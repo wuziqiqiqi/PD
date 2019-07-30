@@ -207,12 +207,12 @@ class Clease(Calculator):
             self.atoms, self.setting, cf_dict,
             dict(zip(self.cluster_names, self.eci)), info)
 
-    def get_energy_given_change(self, atoms, system_changes):
+    def get_energy_given_change(self, system_changes):
         """
         Calculate the energy when the change is known. No
         checking will be performed
         """
-        self.update_cf(system_changes)
+        self.update_cf(system_changes=system_changes)
         self.energy = self.updater.get_energy()
         self.results['energy'] = self.energy
         return self.energy
