@@ -1,7 +1,8 @@
 """Test to ensure the orthnormality of the basis functions."""
 import os
 import itertools
-from ase.clease import CEBulk, Concentration
+from clease import CEBulk, Concentration
+import unittest
 
 
 db_name = 'orthonormal_basis.db'
@@ -64,6 +65,7 @@ def test_5(basis_function):
                      basis_function=basis_function)
     check_orthonormal(setting)
 
+
 def test_6(basis_function):
     """Test for 6 element case."""
     basis_elements = [['Au', 'Cu', 'Ag', 'Ni', 'Fe', 'H']]
@@ -100,17 +102,20 @@ def check_orthonormal(setting):
 
 
 basis_function = 'sanchez'
-test_2(basis_function)
-test_3(basis_function)
-test_4(basis_function)
-test_5(basis_function)
-test_6(basis_function)
 
-basis_function = 'vandewalle'
-test_2(basis_function)
-test_3(basis_function)
-test_4(basis_function)
-test_5(basis_function)
-test_6(basis_function)
 
-os.remove(db_name)
+class TestOrthonormal(unittest.TestCase):
+    def test_ortho(self):
+        for bf in ['sanchez', 'vandewalle']:
+            test_2(bf)
+            test_3(bf)
+            test_4(bf)
+            test_5(bf)
+            test_6(bf)
+
+    def tearDown(self):
+        os.remove(db_name)
+
+
+if __name__ == '__main__':
+    unittest.main()

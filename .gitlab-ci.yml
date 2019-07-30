@@ -1,0 +1,8 @@
+image: python:3-slim
+
+python3_test:
+  script:
+    - pip install -r requirements.txt
+    - pip install .
+    - python -m unittest discover tests/
+

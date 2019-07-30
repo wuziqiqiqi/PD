@@ -1,6 +1,6 @@
 """Test case for the multiprocessing logger."""
 import multiprocessing as mp
-from ase.clease.mp_logger import MultiprocessHandler
+from clease.mp_logger import MultiprocessHandler
 import logging as lg
 import os
 import unittest
