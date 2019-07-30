@@ -105,8 +105,9 @@ class StructureGenerator(object):
 
                 if self._accept():
                     num_accepted += 1
+                    self.atoms.get_calculator().clear_history()
                 else:
-                    self.calc.restore(self.atoms)
+                    self.calc.restore()
 
         self.atoms = self.generated_structure
         self._check_consistency()
