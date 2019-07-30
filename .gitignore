@@ -5,3 +5,4 @@ SOURCES.txt
 dependency_links.txt
 top_level.txt
 __pycache__/*
+settings.json
