@@ -8,8 +8,10 @@ from ase.db import connect
 from random import choice
 import numpy as np
 import os
+import unittest
 
 db_name = "ga_fit_test.db"
+
 
 def init_system():
     basis_elements = [['Au', 'Cu']]
@@ -46,22 +48,30 @@ def init_system():
 setting = init_system()
 
 
-def test_init_from_file():
-    backup = "ga_test.csv"
-    selector = GAFit(setting=setting, fname=backup)
-    try:
-        selector.run(gen_without_change=3, save_interval=1)
-    except SaturatedPopulationError:
-        pass
-    individuals = selector.individuals
+class TestGAFit(unittest.TestCase):
+    def test_init_from_file(self):
+        backup = "ga_test.csv"
+        selector = GAFit(setting=setting, fname=backup)
+        try:
+            selector.run(gen_without_change=3, save_interval=1)
+        except SaturatedPopulationError:
+            pass
+        individuals = selector.individuals
 
-    # Restart from file, this time data will be loaded
-    selector = GAFit(setting=setting, fname=backup)
-    assert np.allclose(individuals, selector.individuals)
-    os.remove(backup)
+        # Restart from file, this time data will be loaded
+        selector = GAFit(setting=setting, fname=backup)
+        self.assertTrue(np.allclose(individuals, selector.individuals))
+        os.remove(backup)
 
-    if os.path.exists("ga_test_cluster_names.txt"):
-        os.remove("ga_test_cluster_names.txt")
+        if os.path.exists("ga_test_cluster_names.txt"):
+            os.remove("ga_test_cluster_names.txt")
 
-test_init_from_file()
-os.remove(db_name)
+    def tearDown(self):
+        try:
+            os.remove(db_name)
+        except Exception:
+            pass
+
+
+if __name__ == '__main__':
+    unittest.main()
