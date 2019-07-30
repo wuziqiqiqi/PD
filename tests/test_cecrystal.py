@@ -244,7 +244,6 @@ class TestCECrystal(unittest.TestCase):
         This test a crystal with internal angles 50, 20, 15 degree.
         """
         db_name = "test_grouped_narrow_angle.db"
-        db_name = "test_spacegroup.db"
         basis_elements = [['Mg', 'Si']]
         concentration = Concentration(basis_elements=basis_elements)
         bsg = CECrystal(basis=[(0.0, 0.0, 0.0)],
