@@ -6,3 +6,9 @@ dependency_links.txt
 top_level.txt
 __pycache__/*
 settings.json
+clease/cython/clease_cxx.cpp
+*.gch
+clease.egg-info/*
+.vscode/*
+*.so
+*.o
