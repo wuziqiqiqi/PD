@@ -54,7 +54,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         X[:, 23] = X[:, 50]
         y = 20*X[:, 0] - 3*X[:, 23]
         eci = bayes.fit(X, y)
-        self.assertEquals(len(eci), 400)
+        self.assertEqual(len(eci), 400)
 
         expected = np.zeros(400)
         expected[0] = 20
