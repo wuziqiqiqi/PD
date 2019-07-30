@@ -19,7 +19,7 @@ def generate_ex_eci(setting):
     return eci
 
 
-def get_binary():
+def get_binary(db_name):
     """Return a simple binary test structure."""
     basis_elements = [["Au", "Cu"]]
     concentration = Concentration(basis_elements=basis_elements)
@@ -39,7 +39,7 @@ def get_binary():
     return bc_setting, wrap_and_sort_by_position(atoms)
 
 
-def get_ternary():
+def get_ternary(db_name):
     """Return a ternary test structure."""
     basis_elements = [["Au", "Cu", "Zn"]]
     concentration = Concentration(basis_elements=basis_elements)
@@ -60,7 +60,7 @@ def get_ternary():
     return bc_setting, wrap_and_sort_by_position(atoms)
 
 
-def get_rocksalt():
+def get_rocksalt(db_name):
     """Test rocksalt where passed atoms with background_atoms."""
     basis_elements=[['Li', 'X', 'V'], ['O']]
     concentration = Concentration(basis_elements=basis_elements)
@@ -84,7 +84,7 @@ def get_rocksalt():
     return setting, wrap_and_sort_by_position(atoms)
 
 
-def rocksalt_with_self_interaction(size):
+def rocksalt_with_self_interaction(size, db_name):
     basis_elements=[['Li', 'Mn', 'X'], ['O', 'X']]
     concentration = Concentration(basis_elements=basis_elements)
     setting = CEBulk(crystalstructure='rocksalt',
@@ -99,7 +99,7 @@ def rocksalt_with_self_interaction(size):
     return setting, atoms
 
 
-def get_spacegroup():
+def get_spacegroup(db_name):
     """Test rocksalt where passed atoms."""
     basis = [(0., 0., 0.),
              (0.3894, 0.1405, 0.),
@@ -192,12 +192,11 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
                 continue
             assert abs(calc_cf[k] - brute_force_cf[k]) < 1E-6
 
-db_name = 'CE_calc_test.db'
-
 
 class TestCECalculator(unittest.TestCase):
     def test_indices_of_changed_symbols(self):
-        setting, atoms = get_binary()
+        db_name = 'indices_changes_symbol.db'
+        setting, atoms = get_binary(db_name)
         eci = generate_ex_eci(setting)
         calc = Clease(setting, cluster_name_eci=eci)
         atoms.set_calculator(calc)
@@ -214,52 +213,60 @@ class TestCECalculator(unittest.TestCase):
         self.assertEqual(calc_changes, changes)
 
     def test_update_corr_func_binary(self):
+        db_name = 'cecalc_corr_func_binary.db'
         print('binary')
-        bin_setting, bin_atoms = get_binary()
+        bin_setting, bin_atoms = get_binary(db_name)
         test_update_correlation_functions(bin_setting, bin_atoms,
                                           n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_ternary(self):
+        db_name = 'cecalc_corr_func_ternary.db'
         print('ternary')
-        tern_setting, tern_atoms = get_ternary()
+        tern_setting, tern_atoms = get_ternary(db_name)
         test_update_correlation_functions(tern_setting, tern_atoms, n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_rocksalt(self):
+        db_name = 'cecalc_corr_func_rocksalt.db'
         print('rocksalt')
-        rs_setting, rs_atoms = get_rocksalt()
+        rs_setting, rs_atoms = get_rocksalt(db_name)
         test_update_correlation_functions(
             rs_setting, rs_atoms, n_trial_configs=5, fixed=['O'])
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x1(self):
         print('rocksalt with self interaction 1x1x1')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1])
+        db_name = 'cecalc_rs_1x1x1.db'
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1], db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x2(self):
+        db_name = 'cecalc_rs_1x1x2.db'
         print('rocksalt with self interaction 1x1x2')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2])
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2], db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x3(self):
+        db_name = 'cecalc_rs_1x1x3.db'
         print('rocksalt with self interaction 1x1x3')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3])
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3], db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x2x3(self):
         print('rocksalt with self interaction 1x2x3')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3])
+        db_name = 'cecalc_rs_1x2x3.db'
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3], db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
     def test_update_corr_func_spacegroup(self):
         print('spacegroup')
-        sp_setting, sp_atoms = get_spacegroup()
+        db_name = 'cecalc_corrfunc_spacegroup.db'
+        sp_setting, sp_atoms = get_spacegroup(db_name)
         test_update_correlation_functions(sp_setting, sp_atoms, n_trial_configs=5,
                                           fixed=['Ta'])
         os.remove(db_name)
