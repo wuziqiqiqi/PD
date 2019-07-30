@@ -10,14 +10,13 @@ fname = "test_bayes_compr_sens.json"
 
 
 class TestBayesianCompressiveSensing(unittest.TestCase):
-    bayes = BayesianCompressiveSensing(fname=fname, output_rate_sec=2, 
-                                   maxiter=100)
+    bayes = BayesianCompressiveSensing(fname=fname, output_rate_sec=2,
+                                       maxiter=100)
 
     def test_optimize_shape_parameter(self):
         self.bayes.lamb = 1.0
         opt = self.bayes.optimal_shape_lamb()
-        assert abs(np.log(opt/2.0) - polygamma(0, opt/2.0)) < 1E-6
-
+        self.assertAlmostEqual(np.log(opt/2.0), polygamma(0, opt/2.0))
 
     def test_fit(self):
         X = np.random.rand(30, 400)
@@ -27,8 +26,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         expected_eci = np.zeros(X.shape[1])
         expected_eci[20] = 60.0
         expected_eci[2] = -80.0
-        assert np.allclose(eci, expected_eci, rtol=1E-4)
-
+        self.assertTrue(np.allclose(eci, expected_eci, rtol=1E-4))
 
     def test_fit_more_coeff(self):
         self.bayes = BayesianCompressiveSensing(fname=fname, noise=0.1)
@@ -41,14 +39,12 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
             y += X[:, i]*c
             expected_eci[i] = c
         eci = self.bayes.fit(X, y)
-        assert np.allclose(eci, expected_eci, atol=1E-2)
-
+        self.assertTrue(np.allclose(eci, expected_eci, atol=1E-2))
 
     def test_save_load(self):
         self.bayes.save()
         bayes2 = BayesianCompressiveSensing.load(fname)
-        assert self.bayes == bayes2
-
+        self.assertTrue(self.bayes == bayes2)
 
     def test_fit_linear_dep_col(self):
         bayes = BayesianCompressiveSensing(fname=fname, noise=0.2, penalty=1E-2)
@@ -58,16 +54,16 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         X[:, 23] = X[:, 50]
         y = 20*X[:, 0] - 3*X[:, 23]
         eci = bayes.fit(X, y)
-        assert len(eci) == 400
+        self.assertEquals(len(eci), 400)
 
         expected = np.zeros(400)
         expected[0] = 20
         expected[23] = -3
         print(np.argwhere(np.abs(eci) > 1E-8))
-        assert np.allclose(eci, expected, atol=1E-2)
+        self.assertTrue(np.allclose(eci, expected, atol=1E-2))
 
         prec = bayes.precision_matrix(X)
-        assert prec.shape == (400, 400)
+        self.assertTrue(prec.shape == (400, 400))
 
     def tearDown(self):
         try:
