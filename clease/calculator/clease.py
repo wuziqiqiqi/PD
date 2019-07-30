@@ -248,12 +248,6 @@ class Clease(Calculator):
     @property
     def indices_of_changed_atoms(self):
         """Return the indices of atoms that have been changed."""
-        #old_numbers = 
-        # o_numbers = self.ref_atoms.numbers
-        # n_numbers = self.atoms.numbers
-        # check = (n_numbers == o_numbers)
-        # changed = np.argwhere(check == 0)[:, 0]
-        # changed = np.unique(changed)
         changed = self.updater.get_changed_sites(self.atoms)
         for index in changed:
             if self.is_backround_index[index] and \
