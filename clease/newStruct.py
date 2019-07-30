@@ -180,7 +180,6 @@ class NewStructures(object):
                 num_attempt = 0
 
             kvp = self._get_kvp(probe_struct, formula_unit)
-            probe_struct.calc.results['energy'] = None
             tab_name = self.corr_func_table_name
             self.db.write(probe_struct, kvp, external_tables={tab_name: cf})
 
