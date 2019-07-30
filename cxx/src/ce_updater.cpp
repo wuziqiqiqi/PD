@@ -394,10 +394,7 @@ void CEUpdater::update_cf( SymbolChange &symb_change )
     }
 
     delta_sp *= (static_cast<double>(size)/equiv_deco.size());
-    //delta_sp /= (normalization*symbols.size()); // This was the old normalization
-    cout << normalisation_factor.at(prefix) << endl;
     delta_sp /= normalisation_factor.at(prefix);
-    //cout << name << " " << cluster_indices << endl;
     next_cf[i] = current_cf[i] + delta_sp;
   }
 }

@@ -49,7 +49,6 @@ class Clease(Calculator):
         self.parameters["eci"] = cluster_name_eci
         self.setting = setting
         self.CF = CorrFunction(setting)
-        self.norm_factor = self._generate_normalization_factor()
 
         # check cluster_name_eci and separate them out
         if isinstance(cluster_name_eci, list) and \
@@ -115,13 +114,7 @@ class Clease(Calculator):
         self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
-        self.num_si = self._get_num_self_interactions()
         self.dupl_tracker = DuplicationCountTracker(self.setting)
-        self.sp_trans_mat = get_sparse_column_matrix(self.setting.trans_matrix)
-        self.symb_id = symbols2integer(self.setting.basis_functions)
-        self.bf_npy = bf2npyarray(self.setting.basis_functions, self.symb_id)
-        self.cluster_info_npy = \
-            self._get_cluster_info_npy(deepcopy(self.setting.cluster_info))
 
         self.equiv_deco = self._precalculate_equivalent_decorations()
 
@@ -130,30 +123,6 @@ class Clease(Calculator):
 
         # C++ updater initialised when atoms are set
         self.updater = None
-     
-    def _get_cluster_info_npy(self, cluster_info):
-        info = []
-        for all_info in cluster_info:
-            info.append(all_info)
-
-            # Now convert the critial structures to numpy arrays
-            for k in all_info.keys():
-                cluster = info[-1][k]
-
-                dup_factors = [self.dupl_tracker.factor(
-                    cluster, non_trans, order)
-                    for non_trans, order in zip(cluster["indices"],
-                                                cluster["order"])]
-
-                info[-1][k]["dup_factors"] = np.array(dup_factors)
-
-                sorted_indices = []
-                for subcluster, order in zip(cluster["indices"], cluster["order"]):
-                    all_indx = [cluster["ref_indx"]] + subcluster
-                    all_indx = [all_indx[i] for i in order]
-                    sorted_indices.append(all_indx)
-                info[-1][k]["indices"] = np.array(sorted_indices, dtype=np.int32)
-        return info
 
     def _get_cluster_info_with_dup_factors(self, cluster_info):
         info = []
@@ -169,13 +138,6 @@ class Clease(Calculator):
                                                 cluster["order"])]
 
                 info[-1][k]["dup_factors"] = dup_factors
-
-                # sorted_indices = []
-                # for subcluster, order in zip(cluster["indices"], cluster["order"]):
-                #     all_indx = [cluster["ref_indx"]] + subcluster
-                #     all_indx = [all_indx[i] for i in order]
-                #     sorted_indices.append(all_indx)
-                # info[-1][k]["indices"] = sorted_indices
         return info
 
     def _precalculate_equivalent_decorations(self):
@@ -245,6 +207,16 @@ class Clease(Calculator):
             self.atoms, self.setting, cf_dict,
             dict(zip(self.cluster_names, self.eci)), info)
 
+    def get_energy_given_change(self, atoms, system_changes):
+        """
+        Calculate the energy when the change is known. No
+        checking will be performed
+        """
+        self.update_cf(system_changes)
+        self.energy = self.updater.get_energy()
+        self.results['energy'] = self.energy
+        return self.energy
+
     def calculate(self, atoms, properties, system_changes):
         """Calculate the energy of the passed atoms object.
 
@@ -264,6 +236,8 @@ class Clease(Calculator):
     def restore(self):
         """Restore the old atoms and correlation functions to the reference."""
         self.updater.undo_changes()
+        self.energy = self.updater.get_energy()
+        self.results['energy'] = self.energy
 
     def update_energy(self):
         """Update correlation function and get new energy."""
@@ -292,9 +266,6 @@ class Clease(Calculator):
         cf = self.updater.get_cf()
         return [(k, v) for k, v in cf.items()]
 
-    # def _symbol_by_index(self, indx):
-    #     return [self.ref_atoms[indx].symbol, self.atoms[indx].symbol]
-
     def _generate_normalization_factor(self):
         """Return a dictionary with all the normalization factors."""
         norm_fact = {}
@@ -316,61 +287,6 @@ class Clease(Calculator):
                               for x in swapped_indices]
         for change in system_changes:
             self.updater.update_cf(change)
-
-        # self.cf = deepcopy(self.ref_cf)
-        # new_symbs = {}
-        # # Reset the atoms object
-        # for indx in swapped_indices:
-        #     new_symbs[indx] = self.atoms[indx].symbol
-        #     self.atoms[indx].symbol = self.ref_atoms[indx].symbol
-
-        # atoms_npy = np.array([self.symb_id.get(atom.symbol, -1)
-        #                       for atom in self.atoms], dtype=np.int32)
-        # for indx in swapped_indices:
-        #     # Swap one index at the time
-        #     self.atoms[indx].symbol = new_symbs[indx]
-        #     new_symbid = self.symb_id[new_symbs[indx]]
-        #     symm = self.symmetry_group[indx]
-
-        #     # Update one_body
-        #     for item in self.one_body:
-        #         i = item[0]
-        #         name = item[1]
-        #         dec = int(name[-1])
-        #         self.cf[i] += (self.bf_npy[dec, new_symbid] -
-        #                        self.bf_npy[dec, atoms_npy[indx]])\
-        #             / len(atoms_npy)
-
-        #     for item in self.clusters_per_symm_group[symm]:
-        #         i = item[0]
-        #         name = item[1]
-        #         # find c{num} in cluster type
-        #         n = int(name[1])
-
-        #         prefix = name.rpartition('_')[0]
-        #         dec_str = name.rpartition('_')[-1]
-        #         dec = [int(x) for x in dec_str]
-
-        #         cluster_npy = self.cluster_info_npy[symm][prefix]
-        #         count = self.norm_factor[prefix]
-        #         cf_tot = self.cf[i] * count
-
-        #         # Try to use JIT function
-        #         dup_factors = cluster_npy["dup_factors"]
-        #         equiv_deco = self.equiv_deco[symm][name]
-        #         indices = cluster_npy["indices"]
-
-        #         cf_change = cf_change_by_indx_jit(
-        #             atoms_npy, indx, new_symbid, indices, equiv_deco,
-        #             dup_factors, self.sp_trans_mat, self.bf_npy)
-
-        #         cf_change /= self.num_si[prefix]
-        #         self.cf[i] = (cf_tot + (n * cf_change)) / count
-
-        #     # Update the number array, JIT version assumes that this array is
-        #     # updated after the CF change is requested
-        #     atoms_npy[indx] = new_symbid
-        # return swapped_indices
 
     @property
     def cf(self):
@@ -401,79 +317,3 @@ class Clease(Calculator):
             return True
         self.logfile.write('{}\n'.format(self.energy))
         self.logfile.flush()
-
-    def _get_num_self_interactions(self):
-        num_si = {}
-        for item in self.setting.cluster_info:
-            for name, info in item.items():
-                if info["size"] <= 1:
-                    num_si[name] = 1.
-                    continue
-                ref_indx = info["ref_indx"]
-                num_int = sum(sub.count(ref_indx) for sub in info["indices"])
-                num_equiv_indices = 0
-                for sub in info["indices"]:
-                    bin_count = np.bincount(sub)
-                    bin_count[bin_count > 0] -= 1
-                    num_equiv_indices += np.sum(bin_count)
-                num_int += num_equiv_indices + len(info["indices"])
-                num_si[name] = float(num_int)/len(info["indices"])
-                num_si[name] = 1.0
-        return num_si
-
-@jit(nopython=True)
-def cf_change_by_indx_jit(atoms_npy, ref_indx, new_symbid, cluster_indices,
-                          equiv_deco, dup_factors, sp_mat, bf_npy):
-        """Calculate the change in correlation function based on atomic index.
-
-        This method tracks changes in correaltion function due to change in
-        element type for atom with index = ref_indx. Passed trans_list refers
-        to the indices of atoms that constitute the cluster
-        (after translation).
-        """
-        symbol = atoms_npy[ref_indx]
-        delta_cf = 0.0
-        for dec_num in range(equiv_deco.shape[0]):
-            dec = equiv_deco[dec_num, :]
-
-            for subclust in range(cluster_indices.shape[0]):
-                cf_new = 1.0
-                cf_ref = 1.0
-                for i in range(cluster_indices.shape[1]):
-                    trans_indx = sp_mat.get(ref_indx,
-                                            cluster_indices[subclust, i])
-
-                    if trans_indx == ref_indx:
-                        cf_new *= bf_npy[dec[i], new_symbid]
-                        cf_ref *= bf_npy[dec[i], symbol]
-                    else:
-                        cf_new *= bf_npy[dec[i], atoms_npy[trans_indx]]
-                        cf_ref *= bf_npy[dec[i], atoms_npy[trans_indx]]
-
-                # If self interactions we need to down scale the contribution
-                # because this cluster is present fewer times.
-                # Example: If indices = [0, 23, 42], this particular clusters
-                # exists when 0, 23 and 42 is reference index (total 3 times)
-                # if the cluster is [0, 23, 23], this cluster exists only
-                # when 0 and 23 is reference index (only 2 times).
-                # Hence, we need to down scale the contribution by a factor
-                # 2/3.
-                scale = len(np.unique(cluster_indices[subclust, :])) / \
-                    float(cluster_indices.shape[1])
-
-                # We only inspect the effect of the change at one reference
-                # index. However, we know that if we looped over all reference
-                # indices one given clusters would appear exactly m times, if
-                # m is the multiplicity factor. On the other hand when
-                # inspecting only one cluster, that may not be the case.
-                # Example: If indices = [[0, 1, 1], [0, 1, 1], [1, 0, 0]]
-                # the situation is as follows. When 0 is reference index
-                # [0, 1, 1] occures to times and [1, 0, 0] occures one time
-                # When 1 is reference index [0, 1, 1] will occure one time
-                # and [1, 0, 0] will occure two times. Since we only
-                # inspect one of the cases, we need to correct for the
-                # fact that for one particular reference index the number
-                # of occurences can be distributed unevenly.
-                scale *= dup_factors[subclust]
-                delta_cf += scale*(cf_new - cf_ref)/equiv_deco.shape[0]
-        return delta_cf
