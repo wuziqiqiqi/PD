@@ -4,6 +4,7 @@ python3_test:
   script:
     - apt-get update
     - apt-get install g++
+    - python --version
     - pip install -r requirements.txt
     - pip install .
     - python -m unittest discover tests/
