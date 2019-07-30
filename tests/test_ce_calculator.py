@@ -196,6 +196,24 @@ db_name = 'CE_calc_test.db'
 
 
 class TestCECalculator(unittest.TestCase):
+    def test_indices_of_changed_symbols(self):
+        setting, atoms = get_binary()
+        eci = generate_ex_eci(setting)
+        calc = Clease(setting, cluster_name_eci=eci)
+        atoms.set_calculator(calc)
+
+        changes = [2, 6]
+        for ch in changes:
+            if atoms[ch].symbol == 'Au':
+                atoms[ch].symbol = 'Cu'
+            else:
+                atoms[ch].symbol = 'Au'
+        
+        calc_changes = calc.indices_of_changed_atoms
+        os.remove(db_name)
+        self.assertEqual(calc_changes, changes)
+
+
     def test_update_corr_func_binary(self):
         print('binary')
         bin_setting, bin_atoms = get_binary()

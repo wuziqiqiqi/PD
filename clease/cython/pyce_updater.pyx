@@ -1,6 +1,8 @@
 # distutils: language = c++
 
 from clease.cython.ce_updater cimport CEUpdater
+from libcpp.vector cimport vector
+from libcpp.string cimport string
 
 cdef class PyCEUpdater:
     """
@@ -52,3 +54,14 @@ cdef class PyCEUpdater:
 
     def set_num_threads(self, num_threads):
         self.thisptr.set_num_threads(num_threads)
+
+    def get_changed_sites(self, atoms):
+        symbs = [atom.symbol for atom in atoms]
+        cdef vector[string] symb_vec
+
+        for atom in atoms:
+            symb_vec.push_back(atom.symbol)
+
+        cdef vector[unsigned int] changed
+        self.thisptr.get_changes(symb_vec, changed)
+        return [changed[i] for i in range(changed.size())]

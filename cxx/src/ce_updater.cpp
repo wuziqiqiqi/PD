@@ -989,3 +989,16 @@ void CEUpdater::read_background_indices(PyObject *bkg_indices){
     is_background_index[indx] = true;
   }
 }
+
+void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const{
+  if (new_symbols.size() != symbols_with_id->size()){
+    throw invalid_argument("Size of passed atoms does not match!");
+  }
+
+  for (unsigned int i=0;i<new_symbols.size();i++){
+    unsigned int symb_id = symbols_with_id->id(i);
+    if (symbols_with_id->get_symbol_id(new_symbols[i]) != symb_id){
+      changed_sites.push_back(i);
+    }
+  }
+}

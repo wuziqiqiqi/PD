@@ -133,6 +133,9 @@ public:
   /** Set the number of threads to use during CF updating */
   void set_num_threads(unsigned int num){cf_update_num_threads = num;};
 
+  /** Find which sites have changed */
+  void get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const;
+
   /** Converts a system change encoded as a python tuple to a SymbolChange object */
   static SymbolChange& py_tuple_to_symbol_change( PyObject *single_change, SymbolChange &symb_change );
   static void py_changes2_symb_changes( PyObject* all_changes, std::vector<SymbolChange> &symb_changes );

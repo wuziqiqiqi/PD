@@ -10,6 +10,7 @@ from clease.corrFunc import equivalent_deco
 from clease.tools import get_sparse_column_matrix, symbols2integer
 from clease.tools import bf2npyarray
 from clease.jit import jit
+from clease_cxx import PyCEUpdater
 
 
 class MovedIgnoredAtomError(Exception):
@@ -110,12 +111,7 @@ class Clease(Calculator):
 
         self.energy = None
         # reference atoms for calculating the cf and energy for new atoms
-        self.ref_atoms = None
-        self.ref_cf = None
-        # old atoms for the case where one needs to revert to the previous
-        # structure (e.g., Monte Carlo Simulation)
-        self.old_atoms = None
-        self.old_cf = None
+        self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
         self.num_si = self._get_num_self_interactions()
@@ -131,6 +127,9 @@ class Clease(Calculator):
         self.clusters_per_symm_group, self.one_body = \
             self._place_clusters_in_symm_groups()
 
+        # C++ updater initialised when atoms are set
+        self.updater = None
+     
     def _get_cluster_info_npy(self, cluster_info):
         info = []
         for all_info in cluster_info:
@@ -192,13 +191,11 @@ class Clease(Calculator):
         return clst_per_symm_group, one_body
 
     def set_atoms(self, atoms):
-        self.atoms = atoms.copy()
+        self.atoms = atoms  # .copy()
         if self.cf is None:
             self.cf = self.CF.get_cf_by_cluster_names(self.atoms,
                                                       self.cluster_names,
                                                       return_type='array')
-        self._copy_current_to_ref()
-        self._copy_current_to_old()
 
         if len(self.setting.atoms) != len(atoms):
             msg = "Passed Atoms object and setting.atoms should have "
@@ -213,6 +210,10 @@ class Clease(Calculator):
             self.symmetry_group[indices] = symm
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
         self.is_backround_index[self.setting.background_indices] = 1
+
+        self.updater = PyCEUpdater(self.atoms, self.setting,
+                                   self.get_cf_dict(),
+                                   dict(zip(self.cluster_names, self.eci)))
 
     def calculate(self, atoms, properties, system_changes):
         """Calculate the energy of the passed atoms object.
@@ -229,32 +230,14 @@ class Clease(Calculator):
         if len(swapped_indices) == 0:
             return self.energy
 
-        self._copy_ref_to_old()
-        self._copy_current_to_ref()
-
         return self.energy
 
-    def _copy_current_to_ref(self):
-        self.ref_atoms = self.atoms.copy()
-        self.ref_cf = deepcopy(self.cf)
+    def clear_history(self):
+        self.updater.clear_history()
 
-    def _copy_current_to_old(self):
-        self.old_atoms = self.atoms.copy()
-        self.old_cf = deepcopy(self.cf)
-
-    def _copy_ref_to_old(self):
-        self.old_atoms = self.ref_atoms.copy()
-        self.old_cf = deepcopy(self.ref_cf)
-
-    def restore(self, atoms):
+    def restore(self):
         """Restore the old atoms and correlation functions to the reference."""
-        if self.old_atoms is None:
-            return
-        self.ref_atoms = self.old_atoms.copy()
-        self.ref_cf = deepcopy(self.old_cf)
-        self.atoms = self.old_atoms.copy()
-        self.cf = deepcopy(self.old_cf)
-        atoms.numbers = self.old_atoms.numbers
+        self.updater.undo_changes()
 
     def update_energy(self):
         """Update correlation function and get new energy."""
@@ -265,11 +248,13 @@ class Clease(Calculator):
     @property
     def indices_of_changed_atoms(self):
         """Return the indices of atoms that have been changed."""
-        o_numbers = self.ref_atoms.numbers
-        n_numbers = self.atoms.numbers
-        check = (n_numbers == o_numbers)
-        changed = np.argwhere(check == 0)[:, 0]
-        changed = np.unique(changed)
+        #old_numbers = 
+        # o_numbers = self.ref_atoms.numbers
+        # n_numbers = self.atoms.numbers
+        # check = (n_numbers == o_numbers)
+        # changed = np.argwhere(check == 0)[:, 0]
+        # changed = np.unique(changed)
+        changed = self.updater.get_changed_sites(self.atoms)
         for index in changed:
             if self.is_backround_index[index] and \
                     self.setting.ignore_background_atoms:
@@ -277,7 +262,7 @@ class Clease(Calculator):
                                             "background atom."
                                             "".format(index))
 
-        return np.unique(changed)
+        return changed
 
     def get_cf_dict(self):
         """Return the correlation functions as a dict"""

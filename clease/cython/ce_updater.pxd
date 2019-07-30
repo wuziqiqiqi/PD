@@ -32,3 +32,5 @@ cdef extern from "ce_updater.hpp":
       const vector[string]& get_symbols() const
 
       void set_num_threads(unsigned int num_threads)
+
+      void get_changes(vector[string] symbs, vector[unsigned int] changed_sites) except+
