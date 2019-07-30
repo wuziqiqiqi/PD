@@ -8,7 +8,7 @@ from numpy.linalg import inv, pinv
 from ase.db import connect
 from clease import CEBulk, CECrystal, CorrFunction
 from clease.tools import wrap_and_sort_by_position
-from ase.calculators.clease import Clease
+from clease.calculator import Clease
 from ase.units import kB
 import time
 

@@ -30,7 +30,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         assert np.allclose(eci, expected_eci, rtol=1E-4)
 
 
-    def test_fit_more_coeff():
+    def test_fit_more_coeff(self):
         self.bayes = BayesianCompressiveSensing(fname=fname, noise=0.1)
         X = np.random.rand(30, 400)
         coeff = [6.0, -2.0, 5.0, 50.0, -30.0]
@@ -50,7 +50,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         assert self.bayes == bayes2
 
 
-    def test_fit_linear_dep_col():
+    def test_fit_linear_dep_col(self):
         bayes = BayesianCompressiveSensing(fname=fname, noise=0.2, penalty=1E-2)
         X = np.random.rand(30, 400)
         X[:, 2] = X[:, 0]
@@ -70,4 +70,10 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         assert prec.shape == (400, 400)
 
     def tearDown(self):
-        os.remove(fname)
+        try:
+            os.remove(fname)
+        except Exception:
+            pass
+
+if __name__ == '__main__':
+    unittest.main()

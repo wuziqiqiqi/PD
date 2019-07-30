@@ -1,6 +1,7 @@
 .DS_Store
-.pyc
+*.pyc*
 PKG-INFO
 SOURCES.txt
 dependency_links.txt
 top_level.txt
+__pycache__/*
