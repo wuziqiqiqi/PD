@@ -1,3 +1,8 @@
+image: ubuntu:14.04
+
+before_script:
+    - apt-get update -qy
+    - apt-get install -qy python-dev python-pip
 
 python3_test:
   script:
