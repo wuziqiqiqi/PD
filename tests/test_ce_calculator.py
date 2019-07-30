@@ -168,6 +168,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
         assert np.allclose(brute_force_cf, calc.cf)
     print(np.mean(timings))
 
+
 def test_insert_element(setting, atoms, n_trial_configs=20):
     from random import choice
     cf = CorrFunction(setting)
