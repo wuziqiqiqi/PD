@@ -1,5 +1,5 @@
 from __future__ import print_function
-from ase.clease import LinearRegression
+from clease import LinearRegression
 import numpy as np
 import multiprocessing as mp
 import os
@@ -68,7 +68,7 @@ class GAFit(object):
         Possible cost functions:
         bic - Bayes Information Criterion
         aic - Afaike Information Criterion
-        aicc - Modified Afaikes Information Criterion 
+        aicc - Modified Afaikes Information Criterion
         (tend to avoid overfitting better than aic)
         loocv - Leave one out cross validation (average)
         max_loocv - Leave one out cross valdition (maximum)
@@ -91,8 +91,8 @@ class GAFit(object):
 
     Example::
 
-        from ase.clease import Evaluate
-        from ase.clease import GAFit
+        from clease import Evaluate
+        from clease import GAFit
 
         setting = None # Should be an ASE ClusterExpansionSetting object
         ga_fit = GAFit(setting)
@@ -105,7 +105,7 @@ class GAFit(object):
                  max_num_in_init_pool=None, parallel=False, num_core=None,
                  select_cond=None, cost_func="bic", sparsity_slope=1.0,
                  min_weight=1.0, include_subclusters=True):
-        from ase.clease import Evaluate
+        from clease import Evaluate
         evaluator = Evaluate(setting, max_cluster_dia=max_cluster_dia,
                              max_cluster_size=max_cluster_size,
                              select_cond=select_cond, min_weight=min_weight)
@@ -538,7 +538,7 @@ class GAFit(object):
         of the run.
 
         Parameters:
-        
+
         gen_without_change: int
             Terminate if gen_without_change are created without sufficient
             improvement

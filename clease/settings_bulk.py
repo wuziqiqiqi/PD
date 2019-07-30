@@ -5,8 +5,8 @@ or CECrystal class.
 """
 from ase.build import bulk
 from ase.spacegroup import crystal
-from ase.clease.tools import wrap_and_sort_by_position
-from ase.clease.settings import ClusterExpansionSetting
+from clease.tools import wrap_and_sort_by_position
+from clease.settings import ClusterExpansionSetting
 from copy import deepcopy
 
 

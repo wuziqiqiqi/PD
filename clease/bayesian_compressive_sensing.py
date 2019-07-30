@@ -1,4 +1,4 @@
-from ase.clease import LinearRegression
+from clease import LinearRegression
 import numpy as np
 from scipy.special import polygamma
 from scipy.optimize import brentq
@@ -382,7 +382,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Fit ECIs to the data
 
         Parameters:
-        
+
         X: np.ndarray
             Design matrix (NxM: N number of datapoints,
             M number of correlation functions)

@@ -6,8 +6,8 @@ from copy import deepcopy, copy
 import numpy as np
 from numpy.linalg import inv, pinv
 from ase.db import connect
-from ase.clease import CEBulk, CECrystal, CorrFunction
-from ase.clease.tools import wrap_and_sort_by_position
+from clease import CEBulk, CECrystal, CorrFunction
+from clease.tools import wrap_and_sort_by_position
 from ase.calculators.clease import Clease
 from ase.units import kB
 import time
@@ -381,7 +381,7 @@ class GSStructure(StructureGenerator):
     """Generate ground-state structure.
 
     Parameters:
-    
+
     setting: CEBulk or BulkSapcegroup object
 
     atoms: Atoms object

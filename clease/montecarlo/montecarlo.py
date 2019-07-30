@@ -5,7 +5,7 @@ from ase.utils import basestring
 from ase.units import kB
 from ase.montecarlo.swap_atoms import SwapAtoms
 from ase.atoms import Atoms
-from ase.clease import CEBulk, CECrystal
+from clease import CEBulk, CECrystal
 
 
 class MonteCarlo(object):

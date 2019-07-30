@@ -323,7 +323,7 @@ def distance_string(distance_array, distance):
 
 
 def reconfigure(setting, select_cond=None):
-    from ase.clease import CorrFunction
+    from clease import CorrFunction
     setting.reconfigure_settings()
     CorrFunction(setting).reconfigure_db_entries(select_cond)
 
@@ -412,10 +412,10 @@ def load_settings(fname):
         info = json.load(infile)
 
     if info['classtype'] == 'CEBulk':
-        from ase.clease import CEBulk
+        from clease import CEBulk
         return CEBulk.load(fname)
     elif info['classtype'] == 'CECrystal':
-        from ase.clease import CECrystal
+        from clease import CECrystal
         return CECrystal.load(fname)
 
     allowed_class_types = ['CEBulk', 'CECrystal']
@@ -460,7 +460,7 @@ def bf2npyarray(basis_functions, symb_id):
 
 
 def get_sparse_column_matrix(tm):
-    from ase.clease.column_sparse_matrix import ColumnSparseMatrix
+    from clease.column_sparse_matrix import ColumnSparseMatrix
 
     columns = set()
     for row in tm:

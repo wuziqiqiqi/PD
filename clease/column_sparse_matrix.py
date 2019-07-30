@@ -1,5 +1,5 @@
 import numpy as np
-from ase.clease.jit import int32, jitclass
+from clease.jit import int32, jitclass
 
 spec = [
     ('global_index', int32[:]),

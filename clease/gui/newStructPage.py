@@ -149,7 +149,7 @@ class NewStructPage(Screen):
         return eci
 
     def generate(self):
-        from ase.clease import NewStructures
+        from clease import NewStructures
         from ase.io import read
 
         settings = App.get_running_app().settings
@@ -223,7 +223,7 @@ class NewStructPage(Screen):
 
     def import_structures(self):
         from ase.io import read
-        from ase.clease import NewStructures
+        from clease import NewStructures
         init = self.ids.initStructInput.text
 
         if init == '' or not os.path.exists(init):

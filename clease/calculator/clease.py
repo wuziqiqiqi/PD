@@ -5,11 +5,11 @@ import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
-from ase.clease import CorrFunction, CEBulk, CECrystal
-from ase.clease.corrFunc import equivalent_deco
-from ase.clease.tools import get_sparse_column_matrix, symbols2integer
-from ase.clease.tools import bf2npyarray
-from ase.clease.jit import jit
+from clease import CorrFunction, CEBulk, CECrystal
+from clease.corrFunc import equivalent_deco
+from clease.tools import get_sparse_column_matrix, symbols2integer
+from clease.tools import bf2npyarray
+from clease.jit import jit
 
 
 class MovedIgnoredAtomError(Exception):

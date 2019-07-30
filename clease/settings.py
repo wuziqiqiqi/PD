@@ -10,17 +10,17 @@ import numpy as np
 from scipy.spatial import cKDTree as KDTree
 from ase.db import connect
 
-from ase.clease import _logger, LogVerbosity
-from ase.clease.floating_point_classification import FloatingPointClassifier
-from ase.clease.tools import (wrap_and_sort_by_position, index_by_position,
-                              flatten, sort_by_internal_distances,
-                              dec_string, get_unique_name,
-                              nested_array2list, get_all_internal_distances,
-                              distance_string, nested_list2str)
-from ase.clease.basis_function import BasisFunction
-from ase.clease.template_atoms import TemplateAtoms
-from ase.clease.concentration import Concentration
-from ase.clease.trans_matrix_constructor import TransMatrixConstructor
+from clease import _logger, LogVerbosity
+from clease.floating_point_classification import FloatingPointClassifier
+from clease.tools import (wrap_and_sort_by_position, index_by_position,
+                          flatten, sort_by_internal_distances,
+                          dec_string, get_unique_name,
+                          nested_array2list, get_all_internal_distances,
+                          distance_string, nested_list2str)
+from clease.basis_function import BasisFunction
+from clease.template_atoms import TemplateAtoms
+from clease.concentration import Concentration
+from clease.trans_matrix_constructor import TransMatrixConstructor
 
 
 class ClusterExpansionSetting(object):
@@ -95,13 +95,13 @@ class ClusterExpansionSetting(object):
 
         elif isinstance(basis_function, str):
             if basis_function.lower() == 'sanchez':
-                from ase.clease.basis_function import Sanchez
+                from clease.basis_function import Sanchez
                 self.bf_scheme = Sanchez(unique_element_no_bkg)
             elif basis_function.lower() == 'vandewalle':
-                from ase.clease.basis_function import VandeWalle
+                from clease.basis_function import VandeWalle
                 self.bf_scheme = VandeWalle(unique_element_no_bkg)
             elif basis_function.lower() == "sluiter":
-                from ase.clease.basis_function import Sluiter
+                from clease.basis_function import Sluiter
                 self.bf_scheme = Sluiter(unique_element_no_bkg)
             else:
                 msg = "basis function scheme {} ".format(basis_function)

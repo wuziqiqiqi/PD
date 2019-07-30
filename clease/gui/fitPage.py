@@ -44,7 +44,7 @@ class GAClusterSelector(object):
     settings = None
 
     def run(self):
-        from ase.clease import GAFit, LinearRegression, Evaluate
+        from clease import GAFit, LinearRegression, Evaluate
 
         try:
             ga = GAFit(self.settings, **self.kwargs)
@@ -224,7 +224,7 @@ class FitPage(Screen):
             # We already optimising ECIs
             return
 
-        from ase.clease import Evaluate
+        from clease import Evaluate
         settings = App.get_running_app().settings
 
         if settings is None:
@@ -271,7 +271,7 @@ class FitPage(Screen):
         if scheme in ['lasso', 'l2']:
             alpha = self.fitting_params['alpha']
         elif scheme == 'bcs':
-            from ase.clease import BayesianCompressiveSensing
+            from clease import BayesianCompressiveSensing
             scheme = BayesianCompressiveSensing(
                 shape_var=self.fitting_params['shape_var'],
                 rate_var=self.fitting_params['rate_var'],

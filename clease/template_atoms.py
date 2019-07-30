@@ -8,7 +8,7 @@ from ase.db import connect
 from ase.build import cut
 from itertools import combinations
 from ase.build import make_supercell
-from ase.clease.tools import str2nested_list
+from clease.tools import str2nested_list
 
 
 class TemplateAtoms(object):
@@ -97,7 +97,7 @@ class TemplateAtoms(object):
         """Get the UID for the template matching atoms.
 
         Parameters:
-        
+
         atoms: Atoms object
             structure to compare its size against template atoms
 

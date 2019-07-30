@@ -10,9 +10,9 @@ from ase.db import connect
 from ase.atoms import Atoms
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
-from ase.clease import CEBulk, CECrystal, CorrFunction
-from ase.clease.tools import wrap_and_sort_by_position, nested_list2str
-from ase.clease.structure_generator import ProbeStructure, GSStructure
+from clease import CEBulk, CECrystal, CorrFunction
+from clease.tools import wrap_and_sort_by_position, nested_list2str
+from clease.structure_generator import ProbeStructure, GSStructure
 
 try:
     from math import gcd

@@ -2,7 +2,7 @@ import os
 from ase.db import connect
 from ase.io import write
 from subprocess import check_output
-from ase.clease import jobscript_template as js
+from clease import jobscript_template as js
 
 
 class cd:

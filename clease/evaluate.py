@@ -6,8 +6,8 @@ import multiprocessing as mp
 import logging as lg
 import json
 from ase.utils import basestring
-from ase.clease import CEBulk, CECrystal
-from ase.clease.mp_logger import MultiprocessHandler
+from clease import CEBulk, CECrystal
+from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 
 
@@ -138,7 +138,7 @@ class Evaluate(object):
                 ('struct_type', '=', 'initial')]
 
     def set_fitting_scheme(self, fitting_scheme="ridge", alpha=1E-9):
-        from ase.clease.regression import LinearRegression
+        from clease.regression import LinearRegression
         allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2"]
         if isinstance(fitting_scheme, LinearRegression):
             self.scheme = fitting_scheme
@@ -149,10 +149,10 @@ class Evaluate(object):
                 raise ValueError("Fitting scheme has to be one of "
                                  "{}".format(allowed_fitting_schemes))
             if fitting_scheme in ["ridge", "tikhonov", "l2"]:
-                from ase.clease.regression import Tikhonov
+                from clease.regression import Tikhonov
                 self.scheme = Tikhonov(alpha=alpha)
             elif fitting_scheme in ["lasso", "l1"]:
-                from ase.clease.regression import Lasso
+                from clease.regression import Lasso
                 self.scheme = Lasso(alpha=alpha)
             else:
                 # Perform ordinary least squares
@@ -202,7 +202,7 @@ class Evaluate(object):
         if abs(min_weight - 1.0) < 1E-4:
             return
 
-        from ase.clease import ConvexHull
+        from clease import ConvexHull
         cnv_hull = ConvexHull(self.setting.db_name,
                               select_cond=self.select_cond)
         hull = cnv_hull.get_convex_hull()
@@ -303,8 +303,8 @@ class Evaluate(object):
             whether or not to show convex hull.
         """
         import matplotlib.pyplot as plt
-        from ase.clease import ConvexHull
-        from ase.clease.interactive_plot import ShowStructureOnClick
+        from clease import ConvexHull
+        from clease.interactive_plot import ShowStructureOnClick
 
         if self.eci is None:
             self.get_eci()
@@ -491,17 +491,17 @@ class Evaluate(object):
               the alpha values that are absent. The newly evaluated CVs are
               appended to the existing file.
         """
-        from ase.clease.regression import LinearRegression
+        from clease.regression import LinearRegression
 
         if fitting_schemes is None:
             if self.scheme_string is None:
                 raise ValueError("No fitting scheme supplied!")
             if self.scheme_string in ["lasso", "l1"]:
-                from ase.clease.regression import Lasso
+                from clease.regression import Lasso
                 fitting_schemes = Lasso.get_instance_array(
                     alpha_min, alpha_max, num_alpha=num_alpha, scale=scale)
             elif self.scheme_string in ["ridge", "l2", "tikhonov"]:
-                from ase.clease.regression import Tikhonov
+                from clease.regression import Tikhonov
                 fitting_schemes = Tikhonov.get_instance_array(
                     alpha_min, alpha_max, num_alpha=num_alpha, scale=scale)
 
@@ -704,7 +704,7 @@ class Evaluate(object):
             If ``True``, one can interact with the plot using mouse.
         """
         import matplotlib.pyplot as plt
-        from ase.clease.interactive_plot import InteractivePlot
+        from clease.interactive_plot import InteractivePlot
 
         if self.eci is None:
             self.get_eci()
@@ -828,7 +828,7 @@ class Evaluate(object):
 
     def k_fold_cv(self):
         """Determine the k-fold cross validation."""
-        from ase.clease.tools import split_dataset
+        from clease.tools import split_dataset
         avg_score = 0.0
         for _ in range(self.num_repetitions):
             partitions = split_dataset(self.cf_matrix, self.e_dft,

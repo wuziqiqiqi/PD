@@ -8,7 +8,7 @@ def vasp_new(param1, param2, name, db_name):
     from ase.io import read, write
     from ase.db import connect
     from ase.io.trajectory import TrajectoryWriter
-    from ase.clease.tools import update_db
+    from clease.tools import update_db
 
     # update database
     name='"""+str(name)+"""'
@@ -58,7 +58,7 @@ def vasp_restart(param1, param2, name, db_name):
     from ase.io import read, write
     from ase.db import connect
     from ase.io.trajectory import TrajectoryWriter
-    from ase.clease.tools import update_db
+    from clease.tools import update_db
 
     # update database
     name='"""+str(name)+"""'
@@ -113,7 +113,7 @@ def vasp_new_FIRE(param1, param2, name, db_name):
     from ase.io.trajectory import Trajectory
     from ase.optimize import FIRE
     from ase.constraints import UnitCellFilter
-    from ase.clease.tools import update_db
+    from clease.tools import update_db
 
     # update database
     name='"""+str(name)+"""'
@@ -162,7 +162,7 @@ def vasp_restart_FIRE(param, name, db_name):
     from ase.io.trajectory import Trajectory
     from ase.optimize import FIRE
     from ase.constraints import UnitCellFilter
-    from ase.clease.tools import update_db
+    from clease.tools import update_db
 
     # update database
     name='"""+str(name)+"""'

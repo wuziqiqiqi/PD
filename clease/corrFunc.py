@@ -2,12 +2,12 @@
 from __future__ import print_function
 import numpy as np
 from ase.atoms import Atoms
-from ase.clease import CEBulk, CECrystal
-from ase.clease.tools import wrap_and_sort_by_position, equivalent_deco
-from ase.clease.tools import symbols2integer, bf2npyarray
+from clease import CEBulk, CECrystal
+from clease.tools import wrap_and_sort_by_position, equivalent_deco
+from clease.tools import symbols2integer, bf2npyarray
 from ase.db import connect
 import multiprocessing as mp
-from ase.clease.jit import jit
+from clease.jit import jit
 
 # workers can not be a member of CorrFunction since CorrFunctions is passed
 # as argument to the map function. Hence, we leave it as a global variable,

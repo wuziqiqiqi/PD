@@ -22,7 +22,7 @@ class SettingsInitialiser(object):
     status = None
 
     def initialise(self):
-        from ase.clease import CEBulk, CECrystal
+        from clease import CEBulk, CECrystal
 
         try:
             if self.type == 'CEBulk':
@@ -198,7 +198,7 @@ class ConcentrationPage(Screen):
 
     def init_settings_class(self):
         try:
-            from ase.clease import Concentration
+            from clease import Concentration
             A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
 
             input_page = self.manager.get_screen("Input")
