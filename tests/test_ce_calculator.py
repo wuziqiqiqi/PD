@@ -8,6 +8,7 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
 import time
+import unittest
 
 
 def generate_ex_eci(setting):
@@ -193,44 +194,56 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
 db_name = 'CE_calc_test.db'
 
 
-print('binary')
-bin_setting, bin_atoms = get_binary()
-test_update_correlation_functions(bin_setting, bin_atoms, n_trial_configs=5)
-os.remove(db_name)
+class TestCECalculator(unittest.TestCase):
+    def test_update_corr_func_binary(self):
+        print('binary')
+        bin_setting, bin_atoms = get_binary()
+        test_update_correlation_functions(bin_setting, bin_atoms, n_trial_configs=5)
+        os.remove(db_name)
 
-print('ternary')
-tern_setting, tern_atoms = get_ternary()
-test_update_correlation_functions(tern_setting, tern_atoms, n_trial_configs=5)
-os.remove(db_name)
+    def test_update_corr_func_ternary(self):
+        print('ternary')
+        tern_setting, tern_atoms = get_ternary()
+        test_update_correlation_functions(tern_setting, tern_atoms, n_trial_configs=5)
+        os.remove(db_name)
 
-print('rocksalt')
-rs_setting, rs_atoms = get_rocksalt()
-test_update_correlation_functions(rs_setting, rs_atoms, n_trial_configs=5,
-                                  fixed=['O'])
-os.remove(db_name)
+    def test_update_corr_func_rocksalt(self):
+        print('rocksalt')
+        rs_setting, rs_atoms = get_rocksalt()
+        test_update_correlation_functions(rs_setting, rs_atoms, n_trial_configs=5,
+                                        fixed=['O'])
+        os.remove(db_name)
 
-print('rocksalt with self interaction 1x1x1')
-rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1])
-test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
-os.remove(db_name)
+    def test_insert_element_rocksalt_1x1x1(self):
+        print('rocksalt with self interaction 1x1x1')
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1])
+        test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
+        os.remove(db_name)
 
-print('rocksalt with self interaction 1x1x2')
-rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2])
-test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
-os.remove(db_name)
+    def test_insert_element_rocksalt_1x1x2(self):
+        print('rocksalt with self interaction 1x1x2')
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2])
+        test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
+        os.remove(db_name)
 
-print('rocksalt with self interaction 1x1x3')
-rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3])
-test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
-os.remove(db_name)
+    def test_insert_element_rocksalt_1x1x3(self):
+        print('rocksalt with self interaction 1x1x3')
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3])
+        test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        os.remove(db_name)
 
-print('rocksalt with self interaction 1x2x3')
-rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3])
-test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
-os.remove(db_name)
+    def test_insert_element_rocksalt_1x2x3(self):
+        print('rocksalt with self interaction 1x2x3')
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3])
+        test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        os.remove(db_name)
 
-print('spacegroup')
-sp_setting, sp_atoms = get_spacegroup()
-test_update_correlation_functions(sp_setting, sp_atoms, n_trial_configs=5,
-                                  fixed=['Ta'])
-os.remove(db_name)
+    def test_update_corr_func_spacegroup(self):
+        print('spacegroup')
+        sp_setting, sp_atoms = get_spacegroup()
+        test_update_correlation_functions(sp_setting, sp_atoms, n_trial_configs=5,
+                                        fixed=['Ta'])
+        os.remove(db_name)
+
+if __name__ == '__main__':
+    unittest.main()
