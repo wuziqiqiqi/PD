@@ -164,6 +164,9 @@ class NewStructures(object):
                                 init_temp, final_temp, num_temp,
                                 num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
+
+            # Remove energy from result dictionary
+            probe_struct.get_calculator().results.pop('energy')
             formula_unit = self._get_formula_unit(probe_struct)
             if self._exists_in_db(probe_struct, formula_unit):
                 msg = 'generated structure is already in DB.\n'
