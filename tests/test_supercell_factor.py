@@ -1,5 +1,5 @@
 import os
-from ase.clease import CEBulk, CECrystal, Concentration
+from clease import CEBulk, CECrystal, Concentration
 
 db_name = 'sf.db'
 

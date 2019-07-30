@@ -1,9 +1,9 @@
 """Test to initiatialize CE using a CECrystal."""
 import os
 import json
-from ase.clease import CECrystal, NewStructures, CorrFunction
-from ase.clease.newStruct import MaxAttemptReachedError
-from ase.clease.concentration import Concentration
+from clease import CECrystal, NewStructures, CorrFunction
+from clease.newStruct import MaxAttemptReachedError
+from clease.concentration import Concentration
 from ase.db import connect
 from ase.test.clease.reference_corr_funcs_crystal import all_cf
 

@@ -1,6 +1,6 @@
 """Test suite for TemplateAtoms."""
 import os
-from ase.clease.template_atoms import TemplateAtoms
+from clease.template_atoms import TemplateAtoms
 from ase.build import bulk
 from ase.db import connect
 import numpy as np

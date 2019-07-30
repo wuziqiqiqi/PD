@@ -1,7 +1,7 @@
 """Unit tests for the corr function class."""
 import os
-from ase.clease import CEBulk, CorrFunction, Concentration
-from ase.clease.corrFunc import equivalent_deco
+from clease import CEBulk, CorrFunction, Concentration
+from clease.corrFunc import equivalent_deco
 from ase.test import must_raise
 
 db_name = "test_corrfunc.db"
@@ -76,7 +76,7 @@ def test_interaction_contribution_symmetric_clusters():
     the same.
     """
     from ase.build import bulk
-    from ase.clease.tools import wrap_and_sort_by_position
+    from clease.tools import wrap_and_sort_by_position
 
     # Create an atoms object that fits with CEBulk
     atoms = bulk("Au", crystalstructure="fcc", a=4.05)
@@ -121,7 +121,7 @@ def test_interaction_contribution_symmetric_clusters():
 
 
 def test_supercell_consistency():
-    from ase.clease.tools import wrap_and_sort_by_position
+    from clease.tools import wrap_and_sort_by_position
     basis_elements=[['Li', 'X'], ['O', 'X']]
     concentration = Concentration(basis_elements=basis_elements)
     db_name_sc = "rocksalt_sc.db"
@@ -144,7 +144,7 @@ def test_supercell_consistency():
 
 
 def time_jit():
-    from ase.clease.tools import wrap_and_sort_by_position
+    from clease.tools import wrap_and_sort_by_position
     import time
     basis_elements = [['Li', 'X'], ['O', 'X']]
     concentration = Concentration(basis_elements=basis_elements)
@@ -170,7 +170,7 @@ def time_jit():
 
 
 def test_error_message_for_non_existent_cluster():
-    from ase.clease.corrFunc import ClusterNotTrackedError
+    from clease.corrFunc import ClusterNotTrackedError
     basis_elements = [['Li', 'X'], ['O', 'X']]
     concentration = Concentration(basis_elements=basis_elements)
     db_name_sc = "rocksalt_sc.db"

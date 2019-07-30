@@ -2,11 +2,11 @@
 import os
 from random import randint
 import numpy as np
-from ase.clease import CEBulk, CECrystal, CorrFunction, Concentration
+from clease import CEBulk, CECrystal, CorrFunction, Concentration
 from ase.calculators.clease import Clease
 from ase.build import bulk
 from ase.spacegroup import crystal
-from ase.clease.tools import wrap_and_sort_by_position
+from clease.tools import wrap_and_sort_by_position
 import time
 
 

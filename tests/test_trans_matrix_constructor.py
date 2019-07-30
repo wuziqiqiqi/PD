@@ -1,7 +1,7 @@
 from ase.build import bulk
 from ase.spacegroup import crystal
-from ase.clease.trans_matrix_constructor import TransMatrixConstructor
-from ase.clease.tools import wrap_and_sort_by_position, index_by_position
+from clease.trans_matrix_constructor import TransMatrixConstructor
+from clease.tools import wrap_and_sort_by_position, index_by_position
 
 
 def brute_force_tm_construction(ref_indices, index_by_basis, atoms):

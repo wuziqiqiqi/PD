@@ -1,8 +1,8 @@
 """Test case for tha GAFit"""
-from ase.clease import GAFit
-from ase.clease.ga_fit import SaturatedPopulationError
-from ase.clease import CEBulk, NewStructures, Concentration
-from ase.clease.tools import update_db
+from clease import GAFit
+from clease.ga_fit import SaturatedPopulationError
+from clease import CEBulk, NewStructures, Concentration
+from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
 from random import choice

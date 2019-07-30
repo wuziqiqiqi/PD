@@ -1,5 +1,5 @@
 from __future__ import division
-from ase.clease import ConvexHull
+from clease import ConvexHull
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.db import connect
 from ase.build import bulk

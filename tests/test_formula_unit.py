@@ -1,7 +1,7 @@
 import os
-from ase.clease import CEBulk, NewStructures, Concentration
+from clease import CEBulk, NewStructures, Concentration
 from ase.build import bulk
-from ase.clease.tools import wrap_and_sort_by_position
+from clease.tools import wrap_and_sort_by_position
 
 db_name = 'fu.db'
 

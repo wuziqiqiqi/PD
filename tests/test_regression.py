@@ -1,4 +1,4 @@
-from ase.clease import LinearRegression
+from clease import LinearRegression
 import numpy as np
 
 

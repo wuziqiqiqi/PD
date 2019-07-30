@@ -1,4 +1,4 @@
-from clease.cleaselogger import CLEASELogger, LogVerbosity
+from clecleaselogger import CLEASELogger, LogVerbosity
 _logger = CLEASELogger()
 
 def set_verbosity(verbosity):

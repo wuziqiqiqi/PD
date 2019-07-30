@@ -1,8 +1,8 @@
 import numpy as np
-from ase.clease.concentration import Concentration
+from clease.concentration import Concentration
 from collections import OrderedDict
 from ase.test import must_raise
-from ase.clease.concentration import InvalidConstraintError
+from clease.concentration import InvalidConstraintError
 
 
 def test_full_range():

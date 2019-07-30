@@ -8,9 +8,9 @@
 
 import os
 import json
-from ase.clease import CEBulk, CorrFunction, NewStructures, Evaluate, Concentration
-from ase.clease.newStruct import MaxAttemptReachedError
-from ase.clease.tools import update_db
+from clease import CEBulk, CorrFunction, NewStructures, Evaluate, Concentration
+from clease.newStruct import MaxAttemptReachedError
+from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
 from ase.test.clease.reference_corr_funcs_bulk import all_cf

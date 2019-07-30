@@ -1,4 +1,4 @@
-from ase.clease.column_sparse_matrix import ColumnSparseMatrix
+from clease.column_sparse_matrix import ColumnSparseMatrix
 import numpy as np
 from ase.test import must_raise
 
