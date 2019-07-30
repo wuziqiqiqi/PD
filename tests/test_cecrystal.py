@@ -13,7 +13,6 @@ import unittest
 # This should normally be False
 update_reference_file = False
 
-db_name = "test_spacegroup.db"
 tol = 1E-9
 
 
@@ -32,6 +31,7 @@ def get_members_of_family(setting, cname):
 class TestCECrystal(unittest.TestCase):
     def test_spgroup_217(self):
         """Test the initialization of spacegroup 217."""
+        db_name = "test_spacegroup_217.db"
         a = 10.553
         b = 10.553
         c = 10.553
@@ -71,7 +71,7 @@ class TestCECrystal(unittest.TestCase):
         os.remove(db_name)
 
     def test_two_grouped_basis(self):
-
+        db_name = "test_spacegroup_two_grouped.db"
         # ---------------------------------- #
         # 2 grouped_basis                    #
         # ---------------------------------- #
@@ -118,6 +118,7 @@ class TestCECrystal(unittest.TestCase):
         # ---------------------------------- #
         # initial_pool + probe_structures    #
         # ---------------------------------- #
+        db_name = "test_grouped_probe.db"
         basis_elements = [['O', 'X'], ['O', 'X'],
                           ['O', 'X'], ['Ta']]
         grouped_basis = [[0, 1, 2], [3]]
@@ -179,6 +180,7 @@ class TestCECrystal(unittest.TestCase):
         # ---------------------------------- #
         # initial_pool + probe_structures    #
         # ---------------------------------- #
+        db_name = "test_grouped_probe_back_probe.db"
         basis_elements = [['O', 'X'], ['Ta'], ['O', 'X'], ['O', 'X']]
         grouped_basis = [[1], [0, 2, 3]]
         concentration = Concentration(basis_elements=basis_elements,
@@ -241,6 +243,7 @@ class TestCECrystal(unittest.TestCase):
 
         This test a crystal with internal angles 50, 20, 15 degree.
         """
+        db_name = "test_grouped_narrow_angle.db"
         db_name = "test_spacegroup.db"
         basis_elements = [['Mg', 'Si']]
         concentration = Concentration(basis_elements=basis_elements)
