@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <set>
 
 using namespace std;
 
@@ -229,6 +230,13 @@ void Cluster::parse_info_dict(PyObject *info)
   // Read equivalent sites
   PyObject *py_equiv_sites = PyDict_GetItemString(info, "equiv_sites");
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
+
+  // Read duplication factors
+  PyObject *py_dup_factors = PyDict_GetItemString(info, "dup_factors");
+  calculate_scaling_factors(py_dup_factors);
+
+  // Sanity check
+  check_consistency();
 }
 
 void Cluster::nested_list_to_cluster(PyObject *py_list, cluster_t &vec)
@@ -245,5 +253,27 @@ void Cluster::nested_list_to_cluster(PyObject *py_list, cluster_t &vec)
     }
     Py_DECREF(seq);
     vec.push_back(one_cluster);
+  }
+}
+
+void Cluster::check_consistency() const{
+  if (duplication_factors.size() != members.size()){
+    throw runtime_error("A duplication factor for each member is required!");
+  }
+}
+
+void Cluster::calculate_scaling_factors(PyObject *pylist){
+  for (unsigned int i=0;i<PyList_Size(pylist);i++){
+    double factor = PyFloat_AsDouble(PyList_GetItem(pylist, i));
+
+    // Calculate unique sites in the sub cluster
+    set<int> unique_values;
+    unique_values.insert(ref_indx);
+    for (int indx : members[i]){
+      unique_values.insert(indx);
+    }
+
+    double scale = static_cast<double>(unique_values.size())/(members[i].size() + 1);
+    duplication_factors.push_back(factor*scale);
   }
 }

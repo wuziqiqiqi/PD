@@ -22,7 +22,7 @@ CEUpdater::~CEUpdater()
   delete basis_functions; basis_functions=nullptr;
 }
 
-void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObject *pyeci)
+void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_info)
 {
   atoms = py_atoms;
   if (BC == nullptr)
@@ -105,7 +105,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
   int num_bfs = py2int(py_num_elements)-1;
   Py_DECREF(py_num_elements);
 
-  PyObject* cluster_info = get_attr(BC, "cluster_info");
+  //PyObject* cluster_info = get_attr(BC, "cluster_info");
 
   if (cluster_info == nullptr)
   {
@@ -127,13 +127,13 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
       new_clst.construct_equivalent_deco(num_bfs);
       new_clusters[cluster_name] = new_clst;
 
-      if ( cluster_symm_group_count.find(cluster_name) == cluster_symm_group_count.end() )
+      if ( normalisation_factor.find(cluster_name) == normalisation_factor.end() )
       {
-        cluster_symm_group_count[cluster_name] = new_clst.get().size();
+        normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[i];
       }
       else
       {
-        cluster_symm_group_count[cluster_name] += new_clst.get().size();
+        normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[i];
       }
     }
     clusters.push_back(new_clusters);
@@ -240,6 +240,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
 
   const vector< vector<int> >& indx_list = cluster.get();
   const vector< vector<int> >& order = cluster.get_order();
+  const vector<double>& dup_factors = cluster.get_duplication_factors();
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();
 
@@ -249,6 +250,8 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
     
     int indices[n_memb+1];
     indices[0] = ref_indx;
+
+    
 
     // Use pointer arithmetics in the inner most loop
     const int *indx_list_ptr = &indx_list[i][0];
@@ -272,7 +275,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
         sp_temp *= basis_functions->get(dec[j], symbols_with_id->id(indices[j]));
       }
     }
-    sp += sp_temp;
+    sp += sp_temp*dup_factors[i];
   }
   return sp;
 }
@@ -392,7 +395,8 @@ void CEUpdater::update_cf( SymbolChange &symb_change )
 
     delta_sp *= (static_cast<double>(size)/equiv_deco.size());
     //delta_sp /= (normalization*symbols.size()); // This was the old normalization
-    delta_sp /= (cluster_symm_group_count.at(prefix)*trans_symm_group_count[symm]);
+    cout << normalisation_factor.at(prefix) << endl;
+    delta_sp /= normalisation_factor.at(prefix);
     //cout << name << " " << cluster_indices << endl;
     next_cf[i] = current_cf[i] + delta_sp;
   }
@@ -582,7 +586,7 @@ CEUpdater* CEUpdater::copy() const
   obj->clusters = clusters;
   obj->trans_symm_group = trans_symm_group;
   obj->trans_symm_group_count = trans_symm_group_count;
-  obj->cluster_symm_group_count = cluster_symm_group_count;
+  obj->normalisation_factor = normalisation_factor;
   obj->basis_functions = new BasisFunction(*basis_functions);
   obj->status = status;
   obj->trans_matrix = trans_matrix;

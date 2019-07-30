@@ -21,6 +21,7 @@ public:
   const cluster_t& get() const { return members; };
   const cluster_t& get_order() const { return order; };
   const cluster_t& get_equiv() const { return equiv_sites; };
+  const std::vector<double>& get_duplication_factors() const { return duplication_factors;};
   unsigned int get_size() const {return size;};
   unsigned int num_subclusters() const {return members.size();};
   const equiv_deco_t& get_equiv_deco(const std::string &dec_string) const;
@@ -41,6 +42,7 @@ private:
   cluster_t order;
   cluster_t equiv_sites;
   all_equiv_deco_t equiv_deco;
+  std::vector<double> duplication_factors;
 
 
   void all_deco(int n_bfs, std::vector< std::vector<int> > &all_deco) const;
@@ -51,6 +53,12 @@ private:
 
   /** Initialize members based on the info dictionary */
   void parse_info_dict(PyObject *info_dict);
+
+  /** Calculate additional factor due to duplications */
+  void calculate_scaling_factors(PyObject *pylist);
+
+  /** Check if the parsing went fine */
+  void check_consistency() const;
 };
 
 std::ostream& operator << ( std::ostream& out, const Cluster& clust );

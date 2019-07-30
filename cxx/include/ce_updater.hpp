@@ -51,8 +51,8 @@ public:
   /** New copy. NOTE: the pointer has to be deleted */
   CEUpdater* copy() const;
 
-  /** Initialize the object */
-  void init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObject *ecis);
+  /** Initialize the object (cluster_info should contain duplication factors) */
+  void init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObject *ecis, PyObject *cluster_info);
 
   /** Change values of ecis */
   void set_ecis( PyObject *ecis );
@@ -153,7 +153,8 @@ private:
   std::vector<cluster_dict> clusters;
   std::vector<int> trans_symm_group;
   std::vector<int> trans_symm_group_count;
-  std::map<std::string,int> cluster_symm_group_count;
+  std::map<std::string,int> normalisation_factor;
+
   //bf_list basis_functions;
   BasisFunction *basis_functions{nullptr};
 

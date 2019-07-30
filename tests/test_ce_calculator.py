@@ -187,7 +187,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
         atoms.get_potential_energy()
         brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
         calc_cf = calc.get_cf_dict()
-        for k in calc_cf:
+        for k in calc_cf.keys():
             if k.startswith("c0") or k.startswith("c1"):
                 continue
             assert abs(calc_cf[k] - brute_force_cf[k]) < 1E-6
@@ -213,11 +213,11 @@ class TestCECalculator(unittest.TestCase):
         os.remove(db_name)
         self.assertEqual(calc_changes, changes)
 
-
     def test_update_corr_func_binary(self):
         print('binary')
         bin_setting, bin_atoms = get_binary()
-        test_update_correlation_functions(bin_setting, bin_atoms, n_trial_configs=5)
+        test_update_correlation_functions(bin_setting, bin_atoms,
+                                          n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_ternary(self):
@@ -229,8 +229,8 @@ class TestCECalculator(unittest.TestCase):
     def test_update_corr_func_rocksalt(self):
         print('rocksalt')
         rs_setting, rs_atoms = get_rocksalt()
-        test_update_correlation_functions(rs_setting, rs_atoms, n_trial_configs=5,
-                                        fixed=['O'])
+        test_update_correlation_functions(
+            rs_setting, rs_atoms, n_trial_configs=5, fixed=['O'])
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x1(self):
@@ -261,7 +261,7 @@ class TestCECalculator(unittest.TestCase):
         print('spacegroup')
         sp_setting, sp_atoms = get_spacegroup()
         test_update_correlation_functions(sp_setting, sp_atoms, n_trial_configs=5,
-                                        fixed=['Ta'])
+                                          fixed=['Ta'])
         os.remove(db_name)
 
 if __name__ == '__main__':
