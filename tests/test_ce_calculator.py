@@ -207,7 +207,7 @@ class TestCECalculator(unittest.TestCase):
                 atoms[ch].symbol = 'Cu'
             else:
                 atoms[ch].symbol = 'Au'
-        
+
         calc_changes = calc.indices_of_changed_atoms
         os.remove(db_name)
         self.assertEqual(calc_changes, changes)
