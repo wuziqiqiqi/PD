@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <iterator>
 
-#define CE_DEBUG
+//#define CE_DEBUG
 using namespace std;
 
 CEUpdater::CEUpdater(){};
