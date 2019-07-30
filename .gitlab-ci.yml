@@ -1,6 +1,4 @@
 
-language: python
-
 python3_test:
   script:
     - python --version
