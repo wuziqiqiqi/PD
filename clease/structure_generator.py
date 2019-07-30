@@ -107,7 +107,7 @@ class StructureGenerator(object):
                     num_accepted += 1
                     self.atoms.get_calculator().clear_history()
                 else:
-                    self.calc.restore()
+                    self.atoms.get_calculator().restore()
 
         self.atoms = self.generated_structure
         self._check_consistency()
@@ -116,7 +116,7 @@ class StructureGenerator(object):
 
     def _set_generated_structure(self):
         self.generated_structure = self.atoms.copy()
-        self.generated_structure.set_calculator(copy(self.calc))
+        self.generated_structure.set_calculator(self.calc)
         self.cf_generated_structure = deepcopy(self.calc.get_cf_dict())
 
     def _accept(self):
