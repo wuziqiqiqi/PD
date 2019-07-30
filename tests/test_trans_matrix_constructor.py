@@ -2,6 +2,7 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease.tools import wrap_and_sort_by_position, index_by_position
+import unittest
 
 
 def brute_force_tm_construction(ref_indices, index_by_basis, atoms):
@@ -26,66 +27,65 @@ def check_sparse_dense(sparse, dense):
     return True
 
 
-def test_fcc():
-    atoms = bulk("Al", crystalstructure="fcc")*(4, 4, 4)
-    atoms = wrap_and_sort_by_position(atoms)
+class TestTransMatrixConstructor(unittest.TestCase):
+    def test_fcc(self):
+        atoms = bulk("Al", crystalstructure="fcc")*(4, 4, 4)
+        atoms = wrap_and_sort_by_position(atoms)
 
-    tm_constructor = TransMatrixConstructor(atoms, 5.0)
+        tm_constructor = TransMatrixConstructor(atoms, 5.0)
 
-    ref_indx = [0]
-    indx_by_basis = [list(range(len(atoms)))]
-    tm_brute = brute_force_tm_construction(ref_indx, indx_by_basis, atoms)
-    symm_group = [0]*len(atoms)
+        ref_indx = [0]
+        indx_by_basis = [list(range(len(atoms)))]
+        tm_brute = brute_force_tm_construction(ref_indx, indx_by_basis, atoms)
+        symm_group = [0]*len(atoms)
 
-    tm_fast = tm_constructor.construct(ref_indx, symm_group)
-    assert check_sparse_dense(tm_fast, tm_brute)
+        tm_fast = tm_constructor.construct(ref_indx, symm_group)
+        self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
 
+    def test_two_basis(self):
+        atoms = bulk("NaCl", crystalstructure="rocksalt", a=5.0)
+        atoms[0].tag = 0
+        atoms[1].tag = 1
+        atoms = atoms*(3, 4, 5)
+        atoms = wrap_and_sort_by_position(atoms)
 
-def test_two_basis():
-    atoms = bulk("NaCl", crystalstructure="rocksalt", a=5.0)
-    atoms[0].tag = 0
-    atoms[1].tag = 1
-    atoms = atoms*(3, 4, 5)
-    atoms = wrap_and_sort_by_position(atoms)
+        symm_group = [atom.tag for atom in atoms]
+        index_by_group = [[], []]
+        for atom in atoms:
+            index_by_group[atom.tag].append(atom.index)
+        ref_indx = [min(index_by_group[0]), min(index_by_group[1])]
 
-    symm_group = [atom.tag for atom in atoms]
-    index_by_group = [[], []]
-    for atom in atoms:
-        index_by_group[atom.tag].append(atom.index)
-    ref_indx = [min(index_by_group[0]), min(index_by_group[1])]
+        tm_brute = brute_force_tm_construction(ref_indx, index_by_group, atoms)
 
-    tm_brute = brute_force_tm_construction(ref_indx, index_by_group, atoms)
+        tm_constructor = TransMatrixConstructor(atoms, 5.5)
+        tm_fast = tm_constructor.construct(ref_indx, symm_group)
+        self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
 
-    tm_constructor = TransMatrixConstructor(atoms, 5.5)
-    tm_fast = tm_constructor.construct(ref_indx, symm_group)
-    assert check_sparse_dense(tm_fast, tm_brute)
+    def test_four_basis(self):
+        unitcell = crystal(symbols=['H', 'O', 'X', 'Fe'],
+                           basis=[(0., 0., 0.), (0.39, 0.14, 0.),
+                                  (0.2, 0.35, 0.5), (0.22, 0.38, 0.)],
+                           spacegroup=55,
+                           cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
+                           size=[1, 1, 1], primitive_cell=False)
 
+        for atom in unitcell:
+            atom.tag = atom.index
 
-def test_four_basis():
-    unitcell = crystal(symbols=['H', 'O', 'X', 'Fe'],
-                    basis=[(0., 0., 0.), (0.39, 0.14, 0.),
-                           (0.2, 0.35, 0.5), (0.22, 0.38, 0.)],
-                    spacegroup=55, 
-                    cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                    size=[1, 1, 1], primitive_cell=False)
+        atoms = wrap_and_sort_by_position(unitcell*(3, 3, 2))
 
-    for atom in unitcell:
-        atom.tag = atom.index
+        symm_group = [atom.tag for atom in atoms]
+        index_by_group = [[] for _ in range(len(unitcell))]
 
-    atoms = wrap_and_sort_by_position(unitcell*(3, 3, 2))
+        for atom in atoms:
+            index_by_group[atom.tag].append(atom.index)
+        ref_indx = [min(gr) for gr in index_by_group]
 
-    symm_group = [atom.tag for atom in atoms]
-    index_by_group = [[] for _ in range(len(unitcell))]
+        tm_brute = brute_force_tm_construction(ref_indx, index_by_group, atoms)
 
-    for atom in atoms:
-        index_by_group[atom.tag].append(atom.index)
-    ref_indx = [min(gr) for gr in index_by_group]
-
-    tm_brute = brute_force_tm_construction(ref_indx, index_by_group, atoms)
-
-    tm_constructor = TransMatrixConstructor(atoms, 5.0)
-    tm_fast = tm_constructor.construct(ref_indx, symm_group)
-    assert check_sparse_dense(tm_fast, tm_brute)
+        tm_constructor = TransMatrixConstructor(atoms, 5.0)
+        tm_fast = tm_constructor.construct(ref_indx, symm_group)
+        self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
 
 
 def timing():
@@ -120,7 +120,7 @@ def timing():
                np.vstack((sizes, brute_force_time, fast_time)).T,
                header="Size, Brute force, fast")
 
-test_fcc()
-test_two_basis()
-test_four_basis()
 # timing()
+
+if __name__ == '__main__':
+    unittest.main()
