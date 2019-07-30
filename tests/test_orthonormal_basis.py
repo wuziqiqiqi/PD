@@ -65,6 +65,7 @@ def test_5(basis_function):
                      basis_function=basis_function)
     check_orthonormal(setting)
 
+
 def test_6(basis_function):
     """Test for 6 element case."""
     basis_elements = [['Au', 'Cu', 'Ag', 'Ni', 'Fe', 'H']]
