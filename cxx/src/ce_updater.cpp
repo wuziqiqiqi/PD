@@ -895,7 +895,10 @@ void CEUpdater::read_trans_matrix( PyObject* py_trans_mat )
     unsigned int size = list_size(py_trans_mat);
     trans_matrix.set_size( size, unique_indx_vec.size(), max_indx );
     trans_matrix.set_lookup_values(unique_indx_vec);
-    cout << "Reading translation matrix from list of dictionaries\n";
+
+    #ifdef CE_DEBUG
+      cout << "Reading translation matrix from list of dictionaries\n";
+    #endif
     unsigned int n_elements_insterted = 0;
     for (unsigned int i=0;i<size;i++ )
     {
@@ -920,7 +923,9 @@ void CEUpdater::read_trans_matrix( PyObject* py_trans_mat )
         n_elements_insterted++;
       }
     }
-    cout << "Inserted " << n_elements_insterted << " into the translation matrix\n";
+    #ifdef CE_DEBUG
+      cout << "Inserted " << n_elements_insterted << " into the translation matrix\n";
+    #endif
   }
   else
   {
