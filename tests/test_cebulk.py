@@ -24,8 +24,6 @@ import unittest
 update_reference_file = False
 tol = 1E-9
 
-db_name = "test_bulk.db"
-
 
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
@@ -43,6 +41,7 @@ def calculate_cf(setting, atoms):
 
 class TestCEBulk(unittest.TestCase):
     def test_corrfunc(self):
+        db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
         setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
@@ -131,6 +130,7 @@ class TestCEBulk(unittest.TestCase):
 
         The EMT calculator is used for energy calculations
         """
+        db_name = "test_bulk_binary_system.db"
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
         bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
@@ -185,6 +185,7 @@ class TestCEBulk(unittest.TestCase):
         os.remove(db_name)
 
     def test_initial_pool(self):
+        db_name = "test_bulk_initial_pool.db"
         basis_elements = [['Li', 'V'], ['X', 'O']]
         concentration = Concentration(basis_elements=basis_elements)
 
@@ -215,6 +216,7 @@ class TestCEBulk(unittest.TestCase):
         # ------------------------------- #
         # initial_pool + probe_structures #
         # ------------------------------- #
+        db_name = "test_bulk_1grouped_probe.db"
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
         concentration = Concentration(basis_elements=basis_elements,
                                       grouped_basis=[[0, 1]])
@@ -250,6 +252,7 @@ class TestCEBulk(unittest.TestCase):
         # ------------------------------- #
         # initial_pool + probe_structures #
         # ------------------------------- #
+        db_name = "test_bulk_2grouped_probe.db"
         basis_elements = [['Zr', 'Ce'], ['O'], ['O']]
         concentration = Concentration(basis_elements=basis_elements,
                                       grouped_basis=[[0], [1, 2]])
@@ -288,6 +291,7 @@ class TestCEBulk(unittest.TestCase):
         # ---------------------------------- #
         # initial_pool + probe_structures    #
         # ---------------------------------- #
+        db_name = "test_bulk_2grouped_bck_probe.db"
         basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
         concentration = Concentration(basis_elements=basis_elements,
                                       grouped_basis=[[0], [1, 2]])
