@@ -1,0 +1,174 @@
+#: set button_height 0.05
+<FitPage>:
+    StackLayout:
+        Button:
+            id: toInput
+            size_hint: [0.25, button_height]
+            text: 'Input'
+            on_release:
+                root.manager.current = 'Input'
+                root.manager.transition.direction = 'right'
+
+        Button:
+            id: concEditor
+            text: 'Concentration'
+            size_hint: [0.25, button_height]
+            on_release:
+                root.manager.current = 'Concentration'
+                root.manager.transition.direction = 'right'
+            
+
+        Button:
+            id: toNewStruct
+            text: 'New structures'
+            size_hint: [0.25, button_height]
+            on_release:
+                root.manager.current = 'NewStruct'
+                root.manager.transition.direction = 'right'
+
+        Button:
+            id: toFit
+            text: 'Fit'
+            size_hint: [0.25, button_height]
+            on_release:
+                root.manager.current = 'Fit'
+                root.manager.transition.direction = 'right'
+
+        Label:
+            size_hint: [1, button_height]
+            id: status
+            text: 'Idle'
+
+        StackLayout:
+            BoxLayout:
+                size_hint: [0.7, 0.9]
+                orientation: 'vertical'
+                BoxLayout:
+                    id: energyPlot
+                    size_hint: [0.8, 0.5]
+
+                BoxLayout:
+                    id: eciPlot
+                    size_hint: [0.8, 0.5]
+            
+            StackLayout:
+                size_hint: [0.3, 0.9]
+
+                Label:
+                    size_hint: [0.2, button_height]
+                    id: eciLabel
+                    text: 'ECI file'
+                
+                TextInput:
+                    size_hint: [0.6, button_height]
+                    id: eciFileInput
+                    text: ''
+                
+                Button:
+                    size_hint: [0.2, button_height]
+                    id: loadEciInput
+                    text: 'Load'
+                    on_release: root.show_load_ECI_file_dialog()
+
+                Label:
+                    size_hint: [0.3, button_height]
+                    id: dbSelectCondLabel
+                    text: 'DB select'
+                
+                TextInput:
+                    size_hint: [0.7, button_height]
+                    id: dbSelectCondInput
+                    text: ''
+                
+                Label:
+                    size_hint: [0.7, button_height]
+                    text: 'Max cluster size (cut)'
+                
+                TextInput:
+                    size_hint: [0.3, button_height]
+                    id: maxClusterSizeCut
+                    text: ''
+                    input_filter: 'int'
+
+                Label:
+                    size_hint: [0.7, button_height]
+                    text: 'Max cluster dia (cut)'
+
+                TextInput:
+                    size_hint: [0.3, button_height]
+                    id: maxClusterDiaCut
+                    text: ''
+                    input_filter: 'float'
+
+                Label:
+                    size_hint: [0.7, button_height]
+                    text: 'k-fold validation'
+                
+                TextInput:
+                    size_hint: [0.3, button_height]
+                    id: kFoldInput
+                    text: '10'
+                    input_filter: 'int'
+
+                Label:
+                    size_hint: [0.7, button_height]
+                    text: 'Num. repititions'
+
+                TextInput:
+                    size_hint: [0.3, button_height]
+                    id: numRepititionsInput
+                    text: '1'
+                    input_filter: 'int'
+
+                CheckBox:
+                    size_hint: [0.2, button_height]
+                    id: separateThread
+                    value: False
+                    on_active: root.thread_check_box_active(self.active)
+
+                Label:
+                    size_hint: [0.8, button_height]
+                    text: 'Optimise on main thread'
+
+                Spinner:
+                    size_hint: [1, button_height]
+                    id: fitAlgSpinner
+                    text: 'LASSO'
+                    values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
+                Button:
+                    size_hint: [1, button_height]
+                    id: fitEditorButton
+                    text: 'Launch Fitting Algorithm Editor'
+                    on_release: root.launch_fit_alg_editor()
+
+                Button:
+                    size_hint: [1, button_height]
+                    id: fitButton
+                    text: 'Fit ECIs'
+                    on_release: root.fit_ecis()
+                Button:
+                    size_hint: [1, button_height]
+                    id: saveECIButton
+                    text: 'Save ECIs'
+                    on_release: root.save_eci()
+
+                Button:
+                    size_hint: [1, button_height]
+                    id: updateFit
+                    text: 'Update plots'
+                    on_release: root.update_plots()
+
+                Label:
+                    size_hint: [1, button_height]
+                    id: cvLabel
+                    text: 'CV: 0.0 meV/atom'
+                Label:
+                    size_hint: [1, button_height]
+                    id: rmseLabel
+                    text: 'RMSE: 0.0 meV/atom'
+                Label:
+                    size_hint: [1, button_height]
+                    id: maeLabel
+                    text: 'MAE: 0.0 meV/atom'
+
+                

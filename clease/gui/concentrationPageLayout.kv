@@ -1,0 +1,53 @@
+<ConcentrationPage>:
+    BoxLayout:
+        id: mainConcLayout
+        orientation: 'vertical'
+        GridLayout:
+            rows: 1
+            cols: 4
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Button:
+                id: toInput
+                text: 'Input'
+                on_release:
+                    root.manager.current = 'Input'
+                    root.manager.transition.direction = 'right'
+
+            Button:
+                id: concEditor
+                text: 'Concentration'
+
+            Button:
+                id: toNewStruct
+                text: 'New structures'
+                on_release:
+                    root.manager.current = 'NewStruct'
+                    root.manager.transition.direction = 'left'
+
+            Button:
+                id: toFit
+                text: 'Fit'
+                on_release:
+                    root.manager.current = 'Fit'
+                    root.manager.transition.direction = 'left'
+
+        GridLayout:
+            rows: 1
+            cols: 2
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+            Button:
+                id: addConstraintButton
+                text: 'Add constraint'
+                on_release: root.add_constraint()
+            Button:
+                id: reconfigureButton
+                text: 'Update settings'
+                on_release: root.init_settings_class()
+        Label:
+            id: status
+            text: 'Idle'

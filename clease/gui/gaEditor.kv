@@ -1,0 +1,81 @@
+#:set ga_button_height 0.1
+<GAEditor>:
+    StackLayout:
+        id: mainLayout
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Elitism'
+
+        TextInput:
+            id: elitismInput
+            size_hint: [0.3, ga_button_height]
+            text: '1'
+            input_filter: 'int'
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Mutation probability'
+
+        TextInput:
+            id: mutationProbInput
+            text: '0.1'
+            input_filter: 'float'
+            size_hint: [0.3, ga_button_height]
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Num. individuals in population'
+
+        TextInput:
+            id: numIndInput
+            size_hint: [0.3, ga_button_height]
+            text: '100'
+            input_filter: 'int'
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Max. active clusters in initial population'
+
+        TextInput:
+            id: maxActiveClusters
+            size_hint: [0.3, ga_button_height]
+            text: '150'
+            input_filter: 'int'
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Cost function'
+        Spinner:
+            id: costFuncSpinner
+            size_hint: [0.3, ga_button_height]
+            text: 'AIC'
+            values: 'AIC', 'AICC', 'BIC', 'LOOCV', 'HQC'
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Sparsity slope (not used with LOOCV)'
+
+        TextInput:
+            id: sparistyInput
+            size_hint: [0.3, ga_button_height]
+            text: '1.0'
+            input_filter: 'float'
+        
+        Label:
+            size_hint: [0.7, ga_button_height]
+            text: 'Include subclusters'
+
+        Spinner:
+            size_hint: [0.3, ga_button_height]
+            id: subclusterSpinner
+            text: 'No'
+            values: 'No', 'Yes'
+
+        Label:
+            size_hint: [0.7, ga_button_height]
+
+        Button:
+            id: closeButton
+            size_hint: [0.3, ga_button_height]
+            text: 'Close'
+            on_release: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)

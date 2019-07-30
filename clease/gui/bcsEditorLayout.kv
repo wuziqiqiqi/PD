@@ -1,0 +1,112 @@
+#:set height 0.07
+<BCSEditor>:
+    StackLayout:
+        id: mainLayout
+        Label:
+            text: 'For a thorough description of the algorithm see'
+            size_hint: [1.0, height/2.0]
+
+        Label:
+            text: 'Babacan, S. Derin, Rafael Molina, and Aggelos K. Katsaggelos.'
+            size_hint: [1.0, height/2.0]
+
+        Label:
+            text: 'Bayesian compressive sensing using Laplace priors.'
+            size_hint: [1.0, height/2.0]
+
+        Label:
+            size_hint: [1.0, height]
+            text: '1/var -- gamma(x | shape_var/2, rate_var/2)'
+
+        Label:
+            size_hint: [1.0, height]
+            text: 'lambda -- gamma(x | 1, shape_lamb)'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Shape param. gamma dist. on inverse variance'
+
+        TextInput:
+            size_hint: [0.3, height]
+            id: shapeVarInput
+            input_filter: 'float'
+            text: '0.5'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Rate param. gamma dist. on inverse variance'
+
+        TextInput:
+            id: rateVarInput
+            size_hint: [0.3, height]
+            input_filter: 'float'
+            text: '0.5'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Shape param. gamma dist. on lambda value'
+
+        TextInput:
+            id: shapeLambInput
+            size_hint: [0.3, height]
+            input_filter: 'float'
+            text: '0.5'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Start variance optimisation after'
+
+        TextInput:
+            id: varianceOptStart
+            size_hint: [0.3, height]
+            input_filter: 'int'
+            text: '100'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Initial lamb parameter'
+
+        TextInput:
+            id: initLamb
+            size_hint: [0.3, height]
+            input_filter: 'float'
+            text: '0.0'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Lambda optimisation after'
+
+        TextInput:
+            id: lambdaOptStart
+            size_hint: [0.3, height]
+            input_filter: 'int'
+            text: '200'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Max. number of iterations'
+
+        TextInput:
+            id: maxIterInput
+            size_hint: [0.3, height]
+            input_filter: 'int'
+            text: '10000'
+
+        Label:
+            size_hint: [0.7, height]
+            text: 'Noise estimate'
+
+        TextInput:
+            id: noiseInput
+            size_hint: [0.3, height]
+            input_filter: 'float'
+            text: '0.1'
+
+        Label:
+            size_hint: [0.7, height]
+
+        Button:
+            id: closeButton
+            size_hint: [0.3, height]
+            text: 'Close'
+            on_release: root.close(root.ids.shapeVarInput.text, root.ids.rateVarInput.text, root.ids.shapeLambInput.text, root.ids.varianceOptStart.text, root.ids.initLamb.text, root.ids.lambdaOptStart.text, root.ids.maxIterInput.text, root.ids.noiseInput.text)

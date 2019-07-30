@@ -1,0 +1,194 @@
+<NewStructPage>:
+    BoxLayout:
+        id: mainConcLayout
+        orientation: 'vertical'
+        GridLayout:
+            rows: 1
+            cols: 4
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Button:
+                id: toInput
+                text: 'Input'
+                on_release:
+                    root.manager.current = 'Input'
+                    root.manager.transition.direction = 'right'
+
+            Button:
+                id: concEditor
+                text: 'Concentration'
+                on_release:
+                    root.manager.current = 'Concentration'
+                    root.manager.transition.direction = 'right'
+                
+
+            Button:
+                id: toNewStruct
+                text: 'New structures'
+                on_release:
+                    root.manager.current = 'NewStruct'
+                    root.manager.transition.direction = 'right'
+
+            Button:
+                id: toFit
+                text: 'Fit'
+                on_release:
+                    root.manager.current = 'Fit'
+                    root.manager.transition.direction = 'left'
+
+        GridLayout:
+            rows: 2
+            cols: 3
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Label:
+                text: 'Initial structure'
+            
+            TextInput:
+                id: initStructInput
+                text: ''
+
+            Button:
+                id: loadInitStruct
+                text: 'Load'
+                on_release: root.show_load_init_struct_dialog()
+
+            Label:
+                text: 'Final structure'
+
+            TextInput:
+                id: finalStructInput
+                text: ''
+
+            Button:
+                id: loadFinalStruct
+                text: 'Load'
+                on_release: root.show_load_final_struct_dialog()
+
+        GridLayout:
+            rows: 1
+            cols: 1
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Button:
+                id: importStructures
+                text: 'Import structures'
+                on_release: root.import_structures()
+
+        GridLayout:
+            rows: 1
+            cols: 1
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+            Spinner:
+                id: newStructTypeSpinner
+                text: 'Random structure'
+                values: 'Random structure', 'Minimum energy structure', 'Probe structure'
+                on_text: root.on_new_struct_type_update(self.text)
+
+        GridLayout:
+            rows: 2
+            cols: 4
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+        
+            Label:
+                id: tempMaxLabel
+                text: 'Max. temperature'
+            
+            Label:
+                id: tempMinLabel
+                text: 'Min. temperature'
+
+            Label:
+                id: numTempLabel
+                text: 'Num. temperatures'
+
+            Label:
+                id: numSweepsLabel
+                text: 'Sweeps per temp'
+
+            TextInput:
+                id: tempMaxInput
+                input_filter: 'float'
+                text: '10000'
+
+            TextInput:
+                id: tempMinInput
+                input_filter: 'float'
+                text: '1'
+
+            TextInput:
+                id: numTempInput
+                input_filter: 'int'
+                text: '100'
+
+            TextInput:
+                id: numSweepsInput
+                input_filter: 'int'
+                text: '100'
+
+        GridLayout:
+            rows: 2
+            cols: 3
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Label:
+                id: eciFileLabel
+                text: 'ECI file'
+
+            TextInput:
+                id: eciFileInput
+                text: ''
+
+            Button:
+                id: loadECIFile
+                text: 'Load'
+                on_release: root.show_load_eci_dialog()
+
+            Label:
+                id: templateAtomsLabel
+                text: 'Template'
+            
+            TextInput:
+                id: templateAtomsInput
+                text: ''
+
+            Button:
+                id: loadTemplateAtoms
+                text: 'Load'
+                on_release: root.show_load_template_dialog()
+
+        GridLayout:
+            rows: 2
+            cols: 1
+            size: root.width*0.9, root.height*0.25
+            row_default_height: 30
+            row_force_default: True
+
+            Spinner:
+                id: randomizeCompositionSpinner
+                text: 'Random composition'
+                values: 'Random composition', 'Composition in template'
+            
+            Button:
+                id: generateButton
+                text: 'Generate structures'
+                on_release: root.generate()
+
+        Label:
+            id: status
+            text: 'Idle'
+
+            
+            
