@@ -2,6 +2,7 @@ image: python:3-slim
 
 python3_test:
   script:
+    - sudo apt-get install g++
     - pip install -r requirements.txt
     - pip install .
     - python -m unittest discover tests/
