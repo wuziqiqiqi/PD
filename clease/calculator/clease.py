@@ -1,15 +1,11 @@
 """Calculator for Cluster Expansion."""
 import sys
-from copy import deepcopy
 import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction, CEBulk, CECrystal
 from clease.corrFunc import equivalent_deco
-from clease.tools import get_sparse_column_matrix, symbols2integer
-from clease.tools import bf2npyarray
-from clease.jit import jit
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -22,8 +18,8 @@ class MovedIgnoredAtomError(Exception):
 class Clease(Calculator):
     """Class for calculating energy using CLEASE.
 
-    Arguments:
-    =========
+    Parameters:
+
     setting: CEBulk or BulkSapcegroup object
 
     cluster_name_eci: dictionary of list of tuples containing
@@ -52,8 +48,8 @@ class Clease(Calculator):
 
         # check cluster_name_eci and separate them out
         if isinstance(cluster_name_eci, list) and \
-           (all(isinstance(i, tuple) for i in cluster_name_eci) or
-                all(isinstance(i, list) for i in cluster_name_eci)):
+           (all(isinstance(i, tuple) for i in cluster_name_eci)
+                or all(isinstance(i, list) for i in cluster_name_eci)):
             self.cluster_names = [tup[0] for tup in cluster_name_eci]
             self.eci = np.array([tup[1] for tup in cluster_name_eci])
         elif isinstance(cluster_name_eci, dict):
@@ -78,7 +74,7 @@ class Clease(Calculator):
                 # cluster_name_eci and init_cf in the same order
                 if cluster_names == self.cluster_names:
                     self.init_cf = np.array([tup[1] for tup in init_cf],
-                                             dtype=float)
+                                            dtype=float)
                 # not in the same order
                 else:
                     self.init_cf = []
@@ -90,7 +86,7 @@ class Clease(Calculator):
                 self.init_cf = np.array(init_cf, dtype=float)
         elif isinstance(init_cf, dict):
             self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
-                               dtype=float)
+                                    dtype=float)
         else:
             raise TypeError("'init_cf' needs to be either (1) a list "
                             "of tuples, (2) a dictionary, or (3) numpy array "

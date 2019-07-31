@@ -50,7 +50,6 @@ class ClusterExpansionSetting(object):
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self.num_basis = len(self.basis_elements)
         self.db_name = db_name
-        #self.dist_num_dec = dist_num_dec
         self.size = to_3x3_matrix(size)
 
         self.unit_cell = self._get_unit_cell()

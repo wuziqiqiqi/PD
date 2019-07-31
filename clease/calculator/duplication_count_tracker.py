@@ -8,11 +8,12 @@ def list2str(array):
 class DuplicationCountTracker(object):
     """Tracks duplication counts and normalization factors.
 
-    Arguments
-    ==========
+    Parameters:
+
     cluster_info: list of dicts
         The entire info entry in settings
     """
+
     def __init__(self, setting):
         self.symm_group = np.zeros(len(setting.atoms), dtype=np.uint8)
         for num, group in enumerate(setting.index_by_trans_symm):
@@ -26,8 +27,8 @@ class DuplicationCountTracker(object):
     def factor(self, cluster, indices, order):
         """Get the normalization factor to correct for self interactions.
 
-        Arguments
-        ===========
+        Parameters:
+
         cluster: dict
             Dictionary holding information about the cluster
 
@@ -70,8 +71,8 @@ class DuplicationCountTracker(object):
     def _get_norm_factors_per_symm_group(self, clusters):
         """Get normalization factors per symmetry group.
 
-        Arguments:
-        =========
+        Parameters:
+
         clusters: dict
             Information dict about all clusters in a symmetry group
         """
@@ -93,8 +94,8 @@ class DuplicationCountTracker(object):
     def _occurence_count(self, cluster):
         """Count the number of occurences of each sub-cluster in the cluster
 
-        Arguments:
-        =========
+        Parameters:
+
         cluster: dict
             A dictionary with info about a particular cluster
         """
