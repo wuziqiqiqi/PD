@@ -96,6 +96,10 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
   // Read cluster names
   create_cname_with_dec( corrFunc );
 
+  #ifdef CE_DEBUG
+    cout << "Cluster names with decoration number created...\n";
+  #endif
+
   PyObject *py_num_elements = get_attr(BC, "num_unique_elements");
 
   if (py_num_elements == nullptr)
@@ -113,6 +117,9 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
   }
   unsigned int num_trans_symm = list_size(cluster_info);
 
+  #ifdef CE_DEBUG
+    cout << "Parsing cluster info...\n";
+  #endif
   for (unsigned int i=0;i<num_trans_symm;i++)
   {
     PyObject *info_dicts = PyList_GetItem(cluster_info, i);
