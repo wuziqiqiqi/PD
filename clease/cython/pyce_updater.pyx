@@ -9,7 +9,7 @@ cdef class PyCEUpdater:
     Cython wrapper for the C++ class
     """
     cdef CEUpdater *thisptr
-    cdef object bc
+    cdef object setting
     cdef object corr_func
     cdef object eci
 
