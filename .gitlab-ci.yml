@@ -5,7 +5,7 @@ python3_test:
     - apt-get install -qy python3-dev python3-pip
     - python3 --version
     - python3 -m pip install -r requirements.txt
-    - python3 -m pip install .
+    - python3 -m pip install -e .
     - python3 tests/test_baysian_compressive.py
     - ls
     - python3 tests/test_ce_calculator.py
