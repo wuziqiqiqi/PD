@@ -306,6 +306,18 @@ class InputPage(Screen):
             return False
         return True
 
+    def cell_size_ok(self):
+        """
+        Check if the cell size is OK
+        """
+        try:
+            _ = parse_size(self.ids.sizeInput.text)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+
     def check_user_input(self):
         """
         Check the input values from the user
@@ -324,10 +336,7 @@ class InputPage(Screen):
 
         # Check that we can parse size
         if self.ids.sizeModeSpinner.text == 'Fixed':
-            try:
-                _ = parse_size(self.ids.sizeInput.text)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cell_size_ok():
                 return 1
         else:
             if self.ids.supercellFactorInput.text == '':

@@ -33,12 +33,10 @@ class TestInputPage(unittest.TestCase):
             screen.ids.toFit.dispatch('on_release')
             self.assertEqual('Fit', app.screen_manager.current)
 
-        app.stop()
-
     def run_max_cluster_dia_input(self, app):
         Clock.schedule_interval(self.pause, self.interval)
 
-        screen = app.screen_manager.get_screen(app.screen_manager.current)
+        screen = app.screen_manager.get_screen('Input')
 
         # Set maximum cluster size to 4
         screen.ids.clusterSize.text = '4'
@@ -62,19 +60,44 @@ class TestInputPage(unittest.TestCase):
         # Try list with correct size
         screen.ids.clusterDia.text = '7.0, 5.0, 6.0'
         self.assertTrue(screen.max_cluster_dia_ok())
+
+    def run_cell_size_ok(self, app):
+        Clock.schedule_interval(self.pause, self.interval)
+
+        screen = app.screen_manager.get_screen('Input')
+        screen.ids.sizeInput.text = 'df'
+        self.assertFalse(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '3, 3'
+        self.assertFalse(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '3, 3, 4'
+        self.assertTrue(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '[[0, 1, 0], [1, 0, 1], [-1, 2, 0]]'
+        self.assertFalse(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '[(0, 1, 0), (1, 0, 1), (-1, 2, 0)]'
+        self.assertFalse(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '((0, 1, 0), (1, 0, 1), (-1, 2, 0))'
+        self.assertTrue(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '(0, 1, 0), (1, 0, 1), (-1, 2, 0)'
+        self.assertTrue(screen.cell_size_ok())
+
+    def run_tests(self, app):
+        Clock.schedule_interval(self.pause, self.interval)
+        self.run_test_naviation(app)
+        self.run_max_cluster_dia_input(app)
+        self.run_cell_size_ok(app)
         app.stop()
 
-    def test_navigation(self):
+    def test_gui(self):
         app = CleaseGUI()
-        Clock.schedule_once(lambda x: self.run_test_naviation(app),
+        Clock.schedule_once(lambda x: self.run_tests(app),
                             self.interval)
         app.run()
-
-    def test_cluster_input(self):
-        app = CleaseGUI()
-        Clock.schedule_once(lambda x: self.run_max_cluster_dia_input(app),
-                            self.interval)
-        app.stop()
 
 if __name__ == '__main__':
     unittest.main()
