@@ -95,7 +95,6 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
 
   // Read cluster names
   create_cname_with_dec(corrFunc);
-  cerr << "here\n";
 
   #ifdef CE_DEBUG
     cerr << "Cluster names with decoration number created...\n";
@@ -123,6 +122,10 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
   #endif
   for (unsigned int i=0;i<num_trans_symm;i++)
   {
+    #ifdef CE_DEBUG
+      cerr << "Parsing trans_symm group " << i << endl;
+    #endif
+
     PyObject *info_dicts = PyList_GetItem(cluster_info, i);
     cluster_dict new_clusters;
     Py_ssize_t pos = 0;
@@ -131,6 +134,10 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
     while( PyDict_Next(info_dicts, &pos, &key, &value) )
     {
       string cluster_name = py2string(key);
+      #ifdef CE_DEBUG
+        cerr << "Extracting cluster " << cluster_name << endl;
+      #endif
+      
       Cluster new_clst(value);
       new_clst.construct_equivalent_deco(num_bfs);
       new_clusters[cluster_name] = new_clst;
