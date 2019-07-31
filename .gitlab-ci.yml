@@ -16,6 +16,6 @@ gui_test:
     - python3 --version
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install kivy
-    - python3 -m pip instal kivy-garden
+    - python3 -m pip install kivy-garden
     - python3 -m pip install .
     - python3 -m unittest discover tests/gui/
