@@ -13,7 +13,7 @@ gui_test:
   script:
     - apt-get update -qy
     - apt-get install -qy python3-dev python3-pip
-    - apt-get install xvfb
+    - apt-get install -qy xvfb
     - python3 --version
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install .
