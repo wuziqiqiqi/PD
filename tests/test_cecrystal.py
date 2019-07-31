@@ -41,7 +41,8 @@ class TestCECrystal(unittest.TestCase):
         cellpar = [a, b, c, alpha, beta, gamma]
         basis = [(0, 0, 0), (0.324, 0.324, 0.324),
                  (0.3582, 0.3582, 0.0393), (0.0954, 0.0954, 0.2725)]
-        basis_elements = [["Al", "Mg"], ["Al", "Mg"], ["Al", "Mg"], ["Al", "Mg"]]
+        basis_elements = [["Al", "Mg"], ["Al", "Mg"], ["Al", "Mg"],
+                          ["Al", "Mg"]]
 
         # Test with grouped basis
         concentration = Concentration(basis_elements=basis_elements,
@@ -165,7 +166,7 @@ class TestCECrystal(unittest.TestCase):
             db = connect(db_name)
             for row in db.select(struct_type='initial'):
                 atoms = row.toatoms()
-                cf = corr.get_cf(atoms, return_type='dict')
+                cf = corr.get_cf(atoms)
                 for key, value in cf.items():
                     self.assertAlmostEqual(row["sanchez_cf"][key], value)
 
@@ -224,12 +225,13 @@ class TestCECrystal(unittest.TestCase):
                 all_cf["Ta_O_X_ungrouped"] = cf
 
             for key in cf.keys():
-                self.assertAlmostEqual(cf[key], all_cf["Ta_O_X_ungrouped"][key])
+                self.assertAlmostEqual(cf[key],
+                                       all_cf["Ta_O_X_ungrouped"][key])
 
             db = connect(db_name)
             for row in db.select(struct_type='initial'):
                 atoms = row.toatoms()
-                cf = corr.get_cf(atoms, return_type='dict')
+                cf = corr.get_cf(atoms)
                 for key, value in cf.items():
                     self.assertAlmostEqual(row["sanchez_cf"][key], value)
 

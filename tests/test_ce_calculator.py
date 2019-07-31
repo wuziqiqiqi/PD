@@ -163,8 +163,10 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
         start = time.time()
         atoms.get_potential_energy()
         timings.append(time.time() - start)
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names,
-                                                    return_type="array")
+        brute_force = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        brute_force_cf = np.array([brute_force[x] for x in calc.cluster_names],
+                                  dtype=float)
+
         assert np.allclose(brute_force_cf, calc.cf)
     print(np.mean(timings))
 
@@ -275,6 +277,7 @@ class TestCECalculator(unittest.TestCase):
         test_update_correlation_functions(
             sp_setting, sp_atoms, n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
+
 
 if __name__ == '__main__':
     unittest.main()
