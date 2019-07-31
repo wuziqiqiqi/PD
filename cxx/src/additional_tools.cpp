@@ -38,7 +38,12 @@ string py2string(PyObject *str)
 {
   #if PY_MAJOR_VERSION >= 3
     // Python 3
-    return PyUnicode_AsUTF8(str);
+    const char* utf8_string = PyUnicode_AsUTF8(str);
+
+    if (utf8_string == NULL){
+      throw invalid_argument("Could not convert python string to const char");
+    }
+    return utf8_string;
   #else
     // Python 2
     return PyString_AsString(str);
