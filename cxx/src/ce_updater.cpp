@@ -94,7 +94,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
   #endif
 
   // Read cluster names
-  create_cname_with_dec( corrFunc );
+  create_cname_with_dec(corrFunc);
+  cerr << "here\n";
 
   #ifdef CE_DEBUG
     cout << "Cluster names with decoration number created...\n";
@@ -718,7 +719,6 @@ void CEUpdater::create_cname_with_dec( PyObject *cf )
       string prefix = new_key.substr(0,pos);
       cname_with_dec[prefix] = new_key;
     }
-    cerr << new_key<< endl;
   }
 }
 
