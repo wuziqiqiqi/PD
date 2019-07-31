@@ -42,6 +42,7 @@ class GAClusterSelector(object):
     fit_page = None
     kwargs = None
     settings = None
+    _pop_up = None
 
     def run(self):
         from clease import GAFit, LinearRegression, Evaluate
@@ -114,6 +115,7 @@ class FitPage(Screen):
         if isinstance(self._pop_up.content, FitAlgEditor):
             self._pop_up.content.backup()
         self._pop_up.dismiss()
+        self._pop_up = None
 
     def show_lasso_editor(self):
         content = LassoEditor(close=self.close_lasso_editor)
@@ -186,7 +188,7 @@ class FitPage(Screen):
         content = LoadDialog(load=self.load_eci_file,
                              cancel=self.dismiss_popup)
 
-        self._pop_up = Popup(title="Load structure DB", content=content,
+        self._pop_up = Popup(title="Load ECI file", content=content,
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
