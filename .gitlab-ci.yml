@@ -6,5 +6,17 @@ python3_test:
     - python3 --version
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install .
-    - python3 -m unittest discover tests/
+    - python3 tests/test_baysian_compressive.py
+    - python3 tests/test_ce_calculator.py
+    - python3 tests/test_cebulk.py
+    - python3 tests/test_column_sparse_matrix.py
+    - python3 tests/test_conc.py
+    - python3 tests/test_corr_func.py
+    - python3 tests/test_formula_unit.py
+    - python3 tests/test_ga_fit.py
+    - python3 tests/test_orthonormal_basis.py
+    - python3 tests/test_regression.py
+    - python3 tests/test_supercell_factor.py
+    - python3 tests/test_templates.py
+    - python3 tests/test_trans_matrix_constructor.py
 
