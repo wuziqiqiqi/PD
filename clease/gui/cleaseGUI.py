@@ -2,10 +2,19 @@ from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 from kivy.lang import Builder
 
-from inputPage import InputPage
-from concentrationPage import ConcentrationPage
-from newStructPage import NewStructPage
-from fitPage import FitPage
+from clease.gui.inputPage import InputPage
+from clease.gui.concentrationPage import ConcentrationPage
+from clease.gui.newStructPage import NewStructPage
+from clease.gui.fitPage import FitPage
+from kivy.resources import resource_add_path
+import os
+import sys
+import time
+import os.path as op
+
+main_path = op.abspath(__file__)
+main_path = main_path.rpartition("/")[0]
+resource_add_path(main_path)
 
 Builder.load_file("cleaseGUILayout.kv")
 
