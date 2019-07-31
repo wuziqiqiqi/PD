@@ -1,3 +1,4 @@
 ase
 matplotlib
 cython
+spglib
