@@ -2,8 +2,10 @@ from setuptools import setup, find_packages, Extension
 import numpy as np
 from Cython.Build import cythonize
 from distutils.errors import CompileError, LinkError
-from distutils.compiler import ccompiler
+from distutils import ccompiler
 from textwrap import dedent
+from distutils.sysconfig import get_python_inc
+import os
 
 cxx_src_folder = 'cxx/src/'
 cxx_inc_folder = 'cxx/include'
@@ -20,6 +22,10 @@ extra_comp_args = ['-std=c++11']
 
 
 def check_python_development_headers():
+    """
+    Try to compile a small snippet in order to check
+    if the Python development files are available
+    """
     compiler = ccompiler.new_compiler()
     code = dedent(
         """
@@ -37,8 +43,9 @@ def check_python_development_headers():
 
     ok = True
     try:
-        compiler.compile([fname])
-    except CompileError:
+        compiler.compile([fname], include_dirs=[get_python_inc()])
+    except CompileError as exc:
+        print(str(exc))
         ok = False
 
     binfile = fname.split('.')[0] + '.o'
@@ -56,7 +63,7 @@ if not check_python_development_headers():
 
 clease_cxx = Extension("clease_cxx", sources=src_files,
                        include_dirs=[cxx_inc_folder, np.get_include(),
-                                     cxx_src_folder],
+                                     cxx_src_folder, get_python_inc()],
                        extra_compile_args=extra_comp_args,
                        language="c++")
 setup(
