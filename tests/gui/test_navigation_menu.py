@@ -86,12 +86,67 @@ class TestInputPage(unittest.TestCase):
         self.assertEqual(screen._pop_up.title, 'Load structure DB')
         screen._pop_up.content.ids.cancelButton.dispatch('on_release')
 
+    def run_check_cellpar(self, app):
+        screen = app.screen_manager.get_screen('Input')
+
+        screen.ids.cellParInput.text = 'dx'
+        self.assertFalse(screen.cellpar_ok())
+
+        screen.ids.cellParInput.text = '(3.0, 4.0)'
+        self.assertFalse(screen.cellpar_ok())
+
+        screen.ids.cellParInput.text = '6.0, 7.0, 3.0, 80, 20, 10'
+        self.assertTrue(screen.cellpar_ok())
+
+        screen.ids.cellParInput.text = '6.0, 7.0, 3.0, 80, 20'
+        self.assertFalse(screen.cellpar_ok())
+
+        screen.ids.cellParInput.text = '(6.0, 7.0, 3.0, 80, 20, 10)'
+        self.assertFalse(screen.cellpar_ok())
+
+    def run_check_cell_input(self, app):
+        screen = app.screen_manager.get_screen('Input')
+        cell_inp = screen.ids.cellInput
+
+        cell_inp.text = 'db'
+        self.assertFalse(screen.cell_ok())
+
+        cell_inp.text = '(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)'
+        self.assertTrue(screen.cell_ok())
+
+    def run_check_element_input(self, app):
+        screen = app.screen_manager.get_screen('Input')
+        elem_in = screen.ids.elementInput
+
+        elem_in.text = 'Al, Cu'
+        self.assertTrue(screen.elem_ok())
+
+        elem_in.text = '(Al, Cu), (Mg, Si)'
+        self.assertTrue(screen.elem_ok())
+
+    def run_check_grouped_basis(self, app):
+        screen = app.screen_manager.get_screen('Input')
+
+        gr_basis = screen.ids.groupedBasisInput
+        gr_basis.text = '1, 2'
+        self.assertTrue(screen.grouped_basis_ok())
+
+        gr_basis.text = '(1, 2), 3'
+        self.assertTrue(screen.grouped_basis_ok())
+
+        gr_basis = '(1, 2), (3, 4)'
+        self.assertTrue(screen.grouped_basis_ok())
+
     def run_tests(self, app):
         Clock.schedule_interval(self.pause, self.interval)
         self.run_test_naviation(app)
         self.run_max_cluster_dia_input(app)
         self.run_cell_size_ok(app)
         self.run_load_dialog(app)
+        self.run_check_cellpar(app)
+        self.run_check_cell_input(app)
+        self.run_check_element_input(app)
+        self.run_check_grouped_basis(app)
         app.stop()
 
     def test_gui(self):

@@ -255,23 +255,53 @@ class InputPage(Screen):
                 return 1
         return 0
 
+    def cellpar_ok(self):
+        cellPar = self.ids.cellParInput.text
+        try:
+            _ = parse_cellpar(cellPar)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def cell_ok(self):
+        cell = self.ids.cellInput.text
+        try:
+            _ = parse_cell(cell)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def elem_ok(self):
+        elems = self.ids.elementInput.text
+        try:
+            _ = parse_elements(elems)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def grouped_basis_ok(self):
+        gr_basis = self.ids.groupedBasisInput.text
+        try:
+            _ = parse_grouped_basis_elements(gr_basis)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
     def _check_cecrystal_input(self):
         cellPar = self.ids.cellParInput.text
         sufficient_cell_info_given = False
         if cellPar != '':
-            try:
-                _ = parse_cellpar(cellPar)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cellpar_ok():
                 return 1
             sufficient_cell_info_given = True
 
         cell = self.ids.cellInput.text
         if cell != '':
-            try:
-                _ = parse_cell(cell)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cell_ok():
                 return 1
             sufficient_cell_info_given = True
 
@@ -316,7 +346,6 @@ class InputPage(Screen):
             self.ids.status.text = str(exc)
             return False
         return True
-
 
     def check_user_input(self):
         """
@@ -366,19 +395,15 @@ class InputPage(Screen):
         if elems == '':
             self.ids.status.text = 'No elements are given'
             return 1
-        try:
-            _ = parse_elements(elems)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
+
+        if not self.elem_ok():
             return 1
 
         gr_basis = self.ids.groupedBasisInput.text
 
         if gr_basis != '':
-            try:
-                _ = parse_grouped_basis_elements(gr_basis)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.grouped_basis_ok():
+                return 1
         return 0
 
     def update_size_section(self, text):
