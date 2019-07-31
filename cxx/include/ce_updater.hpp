@@ -52,7 +52,7 @@ public:
   CEUpdater* copy() const;
 
   /** Initialize the object (cluster_info should contain duplication factors) */
-  void init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObject *ecis, PyObject *cluster_info);
+  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *ecis, PyObject *cluster_info);
 
   /** Change values of ecis */
   void set_ecis( PyObject *ecis );
@@ -64,15 +64,15 @@ public:
   double get_energy();
 
   /** Returns the value of the singlets */
-  void get_singlets( PyObject *npy_array ) const;
+  void get_singlets(PyObject *npy_array) const;
   PyObject* get_singlets() const;
 
   /** Extracts basis functions from the cluster name */
-  void get_basis_functions( const std::string &cluster_name, std::vector<int> &bfs ) const;
+  void get_basis_functions(const std::string &cluster_name, std::vector<int> &bfs) const;
 
   /** Updates the CF */
-  void update_cf( PyObject *single_change );
-  void update_cf( SymbolChange &single_change );
+  void update_cf(PyObject *single_change);
+  void update_cf(SymbolChange &single_change);
 
   /** Computes the spin product for one element */
   double spin_product_one_atom(int ref_indx, const Cluster &indx_list, const std::vector<int> &dec, int ref_id);

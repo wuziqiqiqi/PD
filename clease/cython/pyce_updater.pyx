@@ -19,11 +19,11 @@ cdef class PyCEUpdater:
     def __dealloc__(self):
         del self.thisptr
 
-    def __init__(self, atoms, bc, corr_func, eci, cluster_info):
-        self.bc = bc
+    def __init__(self, atoms, setting, corr_func, eci, cluster_info):
+        self.setting = setting
         self.corr_func = corr_func
         self.eci = eci
-        self.thisptr.init(atoms, bc, corr_func, eci, cluster_info)
+        self.thisptr.init(atoms, setting, corr_func, eci, cluster_info)
 
     def clear_history(self):
         self.thisptr.clear_history()

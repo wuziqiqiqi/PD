@@ -174,21 +174,21 @@ class Clease(Calculator):
 
     def set_atoms(self, atoms):
         self.atoms = atoms
-        # self.setting.set_active_template(atoms=atoms)
-        # self.dupl_tracker = DuplicationCountTracker(self.setting)
 
         if self.init_cf is None:
             self.init_cf = self.CF.get_cf_by_cluster_names(
                 self.atoms, self.cluster_names, return_type='array')
 
         if len(self.setting.atoms) != len(atoms):
-            msg = "Passed Atoms object and setting.atoms should have "
-            msg += "same number of atoms."
+            msg = "Passed Atoms object and setting.atoms should have same "
+            msg += "number of atoms."
             raise ValueError(msg)
+
         if not np.allclose(atoms.positions, self.setting.atoms.positions):
-            msg = "atomic positions of all atoms in the passed Atoms "
-            msg += "object and setting.atoms should be the same. "
+            msg = "Positions of all atoms in the passed Atoms object and "
+            msg += "setting.atoms should be the same. "
             raise ValueError(msg)
+
         self.symmetry_group = np.zeros(len(atoms), dtype=int)
         for symm, indices in enumerate(self.setting.index_by_trans_symm):
             self.symmetry_group[indices] = symm
@@ -197,16 +197,16 @@ class Clease(Calculator):
 
         cf_dict = dict(zip(self.cluster_names, self.init_cf))
 
-        info = self._get_cluster_info_with_dup_factors(
-            self.setting.cluster_info)
-        self.updater = PyCEUpdater(
-            self.atoms, self.setting, cf_dict,
-            dict(zip(self.cluster_names, self.eci)), info)
+        info = \
+            self._get_cluster_info_with_dup_factors(self.setting.cluster_info)
+        self.updater = PyCEUpdater(self.atoms, self.setting, cf_dict,
+                                   dict(zip(self.cluster_names, self.eci)),
+                                   info)
 
     def get_energy_given_change(self, system_changes):
         """
-        Calculate the energy when the change is known. No
-        checking will be performed
+        Calculate the energy when the change is known. No checking will be
+        performed.
         """
         self.update_cf(system_changes=system_changes)
         self.energy = self.updater.get_energy()
@@ -247,9 +247,8 @@ class Clease(Calculator):
         for index in changed:
             if self.is_backround_index[index] and \
                     self.setting.ignore_background_atoms:
-                raise MovedIgnoredAtomError("Atom with index {} is a "
-                                            "background atom."
-                                            "".format(index))
+                msg = "Atom with index {} is a background atom.".format(index)
+                raise MovedIgnoredAtomError(msg)
 
         return changed
 
