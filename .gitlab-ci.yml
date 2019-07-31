@@ -9,7 +9,8 @@ python3_test:
     - ldd clease_cxx.cpython-37m-x86_64-linux-gnu.so
     - python3 tests/test_baysian_compressive.py
     - ls
-    - python3 tests/test_ce_calculator.py
+    - python3 tests/test_ce_calculator.py TestCECalculator.test_indices_of_changed_symbols
+    - python3 tests/test_ce_calculator.py TestCECalculator.test_update_corr_func_binary
     - ls
     - python3 tests/test_cebulk.py
     - python3 tests/test_column_sparse_matrix.py
