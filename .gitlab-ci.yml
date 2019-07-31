@@ -7,7 +7,9 @@ python3_test:
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install .
     - python3 tests/test_baysian_compressive.py
+    - ls
     - python3 tests/test_ce_calculator.py
+    - ls
     - python3 tests/test_cebulk.py
     - python3 tests/test_column_sparse_matrix.py
     - python3 tests/test_conc.py
