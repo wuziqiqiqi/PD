@@ -696,6 +696,9 @@ void CEUpdater::get_basis_functions( const string &cname, vector<int> &bfs ) con
 
 void CEUpdater::create_cname_with_dec( PyObject *cf )
 {
+  if (!PyDict_Check(cf)){
+    throw invalid_argument("Correlation functons has to be dictionary!");
+  }
   Py_ssize_t pos = 0;
   PyObject *key;
   PyObject *value;
