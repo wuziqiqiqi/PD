@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <iterator>
 
-#define CE_DEBUG
+//#define CE_DEBUG
 using namespace std;
 
 CEUpdater::CEUpdater(){};
@@ -137,7 +137,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *BC, PyObject *corrFunc, PyObj
       #ifdef CE_DEBUG
         cerr << "Extracting cluster " << cluster_name << endl;
       #endif
-      
+
       Cluster new_clst(value);
       new_clst.construct_equivalent_deco(num_bfs);
       new_clusters[cluster_name] = new_clst;
