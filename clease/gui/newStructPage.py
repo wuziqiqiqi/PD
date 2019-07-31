@@ -3,8 +3,8 @@ from kivy.utils import get_color_from_hex
 from kivy.uix.popup import Popup
 from kivy.app import App
 
-from constants import FOREGROUND_TEXT_COLOR, INACTIVE_TEXT_COLOR
-from load_save_dialog import LoadDialog
+from clease.gui.constants import FOREGROUND_TEXT_COLOR, INACTIVE_TEXT_COLOR
+from clease.gui.load_save_dialog import LoadDialog
 import os
 import json
 from threading import Thread

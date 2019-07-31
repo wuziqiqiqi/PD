@@ -2,11 +2,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.utils import get_color_from_hex
 
-from constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
-from load_save_dialog import LoadDialog, SaveDialog
-from util import parse_max_cluster_dia, parse_grouped_basis_elements
-from util import parse_size, parse_elements, parse_cellpar, parse_cell
-from util import parse_coordinate_basis
+from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
+from clease.gui.load_save_dialog import LoadDialog, SaveDialog
+from clease.gui.util import parse_max_cluster_dia, parse_grouped_basis_elements
+from clease.gui.util import parse_size, parse_elements, parse_cellpar, parse_cell
+from clease.gui.util import parse_coordinate_basis
 import json
 import os
 
@@ -292,6 +292,20 @@ class InputPage(Screen):
             return 1
         return 0
 
+    def max_cluster_dia_ok(self):
+        cluster_size = int(self.ids.clusterSize.text)
+        try:
+            diameter = parse_max_cluster_dia(self.ids.clusterDia.text)
+
+            if isinstance(diameter, list):
+                if len(diameter) != cluster_size - 1:
+                    self.ids.status.text = 'Cluster dia has to be given for 2-body and beyond!'
+                    return False
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
     def check_user_input(self):
         """
         Check the input values from the user
@@ -305,15 +319,7 @@ class InputPage(Screen):
             return 1
 
         # Check that we can parse the max cluster diameter
-        try:
-            diameter = parse_max_cluster_dia(self.ids.clusterDia.text)
-
-            if isinstance(diameter, list):
-                if len(diameter) != cluster_size - 1:
-                    self.ids.status.text = 'Cluster dia has to be given for 2-body and beyond!'
-                    return 1
-        except Exception as exc:
-            self.ids.status.text = str(exc)
+        if not self.max_cluster_dia_ok():
             return 1
 
         # Check that we can parse size
