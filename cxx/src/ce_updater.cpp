@@ -702,7 +702,7 @@ void CEUpdater::create_cname_with_dec( PyObject *cf )
   Py_ssize_t pos = 0;
   PyObject *key;
   PyObject *value;
-  while(  PyDict_Next(cf, &pos, &key, &value) )
+  while(PyDict_Next(cf, &pos, &key, &value))
   {
     string new_key = py2string(key);
     #ifdef CE_DEBUG
@@ -718,6 +718,7 @@ void CEUpdater::create_cname_with_dec( PyObject *cf )
       string prefix = new_key.substr(0,pos);
       cname_with_dec[prefix] = new_key;
     }
+    cerr << new_key<< endl;
   }
 }
 
