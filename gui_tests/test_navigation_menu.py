@@ -165,6 +165,10 @@ class TestInputPage(unittest.TestCase):
         screen.dismiss_popup()
 
     def run_tests(self, app):
+        """
+        Main function for running all tests. Note that the application
+        is never restarted. Therefore, actions follow each other
+        """
         Clock.schedule_interval(self.pause, self.interval)
         self.run_test_naviation(app)
         self.run_max_cluster_dia_input(app)
