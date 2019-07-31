@@ -201,6 +201,8 @@ class Clease(Calculator):
 
         cf_dict = dict(zip(self.cluster_names, self.init_cf))
         print(cf_dict)
+        import sys
+        sys.stdout.flush()
 
         info = self._get_cluster_info_with_dup_factors(
             self.setting.cluster_info)
