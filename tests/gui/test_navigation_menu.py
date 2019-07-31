@@ -137,6 +137,31 @@ class TestInputPage(unittest.TestCase):
         gr_basis = '(1, 2), (3, 4)'
         self.assertTrue(screen.grouped_basis_ok())
 
+    def run_save_as_button(self, app):
+        screen = app.screen_manager.get_screen('Input')
+        self.assertTrue(screen._pop_up is None)
+
+        # Call save button with an incomplete page
+        screen.ids.saveAsSession.dispatch('on_release')
+        self.assertTrue(screen._pop_up is None)
+
+        # Populate the fields with a valid input
+        screen.ids.aParameterInput.text = '4.05'
+        screen.ids.dbNameInput.text = 'test_gui.db'
+        screen.ids.elementInput.text = 'Au, Cu'
+        screen.ids.saveAsSession.dispatch('on_release')
+        self.assertTrue(screen._pop_up is not None)
+        self.assertEqual(screen._pop_up.title, "Save CLEASE session")
+        screen.dismiss_popup()
+
+    def run_load_session_button(self, app):
+        screen = app.screen_manager.get_screen('Input')
+
+        self.assertTrue(screen._pop_up is None)
+        screen.ids.loadSession.dispatch('on_release')
+        self.assertFalse(screen._pop_up is None)
+        self.assertTrue(screen._pop_up.title, "Load CLEASE session")
+
     def run_tests(self, app):
         Clock.schedule_interval(self.pause, self.interval)
         self.run_test_naviation(app)
@@ -147,6 +172,8 @@ class TestInputPage(unittest.TestCase):
         self.run_check_cell_input(app)
         self.run_check_element_input(app)
         self.run_check_grouped_basis(app)
+        self.run_save_as_button(app)
+        self.run_load_session_button(app)
         app.stop()
 
     def test_gui(self):

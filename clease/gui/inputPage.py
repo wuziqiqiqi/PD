@@ -16,9 +16,11 @@ class InputPage(Screen):
         'crystStructSpinner': ''
     }
     current_session_file = None
+    _pop_up = None
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
+        self._pop_up = None
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
