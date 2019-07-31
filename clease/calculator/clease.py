@@ -22,10 +22,15 @@ class Clease(Calculator):
 
     setting: CEBulk or BulkSapcegroup object
 
-    cluster_name_eci: dictionary of list of tuples containing
-                      cluster names and ECI
+    cluster_name_eci: dictionary
+        Dictionary should contain cluster names and their ECI values
 
-    init_cf: (optional) correlation function of init_cf
+    init_cf: `None` or dictionary (optional)
+        If the correlation function of Atoms object is known, one can supply
+        its correlation function values such that the initial assessment step
+        is skipped. The dictionary should contain cluster names (same as the
+        ones provided in `cluster_name_eci`) and their correlation function
+        values.
 
     logfile: file object or str
         If *logfile* is a string, a file with that name will be opened.
@@ -46,13 +51,8 @@ class Clease(Calculator):
         self.setting = setting
         self.CF = CorrFunction(setting)
 
-        # check cluster_name_eci and separate them out
-        if isinstance(cluster_name_eci, list) and \
-           (all(isinstance(i, tuple) for i in cluster_name_eci)
-                or all(isinstance(i, list) for i in cluster_name_eci)):
-            self.cluster_names = [tup[0] for tup in cluster_name_eci]
-            self.eci = np.array([tup[1] for tup in cluster_name_eci])
-        elif isinstance(cluster_name_eci, dict):
+        # read ECIs
+        if isinstance(cluster_name_eci, dict):
             self.cluster_names = []
             self.eci = []
             for cluster_name, eci in cluster_name_eci.items():
@@ -60,42 +60,26 @@ class Clease(Calculator):
                 self.eci.append(eci)
             self.eci = np.array(self.eci)
         else:
-            msg = "'cluster_name_eci' needs to be either (1) a list of tuples "
-            msg += "or (2) a dictionary.\n They can be etrieved by "
-            msg += "'get_cluster_name_eci' method in Evaluate class."
+            msg = "'cluster_name_eci' must be a dictionary.\n"
+            msg += "It can be obtained using 'get_cluster_name_eci' method in "
+            msg += "Evaluate class."
             raise TypeError(msg)
 
         # calculate init_cf or convert init_cf to array
         if init_cf is None:
             self.init_cf = init_cf
-        elif isinstance(init_cf, list):
-            if all(isinstance(i, (tuple, list)) for i in init_cf):
-                cluster_names = [tup[0] for tup in init_cf]
-                # cluster_name_eci and init_cf in the same order
-                if cluster_names == self.cluster_names:
-                    self.init_cf = np.array([tup[1] for tup in init_cf],
-                                            dtype=float)
-                # not in the same order
-                else:
-                    self.init_cf = []
-                    for name in self.cluster_names:
-                        indx = cluster_names.index(name)
-                        self.init_cf.append(init_cf[indx][1])
-                    self.init_cf = np.array(self.init_cf, dtype=float)
-            else:
-                self.init_cf = np.array(init_cf, dtype=float)
         elif isinstance(init_cf, dict):
             self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
                                     dtype=float)
         else:
-            raise TypeError("'init_cf' needs to be either (1) a list "
-                            "of tuples, (2) a dictionary, or (3) numpy array "
-                            "containing correlation function in the same "
-                            "order as the 'cluster_name_eci'.")
+            msg = "'init_cf' must be a dictionary containing cluster names "
+            msg += "and their correlation function values."
+            raise TypeError(msg)
 
         if self.init_cf is not None and len(self.eci) != len(self.init_cf):
-            raise ValueError('length of provided ECIs and correlation '
-                             'functions do not match')
+            msg = "length of provided ECIs and correlation functions do not "
+            msg += "match"
+            raise ValueError(msg)
 
         # logfile
         if isinstance(logfile, basestring):
@@ -128,10 +112,10 @@ class Clease(Calculator):
             for k in all_info.keys():
                 cluster = info[-1][k]
 
-                dup_factors = [self.dupl_tracker.factor(
-                    cluster, non_trans, order)
-                    for non_trans, order in zip(cluster["indices"],
-                                                cluster["order"])]
+                dup_factors = \
+                    [self.dupl_tracker.factor(cluster, non_trans, order)
+                     for non_trans, order in zip(cluster["indices"],
+                                                 cluster["order"])]
 
                 info[-1][k]["dup_factors"] = dup_factors
         return info
@@ -176,8 +160,11 @@ class Clease(Calculator):
         self.atoms = atoms
 
         if self.init_cf is None:
-            self.init_cf = self.CF.get_cf_by_cluster_names(
-                self.atoms, self.cluster_names, return_type='array')
+            init_cf = self.CF.get_cf_by_cluster_names(self.atoms,
+                                                      self.cluster_names)
+            # change dict to array
+            self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
+                                    dtype=float)
 
         if len(self.setting.atoms) != len(atoms):
             msg = "Passed Atoms object and setting.atoms should have same "

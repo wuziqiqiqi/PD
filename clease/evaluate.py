@@ -232,17 +232,10 @@ class Evaluate(object):
         self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
         return self.eci
 
-    def get_cluster_name_eci(self, return_type='dict'):
-        """Determine cluster names and their corresponding ECI value.
-
-        Parameters:
-
-        return_type: str
-            'tuple'- return an array of cluster_name-ECI tuples.
-            e.g., [(name_1, ECI_1), (name_2, ECI_2)]
-            'dict'- return a dictionary.
-            e.g., {name_1: ECI_1, name_2: ECI_2}
+    def get_cluster_name_eci(self):
         """
+        Determine cluster names and their corresponding ECI value and return
+        them in a dictionary format."""
         self.get_eci()
 
         # sanity check
@@ -256,19 +249,17 @@ class Evaluate(object):
                 continue
             pairs.append((cname, self.eci[i]))
 
-        if return_type == 'dict':
-            return dict(pairs)
-        return pairs
+        return dict(pairs)
 
     def save_cluster_name_eci(self, fname='cluster_eci.json'):
         """Determine cluster names and their corresponding ECI value.
 
         Parameters:
 
-        return_type: str
-            the file name should end with either .json or .txt.
+        fname: str
+            file name should end with either .json or .txt.
         """
-        eci_dict = self.get_cluster_name_eci(return_type='dict')
+        eci_dict = self.get_cluster_name_eci()
 
         extension = fname.split(".")[-1]
 
