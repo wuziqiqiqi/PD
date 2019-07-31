@@ -6,6 +6,7 @@ python3_test:
     - python3 --version
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install -e .
+    - ldd clease_cxx.cpython-37m-x86_64-linux-gnu.so
     - python3 tests/test_baysian_compressive.py
     - ls
     - python3 tests/test_ce_calculator.py
