@@ -16,6 +16,9 @@ gui_test:
     - apt-get install -qy xvfb
     - python3 --version
     - python3 -m pip install -r requirements.txt
+    - python3 -m pip install kivy
+    - python3 -m pip install kivy-garden
+    - garden install matplotlib
     - python3 -m pip install .
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 tests/gui/test_navigation_menu.py
