@@ -186,14 +186,17 @@
             TextInput:
                 id: aParameterInput
                 text: ''
+                input_filter: 'float'
 
             TextInput:
                 id: cParameterInput
                 text: ''
+                input_filter: 'float'
 
             TextInput:
                 id: uParameterInput
                 text: ''
+                input_filter: 'float'
 
             Spinner:
                 id: orthSpinner
@@ -328,6 +331,7 @@
             size_hint_y: None
             height: 30
             Button:
+                id: cancelButton
                 text: "Cancel"
                 on_release: root.cancel()
 
