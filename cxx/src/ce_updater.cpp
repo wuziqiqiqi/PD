@@ -708,7 +708,7 @@ void CEUpdater::create_cname_with_dec( PyObject *cf )
     #ifdef CE_DEBUG
       cout << "Read CF: " << new_key << endl;
     #endif
-    if ( new_key.substr(0,2) == "c1" )
+    if ((new_key.substr(0,2) == "c1") || (new_key == "c0"))
     {
       cname_with_dec[new_key] = new_key;
     }
