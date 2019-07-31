@@ -5,9 +5,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 
 cdef class PyCEUpdater:
-    """
-    Cython wrapper for the C++ class
-    """
+    """Cython wrapper for the C++ class"""
     cdef CEUpdater *thisptr
     cdef object setting
     cdef object corr_func
