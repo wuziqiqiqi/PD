@@ -55,7 +55,6 @@ class ConcentrationPage(Screen):
         elem_str = self.manager.get_screen("Input").ids.elementInput.text
         grouped_basis = \
             self.manager.get_screen("Input").ids.groupedBasisInput.text
-
         try:
             if grouped_basis != '':
                 self.grouped_basis = \

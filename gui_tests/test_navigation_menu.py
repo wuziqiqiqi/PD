@@ -3,6 +3,7 @@ import unittest
 import time
 from kivy.clock import Clock
 from functools import partial
+from gui_tests.concentraton_page_tests import ConcentrationPageTest
 
 
 class TestInputPage(unittest.TestCase):
@@ -175,6 +176,9 @@ class TestInputPage(unittest.TestCase):
         self.run_check_grouped_basis(app)
         self.run_save_as_button(app)
         self.run_load_session_button(app)
+
+        conc_page_test = ConcentrationPageTest()
+        conc_page_test.run(app)
         app.stop()
 
     def test_gui(self):
