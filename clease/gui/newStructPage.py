@@ -65,6 +65,8 @@ class EminStructGenerator(object):
 
 
 class NewStructPage(Screen):
+    _pop_up = None
+    
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
 
@@ -117,6 +119,7 @@ class NewStructPage(Screen):
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
+        self._pop_up = None
 
     def show_load_eci_dialog(self):
         content = LoadDialog(

@@ -4,6 +4,7 @@ import time
 from kivy.clock import Clock
 from functools import partial
 from gui_tests.concentraton_page_tests import ConcentrationPageTest
+from gui_tests.new_struct_page_test import NewStructPageTest
 
 
 class TestInputPage(unittest.TestCase):
@@ -183,6 +184,9 @@ class TestInputPage(unittest.TestCase):
 
         conc_page_test = ConcentrationPageTest()
         conc_page_test.run(app)
+
+        new_struct_test = NewStructPageTest()
+        new_struct_test.run(app)
         app.stop()
 
     def test_gui(self):
