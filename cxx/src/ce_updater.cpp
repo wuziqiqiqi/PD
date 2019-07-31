@@ -702,9 +702,12 @@ void CEUpdater::create_cname_with_dec( PyObject *cf )
   Py_ssize_t pos = 0;
   PyObject *key;
   PyObject *value;
-  while(  PyDict_Next(cf, &pos, &key,&value) )
+  while(  PyDict_Next(cf, &pos, &key, &value) )
   {
     string new_key = py2string(key);
+    #ifdef CE_DEBUG
+      cout << "Read CF: " << new_key << endl;
+    #endif
     if ( new_key.substr(0,2) == "c1" )
     {
       cname_with_dec[new_key] = new_key;
