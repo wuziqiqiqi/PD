@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages, Extension
 import numpy as np
 from Cython.Build import cythonize
-from distutils.errors import CompileError, LinkError
+from distutils.errors import CompileError
 from distutils import ccompiler
 from textwrap import dedent
 from distutils.sysconfig import get_python_inc
@@ -23,8 +23,8 @@ extra_comp_args = ['-std=c++11']
 
 def check_python_development_headers():
     """
-    Try to compile a small snippet in order to check
-    if the Python development files are available
+    Try to compile a small snippet in order to check if the Python development
+    files are available
     """
     compiler = ccompiler.new_compiler()
     code = dedent(
@@ -58,7 +58,7 @@ def check_python_development_headers():
 
 
 if not check_python_development_headers():
-    raise ValueError("Python development header needs to be available")
+    raise ValueError("Python development header must be available.")
 
 
 clease_cxx = Extension("clease_cxx", sources=src_files,
@@ -70,6 +70,6 @@ setup(
     name="clease",
     ext_modules=cythonize(clease_cxx),
     version=1.0,
-    description="Cluster Expansion In Atomistic Simulation Environment",
+    description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages()
 )

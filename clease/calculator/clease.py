@@ -1,15 +1,11 @@
 """Calculator for Cluster Expansion."""
 import sys
-from copy import deepcopy
 import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction, CEBulk, CECrystal
 from clease.corrFunc import equivalent_deco
-from clease.tools import get_sparse_column_matrix, symbols2integer
-from clease.tools import bf2npyarray
-from clease.jit import jit
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -22,8 +18,8 @@ class MovedIgnoredAtomError(Exception):
 class Clease(Calculator):
     """Class for calculating energy using CLEASE.
 
-    Arguments:
-    =========
+    Parameters:
+
     setting: CEBulk or BulkSapcegroup object
 
     cluster_name_eci: dictionary of list of tuples containing
@@ -52,8 +48,8 @@ class Clease(Calculator):
 
         # check cluster_name_eci and separate them out
         if isinstance(cluster_name_eci, list) and \
-           (all(isinstance(i, tuple) for i in cluster_name_eci) or
-                all(isinstance(i, list) for i in cluster_name_eci)):
+           (all(isinstance(i, tuple) for i in cluster_name_eci)
+                or all(isinstance(i, list) for i in cluster_name_eci)):
             self.cluster_names = [tup[0] for tup in cluster_name_eci]
             self.eci = np.array([tup[1] for tup in cluster_name_eci])
         elif isinstance(cluster_name_eci, dict):
@@ -78,7 +74,7 @@ class Clease(Calculator):
                 # cluster_name_eci and init_cf in the same order
                 if cluster_names == self.cluster_names:
                     self.init_cf = np.array([tup[1] for tup in init_cf],
-                                             dtype=float)
+                                            dtype=float)
                 # not in the same order
                 else:
                     self.init_cf = []
@@ -90,7 +86,7 @@ class Clease(Calculator):
                 self.init_cf = np.array(init_cf, dtype=float)
         elif isinstance(init_cf, dict):
             self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
-                               dtype=float)
+                                    dtype=float)
         else:
             raise TypeError("'init_cf' needs to be either (1) a list "
                             "of tuples, (2) a dictionary, or (3) numpy array "
@@ -178,21 +174,21 @@ class Clease(Calculator):
 
     def set_atoms(self, atoms):
         self.atoms = atoms
-        # self.setting.set_active_template(atoms=atoms)
-        # self.dupl_tracker = DuplicationCountTracker(self.setting)
 
         if self.init_cf is None:
             self.init_cf = self.CF.get_cf_by_cluster_names(
                 self.atoms, self.cluster_names, return_type='array')
 
         if len(self.setting.atoms) != len(atoms):
-            msg = "Passed Atoms object and setting.atoms should have "
-            msg += "same number of atoms."
+            msg = "Passed Atoms object and setting.atoms should have same "
+            msg += "number of atoms."
             raise ValueError(msg)
+
         if not np.allclose(atoms.positions, self.setting.atoms.positions):
-            msg = "atomic positions of all atoms in the passed Atoms "
-            msg += "object and setting.atoms should be the same. "
+            msg = "Positions of all atoms in the passed Atoms object and "
+            msg += "setting.atoms should be the same. "
             raise ValueError(msg)
+
         self.symmetry_group = np.zeros(len(atoms), dtype=int)
         for symm, indices in enumerate(self.setting.index_by_trans_symm):
             self.symmetry_group[indices] = symm
@@ -201,16 +197,16 @@ class Clease(Calculator):
 
         cf_dict = dict(zip(self.cluster_names, self.init_cf))
 
-        info = self._get_cluster_info_with_dup_factors(
-            self.setting.cluster_info)
-        self.updater = PyCEUpdater(
-            self.atoms, self.setting, cf_dict,
-            dict(zip(self.cluster_names, self.eci)), info)
+        info = \
+            self._get_cluster_info_with_dup_factors(self.setting.cluster_info)
+        self.updater = PyCEUpdater(self.atoms, self.setting, cf_dict,
+                                   dict(zip(self.cluster_names, self.eci)),
+                                   info)
 
     def get_energy_given_change(self, system_changes):
         """
-        Calculate the energy when the change is known. No
-        checking will be performed
+        Calculate the energy when the change is known. No checking will be
+        performed.
         """
         self.update_cf(system_changes=system_changes)
         self.energy = self.updater.get_energy()
@@ -251,9 +247,8 @@ class Clease(Calculator):
         for index in changed:
             if self.is_backround_index[index] and \
                     self.setting.ignore_background_atoms:
-                raise MovedIgnoredAtomError("Atom with index {} is a "
-                                            "background atom."
-                                            "".format(index))
+                msg = "Atom with index {} is a background atom.".format(index)
+                raise MovedIgnoredAtomError(msg)
 
         return changed
 

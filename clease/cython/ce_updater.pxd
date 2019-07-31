@@ -33,4 +33,4 @@ cdef extern from "ce_updater.hpp":
 
       void set_num_threads(unsigned int num_threads)
 
-      void get_changes(vector[string] &symbs, vector[unsigned int] &changed_sites) except+
+      void get_changes(vector[string] &symbs, vector[unsigned int] &changed_sites) except +
