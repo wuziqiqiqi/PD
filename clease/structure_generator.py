@@ -37,9 +37,9 @@ class StructureGenerator(object):
 
         # eci set to 1 to ensure that all correlation functions are included
         # but the energy produced from this should never be used
-        eci = {name: 1. for name in self.cluster_names}
-        self.calc = Clease(self.setting, cluster_name_eci=eci)
-        self.atoms.set_calculator(self.calc)
+        self.eci = {name: 1. for name in self.cluster_names}
+        calc = Clease(self.setting, cluster_name_eci=self.eci)
+        self.atoms.set_calculator(calc)
         self.output_every = 30
         self.init_temp = init_temp
         self.final_temp = final_temp
@@ -105,18 +105,27 @@ class StructureGenerator(object):
 
                 if self._accept():
                     num_accepted += 1
+                    self.atoms.get_calculator().clear_history()
                 else:
-                    self.calc.restore(self.atoms)
+                    self.atoms.get_calculator().restore()
 
-        self.atoms = self.generated_structure
+        # Create a new calculator and attach it to the generated structure
+        calc = Clease(self.setting, cluster_name_eci=self.eci,
+                      init_cf=self.cf_generated_structure)
+        self.generated_structure.set_calculator(calc)
+
+        # Force an energy evaluation to update the results dictionary
+        self.generated_structure.get_potential_energy()
+
+        # Check thate correlation function matach the expected value
         self._check_consistency()
-        cf = self.corrFunc.get_cf(self.atoms, return_type="dict")
-        return self.atoms, cf
+        cf = self.corrFunc.get_cf(self.generated_structure, return_type="dict")
+        return self.generated_structure, cf
 
     def _set_generated_structure(self):
         self.generated_structure = self.atoms.copy()
-        self.generated_structure.set_calculator(copy(self.calc))
-        self.cf_generated_structure = deepcopy(self.calc.get_cf_dict())
+        cf_dict = self.atoms.get_calculator().get_cf_dict()
+        self.cf_generated_structure = deepcopy(cf_dict)
 
     def _accept(self):
         raise NotImplementedError('_accept should be implemented in the '
@@ -239,7 +248,7 @@ class StructureGenerator(object):
         # Check to see if the cf is indeed preserved
         final_cf = \
             self.corrFunc.get_cf_by_cluster_names(self.generated_structure,
-                                                  self.calc.cluster_names,
+                                                  self.atoms.get_calculator().cluster_names,
                                                   return_type='dict')
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
@@ -306,7 +315,7 @@ class ProbeStructure(StructureGenerator):
         StructureGenerator.__init__(self, setting, atoms, struct_per_gen,
                                     init_temp, final_temp, num_temp,
                                     num_steps_per_temp)
-        self.o_cf = self.calc.cf
+        self.o_cf = self.atoms.get_calculator().cf
         self.o_cfm = np.vstack((self.cfm, self.o_cf))
         self.approx_mean_var = approx_mean_var
         fname = 'probe_structure-sigma_mu.npz'
@@ -328,7 +337,7 @@ class ProbeStructure(StructureGenerator):
 
     def _accept(self):
         """Accept the last change."""
-        cfm = np.vstack((self.cfm, self.calc.cf))
+        cfm = np.vstack((self.cfm, self.atoms.get_calculator().cf))
         if self.approx_mean_var:
             n_mv = mean_variance_approx(cfm)
         else:
@@ -412,8 +421,8 @@ class GSStructure(StructureGenerator):
                                     init_temp, final_temp, num_temp,
                                     num_steps_per_temp)
         self.alter_composition = False
-        self.calc = Clease(self.setting, cluster_name_eci=cluster_name_eci)
-        self.atoms.set_calculator(self.calc)
+        calc = Clease(self.setting, cluster_name_eci=cluster_name_eci)
+        self.atoms.set_calculator(calc)
         self.old_energy = None
         self.min_energy = None
 
