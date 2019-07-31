@@ -13,8 +13,6 @@ class TestInputPage(unittest.TestCase):
         time.sleep(self.interval)
 
     def run_test_naviation(self, app):
-        Clock.schedule_interval(self.pause, self.interval)
-
         # Make sure that we are on the InputPage
         self.assertEqual('Input', app.screen_manager.current)
 
@@ -34,8 +32,6 @@ class TestInputPage(unittest.TestCase):
             self.assertEqual('Fit', app.screen_manager.current)
 
     def run_max_cluster_dia_input(self, app):
-        Clock.schedule_interval(self.pause, self.interval)
-
         screen = app.screen_manager.get_screen('Input')
 
         # Set maximum cluster size to 4
@@ -62,8 +58,6 @@ class TestInputPage(unittest.TestCase):
         self.assertTrue(screen.max_cluster_dia_ok())
 
     def run_cell_size_ok(self, app):
-        Clock.schedule_interval(self.pause, self.interval)
-
         screen = app.screen_manager.get_screen('Input')
         screen.ids.sizeInput.text = 'df'
         self.assertFalse(screen.cell_size_ok())
@@ -86,11 +80,18 @@ class TestInputPage(unittest.TestCase):
         screen.ids.sizeInput.text = '(0, 1, 0), (1, 0, 1), (-1, 2, 0)'
         self.assertTrue(screen.cell_size_ok())
 
+    def run_load_dialog(self, app):
+        screen = app.screen_manager.get_screen('Input')
+        screen.ids.loadDbButton.dispatch('on_release')
+        self.assertEqual(screen._pop_up.title, 'Load structure DB')
+        screen._pop_up.content.ids.cancelButton.dispatch('on_release')
+
     def run_tests(self, app):
         Clock.schedule_interval(self.pause, self.interval)
         self.run_test_naviation(app)
         self.run_max_cluster_dia_input(app)
         self.run_cell_size_ok(app)
+        self.run_load_dialog(app)
         app.stop()
 
     def test_gui(self):
