@@ -8,6 +8,7 @@ os.environ["OPENBLAS_MAIN_FREE"] = "1"
 
 workers = None
 
+
 class SaturatedPopulationError(Exception):
     pass
 
@@ -98,6 +99,7 @@ class GAFit(object):
         ga_fit = GAFit(setting)
         ga_fit.run()
     """
+
     def __init__(self, setting=None, max_cluster_size=None,
                  max_cluster_dia=None, mutation_prob=0.001,
                  elitism=1, fname="ga_fit.csv", num_individuals="auto",
@@ -246,7 +248,6 @@ class GAFit(object):
             return 0.0
         return 1000.0*np.sqrt(cv_sq)
 
-
     def fit_individual(self, individual):
         coeff = self.get_eci(individual)
         X = self.design_matrix(individual)
@@ -392,8 +393,8 @@ class GAFit(object):
             # Check if there are any equal individuals in
             # the population
             counter = 0
-            while (self._is_in_population(new_individual, new_generation) and
-                    counter < max_attempts):
+            while (self._is_in_population(new_individual, new_generation)
+                    and counter < max_attempts):
                 new_individual = self.flip_one_mutation(new_individual)
                 new_individual = self.make_valid(new_individual)
                 counter += 1
@@ -404,8 +405,8 @@ class GAFit(object):
             new_generation.append(new_individual)
 
             counter = 0
-            while (self._is_in_population(new_individual2, new_generation) and
-                    counter < max_attempts):
+            while (self._is_in_population(new_individual2, new_generation)
+                    and counter < max_attempts):
                 new_individual2 = self.flip_one_mutation(new_individual2)
                 new_individual2 = self.make_valid(new_individual2)
                 counter += 1

@@ -1,20 +1,23 @@
 from ase.neighborlist import neighbor_list
 import numpy as np
 
+
 class MICDistanceNotUniqueError(Exception):
     pass
+
 
 class TransMatrixConstructor(object):
     """Class that constructs translation matrices.
 
     Parameters:
 
-    atoms: Atoms object 
+    atoms: Atoms object
         ASE atoms object (assumed to be wrapped and sorted)
 
     cutoff: float
         Cut-off distance in angstrom
     """
+
     def __init__(self, atoms, cutoff):
         self.num_atoms = len(atoms)
         self.neighbor = self._construct_neighbor_list(atoms, cutoff)
@@ -59,18 +62,18 @@ class TransMatrixConstructor(object):
         """Construct translation matrix.
 
         Parameters:
-        
+
         ref_symm_group: list
-            List of reference indices. 
+            List of reference indices.
             If passed Atoms object has only one basis, ref_symm_group is [0],
-            otherwise it hold indices of reference atoms in each basis. 
+            otherwise it hold indices of reference atoms in each basis.
             (e.g., [0, 5, 15] for the Atoms object with 3 basis)
 
         symm_group: list
-            List of the symmetry groups of each Atoms object. 
-            If passed Atoms object has only one basis, symm_group is 
-            [0, 0, ..., 0].  
-            If it has two basis,  this can be [0, 0, 1, 1, 0, 1, ...]. 
+            List of the symmetry groups of each Atoms object.
+            If passed Atoms object has only one basis, symm_group is
+            [0, 0, ..., 0].
+            If it has two basis,  this can be [0, 0, 1, 1, 0, 1, ...].
             The index of the reference atom for the basis where the atom
             with index k belongs to is ref_symm_group[symm_group[k]]
         """

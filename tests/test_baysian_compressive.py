@@ -47,7 +47,8 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         self.assertTrue(self.bayes == bayes2)
 
     def test_fit_linear_dep_col(self):
-        bayes = BayesianCompressiveSensing(fname=fname, noise=0.2, penalty=1E-2)
+        bayes = BayesianCompressiveSensing(fname=fname, noise=0.2,
+                                           penalty=1E-2)
         X = np.random.rand(30, 400)
         X[:, 2] = X[:, 0]
         X[:, 8] = X[:, 20]
@@ -70,6 +71,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
             os.remove(fname)
         except Exception:
             pass
+
 
 if __name__ == '__main__':
     unittest.main()

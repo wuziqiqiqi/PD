@@ -140,17 +140,17 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=var_range)
         A_eq = np.array([[1, 1, 1, 0, 0],
-                        [0, 0, 0, 1, 1],
-                        [0, 3, 0, 0, 0]])
+                         [0, 0, 0, 1, 1],
+                         [0, 3, 0, 0, 0]])
         b_eq = np.array([1, 1, 1])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(5)
         b_lb_implicit = np.zeros(5)
         A_lb = np.array([[3, 0, 0, 0, 0],
-                        [-3, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 3],
-                        [0, 0, 0, 0, -3]])
+                         [-3, 0, 0, 0, 0],
+                         [0, 0, 0, 0, 3],
+                         [0, 0, 0, 0, -3]])
         b_lb = np.array([0, -2, 0, -0.75])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -164,17 +164,17 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
         A_eq = np.array([[1, 1, 1, 0, 0],
-                        [0, 0, 0, 1, 1],
-                        [0, 3, 0, 0, 0],
-                        [0, 0, 0, 3, 0],
-                        [0, 0, 0, 0, 3]])
+                         [0, 0, 0, 1, 1],
+                         [0, 3, 0, 0, 0],
+                         [0, 0, 0, 3, 0],
+                         [0, 0, 0, 0, 3]])
         b_eq = np.array([1, 1, 1, 2, 1])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(5)
         b_lb_implicit = np.zeros(5)
         A_lb = np.array([[3, 0, 0, 0, 0],
-                        [-3, 0, 0, 0, 0]])
+                         [-3, 0, 0, 0, 0]])
         b_lb = np.array([0, -2])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -188,14 +188,14 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
         A_eq = np.array([[1, 1, 1],
-                        [0, 1, -3]])
+                         [0, 1, -3]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(3)
         b_lb_implicit = np.zeros(3)
         A_lb = np.array([[0, 0, 4],
-                        [0, 0, -4]])
+                         [0, 0, -4]])
         b_lb = np.array([0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -209,14 +209,14 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
         A_eq = np.array([[1, 1, 1],
-                        [0, -1, 1]])
+                         [0, -1, 1]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(3)
         b_lb_implicit = np.zeros(3)
         A_lb = np.array([[0, 2, 0],
-                        [0, -2, 0]])
+                         [0, -2, 0]])
         b_lb = np.array([0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -230,16 +230,16 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
         A_eq = np.array([[1, 1, 1, 1],
-                        [0, -1, 1, 0]])
+                         [0, -1, 1, 0]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(4)
         b_lb_implicit = np.zeros(4)
         A_lb = np.array([[0, 0, 0, 3],
-                        [0, 0, 0, -3],
-                        [0, 3, 0, 0],
-                        [0, -3, 0, 0]])
+                         [0, 0, 0, -3],
+                         [0, 3, 0, 0],
+                         [0, -3, 0, 0]])
         b_lb = np.array([0, -1, 0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)

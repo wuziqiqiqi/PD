@@ -145,17 +145,6 @@ class CEBulk(ClusterExpansionSetting):
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
 
-    # def _group_index_by_basis(self):
-    #     indx_by_basis = []
-    #     for basis in self.basis_elements:
-    #         indx_by_basis.append([a.index for a in self.atoms if
-    #                               a.symbol == basis[0]])
-
-    #     for basis in indx_by_basis:
-    #         basis.sort()
-    #     self.index_by_basis = indx_by_basis
-    #     return self.index_by_basis
-
     def _group_index_by_basis_group(self):
         return self.index_by_basis
 
@@ -289,8 +278,8 @@ class CECrystal(ClusterExpansionSetting):
     def load(filename):
         """Load settings from a file in JSON format.
 
-        Arguments:
-        =========
+        Parameters:
+
         filename: str
             Name of the file that has the settings.
         """

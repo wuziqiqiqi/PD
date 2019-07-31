@@ -2,7 +2,7 @@
 import os
 import math
 from random import choice, getrandbits
-from copy import deepcopy, copy
+from copy import deepcopy
 import numpy as np
 from numpy.linalg import inv, pinv
 from ase.db import connect

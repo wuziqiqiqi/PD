@@ -9,12 +9,14 @@ class LogVerbosity(IntEnum):
     INFO = 2
     DEBUG = 3
 
+
 class CLEASELogger:
     """Class for handling printing in CLEASE"""
+
     def __init__(self, fd='-', verbosity=LogVerbosity.INFO):
-        self.oldfd = None         # Dummy
-        self.fd = fd              # File descriptor
-        self.verbosity = verbosity  # Messages with verbose <= verbosity gets printed
+        self.oldfd = None           # Dummy
+        self.fd = fd                # File descriptor
+        self.verbosity = verbosity  # Print messages with verbose <= verbosity
 
     @property
     def verbosity(self):
@@ -50,4 +52,5 @@ class CLEASELogger:
             print(*args, file=self._fd, **kwargs)
 
     def __str__(self):
-        return 'Verbosity threshold: {}, FD: {}'.format(str(self.verbosity), self.fd)
+        return 'Verbosity threshold: {}, FD: {}'.format(str(self.verbosity),
+                                                        self.fd)

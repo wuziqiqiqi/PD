@@ -28,6 +28,7 @@ class ConvexHull(object):
         gold concentrations in the range 0 to 0.5 this argument would
         be {"Au": (0, 0.5)}.
     """
+
     def __init__(self, db_name, select_cond=None, atoms_per_fu=1,
                  conc_scale=1.0, conc_ranges={}):
         self.db_name = db_name
@@ -349,7 +350,7 @@ class ConvexHull(object):
         """Return the formation energy
 
         Parameters:
-        
+
         conc: dict
             Dictionary with the concenatration
         tot_energy: float

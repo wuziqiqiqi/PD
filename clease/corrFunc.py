@@ -27,7 +27,7 @@ class CorrFunction(object):
     setting: settings object
 
     parallel: bool (optional)
-        specify whether or not to use the parallel processing for ``get_cf''
+        specify whether or not to use the parallel processing for `get_cf`
         method.
 
     num_core: int or "all" (optional)
