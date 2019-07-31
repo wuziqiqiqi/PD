@@ -38,12 +38,22 @@ string py2string(PyObject *str)
 {
   #if PY_MAJOR_VERSION >= 3
     // Python 3
-    const char* utf8_string = PyUnicode_AsUTF8(str);
+    const char* char_str;
+    if (PyUnicode_Check(str)){
+      char_str = PyUnicode_AsUTF8(str);
+    }
+    else if (PyBytes_Check(str)){
+      char_str = PyBytes_AsString(str);
+    }
+    else{
+      throw invalid_argument("Unrecognized string type!");
+    }
+    
 
-    if (utf8_string == NULL){
+    if (char_str == NULL){
       throw invalid_argument("Could not convert python string to const char");
     }
-    return utf8_string;
+    return char_str;
   #else
     // Python 2
     return PyString_AsString(str);
