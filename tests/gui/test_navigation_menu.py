@@ -161,6 +161,7 @@ class TestInputPage(unittest.TestCase):
         screen.ids.loadSession.dispatch('on_release')
         self.assertFalse(screen._pop_up is None)
         self.assertTrue(screen._pop_up.title, "Load CLEASE session")
+        screen.dismiss_popup()
 
     def run_tests(self, app):
         Clock.schedule_interval(self.pause, self.interval)
