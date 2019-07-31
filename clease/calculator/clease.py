@@ -200,6 +200,7 @@ class Clease(Calculator):
         self.is_backround_index[self.setting.background_indices] = 1
 
         cf_dict = dict(zip(self.cluster_names, self.init_cf))
+        print(cf_dict)
 
         info = self._get_cluster_info_with_dup_factors(
             self.setting.cluster_info)
