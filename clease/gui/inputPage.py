@@ -342,7 +342,7 @@ class InputPage(Screen):
             if self.ids.supercellFactorInput.text == '':
                 self.ids.status.text = 'Supercell factor has to be given'
                 return 1
-            
+
             if self.ids.skewnessFactorInput.text == '':
                 self.ids.status.text = 'Skewness factor has to be given'
                 return 1
