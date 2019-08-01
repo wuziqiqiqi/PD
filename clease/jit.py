@@ -4,9 +4,10 @@ try:
     from numba import int32
     jit = numba_jit
     jitclass = numba_jitclass
-    
+
 except ImportError:
     print("Numba not installed. We recommend installing Numba.")
+
     # Numba is not installed
     def dummy_jit(**options):
         def decorate_func(func):
@@ -28,4 +29,3 @@ except ImportError:
             pass
 
     int32 = Int32Cls()
-

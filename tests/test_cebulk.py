@@ -36,7 +36,7 @@ def get_members_of_family(setting, cname):
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
-    return cf.get_cf(atoms, return_type='dict')
+    return cf.get_cf(atoms)
 
 
 class TestCEBulk(unittest.TestCase):
@@ -152,8 +152,6 @@ class TestCEBulk(unittest.TestCase):
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
         eval_l2 = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
-        eval_l2.get_cluster_name_eci(return_type='tuple')
-        eval_l2.get_cluster_name_eci(return_type='dict')
 
         # Test subclusters for pairs
         for cluster in bc_setting.cluster_info_given_size(2):
@@ -330,5 +328,3 @@ if __name__ == '__main__':
         print("This should normally not be done.")
         with open("reference_corr_funcs_bulk.py", 'w') as outfile:
             json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
-
-    

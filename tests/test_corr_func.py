@@ -1,7 +1,6 @@
 """Unit tests for the corr function class."""
 import os
 from clease import CEBulk, CorrFunction, Concentration
-from clease.corrFunc import equivalent_deco
 import unittest
 
 db_name = "test_corrfunc.db"
@@ -15,12 +14,12 @@ bc_setting = CEBulk(crystalstructure="fcc", a=4.05, size=[4, 4, 4],
 
 
 def get_mic_dists(atoms, cluster):
-        """Get the MIC dist."""
-        dists = []
-        for indx in cluster:
-            dist = atoms.get_distances(indx, cluster, mic=True)
-            dists.append(dist)
-        return dists
+    """Get the MIC dist."""
+    dists = []
+    for indx in cluster:
+        dist = atoms.get_distances(indx, cluster, mic=True)
+        dists.append(dist)
+    return dists
 
 
 class TestCorrFunc(unittest.TestCase):
@@ -34,10 +33,9 @@ class TestCorrFunc(unittest.TestCase):
             self.assertAlmostEqual(dist, ref_dist)
 
     def test_order_indep_ref_indx(self):
-        """Check that the order of the elements are independent of the ref index.
-
-        This does only apply for clusters with only inequivalent
-        sites
+        """
+        Check that the order of the elements are independent of the ref index.
+        This does only apply for clusters with only inequivalent sites
         """
         for _, clst in bc_setting.cluster_info_given_size(3)[0].items():
             if clst["equiv_sites"]:

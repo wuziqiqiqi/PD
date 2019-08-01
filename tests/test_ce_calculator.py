@@ -163,9 +163,12 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
         start = time.time()
         atoms.get_potential_energy()
         timings.append(time.time() - start)
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names,
-                                                    return_type="array")
-        assert np.allclose(brute_force_cf, calc.cf)
+        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        calc_cf = calc.get_cf()
+
+        for key in calc_cf.keys():
+            assert abs(calc_cf[key] - brute_force_cf[key]) < 1E-6
+
     print(np.mean(timings))
 
 
@@ -186,7 +189,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
         atoms[indx1].symbol = symb2
         atoms.get_potential_energy()
         brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
-        calc_cf = calc.get_cf_dict()
+        calc_cf = calc.get_cf()
         for k in calc_cf.keys():
             if k.startswith("c0") or k.startswith("c1"):
                 continue
@@ -275,6 +278,7 @@ class TestCECalculator(unittest.TestCase):
         test_update_correlation_functions(
             sp_setting, sp_atoms, n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
+
 
 if __name__ == '__main__':
     unittest.main()

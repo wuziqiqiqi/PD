@@ -27,7 +27,7 @@ class CorrFunction(object):
     setting: settings object
 
     parallel: bool (optional)
-        specify whether or not to use the parallel processing for ``get_cf''
+        specify whether or not to use the parallel processing for `get_cf`
         method.
 
     num_core: int or "all" (optional)
@@ -91,19 +91,14 @@ class CorrFunction(object):
         self.atoms_npy = self._atoms2npy(atoms)
         self.tm = self._full_trans_matrix()
 
-    def get_cf(self, atoms, return_type='dict'):
-        """Calculate correlation function for all possible clusters.
+    def get_cf(self, atoms):
+        """
+        Calculate correlation functions for all possible clusters and return
+        them in a dictionary format.
 
         Parameters:
 
         atoms: Atoms object
-
-        return_type: str
-            -'dict' (default): returns a dictionary (e.g., {'name': cf_value})
-            -'tuple': returns a list of tuples (e.g., [('name', cf_value)])
-            -'array': NumPy array containing *only* the correlation function
-                      values in the same order as the order in
-                      "setting.full_cluster_names"
         """
         if not isinstance(atoms, Atoms):
             raise TypeError('atoms must be an Atoms object')
@@ -114,33 +109,29 @@ class CorrFunction(object):
         # Compute correlation function up the max_cluster_size
         # ----------------------------------------------------
         # loop though all cluster sizes
-        cf['c0'] = np.float64(1.0)
+        cf['c0'] = float(1.0)
 
         # Update singlets
         for dec in bf_list:
-            cf['c1_{}'.format(dec)] = np.float64(self.get_c1(atoms, dec))
+            cf['c1_{}'.format(dec)] = float(self.get_c1(atoms, dec))
 
         cnames = self.setting.cluster_names
         if self.parallel:
-            # Pre-calculate nessecary stuff prior to parallel
-            # execution
+            # Pre-calculate nessecary stuff prior to parallel execution
             self._prepare_corr_func_calculation(atoms)
 
             args = [(self, atoms, name) for name in cnames]
             res = workers.map(get_cf_parallel, args)
             cf = {}
             for r in res:
-                cf[r[0][0]] = np.float64(r[0][1])
-            if return_type == 'tuple':
-                return list(cf.items())
-            elif return_type == 'array':
-                cf = np.array([cf[x] for x in cnames], dtype=np.float64)
+                cf.update(r)
             return cf
-        return self.get_cf_by_cluster_names(atoms, cnames, return_type)
+        return self.get_cf_by_cluster_names(atoms, cnames)
 
-    def get_cf_by_cluster_names(self, atoms, cluster_names,
-                                return_type='dict', warm=False):
-        """Calculate correlation functions of the specified clusters.
+    def get_cf_by_cluster_names(self, atoms, cluster_names, warm=False):
+        """
+        Calculate correlation functions of the specified clusters and return
+        them in a dictionary format.
 
         Parameters:
 
@@ -149,13 +140,6 @@ class CorrFunction(object):
         cluster_names: list
             names (str) of the clusters for which the correlation functions are
             calculated for the structure provided in atoms
-
-        return_type: str
-            -'dict' (default): returns a dictionary (e.g., {'name': cf_value})
-            -'tuple': returns a list of tuples (e.g., [('name', cf_value)])
-            -'array': NumPy array containing *only* the correlation function
-                      values in the same order as the order provided in the
-                      "cluster_names"
         """
 
         self._confirm_cluster_names_exists(cluster_names)
@@ -165,7 +149,7 @@ class CorrFunction(object):
         cf = {}
         for name in cluster_names:
             if name == 'c0':
-                cf[name] = np.float64(1.0)
+                cf[name] = float(1.0)
                 continue
             prefix = name.rpartition('_')[0]
             dec = name.rpartition('_')[-1]
@@ -174,7 +158,7 @@ class CorrFunction(object):
             n = int(prefix[1])
 
             if n == 1:
-                cf[name] = np.float64(self.get_c1(atoms, int(dec)))
+                cf[name] = float(self.get_c1(atoms, int(dec)))
                 continue
 
             sp = 0.
@@ -190,14 +174,8 @@ class CorrFunction(object):
                 sp += sp_temp
                 count += count_temp
             cf_temp = sp / count
-            cf['{}_{}'.format(prefix, dec)] = np.float64(cf_temp)
+            cf['{}_{}'.format(prefix, dec)] = float(cf_temp)
 
-        if return_type == 'dict':
-            pass
-        elif return_type == 'tuple':
-            cf = list(cf.items())
-        elif return_type == 'array':
-            cf = np.array([cf[x] for x in cluster_names], dtype=np.float64)
         return cf
 
     def reconfigure_db_entries(self, select_cond=None, verbose=True):
@@ -247,7 +225,7 @@ class CorrFunction(object):
                 print("updating {} of {} entries".format(count+1, num_reconf),
                       end="\r")
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
-            cf = self.get_cf(atoms, return_type='dict')
+            cf = self.get_cf(atoms)
             db.update(row_id, external_tables={tab_name: cf})
 
         if verbose:
@@ -365,7 +343,7 @@ def get_cf_parallel(args):
     cf = args[0]
     atoms = args[1]
     name = args[2]
-    return cf.get_cf_by_cluster_names(atoms, [name], return_type="tuple")
+    return cf.get_cf_by_cluster_names(atoms, [name])
 
 
 @jit(nopython=True)

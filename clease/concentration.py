@@ -62,6 +62,7 @@ class Concentration(object):
         A list used tp specify the equality condisitons of the concentration
         ranges.
     """
+
     def __init__(self, basis_elements=None, grouped_basis=None,
                  A_lb=None, b_lb=None, A_eq=None, b_eq=None):
         self.orig_basis_elements = basis_elements
@@ -165,7 +166,7 @@ class Concentration(object):
         A_eq: nested list of numpy array
             NxM matrix where N is the number of equations and
             M is the overall number of concentrations
-        b_eq: list or numpy array 
+        b_eq: list or numpy array
             right hand side vector of the equation length N
         """
 
@@ -205,7 +206,7 @@ class Concentration(object):
         A_lb: nested list of numpy array
             NxM matrix where N is the number of equations and
             M is the overall number of concentrations
-        b_lb: list or numpy array 
+        b_lb: list or numpy array
             right hand side vector of the equation length N
         """
         A_lb = np.array(A_lb)
@@ -352,14 +353,14 @@ class Concentration(object):
         Parameters:
 
         formulas: list
-            List constaining formula strings (e.g., 
+            List constaining formula strings (e.g.,
             ["Li<x>Ru<1>X<2-x>", "O<3-y>X<y>"], ['Al<4-4x>Mg<3x>Si<x>''])
             1. formula string should be provided per basis.
             2. formula string can only have integer numbers.
             3. only one  dvariable is allowed per basis.
             4. each variable should have at least one instance of 'clean'
             representation (e.g., <x>, <y>)
-            
+
         variable_range: dict
             Range of each variable used in formulas.
             key is a string, and the value should be int or float
@@ -376,7 +377,7 @@ class Concentration(object):
                 "".format(len(self.basis_elements), len(formulas),
                           self.basis_elements)
             )
-            
+
         element_conc = self._parse_formula_unit_string(formulas)
         num_atoms_in_basis = self._num_atoms_in_basis(formulas, variable_range)
 
@@ -656,12 +657,10 @@ class Concentration(object):
                            bounds=self.trivial_bounds)
         self._remove_fixed_element_in_each_basis_constraint()
         x = opt_res["x"]
-        
 
         if not self.is_valid_conc(x):
-            raise InvalidConcentrationError("Could not find valid "
-                                            "concentration. "
-                                            "Revise the constraints.")
+            msg = "Could not find valid concentration. Revise the constraints."
+            raise InvalidConcentrationError(msg)
         return x
 
     def _get_interbasis_relations(self):
@@ -674,7 +673,7 @@ class Concentration(object):
         for i in range(0, len(self.basis_elements)-1):
             start_col = basis_start_col[-1] + len(self.basis_elements[i])
             basis_start_col.append(start_col)
-        
+
         # Linked basis
         tol = 1E-6
         for i in range(A.shape[0]):
@@ -725,13 +724,13 @@ class Concentration(object):
         # Find the closest vector to x0 that satisfies all constraints
         opt_res = minimize(objective_component_min, x0, args=(comp,),
                            method="SLSQP", jac=obj_jac_component_min,
-                           constraints=constraints, 
+                           constraints=constraints,
                            bounds=self.trivial_bounds)
 
         x = opt_res["x"]
         if not self.is_valid_conc(x):
-            raise InvalidConcentrationError("Could not find valid concentration. "
-                                            "Revise the constraints.")
+            msg = "Could not find valid concentration. Revise the constraints."
+            raise InvalidConcentrationError(msg)
         return x
 
     def get_conc_max_component(self, comp):
@@ -751,16 +750,16 @@ class Concentration(object):
                            bounds=self.trivial_bounds)
         x = opt_res["x"]
         if not self.is_valid_conc(x):
-            raise InvalidConcentrationError("Could not find valid concentration. "
-                                            "Revise the constraints.")
+            msg = "Could not find valid concentration. Revise the constraints."
+            raise InvalidConcentrationError(msg)
         return x
 
     def conc_in_int(self, num_atoms_in_basis, conc):
         """Converts concentration value to an integer that corresponds to the
         number of corresponding elements.
 
-        Arugments:
-        =========
+        Parameters:
+
         num_atoms_in_basis: list of int
             Number of sites in each basis (e.g., [27, 27], [64]).
         conc: array of float
@@ -839,7 +838,7 @@ class Concentration(object):
     def is_valid(self, index_by_basis, atoms):
         """Check if the atoms object has a valid concentration.
 
-        Parameters: 
+        Parameters:
 
         index_by_basis: list
             list where the indices of atoms is grouped by basis

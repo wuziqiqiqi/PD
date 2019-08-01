@@ -5,7 +5,7 @@ class InteractivePlot(object):
     """Class for creating an interactive plot with annotations
 
     Parameters:
-    
+
     fig: Figure instance
         Instance of the figure object visualizing the data
     ax: Axes instance
@@ -15,6 +15,7 @@ class InteractivePlot(object):
         Each list contains one annotation for each (x, y) pair on that
         line
     """
+
     def __init__(self, fig, ax, lines, annotations):
         self.fig = fig
         self.ax = ax

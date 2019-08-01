@@ -406,5 +406,3 @@ def check_valid_conversion_matrix(array):
                          "zero (got {}). For a right "
                          "coordinate system, we need a positive "
                          "determinant!".format(determinant))
-
-

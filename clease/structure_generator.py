@@ -2,7 +2,7 @@
 import os
 import math
 from random import choice, getrandbits
-from copy import deepcopy, copy
+from copy import deepcopy
 import numpy as np
 from numpy.linalg import inv, pinv
 from ase.db import connect
@@ -119,12 +119,12 @@ class StructureGenerator(object):
 
         # Check thate correlation function matach the expected value
         self._check_consistency()
-        cf = self.corrFunc.get_cf(self.generated_structure, return_type="dict")
+        cf = self.corrFunc.get_cf(self.generated_structure)
         return self.generated_structure, cf
 
     def _set_generated_structure(self):
         self.generated_structure = self.atoms.copy()
-        cf_dict = self.atoms.get_calculator().get_cf_dict()
+        cf_dict = self.atoms.get_calculator().get_cf()
         self.cf_generated_structure = deepcopy(cf_dict)
 
     def _accept(self):
@@ -248,8 +248,7 @@ class StructureGenerator(object):
         # Check to see if the cf is indeed preserved
         final_cf = \
             self.corrFunc.get_cf_by_cluster_names(self.generated_structure,
-                                                  self.atoms.get_calculator().cluster_names,
-                                                  return_type='dict')
+                                                  self.atoms.get_calculator().cluster_names)
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'

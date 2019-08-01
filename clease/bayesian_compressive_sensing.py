@@ -64,6 +64,7 @@ class BayesianCompressiveSensing(LinearRegression):
         Penalization value added to the diagonal of matrice
         to avoid singular matrices
     """
+
     def __init__(self, shape_var=0.5, rate_var=0.5, shape_lamb=0.5,
                  lamb_opt_start=200, variance_opt_start=100,
                  fname="bayes_compr_sens.json",

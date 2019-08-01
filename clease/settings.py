@@ -267,8 +267,8 @@ class ClusterExpansionSetting(object):
             lengths.append(np.sqrt(vec.dot(vec)))
             weights.append(w)
 
-        # Introduce tolerance to make max distance strictly
-        # smaller than half of the shortest cell dimension
+        # Introduce tolerance to make max distance strictly smaller than half
+        # of the shortest cell dimension
         tol = 2 * 10**(-3)
         min_length = min(lengths) / 2.0
         min_length = min_length.round(decimals=3) - tol

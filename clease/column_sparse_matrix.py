@@ -20,7 +20,8 @@ class ColumnSparseMatrix(object):
 
         self.num_rows = num_rows
         self.num_cols = len(columns)
-        self.matrix_elements = np.zeros(self.num_rows*self.num_cols, dtype=np.int32)
+        self.matrix_elements = np.zeros(self.num_rows*self.num_cols,
+                                        dtype=np.int32)
 
     def _index_in_element_array(self, row, col):
         return row*self.num_cols + self.global_index[col]

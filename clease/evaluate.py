@@ -232,17 +232,10 @@ class Evaluate(object):
         self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
         return self.eci
 
-    def get_cluster_name_eci(self, return_type='dict'):
-        """Determine cluster names and their corresponding ECI value.
-
-        Parameters:
-
-        return_type: str
-            'tuple'- return an array of cluster_name-ECI tuples.
-            e.g., [(name_1, ECI_1), (name_2, ECI_2)]
-            'dict'- return a dictionary.
-            e.g., {name_1: ECI_1, name_2: ECI_2}
+    def get_cluster_name_eci(self):
         """
+        Determine cluster names and their corresponding ECI value and return
+        them in a dictionary format."""
         self.get_eci()
 
         # sanity check
@@ -256,19 +249,17 @@ class Evaluate(object):
                 continue
             pairs.append((cname, self.eci[i]))
 
-        if return_type == 'dict':
-            return dict(pairs)
-        return pairs
+        return dict(pairs)
 
     def save_cluster_name_eci(self, fname='cluster_eci.json'):
         """Determine cluster names and their corresponding ECI value.
 
         Parameters:
 
-        return_type: str
-            the file name should end with either .json or .txt.
+        fname: str
+            file name should end with either .json or .txt.
         """
-        eci_dict = self.get_cluster_name_eci(return_type='dict')
+        eci_dict = self.get_cluster_name_eci()
 
         extension = fname.split(".")[-1]
 
@@ -455,13 +446,14 @@ class Evaluate(object):
             else:
                 plt.show()
 
-    def alpha_CV(self, alpha_min=1E-7, alpha_max=1.0, num_alpha=10, scale='log',
-                 logfile=None, fitting_schemes=None):
+    def alpha_CV(self, alpha_min=1E-7, alpha_max=1.0, num_alpha=10,
+                 scale='log', logfile=None, fitting_schemes=None):
         """Calculate CV for a given range of alpha.
 
         In addition to calculating CV with respect to alpha, a logfile can be
-        used to extend the range of alpha or to add more alpha values in a given
-        range.
+        used to extend the range of alpha or to add more alpha values in a
+        given range.
+
         Returns a list of alpha values, and a list of CV scores.
 
         Parameters:
@@ -871,8 +863,8 @@ class Evaluate(object):
                 prefix = name.rpartition("_")[0]
                 info = self.setting.cluster_info_by_name(prefix)[0]
                 dia = info["max_cluster_dia"]
-            if (size <= self.max_cluster_size and
-                    dia < self.max_cluster_dia[size]):
+            if (size <= self.max_cluster_size
+                    and dia < self.max_cluster_dia[size]):
                 filtered_cnames.append(name)
         self.cluster_names = filtered_cnames
 
@@ -959,7 +951,6 @@ class Evaluate(object):
         elif self.scoring_scheme == "k-fold":
             cv = self.k_fold_cv() * 1000.0
         return cv
-
 
 
 def loocv_mp(args):

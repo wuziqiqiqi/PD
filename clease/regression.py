@@ -94,6 +94,7 @@ class Tikhonov(LinearRegression):
                     The dimensions of the matrix should be M * M where M is the
                     number of features.
     """
+
     def __init__(self, alpha=1E-5, penalize_bias_term=False):
         LinearRegression.__init__(self)
         self.alpha = alpha
@@ -170,6 +171,7 @@ class Lasso(LinearRegression):
     alpha: float
         regularization coefficient
     """
+
     def __init__(self, alpha=1E-5):
         LinearRegression.__init__(self)
         self.alpha = alpha

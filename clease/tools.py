@@ -435,7 +435,7 @@ def symbols2integer(basis_functions):
     """
     symb_id = {}
     for i, symb in enumerate(basis_functions[0].keys()):
-            symb_id[symb] = i
+        symb_id[symb] = i
     return symb_id
 
 

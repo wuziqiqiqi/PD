@@ -9,22 +9,24 @@ class TestSupercelLFactor(unittest.TestCase):
     def test_fcc(self):
         conc = Concentration(basis_elements=[['Au', 'Cu']])
 
-        setting = CEBulk(crystalstructure='fcc', a=4.0, 
+        setting = CEBulk(crystalstructure='fcc', a=4.0,
                          cubic=True, supercell_factor=8,
-                         concentration=conc, db_name=db_name, max_cluster_size=4,
-                         max_cluster_dia=4.0, basis_function='sanchez',
-                         skew_threshold=4, ignore_background_atoms=False)
-        
+                         concentration=conc, db_name=db_name,
+                         max_cluster_size=4, max_cluster_dia=4.0,
+                         basis_function='sanchez', skew_threshold=4,
+                         ignore_background_atoms=False)
+
         self.assertEqual(setting.template_atoms.num_templates, 6)
-        
+
         os.remove(db_name)
 
         setting = CEBulk(crystalstructure='fcc', a=4.0,
                          cubic=True, supercell_factor=8, size=[2, 2, 2],
-                         concentration=conc, db_name=db_name, max_cluster_size=4,
-                         max_cluster_dia=4.0, basis_function='sanchez',
-                         skew_threshold=4, ignore_background_atoms=False)
-        
+                         concentration=conc, db_name=db_name,
+                         max_cluster_size=4, max_cluster_dia=4.0,
+                         basis_function='sanchez', skew_threshold=4,
+                         ignore_background_atoms=False)
+
         self.assertEqual(setting.template_atoms.num_templates, 1)
 
         os.remove(db_name)
