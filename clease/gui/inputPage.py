@@ -2,11 +2,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.utils import get_color_from_hex
 
-from constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
-from load_save_dialog import LoadDialog, SaveDialog
-from util import parse_max_cluster_dia, parse_grouped_basis_elements
-from util import parse_size, parse_elements, parse_cellpar, parse_cell
-from util import parse_coordinate_basis
+from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
+from clease.gui.load_save_dialog import LoadDialog, SaveDialog
+from clease.gui.util import parse_max_cluster_dia, parse_grouped_basis_elements
+from clease.gui.util import parse_size, parse_elements, parse_cellpar, parse_cell
+from clease.gui.util import parse_coordinate_basis
 import json
 import os
 
@@ -16,9 +16,11 @@ class InputPage(Screen):
         'crystStructSpinner': ''
     }
     current_session_file = None
+    _pop_up = None
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
+        self._pop_up = None
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
@@ -255,23 +257,53 @@ class InputPage(Screen):
                 return 1
         return 0
 
+    def cellpar_ok(self):
+        cellPar = self.ids.cellParInput.text
+        try:
+            _ = parse_cellpar(cellPar)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def cell_ok(self):
+        cell = self.ids.cellInput.text
+        try:
+            _ = parse_cell(cell)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def elem_ok(self):
+        elems = self.ids.elementInput.text
+        try:
+            _ = parse_elements(elems)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def grouped_basis_ok(self):
+        gr_basis = self.ids.groupedBasisInput.text
+        try:
+            _ = parse_grouped_basis_elements(gr_basis)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
     def _check_cecrystal_input(self):
         cellPar = self.ids.cellParInput.text
         sufficient_cell_info_given = False
         if cellPar != '':
-            try:
-                _ = parse_cellpar(cellPar)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cellpar_ok():
                 return 1
             sufficient_cell_info_given = True
 
         cell = self.ids.cellInput.text
         if cell != '':
-            try:
-                _ = parse_cell(cell)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cell_ok():
                 return 1
             sufficient_cell_info_given = True
 
@@ -292,6 +324,31 @@ class InputPage(Screen):
             return 1
         return 0
 
+    def max_cluster_dia_ok(self):
+        cluster_size = int(self.ids.clusterSize.text)
+        try:
+            diameter = parse_max_cluster_dia(self.ids.clusterDia.text)
+
+            if isinstance(diameter, list):
+                if len(diameter) != cluster_size - 1:
+                    self.ids.status.text = 'Cluster dia has to be given for 2-body and beyond!'
+                    return False
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def cell_size_ok(self):
+        """
+        Check if the cell size is OK
+        """
+        try:
+            _ = parse_size(self.ids.sizeInput.text)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
     def check_user_input(self):
         """
         Check the input values from the user
@@ -305,29 +362,18 @@ class InputPage(Screen):
             return 1
 
         # Check that we can parse the max cluster diameter
-        try:
-            diameter = parse_max_cluster_dia(self.ids.clusterDia.text)
-
-            if isinstance(diameter, list):
-                if len(diameter) != cluster_size - 1:
-                    self.ids.status.text = 'Cluster dia has to be given for 2-body and beyond!'
-                    return 1
-        except Exception as exc:
-            self.ids.status.text = str(exc)
+        if not self.max_cluster_dia_ok():
             return 1
 
         # Check that we can parse size
         if self.ids.sizeModeSpinner.text == 'Fixed':
-            try:
-                _ = parse_size(self.ids.sizeInput.text)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.cell_size_ok():
                 return 1
         else:
             if self.ids.supercellFactorInput.text == '':
                 self.ids.status.text = 'Supercell factor has to be given'
                 return 1
-            
+
             if self.ids.skewnessFactorInput.text == '':
                 self.ids.status.text = 'Skewness factor has to be given'
                 return 1
@@ -351,19 +397,15 @@ class InputPage(Screen):
         if elems == '':
             self.ids.status.text = 'No elements are given'
             return 1
-        try:
-            _ = parse_elements(elems)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
+
+        if not self.elem_ok():
             return 1
 
         gr_basis = self.ids.groupedBasisInput.text
 
         if gr_basis != '':
-            try:
-                _ = parse_grouped_basis_elements(gr_basis)
-            except Exception as exc:
-                self.ids.status.text = str(exc)
+            if not self.grouped_basis_ok():
+                return 1
         return 0
 
     def update_size_section(self, text):

@@ -12,3 +12,5 @@ clease.egg-info/*
 .vscode/*
 *.so
 *.o
+gui_tests/*.txt
+*.txt

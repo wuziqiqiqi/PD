@@ -6,9 +6,9 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
 from kivy.app import App
 from threading import Thread
-from util import parse_grouped_basis_elements, parse_elements
-from util import parse_cell, parse_coordinate_basis, parse_cellpar
-from util import parse_size
+from clease.gui.util import parse_grouped_basis_elements, parse_elements
+from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
+from clease.gui.util import parse_size
 
 
 class SettingsInitialiser(object):
@@ -55,7 +55,6 @@ class ConcentrationPage(Screen):
         elem_str = self.manager.get_screen("Input").ids.elementInput.text
         grouped_basis = \
             self.manager.get_screen("Input").ids.groupedBasisInput.text
-
         try:
             if grouped_basis != '':
                 self.grouped_basis = \

@@ -3,8 +3,8 @@ from kivy.utils import get_color_from_hex
 from kivy.uix.popup import Popup
 from kivy.app import App
 
-from constants import FOREGROUND_TEXT_COLOR, INACTIVE_TEXT_COLOR
-from load_save_dialog import LoadDialog
+from clease.gui.constants import FOREGROUND_TEXT_COLOR, INACTIVE_TEXT_COLOR
+from clease.gui.load_save_dialog import LoadDialog
 import os
 import json
 from threading import Thread
@@ -65,6 +65,8 @@ class EminStructGenerator(object):
 
 
 class NewStructPage(Screen):
+    _pop_up = None
+    
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
 
@@ -117,6 +119,7 @@ class NewStructPage(Screen):
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
+        self._pop_up = None
 
     def show_load_eci_dialog(self):
         content = LoadDialog(

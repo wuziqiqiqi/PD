@@ -96,6 +96,7 @@
             TextInput:
                 id: clusterSize
                 text: '4'
+                input_filter: 'int'
 
             TextInput:
                 id: clusterDia
@@ -185,14 +186,17 @@
             TextInput:
                 id: aParameterInput
                 text: ''
+                input_filter: 'float'
 
             TextInput:
                 id: cParameterInput
                 text: ''
+                input_filter: 'float'
 
             TextInput:
                 id: uParameterInput
                 text: ''
+                input_filter: 'float'
 
             Spinner:
                 id: orthSpinner
@@ -293,7 +297,7 @@
                 text: 'Reconfigure corr func'
 
             Button:
-                id: saveSession
+                id: saveAsSession
                 text: 'Save As'
                 on_release: root.show_save_dialog()
 
@@ -327,6 +331,7 @@
             size_hint_y: None
             height: 30
             Button:
+                id: cancelButton
                 text: "Cancel"
                 on_release: root.cancel()
 
