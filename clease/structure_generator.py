@@ -124,7 +124,7 @@ class StructureGenerator(object):
 
     def _set_generated_structure(self):
         self.generated_structure = self.atoms.copy()
-        cf_dict = self.atoms.get_calculator().get_cf_dict()
+        cf_dict = self.atoms.get_calculator().get_cf()
         self.cf_generated_structure = deepcopy(cf_dict)
 
     def _accept(self):

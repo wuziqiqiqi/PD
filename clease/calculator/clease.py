@@ -49,28 +49,23 @@ class Clease(Calculator):
             raise TypeError(msg)
         self.parameters["eci"] = cluster_name_eci
         self.setting = setting
-        self.CF = CorrFunction(setting)
+        self.corrFunc = CorrFunction(setting)
 
         # read ECIs
         if isinstance(cluster_name_eci, dict):
-            self.cluster_names = []
-            self.eci = []
-            for cluster_name, eci in cluster_name_eci.items():
-                self.cluster_names.append(cluster_name)
-                self.eci.append(eci)
-            self.eci = np.array(self.eci)
+            self.eci = cluster_name_eci
         else:
             msg = "'cluster_name_eci' must be a dictionary.\n"
             msg += "It can be obtained using 'get_cluster_name_eci' method in "
             msg += "Evaluate class."
             raise TypeError(msg)
 
+        # store cluster names
+        self.cluster_names = list(cluster_name_eci.keys())
+
         # calculate init_cf or convert init_cf to array
-        if init_cf is None:
+        if init_cf is None or isinstance(init_cf, dict):
             self.init_cf = init_cf
-        elif isinstance(init_cf, dict):
-            self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
-                                    dtype=float)
         else:
             msg = "'init_cf' must be a dictionary containing cluster names "
             msg += "and their correlation function values."
@@ -133,9 +128,9 @@ class Clease(Calculator):
                 dec_str = name.rpartition('_')[-1]
                 dec = [int(x) for x in dec_str]
                 cluster = self.setting.cluster_info[symm][prefix]
-                equiv_deco = np.array(
-                            equivalent_deco(dec, cluster["equiv_sites"]),
-                            dtype=np.int32)
+                equiv_deco = \
+                    np.array(equivalent_deco(dec, cluster["equiv_sites"]),
+                             dtype=np.int32)
                 equiv_decos[-1][name] = equiv_deco
         return equiv_decos
 
@@ -160,11 +155,9 @@ class Clease(Calculator):
         self.atoms = atoms
 
         if self.init_cf is None:
-            init_cf = self.CF.get_cf_by_cluster_names(self.atoms,
+            self.init_cf = \
+                self.corrFunc.get_cf_by_cluster_names(self.atoms,
                                                       self.cluster_names)
-            # change dict to array
-            self.init_cf = np.array([init_cf[x] for x in self.cluster_names],
-                                    dtype=float)
 
         if len(self.setting.atoms) != len(atoms):
             msg = "Passed Atoms object and setting.atoms should have same "
@@ -182,13 +175,10 @@ class Clease(Calculator):
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
         self.is_backround_index[self.setting.background_indices] = 1
 
-        cf_dict = dict(zip(self.cluster_names, self.init_cf))
-
         info = \
             self._get_cluster_info_with_dup_factors(self.setting.cluster_info)
-        self.updater = PyCEUpdater(self.atoms, self.setting, cf_dict,
-                                   dict(zip(self.cluster_names, self.eci)),
-                                   info)
+        self.updater = PyCEUpdater(self.atoms, self.setting, self.init_cf,
+                                   self.eci, info)
 
     def get_energy_given_change(self, system_changes):
         """
@@ -239,14 +229,9 @@ class Clease(Calculator):
 
         return changed
 
-    def get_cf_dict(self):
+    def get_cf(self):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
-
-    def get_cf_list_tup(self):
-        """Return the correlation function as a list of tuples"""
-        cf = self.updater.get_cf()
-        return [(k, v) for k, v in cf.items()]
 
     def _generate_normalization_factor(self):
         """Return a dictionary with all the normalization factors."""
