@@ -3,7 +3,7 @@
 CLuster Expansion in Atomic Simulation Environment
 
 # Installation
-After cloning CLEASE, install the [requirements](requirements.txt) by executing
+After cloning CLEASE, install the [dependencies](requirements.txt) by executing
 ```
 pip install -r requirements.txt
 ```
