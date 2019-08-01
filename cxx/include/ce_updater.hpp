@@ -169,6 +169,7 @@ private:
   NamedArray ecis;
   std::map<std::string,std::string> cname_with_dec;
   std::vector<bool> is_background_index;
+  bool ignore_background_indices{true};
   CFHistoryTracker *history{nullptr};
   PyObject *atoms{nullptr};
   tracker_t *tracker{nullptr}; // Do not own this pointer

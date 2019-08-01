@@ -33,6 +33,9 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   #ifdef CE_DEBUG
     cerr << "Getting symbols from setting object\n";
   #endif
+  PyObject* py_ignore_bck = get_attr(setting, "ignore_background_atoms");
+  ignore_background_indices = PyObject_IsTrue(py_ignore_bck);
+  Py_DECREF(py_ignore_bck);
 
   unsigned int n_atoms = PyObject_Length(atoms);
   if (n_atoms < 0)
@@ -923,7 +926,7 @@ void CEUpdater::read_trans_matrix( PyObject* py_trans_mat )
     for (unsigned int i=0;i<size;i++ )
     {
       // Background atoms are ignored (and should never be accessed)
-      if (is_background_index[i]){
+      if (is_background_index[i] && ignore_background_indices){
         continue;
       }
 
@@ -1087,7 +1090,7 @@ void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
     double count = 0;
     for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
       int symm = trans_symm_group[atom_no];
-      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no]))
+      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no] && ignore_background_indices))
       {
         continue;
       }
