@@ -17,6 +17,7 @@ from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
 import unittest
+import time
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -36,7 +37,8 @@ def get_members_of_family(setting, cname):
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
-    return cf.get_cf(atoms)
+    cf_dict = cf.get_cf(atoms)
+    return cf_dict
 
 
 class TestCEBulk(unittest.TestCase):

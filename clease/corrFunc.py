@@ -8,6 +8,7 @@ from clease.tools import symbols2integer, bf2npyarray
 from ase.db import connect
 import multiprocessing as mp
 from clease.jit import jit
+from clease_cxx import PyCEUpdater
 
 # workers can not be a member of CorrFunction since CorrFunctions is passed
 # as argument to the map function. Hence, we leave it as a global variable,
@@ -143,8 +144,16 @@ class CorrFunction(object):
         """
 
         self._confirm_cluster_names_exists(cluster_names)
+
         if not self.parallel:
             self._prepare_corr_func_calculation(atoms)
+
+        eci = {name: 1.0 for name in cluster_names}
+        cf = {name: 1.0 for name in cluster_names}
+        updater = PyCEUpdater(atoms, self.setting, cf, eci,
+                              self.setting.cluster_info)
+        cf = updater.calculate_cf_from_scratch()
+        return cf
 
         cf = {}
         for name in cluster_names:

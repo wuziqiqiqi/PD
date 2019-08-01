@@ -16,7 +16,7 @@ CEUpdater::CEUpdater(){};
 CEUpdater::~CEUpdater()
 {
   delete history;
-  if ( atoms != nullptr ) Py_DECREF(atoms);
+  //if ( atoms != nullptr ) Py_DECREF(atoms);
 
   delete symbols_with_id; symbols_with_id=nullptr;
   delete basis_functions; basis_functions=nullptr;
@@ -152,7 +152,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     }
     clusters.push_back(new_clusters);
   }
-  Py_DECREF(cluster_info);
+  //Py_DECREF(cluster_info);
   #ifdef CE_DEBUG
     cout << "Finished reading cluster_info\n";
   #endif
@@ -1026,5 +1026,89 @@ void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::ve
     if (symbols_with_id->get_symbol_id(new_symbols[i]) != symb_id){
       changed_sites.push_back(i);
     }
+  }
+}
+
+void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
+
+  cf.clear();
+
+  // Initialise all cluster names
+  for (unsigned int eci_index=0;eci_index<ecis.size();eci_index++){
+    cf[ecis.name(eci_index)] = 0.0;
+  }
+
+  // Loop over all clusters
+  for (unsigned int eci_index=0;eci_index<ecis.size();eci_index++){
+    const string& name = ecis.name(eci_index);
+
+    // Handle empty cluster
+    if (name.find("c0") == 0)
+    {
+      cf[name] = 1.0;
+      continue;
+    }
+
+    vector<int> bfs;
+    get_basis_functions(name, bfs);
+
+    // Handle singlet cluster
+    if (name.find("c1") == 0)
+    {
+      int dec = bfs[0];
+      double new_value = 0.0;
+      for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
+        new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
+      }
+      cf[name] = new_value/symbols_with_id->size();
+      continue;
+    }
+
+    // Handle the rest of the clusters
+    // Extract the prefix
+    int pos = name.rfind("_");
+    string prefix = name.substr(0,pos);
+    string dec_str = name.substr(pos+1);
+
+    vector<const Cluster*> clust_per_symm_group;
+
+    for (unsigned int symm=0;symm<clusters.size();symm++){
+      if (clusters[symm].find(prefix) == clusters[symm].end())
+      {
+        clust_per_symm_group.push_back(nullptr);
+      }
+      else{
+        clust_per_symm_group.push_back(&clusters[symm].at(prefix));
+      }
+    }
+
+    double sp = 0.0;
+    double cf_temp = 0.0;
+    double count = 0;
+    for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
+      int symm = trans_symm_group[atom_no];
+      if (clust_per_symm_group[symm] == nullptr)
+      {
+        continue;
+      }
+
+      const Cluster& cluster = *clust_per_symm_group[symm];
+      unsigned int size = cluster.size;
+      assert(cluster_indices[0].size() == size);
+      assert(bfs.size() == size);
+
+
+      const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
+      double sp_temp = 0.0;
+      for (const vector<int>& deco : equiv_deco)
+      {
+        sp_temp += spin_product_one_atom(atom_no, cluster, deco, symbols_with_id->id(atom_no));
+      }
+
+      sp += sp_temp/equiv_deco.size();
+      count += cluster.get().size();
+    }
+
+    cf[name] = sp/count;
   }
 }

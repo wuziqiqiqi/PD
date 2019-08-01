@@ -136,6 +136,9 @@ public:
   /** Find which sites have changed */
   void get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const;
 
+  /** Calculate correlation functions from scratch */
+  void calculate_cf_from_scratch(std::map<std::string, double> &cf);
+
   /** Converts a system change encoded as a python tuple to a SymbolChange object */
   static SymbolChange& py_tuple_to_symbol_change( PyObject *single_change, SymbolChange &symb_change );
   static void py_changes2_symb_changes( PyObject* all_changes, std::vector<SymbolChange> &symb_changes );
