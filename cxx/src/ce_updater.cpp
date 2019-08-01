@@ -1087,7 +1087,7 @@ void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
     double count = 0;
     for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
       int symm = trans_symm_group[atom_no];
-      if (clust_per_symm_group[symm] == nullptr)
+      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no]))
       {
         continue;
       }
@@ -1108,7 +1108,12 @@ void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
       sp += sp_temp/equiv_deco.size();
       count += cluster.get().size();
     }
-
-    cf[name] = sp/count;
+    
+    if (count == 0){
+      cf[name] = 0.0;
+    }
+    else{
+      cf[name] = sp/count;
+    }
   }
 }
