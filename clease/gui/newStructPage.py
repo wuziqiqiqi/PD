@@ -169,7 +169,7 @@ class NewStructPage(Screen):
             if fname == '':
                 msg = 'No atoms template given. Using active template.'
                 self.ids.status.text = msg
-                atoms = settings.atoms
+                atoms = settings.atoms.copy()
             else:
                 if not os.path.exists(fname):
                     self.ids.status.text = "Cannot find file {}".format(fname)
