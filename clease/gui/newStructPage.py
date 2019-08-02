@@ -14,6 +14,7 @@ class RandomStructureGenerator(object):
     atoms = None
     generator = None
     status = None
+    page = None
 
     def generate(self):
         try:
@@ -21,6 +22,7 @@ class RandomStructureGenerator(object):
             self.status.text = 'Finished generating random structures...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
 class ProbeStructureGenerator(object):
@@ -31,6 +33,7 @@ class ProbeStructureGenerator(object):
     Tmax = None
     num_temp = None
     num_steps = None
+    page = None
 
     def generate(self):
         try:
@@ -40,6 +43,7 @@ class ProbeStructureGenerator(object):
             self.status.text = 'Finished generating probe strcutres...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
 class EminStructGenerator(object):
@@ -52,6 +56,7 @@ class EminStructGenerator(object):
     num_steps = None
     eci = None
     randomize = None
+    page = None
 
     def generate(self):
         try:
@@ -62,10 +67,12 @@ class EminStructGenerator(object):
             self.status.text = 'Finished generating GS structures...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
 class NewStructPage(Screen):
     _pop_up = None
+    structure_generation_in_progress = False
     
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
@@ -155,6 +162,12 @@ class NewStructPage(Screen):
         from clease import NewStructures
         from ase.io import read
 
+        if self.structure_generation_in_progress:
+            # Don't allow user to initialise many threads
+            # by successively clicking on the generate button
+            return
+        
+        self.structure_generation_in_progress = True
         settings = App.get_running_app().settings
 
         if settings is None:
@@ -190,6 +203,7 @@ class NewStructPage(Screen):
                 rnd_generator.generator = generator
                 rnd_generator.atoms = atoms
                 rnd_generator.status = self.ids.status
+                rnd_generator.page = self
                 Thread(target=rnd_generator.generate).start()
             elif struct_type == 'Probe structure':
                 self.ids.status.text = 'Generating probe structures...'
@@ -201,6 +215,7 @@ class NewStructPage(Screen):
                 prb_generator.Tmin = Tmin
                 prb_generator.num_temp = num_temps
                 prb_generator.num_steps = num_steps
+                prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
             elif struct_type == 'Minimum energy structure':
                 eci_file = self.ids.eciFileInput.text
@@ -219,6 +234,7 @@ class NewStructPage(Screen):
                 emin_generator.num_steps = num_steps
                 emin_generator.eci = eci
                 emin_generator.randomize = randomize
+                emin_generator.page = self
 
                 Thread(target=emin_generator.generate).start()
         except RuntimeError as exc:
