@@ -10,23 +10,28 @@ import json
 from threading import Thread
 
 
-class RandomStructureGenerator(object):
+class BaseGenerator(object):
     atoms = None
     generator = None
     status = None
+    page = None
 
+    def generate(self):
+        if self.status is None:
+            self.status.text = 'Generate function needs to be implemented'
+
+
+class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
             self.status.text = 'Finished generating random structures...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
-class ProbeStructureGenerator(object):
-    atoms = None
-    generator = None
-    status = None
+class ProbeStructureGenerator(BaseGenerator):
     Tmin = None
     Tmax = None
     num_temp = None
@@ -40,12 +45,10 @@ class ProbeStructureGenerator(object):
             self.status.text = 'Finished generating probe strcutres...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
 class EminStructGenerator(object):
-    atoms = None
-    generator = None
-    status = None
     Tmax = None
     Tmin = None
     num_temps = None
@@ -62,10 +65,12 @@ class EminStructGenerator(object):
             self.status.text = 'Finished generating GS structures...'
         except Exception as exc:
             self.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
 
 
 class NewStructPage(Screen):
     _pop_up = None
+    structure_generation_in_progress = False
     
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
@@ -155,6 +160,12 @@ class NewStructPage(Screen):
         from clease import NewStructures
         from ase.io import read
 
+        if self.structure_generation_in_progress:
+            # Don't allow user to initialise many threads
+            # by successively clicking on the generate button
+            return
+        
+        self.structure_generation_in_progress = True
         settings = App.get_running_app().settings
 
         if settings is None:
@@ -169,7 +180,7 @@ class NewStructPage(Screen):
             if fname == '':
                 msg = 'No atoms template given. Using active template.'
                 self.ids.status.text = msg
-                atoms = settings.atoms
+                atoms = settings.atoms.copy()
             else:
                 if not os.path.exists(fname):
                     self.ids.status.text = "Cannot find file {}".format(fname)
@@ -190,6 +201,7 @@ class NewStructPage(Screen):
                 rnd_generator.generator = generator
                 rnd_generator.atoms = atoms
                 rnd_generator.status = self.ids.status
+                rnd_generator.page = self
                 Thread(target=rnd_generator.generate).start()
             elif struct_type == 'Probe structure':
                 self.ids.status.text = 'Generating probe structures...'
@@ -201,6 +213,7 @@ class NewStructPage(Screen):
                 prb_generator.Tmin = Tmin
                 prb_generator.num_temp = num_temps
                 prb_generator.num_steps = num_steps
+                prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
             elif struct_type == 'Minimum energy structure':
                 eci_file = self.ids.eciFileInput.text
@@ -219,6 +232,7 @@ class NewStructPage(Screen):
                 emin_generator.num_steps = num_steps
                 emin_generator.eci = eci
                 emin_generator.randomize = randomize
+                emin_generator.page = self
 
                 Thread(target=emin_generator.generate).start()
         except RuntimeError as exc:

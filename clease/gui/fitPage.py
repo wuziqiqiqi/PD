@@ -35,6 +35,7 @@ class ECIOptimiser(object):
             self.fit_page.fitting_in_progress = False
         except Exception as exc:
             self.fit_page.ids.status.text = str(exc)
+            self.fit_page.fitting_in_progress = False
             return
 
 
@@ -217,9 +218,12 @@ class FitPage(Screen):
         if not fname.endswith('.json'):
             self.ids.status.text = 'ECI file should be a JSON file'
 
-        with open(fname, 'w') as out:
-            json.dump(self.eci, out, separators=(',', ': '), indent=2)
-        self.ids.status.text = 'ECIs saved to {}'.format(fname)
+        try:
+            with open(fname, 'w') as out:
+                json.dump(self.eci, out, separators=(',', ': '), indent=2)
+            self.ids.status.text = 'ECIs saved to {}'.format(fname)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
 
     def fit_ecis(self):
         if self.fitting_in_progress:

@@ -14,7 +14,7 @@ import os.path as op
 
 main_path = op.abspath(__file__)
 main_path = main_path.rpartition("/")[0]
-resource_add_path(main_path)
+resource_add_path(main_path + '/layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 

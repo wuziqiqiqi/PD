@@ -23,13 +23,14 @@ class SettingsInitialiser(object):
 
     def initialise(self):
         from clease import CEBulk, CECrystal
-
         try:
             if self.type == 'CEBulk':
                 self.app.settings = CEBulk(**self.kwargs)
             elif self.type == 'CECrystal':
                 self.app.settings = CECrystal(**self.kwargs)
             self.status.text = 'Database initialised'
+        except AssertionError as exc:
+            self.status.text = "AssertError during initialisation " + str(exc)
         except Exception as exc:
             self.status.text = str(exc)
 

@@ -83,6 +83,7 @@ class StructureGenerator(object):
             count = 0
             while count < self.num_steps_per_temp:
                 count += 1
+
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted)/count
                     print("Temp: {}. {} of {}. Acc. rate: {}"
@@ -420,6 +421,7 @@ class GSStructure(StructureGenerator):
                                     init_temp, final_temp, num_temp,
                                     num_steps_per_temp)
         self.alter_composition = False
+        self.eci = cluster_name_eci
         calc = Clease(self.setting, cluster_name_eci=cluster_name_eci)
         self.atoms.set_calculator(calc)
         self.old_energy = None
