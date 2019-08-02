@@ -19,6 +19,8 @@ class InputPage(Screen):
     _pop_up = None
 
     def dismiss_popup(self):
+        if self._pop_up is None:
+            return
         self._pop_up.dismiss()
         self._pop_up = None
 
