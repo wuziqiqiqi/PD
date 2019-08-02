@@ -57,6 +57,11 @@ def check_python_development_headers():
     return ok
 
 
+def find_layout_files():
+    folder = 'clease/gui/layout/'
+    files = os.listdir(folder)
+    return [folder + x for x in files if x.endswith('.kv')]
+
 if not check_python_development_headers():
     raise ValueError("Python development header must be available.")
 
@@ -66,10 +71,15 @@ clease_cxx = Extension("clease_cxx", sources=src_files,
                                      cxx_src_folder, get_python_inc()],
                        extra_compile_args=extra_comp_args,
                        language="c++")
+
+
 setup(
     name="clease",
     ext_modules=cythonize(clease_cxx),
+    scripts=['bin/clease'],
     version=1.0,
     description="CLuster Expansion in Atomistic Simulation Environment",
-    packages=find_packages()
+    packages=find_packages(),
+    include_package_data=True,
+    data_files=[('layout', find_layout_files())]
 )
