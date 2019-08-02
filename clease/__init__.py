@@ -16,6 +16,7 @@ from clease.concentration import Concentration
 from clease.regression import LinearRegression, Tikhonov, Lasso
 from clease.ga_fit import GAFit
 from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
+from clease.cluster_info_mapper import ClusterInfoMapper
 
 __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'NewStructures', 'NewStructures', 'Evaluate',
