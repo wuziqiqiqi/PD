@@ -152,7 +152,7 @@ class CorrFunction(object):
         cf = {name: 1.0 for name in cluster_names}
         updater = PyCEUpdater(atoms, self.setting, cf, eci,
                               self.setting.cluster_info)
-        cf = updater.calculate_cf_from_scratch()
+        cf = updater.calculate_cf_from_scratch(atoms, cluster_names)
         return cf
 
         cf = {}

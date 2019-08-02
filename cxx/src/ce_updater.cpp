@@ -1120,3 +1120,22 @@ void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
     }
   }
 }
+
+void CEUpdater::set_atoms(PyObject *py_atoms){
+    vector<string> symbols;
+    unsigned int num_atoms = PySequence_Length(py_atoms);
+
+    if (num_atoms != symbols_with_id->size()){
+      throw invalid_argument("Length of passed atoms object is different from current");
+    }
+
+    for (unsigned int i=0;i<num_atoms;i++){
+      PyObject* atom = PySequence_GetItem(py_atoms, i);
+      PyObject* symb_str = get_attr(atom, "symbol");
+      symbols.push_back(py2string(symb_str));
+      Py_DECREF(atom);
+      Py_DECREF(symb_str);
+    }
+    this->atoms = py_atoms;
+    symbols_with_id->set_symbols(symbols);
+}

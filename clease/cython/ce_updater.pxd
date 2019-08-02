@@ -37,3 +37,5 @@ cdef extern from "ce_updater.hpp":
       void get_changes(vector[string] &symbs, vector[unsigned int] &changed_sites) except +
 
       void calculate_cf_from_scratch(map_cpp[string, double] &cf)
+
+      void set_atoms(object atoms) except+

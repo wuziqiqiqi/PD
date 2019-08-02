@@ -66,7 +66,9 @@ cdef class PyCEUpdater:
         self.thisptr.get_changes(symb_vec, changed)
         return [changed[i] for i in range(changed.size())]
 
-    def calculate_cf_from_scratch(self):
+    def calculate_cf_from_scratch(self, atoms, cluster_names):
+        self.thisptr.set_atoms(atoms)
+
         cdef map_cpp[string, double] cf
         self.thisptr.calculate_cf_from_scratch(cf)
 

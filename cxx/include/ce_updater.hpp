@@ -139,6 +139,9 @@ public:
   /** Calculate correlation functions from scratch */
   void calculate_cf_from_scratch(std::map<std::string, double> &cf);
 
+  /** Set a new atoms object */
+  void set_atoms(PyObject *atoms);
+
   /** Converts a system change encoded as a python tuple to a SymbolChange object */
   static SymbolChange& py_tuple_to_symbol_change( PyObject *single_change, SymbolChange &symb_change );
   static void py_changes2_symb_changes( PyObject* all_changes, std::vector<SymbolChange> &symb_changes );
