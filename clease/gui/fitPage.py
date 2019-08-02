@@ -35,6 +35,7 @@ class ECIOptimiser(object):
             self.fit_page.fitting_in_progress = False
         except Exception as exc:
             self.fit_page.ids.status.text = str(exc)
+            self.fit_page.fitting_in_progress = False
             return
 
 
