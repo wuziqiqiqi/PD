@@ -70,13 +70,19 @@ cdef class PyCEUpdater:
         self.thisptr.set_atoms(atoms)
 
         cdef map_cpp[string, double] cf
-        self.thisptr.calculate_cf_from_scratch(cf)
+        cdef vector[string] cname_vec
+
+        # Transfer names to a C++ vector
+        for name in cluster_names:
+            cname_vec.push_back(name)
+        self.thisptr.calculate_cf_from_scratch(cname_vec, cf)
 
         # Transfer to python dict
         cf_dict = {}
         cdef map_cpp[string, double].iterator it = cf.begin()
         cdef map_cpp[string, double].iterator end = cf.end()
         
+        # Transfer map[string, double] to dictionary
         while(it != end):
             cf_dict[dereference(it).first] = dereference(it).second
             postincrement(it)

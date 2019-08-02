@@ -1032,18 +1032,17 @@ void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::ve
   }
 }
 
-void CEUpdater::calculate_cf_from_scratch(map<string, double> &cf){
+void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, map<string, double> &cf){
 
   cf.clear();
 
   // Initialise all cluster names
-  for (unsigned int eci_index=0;eci_index<ecis.size();eci_index++){
-    cf[ecis.name(eci_index)] = 0.0;
+  for (const string& name : cluster_names){
+    cf[name] = 0.0;
   }
 
   // Loop over all clusters
-  for (unsigned int eci_index=0;eci_index<ecis.size();eci_index++){
-    const string& name = ecis.name(eci_index);
+  for (const string& name : cluster_names){
 
     // Handle empty cluster
     if (name.find("c0") == 0)
