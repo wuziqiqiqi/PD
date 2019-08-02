@@ -34,12 +34,6 @@ class CorrFunction(object):
                             "object")
         self.setting = setting
 
-    def _prepare_corr_func_calculation(self, atoms):
-        if isinstance(atoms, Atoms):
-            self.check_cell_size(atoms)
-        else:
-            raise TypeError('atoms must be Atoms object')
-
     def get_cf(self, atoms):
         """
         Calculate correlation functions for all possible clusters and return
@@ -68,10 +62,12 @@ class CorrFunction(object):
             calculated for the structure provided in atoms
         """
 
-        self._confirm_cluster_names_exists(cluster_names)
+        if isinstance(atoms, Atoms):
+            self.check_cell_size(atoms)
+        else:
+            raise TypeError('atoms must be Atoms object')
 
-        if not self.parallel:
-            self._prepare_corr_func_calculation(atoms)
+        self._confirm_cluster_names_exists(cluster_names)
 
         eci = {name: 1.0 for name in cluster_names}
         cf = {name: 1.0 for name in cluster_names}
