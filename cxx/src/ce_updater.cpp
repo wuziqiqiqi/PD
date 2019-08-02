@@ -1118,6 +1118,8 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
       cf[name] = sp/count;
     }
   }
+
+  history->get_current().init(cf);
 }
 
 void CEUpdater::set_atoms(PyObject *py_atoms){
