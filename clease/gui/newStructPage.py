@@ -10,12 +10,18 @@ import json
 from threading import Thread
 
 
-class RandomStructureGenerator(object):
+class BaseGenerator(object):
     atoms = None
     generator = None
     status = None
     page = None
 
+    def generate(self):
+        if self.status is None:
+            self.status.text = 'Generate function needs to be implemented'
+
+
+class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
@@ -25,15 +31,11 @@ class RandomStructureGenerator(object):
         self.page.structure_generation_in_progress = False
 
 
-class ProbeStructureGenerator(object):
-    atoms = None
-    generator = None
-    status = None
+class ProbeStructureGenerator(BaseGenerator):
     Tmin = None
     Tmax = None
     num_temp = None
     num_steps = None
-    page = None
 
     def generate(self):
         try:
@@ -47,16 +49,12 @@ class ProbeStructureGenerator(object):
 
 
 class EminStructGenerator(object):
-    atoms = None
-    generator = None
-    status = None
     Tmax = None
     Tmin = None
     num_temps = None
     num_steps = None
     eci = None
     randomize = None
-    page = None
 
     def generate(self):
         try:
