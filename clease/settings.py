@@ -861,7 +861,6 @@ class ClusterExpansionSetting(object):
             assert len(self.trans_matrix_old) == len(self.trans_matrix)
             assert self.trans_matrix_old == self.trans_matrix
 
-
     def _store_data(self):
         size_str = nested_list2str(self.size)
         num = self.template_atoms_uid
