@@ -57,9 +57,9 @@ class ClusterInfoMapper(object):
         new_info = deepcopy(self.cluster_info)
         for new_item, old_item in zip(new_info, self.cluster_info):
             for k, v in new_item.items():
-                v['ref_indx'] = index_map[old_item[k]['ref_indx']]
+                v['ref_indx'] = int(index_map[old_item[k]['ref_indx']])
                 o_indx = old_item[k]['indices']
-                v['indices'] = [[index_map[x] for x in sub] for sub in o_indx]
+                v['indices'] = [[int(index_map[x]) for x in sub] for sub in o_indx]
         return new_info
 
     def _map_trans_matrix(self, index_map):
@@ -71,7 +71,7 @@ class ClusterInfoMapper(object):
 
         for row in unique:
             row_in_large = np.where(index_map == row)[0][0]
-            new_tm.append({index_map[k]: index_map[v]
+            new_tm.append({int(index_map[k]): int(index_map[v])
                            for k, v in self.tm_matrix[row_in_large].items()})
         return new_tm
 
