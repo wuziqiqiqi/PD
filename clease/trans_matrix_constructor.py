@@ -54,22 +54,6 @@ class TransMatrixConstructor(object):
         mapped[template_indx] = indx
         return mapped
 
-        tol = 1E-6
-        for i, d in zip(nb_indx, nb_dist):
-            dist_vec = np.array(ref_dists) - np.array(d)
-            lengths = np.sum(dist_vec**2, axis=1)
-            short_lengths = lengths[lengths < tol]
-
-            if len(short_lengths) > 1:
-                raise MICDistanceNotUniqueError(
-                    'Multiple atoms has the same distance vector')
-            elif len(short_lengths) == 0:
-                raise MICDistanceNotUniqueError('No MIC distance vector match')
-
-            corresponding_indx = ref_indx[np.argmin(lengths)]
-            mapped[corresponding_indx] = i
-        return mapped
-
     def construct(self, ref_symm_group, symm_group):
         """Construct translation matrix.
 
