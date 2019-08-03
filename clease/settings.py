@@ -178,8 +178,10 @@ class ClusterExpansionSetting(object):
         """Convert the current size into a string."""
         return nested_list2str(self.size)
 
-    def _set_active_template_by_uid(self, uid):
-        """Set a fixed template atoms object as the active."""
+    def _prepare_new_active_template(self, uid):
+        """
+        Prepare nessecary datastructures when setting new template
+        """
         self.template_atoms_uid = uid
         self.atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
@@ -193,6 +195,10 @@ class ClusterExpansionSetting(object):
         self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
+
+    def _set_active_template_by_uid(self, uid):
+        """Set a fixed template atoms object as the active."""
+        self._prepare_new_active_template(uid)
 
         # Read information from database
         # Note that if the data is not found, it will generate
