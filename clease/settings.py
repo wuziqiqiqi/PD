@@ -117,6 +117,7 @@ class ClusterExpansionSetting(object):
             raise ValueError("list of elements is needed for each basis")
 
         if not os.path.exists(db_name):
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         else:
             self._read_data()
@@ -844,16 +845,7 @@ class ClusterExpansionSetting(object):
                 max_dist = np.max(distances)
         return max_dist + 1E-5
 
-    def _store_data(self):
-        size_str = nested_list2str(self.size)
-        num = self.template_atoms_uid
-        num_templates = self.template_atoms.num_templates
-        # print('Generating cluster data for template with size: {}. '
-        #       '({} of {})'.format(size_str, num+1, num_templates))
-        _logger('Generating cluster data for template with size: {}. '
-                '({} of {})'.format(size_str, num+1, num_templates),
-                verbose=LogVerbosity.INFO)
-
+    def _create_cluster_info_and_trans_matrix(self):
         self._create_cluster_information()
 
         symm_group = self._get_symm_groups()
@@ -868,6 +860,17 @@ class ClusterExpansionSetting(object):
                 assert self.trans_matrix_old[_] == self.trans_matrix[_]
             assert len(self.trans_matrix_old) == len(self.trans_matrix)
             assert self.trans_matrix_old == self.trans_matrix
+
+
+    def _store_data(self):
+        size_str = nested_list2str(self.size)
+        num = self.template_atoms_uid
+        num_templates = self.template_atoms.num_templates
+        # print('Generating cluster data for template with size: {}. '
+        #       '({} of {})'.format(size_str, num+1, num_templates))
+        _logger('Generating cluster data for template with size: {}. '
+                '({} of {})'.format(size_str, num+1, num_templates),
+                verbose=LogVerbosity.INFO)
 
         db = connect(self.db_name)
         data = {'cluster_info': self.cluster_info,
@@ -889,6 +892,7 @@ class ClusterExpansionSetting(object):
             self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
@@ -1036,6 +1040,7 @@ class ClusterExpansionSetting(object):
         # current max_cluster_size and max_cluster_dia
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         self._set_active_template_by_uid(0)
         _logger('Cluster data updated for all templates.\n'
