@@ -4,6 +4,9 @@ from copy import deepcopy
 import numpy as np
 
 
+class AtomsNotContainedInLargeCellError(Exception):
+    pass
+
 class ClusterInfoMapper(object):
     """
     Class for accelerating the construction of cluster descriptors when 
@@ -24,21 +27,14 @@ class ClusterInfoMapper(object):
         self.cluster_info = cluster_info
         self.tree = KDTree(self.atoms.get_positions())
 
-    def map_indices(self, small_atoms):
+    def _map_indices(self, small_atoms):
         """
         Map indices from large atoms to small.
         """
-        com = self.atoms.get_center_of_mass()
-        com_small = small_atoms.get_center_of_mass()
-
-        # Get the position of the atom that is closest to the center of mass
-        dist, ind = self.tree.query(com)
-        pos_closest = self.tree.data[ind, :]
-
         tree = KDTree(small_atoms.get_positions())
 
         # Positions in large cell
-        large_pos = self.atoms.get_positions() - pos_closest
+        large_pos = self.atoms.get_positions()
         
         # Wrap these positions into the small cell
         large_pos = wrap_positions(large_pos, small_atoms.get_cell())
@@ -48,9 +44,12 @@ class ClusterInfoMapper(object):
         # in the large cell
         dist, index_map = tree.query(large_pos)
         assert np.all(dist < 1E-6)
+
+        if len(list(set(index_map))) != len(small_atoms):
+            raise AtomsNotContainedInLargeCellError("All indices not covered")
         return index_map
 
-    def map_cluster_info(self, index_map):
+    def _map_cluster_info(self, index_map):
         """
         Maps the cluster info the old large atoms to the corresponding
         cluster info of the small atoms object
@@ -63,7 +62,7 @@ class ClusterInfoMapper(object):
                 v['indices'] = [[index_map[x] for x in sub] for sub in o_indx]
         return new_info
 
-    def map_trans_matrix(self, index_map):
+    def _map_trans_matrix(self, index_map):
         """
         Map the translation matrix
         """
@@ -75,3 +74,12 @@ class ClusterInfoMapper(object):
             new_tm.append({index_map[k]: index_map[v]
                            for k, v in self.tm_matrix[row_in_large].items()})
         return new_tm
+
+    def map_info(self, small_atoms):
+        """
+        Map cluster info from the large host
+        """
+        index_map = self._map_indices(small_atoms)
+        new_info = self._map_cluster_info(index_map)
+        new_tm = self._map_trans_matrix(index_map)
+        return new_info, new_tm

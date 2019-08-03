@@ -1,6 +1,7 @@
 from clease import ClusterInfoMapper, CEBulk, Concentration, CorrFunction
 from clease import CECrystal
 from clease.tools import wrap_and_sort_by_position
+from clease.cluster_info_mapper import AtomsNotContainedInLargeCellError
 import unittest
 import os
 from ase.build import bulk
@@ -32,9 +33,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         info_mapper = ClusterInfoMapper(
             setting.atoms, setting.trans_matrix, setting.cluster_info)
 
-        index_map = info_mapper.map_indices(atoms_small)
-        map_info = info_mapper.map_cluster_info(index_map)
-        map_tm = info_mapper.map_trans_matrix(index_map)
+        map_info, map_tm = info_mapper.map_info(atoms_small)
 
         atoms_small[0].symbol = 'Cu'
         atoms_small[4].symbol = 'Cu'
@@ -88,9 +87,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         info_mapper = ClusterInfoMapper(
             bsg.atoms, bsg.trans_matrix, bsg.cluster_info)
         
-        index_map = info_mapper.map_indices(atoms_small)
-        map_info = info_mapper.map_cluster_info(index_map)
-        map_tm = info_mapper.map_trans_matrix(index_map)
+        map_info, map_tm = info_mapper.map_info(atoms_small)
 
         # Swap 3 O with X
         count = 0
@@ -116,6 +113,13 @@ class TestClusterInfoMapper(unittest.TestCase):
         os.remove(db_name)
         self.assertTrue(dict_amost_equal(cf1, cf2))
 
+    def test_not_contained_error(self):
+        atoms = bulk("Al", crystalstructure="fcc", a=4.05)*(2, 1, 1)
+        atoms2 = bulk("Al", crystalstructure="fcc", a=4.05)*(1, 1, 3)
+
+        info_mapper = ClusterInfoMapper(atoms, None, None)
+        with self.assertRaises(AtomsNotContainedInLargeCellError):
+            info_mapper._map_indices(atoms2)
 
 if __name__ == '__main__':
     unittest.main()
