@@ -5,6 +5,19 @@ import numpy as np
 
 
 class ClusterInfoMapper(object):
+    """
+    Class for accelerating the construction of cluster descriptors when 
+    the cluster descriptor already is known for a larger cell
+
+    Parameter
+    =========
+    atoms: Atoms
+        Large atoms cell
+    tm_matrix list of dict
+        Translation "matrix" for the large cell
+    cluster_info: list dict (See settiing)
+        Cluster info the for the large cell
+    """
     def __init__(self, atoms, tm_matrix, cluster_info):
         self.atoms = atoms
         self.tm_matrix = tm_matrix
@@ -42,7 +55,6 @@ class ClusterInfoMapper(object):
         Maps the cluster info the old large atoms to the corresponding
         cluster info of the small atoms object
         """
-        new_trans_mat = {}
         new_info = deepcopy(self.cluster_info)
         for new_item, old_item in zip(new_info, self.cluster_info):
             for k, v in new_item.items():
