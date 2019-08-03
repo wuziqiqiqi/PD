@@ -28,9 +28,18 @@ class TransMatrixConstructor(object):
         # Transfer to more convenienct strucutre
         neighbor = [{"nb_index": [], "dist": []} for _ in range(len(atoms))]
 
+        # Re-group by first index
         for i in range(len(i_first)):
-            neighbor[i_first[i]]["nb_index"].append(i_second[i])
-            neighbor[i_first[i]]["dist"].append(d_vec[i])
+            neighbor[i_first[i]]["nb_index"].append(i_second[i].tolist()) 
+            d = d_vec[i].round(decimals=6) + 0
+            neighbor[i_first[i]]["dist"].append(d.tolist())
+
+        # Sort based on distance
+        for i in range(len(neighbor)):
+            srt = sorted(list(zip(neighbor[i]["dist"], neighbor[i]["nb_index"])))
+            srt = list(zip(*srt))  # Unzip the list
+            neighbor[i]["dist"] = srt[0]
+            neighbor[i]["nb_index"] = srt[1]
         return neighbor
 
     def _map_one(self, indx, template_indx):
@@ -41,6 +50,9 @@ class TransMatrixConstructor(object):
         nb_dist = self.neighbor[indx]["dist"]
         ref_indx = self.neighbor[template_indx]["nb_index"]
         ref_dists = self.neighbor[template_indx]["dist"]
+        mapped = {ref: ind for ref, ind in zip(ref_indx, nb_indx)}
+        mapped[template_indx] = indx
+        return mapped
 
         tol = 1E-6
         for i, d in zip(nb_indx, nb_dist):
