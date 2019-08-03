@@ -47,9 +47,7 @@ class TransMatrixConstructor(object):
         mapped = {template_indx: indx}
 
         nb_indx = self.neighbor[indx]["nb_index"]
-        nb_dist = self.neighbor[indx]["dist"]
         ref_indx = self.neighbor[template_indx]["nb_index"]
-        ref_dists = self.neighbor[template_indx]["dist"]
         mapped = {ref: ind for ref, ind in zip(ref_indx, nb_indx)}
         mapped[template_indx] = indx
         return mapped
