@@ -103,8 +103,7 @@ class CEBulk(ClusterExpansionSetting):
                             'c': c,
                             'covera': covera,
                             'u': u,
-                            'orthorhombic': orthorhombic,
-                            'cubic': cubic})
+                            'orthorhombic': orthorhombic})
         num_basis = len(self.concentration.orig_basis_elements)
         if num_basis != self.structures[self.crystalstructure]:
             msg = "{} has {} basis. ".format(
@@ -252,8 +251,7 @@ class CECrystal(ClusterExpansionSetting):
                             'spacegroup': spacegroup,
                             'cell': cell,
                             'cellpar': cellpar,
-                            'ab_normal': ab_normal,
-                            'primitive_cell': primitive_cell})
+                            'ab_normal': ab_normal})
 
         self._check_first_elements()
 
