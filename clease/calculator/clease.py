@@ -4,8 +4,6 @@ import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
-from clease import CorrFunction, CEBulk, CECrystal
-from clease.corrFunc import equivalent_deco
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -42,9 +40,11 @@ class Clease(Calculator):
 
     def __init__(self, setting, cluster_name_eci=None, init_cf=None,
                  logfile=None):
+        from clease import CorrFunction
+        from clease.settings import ClusterExpansionSetting
         Calculator.__init__(self)
 
-        if not isinstance(setting, (CEBulk, CECrystal)):
+        if not isinstance(setting, ClusterExpansionSetting):
             msg = "setting must be CEBulk or CECrystal object."
             raise TypeError(msg)
         self.parameters["eci"] = cluster_name_eci
@@ -116,6 +116,7 @@ class Clease(Calculator):
         return info
 
     def _precalculate_equivalent_decorations(self):
+        from clease.corrFunc import equivalent_deco
         equiv_decos = []
 
         for symm in range(0, len(self.setting.cluster_info)):
