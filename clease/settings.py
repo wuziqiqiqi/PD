@@ -885,19 +885,43 @@ class ClusterExpansionSetting(object):
     def _cutoff_for_tm_construction(self):
         indices = self.unique_indices
         max_dist = -1.0
+        
         for ref in indices:
-            distances = self.atoms.get_distances(ref, indices, mic=True)
-            if np.max(distances) > max_dist:
-                max_dist = np.max(distances)
-        return max_dist + 1E-5
+            # MIC distance is a lower bound for the distance used in the 
+            # cluster
+            mic_distances = self.atoms.get_distances(ref, indices, mic=True)
+            new_max_dist = np.max(mic_distances)
+            if new_max_dist > max_dist:
+                max_dist = new_max_dist
+        return 0.51*max_dist
 
     def _create_cluster_info_and_trans_matrix(self):
         self._create_cluster_information()
 
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()
-        tmc = TransMatrixConstructor(self.atoms, tm_cutoff)
-        tm = tmc.construct(self.ref_index_trans_symm, symm_group)
+
+        # For smaller cell we currently have no method to set decide how large cutoff
+        # we need in order to ensure that all indices in unique_indices are included
+        # We therefore just probe the cutoff and increase it by a factor 2 until we
+        # achieve the what we want
+        all_included = False
+        counter = 0
+        max_attempts = 1000
+        while not all_included and counter < max_attempts:
+            try:
+                tmc = TransMatrixConstructor(self.atoms, tm_cutoff)
+                tm = tmc.construct(self.ref_index_trans_symm, symm_group)
+                _ = [tm[0][k] for k in self.unique_indices]
+                all_included = True
+            except (KeyError, IndexError):
+                tm_cutoff *= 2
+                print(tm_cutoff)
+            counter += 1
+
+        if counter >= max_attempts:
+            raise RuntimeError("Could not find a cutoff suc that all "
+                               "unique_indices are included")
         self.trans_matrix = [{k: row[k] for k in self.unique_indices}
                              for row in tm]
         if self.check_old_tm_algorithm:
