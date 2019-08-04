@@ -67,7 +67,7 @@ class TestTransMatrixConstructor(unittest.TestCase):
                                   (0.2, 0.35, 0.5), (0.22, 0.38, 0.)],
                            spacegroup=55,
                            cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                           size=[1, 1, 1], primitive_cell=False)
+                           size=[1, 1, 1])
 
         for atom in unitcell:
             atom.tag = atom.index
