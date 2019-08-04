@@ -242,10 +242,9 @@ class ConcentrationPage(Screen):
                     u = float(inputPage['uParameter'])
 
                 ortho = inputPage['ortho'] == 'Yes'
-                cubic = inputPage['cubic'] == 'Yes'
                 kwargs = dict(
                     crystalstructure=inputPage['crystalstructure'], a=a,
-                    c=c, u=u, orthorhombic=ortho, cubic=cubic,
+                    c=c, u=u, orthorhombic=ortho,
                     db_name=inputPage['db_name'], concentration=conc,
                     max_cluster_dia=float(inputPage['max_cluster_dia']),
                     max_cluster_size=int(inputPage['cluster_size']),
@@ -273,12 +272,10 @@ class ConcentrationPage(Screen):
                 else:
                     cell = parse_cell(inputPage['cell'])
 
-                primitive = inputPage['primitive'] == 'Yes'
                 sp = int(inputPage['spacegroup'])
                 self.ids.status.text = "Initialising database..."
                 kwargs = dict(
                     basis=basis, cellpar=cellpar, cell=cell,
-                    primitive_cell=primitive,
                     max_cluster_dia=float(inputPage['max_cluster_dia']),
                     max_cluster_size=int(inputPage['cluster_size']),
                     basis_function=inputPage['basis_function'],
