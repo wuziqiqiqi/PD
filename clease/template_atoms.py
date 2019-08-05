@@ -9,6 +9,7 @@ from ase.build import cut
 from itertools import combinations
 from ase.build import make_supercell
 from clease.tools import str2nested_list
+from clease import _logger
 
 
 class TemplateAtoms(object):
