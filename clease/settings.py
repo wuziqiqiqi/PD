@@ -521,32 +521,41 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        supercell = atoms_cpy*self.supercell_scale_factor
-        supercell = wrap_and_sort_by_position(supercell)
-        # supercell = close_to_cubic_supercell(atoms_cpy, zero_cutoff=0.1)
-        # sc_factor = self._get_scale_factor(supercell)
-        # supercell *= (sc_factor)
+        # supercell = atoms_cpy*self.supercell_scale_factor
         # supercell = wrap_and_sort_by_position(supercell)
+        supercell = close_to_cubic_supercell(atoms_cpy)
+        max_cluster_dia_in_sc = self._get_max_cluster_dia(supercell.get_cell().T)
+
+        # Make supercell so large that we ca of 4 times max_cluster_ inside
+        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
+        supercell = supercell*(scale, scale, scale)
+        supercell = wrap_and_sort_by_position(supercell)
+        ref_indices = self._corresponding_indices(
+            self.ref_index_trans_symm, supercell)
+
+        com = supercell.get_center_of_mass()
+        supercell.translate(com)
+        supercell.wrap()
+
 
         # If the template atoms is not repeated we need to scale it to at
         # least 2x2x2 when all internal distances are extracted
-        unit_cell_lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
-        sc_lengths = supercell.get_cell_lengths_and_angles()[:3]
-        ratio = np.round(sc_lengths/unit_cell_lengths, decimals=0).astype(int)
-        dist_sc_scale_factor = np.array([1, 1, 1])
-        dist_sc_scale_factor[ratio == 1] = 2
+        # unit_cell_lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
+        # sc_lengths = supercell.get_cell_lengths_and_angles()[:3]
+        # ratio = np.round(sc_lengths/unit_cell_lengths, decimals=0).astype(int)
+        # dist_sc_scale_factor = np.array([1, 1, 1])
+        # dist_sc_scale_factor[ratio == 1] = 2
 
         supercell.info['distances'] = get_all_internal_distances(
-            supercell*dist_sc_scale_factor, max(self.max_cluster_dia))
+            supercell, max(self.max_cluster_dia))
         kdtrees = self._create_kdtrees(supercell)
+        kdtrees = [KDTree(supercell.get_positions())]
 
         cluster_info = []
         fam_identifier = []
 
         # determine cluster information for each inequivalent site
         # (based on translation symmetry)
-        ref_indices = self._corresponding_indices(
-            self.ref_index_trans_symm, supercell)
         # for site, ref_indx in enumerate(self.ref_index_trans_symm):
         for site, ref_indx in enumerate(ref_indices):
             if (supercell[ref_indx].tag in self.background_indices
