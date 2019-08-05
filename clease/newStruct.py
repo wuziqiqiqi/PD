@@ -13,6 +13,7 @@ from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 from clease import CEBulk, CECrystal, CorrFunction
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import ProbeStructure, GSStructure
+from clease import _logger
 
 try:
     from math import gcd
@@ -70,9 +71,9 @@ class NewStructures(object):
                                self.db.select(gen=self.gen)])
         self.num_to_gen = max(self.struct_per_gen - self.num_in_gen, 0)
         if self.num_in_gen >= self.struct_per_gen:
-            print("There are {} structures in generation {} in DB and "
-                  "struct_per_gen = {}. No more structures generated."
-                  .format(self.num_in_gen, self.gen, self.struct_per_gen))
+            _logger("There are {} structures in generation {} in DB and "
+                    "struct_per_gen = {}. No more structures generated."
+                    .format(self.num_in_gen, self.gen, self.struct_per_gen))
 
         if self.num_to_gen == 0:
             return False
@@ -140,8 +141,8 @@ class NewStructures(object):
             if not os.path.isfile('probe_structure-sigma_mu.npz'):
                 self._generate_sigma_mu(num_samples_var)
 
-        print("Generate {} probe structures (struct_per_gen={}, {} present)."
-              .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
+        _logger("Generate {} probe structures (struct_per_gen={}, {} present)."
+                .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
         num_attempt = 0
         while True:
             if atoms is not None:
@@ -158,8 +159,8 @@ class NewStructures(object):
 
             struct = self._get_struct_at_conc(conc_type='random')
 
-            print('Generating {} out of {} structures.'
-                  .format(num_struct + 1, self.struct_per_gen))
+            _logger('Generating {} out of {} structures.'
+                    .format(num_struct + 1, self.struct_per_gen))
             ps = ProbeStructure(self.setting, struct, self.struct_per_gen,
                                 init_temp, final_temp, num_temp,
                                 num_steps_per_temp, approx_mean_var)
@@ -173,7 +174,7 @@ class NewStructures(object):
                 msg += 'generating again... '
                 msg += '{} out of {} attempts'.format(num_attempt + 1,
                                                       max_attempt)
-                print(msg)
+                _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
                     raise MaxAttemptReachedError(
@@ -262,8 +263,8 @@ class NewStructures(object):
             struct = structs[current_count].copy()
             self.setting.set_active_template(atoms=struct,
                                              generate_template=False)
-            print("Generating {} out of {} structures."
-                  .format(current_count + 1, len(structs)))
+            _logger("Generating {} out of {} structures."
+                    .format(current_count + 1, len(structs)))
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, cluster_name_eci)
@@ -275,7 +276,7 @@ class NewStructures(object):
                 msg += 'generating again... '
                 msg += '{} out of {} attempts'.format(num_attempt + 1,
                                                       max_attempt)
-                print(msg)
+                _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
                     raise MaxAttemptReachedError(
@@ -285,7 +286,7 @@ class NewStructures(object):
             else:
                 num_attempt = 0
 
-            print('Structure with E = {:.3f} generated.'.format(es.min_energy))
+            _logger('Structure with E = {:.3f} generated.'.format(es.min_energy))
             kvp = self._get_kvp(gs_struct, formula_unit)
             tab_name = self.corr_func_table_name
             self.db.write(gs_struct, kvp, external_tables={tab_name: cf})
@@ -305,15 +306,15 @@ class NewStructures(object):
         """
         if not self._check_num_to_generate():
             return
-        print("Generating {} random structures (struct_per_gen={}, {} present)"
-              .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
+        _logger("Generating {} random structures (struct_per_gen={}, {} present)"
+                .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
 
         fail_counter = 0
         i = 0
 
         while i < self.num_to_gen and fail_counter < max_fail:
             if self.generate_one_random_structure(atoms=atoms, verbose=False):
-                print("Generated {} random structures".format(i + 1))
+                _logger("Generated {} random structures".format(i + 1))
                 i += 1
                 fail_counter = 0
             else:
@@ -359,8 +360,8 @@ class NewStructures(object):
 
         if not unique_structure_found:
             if verbose:
-                print("Could not find a structure that does not already exist "
-                      "in the DB within {} attempts.".format(max_attempt))
+                _logger("Could not find a structure that does not already exist "
+                        "in the DB within {} attempts.".format(max_attempt))
             return False
 
         self.insert_structure(init_struct=new_atoms)
@@ -372,13 +373,13 @@ class NewStructures(object):
             struct = wrap_and_sort_by_position(atoms)
             if random_composition is False:
                 self.num_to_gen = 1
-                print("Generate 1 ground-state structure.")
+                _logger("Generate 1 ground-state structure.")
                 structs.append(struct)
             else:
-                print("Generate {} ground-state structures "
-                      "(struct_per_gen={}, {} present)"
-                      .format(self.num_to_gen, self.struct_per_gen,
-                              self.num_in_gen))
+                _logger("Generate {} ground-state structures "
+                        "(struct_per_gen={}, {} present)"
+                        .format(self.num_to_gen, self.struct_per_gen,
+                                self.num_in_gen))
                 self.setting.set_active_template(atoms=struct,
                                                  generate_template=True)
                 concs = []
@@ -407,7 +408,7 @@ class NewStructures(object):
                     structs.append(self._random_struct_at_conc(num_insert))
 
         elif all(isinstance(a, Atoms) for a in atoms):
-            print("Generate {} ground-state structures ".format(len(atoms)))
+            _logger("Generate {} ground-state structures ".format(len(atoms)))
             if random_composition is False:
                 for struct in atoms:
                     structs.append(wrap_and_sort_by_position(struct))
@@ -454,8 +455,8 @@ class NewStructures(object):
     def generate_conc_extrema(self):
         """Generate initial pool of structures with max/min concentration."""
         from itertools import product
-        print("Generating one structure per concentration where the number "
-              "of an element is at max/min")
+        _logger("Generating one structure per concentration where the number "
+                "of an element is at max/min")
         indx_in_each_basis = []
         start = 0
         for basis in self.setting.concentration.basis_elements:
@@ -592,7 +593,7 @@ class NewStructures(object):
         except Exception:
             msg = "Warning! Setting to_primitive=False because spglib "
             msg += "is missing!"
-            print(msg)
+            _logger(msg)
             to_prim = False
 
         symmcheck = SymmetryEquivalenceCheck(angle_tol=1.0, ltol=0.05,
@@ -695,11 +696,11 @@ class NewStructures(object):
         return gen
 
     def _generate_sigma_mu(self, num_samples_var):
-        print('===========================================================\n'
-              'Determining sigma and mu value for assessing mean variance.\n'
-              'May take a long time depending on the number of samples \n'
-              'specified in the *num_samples_var* argument.\n'
-              '===========================================================')
+        _logger('===========================================================\n'
+                'Determining sigma and mu value for assessing mean variance.\n'
+                'May take a long time depending on the number of samples \n'
+                'specified in the *num_samples_var* argument.\n'
+                '===========================================================')
         count = 0
         cfm = np.zeros((num_samples_var, len(self.setting.cluster_names)),
                        dtype=float)
@@ -707,7 +708,7 @@ class NewStructures(object):
             atoms = self._get_struct_at_conc(conc_type='random')
             cfm[count] = self.corrfunc.get_cf(atoms, 'array')
             count += 1
-            print('sampling {} ouf of {}'.format(count, num_samples_var))
+            _logger('sampling {} ouf of {}'.format(count, num_samples_var))
 
         sigma = np.cov(cfm.T)
         mu = np.mean(cfm, axis=0)

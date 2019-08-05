@@ -5,6 +5,7 @@ from scipy.optimize import brentq
 import time
 import json
 from itertools import product
+from clease import _logger, LogVerbosity
 
 
 class BayesianCompressiveSensing(LinearRegression):
@@ -299,7 +300,7 @@ class BayesianCompressiveSensing(LinearRegression):
         return np.sqrt(np.mean((pred - self.y)**2))
 
     def log(self, msg):
-        print(msg)
+        _logger(msg, verbose=LogVerbosity.INFO)
 
     @property
     def num_ecis(self):
@@ -325,7 +326,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Save the results from file."""
         with open(self.fname, 'w') as outfile:
             json.dump(self.to_dict(), outfile)
-        print("Backup data written to {}".format(self.fname))
+        _logger("Backup data written to {}".format(self.fname), LogVerbosity.info)
 
     @staticmethod
     def load(fname):

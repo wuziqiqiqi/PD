@@ -848,8 +848,6 @@ class ClusterExpansionSetting(object):
         size_str = nested_list2str(self.size)
         num = self.template_atoms_uid
         num_templates = self.template_atoms.num_templates
-        # print('Generating cluster data for template with size: {}. '
-        #       '({} of {})'.format(size_str, num+1, num_templates))
         _logger('Generating cluster data for template with size: {}. '
                 '({} of {})'.format(size_str, num+1, num_templates),
                 verbose=LogVerbosity.INFO)

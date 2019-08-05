@@ -83,8 +83,8 @@ class TemplateAtoms(object):
                              "".format(size))
 
         # get dims based on the passed atoms and append.
-        print("Template that matches the specified size not found. "
-              "Generating...")
+        _logger("Template that matches the specified size not found. "
+                "Generating...")
         check_valid_conversion_matrix(size)
         unit_cell = self.unit_cell
         self.templates['atoms'].append(unit_cell*size)
@@ -116,8 +116,8 @@ class TemplateAtoms(object):
                              "of given atoms object")
 
         # get dims based on the passed atoms and append.
-        print("Template that matches the size of passed atoms not found. "
-              "Generating...")
+        _logger("Template that matches the size of passed atoms not found. "
+                "Generating...")
         size = self._get_conversion_matrix(atoms)
         assert is_3x3_matrix(size)
 

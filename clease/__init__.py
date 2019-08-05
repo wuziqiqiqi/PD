@@ -1,8 +1,10 @@
 from clease.cleaselogger import CLEASELogger, LogVerbosity
 _logger = CLEASELogger()
 
+
 def set_verbosity(verbosity):
     _logger.verbosity = verbosity
+
 
 def set_fd(fd):
     _logger.fd = fd

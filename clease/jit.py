@@ -4,9 +4,10 @@ try:
     from numba import int32
     jit = numba_jit
     jitclass = numba_jitclass
+    from clease import _logger
 
 except ImportError:
-    print("Numba not installed. We recommend installing Numba.")
+    _logger("Numba not installed. We recommend installing Numba.")
 
     # Numba is not installed
     def dummy_jit(**options):
