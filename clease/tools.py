@@ -41,6 +41,7 @@ def wrap_and_sort_by_position(atoms):
 
 def create_cluster(atoms, indices):
     """Create a cluster centered in the unit cell."""
+    return atoms[indices]
     cluster = atoms[list(indices)]
     cell = cluster.get_cell()
     center = 0.5 * (cell[0, :] + cell[1, :] + cell[2, :])
