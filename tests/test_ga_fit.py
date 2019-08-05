@@ -10,10 +10,8 @@ import numpy as np
 import os
 import unittest
 
-db_name = "ga_fit_test.db"
 
-
-def init_system():
+def init_system(db_name):
     basis_elements = [['Au', 'Cu']]
     concentration = Concentration(basis_elements=basis_elements)
     bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
@@ -45,11 +43,10 @@ def init_system():
     return bc_setting
 
 
-setting = init_system()
-
-
 class TestGAFit(unittest.TestCase):
     def test_init_from_file(self):
+        db_name = 'test_ga_fit.db'
+        setting = init_system(db_name)
         backup = "ga_test.csv"
         selector = GAFit(setting=setting, fname=backup)
         try:
@@ -68,7 +65,7 @@ class TestGAFit(unittest.TestCase):
 
     def tearDown(self):
         try:
-            os.remove(db_name)
+            os.remove('test_ga_fit.db')
         except Exception:
             pass
 
