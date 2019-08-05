@@ -498,6 +498,16 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.01,
                              max_relative_vol_incrase=5):
     """
     Create a close to cubic supercell
+
+    Parameters
+    ==========
+    atoms: Atoms
+        Cell to be used for construction
+    zero_cutoff: float
+        Value below this value will be considered as zero when the
+        scaling factor is computed
+    max_relative_vol_increase: float
+        Maximum allowed relative increase in volume.
     """
     cell = atoms.get_cell()
     inv_cell = np.linalg.inv(cell)
