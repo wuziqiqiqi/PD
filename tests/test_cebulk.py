@@ -112,7 +112,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0],
+                         max_cluster_dia=[4.0, 4.01],
                          ignore_background_atoms=True)
         atoms = setting.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
@@ -121,6 +121,7 @@ class TestCEBulk(unittest.TestCase):
         cf = calculate_cf(setting, atoms)
         if update_reference_file:
             all_cf["two_grouped_basis_bckgrnd"] = cf
+
         for key in cf.keys():
             self.assertAlmostEqual(
                 cf[key], all_cf["two_grouped_basis_bckgrnd"][key]
