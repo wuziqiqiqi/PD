@@ -6,11 +6,10 @@ from ase.db import connect
 import numpy as np
 import unittest
 
-db_name = 'templates.db'
-
 
 class TestTemplates(unittest.TestCase):
     def test_fcc(self):
+        db_name = 'templates_fcc.db'
         unit_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
         db = connect(db_name)
         db.write(unit_cell, name='unit_cell')
@@ -28,6 +27,7 @@ class TestTemplates(unittest.TestCase):
         os.remove(db_name)
 
     def test_hcp(self):
+        db_name = 'templates_hcp.db'
         unit_cell = bulk("Mg")
         db = connect(db_name)
         db.write(unit_cell, name='unit_cell')
