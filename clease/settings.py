@@ -21,6 +21,7 @@ from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
+from clease.tools import close_to_cubic_supercell
 
 
 class ClusterExpansionSetting(object):
@@ -187,7 +188,7 @@ class ClusterExpansionSetting(object):
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
 
-        self.supercell_scale_factor = self._get_scale_factor()
+        self.supercell_scale_factor = self._get_scale_factor(self.atoms)
         self.background_indices = self._get_background_indices()
         self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
@@ -278,9 +279,9 @@ class ClusterExpansionSetting(object):
             return min_length, weights[min_indx]
         return min_length
 
-    def _get_scale_factor(self):
+    def _get_scale_factor(self, atoms):
         """Compute the scale factor nessecary to resolve max_cluster_dia."""
-        cell = self.atoms.get_cell().T
+        cell = atoms.get_cell().T
         max_dia = max(self.max_cluster_dia)
 
         cell_too_small = True
@@ -520,7 +521,11 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        supercell = atoms_cpy*self.supercell_scale_factor
+        # supercell = atoms_cpy*self.supercell_scale_factor
+        # supercell = wrap_and_sort_by_position(supercell)
+        supercell = close_to_cubic_supercell(atoms_cpy, zero_cutoff=0.1)
+        sc_factor = self._get_scale_factor(supercell)
+        supercell *= (sc_factor)
         supercell = wrap_and_sort_by_position(supercell)
 
         # If the template atoms is not repeated we need to scale it to at

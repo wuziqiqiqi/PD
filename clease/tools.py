@@ -6,6 +6,10 @@ from random import sample
 from ase.db import connect
 import json
 from clease import _logger
+from ase.build import make_supercell
+from ase.geometry import wrap_positions
+from scipy.spatial import cKDTree as KDTree
+from math import gcd
 
 
 def index_by_position(atoms):
@@ -488,3 +492,41 @@ def str2nested_list(string):
     """Convert string to nested list."""
     return [list(map(lambda x: int(x), item.split(',')))
             for item in string.split('x')]
+
+
+def close_to_cubic_supercell(atoms, zero_cutoff=0.01,
+                             max_relative_vol_incrase=5):
+    """
+    Create a close to cubic supercell
+    """
+    cell = atoms.get_cell()
+    inv_cell = np.linalg.inv(cell)
+
+    scale = 1.0/inv_cell[np.abs(inv_cell) > zero_cutoff]
+    scale = np.round(scale).astype(np.int32)
+    min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
+    scale = np.true_divide(scale, min_gcd)
+    scale = min_gcd*np.prod(scale)
+    integer_matrix = np.round(inv_cell*scale).astype(np.int32)
+
+    vol_increase = np.linalg.det(integer_matrix)
+    if vol_increase > max_relative_vol_incrase:
+        ratio = max_relative_vol_incrase/vol_increase
+        integer_matrix = np.true_divide(integer_matrix, ratio)
+        integer_matrix = np.round(integer_matrix).astype(np.int32)
+
+    print(np.linalg.det(integer_matrix), integer_matrix, cell, vol_increase)
+    # exit()
+    sc = make_supercell(atoms, integer_matrix)
+    sc = wrap_and_sort_by_position(sc)
+
+    # We need to tag the atoms
+    sc_pos = sc.get_positions()
+    sc_pos = wrap_positions(sc_pos, atoms.get_cell())
+
+    tree = KDTree(atoms.get_positions())
+    dists, tags = tree.query(sc_pos)
+    assert np.allclose(dists, 0.0)
+    for i, tag in enumerate(tags):
+        sc[i].tag = tag
+    return sc
