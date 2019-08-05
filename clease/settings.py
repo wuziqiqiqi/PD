@@ -521,12 +521,12 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        # supercell = atoms_cpy*self.supercell_scale_factor
-        # supercell = wrap_and_sort_by_position(supercell)
-        supercell = close_to_cubic_supercell(atoms_cpy, zero_cutoff=0.1)
-        sc_factor = self._get_scale_factor(supercell)
-        supercell *= (sc_factor)
+        supercell = atoms_cpy*self.supercell_scale_factor
         supercell = wrap_and_sort_by_position(supercell)
+        # supercell = close_to_cubic_supercell(atoms_cpy, zero_cutoff=0.1)
+        # sc_factor = self._get_scale_factor(supercell)
+        # supercell *= (sc_factor)
+        # supercell = wrap_and_sort_by_position(supercell)
 
         # If the template atoms is not repeated we need to scale it to at
         # least 2x2x2 when all internal distances are extracted
