@@ -32,5 +32,12 @@ class TestTools(unittest.TestCase):
         expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
         self.assertTrue(np.allclose(expected_cell, sc.get_cell()))
 
+    def test_bcc(self):
+        a = 3.8
+        atoms = bulk("Fe", a=a, crystalstructure="bcc")
+        sc = close_to_cubic_supercell(atoms)
+        expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
+        self.assertTrue(np.allclose(sc.get_cell(), expected_cell))
+
 if __name__ == '__main__':
     unittest.main()
