@@ -136,6 +136,12 @@ public:
   /** Find which sites have changed */
   void get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const;
 
+  /** Calculate correlation functions from scratch */
+  void calculate_cf_from_scratch(const std::vector<std::string> &cluster_names, std::map<std::string, double> &cf);
+
+  /** Set a new atoms object */
+  void set_atoms(PyObject *atoms);
+
   /** Converts a system change encoded as a python tuple to a SymbolChange object */
   static SymbolChange& py_tuple_to_symbol_change( PyObject *single_change, SymbolChange &symb_change );
   static void py_changes2_symb_changes( PyObject* all_changes, std::vector<SymbolChange> &symb_changes );
@@ -166,6 +172,7 @@ private:
   NamedArray ecis;
   std::map<std::string,std::string> cname_with_dec;
   std::vector<bool> is_background_index;
+  bool ignore_background_indices{true};
   CFHistoryTracker *history{nullptr};
   PyObject *atoms{nullptr};
   tracker_t *tracker{nullptr}; // Do not own this pointer

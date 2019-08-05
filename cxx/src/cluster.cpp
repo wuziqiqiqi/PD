@@ -232,8 +232,20 @@ void Cluster::parse_info_dict(PyObject *info)
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
 
   // Read duplication factors
-  PyObject *py_dup_factors = PyDict_GetItemString(info, "dup_factors");
-  calculate_scaling_factors(py_dup_factors);
+  PyObject *key = string2py("dup_factors");
+  if (PyDict_Contains(info, key)){
+    PyObject *py_dup_factors = PyDict_GetItemString(info, "dup_factors");
+    calculate_scaling_factors(py_dup_factors);
+  }
+  else{
+    // Fill duplication factors with 1.0
+    duplication_factors.clear();
+    for (unsigned int i=0;i<members.size();i++){
+      duplication_factors.push_back(1.0);
+    }
+  }
+  Py_DECREF(key);
+  
 
   // Sanity check
   check_consistency();

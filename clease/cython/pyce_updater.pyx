@@ -3,6 +3,8 @@
 from clease.cython.ce_updater cimport CEUpdater
 from libcpp.vector cimport vector
 from libcpp.string cimport string
+from libcpp.map cimport map as map_cpp
+from cython.operator import dereference, postincrement
 
 cdef class PyCEUpdater:
     """Cython wrapper for the C++ class"""
@@ -63,3 +65,25 @@ cdef class PyCEUpdater:
         cdef vector[unsigned int] changed
         self.thisptr.get_changes(symb_vec, changed)
         return [changed[i] for i in range(changed.size())]
+
+    def calculate_cf_from_scratch(self, atoms, cluster_names):
+        self.thisptr.set_atoms(atoms)
+
+        cdef map_cpp[string, double] cf
+        cdef vector[string] cname_vec
+
+        # Transfer names to a C++ vector
+        for name in cluster_names:
+            cname_vec.push_back(name)
+        self.thisptr.calculate_cf_from_scratch(cname_vec, cf)
+
+        # Transfer to python dict
+        cf_dict = {}
+        cdef map_cpp[string, double].iterator it = cf.begin()
+        cdef map_cpp[string, double].iterator end = cf.end()
+        
+        # Transfer map[string, double] to dictionary
+        while(it != end):
+            cf_dict[dereference(it).first] = dereference(it).second
+            postincrement(it)
+        return cf_dict
