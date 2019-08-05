@@ -494,8 +494,7 @@ def str2nested_list(string):
             for item in string.split('x')]
 
 
-def close_to_cubic_supercell(atoms, zero_cutoff=0.01,
-                             max_relative_vol_incrase=5):
+def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     """
     Create a close to cubic supercell
 
@@ -510,23 +509,17 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.01,
         Maximum allowed relative increase in volume.
     """
     cell = atoms.get_cell()
+    a = np.linalg.det(cell)**(1.0/3.0)
     inv_cell = np.linalg.inv(cell)
-
-    scale = 1.0/inv_cell[np.abs(inv_cell) > zero_cutoff]
+    scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
     scale = np.round(scale).astype(np.int32)
     min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
     scale = np.true_divide(scale, min_gcd)
-    scale = min_gcd*np.prod(scale)
+    scale = min_gcd*np.max(scale)
     integer_matrix = np.round(inv_cell*scale).astype(np.int32)
 
     if np.linalg.det(integer_matrix) < 0:
         integer_matrix *= -1
-
-    vol_increase = np.linalg.det(integer_matrix)
-    if vol_increase > max_relative_vol_incrase:
-        ratio = max_relative_vol_incrase/vol_increase
-        integer_matrix = np.true_divide(integer_matrix, ratio)
-        integer_matrix = np.round(integer_matrix).astype(np.int32)
 
     sc = make_supercell(atoms, integer_matrix)
     sc = wrap_and_sort_by_position(sc)
