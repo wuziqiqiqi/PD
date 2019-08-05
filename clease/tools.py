@@ -509,14 +509,15 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.01,
     scale = min_gcd*np.prod(scale)
     integer_matrix = np.round(inv_cell*scale).astype(np.int32)
 
+    if np.linalg.det(integer_matrix) < 0:
+        integer_matrix *= -1
+
     vol_increase = np.linalg.det(integer_matrix)
     if vol_increase > max_relative_vol_incrase:
         ratio = max_relative_vol_incrase/vol_increase
         integer_matrix = np.true_divide(integer_matrix, ratio)
         integer_matrix = np.round(integer_matrix).astype(np.int32)
 
-    print(np.linalg.det(integer_matrix), integer_matrix, cell, vol_increase)
-    # exit()
     sc = make_supercell(atoms, integer_matrix)
     sc = wrap_and_sort_by_position(sc)
 
