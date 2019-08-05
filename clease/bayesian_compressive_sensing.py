@@ -326,7 +326,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Save the results from file."""
         with open(self.fname, 'w') as outfile:
             json.dump(self.to_dict(), outfile)
-        _logger("Backup data written to {}".format(self.fname), LogVerbosity.info)
+        _logger("Backup data written to {}".format(self.fname))
 
     @staticmethod
     def load(fname):
