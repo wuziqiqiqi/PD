@@ -3,14 +3,15 @@ import os
 from clease import CEBulk, CorrFunction, Concentration
 import unittest
 
-db_name = "test_corrfunc.db"
+
 basis_elements = [["Au", "Cu", "Si"]]
 concentration = Concentration(basis_elements=basis_elements)
 
 
-bc_setting = CEBulk(crystalstructure="fcc", a=4.05, size=[4, 4, 4],
-                    concentration=concentration, db_name=db_name,
-                    max_cluster_size=3, max_cluster_dia=[5.73, 5.73])
+def get_bc_setting(db_name):
+    return CEBulk(crystalstructure="fcc", a=4.05, size=[4, 4, 4],
+                  concentration=concentration, db_name=db_name,
+                  max_cluster_size=3, max_cluster_dia=[5.73, 5.73])
 
 
 def get_mic_dists(atoms, cluster):
@@ -25,18 +26,23 @@ def get_mic_dists(atoms, cluster):
 class TestCorrFunc(unittest.TestCase):
     def test_trans_matrix(self):
         """Check that the MIC distance between atoms are correct."""
+        db_name = "test_corrfunc_transmat.db"
+        bc_setting = get_bc_setting(db_name)
         atoms = bc_setting.atoms
         tm = bc_setting.trans_matrix
         ref_dist = atoms.get_distance(0, 1, mic=True)
         for indx in range(len(atoms)):
             dist = atoms.get_distance(indx, tm[indx][1], mic=True)
             self.assertAlmostEqual(dist, ref_dist)
+        os.remove(db_name)
 
     def test_order_indep_ref_indx(self):
         """
         Check that the order of the elements are independent of the ref index.
         This does only apply for clusters with only inequivalent sites
         """
+        db_name = 'test_corrfunc_order_indep_ref_indx.db'
+        bc_setting = get_bc_setting(db_name)
         for _, clst in bc_setting.cluster_info_given_size(3)[0].items():
             if clst["equiv_sites"]:
                 # The cluster contains symmetrically equivalent sites
@@ -64,6 +70,7 @@ class TestCorrFunc(unittest.TestCase):
                         found_cluster = True
                         self.assertEqual(init_cluster, new_cluster)
                 self.assertTrue(found_cluster)
+        os.remove(db_name)
 
     def test_supercell_consistency(self):
         from clease.tools import wrap_and_sort_by_position
