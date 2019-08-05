@@ -1,3 +1,4 @@
+from clease import _logger
 try:
     from numba import jit as numba_jit
     from numba import jitclass as numba_jitclass
@@ -6,7 +7,7 @@ try:
     jitclass = numba_jitclass
 
 except ImportError:
-    print("Numba not installed. We recommend installing Numba.")
+    _logger("Numba not installed. We recommend installing Numba.")
 
     # Numba is not installed
     def dummy_jit(**options):

@@ -5,6 +5,7 @@ import collections
 from random import sample
 from ase.db import connect
 import json
+from clease import _logger
 
 
 def index_by_position(atoms):
@@ -258,8 +259,8 @@ def update_db(uid_initial=None, final_struct=None, db_name=None,
     select_cond = [('name', '=', name), ('struct_type', '=', 'final')]
     exist = sum(1 for row in db.select(select_cond))
     if exist >= 1:
-        print("A structure with 'name'={} and 'struct_type'=final "
-              "already exits in DB".format(name))
+        _logger("A structure with 'name'={} and 'struct_type'=final "
+                "already exits in DB".format(name))
         return
 
     # Write the final structure to database

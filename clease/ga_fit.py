@@ -1,5 +1,5 @@
-from __future__ import print_function
 from clease import LinearRegression
+from clease import _logger, LogVerbosity
 import numpy as np
 import multiprocessing as mp
 import os
@@ -181,7 +181,7 @@ class GAFit(object):
 
     def _init_from_file(self):
         """Initialize the population from file."""
-        print("Initializing population from {}".format(self.fname))
+        _logger("Initializing population from {}".format(self.fname))
         individuals = []
         with open(self.fname, 'r') as infile:
             for line in infile:
@@ -464,9 +464,9 @@ class GAFit(object):
         std = np.std(self.individuals)
         return np.mean(std)
 
-    def log(self, msg, end="\n"):
+    def log(self, msg):
         """Log messages."""
-        print(msg, end=end)
+        _logger(msg)
 
     @property
     def best_individual(self):
@@ -511,14 +511,14 @@ class GAFit(object):
                 out.write(",".join(str(x) for x in
                                    self.index_of_selected_clusters(i)))
                 out.write("\n")
-        print("\nPopulation written to {}".format(self.fname))
+        _logger("\nPopulation written to {}".format(self.fname))
 
     def save_cluster_names(self):
         """Store cluster names of best population to file."""
         with open(self.fname_cluster_names, 'w') as out:
             for name in self.selected_cluster_names:
                 out.write(name+"\n")
-        print("Selected cluster names saved to "
+        _logger("Selected cluster names saved to "
               "{}".format(self.fname_cluster_names))
 
     def plot_evolution(self):
@@ -576,7 +576,7 @@ class GAFit(object):
                      "".format(gen, self.cost_func,
                                best3[0], best3[0] - best3[1],
                                best3[0] - best3[2], num_eci, diversity,
-                               loocv_msg), end="\r")
+                               loocv_msg))
             self.mutate()
             self.create_new_generation()
             if abs(current_best - self.fitness[best_indx]) > min_change:

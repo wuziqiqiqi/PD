@@ -11,6 +11,7 @@ from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from ase.units import kB
 import time
+from clease import _logger
 
 
 class StructureGenerator(object):
@@ -86,8 +87,8 @@ class StructureGenerator(object):
 
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted)/count
-                    print("Temp: {}. {} of {}. Acc. rate: {}"
-                          "".format(temp, count, self.num_steps_per_temp,
+                    _logger("Temp: {}. {} of {}. Acc. rate: {}"
+                            "".format(temp, count, self.num_steps_per_temp,
                                     acc_rate))
                     now = time.time()
 
@@ -141,8 +142,8 @@ class StructureGenerator(object):
                                   'in the inherited class.')
 
     def _determine_temps(self):
-        print("Temperature range not given. "
-              "Determining the range automatically.")
+        _logger("Temperature range not given. "
+                "Determining the range automatically.")
         self._reset()
         count = 0
         max_count = 100
@@ -151,7 +152,7 @@ class StructureGenerator(object):
         self.temp = 10000000.0
         while count < max_count:
             if time.time() - now > self.output_every:
-                print("Progress ({}%)".format(100*count/max_count))
+                _logger("Progress ({}%)".format(100*count/max_count))
                 now = time.time()
 
             if bool(getrandbits(1)) and self.alter_composition:
@@ -174,7 +175,7 @@ class StructureGenerator(object):
             self._accept()
         init_temp, final_temp = self._estimate_temp_range()
         self.temp = init_temp
-        print('init_temp= {}, final_temp= {}'.format(init_temp, final_temp))
+        _logger('init_temp= {}, final_temp= {}'.format(init_temp, final_temp))
         return init_temp, final_temp
 
     def _swap_two_atoms(self):
