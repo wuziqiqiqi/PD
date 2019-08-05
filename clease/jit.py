@@ -1,10 +1,10 @@
+from clease import _logger
 try:
     from numba import jit as numba_jit
     from numba import jitclass as numba_jitclass
     from numba import int32
     jit = numba_jit
     jitclass = numba_jitclass
-    from clease import _logger
 
 except ImportError:
     _logger("Numba not installed. We recommend installing Numba.")
