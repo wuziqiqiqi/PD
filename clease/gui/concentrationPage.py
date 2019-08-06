@@ -240,11 +240,9 @@ class ConcentrationPage(Screen):
                     u = None
                 else:
                     u = float(inputPage['uParameter'])
-
-                ortho = inputPage['ortho'] == 'Yes'
                 kwargs = dict(
                     crystalstructure=inputPage['crystalstructure'], a=a,
-                    c=c, u=u, orthorhombic=ortho,
+                    c=c, u=u,
                     db_name=inputPage['db_name'], concentration=conc,
                     max_cluster_dia=float(inputPage['max_cluster_dia']),
                     max_cluster_size=int(inputPage['cluster_size']),

@@ -33,10 +33,6 @@ class CEBulk(ClusterExpansionSetting):
     u: float
         Internal coordinate for Wurtzite structure.
 
-    orthorhombic: bool
-        Construct orthorhombic unit cell instead of primitive cell
-        which is the default.
-
     size: list
         Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
 
@@ -72,7 +68,7 @@ class CEBulk(ClusterExpansionSetting):
     """
 
     def __init__(self, crystalstructure=None,
-                 a=None, c=None, covera=None, u=None, orthorhombic=False,
+                 a=None, c=None, covera=None, u=None,
                  size=None, supercell_factor=None,
                  concentration=None, db_name=None, max_cluster_size=4,
                  max_cluster_dia=[5.0, 5.0, 5.0], basis_function='sanchez',
@@ -87,7 +83,6 @@ class CEBulk(ClusterExpansionSetting):
         self.c = c
         self.covera = covera
         self.u = u
-        self.orthorhombic = orthorhombic
 
         ClusterExpansionSetting.__init__(self, size, supercell_factor,
                                          concentration, db_name,
@@ -102,8 +97,7 @@ class CEBulk(ClusterExpansionSetting):
                             'a': a,
                             'c': c,
                             'covera': covera,
-                            'u': u,
-                            'orthorhombic': orthorhombic})
+                            'u': u})
         num_basis = len(self.concentration.orig_basis_elements)
         if num_basis != self.structures[self.crystalstructure]:
             msg = "{} has {} basis. ".format(
@@ -120,23 +114,20 @@ class CEBulk(ClusterExpansionSetting):
         if num_basis == 1:
             atoms = bulk(name='{}'.format(basis_elements[0][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic)
+                         c=self.c, covera=self.covera, u=self.u)
 
         elif num_basis == 2:
             atoms = bulk(name='{}{}'.format(basis_elements[0][0],
                                             basis_elements[1][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic)
+                         c=self.c, covera=self.covera, u=self.u)
 
         else:
             atoms = bulk(name='{}{}{}'.format(basis_elements[0][0],
                                               basis_elements[1][0],
                                               basis_elements[2][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic)
+                         c=self.c, covera=self.covera, u=self.u)
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
 
