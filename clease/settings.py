@@ -568,7 +568,6 @@ class ClusterExpansionSetting(object):
         kdtrees = [KDTree(supercell.get_positions())]
         cluster_info = []
         fam_identifier = []
-        print(supercell.info['distances'])
 
         # determine cluster information for each inequivalent site
         # (based on translation symmetry)
