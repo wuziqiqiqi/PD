@@ -1,5 +1,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib
+matplotlib.use("module://kivy.garden.matplotlib.backend_kivyagg")
 from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
