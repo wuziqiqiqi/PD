@@ -7,7 +7,6 @@ import os
 from itertools import combinations, product
 from copy import deepcopy
 import numpy as np
-from scipy.spatial import cKDTree as KDTree
 from ase.db import connect
 
 from clease import _logger, LogVerbosity
@@ -332,31 +331,6 @@ class ClusterExpansionSetting(object):
         """Create atoms with a user-specified size."""
         atoms = self.unit_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
-
-    def _create_kdtrees(self, atoms):
-        kd_trees = []
-        trans = []
-
-        cell = atoms.get_cell().T
-        weights = [-1, 0, 1]
-        for comb in product(weights, repeat=3):
-            vec = cell.dot(comb) / 2.0
-            trans.append(vec)
-
-        # NOTE: If the error message
-        # 'The correlation function changed after simulated annealing'
-        # appears when probestructures are generated, uncommenting
-        # the next line might be a quick fix. However, this introduce
-        # a lot of overhead. For big systems one might easily run out of
-        # memory.
-        # trans += [atom.position for atom in atoms]
-
-        for t in trans:
-            shifted = atoms.copy()
-            shifted.translate(t)
-            shifted.wrap()
-            kd_trees.append(KDTree(shifted.get_positions()))
-        return kd_trees
 
     def _group_indices_by_trans_symmetry(self):
         """Group indices by translational symmetry."""
