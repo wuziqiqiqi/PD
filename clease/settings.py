@@ -570,8 +570,7 @@ class ClusterExpansionSetting(object):
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
         self._check_max_cluster_dia(supercell.info['distances'])
-        kdtrees = self._create_kdtrees(supercell)
-        kdtrees = [KDTree(supercell.get_positions())]
+        positions = supercell.get_positions()
         cluster_info = []
         fam_identifier = []
 
@@ -609,7 +608,8 @@ class ClusterExpansionSetting(object):
             }
 
             for size in range(2, self.max_cluster_size + 1):
-                indices = self.indices_of_nearby_atom(ref_indx, size, kdtrees)
+                indices = self.indices_of_nearby_atom(ref_indx, size,
+                                                      positions)
                 if self.ignore_background_atoms:
                     indices = [i for i in indices if
                                supercell[i].tag not in self.background_indices]
@@ -619,7 +619,7 @@ class ClusterExpansionSetting(object):
                 equiv_sites_set = []
                 max_cluster_diameter = []
                 for k in combinations(indices, size - 1):
-                    d = self.get_min_distance((ref_indx,) + k, kdtrees)
+                    d = self.get_min_distance((ref_indx,) + k, positions)
                     if max(d) > self.max_cluster_dia[size]:
                         continue
                     order, eq_sites, string_description = \
@@ -761,21 +761,18 @@ class ClusterExpansionSetting(object):
                 tm[indx] = {col: indices[col] for col in unique_indices}
         return tm
 
-    def get_min_distance(self, cluster, kd_trees):
+    def get_min_distance(self, cluster, positions):
         """Get minimum distances.
 
         Get the minimum distances between the atoms in a cluster according to
         dist_matrix and return the sorted distances (reverse order)
         """
         d = []
-        for _, tree in enumerate(kd_trees):
-            row = []
-            for x in combinations(cluster, 2):
-                x0 = tree.data[x[0], :]
-                x1 = tree.data[x[1], :]
-                row.append(self._get_distance(x0, x1))
-            d.append(sorted(row, reverse=True))
-        return np.array(min(d))
+        for x in combinations(cluster, 2):
+            x0 = positions[x[0], :]
+            x1 = positions[x[1], :]
+            d.append(self._get_distance(x0, x1))
+        return sorted(d, reverse=True)
 
     def _get_distance(self, x0, x1):
         """Compute the Euclidean distance between two points."""
@@ -783,19 +780,16 @@ class ClusterExpansionSetting(object):
         length = np.sqrt(diff.dot(diff))
         return length
 
-    def indices_of_nearby_atom(self, ref_indx, size, kd_trees):
+    def indices_of_nearby_atom(self, ref_indx, size, pos):
         """Return the indices of the atoms nearby.
 
         Indices of the atoms are only included if distances smaller than
         specified by max_cluster_dia from the reference atom index.
         """
         nearby_indices = []
-        for tree in kd_trees:
-            x0 = tree.data[ref_indx, :]
-            result = tree.query_ball_point(x0, self.max_cluster_dia[size])
-            nearby_indices += list(result)
-
-        nearby_indices = list(set(nearby_indices))
+        dists = np.sqrt(np.sum((pos - pos[ref_indx, :])**2, axis=1))
+        cutoff = self.max_cluster_dia[size]
+        nearby_indices = np.nonzero(dists < cutoff)[0].tolist()
         nearby_indices.remove(ref_indx)
         return nearby_indices
 
