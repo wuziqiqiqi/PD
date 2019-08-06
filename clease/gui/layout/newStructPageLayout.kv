@@ -1,7 +1,8 @@
 #: set button_height 0.05
 <NewStructPage>:
+    id: mainConcLayout
+
     StackLayout:
-        id: mainConcLayout
 
         Button:
             id: toInput
@@ -23,9 +24,6 @@
             id: toNewStruct
             text: 'New structures'
             size_hint: [0.25, button_height]
-            on_release:
-                root.manager.current = 'NewStruct'
-                root.manager.transition.direction = 'right'
         
         Button:
             id: toFit
