@@ -92,7 +92,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0])
+                         max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         atoms[1].symbol = 'Cl'
         atoms[7].symbol = 'Cl'
