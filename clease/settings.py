@@ -479,12 +479,14 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        
+
         supercell = close_to_cubic_supercell(atoms_cpy)
         max_cluster_dia_in_sc = self._get_max_cluster_dia(supercell.get_cell().T)
 
         # Make supercell so large that we ca of 4 times max_cluster_ inside
         scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
+        if scale < 1:
+            scale = 1
         supercell = supercell*(scale, scale, scale)
         supercell = wrap_and_sort_by_position(supercell)
         ref_indices = self._corresponding_indices(
@@ -500,6 +502,7 @@ class ClusterExpansionSetting(object):
         # of mass of the cell
         supercell.translate(com - com_ref)
         supercell.wrap()
+
 
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
