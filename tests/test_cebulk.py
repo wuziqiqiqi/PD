@@ -284,6 +284,12 @@ class TestCEBulk(unittest.TestCase):
         except MaxAttemptReachedError as exc:
             print(str(exc))
 
+        # Try to create a cell with previously failing size
+        size = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]])
+        atoms = make_supercell(setting.unit_cell, size)
+
+        # This will fail if coordinatation number is wrong
+        setting.set_active_template(atoms=atoms, generate_template=True)
         os.remove(db_name)
 
     def test_2grouped_basis_bckgrnd_probe(self):
