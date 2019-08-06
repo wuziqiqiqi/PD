@@ -188,7 +188,6 @@ class ClusterExpansionSetting(object):
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
 
-        self.supercell_scale_factor = self._get_scale_factor(self.atoms)
         self.background_indices = self._get_background_indices()
         self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
@@ -278,44 +277,6 @@ class ClusterExpansionSetting(object):
             min_indx = np.argmin(lengths)
             return min_length, weights[min_indx]
         return min_length
-
-    def _get_scale_factor(self, atoms):
-        """Compute the scale factor nessecary to resolve max_cluster_dia."""
-        cell = atoms.get_cell().T
-        max_dia = max(self.max_cluster_dia)
-
-        cell_too_small = True
-        scale_factor = [1, 1, 1]
-        orig_cell = cell.copy()
-        while cell_too_small:
-            # Check what the maximum cluster distance is for the current cell
-            max_size, w = self._get_max_cluster_dia(cell, ret_weights=True)
-            if max_size < max_dia:
-                # Find which vectors formed the shortest diagonal
-                indices_in_w = [i for i, weight in enumerate(w) if weight != 0]
-                shortest_vec = -1
-                shortest_length = 1E10
-
-                # Find the shortest vector of the ones that formed the
-                # shortest diagonal
-                for indx in indices_in_w:
-                    vec = cell[:, indx]
-                    length = np.sqrt(vec.dot(vec))
-                    if length < shortest_length:
-                        shortest_vec = indx
-                        shortest_length = length
-
-                # Increase the scale factor in the direction of the shortest
-                # vector in the diagonal by 1
-                scale_factor[shortest_vec] += 1
-
-                # Update the cell to the new scale factor
-                for i in range(3):
-                    cell[:, i] = orig_cell[:, i] * scale_factor[i]
-            else:
-                cell_too_small = False
-
-        return scale_factor
 
     def _get_background_indices(self):
         """Get indices of the background atoms."""
@@ -962,10 +923,6 @@ class ClusterExpansionSetting(object):
                 continue
             uid = i
         self._set_active_template_by_uid(uid)
-        if max(self.supercell_scale_factor) > 1:
-            _logger("Warning: the largest template atoms in DB is too small "
-                    "to accurately display large clusters.",
-                    verbose=LogVerbosity.WARNING)
 
         already_included_names = []
         cluster_atoms = []
