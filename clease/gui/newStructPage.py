@@ -270,9 +270,9 @@ class NewStructPage(Screen):
                 self.ids.status.text = msg
                 return
             generator = NewStructures(settings)
-            generator.insert_struct(init_struct=init_struct,
-                                    final_struct=final_struct,
-                                    generate_template=False)
+            generator.insert_structure(init_struct=init_struct,
+                                       final_struct=final_struct,
+                                       generate_template=False)
         except Exception as exc:
             self.ids.status.text = str(exc)
 
