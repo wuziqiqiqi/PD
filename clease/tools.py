@@ -42,32 +42,6 @@ def wrap_and_sort_by_position(atoms):
 def create_cluster(atoms, indices):
     """Create a cluster centered in the unit cell."""
     return atoms[indices]
-    cluster = atoms[list(indices)]
-    cell = cluster.get_cell()
-    center = 0.5 * (cell[0, :] + cell[1, :] + cell[2, :])
-    min_max_dist = 1E10
-    minimal_cluster = None
-    for ref_indx in range(len(indices)):
-        cluster_cpy = cluster.copy()
-        sub_indx = [i for i in range(len(indices)) if i != ref_indx]
-        mic_dists = cluster_cpy.get_distances(
-            ref_indx, sub_indx, mic=True, vector=True)
-        com = cluster_cpy[ref_indx].position + \
-            np.sum(mic_dists, axis=0) / len(indices)
-        cluster_cpy.translate(center - com)
-        cluster_cpy.wrap()
-        pos = cluster_cpy.get_positions()
-        lengths = []
-
-        for comb in combinations(range(len(indices)), r=2):
-            dist = pos[comb[0], :] - pos[comb[1], :]
-            length = np.sqrt(np.sum(dist**2))
-            lengths.append(length)
-        max_dist = np.max(lengths)
-        if max_dist < min_max_dist:
-            min_max_dist = max_dist
-            minimal_cluster = cluster_cpy.copy()
-    return minimal_cluster
 
 
 def shift(array):
