@@ -22,6 +22,7 @@ from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease.tools import close_to_cubic_supercell
+from ase.geometry import wrap_positions
 
 
 class ClusterExpansionSetting(object):
@@ -445,11 +446,20 @@ class ClusterExpansionSetting(object):
             corresponding to the position in self.atoms
         """
         supercell_indices = []
+        sc_pos = supercell.get_positions()
+        wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
+        sc_candidates = []
+        dist_to_origin = np.sum(sc_pos**2, axis=1)
         for indx in indices:
             pos = self.atoms[indx].position
-            dist = supercell.get_positions() - pos
+            dist = wrapped_sc_pos - pos
             lengths_sq = np.sum(dist**2, axis=1)
-            supercell_indices.append(np.argmin(lengths_sq))
+            candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
+
+            # Pick reference index that is closest the origin of the
+            # supercell
+            temp_indx = np.argmin(dist_to_origin[candidates])
+            supercell_indices.append(candidates[temp_indx])
         return supercell_indices
 
     def _create_cluster_information(self):
@@ -558,6 +568,7 @@ class ClusterExpansionSetting(object):
         kdtrees = [KDTree(supercell.get_positions())]
         cluster_info = []
         fam_identifier = []
+        print(supercell.info['distances'])
 
         # determine cluster information for each inequivalent site
         # (based on translation symmetry)
