@@ -104,7 +104,7 @@ class TestCECrystal(unittest.TestCase):
                         size=[1, 1, 1],
                         db_name=db_name,
                         max_cluster_size=3,
-                        max_cluster_dia=[2.5, 2.5], primitive_cell=True)
+                        max_cluster_dia=[2.5, 2.5])
         self.assertTrue(bsg.unique_elements == ['F', 'Li', 'O', 'V', 'X'])
         self.assertTrue(bsg.spin_dict == {'F': 2.0, 'Li': -2.0,
                                           'O': 1.0, 'V': -1.0, 'X': 0})
