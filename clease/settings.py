@@ -567,14 +567,6 @@ class ClusterExpansionSetting(object):
         supercell.translate(com - com_ref)
         supercell.wrap()
 
-        # If the template atoms is not repeated we need to scale it to at
-        # least 2x2x2 when all internal distances are extracted
-        # unit_cell_lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
-        # sc_lengths = supercell.get_cell_lengths_and_angles()[:3]
-        # ratio = np.round(sc_lengths/unit_cell_lengths, decimals=0).astype(int)
-        # dist_sc_scale_factor = np.array([1, 1, 1])
-        # dist_sc_scale_factor[ratio == 1] = 2
-
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
         self._check_max_cluster_dia(supercell.info['distances'])
