@@ -533,10 +533,16 @@ class ClusterExpansionSetting(object):
         ref_indices = self._corresponding_indices(
             self.ref_index_trans_symm, supercell)
 
+        # Calculate the center of mass of the supercell
         com = supercell.get_center_of_mass()
-        supercell.translate(com)
-        supercell.wrap()
 
+        # Calculate the center of mass of all the reference indices
+        com_ref = supercell[ref_indices].get_center_of_mass()
+
+        # Translate center of mass of reference indices to the center
+        # of mass of the cell
+        supercell.translate(com - com_ref)
+        supercell.wrap()
 
         # If the template atoms is not repeated we need to scale it to at
         # least 2x2x2 when all internal distances are extracted
@@ -550,7 +556,6 @@ class ClusterExpansionSetting(object):
             supercell, max(self.max_cluster_dia))
         kdtrees = self._create_kdtrees(supercell)
         kdtrees = [KDTree(supercell.get_positions())]
-
         cluster_info = []
         fam_identifier = []
 
