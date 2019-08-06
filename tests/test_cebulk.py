@@ -112,7 +112,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.01],
+                         max_cluster_dia=[4.01, 4.01],
                          ignore_background_atoms=True)
         atoms = setting.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
