@@ -15,7 +15,7 @@ class TestSupercelLFactor(unittest.TestCase):
                          basis_function='sanchez', skew_threshold=4,
                          ignore_background_atoms=False)
 
-        self.assertEqual(setting.template_atoms.num_templates, 6)
+        self.assertEqual(setting.template_atoms.num_templates, 3)
 
         os.remove(db_name)
 
