@@ -544,8 +544,7 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        # supercell = atoms_cpy*self.supercell_scale_factor
-        # supercell = wrap_and_sort_by_position(supercell)
+        
         supercell = close_to_cubic_supercell(atoms_cpy)
         max_cluster_dia_in_sc = self._get_max_cluster_dia(supercell.get_cell().T)
 
