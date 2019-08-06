@@ -771,7 +771,7 @@ class ClusterExpansionSetting(object):
             x0 = positions[x[0], :]
             x1 = positions[x[1], :]
             d.append(self._get_distance(x0, x1))
-        return sorted(d, reverse=True)
+        return np.array(sorted(d, reverse=True))
 
     def _get_distance(self, x0, x1):
         """Compute the Euclidean distance between two points."""
