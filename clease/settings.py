@@ -723,7 +723,7 @@ class ClusterExpansionSetting(object):
         nearby_indices = []
         dists = np.sqrt(np.sum((pos - pos[ref_indx, :])**2, axis=1))
         cutoff = self.max_cluster_dia[size]
-        nearby_indices = np.nonzero(dists < cutoff)[0].tolist()
+        nearby_indices = np.nonzero(dists <= cutoff)[0].tolist()
         nearby_indices.remove(ref_indx)
         return nearby_indices
 
