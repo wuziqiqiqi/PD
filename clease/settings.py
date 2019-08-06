@@ -462,6 +462,19 @@ class ClusterExpansionSetting(object):
             supercell_indices.append(candidates[temp_indx])
         return supercell_indices
 
+    def _check_max_cluster_dia(self, internal_distances):
+        """
+        Check that the maximum cluster diameter does not exactly correspond
+        to an internal distance as this can lead to round off errors
+        """
+        for dia in self.max_cluster_dia:
+            if np.min(np.abs(internal_distances - dia) < 1E-6):
+                raise ValueError(
+                    "One of the maximum cluster diameters correspond"
+                    "to an internal distance. Try to increase the max"
+                    "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
+                )
+
     def _create_cluster_information(self):
         """Create a set of parameters describing the structure.
 
@@ -564,6 +577,7 @@ class ClusterExpansionSetting(object):
 
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
+        self._check_max_cluster_dia(supercell.info['distances'])
         kdtrees = self._create_kdtrees(supercell)
         kdtrees = [KDTree(supercell.get_positions())]
         cluster_info = []
