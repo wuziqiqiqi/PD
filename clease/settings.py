@@ -811,7 +811,7 @@ class ClusterExpansionSetting(object):
 
     def _cutoff_for_tm_construction(self):
         indices = self.unique_indices
-        max_dist = -1.0
+        max_dist = 0.1
         
         for ref in indices:
             # MIC distance is a lower bound for the distance used in the 
