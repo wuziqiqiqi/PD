@@ -16,7 +16,6 @@ CEUpdater::CEUpdater(){};
 CEUpdater::~CEUpdater()
 {
   delete history;
-  //if ( atoms != nullptr ) Py_DECREF(atoms);
 
   delete symbols_with_id; symbols_with_id=nullptr;
   delete basis_functions; basis_functions=nullptr;

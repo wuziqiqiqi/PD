@@ -439,25 +439,6 @@ def bf2npyarray(basis_functions, symb_id):
     return bf_npy
 
 
-def get_sparse_column_matrix(tm):
-    from clease.column_sparse_matrix import ColumnSparseMatrix
-
-    columns = set()
-    for row in tm:
-        columns = columns.union(list(row.keys()))
-
-    columns = np.array(list(columns))
-
-    num_rows = len(tm)
-
-    sp_mat = ColumnSparseMatrix(num_rows, columns)
-
-    for row_num, row in enumerate(tm):
-        for col, value in row.items():
-            sp_mat.insert(row_num, col, value)
-    return sp_mat
-
-
 def nested_list2str(nested_list):
     """Convert a nested list to string."""
     return 'x'.join(','.join(str(x) for x in item) for item in nested_list)
@@ -473,8 +454,8 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     """
     Create a close to cubic supercell
 
-    Parameters
-    ==========
+    Parameters:
+    
     atoms: Atoms
         Cell to be used for construction
     zero_cutoff: float
