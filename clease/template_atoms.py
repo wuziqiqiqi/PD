@@ -9,6 +9,7 @@ from ase.build import cut
 from itertools import combinations
 from ase.build import make_supercell
 from clease.tools import str2nested_list
+from clease import _logger
 
 
 class TemplateAtoms(object):
@@ -95,8 +96,8 @@ class TemplateAtoms(object):
                              "".format(size))
 
         # get dims based on the passed atoms and append.
-        print("Template that matches the specified size not found. "
-              "Generating...")
+        _logger("Template that matches the specified size not found. "
+                "Generating...")
         check_valid_conversion_matrix(size)
         unit_cell = self.unit_cell
         self.templates['atoms'].append(unit_cell*size)
@@ -128,8 +129,8 @@ class TemplateAtoms(object):
                              "of given atoms object")
 
         # get dims based on the passed atoms and append.
-        print("Template that matches the size of passed atoms not found. "
-              "Generating...")
+        _logger("Template that matches the size of passed atoms not found. "
+                "Generating...")
         size = self._get_conversion_matrix(atoms)
         assert is_3x3_matrix(size)
 
@@ -272,11 +273,11 @@ class TemplateAtoms(object):
         """Return the conversion matrix factor."""
         unit_cell = self.unit_cell
 
-        small_cell = unit_cell.get_cell().T
+        small_cell = unit_cell.get_cell()
         inv_cell = np.linalg.inv(small_cell)
 
-        large_cell = atoms.get_cell().T
-        size_factor = inv_cell.dot(large_cell)
+        large_cell = atoms.get_cell()
+        size_factor = large_cell.dot(inv_cell)
         scale_int = size_factor.round(decimals=0).astype(int)
         if np.allclose(size_factor, scale_int):
             check_valid_conversion_matrix(scale_int)

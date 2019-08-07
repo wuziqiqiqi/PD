@@ -16,7 +16,6 @@ CEUpdater::CEUpdater(){};
 CEUpdater::~CEUpdater()
 {
   delete history;
-  if ( atoms != nullptr ) Py_DECREF(atoms);
 
   delete symbols_with_id; symbols_with_id=nullptr;
   delete basis_functions; basis_functions=nullptr;
@@ -33,6 +32,9 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   #ifdef CE_DEBUG
     cerr << "Getting symbols from setting object\n";
   #endif
+  PyObject* py_ignore_bck = get_attr(setting, "ignore_background_atoms");
+  ignore_background_indices = PyObject_IsTrue(py_ignore_bck);
+  Py_DECREF(py_ignore_bck);
 
   unsigned int n_atoms = PyObject_Length(atoms);
   if (n_atoms < 0)
@@ -152,7 +154,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     }
     clusters.push_back(new_clusters);
   }
-  Py_DECREF(cluster_info);
+  //Py_DECREF(cluster_info);
   #ifdef CE_DEBUG
     cout << "Finished reading cluster_info\n";
   #endif
@@ -923,7 +925,7 @@ void CEUpdater::read_trans_matrix( PyObject* py_trans_mat )
     for (unsigned int i=0;i<size;i++ )
     {
       // Background atoms are ignored (and should never be accessed)
-      if (is_background_index[i]){
+      if (is_background_index[i] && ignore_background_indices){
         continue;
       }
 
@@ -1027,4 +1029,115 @@ void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::ve
       changed_sites.push_back(i);
     }
   }
+}
+
+void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, map<string, double> &cf){
+
+  cf.clear();
+
+  // Initialise all cluster names
+  for (const string& name : cluster_names){
+    cf[name] = 0.0;
+  }
+
+  // Loop over all clusters
+  for (const string& name : cluster_names){
+
+    // Handle empty cluster
+    if (name.find("c0") == 0)
+    {
+      cf[name] = 1.0;
+      continue;
+    }
+
+    vector<int> bfs;
+    get_basis_functions(name, bfs);
+
+    // Handle singlet cluster
+    if (name.find("c1") == 0)
+    {
+      int dec = bfs[0];
+      double new_value = 0.0;
+      for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
+        if (!is_background_index[atom_no] || !ignore_background_indices){
+          new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
+        }
+      }
+      cf[name] = new_value/symbols_with_id->size();
+      continue;
+    }
+
+    // Handle the rest of the clusters
+    // Extract the prefix
+    int pos = name.rfind("_");
+    string prefix = name.substr(0,pos);
+    string dec_str = name.substr(pos+1);
+
+    vector<const Cluster*> clust_per_symm_group;
+
+    for (unsigned int symm=0;symm<clusters.size();symm++){
+      if (clusters[symm].find(prefix) == clusters[symm].end())
+      {
+        clust_per_symm_group.push_back(nullptr);
+      }
+      else{
+        clust_per_symm_group.push_back(&clusters[symm].at(prefix));
+      }
+    }
+
+    double sp = 0.0;
+    double cf_temp = 0.0;
+    double count = 0;
+    for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
+      int symm = trans_symm_group[atom_no];
+      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no] && ignore_background_indices))
+      {
+        continue;
+      }
+
+      const Cluster& cluster = *clust_per_symm_group[symm];
+      unsigned int size = cluster.size;
+      assert(cluster_indices[0].size() == size);
+      assert(bfs.size() == size);
+
+
+      const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
+      double sp_temp = 0.0;
+      for (const vector<int>& deco : equiv_deco)
+      {
+        sp_temp += spin_product_one_atom(atom_no, cluster, deco, symbols_with_id->id(atom_no));
+      }
+
+      sp += sp_temp/equiv_deco.size();
+      count += cluster.get().size();
+    }
+    
+    if (count == 0){
+      cf[name] = 0.0;
+    }
+    else{
+      cf[name] = sp/count;
+    }
+  }
+
+  history->get_current().init(cf);
+}
+
+void CEUpdater::set_atoms(PyObject *py_atoms){
+    vector<string> symbols;
+    unsigned int num_atoms = PySequence_Length(py_atoms);
+
+    if (num_atoms != symbols_with_id->size()){
+      throw invalid_argument("Length of passed atoms object is different from current");
+    }
+
+    for (unsigned int i=0;i<num_atoms;i++){
+      PyObject* atom = PySequence_GetItem(py_atoms, i);
+      PyObject* symb_str = get_attr(atom, "symbol");
+      symbols.push_back(py2string(symb_str));
+      Py_DECREF(atom);
+      Py_DECREF(symb_str);
+    }
+    this->atoms = py_atoms;
+    symbols_with_id->set_symbols(symbols);
 }

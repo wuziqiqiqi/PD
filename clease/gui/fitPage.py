@@ -272,7 +272,6 @@ class FitPage(Screen):
             return
 
         scheme = scheme.lower()
-        print(scheme)
         alpha = 0.0
         if scheme in ['lasso', 'l2']:
             alpha = self.fitting_params['alpha']

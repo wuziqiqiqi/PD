@@ -36,7 +36,8 @@ def get_members_of_family(setting, cname):
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
-    return cf.get_cf(atoms)
+    cf_dict = cf.get_cf(atoms)
+    return cf_dict
 
 
 class TestCEBulk(unittest.TestCase):
@@ -68,7 +69,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0])
+                         max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         Li_ind = [atom.index for atom in atoms if atom.symbol == 'Li']
         X_ind = [atom.index for atom in atoms if atom.symbol == 'X']
@@ -90,7 +91,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0])
+                         max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         atoms[1].symbol = 'Cl'
         atoms[7].symbol = 'Cl'
@@ -110,7 +111,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0],
+                         max_cluster_dia=[4.01, 4.01],
                          ignore_background_atoms=True)
         atoms = setting.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
@@ -119,6 +120,7 @@ class TestCEBulk(unittest.TestCase):
         cf = calculate_cf(setting, atoms)
         if update_reference_file:
             all_cf["two_grouped_basis_bckgrnd"] = cf
+
         for key in cf.keys():
             self.assertAlmostEqual(
                 cf[key], all_cf["two_grouped_basis_bckgrnd"][key]
@@ -151,7 +153,7 @@ class TestCEBulk(unittest.TestCase):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
-        eval_l2 = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
         for cluster in bc_setting.cluster_info_given_size(2):
@@ -260,7 +262,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=2,
-                         max_cluster_dia=[4.0])
+                         max_cluster_dia=[4.01])
         fam_members = get_members_of_family(setting, "c2_06nn_0")
         self.assertEqual(len(fam_members[0]), 6)
         self.assertEqual(len(fam_members[1]), 6)
@@ -281,6 +283,12 @@ class TestCEBulk(unittest.TestCase):
         except MaxAttemptReachedError as exc:
             print(str(exc))
 
+        # Try to create a cell with previously failing size
+        size = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]])
+        atoms = make_supercell(setting.unit_cell, size)
+
+        # This will fail if coordinatation number is wrong
+        setting.set_active_template(atoms=atoms, generate_template=True)
         os.remove(db_name)
 
     def test_2grouped_basis_bckgrnd_probe(self):
@@ -299,7 +307,7 @@ class TestCEBulk(unittest.TestCase):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0],
+                         max_cluster_dia=[4.01, 4.01],
                          ignore_background_atoms=True)
         self.assertEqual(setting.num_basis, 2)
         self.assertEqual(len(setting.index_by_basis), 2)

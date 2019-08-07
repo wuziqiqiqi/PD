@@ -2,6 +2,7 @@
 
 from libcpp.string cimport string
 from libcpp.vector cimport vector
+from libcpp.map cimport map as map_cpp
 
 cdef extern from "ce_updater.hpp":
   cdef cppclass CEUpdater:
@@ -34,3 +35,7 @@ cdef extern from "ce_updater.hpp":
       void set_num_threads(unsigned int num_threads)
 
       void get_changes(vector[string] &symbs, vector[unsigned int] &changed_sites) except +
+
+      void calculate_cf_from_scratch(const vector[string] &cluster_names, map_cpp[string, double] &cf)
+
+      void set_atoms(object atoms) except+

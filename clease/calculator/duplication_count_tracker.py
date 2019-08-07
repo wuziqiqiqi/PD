@@ -146,7 +146,8 @@ class DuplicationCountTracker(object):
 
     def show(self):
         """Return a string represenatation."""
-        print(self._norm_factors)
+        from clease import _logger
+        _logger(self._norm_factors)
 
     def _order_equiv_sites(self, equiv_sites, ordered_indices):
         """After the indices are ordered, adopt a consistent scheme

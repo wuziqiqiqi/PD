@@ -149,7 +149,7 @@
 
         GridLayout:
             rows: 2
-            cols: 6
+            cols: 4
             size_hint: [1.0, input_height]
             row_default_height: 30
             row_force_default: True
@@ -169,14 +169,6 @@
             Label:
                 id: uParameter
                 text: 'u'
-
-            Label:
-                id: orthInput
-                text: 'Orthorhombic'
-
-            Label:
-                id: cubicInput
-                text: 'Cubic'
 
             Spinner:
                 id: crystStructSpinner
@@ -198,16 +190,6 @@
                 text: ''
                 input_filter: 'float'
 
-            Spinner:
-                id: orthSpinner
-                text: 'No'
-                values: 'No', 'Yes'
-
-            Spinner:
-                id: cubicSpinner
-                text: 'No'
-                values: 'No', 'Yes'
-
         Label:
             id: CECrystalTitle
             size_hint: [1.0, input_height/2.0]
@@ -215,7 +197,7 @@
 
         GridLayout:
             rows: 2
-            cols: 5
+            cols: 4
             size_hint: [1.0, input_height]
             row_default_height: 30
             row_force_default: True
@@ -227,10 +209,6 @@
             Label:
                 id: cell
                 text: 'Cell'
-
-            Label:
-                id: primitive
-                text: 'Primitive'
 
             Label:
                 id: crBasisLabel
@@ -247,11 +225,6 @@
             TextInput:
                 id: cellInput
                 text: ''
-
-            Spinner:
-                id: primitiveSpinner
-                text: 'No'
-                values: 'No', 'Yes'
 
             TextInput:
                 id: crdBasisInput

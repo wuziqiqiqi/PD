@@ -4,11 +4,10 @@ from ase.build import bulk
 from clease.tools import wrap_and_sort_by_position
 import unittest
 
-db_name = 'fu.db'
-
 
 class TestFormulaUnit(unittest.TestCase):
     def test_fu(self):
+        db_name = 'fu.db'
         basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
         A_eq = [[0, 3, 0, 0, 0]]
         b_eq = [1]

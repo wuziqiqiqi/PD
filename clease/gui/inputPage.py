@@ -53,11 +53,8 @@ class InputPage(Screen):
             self.ids.aParameterInput.text = data['aParameter']
             self.ids.cParameterInput.text = data['cParameter']
             self.ids.uParameterInput.text = data['uParameter']
-            self.ids.orthSpinner.text = data['ortho']
-            self.ids.cubicSpinner.text = data['cubic']
             self.ids.cellParInput.text = data['cellpar']
             self.ids.cellInput.text = data['cell']
-            self.ids.primitiveSpinner.text = data['primitive']
             self.ids.elementInput.text = data['elements']
             self.ids.crdBasisInput.text = data['basis']
             self.ids.spInput.text = data['spacegroup']
@@ -101,11 +98,8 @@ class InputPage(Screen):
             'aParameter': self.ids.aParameterInput.text,
             'cParameter': self.ids.cParameterInput.text,
             'uParameter': self.ids.uParameterInput.text,
-            'ortho': self.ids.orthSpinner.text,
-            'cubic': self.ids.cubicSpinner.text,
             'cellpar': self.ids.cellParInput.text,
             'cell': self.ids.cellInput.text,
-            'primitive': self.ids.primitiveSpinner.text,
             'elements': self.ids.elementInput.text,
             'basis': self.ids.crdBasisInput.text,
             'spacegroup': self.ids.spInput.text,
@@ -170,30 +164,24 @@ class InputPage(Screen):
         self.ids.aParameter.color = color
         self.ids.cParameter.color = color
         self.ids.uParameter.color = color
-        self.ids.orthInput.color = color
-        self.ids.cubicInput.color = color
 
         # Disable
         self.ids.crystStructSpinner.disabled = True
         self.ids.aParameterInput.disabled = True
         self.ids.cParameterInput.disabled = True
         self.ids.uParameterInput.disabled = True
-        self.ids.orthSpinner.disabled = True
-        self.ids.cubicSpinner.disabled = True
 
     def _disable_CECrystal(self):
         color = get_color_from_hex(INACTIVE_TEXT_COLOR)
         self.ids.CECrystalTitle.color = color
         self.ids.cell.color = color
         self.ids.cellPar.color = color
-        self.ids.primitive.color = color
         self.ids.spLabel.color = color
         self.ids.crBasisLabel.color = color
 
         # Disable fields
         self.ids.cellInput.disabled = True
         self.ids.cellParInput.disabled = True
-        self.ids.primitiveSpinner.disabled = True
         self.ids.spInput.disabled = True
         self.ids.crdBasisInput.disabled = True
 
@@ -204,30 +192,24 @@ class InputPage(Screen):
         self.ids.aParameter.color = color
         self.ids.cParameter.color = color
         self.ids.uParameter.color = color
-        self.ids.orthInput.color = color
-        self.ids.cubicInput.color = color
 
         # Enable
         self.ids.crystStructSpinner.disabled = False
         self.ids.aParameterInput.disabled = False
         self.ids.cParameterInput.disabled = False
         self.ids.uParameterInput.disabled = False
-        self.ids.orthSpinner.disabled = False
-        self.ids.cubicSpinner.disabled = False
 
     def _enable_CECrystal(self):
         color = get_color_from_hex(FOREGROUND_TEXT_COLOR)
         self.ids.CECrystalTitle.color = color
         self.ids.cell.color = color
         self.ids.cellPar.color = color
-        self.ids.primitive.color = color
         self.ids.spLabel.color = color
         self.ids.crBasisLabel.color = color
 
         # Disable fields
         self.ids.cellInput.disabled = False
         self.ids.cellParInput.disabled = False
-        self.ids.primitiveSpinner.disabled = False
         self.ids.spInput.disabled = False
         self.ids.crdBasisInput.disabled = False
 

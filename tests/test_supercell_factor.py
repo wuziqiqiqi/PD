@@ -2,26 +2,25 @@ import os
 from clease import CEBulk, CECrystal, Concentration
 import unittest
 
-db_name = 'sf.db'
-
 
 class TestSupercelLFactor(unittest.TestCase):
     def test_fcc(self):
+        db_name = 'test_sc_factor_fcc_sf.db'
         conc = Concentration(basis_elements=[['Au', 'Cu']])
 
         setting = CEBulk(crystalstructure='fcc', a=4.0,
-                         cubic=True, supercell_factor=8,
+                         supercell_factor=8,
                          concentration=conc, db_name=db_name,
-                         max_cluster_size=4, max_cluster_dia=4.0,
+                         max_cluster_size=4, max_cluster_dia=4.01,
                          basis_function='sanchez', skew_threshold=4,
                          ignore_background_atoms=False)
 
-        self.assertEqual(setting.template_atoms.num_templates, 6)
+        self.assertEqual(setting.template_atoms.num_templates, 3)
 
         os.remove(db_name)
 
-        setting = CEBulk(crystalstructure='fcc', a=4.0,
-                         cubic=True, supercell_factor=8, size=[2, 2, 2],
+        setting = CEBulk(crystalstructure='fcc', a=4.01,
+                         supercell_factor=8, size=[2, 2, 2],
                          concentration=conc, db_name=db_name,
                          max_cluster_size=4, max_cluster_dia=4.0,
                          basis_function='sanchez', skew_threshold=4,
@@ -32,6 +31,7 @@ class TestSupercelLFactor(unittest.TestCase):
         os.remove(db_name)
 
     def test_crystal(self):
+        db_name = 'test_sc_factor_crystal_sf.db'
         basis_elements = [['O', 'X'], ['O', 'X'],
                           ['O', 'X'], ['Ta']]
         grouped_basis = [[0, 1, 2], [3]]

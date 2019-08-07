@@ -7,7 +7,6 @@ import os
 from itertools import combinations, product
 from copy import deepcopy
 import numpy as np
-from scipy.spatial import cKDTree as KDTree
 from ase.db import connect
 
 from clease import _logger, LogVerbosity
@@ -21,6 +20,8 @@ from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
+from clease.tools import close_to_cubic_supercell
+from ase.geometry import wrap_positions
 
 
 class ClusterExpansionSetting(object):
@@ -190,7 +191,6 @@ class ClusterExpansionSetting(object):
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
 
-        self.supercell_scale_factor = self._get_scale_factor()
         self.background_indices = self._get_background_indices()
         self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
@@ -285,44 +285,6 @@ class ClusterExpansionSetting(object):
             return min_length, weights[min_indx]
         return min_length
 
-    def _get_scale_factor(self):
-        """Compute the scale factor nessecary to resolve max_cluster_dia."""
-        cell = self.atoms.get_cell().T
-        max_dia = max(self.max_cluster_dia)
-
-        cell_too_small = True
-        scale_factor = [1, 1, 1]
-        orig_cell = cell.copy()
-        while cell_too_small:
-            # Check what the maximum cluster distance is for the current cell
-            max_size, w = self._get_max_cluster_dia(cell, ret_weights=True)
-            if max_size < max_dia:
-                # Find which vectors formed the shortest diagonal
-                indices_in_w = [i for i, weight in enumerate(w) if weight != 0]
-                shortest_vec = -1
-                shortest_length = 1E10
-
-                # Find the shortest vector of the ones that formed the
-                # shortest diagonal
-                for indx in indices_in_w:
-                    vec = cell[:, indx]
-                    length = np.sqrt(vec.dot(vec))
-                    if length < shortest_length:
-                        shortest_vec = indx
-                        shortest_length = length
-
-                # Increase the scale factor in the direction of the shortest
-                # vector in the diagonal by 1
-                scale_factor[shortest_vec] += 1
-
-                # Update the cell to the new scale factor
-                for i in range(3):
-                    cell[:, i] = orig_cell[:, i] * scale_factor[i]
-            else:
-                cell_too_small = False
-
-        return scale_factor
-
     def _get_background_indices(self):
         """Get indices of the background atoms."""
         # check if any basis consists of only one element type
@@ -337,31 +299,6 @@ class ClusterExpansionSetting(object):
         """Create atoms with a user-specified size."""
         atoms = self.unit_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
-
-    def _create_kdtrees(self, atoms):
-        kd_trees = []
-        trans = []
-
-        cell = atoms.get_cell().T
-        weights = [-1, 0, 1]
-        for comb in product(weights, repeat=3):
-            vec = cell.dot(comb) / 2.0
-            trans.append(vec)
-
-        # NOTE: If the error message
-        # 'The correlation function changed after simulated annealing'
-        # appears when probestructures are generated, uncommenting
-        # the next line might be a quick fix. However, this introduce
-        # a lot of overhead. For big systems one might easily run out of
-        # memory.
-        # trans += [atom.position for atom in atoms]
-
-        for t in trans:
-            shifted = atoms.copy()
-            shifted.translate(t)
-            shifted.wrap()
-            kd_trees.append(KDTree(shifted.get_positions()))
-        return kd_trees
 
     def _group_indices_by_trans_symmetry(self):
         """Group indices by translational symmetry."""
@@ -451,12 +388,34 @@ class ClusterExpansionSetting(object):
             corresponding to the position in self.atoms
         """
         supercell_indices = []
+        sc_pos = supercell.get_positions()
+        wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
+        sc_candidates = []
+        dist_to_origin = np.sum(sc_pos**2, axis=1)
         for indx in indices:
             pos = self.atoms[indx].position
-            dist = supercell.get_positions() - pos
+            dist = wrapped_sc_pos - pos
             lengths_sq = np.sum(dist**2, axis=1)
-            supercell_indices.append(np.argmin(lengths_sq))
+            candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
+
+            # Pick reference index that is closest the origin of the
+            # supercell
+            temp_indx = np.argmin(dist_to_origin[candidates])
+            supercell_indices.append(candidates[temp_indx])
         return supercell_indices
+
+    def _check_max_cluster_dia(self, internal_distances):
+        """
+        Check that the maximum cluster diameter does not exactly correspond
+        to an internal distance as this can lead to round off errors
+        """
+        for dia in self.max_cluster_dia:
+            if np.min(np.abs(internal_distances - dia) < 1E-6):
+                raise ValueError(
+                    "One of the maximum cluster diameters correspond"
+                    "to an internal distance. Try to increase the max"
+                    "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
+                )
 
     def _create_cluster_information(self):
         """Create a set of parameters describing the structure.
@@ -527,28 +486,41 @@ class ClusterExpansionSetting(object):
         atoms_cpy = self.atoms.copy()
         for atom in atoms_cpy:
             atom.tag = atom.index
-        supercell = atoms_cpy*self.supercell_scale_factor
-        supercell = wrap_and_sort_by_position(supercell)
 
-        # If the template atoms is not repeated we need to scale it to at
-        # least 2x2x2 when all internal distances are extracted
-        unit_cell_lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
-        sc_lengths = supercell.get_cell_lengths_and_angles()[:3]
-        ratio = np.round(sc_lengths/unit_cell_lengths, decimals=0).astype(int)
-        dist_sc_scale_factor = np.array([1, 1, 1])
-        dist_sc_scale_factor[ratio == 1] = 2
+        supercell = close_to_cubic_supercell(atoms_cpy)
+        max_cluster_dia_in_sc = self._get_max_cluster_dia(
+            supercell.get_cell().T)
+
+        # Make supercell so large that we ca of 4 times max_cluster_ inside
+        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
+        if scale < 1:
+            scale = 1
+        supercell = supercell*(scale, scale, scale)
+        supercell = wrap_and_sort_by_position(supercell)
+        ref_indices = self._corresponding_indices(
+            self.ref_index_trans_symm, supercell)
+
+        # Calculate the center of mass of the supercell
+        pos = supercell.get_positions()
+        com = np.mean(pos, axis=0)
+
+        # Calculate the center of mass of all the reference indices
+        com_ref = np.mean(pos[ref_indices, :], axis=0)
+
+        # Translate center of mass of reference indices to the center
+        # of mass of the cell
+        supercell.translate(com - com_ref)
+        supercell.wrap()
 
         supercell.info['distances'] = get_all_internal_distances(
-            supercell*dist_sc_scale_factor, max(self.max_cluster_dia))
-        kdtrees = self._create_kdtrees(supercell)
-
+            supercell, max(self.max_cluster_dia))
+        self._check_max_cluster_dia(supercell.info['distances'])
+        positions = supercell.get_positions()
         cluster_info = []
         fam_identifier = []
 
         # determine cluster information for each inequivalent site
         # (based on translation symmetry)
-        ref_indices = self._corresponding_indices(
-            self.ref_index_trans_symm, supercell)
         # for site, ref_indx in enumerate(self.ref_index_trans_symm):
         for site, ref_indx in enumerate(ref_indices):
             if (supercell[ref_indx].tag in self.background_indices
@@ -581,7 +553,8 @@ class ClusterExpansionSetting(object):
             }
 
             for size in range(2, self.max_cluster_size + 1):
-                indices = self.indices_of_nearby_atom(ref_indx, size, kdtrees)
+                indices = self.indices_of_nearby_atom(ref_indx, size,
+                                                      positions)
                 if self.ignore_background_atoms:
                     indices = [i for i in indices if
                                supercell[i].tag not in self.background_indices]
@@ -591,7 +564,7 @@ class ClusterExpansionSetting(object):
                 equiv_sites_set = []
                 max_cluster_diameter = []
                 for k in combinations(indices, size - 1):
-                    d = self.get_min_distance((ref_indx,) + k, kdtrees)
+                    d = self.get_min_distance((ref_indx,) + k, positions)
                     if max(d) > self.max_cluster_dia[size]:
                         continue
                     order, eq_sites, string_description = \
@@ -733,21 +706,18 @@ class ClusterExpansionSetting(object):
                 tm[indx] = {col: indices[col] for col in unique_indices}
         return tm
 
-    def get_min_distance(self, cluster, kd_trees):
+    def get_min_distance(self, cluster, positions):
         """Get minimum distances.
 
         Get the minimum distances between the atoms in a cluster according to
         dist_matrix and return the sorted distances (reverse order)
         """
         d = []
-        for _, tree in enumerate(kd_trees):
-            row = []
-            for x in combinations(cluster, 2):
-                x0 = tree.data[x[0], :]
-                x1 = tree.data[x[1], :]
-                row.append(self._get_distance(x0, x1))
-            d.append(sorted(row, reverse=True))
-        return np.array(min(d))
+        for x in combinations(cluster, 2):
+            x0 = positions[x[0], :]
+            x1 = positions[x[1], :]
+            d.append(self._get_distance(x0, x1))
+        return np.array(sorted(d, reverse=True))
 
     def _get_distance(self, x0, x1):
         """Compute the Euclidean distance between two points."""
@@ -755,19 +725,16 @@ class ClusterExpansionSetting(object):
         length = np.sqrt(diff.dot(diff))
         return length
 
-    def indices_of_nearby_atom(self, ref_indx, size, kd_trees):
+    def indices_of_nearby_atom(self, ref_indx, size, pos):
         """Return the indices of the atoms nearby.
 
         Indices of the atoms are only included if distances smaller than
         specified by max_cluster_dia from the reference atom index.
         """
         nearby_indices = []
-        for tree in kd_trees:
-            x0 = tree.data[ref_indx, :]
-            result = tree.query_ball_point(x0, self.max_cluster_dia[size])
-            nearby_indices += list(result)
-
-        nearby_indices = list(set(nearby_indices))
+        dists = np.sqrt(np.sum((pos - pos[ref_indx, :])**2, axis=1))
+        cutoff = self.max_cluster_dia[size]
+        nearby_indices = np.nonzero(dists <= cutoff)[0].tolist()
         nearby_indices.remove(ref_indx)
         return nearby_indices
 
@@ -995,10 +962,6 @@ class ClusterExpansionSetting(object):
                 continue
             uid = i
         self._set_active_template_by_uid(uid)
-        if max(self.supercell_scale_factor) > 1:
-            _logger("Warning: the largest template atoms in DB is too small "
-                    "to accurately display large clusters.",
-                    verbose=LogVerbosity.WARNING)
 
         already_included_names = []
         cluster_atoms = []

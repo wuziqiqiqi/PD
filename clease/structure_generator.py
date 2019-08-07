@@ -11,6 +11,7 @@ from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from ase.units import kB
 import time
+from clease import _logger
 
 
 class StructureGenerator(object):
@@ -86,9 +87,9 @@ class StructureGenerator(object):
 
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted)/count
-                    print("Temp: {}. {} of {}. Acc. rate: {}"
-                          "".format(temp, count, self.num_steps_per_temp,
-                                    acc_rate))
+                    _logger("Temp: {}. {} of {}. Acc. rate: {}"
+                            "".format(temp, count, self.num_steps_per_temp,
+                                      acc_rate))
                     now = time.time()
 
                 if bool(getrandbits(1)) and self.alter_composition:
@@ -141,8 +142,8 @@ class StructureGenerator(object):
                                   'in the inherited class.')
 
     def _determine_temps(self):
-        print("Temperature range not given. "
-              "Determining the range automatically.")
+        _logger("Temperature range not given. "
+                "Determining the range automatically.")
         self._reset()
         count = 0
         max_count = 100
@@ -151,7 +152,7 @@ class StructureGenerator(object):
         self.temp = 10000000.0
         while count < max_count:
             if time.time() - now > self.output_every:
-                print("Progress ({}%)".format(100*count/max_count))
+                _logger("Progress ({}%)".format(100*count/max_count))
                 now = time.time()
 
             if bool(getrandbits(1)) and self.alter_composition:
@@ -174,7 +175,7 @@ class StructureGenerator(object):
             self._accept()
         init_temp, final_temp = self._estimate_temp_range()
         self.temp = init_temp
-        print('init_temp= {}, final_temp= {}'.format(init_temp, final_temp))
+        _logger('init_temp= {}, final_temp= {}'.format(init_temp, final_temp))
         return init_temp, final_temp
 
     def _swap_two_atoms(self):
@@ -248,8 +249,9 @@ class StructureGenerator(object):
     def _check_consistency(self):
         # Check to see if the cf is indeed preserved
         final_cf = \
-            self.corrFunc.get_cf_by_cluster_names(self.generated_structure,
-                                                  self.atoms.get_calculator().cluster_names)
+            self.corrFunc.get_cf_by_cluster_names(
+                self.generated_structure,
+                self.atoms.get_calculator().cluster_names)
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'
@@ -414,6 +416,7 @@ class GSStructure(StructureGenerator):
     cluster_name_eci: dict of list of tuples containing
                       cluster names and ECI
     """
+
     def __init__(self, setting, atoms, struct_per_gen, init_temp=2000,
                  final_temp=10, num_temp=10, num_steps_per_temp=100000,
                  cluster_name_eci=None):
@@ -453,6 +456,7 @@ class GSStructure(StructureGenerator):
         if accept_move:
             self.old_energy = new_energy
         return accept_move
+
 
 def mean_variance_full(cfm):
     prec = precision_matrix(cfm)
