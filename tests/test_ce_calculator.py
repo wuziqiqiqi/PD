@@ -125,7 +125,7 @@ def get_spacegroup(db_name):
     atoms = crystal(symbols=['O', 'X', 'O', 'Ta'], basis=basis,
                     spacegroup=spacegroup, cell=None,
                     cellpar=cellpar, ab_normal=(0, 0, 1),
-                    size=size, primitive_cell=False)
+                    size=size)
 
     return setting, wrap_and_sort_by_position(atoms)
 
