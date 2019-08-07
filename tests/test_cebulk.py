@@ -17,7 +17,6 @@ from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
 import unittest
-import time
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -154,7 +153,7 @@ class TestCEBulk(unittest.TestCase):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
-        eval_l2 = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
         for cluster in bc_setting.cluster_info_given_size(2):
