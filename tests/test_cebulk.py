@@ -153,7 +153,7 @@ class TestCEBulk(unittest.TestCase):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
-        eval_l2 = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
         for cluster in bc_setting.cluster_info_given_size(2):

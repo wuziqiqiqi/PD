@@ -481,7 +481,8 @@ class ClusterExpansionSetting(object):
             atom.tag = atom.index
 
         supercell = close_to_cubic_supercell(atoms_cpy)
-        max_cluster_dia_in_sc = self._get_max_cluster_dia(supercell.get_cell().T)
+        max_cluster_dia_in_sc = self._get_max_cluster_dia(
+            supercell.get_cell().T)
 
         # Make supercell so large that we ca of 4 times max_cluster_ inside
         scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
@@ -493,16 +494,16 @@ class ClusterExpansionSetting(object):
             self.ref_index_trans_symm, supercell)
 
         # Calculate the center of mass of the supercell
-        com = supercell.get_center_of_mass()
+        pos = supercell.get_positions()
+        com = np.mean(pos, axis=0)
 
         # Calculate the center of mass of all the reference indices
-        com_ref = supercell[ref_indices].get_center_of_mass()
+        com_ref = np.mean(pos[ref_indices, :], axis=0)
 
         # Translate center of mass of reference indices to the center
         # of mass of the cell
         supercell.translate(com - com_ref)
         supercell.wrap()
-
 
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))

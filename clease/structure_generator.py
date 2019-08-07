@@ -89,7 +89,7 @@ class StructureGenerator(object):
                     acc_rate = float(num_accepted)/count
                     _logger("Temp: {}. {} of {}. Acc. rate: {}"
                             "".format(temp, count, self.num_steps_per_temp,
-                                    acc_rate))
+                                      acc_rate))
                     now = time.time()
 
                 if bool(getrandbits(1)) and self.alter_composition:
