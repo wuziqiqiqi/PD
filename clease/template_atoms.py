@@ -261,11 +261,11 @@ class TemplateAtoms(object):
         """Return the conversion matrix factor."""
         unit_cell = self.unit_cell
 
-        small_cell = unit_cell.get_cell().T
+        small_cell = unit_cell.get_cell()
         inv_cell = np.linalg.inv(small_cell)
 
-        large_cell = atoms.get_cell().T
-        size_factor = inv_cell.dot(large_cell)
+        large_cell = atoms.get_cell()
+        size_factor = large_cell.dot(inv_cell)
         scale_int = size_factor.round(decimals=0).astype(int)
         if np.allclose(size_factor, scale_int):
             check_valid_conversion_matrix(scale_int)

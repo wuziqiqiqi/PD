@@ -176,14 +176,12 @@ class InputPage(Screen):
         self.ids.CECrystalTitle.color = color
         self.ids.cell.color = color
         self.ids.cellPar.color = color
-        self.ids.primitive.color = color
         self.ids.spLabel.color = color
         self.ids.crBasisLabel.color = color
 
         # Disable fields
         self.ids.cellInput.disabled = True
         self.ids.cellParInput.disabled = True
-        self.ids.primitiveSpinner.disabled = True
         self.ids.spInput.disabled = True
         self.ids.crdBasisInput.disabled = True
 
@@ -206,14 +204,12 @@ class InputPage(Screen):
         self.ids.CECrystalTitle.color = color
         self.ids.cell.color = color
         self.ids.cellPar.color = color
-        self.ids.primitive.color = color
         self.ids.spLabel.color = color
         self.ids.crBasisLabel.color = color
 
         # Disable fields
         self.ids.cellInput.disabled = False
         self.ids.cellParInput.disabled = False
-        self.ids.primitiveSpinner.disabled = False
         self.ids.spInput.disabled = False
         self.ids.crdBasisInput.disabled = False
 

@@ -33,13 +33,6 @@ class CEBulk(ClusterExpansionSetting):
     u: float
         Internal coordinate for Wurtzite structure.
 
-    orthorhombic: bool
-        Construct orthorhombic unit cell instead of primitive cell
-        which is the default.
-
-    cubic: bool
-        Construct cubic unit cell if possible.
-
     size: list
         Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
 
@@ -75,8 +68,8 @@ class CEBulk(ClusterExpansionSetting):
     """
 
     def __init__(self, crystalstructure=None,
-                 a=None, c=None, covera=None, u=None, orthorhombic=False,
-                 cubic=False, size=None, supercell_factor=None,
+                 a=None, c=None, covera=None, u=None,
+                 size=None, supercell_factor=None,
                  concentration=None, db_name=None, max_cluster_size=4,
                  max_cluster_dia=[5.0, 5.0, 5.0], basis_function='sanchez',
                  skew_threshold=4, ignore_background_atoms=False):
@@ -90,8 +83,6 @@ class CEBulk(ClusterExpansionSetting):
         self.c = c
         self.covera = covera
         self.u = u
-        self.orthorhombic = orthorhombic
-        self.cubic = cubic
 
         ClusterExpansionSetting.__init__(self, size, supercell_factor,
                                          concentration, db_name,
@@ -106,9 +97,7 @@ class CEBulk(ClusterExpansionSetting):
                             'a': a,
                             'c': c,
                             'covera': covera,
-                            'u': u,
-                            'orthorhombic': orthorhombic,
-                            'cubic': cubic})
+                            'u': u})
         num_basis = len(self.concentration.orig_basis_elements)
         if num_basis != self.structures[self.crystalstructure]:
             msg = "{} has {} basis. ".format(
@@ -125,23 +114,20 @@ class CEBulk(ClusterExpansionSetting):
         if num_basis == 1:
             atoms = bulk(name='{}'.format(basis_elements[0][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic, cubic=self.cubic)
+                         c=self.c, covera=self.covera, u=self.u)
 
         elif num_basis == 2:
             atoms = bulk(name='{}{}'.format(basis_elements[0][0],
                                             basis_elements[1][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic, cubic=self.cubic)
+                         c=self.c, covera=self.covera, u=self.u)
 
         else:
             atoms = bulk(name='{}{}{}'.format(basis_elements[0][0],
                                               basis_elements[1][0],
                                               basis_elements[2][0]),
                          crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u,
-                         orthorhombic=self.orthorhombic, cubic=self.cubic)
+                         c=self.c, covera=self.covera, u=self.u)
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
 
@@ -198,10 +184,6 @@ class CECrystal(ClusterExpansionSetting):
         Maximum multipilicity factor for limiting the size of supercell
         created from the primitive cell.
 
-    primitive_cell: bool
-        Wheter to return the primitive instead of the conventional
-        unit cell.
-
     concentration: Concentration object
         Concentration object specifying the concentration range of
         constituting species
@@ -231,10 +213,10 @@ class CECrystal(ClusterExpansionSetting):
 
     def __init__(self, basis=None, spacegroup=1,
                  cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
-                 supercell_factor=None, primitive_cell=False,
-                 concentration=None, db_name=None, max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='sanchez',
-                 skew_threshold=4, ignore_background_atoms=False):
+                 supercell_factor=None, concentration=None, db_name=None,
+                 max_cluster_size=4, max_cluster_dia=[5.0, 5.0, 5.0],
+                 basis_function='sanchez', skew_threshold=4,
+                 ignore_background_atoms=False):
 
         # Initialization
         self.basis = basis
@@ -242,7 +224,6 @@ class CECrystal(ClusterExpansionSetting):
         self.cell = cell
         self.cellpar = cellpar
         self.ab_normal = ab_normal
-        self.primitive_cell = primitive_cell
         self.symbols = []
         num_basis = len(concentration.orig_basis_elements)
         for x in range(num_basis):
@@ -261,8 +242,7 @@ class CECrystal(ClusterExpansionSetting):
                             'spacegroup': spacegroup,
                             'cell': cell,
                             'cellpar': cellpar,
-                            'ab_normal': ab_normal,
-                            'primitive_cell': primitive_cell})
+                            'ab_normal': ab_normal})
 
         self._check_first_elements()
 
@@ -270,7 +250,7 @@ class CECrystal(ClusterExpansionSetting):
         atoms = crystal(symbols=self.symbols, basis=self.basis,
                         spacegroup=self.spacegroup, cell=self.cell,
                         cellpar=self.cellpar, ab_normal=self.ab_normal,
-                        size=[1, 1, 1], primitive_cell=self.primitive_cell)
+                        size=[1, 1, 1], primitive_cell=True)
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
 

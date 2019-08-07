@@ -4,8 +4,10 @@ import json
 from clease import CECrystal, NewStructures, CorrFunction
 from clease.newStruct import MaxAttemptReachedError
 from clease.concentration import Concentration
+from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from reference_corr_funcs_crystal import all_cf
+from ase.spacegroup import crystal
 import unittest
 
 # If this is True, the JSON file containing the correlation functions
@@ -55,8 +57,15 @@ class TestCECrystal(unittest.TestCase):
                         db_name=db_name,
                         size=[1, 1, 1],
                         max_cluster_dia=[3.5, 3.5])
+
+        # The correlation functions are actually calculated for the
+        # conventional cell
+        atoms = crystal(symbols=['Al', 'Al', 'Al', 'Al'], cellpar=cellpar,
+                        spacegroup=217, primitive_cell=False,
+                        basis=basis)
+        atoms = wrap_and_sort_by_position(atoms)
         self.assertEqual(bsg.num_trans_symm, 29)
-        atoms = bsg.atoms.copy()
+        # atoms = bsg.atoms.copy()
         atoms[0].symbol = "Mg"
         atoms[10].symbol = "Mg"
         atoms[20].symbol = "Mg"
@@ -82,11 +91,13 @@ class TestCECrystal(unittest.TestCase):
         concentration = Concentration(basis_elements=basis_elements,
                                       grouped_basis=grouped_basis)
 
-        bsg = CECrystal(basis=[(0.00, 0.00, 0.00),
-                               (1. / 3, 2. / 3, 0.00),
-                               (1. / 3, 0.00, 0.25)],
+        cellpar = [5.123, 5.123, 13.005, 90., 90., 120.]
+        basis = [(0.00, 0.00, 0.00),
+                 (1. / 3, 2. / 3, 0.00),
+                 (1. / 3, 0.00, 0.25)]
+        bsg = CECrystal(basis=basis,
                         spacegroup=167,
-                        cellpar=[5.123, 5.123, 13.005, 90., 90., 120.],
+                        cellpar=cellpar,
                         concentration=concentration,
                         size=[1, 1, 1],
                         db_name=db_name,
@@ -100,7 +111,12 @@ class TestCECrystal(unittest.TestCase):
         self.assertEqual(len(bsg.index_by_basis), 2)
         self.assertEqual(len(bsg.basis_functions), 4)
 
-        atoms = bsg.atoms.copy()
+        # The correlation functions in the reference file is calculated for
+        # the conventional cell
+        atoms = crystal(symbols=['Li', 'Li', 'O'], basis=basis,
+                        cellpar=cellpar, primitive_cell=False,
+                        spacegroup=167)
+        atoms = wrap_and_sort_by_position(atoms)
         indx_to_X = [6, 33, 8, 35]
         for indx in indx_to_X:
             atoms[indx].symbol = "X"

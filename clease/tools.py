@@ -6,6 +6,10 @@ from random import sample
 from ase.db import connect
 import json
 from clease import _logger
+from ase.build import make_supercell
+from ase.geometry import wrap_positions
+from scipy.spatial import cKDTree as KDTree
+from math import gcd
 
 
 def index_by_position(atoms):
@@ -37,32 +41,7 @@ def wrap_and_sort_by_position(atoms):
 
 def create_cluster(atoms, indices):
     """Create a cluster centered in the unit cell."""
-    cluster = atoms[list(indices)]
-    cell = cluster.get_cell()
-    center = 0.5 * (cell[0, :] + cell[1, :] + cell[2, :])
-    min_max_dist = 1E10
-    minimal_cluster = None
-    for ref_indx in range(len(indices)):
-        cluster_cpy = cluster.copy()
-        sub_indx = [i for i in range(len(indices)) if i != ref_indx]
-        mic_dists = cluster_cpy.get_distances(
-            ref_indx, sub_indx, mic=True, vector=True)
-        com = cluster_cpy[ref_indx].position + \
-            np.sum(mic_dists, axis=0) / len(indices)
-        cluster_cpy.translate(center - com)
-        cluster_cpy.wrap()
-        pos = cluster_cpy.get_positions()
-        lengths = []
-
-        for comb in combinations(range(len(indices)), r=2):
-            dist = pos[comb[0], :] - pos[comb[1], :]
-            length = np.sqrt(np.sum(dist**2))
-            lengths.append(length)
-        max_dist = np.max(lengths)
-        if max_dist < min_max_dist:
-            min_max_dist = max_dist
-            minimal_cluster = cluster_cpy.copy()
-    return minimal_cluster
+    return atoms[indices]
 
 
 def shift(array):
@@ -460,25 +439,6 @@ def bf2npyarray(basis_functions, symb_id):
     return bf_npy
 
 
-def get_sparse_column_matrix(tm):
-    from clease.column_sparse_matrix import ColumnSparseMatrix
-
-    columns = set()
-    for row in tm:
-        columns = columns.union(list(row.keys()))
-
-    columns = np.array(list(columns))
-
-    num_rows = len(tm)
-
-    sp_mat = ColumnSparseMatrix(num_rows, columns)
-
-    for row_num, row in enumerate(tm):
-        for col, value in row.items():
-            sp_mat.insert(row_num, col, value)
-    return sp_mat
-
-
 def nested_list2str(nested_list):
     """Convert a nested list to string."""
     return 'x'.join(','.join(str(x) for x in item) for item in nested_list)
@@ -488,3 +448,45 @@ def str2nested_list(string):
     """Convert string to nested list."""
     return [list(map(lambda x: int(x), item.split(',')))
             for item in string.split('x')]
+
+
+def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
+    """
+    Create a close to cubic supercell
+
+    Parameters:
+    
+    atoms: Atoms
+        Cell to be used for construction
+    zero_cutoff: float
+        Value below this value will be considered as zero when the
+        scaling factor is computed
+    max_relative_vol_increase: float
+        Maximum allowed relative increase in volume.
+    """
+    cell = atoms.get_cell()
+    a = np.linalg.det(cell)**(1.0/3.0)
+    inv_cell = np.linalg.inv(cell)
+    scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
+    scale = np.round(scale).astype(np.int32)
+    min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
+    scale = np.true_divide(scale, min_gcd)
+    scale = min_gcd*np.max(scale)
+    integer_matrix = np.round(inv_cell*scale).astype(np.int32)
+
+    if np.linalg.det(integer_matrix) < 0:
+        integer_matrix *= -1
+
+    sc = make_supercell(atoms, integer_matrix)
+    sc = wrap_and_sort_by_position(sc)
+
+    # We need to tag the atoms
+    sc_pos = sc.get_positions()
+    sc_pos = wrap_positions(sc_pos, atoms.get_cell())
+
+    tree = KDTree(atoms.get_positions())
+    dists, tags = tree.query(sc_pos)
+    assert np.allclose(dists, 0.0)
+    for i, tag in enumerate(tags):
+        sc[i].tag = tag
+    return sc

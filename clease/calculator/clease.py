@@ -116,7 +116,7 @@ class Clease(Calculator):
         return info
 
     def _precalculate_equivalent_decorations(self):
-        from clease.corrFunc import equivalent_deco
+        from clease.tools import equivalent_deco
         equiv_decos = []
 
         for symm in range(0, len(self.setting.cluster_info)):
