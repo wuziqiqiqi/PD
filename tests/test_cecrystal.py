@@ -7,10 +7,8 @@ from clease.concentration import Concentration
 from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from reference_corr_funcs_crystal import all_cf
-from clease.tools import wrap_and_sort_by_position
 from ase.spacegroup import crystal
 import unittest
-from ase.spacegroup import crystal
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -62,7 +60,7 @@ class TestCECrystal(unittest.TestCase):
 
         # The correlation functions are actually calculated for the
         # conventional cell
-        atoms = crystal(symbols=['Al', 'Al', 'Al', 'Al'], cellpar=cellpar, 
+        atoms = crystal(symbols=['Al', 'Al', 'Al', 'Al'], cellpar=cellpar,
                         spacegroup=217, primitive_cell=False,
                         basis=basis)
         atoms = wrap_and_sort_by_position(atoms)
@@ -115,7 +113,7 @@ class TestCECrystal(unittest.TestCase):
 
         # The correlation functions in the reference file is calculated for
         # the conventional cell
-        atoms = crystal(symbols=['Li', 'Li', 'O'], basis=basis, 
+        atoms = crystal(symbols=['Li', 'Li', 'O'], basis=basis,
                         cellpar=cellpar, primitive_cell=False,
                         spacegroup=167)
         atoms = wrap_and_sort_by_position(atoms)

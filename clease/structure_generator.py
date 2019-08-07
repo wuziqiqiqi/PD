@@ -249,8 +249,9 @@ class StructureGenerator(object):
     def _check_consistency(self):
         # Check to see if the cf is indeed preserved
         final_cf = \
-            self.corrFunc.get_cf_by_cluster_names(self.generated_structure,
-                                                  self.atoms.get_calculator().cluster_names)
+            self.corrFunc.get_cf_by_cluster_names(
+                self.generated_structure,
+                self.atoms.get_calculator().cluster_names)
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'
@@ -415,6 +416,7 @@ class GSStructure(StructureGenerator):
     cluster_name_eci: dict of list of tuples containing
                       cluster names and ECI
     """
+
     def __init__(self, setting, atoms, struct_per_gen, init_temp=2000,
                  final_temp=10, num_temp=10, num_steps_per_temp=100000,
                  cluster_name_eci=None):
@@ -454,6 +456,7 @@ class GSStructure(StructureGenerator):
         if accept_move:
             self.old_energy = new_energy
         return accept_move
+
 
 def mean_variance_full(cfm):
     prec = precision_matrix(cfm)

@@ -1,10 +1,8 @@
 """Module for calculating correlation functions."""
 from __future__ import print_function
-import numpy as np
 from ase.atoms import Atoms
 from clease import CEBulk, CECrystal
-from clease.tools import wrap_and_sort_by_position, equivalent_deco
-from clease.tools import symbols2integer, bf2npyarray
+from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from clease_cxx import PyCEUpdater
 
