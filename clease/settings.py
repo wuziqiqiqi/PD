@@ -21,8 +21,6 @@ from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
-from clease.cluster_info_mapper import ClusterInfoMapper
-from clease.cluster_info_mapper import AtomsNotContainedInLargeCellError
 
 
 class ClusterExpansionSetting(object):
@@ -81,9 +79,8 @@ class ClusterExpansionSetting(object):
         self.ref_index_trans_symm = []
         self.kd_trees = None
         self.template_atoms_uid = 0
-        # for uid in range(self.template_atoms.num_templates):
-        #     self._set_active_template_by_uid(uid)
-        self._initialise_templates()
+        for uid in range(self.template_atoms.num_templates):
+            self._set_active_template_by_uid(uid)
         # Set the initial template atoms to 0, which is the smallest cell
         self._set_active_template_by_uid(0)
         self._check_cluster_info_consistency()
@@ -222,43 +219,6 @@ class ClusterExpansionSetting(object):
         else:
             uid = self.template_atoms.weighted_random_template()
         self._set_active_template_by_uid(uid)
-
-    def _initialise_templates(self):
-        """
-        Initialise all templates
-        """
-        # First we create the largest template
-        largest = self.template_atoms.get_largest_template()
-        self.set_active_template(atoms=largest)
-        self.set_active_template(atoms=largest, generate_template=True)
-
-        # Store a copy of the largest template info and trans matrix
-        # of the largest template
-        largest_cinfo = deepcopy(self.cluster_info)
-        largest_tm = deepcopy(self.trans_matrix)
-
-        info_mapper = ClusterInfoMapper(largest, largest_tm, largest_cinfo)
-        db = connect(self.db_name)
-        for uid in range(self.template_atoms.num_templates):
-            # First check if the template is in the database
-            self._prepare_new_active_template(uid)
-            select_cond = [('name', '=', 'template'),
-                           ('size', '=', self._size2string())]
-            num_occurences = sum(1 for _ in db.select(select_cond))
-
-            if num_occurences == 1:
-                continue
-            elif num_occurences > 1:
-                raise ValueError("A template cannot be present more than one time!")
-            
-            try:
-                cinfo, tm = info_mapper.map_info(self.atoms)
-                self.cluster_info = cinfo
-                self.trans_matrix = tm
-                print("Info extracted from largest")
-            except AtomsNotContainedInLargeCellError:
-                self._create_cluster_info_and_trans_matrix()
-            self._store_data()
 
     def _tag_unit_cell(self):
         """Add a tag to all the atoms in the unit cell to track the index."""
