@@ -14,7 +14,7 @@
             id: toInput
             size_hint: [0.25, button_height]
             text: 'Input'
-        
+
         Button:
             id: concEditor
             text: 'Concentration'
@@ -30,7 +30,7 @@
             on_release:
                 root.manager.current = 'NewStruct'
                 root.manager.transition.direction = 'left'
-        
+
         Button:
             id: toFit
             text: 'Fit'
@@ -51,7 +51,7 @@
             size_hint: [0.125, button_height]
             id: ceType
             text: 'Type'
-        
+
         Label:
             size_hint: [0.125, button_height]
             id: bfLabel
@@ -86,7 +86,7 @@
             size_hint: [0.125, button_height]
             id: skewnessLabel
             text: 'Skew factor'
-        
+
         Spinner:
             size_hint: [0.125, button_height]
             id: typeSpinner
@@ -113,7 +113,7 @@
 
         Spinner:
             size_hint: [0.125, button_height]
-            id: sizeModeSpinner
+            id: sizeSpinner
             text: 'Fixed'
             values: 'Fixed', 'Mult. factor'
             on_text: root.update_size_section(self.text)
@@ -125,13 +125,13 @@
 
         TextInput:
             size_hint: [0.125, button_height]
-            id: supercellFactorInput
+            id: scFactorInput
             text: '20'
             input_filter: 'int'
 
         TextInput:
             size_hint: [0.125, button_height]
-            id: skewnessFactorInput
+            id: skewFactorInput
             text: '4'
             input_filter: 'int'
 
@@ -139,7 +139,7 @@
         Label:
             size_hint: [1, 0.5*button_height]
             text: ''
-     
+
         Label:
             size_hint: [0.3, button_height]
             id: dbChooser
@@ -155,7 +155,7 @@
             id: loadDbButton
             text: 'Load'
             on_release: root.show_load_dialog()
-            
+
 
 
 
@@ -214,7 +214,7 @@
             input_filter: 'float'
 
 
-       
+
 
 
         Label:
@@ -225,55 +225,44 @@
             id: CECrystalTitle
             size_hint: [1.0, 1.5*button_height]
             text: 'CECrystal parameters'
-        
+
         Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: cellPar
             text: 'Cellpar'
 
         Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: cell
             text: 'Cell'
 
         Label:
-            size_hint: [0.2, button_height]
-            id: primitive
-            text: 'Primitive'
-
-        Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: crBasisLabel
             text: 'Coordinate basis'
 
         Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: spLabel
             text: 'Spacegroup'
 
         TextInput:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: cellParInput
             text: ''
 
         TextInput:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: cellInput
             text: ''
 
-        Spinner:
-            size_hint: [0.2, button_height]
-            id: primitiveSpinner
-            text: 'No'
-            values: 'No', 'Yes'
-
         TextInput:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: crdBasisInput
             text: ''
 
         TextInput:
-            size_hint: [0.2, button_height]
+            size_hint: [0.25, button_height]
             id: spInput
             text: '1'
 
@@ -287,7 +276,7 @@
         Label:
             text: 'Concentration'
             size_hint: [1.0, 1.5*button_height]
-        
+
         Label:
             size_hint: [0.5, button_height]
             text: 'Elements'
@@ -309,11 +298,11 @@
 
 
 
-        
+
         Label:
             size_hint: [1, 0.5*button_height]
             text: ''
-        
+
         Button:
             size_hint: [0.25, button_height]
             id: reconfigureDBButton
@@ -336,7 +325,7 @@
             id: loadSession
             text: 'Load session'
             on_release: root.show_load_session_dialog()
-        
+
 
 
 
@@ -354,7 +343,7 @@
             size_hint: [0.8, button_height]
             text: 'Idle'
 
-        
+
 
 <LoadDialog>:
     BoxLayout:
@@ -402,4 +391,3 @@
             Button:
                 text: "Save"
                 on_release: root.save(filechooser.path, filechooser.selection, userFilename.text)
-        
