@@ -1060,7 +1060,9 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
       int dec = bfs[0];
       double new_value = 0.0;
       for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
-        new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
+        if (!is_background_index[atom_no] || !ignore_background_indices){
+          new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
+        }
       }
       cf[name] = new_value/symbols_with_id->size();
       continue;
