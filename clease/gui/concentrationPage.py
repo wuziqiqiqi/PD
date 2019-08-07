@@ -2,9 +2,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
 from kivy.app import App
+from kivy.clock import Clock
 from threading import Thread
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
@@ -30,7 +32,7 @@ class SettingsInitialiser(object):
                 self.app.settings = CECrystal(**self.kwargs)
             self.status.text = 'Database initialised'
         except AssertionError as exc:
-            self.status.text = "AssertError during initialisation " + str(exc)
+            self.status.text = "AssertError during initialization " + str(exc)
         except Exception as exc:
             self.status.text = str(exc)
 
@@ -81,6 +83,7 @@ class ConcentrationPage(Screen):
 
             layout = GridLayout(cols=self.num_concentrations + 3,
                                 id='elemHeader')
+            layout = StackLayout(id='elemHeader')
 
             for item in self.grouped_elements:
                 for symb in item:
@@ -105,23 +108,28 @@ class ConcentrationPage(Screen):
         return sum(len(item) for item in self.grouped_elements)
 
     def add_constraint(self):
-        layout = GridLayout(cols=self.num_concentrations + 3,
-                            id="cnst{}".format(self.num_constraints))
+        layout = StackLayout(id="cnst{}".format(self.num_constraints))
         for i in range(self.num_concentrations):
             layout.add_widget(TextInput(text='0', multiline=False,
+                                        size_hint=[0.2, 0.05],
                                         id='conc{}'.format(i)))
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
-                                  id='comparisonSpinner'))
-        layout.add_widget(TextInput(text='0', multiline=False, id='rhs'))
+                                  id='comparisonSpinner',
+                                  size_hint=[0.2, 0.05]))
+        layout.add_widget(TextInput(text='0', size_hint=[0.6, 0.05],                                           multiline=False, id='rhs'))
         layout.add_widget(
             Button(text='Remove',
+                   size_hint=[0.2, 0.05],
                    on_press=lambda _: self.remove_constraint(layout)))
 
         self.ids.mainConcLayout.add_widget(layout)
         self.num_constraints += 1
+        print('yes, {}'.format(self.num_constraints))
+        print(layout)
         return layout
 
     def remove_constraint(self, widget):
+        self.num_constraints -= 1
         self.ids.mainConcLayout.remove_widget(widget)
 
     def check_user_input(self):
