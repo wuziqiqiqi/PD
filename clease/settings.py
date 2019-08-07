@@ -504,7 +504,6 @@ class ClusterExpansionSetting(object):
         supercell.translate(com - com_ref)
         supercell.wrap()
 
-
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
         self._check_max_cluster_dia(supercell.info['distances'])
