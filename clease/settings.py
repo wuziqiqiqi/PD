@@ -493,10 +493,11 @@ class ClusterExpansionSetting(object):
             self.ref_index_trans_symm, supercell)
 
         # Calculate the center of mass of the supercell
-        com = supercell.get_center_of_mass()
+        pos = supercell.get_positions()
+        com = np.mean(pos, axis=0)
 
         # Calculate the center of mass of all the reference indices
-        com_ref = supercell[ref_indices].get_center_of_mass()
+        com_ref = np.mean(pos[ref_indices, :], axis=0)
 
         # Translate center of mass of reference indices to the center
         # of mass of the cell
