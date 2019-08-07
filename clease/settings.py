@@ -481,7 +481,8 @@ class ClusterExpansionSetting(object):
             atom.tag = atom.index
 
         supercell = close_to_cubic_supercell(atoms_cpy)
-        max_cluster_dia_in_sc = self._get_max_cluster_dia(supercell.get_cell().T)
+        max_cluster_dia_in_sc = self._get_max_cluster_dia(
+            supercell.get_cell().T)
 
         # Make supercell so large that we ca of 4 times max_cluster_ inside
         scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
