@@ -417,6 +417,33 @@ class ClusterExpansionSetting(object):
                     "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
                 )
 
+    def _get_supercell(self, atoms):
+        supercell = close_to_cubic_supercell(atoms)
+        max_cluster_dia_in_sc = self._get_max_cluster_dia(
+            supercell.get_cell().T)
+
+        # Make supercell so large that we ca of 4 times max_cluster_ inside
+        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
+        if scale < 1:
+            scale = 1
+        supercell = supercell*(scale, scale, scale)
+        supercell = wrap_and_sort_by_position(supercell)
+        ref_indices = self._corresponding_indices(
+            self.ref_index_trans_symm, supercell)
+
+        # Calculate the center of mass of the supercell
+        pos = supercell.get_positions()
+        com = np.mean(pos, axis=0)
+
+        # Calculate the center of mass of all the reference indices
+        com_ref = np.mean(pos[ref_indices, :], axis=0)
+
+        # Translate center of mass of reference indices to the center
+        # of mass of the cell
+        supercell.translate(com - com_ref)
+        supercell.wrap()
+        return supercell, ref_indices
+
     def _create_cluster_information(self):
         """Create a set of parameters describing the structure.
 
@@ -487,31 +514,7 @@ class ClusterExpansionSetting(object):
         for atom in atoms_cpy:
             atom.tag = atom.index
 
-        supercell = close_to_cubic_supercell(atoms_cpy)
-        max_cluster_dia_in_sc = self._get_max_cluster_dia(
-            supercell.get_cell().T)
-
-        # Make supercell so large that we ca of 4 times max_cluster_ inside
-        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
-        if scale < 1:
-            scale = 1
-        supercell = supercell*(scale, scale, scale)
-        supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = self._corresponding_indices(
-            self.ref_index_trans_symm, supercell)
-
-        # Calculate the center of mass of the supercell
-        pos = supercell.get_positions()
-        com = np.mean(pos, axis=0)
-
-        # Calculate the center of mass of all the reference indices
-        com_ref = np.mean(pos[ref_indices, :], axis=0)
-
-        # Translate center of mass of reference indices to the center
-        # of mass of the cell
-        supercell.translate(com - com_ref)
-        supercell.wrap()
-
+        supercell, ref_indices = self._get_supercell(atoms_cpy)
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia))
         self._check_max_cluster_dia(supercell.info['distances'])
