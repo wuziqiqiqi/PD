@@ -26,12 +26,14 @@ class InputPage(Screen):
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
         self._pop_up = Popup(title="Load structure DB", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_load_session_dialog(self):
         content = LoadDialog(load=self.load_session, cancel=self.dismiss_popup)
         self._pop_up = Popup(title="Load CLEASE session", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -83,6 +85,7 @@ class InputPage(Screen):
         content = SaveDialog(save=self.save_session, cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Save CLEASE session", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 

@@ -71,7 +71,7 @@ class EminStructGenerator(object):
 class NewStructPage(Screen):
     _pop_up = None
     structure_generation_in_progress = False
-    
+
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
 
@@ -132,6 +132,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load ECI filename", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -141,6 +142,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load template atoms", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -164,7 +166,7 @@ class NewStructPage(Screen):
             # Don't allow user to initialise many threads
             # by successively clicking on the generate button
             return
-        
+
         self.structure_generation_in_progress = True
         settings = App.get_running_app().settings
 
@@ -295,6 +297,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load initial structure", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -305,6 +308,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load final structure", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
