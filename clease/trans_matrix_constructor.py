@@ -52,7 +52,7 @@ class TransMatrixConstructor(object):
         mapped[template_indx] = indx
         return mapped
 
-    def construct(self, ref_symm_group, symm_group):
+    def construct(self, ref_symm_group, symm_group, indices=None):
         """Construct translation matrix.
 
         Parameters:
@@ -70,9 +70,16 @@ class TransMatrixConstructor(object):
             If it has two basis,  this can be [0, 0, 1, 1, 0, 1, ...].
             The index of the reference atom for the basis where the atom
             with index k belongs to is ref_symm_group[symm_group[k]]
+
+        indices: list of int
+            List of indices that the translation matrix should be calculated
+            for. If None, all indices will be used.
         """
         tm = []
-        for indx in range(self.num_atoms):
+        if indices is None:
+            indices = range(self.num_atoms)
+
+        for indx in indices:
             ref_indx = ref_symm_group[symm_group[indx]]
             mapped = self._map_one(indx, ref_indx)
             tm.append(mapped)
