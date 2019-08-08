@@ -87,6 +87,43 @@ class TestTransMatrixConstructor(unittest.TestCase):
         tm_fast = tm_constructor.construct(ref_indx, symm_group)
         self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
 
+    def test_sp217(self):
+        a = 10.553
+        b = 10.553
+        c = 10.553
+        alpha = 90
+        beta = 90
+        gamma = 90
+        cellpar = [a, b, c, alpha, beta, gamma]
+        basis = [(0, 0, 0), (0.324, 0.324, 0.324),
+                 (0.3582, 0.3582, 0.0393), (0.0954, 0.0954, 0.2725)]
+
+        unitcell = crystal(symbols=['Al', 'Al', 'Al', 'Al'], cellpar=cellpar,
+                           spacegroup=217, primitive_cell=False,
+                           basis=basis)
+
+        # Tag atoms
+        for atom in unitcell:
+            atom.tag = atom.index
+
+        atoms = wrap_and_sort_by_position(unitcell*(2, 2, 2))
+        symm_group = [atom.tag for atom in atoms]
+
+        index_by_group = [[] for _ in range(len(unitcell))]
+
+        for atom in atoms:
+            index_by_group[atom.tag].append(atom.index)
+        ref_indx = [min(gr) for gr in index_by_group]
+
+        tm_brute = brute_force_tm_construction(ref_indx, index_by_group, atoms)
+
+        tm_constructor = TransMatrixConstructor(atoms, 5.0)
+        tm_fast = tm_constructor.construct(ref_indx, symm_group)
+        self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
+
+
+        
+
 
 def timing():
     import time
