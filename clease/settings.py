@@ -15,7 +15,8 @@ from clease.tools import (wrap_and_sort_by_position, index_by_position,
                           flatten, sort_by_internal_distances,
                           dec_string, get_unique_name,
                           nested_array2list, get_all_internal_distances,
-                          distance_string, nested_list2str)
+                          distance_string, nested_list2str,
+                          trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
@@ -840,10 +841,21 @@ class ClusterExpansionSetting(object):
         all_included = False
         counter = 0
         max_attempts = 1000
+        supercell, ref_indices = self._get_supercell(self.atoms.copy())
+
+        # We need to get the symmetry groups of the supercell. We utilise that
+        # supercell is tagged
+        symm_group_sc = [-1 for _ in range(len(supercell))]
+        for atom in supercell:
+            symm_group_sc[atom.index] = symm_group[atom.tag]
+
         while not all_included and counter < max_attempts:
             try:
-                tmc = TransMatrixConstructor(self.atoms, tm_cutoff)
-                tm = tmc.construct(self.ref_index_trans_symm, symm_group)
+                tmc = TransMatrixConstructor(supercell, tm_cutoff)
+                tm_sc = tmc.construct(ref_indices, symm_group_sc)
+
+                # Map supercell indices to normal indices
+                tm = trans_matrix_index2tags(tm_sc, supercell)
                 _ = [tm[0][k] for k in self.unique_indices]
                 all_included = True
             except (KeyError, IndexError):
