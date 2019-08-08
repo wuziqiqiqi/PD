@@ -122,9 +122,6 @@ class TestTransMatrixConstructor(unittest.TestCase):
         self.assertTrue(check_sparse_dense(tm_fast, tm_brute))
 
 
-        
-
-
 def timing():
     import time
     import numpy as np
