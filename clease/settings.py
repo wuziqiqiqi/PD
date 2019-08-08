@@ -418,6 +418,8 @@ class ClusterExpansionSetting(object):
                 )
 
     def _get_supercell(self, atoms):
+        for atom in atoms:
+            atom.tag = atom.index
         supercell = close_to_cubic_supercell(atoms)
         max_cluster_dia_in_sc = self._get_max_cluster_dia(
             supercell.get_cell().T)
