@@ -856,11 +856,10 @@ class ClusterExpansionSetting(object):
 
                 # Map supercell indices to normal indices
                 tm = trans_matrix_index2tags(tm_sc, supercell)
-                _ = [tm[0][k] for k in self.unique_indices]
+                _ = [row[k] for row in tm for k in self.unique_indices]
                 all_included = True
             except (KeyError, IndexError):
-                tm_cutoff *= 2
-                print(tm_cutoff)
+                tm_cutoff += 1.0
             counter += 1
 
         if counter >= max_attempts:
