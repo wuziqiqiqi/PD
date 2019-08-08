@@ -863,7 +863,7 @@ class ClusterExpansionSetting(object):
             counter += 1
 
         if counter >= max_attempts:
-            raise RuntimeError("Could not find a cutoff suc that all "
+            raise RuntimeError("Could not find a cutoff such that all "
                                "unique_indices are included")
         self.trans_matrix = [{k: row[k] for k in self.unique_indices}
                              for row in tm]
