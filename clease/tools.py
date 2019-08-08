@@ -492,7 +492,7 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     return sc
 
 
-def trans_matrix_index2tags(tm, tagged_atoms):
+def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
     """
     Convert from indices to tags
 
@@ -503,8 +503,16 @@ def trans_matrix_index2tags(tm, tagged_atoms):
     tagged_atoms: Atoms
         Atoms with a tag that should be used instead of the
         index
+    indices: list of int
+        Atom indices corresponding to each row in tm. If None,
+        it is assumed that len(tm) == len(tagged_atoms) and each
+        row in tm corresponds to the atom with the same index in 
+        tagged_atoms.
     """
     unique_tags = sorted(list(set(atom.tag for atom in tagged_atoms)))
+
+    if indices is None:
+        indices = list(range(len(tm)))
 
     # Make sure we have a continuous series of tags
     assert len(unique_tags) == max(unique_tags) + 1
@@ -513,7 +521,7 @@ def trans_matrix_index2tags(tm, tagged_atoms):
     used_tags = [False for _ in range(len(unique_tags))]
 
     for i, row in enumerate(tm):
-        tag = tagged_atoms[i].tag
+        tag = tagged_atoms[indices[i]].tag
         if used_tags[tag]:
             continue
         new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag for k, v in row.items()}

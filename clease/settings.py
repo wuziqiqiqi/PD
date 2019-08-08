@@ -849,13 +849,21 @@ class ClusterExpansionSetting(object):
         for atom in supercell:
             symm_group_sc[atom.index] = symm_group[atom.tag]
 
+        # Make as efficient as possible by evaluating only a subset of
+        # the indices
+        indices = [-1 for _ in range(len(self.atoms))]
+        for atom in supercell:
+            if indices[atom.tag] == -1:
+                indices[atom.tag] = atom.index
+
         while not all_included and counter < max_attempts:
             try:
                 tmc = TransMatrixConstructor(supercell, tm_cutoff)
-                tm_sc = tmc.construct(ref_indices, symm_group_sc)
+                tm_sc = tmc.construct(ref_indices, symm_group_sc,
+                                      indices=indices)
 
                 # Map supercell indices to normal indices
-                tm = trans_matrix_index2tags(tm_sc, supercell)
+                tm = trans_matrix_index2tags(tm_sc, supercell, indices=indices)
                 _ = [row[k] for row in tm for k in self.unique_indices]
                 all_included = True
             except (KeyError, IndexError):
