@@ -30,11 +30,11 @@ class ConcentrationPageTest(unittest.TestCase):
         screen = app.screen_manager.get_screen('Concentration')
 
         # Constraint counter is on 1 after the check_add_constraint
-        self.assertEqual(screen.num_constraints, 1)
+        self.assertEqual(screen.next_constraint_id, 1)
         screen.ids.addConstraintButton.dispatch('on_release')
         screen.ids.addConstraintButton.dispatch('on_release')
         screen.ids.addConstraintButton.dispatch('on_release')
-        self.assertEqual(screen.num_constraints, 4)
+        self.assertEqual(screen.next_constraint_id, 4)
 
         for widget in screen.ids.mainConcLayout.children:
             if widget.id is None:
