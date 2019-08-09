@@ -39,5 +39,6 @@ class TestTools(unittest.TestCase):
         expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
         self.assertTrue(np.allclose(sc.get_cell(), expected_cell))
 
+
 if __name__ == '__main__':
     unittest.main()

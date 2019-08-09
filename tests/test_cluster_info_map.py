@@ -84,9 +84,9 @@ class TestClusterInfoMapper(unittest.TestCase):
 
         atoms_small = atoms_small = wrap_and_sort_by_position(atoms_small)
 
-        info_mapper = ClusterInfoMapper(
-            bsg.atoms, bsg.trans_matrix, bsg.cluster_info)
-        
+        info_mapper = \
+            ClusterInfoMapper(bsg.atoms, bsg.trans_matrix, bsg.cluster_info)
+
         map_info, map_tm = info_mapper.map_info(atoms_small)
 
         # Swap 3 O with X
@@ -120,6 +120,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         info_mapper = ClusterInfoMapper(atoms, None, None)
         with self.assertRaises(AtomsNotContainedInLargeCellError):
             info_mapper._map_indices(atoms2)
+
 
 if __name__ == '__main__':
     unittest.main()
