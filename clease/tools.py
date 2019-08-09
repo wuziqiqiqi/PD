@@ -269,7 +269,7 @@ def exclude_information_entries():
             ('name', '!=', 'float_classification')]
 
 
-def get_all_internal_distances(atoms, max_dist):
+def get_all_internal_distances(atoms, max_dist, ref_indices):
     """Obtain all internal distances of the passed atoms object and return a
        Numpy array containing all the distances sorted in an ascending order.
     """
@@ -277,9 +277,9 @@ def get_all_internal_distances(atoms, max_dist):
 
     tree = KDTree(atoms.get_positions())
     distances = []
-    for atom in atoms:
-        indices = tree.query_ball_point(atom.position, max_dist)
-        dists = atoms.get_distances(atom.index, indices)
+    for ind in ref_indices:
+        indices = tree.query_ball_point(atoms[ind].position, max_dist)
+        dists = atoms.get_distances(ind, indices)
         for d in dists:
             if np.any(np.abs(np.array(distances) - d) < 1E-6):
                 continue

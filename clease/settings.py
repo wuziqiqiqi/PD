@@ -516,7 +516,7 @@ class ClusterExpansionSetting(object):
 
         supercell, ref_indices = self._get_supercell(atoms_cpy)
         supercell.info['distances'] = get_all_internal_distances(
-            supercell, max(self.max_cluster_dia))
+            supercell, max(self.max_cluster_dia), ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
         positions = supercell.get_positions()
         cluster_info = []
