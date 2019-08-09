@@ -10,6 +10,7 @@ def set_fd(fd):
     _logger.fd = fd
 
 from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
+from clease.template_filters import ValidConcentrationFilter
 from clease.settings_bulk import CEBulk, CECrystal
 from clease.evaluate import Evaluate
 from clease.corrFunc import CorrFunction

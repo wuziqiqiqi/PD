@@ -754,6 +754,18 @@ class Concentration(object):
             raise InvalidConcentrationError(msg)
         return x
 
+    def to_float_conc(self, num_atoms_in_basis, int_conc):
+        """
+        Convert integer number to float concentration
+        """
+        conc_index = 0
+        x = np.zeros(len(int_conc))
+        for i, elem in enumerate(self.basis_elements):
+            for _ in range(len(elem)):
+                x[conc_index] = int_conc[conc_index]/num_atoms_in_basis[i]
+                conc_index += 1
+        return x
+
     def conc_in_int(self, num_atoms_in_basis, conc):
         """Converts concentration value to an integer that corresponds to the
         number of corresponding elements.

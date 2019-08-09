@@ -108,9 +108,15 @@ class ValidConcentrationFilter(AtomsFilter):
         ratio = num_in_atoms/num_in_template
         nib = [len(x)*ratio for x in self.setting.index_by_basis]
 
+        if not np.allclose(nib, np.round(nib)):
+            return False
         valid = True
         try:
-            self.setting.conc.get_random_concentration(nib=nib)
+            x = self.setting.conc.get_random_concentration(nib=nib)
+            x_int = self.setting.conc.conc_in_int(nib, x)
+            x_from_int = self.setting.conc.to_float_conc(nib, x_int)
+            if not np.allclose(x, x_from_int):
+                return False
         except Exception:
             valid = False
         return valid

@@ -56,20 +56,20 @@ class TemplateAtoms(object):
     def num_templates(self):
         return len(self.templates['atoms'])
 
-    def add_cell_filter(self, filter):
+    def add_cell_filter(self, cell_filter):
         """
         Attach a new Cell filter
         """
         from clease.template_filters import CellFilter
-        if not isinstance(filter, CellFilter):
+        if not isinstance(cell_filter, CellFilter):
             raise TypeError("filter has to be an instance of CellFilter!")
-        self.cell_filters.append(filter)
+        self.cell_filters.append(cell_filter)
 
-    def add_atoms_filter(self, filter):
+    def add_atoms_filter(self, at_filter):
         from clease.template_filters import AtomsFilter
-        if not isinstance(filter, AtomsFilter):
+        if not isinstance(at_filter, AtomsFilter):
             raise TypeError("filter has to be an instance of CellFilter")
-        self.atoms_filters.append(filter)
+        self.atoms_filters.append(at_filter)
 
     def clear_filters(self):
         """
@@ -86,11 +86,14 @@ class TemplateAtoms(object):
         """
         cell_valid = True
         if cell is not None:
-            cell_valid = all(f(cell) for f in self.cell_filters)
+            cell_valid = all([f(cell) for f in self.cell_filters])
+
+        if not cell_valid:
+            return False
 
         atoms_valid = True
         if atoms is not None:
-            atoms_valid = all(f(cell) for f in self.atoms_filters)
+            atoms_valid = all([f(atoms) for f in self.atoms_filters])
         return cell_valid and atoms_valid
 
     def get_size(self):
