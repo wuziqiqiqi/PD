@@ -813,17 +813,22 @@ class ClusterExpansionSetting(object):
         return symm_groups.tolist()
 
     def _cutoff_for_tm_construction(self):
+        """ Get cutoff radius for translation matrix construction."""
         indices = self.unique_indices
+        # start with some small positive number
         max_dist = 0.1
 
         for ref in indices:
             # MIC distance is a lower bound for the distance used in the
             # cluster
             mic_distances = self.atoms.get_distances(ref, indices, mic=True)
-            new_max_dist = np.max(mic_distances)
-            if new_max_dist > max_dist:
-                max_dist = new_max_dist
-        return 0.51*max_dist
+            dist = np.max(mic_distances)
+            if dist > max_dist:
+                max_dist = dist
+
+        # 0.5 * max_dist is the radius, but give a bit of buffer (0.1)
+        max_dist *= 0.51
+        return max_dist
 
     def _create_cluster_info_and_trans_matrix(self):
         self._create_cluster_information()
@@ -834,14 +839,14 @@ class ClusterExpansionSetting(object):
         # For smaller cell we currently have no method to decide how large
         # cutoff we need in order to ensure that all indices in unique_indices
         # are included. We therefore just probe the cutoff and increase it by
-        # a factor 2 until we achieve the what we want
+        # a 1 angstrom until we achieve the what we want
         all_included = False
         counter = 0
         max_attempts = 1000
         supercell, ref_indices = self._get_supercell(self.atoms.copy())
 
         # We need to get the symmetry groups of the supercell. We utilise that
-        # supercell is tagged
+        # the supercell is tagged
         symm_group_sc = [-1 for _ in range(len(supercell))]
         for atom in supercell:
             symm_group_sc[atom.index] = symm_group[atom.tag]
