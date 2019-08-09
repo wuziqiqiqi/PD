@@ -10,6 +10,7 @@ from itertools import combinations
 from ase.build import make_supercell
 from clease.tools import str2nested_list
 from clease import _logger
+from clease import SkewnessFilter, EquivalentCellsFilter
 
 
 class TemplateAtoms(object):
@@ -23,6 +24,14 @@ class TemplateAtoms(object):
         self.supercell_factor = supercell_factor
         self.size = size
 
+        self.cell_filters = []
+        self.atoms_filters = []
+
+        # If skewness factor is given: attach the skewness filter
+        self.add_cell_filter(SkewnessFilter(skew_threshold))
+        self.all_cells = []
+        self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
+
         if self.size is not None:
             check_valid_conversion_matrix(self.size)
         self.skew_threshold = skew_threshold
@@ -32,8 +41,6 @@ class TemplateAtoms(object):
         self.unit_cell = list(self.db.select(name='unit_cell'))[0].toatoms()
         self._set_based_on_setting()
         self._append_templates_from_db()
-        self.cell_filters = []
-        self.atoms_filters = []
 
     def __str__(self):
         """Print a summary of the class."""
@@ -63,6 +70,13 @@ class TemplateAtoms(object):
         if not isinstance(filter, AtomsFilter):
             raise TypeError("filter has to be an instance of CellFilter")
         self.atoms_filters.append(filter)
+
+    def clear_filters(self):
+        """
+        Remove all filters
+        """
+        self.cell_filters = []
+        self.atoms_filters = []
 
     def is_valid(self, atoms=None, cell=None):
         """
@@ -165,8 +179,8 @@ class TemplateAtoms(object):
         """Construct templates based on arguments specified."""
         if self.size is None:
             self.supercell_factor = int(self.supercell_factor)
-            templates = self._generate_template_atoms()
-            self.templates = self._filter_equivalent_templates(templates)
+            self.templates = self._generate_template_atoms()
+            #self.templates = self._filter_equivalent_templates(templates)
             if not self.templates['atoms']:
                 raise RuntimeError("No template atoms with matching criteria")
         else:
@@ -216,8 +230,11 @@ class TemplateAtoms(object):
                 continue
             matrix = np.diag(size)
             atoms = make_supercell(self.unit_cell, matrix)
-            templates['atoms'].append(atoms)
-            templates['size'].append(matrix.tolist())
+
+            if self.is_valid(atoms=atoms, cell=atoms.get_cell()):
+                templates['atoms'].append(atoms)
+                templates['size'].append(matrix.tolist())
+                self.all_cells.append(atoms.get_cell())
         return templates
 
     def _construct_templates_from_supercell(self, size):
@@ -278,8 +295,10 @@ class TemplateAtoms(object):
                 continue
 
             # Check diagonal
-            ratio = self._get_max_min_diag_ratio(atoms)
-            if ratio > self.skew_threshold:
+            # ratio = self._get_max_min_diag_ratio(atoms)
+            # if ratio > self.skew_threshold:
+            #     continue
+            if not self.is_valid(atoms=atoms, cell=atoms.get_cell()):
                 continue
 
             size = [[int(np.round(x)) for x in v1.tolist()],
@@ -307,21 +326,21 @@ class TemplateAtoms(object):
                          "repeating of the unit cells. Scale factors found "
                          "{}".format(size_factor))
 
-    def _is_unitary(self, matrix):
-        return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
+    # def _is_unitary(self, matrix):
+    #     return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
 
-    def _are_equivalent(self, cell1, cell2):
-        """Compare two cells to check if they are equivalent.
+    # def _are_equivalent(self, cell1, cell2):
+    #     """Compare two cells to check if they are equivalent.
 
-        It is assumed that the cell vectors are columns of each matrix.
-        """
-        inv_cell1 = inv(cell1)
-        for perm in permutations(range(3)):
-            permute_cell = cell2[:, perm]
-            R = permute_cell.dot(inv_cell1)
-            if self._is_unitary(R):
-                return True
-        return False
+    #     It is assumed that the cell vectors are columns of each matrix.
+    #     """
+    #     inv_cell1 = inv(cell1)
+    #     for perm in permutations(range(3)):
+    #         permute_cell = cell2[:, perm]
+    #         R = permute_cell.dot(inv_cell1)
+    #         if self._is_unitary(R):
+    #             return True
+    #     return False
 
     def _internal_distances_are_equal(self, atoms1, atoms2):
         """Check if all internal distances are equivalent."""
@@ -335,37 +354,37 @@ class TemplateAtoms(object):
             dist2 += atoms2.get_distances(ref, remaining).tolist()
         return np.allclose(sorted(dist1), sorted(dist2))
 
-    def _filter_equivalent_templates(self, templates):
-        """Remove symmetrically equivalent clusters."""
-        templates = self._filter_very_skewed_templates(templates)
-        filtered = {'atoms': [], 'size': []}
-        for i, atoms in enumerate(templates['atoms']):
-            current = atoms.get_cell().T
-            duplicate = False
-            for j in range(0, len(filtered['atoms'])):
-                ref = filtered['atoms'][j].get_cell().T
-                if self._are_equivalent(current, ref):
-                    duplicate = True
-                    break
-                elif self._internal_distances_are_equal(
-                        atoms, filtered['atoms'][j]):
-                    duplicate = True
-                    break
+    # def _filter_equivalent_templates(self, templates):
+    #     """Remove symmetrically equivalent clusters."""
+    #     templates = self._filter_very_skewed_templates(templates)
+    #     filtered = {'atoms': [], 'size': []}
+    #     for i, atoms in enumerate(templates['atoms']):
+    #         current = atoms.get_cell().T
+    #         duplicate = False
+    #         for j in range(0, len(filtered['atoms'])):
+    #             ref = filtered['atoms'][j].get_cell().T
+    #             if self._are_equivalent(current, ref):
+    #                 duplicate = True
+    #                 break
+    #             elif self._internal_distances_are_equal(
+    #                     atoms, filtered['atoms'][j]):
+    #                 duplicate = True
+    #                 break
 
-            if not duplicate:
-                filtered['atoms'].append(atoms)
-                filtered['size'].append(list(templates['size'][i]))
-        return filtered
+    #         if not duplicate:
+    #             filtered['atoms'].append(atoms)
+    #             filtered['size'].append(list(templates['size'][i]))
+    #     return filtered
 
-    def _filter_very_skewed_templates(self, templates):
-        """Remove templates that have a very skewed unit cell."""
-        filtered = {'atoms': [], 'size': []}
-        for i, atoms in enumerate(templates['atoms']):
-            ratio = self._get_max_min_diag_ratio(atoms)
-            if ratio < self.skew_threshold:
-                filtered['atoms'].append(atoms)
-                filtered['size'].append(list(templates['size'][i]))
-        return filtered
+    # def _filter_very_skewed_templates(self, templates):
+    #     """Remove templates that have a very skewed unit cell."""
+    #     filtered = {'atoms': [], 'size': []}
+    #     for i, atoms in enumerate(templates['atoms']):
+    #         ratio = self._get_max_min_diag_ratio(atoms)
+    #         if ratio < self.skew_threshold:
+    #             filtered['atoms'].append(atoms)
+    #             filtered['size'].append(list(templates['size'][i]))
+    #     return filtered
 
     def random_template(self, max_supercell_factor=1000, return_size=False):
         """Select a random template atoms.
@@ -523,8 +542,11 @@ class TemplateAtoms(object):
             Number of templates to generate
         """
         max_attempts = 1000
-        inverse_matrices = []
+        matrices = []
         int_matrices = []
+
+        # Use the equivalent cell filter to trace already selected templates
+        equiv_filter = EquivalentCellsFilter(matrices)
 
         counter = 0
         ucell = self.unit_cell.get_cell()
@@ -537,22 +559,16 @@ class TemplateAtoms(object):
 
             # Check if this matrix can be obtained with a unitary
             # transformation of any of the other
-            already_exist = False
-            for mat in inverse_matrices:
-                S = sc.dot(mat)
-                if self._is_unitary(S):
-                    already_exist = True
-                    break
+            valid = self.is_valid(cell=sc)
 
-            if not already_exist:
+            if valid and equiv_filter(sc):
                 int_matrices.append(matrix)
-                inverse_matrices.append(np.linalg.inv(sc))
+                matrices.append(sc)
 
         templates = []
         for mat in int_matrices:
             templates.append(make_supercell(self.unit_cell, mat))
         return templates
-
 
 
 def is_3x3_matrix(array):

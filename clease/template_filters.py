@@ -1,3 +1,7 @@
+from itertools import product, permutations
+import numpy as np
+
+
 class AtomsFilter(object):
     """
     Base class for all template filters that requires a full
@@ -39,11 +43,10 @@ class SkewnessFilter(CellFilter):
     def _get_max_min_diag_ratio(self, cell):
         """Return the ratio between the maximum and the minimum diagonal."""
         diag_lengths = []
-        cell = atoms.get_cell()
         for w in product([-1, 0, 1], repeat=3):
             if np.allclose(w, 0):
                 continue
-            diag = w.dot(cell)
+            diag = np.array(w).dot(cell)
             length = np.sqrt(diag.dot(diag))
             diag_lengths.append(length)
         max_length = np.max(diag_lengths)
@@ -52,4 +55,35 @@ class SkewnessFilter(CellFilter):
 
     def __call__(self, cell):
         diag_ratio = self._get_max_min_diag_ratio(cell)
-        return diag_ratio < self.ratio 
+        return diag_ratio < self.ratio
+
+
+class EquivalentCellsFilter(CellFilter):
+    """
+    Rejects templates that can be obtained by a unitary
+    transformation of an existing cell
+    """
+    def __init__(self, cell_list):
+        self.cell_list = cell_list
+
+    def _is_unitary(self, matrix):
+        return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
+
+    def _are_equivalent(self, cell1, cell2):
+        """Compare two cells to check if they are equivalent.
+
+        It is assumed that the cell vectors are columns of each matrix.
+        """
+        inv_cell1 = np.linalg.inv(cell1)
+        for perm in permutations(range(3)):
+            permute_cell = cell2[:, perm]
+            R = permute_cell.dot(inv_cell1)
+            if self._is_unitary(R):
+                return True
+        return False
+
+    def __call__(self, cell):
+        for existing_cell in self.cell_list:
+            if self._are_equivalent(existing_cell, cell):
+                return False
+        return True
