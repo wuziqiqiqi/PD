@@ -32,6 +32,8 @@ class TemplateAtoms(object):
         self.unit_cell = list(self.db.select(name='unit_cell'))[0].toatoms()
         self._set_based_on_setting()
         self._append_templates_from_db()
+        self.cell_filters = []
+        self.atoms_filters = []
 
     def __str__(self):
         """Print a summary of the class."""
@@ -46,6 +48,36 @@ class TemplateAtoms(object):
     @property
     def num_templates(self):
         return len(self.templates['atoms'])
+
+    def add_cell_filter(self, filter):
+        """
+        Attach a new Cell filter
+        """
+        from clease.template_filters import CellFilter
+        if not isinstance(filter, CellFilter):
+            raise TypeError("filter has to be an instance of CellFilter!")
+        self.cell_filters.append(filter)
+
+    def add_atoms_filter(self, filter):
+        from clease.template_filters import AtomsFilter
+        if not isinstance(filter, AtomsFilter):
+            raise TypeError("filter has to be an instance of CellFilter")
+        self.atoms_filters.append(filter)
+
+    def is_valid(self, atoms=None, cell=None):
+        """
+        Return true if the templates either given by its full
+        `Atoms`object or its cell is valid according to all
+        attached filters.
+        """
+        cell_valid = True
+        if cell is not None:
+            cell_valid = all(f(cell) for f in self.cell_filters)
+
+        atoms_valid = True
+        if atoms is not None:
+            atoms_valid = all(f(cell) for f in self.atoms_filters)
+        return cell_valid and atoms_valid
 
     def get_size(self):
         """Get size of the templates."""
