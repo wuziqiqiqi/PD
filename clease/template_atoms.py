@@ -391,6 +391,66 @@ class TemplateAtoms(object):
         for _, v in self.templates.items():
             assert len(v) == num_entries
 
+    def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
+                                                 off_diag_range):
+
+        A = np.diag(diag_A)  # Upper triangular matrix
+        B = np.diag(diag_B)  # Lower triangular matrix
+
+        # Generate random off diagonal elements
+        off_diag = np.random.randint(-off_diag_range, off_diag_range,
+                                     size=6)
+
+        A[0, 1] = off_diag[0]
+        A[0, 2] = off_diag[1]
+        A[1, 2] = off_diag[2]
+        B[1, 0] = off_diag[3]
+        B[2, 0] = off_diag[4]
+        B[2, 1] = off_diag[5]
+
+        C = A.dot(B)
+        return C
+
+    def get_template_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                  off_diag_range=2):
+        matrix = self._transformation_matrix_with_given_volume(
+            diag_A, diag_B, off_diag_range)
+        return make_supercell(self.unit_cell, matrix)
+
+    def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                   off_diag_range=2, num_templates=10):
+        max_attempts = 1000
+        inverse_matrices = []
+        int_matrices = []
+
+        counter = 0
+        ucell = self.unit_cell.get_cell()
+        while len(int_matrices) < num_templates and counter < max_attempts:
+            counter += 1
+            matrix = self._transformation_matrix_with_given_volume(
+                diag_A, diag_B, off_diag_range)
+
+            sc = matrix.dot(ucell)
+
+            # Check if this matrix can be obtained with a unitary
+            # transformation of any of the other
+            already_exist = False
+            for mat in inverse_matrices:
+                S = sc.dot(mat)
+                if self._is_unitary(S):
+                    already_exist = True
+                    break
+
+            if not already_exist:
+                int_matrices.append(matrix)
+                inverse_matrices.append(np.linalg.inv(sc))
+
+        templates = []
+        for mat in int_matrices:
+            templates.append(make_supercell(self.unit_cell, mat))
+        return templates
+
+
 
 def is_3x3_matrix(array):
     return np.array(array).shape == (3, 3)
