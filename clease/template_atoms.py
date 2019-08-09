@@ -403,6 +403,7 @@ class TemplateAtoms(object):
         for _, v in self.templates.items():
             assert len(v) == num_entries
 
+
 def is_3x3_matrix(array):
     return np.array(array).shape == (3, 3)
 

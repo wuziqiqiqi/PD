@@ -12,14 +12,18 @@ class ConvexHull(object):
 
     db_name: str
         Name of the database
+
     select_cond: list
         Select conditions for retrieving data from the database
         If None, the select condition will be [[('converged', '=', True)]
+
     atoms_per_fu: int
         Number of atoms per formula unit
+
     conc_scale: float
         Concentration scale. In the plots the concentration
         will be divided by this number
+
     conc_ranges: dict
         Dictionary with lower and upper bound for the concentrations to
         be included.
