@@ -885,7 +885,8 @@ class ClusterExpansionSetting(object):
                 # For a simpler data structure in calculator store some
                 # additional data
                 for i, row in enumerate(tm):
-                    diff = all_unique_indices - unique_index_symm[symm_group[i]]
+                    gr = symm_group[i]
+                    diff = all_unique_indices - unique_index_symm[gr]
                     for i in diff:
                         row[i] = -1  # Put -1 as this should never be accessed
                 all_included = True
