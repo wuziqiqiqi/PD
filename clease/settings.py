@@ -648,6 +648,16 @@ class ClusterExpansionSetting(object):
         return list(set(all_indices))
 
     @property
+    def unique_indices_per_group(self):
+        index_per_group = []
+        for item in self.cluster_info:
+            unique_indices = set()
+            for _, info in item.items():
+                unique_indices.update(flatten(info["indices"]))
+            index_per_group.append(list(unique_indices))
+        return index_per_group
+
+    @property
     def multiplicity_factor(self):
         """Return the multiplicity factor of each cluster."""
         names = self.cluster_family_names
@@ -858,6 +868,9 @@ class ClusterExpansionSetting(object):
             if indices[atom.tag] == -1:
                 indices[atom.tag] = atom.index
 
+        unique_index_symm = self.unique_indices_per_group
+        unique_index_symm = [set(x) for x in unique_index_symm]
+        all_unique_indices = set(self.unique_indices)
         while not all_included and counter < max_attempts:
             try:
                 tmc = TransMatrixConstructor(supercell, tm_cutoff)
@@ -866,10 +879,20 @@ class ClusterExpansionSetting(object):
 
                 # Map supercell indices to normal indices
                 tm = trans_matrix_index2tags(tm_sc, supercell, indices=indices)
-                _ = [row[k] for row in tm for k in self.unique_indices]
+                for i, row in enumerate(tm):
+                    _ = [row[k] for k in unique_index_symm[symm_group[i]]]
+
+                # _ = [row[k] for row in tm for k in self.unique_indices]
+
+                # For a simpler data structure in calculator store some
+                # additional data
+                for i, row in enumerate(tm):
+                    diff = all_unique_indices - unique_index_symm[symm_group[i]]
+                    for i in diff:
+                        row[i] = -1  # Put -1 as this should never be accessed
                 all_included = True
             except (KeyError, IndexError):
-                tm_cutoff += 1.0
+                tm_cutoff += 3.0
             counter += 1
 
         if counter >= max_attempts:
