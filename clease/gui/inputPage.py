@@ -339,7 +339,7 @@ class InputPage(Screen):
 
         # Check max cluster size
         try:
-            cluster_size = int(self.ids.clusterSize.text)
+            _ = int(self.ids.clusterSize.text)
         except Exception:
             self.ids.status.text = "Max cluster size has to be an integer"
             return 1

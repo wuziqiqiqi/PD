@@ -1,4 +1,5 @@
-#: set button_height 0.05
+#:kivy
+#: set height 0.05
 <NewStructPage>:
     id: mainConcLayout
 
@@ -6,16 +7,16 @@
 
         Button:
             id: toInput
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             text: 'Input'
             on_release:
                 root.manager.current = 'Input'
                 root.manager.transition.direction = 'right'
-        
+
         Button:
             id: concEditor
             text: 'Concentration'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Concentration'
                 root.manager.transition.direction = 'right'
@@ -23,14 +24,14 @@
         Button:
             id: toNewStruct
             text: 'New structures'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'NewStruct'
-        
+
         Button:
             id: toFit
             text: 'Fit'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Fit'
                 root.manager.transition.direction = 'left'
@@ -38,201 +39,198 @@
 
 
         Label:
-            size_hint: [1, 2*button_height]
+            size_hint: [1, 2*height]
             text: 'Import Structure'
 
         Label:
-            size_hint: [0.3, button_height]
+            size_hint: [0.3, height]
             text: 'Initial structure'
-            
+
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: initStructInput
             text: ''
 
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: loadInitStruct
             text: 'Load'
             on_release: root.show_load_init_struct_dialog()
-        
+
 
         Label:
-            size_hint: [0.3, button_height]
+            size_hint: [0.3, height]
             text: 'Final structure'
 
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: finalStructInput
             text: ''
 
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: loadFinalStruct
             text: 'Load'
             on_release: root.show_load_final_struct_dialog()
 
         Label:
-            size_hint: [1, 0.7*button_height]
+            size_hint: [1, 0.7*height]
             text: ''
 
         Label:
-            size_hint: [0.4, button_height]
+            size_hint: [0.4, height]
             text: ''
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: importStructures
             text: 'Import structure'
             on_release: root.import_structures()
         Label:
-            size_hint: [0.4, button_height]
+            size_hint: [0.4, height]
             text: ''
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
 
 
 
         Label:
-            size_hint: [1, 2*button_height]
+            size_hint: [1, 2*height]
             text: 'Generate Structure'
 
         Label:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             text: 'Generation Scheme:'
         Spinner:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: newStructTypeSpinner
             text: 'Random structure'
             values: 'Random structure', 'Minimum energy structure', 'Probe structure'
             on_text: root.on_new_struct_type_update(self.text)
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: tempMaxLabel
             text: 'Max. temperature'
-        
+
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: tempMinLabel
             text: 'Min. temperature'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: numTempLabel
             text: 'Num. temperatures'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: numSweepsLabel
             text: 'Sweeps per temp'
-        
+
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: tempMaxInput
             input_filter: 'float'
             text: '10000'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: tempMinInput
             input_filter: 'float'
             text: '1'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: numTempInput
             input_filter: 'int'
             text: '100'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: numSweepsInput
             input_filter: 'int'
             text: '100'
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
-            size_hint: [0.3, button_height]
+            size_hint: [0.3, height]
             id: eciFileLabel
             text: 'ECI file'
 
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: eciFileInput
             text: ''
 
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: loadECIFile
             text: 'Load'
             on_release: root.show_load_eci_dialog()
 
         Label:
-            size_hint: [0.3, button_height]
+            size_hint: [0.3, height]
             id: templateAtomsLabel
             text: 'Template'
-        
+
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: templateAtomsInput
             text: ''
 
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: loadTemplateAtoms
             text: 'Load'
             on_release: root.show_load_template_dialog()
-        
+
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
-        
+
         Label:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             text: 'Composition Scheme:'
 
         Spinner:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: randomizeCompositionSpinner
             text: 'Random composition'
             values: 'Random composition', 'Composition in template'
-        
+
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
-        
+
         Label:
-            size_hint: [0.4, button_height]
+            size_hint: [0.4, height]
             text: ''
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: generateButton
             text: 'Generate structure'
             on_release: root.generate()
         Label:
-            size_hint: [0.4, button_height]
+            size_hint: [0.4, height]
             text: ''
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
         Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             text: 'Status:'
         Label:
-            size_hint: [0.8, button_height]
+            size_hint: [0.8, height]
             id: status
             text: 'Idle'
-
-            
-            

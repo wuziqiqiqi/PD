@@ -52,7 +52,7 @@ class GAClusterSelector(object):
 
         try:
             ga = GAFit(self.settings, **self.kwargs)
-            cluster_names = ga.run()
+            _ = ga.run()
 
             optimiser = ECIOptimiser()
             optimiser.fit_page = self.fit_page
