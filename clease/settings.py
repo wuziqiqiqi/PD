@@ -882,8 +882,6 @@ class ClusterExpansionSetting(object):
                 for i, row in enumerate(tm):
                     _ = [row[k] for k in unique_index_symm[symm_group[i]]]
 
-                # _ = [row[k] for row in tm for k in self.unique_indices]
-
                 # For a simpler data structure in calculator store some
                 # additional data
                 for i, row in enumerate(tm):
