@@ -452,17 +452,16 @@ def str2nested_list(string):
 
 def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     """
-    Create a close to cubic supercell
+    Create a close to cubic supercell.
 
     Parameters:
-    
+
     atoms: Atoms
         Cell to be used for construction
+
     zero_cutoff: float
         Value below this value will be considered as zero when the
         scaling factor is computed
-    max_relative_vol_increase: float
-        Maximum allowed relative increase in volume.
     """
     cell = atoms.get_cell()
     a = np.linalg.det(cell)**(1.0/3.0)
@@ -500,13 +499,15 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
 
     tm: list of dict
         Original translation matrix
+
     tagged_atoms: Atoms
         Atoms with a tag that should be used instead of the
         index
+
     indices: list of int
         Atom indices corresponding to each row in tm. If None,
         it is assumed that len(tm) == len(tagged_atoms) and each
-        row in tm corresponds to the atom with the same index in 
+        row in tm corresponds to the atom with the same index in
         tagged_atoms.
     """
     unique_tags = sorted(list(set(atom.tag for atom in tagged_atoms)))
@@ -524,7 +525,8 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
         tag = tagged_atoms[indices[i]].tag
         if used_tags[tag]:
             continue
-        new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag for k, v in row.items()}
+        new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag
+                   for k, v in row.items()}
         used_tags[tag] = True
         new_tm[tag] = new_row
     return new_tm

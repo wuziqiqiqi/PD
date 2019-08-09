@@ -181,9 +181,7 @@ class ClusterExpansionSetting(object):
         return nested_list2str(self.size)
 
     def _prepare_new_active_template(self, uid):
-        """
-        Prepare nessecary datastructures when setting new template
-        """
+        """Prepare necessary data structures when setting new template."""
         self.template_atoms_uid = uid
         self.atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
@@ -391,7 +389,7 @@ class ClusterExpansionSetting(object):
         supercell_indices = []
         sc_pos = supercell.get_positions()
         wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
-        sc_candidates = []
+
         dist_to_origin = np.sum(sc_pos**2, axis=1)
         for indx in indices:
             pos = self.atoms[indx].position
@@ -422,27 +420,26 @@ class ClusterExpansionSetting(object):
         for atom in atoms:
             atom.tag = atom.index
         supercell = close_to_cubic_supercell(atoms)
-        max_cluster_dia_in_sc = self._get_max_cluster_dia(
-            supercell.get_cell().T)
+        max_cluster_dia_in_sc = \
+            self._get_max_cluster_dia(supercell.get_cell().T)
 
-        # Make supercell so large that we ca of 4 times max_cluster_ inside
+        # Make large enough supercell (4 times max_cluster_dia can go inside)
         scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
         if scale < 1:
             scale = 1
         supercell = supercell*(scale, scale, scale)
         supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = self._corresponding_indices(
-            self.ref_index_trans_symm, supercell)
+        ref_indices = self._corresponding_indices(self.ref_index_trans_symm,
+                                                  supercell)
 
-        # Calculate the center of mass of the supercell
+        # Calculate the center of atomic positions in a supercell
         pos = supercell.get_positions()
         com = np.mean(pos, axis=0)
 
-        # Calculate the center of mass of all the reference indices
+        # Calculate the center all the reference indices
         com_ref = np.mean(pos[ref_indices, :], axis=0)
 
-        # Translate center of mass of reference indices to the center
-        # of mass of the cell
+        # Translate center of reference indices
         supercell.translate(com - com_ref)
         supercell.wrap()
         return supercell, ref_indices
@@ -818,9 +815,9 @@ class ClusterExpansionSetting(object):
     def _cutoff_for_tm_construction(self):
         indices = self.unique_indices
         max_dist = 0.1
-        
+
         for ref in indices:
-            # MIC distance is a lower bound for the distance used in the 
+            # MIC distance is a lower bound for the distance used in the
             # cluster
             mic_distances = self.atoms.get_distances(ref, indices, mic=True)
             new_max_dist = np.max(mic_distances)
@@ -834,10 +831,10 @@ class ClusterExpansionSetting(object):
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()
 
-        # For smaller cell we currently have no method to set decide how large cutoff
-        # we need in order to ensure that all indices in unique_indices are included
-        # We therefore just probe the cutoff and increase it by a factor 2 until we
-        # achieve the what we want
+        # For smaller cell we currently have no method to decide how large
+        # cutoff we need in order to ensure that all indices in unique_indices
+        # are included. We therefore just probe the cutoff and increase it by
+        # a factor 2 until we achieve the what we want
         all_included = False
         counter = 0
         max_attempts = 1000
