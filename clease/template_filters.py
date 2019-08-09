@@ -1,5 +1,6 @@
 from itertools import product, permutations
 import numpy as np
+from clease.tools import wrap_and_sort_by_position
 
 
 class AtomsFilter(object):
@@ -87,3 +88,29 @@ class EquivalentCellsFilter(CellFilter):
             if self._are_equivalent(existing_cell, cell):
                 return False
         return True
+
+
+class ValidConcentrationFilter(AtomsFilter):
+    """
+    Rejects template that has no valid concentration
+
+    Parameters
+
+    setting: ClusterExpansionSetting
+        Instance of `ClusterExpansionSetting`
+    """
+    def __init__(self, setting):
+        self.setting = setting
+
+    def __call__(self, atoms):
+        num_in_template = len(self.setting.atoms)
+        num_in_atoms = len(atoms)
+        ratio = num_in_atoms/num_in_template
+        nib = [len(x)*ratio for x in self.setting.index_by_basis]
+
+        valid = True
+        try:
+            self.setting.conc.get_random_concentration(nib=nib)
+        except Exception:
+            valid = False
+        return valid
