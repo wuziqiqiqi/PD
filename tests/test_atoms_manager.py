@@ -49,6 +49,8 @@ class TestAtomsManager(unittest.TestCase):
         self.assertTrue(all(map(lambda x: x % 4 == 1 or x % 4 == 2,
                             ind_by_basis[1])))
         self.assertTrue(all(map(lambda x: x % 4 == 3, ind_by_basis[2])))
+        self.assertEqual(sorted(manager.unique_elements()),
+                         ['Ag', 'Au', 'Cu', 'X'])
 
 
 if __name__ == '__main__':

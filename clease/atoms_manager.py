@@ -52,3 +52,9 @@ class AtomsManager(object):
         for atom in self.atoms:
             ind_by_symbol[group_map[atom.symbol]].append(atom.index)
         return ind_by_symbol
+
+    def unique_elements(self):
+        """
+        Return a list with unique elements
+        """
+        return list(set([a.symbol for a in self.atoms]))
