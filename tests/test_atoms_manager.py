@@ -52,6 +52,17 @@ class TestAtomsManager(unittest.TestCase):
         self.assertEqual(sorted(manager.unique_elements()),
                          ['Ag', 'Au', 'Cu', 'X'])
 
+    def test_background_indices(self):
+        atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        atoms = atoms*(5, 5, 5)
+
+        # Clhorine sites are background indices
+        basis_elements = [['Na', 'X'], ['Cl']]
+        manager = AtomsManager(atoms)
+        bkg_indices = manager.single_element_sites(basis_elements)
+
+        cl_sites = [atom.index for atom in atoms if atom.symbol == 'Cl']
+        self.assertEqual(sorted(bkg_indices), sorted(cl_sites))
 
 if __name__ == '__main__':
     unittest.main()

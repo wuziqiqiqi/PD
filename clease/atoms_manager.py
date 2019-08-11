@@ -53,8 +53,31 @@ class AtomsManager(object):
             ind_by_symbol[group_map[atom.symbol]].append(atom.index)
         return ind_by_symbol
 
-    def unique_elements(self):
+    def unique_elements(self, ignore=[]):
         """
         Return a list with unique elements
         """
-        return list(set([a.symbol for a in self.atoms]))
+        all_unique = set([a.symbol for a in self.atoms])
+        return list(all_unique - set(ignore))
+
+    def single_element_sites(self, allowed_elements):
+        """
+        Return a list of sites that can only occupied by a single
+        element according to allowed_elements.
+
+        Parameters:
+
+        allowed_elements: list
+            List with allowed elements on each site. It is assumed
+            that all elements first in each group is present in self.atoms
+            If allowed_elements is equal to [['Au', 'Ag' 'X], ['Cu', 'X']] it
+            means that all sites where `self.atoms` has a gold symbol can be 
+            occupied by Au, Ag, X in the cluster expansion and all sites that 
+            are occupied by Cu can be occubpied by Cu or X in the cluster expansion
+        """
+        single_site_symb = [x[0] for x in allowed_elements if len(x) == 1]
+        single_sites = []
+        for atom in self.atoms:
+            if atom.symbol in single_site_symb:
+                single_sites.append(atom.index)
+        return single_sites
