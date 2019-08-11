@@ -490,3 +490,30 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     for i, tag in enumerate(tags):
         sc[i].tag = tag
     return sc
+
+
+def min_distance_from_facet(x, cell):
+    """Calculate the minimum distance from a point to the cell facet
+
+    Parameters
+    x: np.array
+        Position from which to calculate the minimum distance
+    cell: Cell
+        Cell of an Atoms object
+    """
+    dists = []
+
+    for plane in combinations([0, 1, 2], r=2):
+        n = np.cross(cell[plane[0], :], cell[plane[1], :])
+        n /= np.sqrt(n.dot(n))
+
+        # Plane with origin in it
+        dist = np.abs(n.dot(x))
+        dists.append(dist)
+
+        # Opposite facet
+        remaining = list(set([0, 1, 2]) - set(plane))[0]
+        vec = cell[remaining, :]
+        dist = np.abs(n.dot(x - vec))
+        dists.append(dist)
+    return min(dists)
