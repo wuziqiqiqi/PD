@@ -71,9 +71,10 @@ class AtomsManager(object):
             List with allowed elements on each site. It is assumed
             that all elements first in each group is present in self.atoms
             If allowed_elements is equal to [['Au', 'Ag' 'X], ['Cu', 'X']] it
-            means that all sites where `self.atoms` has a gold symbol can be 
-            occupied by Au, Ag, X in the cluster expansion and all sites that 
-            are occupied by Cu can be occubpied by Cu or X in the cluster expansion
+            means that all sites where `self.atoms` has a gold symbol can be
+            occupied by Au, Ag, X in the cluster expansion and all sites that
+            are occupied by Cu can be occubpied by Cu or X in the cluster
+            expansion.
         """
         single_site_symb = [x[0] for x in allowed_elements if len(x) == 1]
         single_sites = []
