@@ -95,7 +95,6 @@ class AtomsManager(object):
         """
         pos = self.atoms.get_positions()
         wrapped_pos = wrap_positions(pos, other_atoms.get_cell())
-        print(wrapped_pos)
         tree = KDTree(other_atoms.get_positions())
 
         dists, indices = tree.query(wrapped_pos)
