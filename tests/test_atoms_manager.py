@@ -64,5 +64,14 @@ class TestAtomsManager(unittest.TestCase):
         cl_sites = [atom.index for atom in atoms if atom.symbol == 'Cl']
         self.assertEqual(sorted(bkg_indices), sorted(cl_sites))
 
+        # Extract unique elements
+        unique_elem = manager.unique_elements()
+        self.assertEqual(sorted(unique_elem), ['Cl', 'Na'])
+
+        # Try unique elements without background
+        unique_elem = manager.unique_elements(ignore=['Cl'])
+        self.assertEqual(sorted(unique_elem), ['Na'])
+
+
 if __name__ == '__main__':
     unittest.main()
