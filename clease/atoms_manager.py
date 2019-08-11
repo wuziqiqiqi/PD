@@ -1,3 +1,8 @@
+from ase.geometry import wrap_positions
+from scipy.spatial import cKDTree as KDTree
+import numpy as np
+
+
 class AtomsManager(object):
     """
     Class that manages the Atoms object used in a cluster expansion
@@ -82,3 +87,22 @@ class AtomsManager(object):
             if atom.symbol in single_site_symb:
                 single_sites.append(atom.index)
         return single_sites
+
+    def tag_by_corresponding_atom(self, other_atoms):
+        """
+        Tag `self.atoms` by its corresponding atom in `other_atoms`
+        when the positions are wrapped.
+        """
+        pos = self.atoms.get_positions()
+        wrapped_pos = wrap_positions(pos, other_atoms.get_cell())
+        print(wrapped_pos)
+        tree = KDTree(other_atoms.get_positions())
+
+        dists, indices = tree.query(wrapped_pos)
+
+        if not np.allclose(dists, 0.0):
+            raise ValueError("Not all sites has a corresponding atom in the "
+                             "passed object")
+
+        for atom, tag in zip(self.atoms, indices.tolist()):
+            atom.tag = tag

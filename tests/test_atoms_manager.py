@@ -72,6 +72,37 @@ class TestAtomsManager(unittest.TestCase):
         unique_elem = manager.unique_elements(ignore=['Cl'])
         self.assertEqual(sorted(unique_elem), ['Na'])
 
+    def test_tag_by_corresponding(self):
+        unit_cell = bulk('Mg', crystalstructure='hcp')
+        unit_cell[0].symbol = 'Mg'
+        unit_cell[1].symbol = 'Zn'
+
+        atoms = unit_cell*(2, 3, 4)
+        manager = AtomsManager(atoms)
+        manager.tag_by_corresponding_atom(unit_cell)
+
+        for atom in manager.atoms:
+            if atom.symbol == 'Mg':
+                self.assertEqual(atom.tag, 0)
+            else:
+                self.assertEqual(atom.tag, 1)
+
+    def test_tag_by_corresponding_primitive_conventional(self):
+        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        unit_cell.wrap()
+        atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0, cubic=True)
+        atoms = atoms*(3, 4, 5)
+
+        manager = AtomsManager(atoms)
+        manager.tag_by_corresponding_atom(unit_cell)
+
+        for atom in manager.atoms:
+            if atom.symbol == 'Na':
+                self.assertEqual(atom.tag, 0)
+            elif atom.symbol == 'Cl':
+                self.assertEqual(atom.tag, 1)
+
+
 
 if __name__ == '__main__':
     unittest.main()
