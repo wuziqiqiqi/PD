@@ -102,6 +102,16 @@ class TestAtomsManager(unittest.TestCase):
             elif atom.symbol == 'Cl':
                 self.assertEqual(atom.tag, 1)
 
+    def test_raise_if_not_match(self):
+        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        unit_cell.wrap()
+        atoms = bulk('Mg', crystalstructure='hcp')
+        atoms = atoms*(3, 4, 5)
+
+        manager = AtomsManager(atoms)
+        with self.assertRaises(ValueError):
+            manager.tag_by_corresponding_atom(unit_cell)
+
 
 
 if __name__ == '__main__':
