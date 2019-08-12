@@ -28,7 +28,7 @@ class TestMonteCarlo(unittest.TestCase):
             atoms[i].symbol = 'Cu'
 
         E = []
-        for T in [10000, 5000, 2000, 1000, 500, 100]:
+        for T in [5000, 2000, 1000, 500, 100]:
             mc = Montecarlo(atoms, T)
             mc.run(steps=10000)
             E.append(mc.get_thermodynamic()['energy'])
@@ -41,7 +41,6 @@ class TestMonteCarlo(unittest.TestCase):
             self.assertAlmostEqual(v, cf_calc[k])
 
         # Make sure that the energies are decreasing
-        print(E)
         for i in range(1, len(E)):
             self.assertGreaterEqual(E[i-1], E[i])
 
