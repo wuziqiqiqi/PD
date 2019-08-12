@@ -1,4 +1,6 @@
 from clease.montecarlo.observers import MCObserver
+import numpy as np
+from clease.montecarlo.averager import Averager
 
 
 class SGCObserver(MCObserver):
@@ -16,13 +18,13 @@ class SGCObserver(MCObserver):
         super(SGCObserver, self).__init__()
         self.name = "SGCObersver"
         self.calc = calc
-
+        E = calc.get_potential_energy()
         n_singlets = len(self.calc.get_singlets())
         self.quantities = {
             "singlets": np.zeros(n_singlets, dtype=np.float64),
             "singlets_sq": np.zeros(n_singlets, dtype=np.float64),
-            "energy": Averager(ref_value=ce_calc.get_energy()),
-            "energy_sq": Averager(ref_value=ce_calc.get_energy()),
+            "energy": Averager(ref_value=E),
+            "energy_sq": Averager(ref_value=E**2),
             "singl_eng": np.zeros(n_singlets, dtype=np.float64),
             "counter": 0
         }
@@ -51,7 +53,7 @@ class SGCObserver(MCObserver):
         self.quantities["counter"] += 1
         new_singlets = self.calc.get_singlets()
 
-        E = calc.result['energy']
+        E = self.calc.results['energy']
 
         self.quantities["singlets"] += new_singlets
         self.quantities["singlets_sq"] += new_singlets**2

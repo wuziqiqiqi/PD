@@ -35,8 +35,7 @@ class SGCMonteCarlo(Montecarlo):
 
         if len(self.symbols) <= 1:
             raise ValueError("At least 2 symbols have to be specified")
-        self.averager = SGCObserver(
-            self.atoms.get_calculator())
+        self.averager = SGCObserver(self.atoms.get_calculator())
 
         self.chem_pots = []
         self.chem_pot_names = []
@@ -115,11 +114,11 @@ class SGCMonteCarlo(Montecarlo):
         self._include_chemical_potential_in_ecis(
             chem_pot, self.atoms.get_calculator().eci)
 
-    def _include_chemical_potential_in_ecis(self, chem_potential, eci):
+    def _include_chemical_potential_in_ecis(self, chem_pot, eci):
         """
         Including the chemical potentials in the ecis
 
-        :param dict chem_potential: Chemical potentials
+        :param dict chem_pot: Chemical potentials
         :param dict eci: Original ECIs
 
         :return: ECIs with chemical potential included
@@ -127,16 +126,17 @@ class SGCMonteCarlo(Montecarlo):
         """
         self.chem_pots = []
         self.chem_pot_names = []
-        keys = list(chem_potential.keys())
+        keys = list(chem_pot.keys())
         keys.sort()
         for key in keys:
-            self.chem_pots.append(chem_potential[key])
+            self.chem_pots.append(chem_pot[key])
             self.chem_pot_names.append(key)
             current_eci = eci.get(key, 0.0)
-            eci[key] = current_eci - chem_potential[key]
-        self.atoms.get_calculator().update_ecis(eci)
+            eci[key] = current_eci - chem_pot[key]
+        calc = self.atoms.get_calculator()
+        calc.update_ecis(eci)
         self.chem_pot_in_ecis = True
-        self.current_energy = self.atoms.get_calculator().get_energy()
+        self.current_energy = calc.calculate(None, None, None)
         return eci
 
     def _reset_eci_to_original(self, eci_with_chem_pot):
@@ -147,9 +147,10 @@ class SGCMonteCarlo(Montecarlo):
         """
         for name, val in zip(self.chem_pot_names, self.chem_pots):
             eci_with_chem_pot[name] += val
-        self.atoms.get_calculator().update_ecis(eci_with_chem_pot)
+        calc = self.atoms.get_calculator()
+        calc.update_ecis(eci_with_chem_pot)
         self.chem_pot_in_ecis = False
-        self.current_energy = self.atoms.get_calculator().get_energy()
+        self.current_energy = calc.calculate(None, None, None)
         return eci_with_chem_pot
 
     def reset_ecis(self):
@@ -159,18 +160,18 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_ecis:
             self._reset_eci_to_original(self.atoms.get_calculator().eci)
 
-    def run(self, steps=10, chem_potential=None):
+    def run(self, steps=10, chem_pot=None):
         """
         Run Monte Carlo simulation.
         See :py:meth:`cemc.mcmc.Montecarlo.runMC`
 
-        :param dict chem_potential: Chemical potentials.
+        :param dict chem_pot: Chemical potentials.
             The keys should correspond to one of the singlet terms.
             A typical form of this is
             {"c1_0":-1.0,c1_1_1.0}
         """
 
-        if chem_potential is None and self.chemical_potential is None:
+        if chem_pot is None and self.chemical_potential is None:
             ex_chem_pot = {
                 "c1_1": -0.1,
                 "c1_2": 0.05
@@ -178,15 +179,15 @@ class SGCMonteCarlo(Montecarlo):
             raise ValueError("No chemicalpotentials given. Has to be "
                              "dictionary of the form {}".format(ex_chem_pot))
 
-        if chem_potential is not None:
-            self.chemical_potential = chem_potential
+        if chem_pot is not None:
+            self.chemical_potential = chem_pot
         self.reset()
 
-        mc.Montecarlo.run(self, steps=steps)
+        Montecarlo.run(self, steps=steps)
 
     def singlet2composition(self, avg_singlets):
         """Convert singlets to composition."""
-        bf = self.atoms.get_calculator().BC.basis_functions
+        bf = self.atoms.get_calculator().setting.basis_functions
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
 
         index = {s: i for i, s in enumerate(self.symbols)}
