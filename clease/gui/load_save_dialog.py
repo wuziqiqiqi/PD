@@ -1,8 +1,9 @@
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.stacklayout import StackLayout
 from kivy.properties import ObjectProperty
 
 
-class LoadDialog(FloatLayout):
+class LoadDialog(StackLayout):
     load = ObjectProperty(None)
     cancel = ObjectProperty(None)
 

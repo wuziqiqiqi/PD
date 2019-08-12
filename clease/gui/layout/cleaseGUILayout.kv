@@ -346,25 +346,31 @@
 
 
 <LoadDialog>:
-    BoxLayout:
-        size: root.size
-        pos: root.pos
-        orientation: "vertical"
+    StackLayout:
+        size_hint: [1, 0.9]
+
         FileChooserListView:
+            size_hint: [1, 1]
             id: filechooser
             path: '.'
 
-        BoxLayout:
-            size_hint_y: None
-            height: 30
-            Button:
-                id: cancelButton
-                text: "Cancel"
-                on_release: root.cancel()
+    StackLayout:
+        size_hint: [1, 0.1]
 
-            Button:
-                text: "Load"
-                on_release: root.load(filechooser.path, filechooser.selection)
+        Label:
+            size_hint: [1.0, 0.45]
+            text: ''
+
+        Button:
+            size_hint: [0.5, 0.55]
+            id: cancelButton
+            text: "Cancel"
+            on_release: root.cancel()
+
+        Button:
+            size_hint: [0.5, 0.55]
+            text: "Load"
+            on_release: root.load(filechooser.path, filechooser.selection)
 
 <SaveDialog>:
     BoxLayout:
