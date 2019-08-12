@@ -3,6 +3,7 @@ import unittest
 from clease.calculator import attach_calculator
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
+from clease.montecarlo.observers import Snapshot
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -34,7 +35,7 @@ class TestMonteCarlo(unittest.TestCase):
             atoms[i].symbol = 'Cu'
 
         E = []
-        for T in [5000, 2000, 1000, 500, 100]:
+        for T in [1000, 500, 100]:
             mc = Montecarlo(atoms, T)
             mc.run(steps=10000)
             E.append(mc.get_thermodynamic()['energy'])
@@ -71,6 +72,23 @@ class TestMonteCarlo(unittest.TestCase):
 
         for k in cf_keys:
             self.assertTrue('cf_' + k in thermo.keys())
+
+    def test_snapshot(self):
+        db_name = 'test_snapshot.db'
+        atoms = get_example_mc_system(db_name)
+
+        atoms[0].symbol = 'Cu'
+        atoms[1].symbol = 'Cu'
+
+        traj = 'snapshot.traj'
+        obs = Snapshot(trajfile=traj, atoms=atoms)
+
+        mc = Montecarlo(atoms, 600)
+        mc.attach(obs, interval=100)
+        mc.run(steps=1000)
+        os.remove(db_name)
+        self.assertEqual(len(obs.traj), 10)
+        os.remove(traj)
 
 
 
