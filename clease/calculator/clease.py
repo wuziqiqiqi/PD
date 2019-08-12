@@ -285,3 +285,15 @@ class Clease(Calculator):
             return True
         self.logfile.write('{}\n'.format(self.energy))
         self.logfile.flush()
+
+    def update_ecis(self, ecis):
+        """
+        Update the ECIs
+
+        Parameters
+
+        eci: dict
+            Dictionary with new ECIs
+        """
+        self.eci = ecis
+        self.updater.set_ecis(ecis)

@@ -10,9 +10,9 @@ from scipy import stats
 from ase.units import kJ, mol
 from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
-from clease.montecarlo.util import get_new_state
 from clease.montecarlo import BiasPotential
 from clease.montecarlo .swap_move_index_tracker import SwapMoveIndexTracker
+from clease import _logger
 
 
 class DidNotReachEquillibriumError(Exception):
@@ -58,7 +58,7 @@ class Montecarlo(object):
         self.observers = []
 
         self.constraints = []
-        self.max_allowed_constraint_pass_attempts = max_constraint_attempts
+        self.max_allowed_constraint_pass_attempts = 1000
 
         if self.max_allowed_constraint_pass_attempts <= 0:
             raise ValueError("Max. constraint attempts has to be > 0!")
@@ -71,7 +71,7 @@ class Montecarlo(object):
         self.atoms_tracker = SwapMoveIndexTracker()
         self.symbols = []
         self._build_atoms_list()
-        E0 = self.atoms.get_calculator().get_potential_energy()
+        E0 = self.atoms.get_calculator().calculate(None, None, None)
         self.current_energy = E0
         self.bias_energy = 0.0
         self.new_bias_energy = self.bias_energy
@@ -91,11 +91,6 @@ class Montecarlo(object):
         self.rand_b = 0
         self.selected_a = 0
         self.selected_b = 0
-
-        # Array of energies used to estimate the correlation time
-        self.corrtime_energies = []
-        self.correlation_info = None
-        self.plot_debug = plot_debug
 
         self.filter = ExponentialFilter(min_time=0.2*len(self.atoms),
                                         max_time=20*len(self.atoms),
@@ -121,13 +116,16 @@ class Montecarlo(object):
 
         :param float: Energy bias
         """
-        eci = self.atoms.get_calculator().eci
+        calc = self.atoms.get_calculator()
+        eci = calc.eci
         c0_eci = eci['c0']
         c0_eci -= bias/len(self.atoms)
         eci['c0'] = c0_eci
 
-        self.atoms.get_calculator().update_ecis(eci)
-        self.current_energy = self.atoms.get_calculator().get_energy()
+        calc.update_ecis(eci)
+
+        # Force re-calculation of the energy
+        self.current_energy = calc.calculate(None, None, None)
         self.last_energies[0] = self.current_energy
 
         if abs(self.current_energy) > 1E-6:
@@ -201,7 +199,7 @@ class Montecarlo(object):
 
     def update_current_energy(self):
         """Enforce a new energy evaluation."""
-        self.current_energy = self.atoms.get_calculator().get_energy()
+        self.current_energy = self.atoms.get_calculator().calculate(None, None, None)
         self.bias_energy = 0.0
         for bias in self.bias_potentials:
             self.bias_energy += bias.calculate_from_scratch(self.atoms)
@@ -252,10 +250,7 @@ class Montecarlo(object):
         if mode not in allowed_modes:
             raise ValueError("Mode has to be one of {}".format(allowed_modes))
 
-        if mode == "info":
-            self.logger.info(msg)
-        elif mode == "warning":
-            self.logger.warning(msg)
+        _logger(msg)
 
     def _no_constraint_violations(self, system_changes):
         """
@@ -354,11 +349,12 @@ class Montecarlo(object):
         self._probe_energy_bias()
         self.reset()
 
+        start = time.time()
         while(self.current_step < steps):
-            E, accept = self._mc_step(verbose=verbose)
+            E, accept = self._mc_step()
 
             self.mean_energy += E
-            self.energy_squared += E_sq
+            self.energy_squared += E**2
 
             if (time.time() - start > self.status_every_sec):
                 ms_per_step = 1000.0 * self.status_every_sec / \
@@ -376,7 +372,6 @@ class Montecarlo(object):
 
         # NOTE: Does not reset the energy bias to 0
         self._undo_energy_bias_from_eci()
-        return totalenergies
 
     @property
     def meta_info(self):
@@ -407,7 +402,7 @@ class Montecarlo(object):
         mean_sq = self.energy_squared.mean
         quantities["heat_capacity"] = (
             mean_sq - mean_energy**2) / (units.kB * self.T**2)
-        quantities["energy_std"] = np.sqrt(self._get_var_average_energy())
+        quantities["energy_var"] = mean_sq - mean_energy**2
         quantities["temperature"] = self.T
         at_count = self.count_atoms()
         for key, value in at_count.items():
@@ -430,8 +425,9 @@ class Montecarlo(object):
         :return: Trial move
         :rtype: list
         """
-        self.rand_a = self.indeces[np.random.randint(0, len(self.indeces))]
-        self.rand_b = self.indeces[np.random.randint(0, len(self.indeces))]
+        n = len(self.atoms)
+        self.rand_a = np.random.randint(0, n)
+        self.rand_b = np.random.randint(0, n)
         symb_a = self.symbols[np.random.randint(0, len(self.symbols))]
         symb_b = symb_a
         while (symb_b == symb_a):
@@ -455,8 +451,8 @@ class Montecarlo(object):
         self.last_energies[0] = self.current_energy
 
         # NOTE: Calculate updates the system
-        self.new_energy = self.atoms.get_calculator().calculate(
-            self.atoms, ["energy"], system_changes)
+        calc = self.atoms.get_calculator()
+        self.new_energy = calc.get_energy_given_change(system_changes)
 
         # NOTE: As this is called after calculate, the changes has
         # already been introduced to the system
@@ -527,7 +523,7 @@ class Montecarlo(object):
         if (move_accepted):
             self.atoms.get_calculator().clear_history()
         else:
-            self.atoms.get_calculator().undo_changes()
+            self.atoms.get_calculator().restore()
 
         if (move_accepted):
             # Update the atom_indices
