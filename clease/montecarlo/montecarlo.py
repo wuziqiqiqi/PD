@@ -31,21 +31,13 @@ class Montecarlo(object):
     """
     Class for running Monte Carlo at fixed composition
 
-    :param Atoms atoms: ASE atoms object (with CE calculator attached!)
-    :param float temp: Temperature of Monte Carlo simulation in Kelvin
-    :param list indeces: Atoms involved Monte Carlo swaps. default is all
-                    atoms (currently this has no effect!).
-    :param str logfile: Filename for logging (default is logging to console)
-    :param bool plot_debug: If True it will create some diagnositc plots during
-                       equilibration
-    :param bool recycle_waste: If True also rejected states will be used to
-        estimate averages
-    :param int max_constraint_attempts: Maximum number of allowed attempts to
-        for finding a candidate move that does not violate the constraints.
-        A CanNotFindLegalMoveError is raised if the maximum number of attempts
-        is reaced.
-    :param bool accept_first_trial_move_after_reset: If True the first trial
-        move after reset and set_symbols will be accepted
+    Parameters:
+
+    atoms: Atoms
+        ASE atoms object (with CE calculator attached!)
+
+    temp: float
+        Temperature of Monte Carlo simulation in Kelvin
     """
 
     def __init__(self, atoms, temp):
@@ -100,7 +92,7 @@ class Montecarlo(object):
         """
         Run MC steps to probe the energy bias. The bias
         will be subtracted off the zeroth ECI and then
-        added to the total energy durin gpost processing.
+        added to the total energy during post processing.
         """
         self.log("Probing energy bias using {} MC steps...".format(num_steps))
         for _ in range(num_steps):
@@ -114,7 +106,9 @@ class Montecarlo(object):
         """
         Remove the energy bias from the zeroth ECI.
 
-        :param float: Energy bias
+        Parameters
+        bias: float
+            Energy bias
         """
         calc = self.atoms.get_calculator()
         eci = calc.eci
@@ -143,8 +137,12 @@ class Montecarlo(object):
     def insert_symbol(self, symb, indices):
         """Insert symbols on a predefined set of indices.
 
-        :param str symb: Symbol to be inserted
-        :param list indices: Indices where symb should be inserted
+        Parameters:
+
+        symb: str
+            Symbol to be inserted
+        indices: list
+            Indices where symb should be inserted
         """
         calc = self.atoms.get_calculator()
         for indx in indices:
@@ -160,10 +158,15 @@ class Montecarlo(object):
     def insert_symbol_random_places(self, symbol, num=1, swap_symbs=[]):
         """Insert random symbol.
 
-        :param str symbol: Symbol to insert
-        :param int num: Number of sites
-        :param list swap_symbs: If given, will insert replace symbol with sites
-                          having symbols in this list
+        Parameters
+
+        symbol: str
+            Symbol to insert
+        num: int
+            Number of sites to insert at
+        swap_symbs: list
+            If given, will insert replace symbol with sites having symbols in
+            this list
         """
         from random import choice
         if not swap_symbs:
@@ -208,8 +211,12 @@ class Montecarlo(object):
     def set_symbols(self, symbs):
         """Set the symbols of this Monte Carlo run.
 
-        :param list: Symbols to insert. Has to have the same length as the
-            attached atoms object
+        Parameters:
+
+
+        symbs: list
+            Symbols to insert. Has to have the same length as the
+            attached atoms object.
         """
         self.atoms.get_calculator().set_symbols(symbs)
         self._build_atoms_list()
@@ -256,11 +263,10 @@ class Montecarlo(object):
         """
         Checks if the proposed moves violates any of the constraints
 
-        :param list system_changes: Changes of the proposed move
-            see :py:class:`cemc.mcmc.mc_observers.MCObserver`
+        Parameters:
 
-        :return: True/False if True then no constraints are violated
-        :rtype: bool
+        system_changes: list
+            Changes of the proposed move
         """
         for constraint in self.constraints:
             if not constraint(system_changes):
@@ -299,14 +305,21 @@ class Montecarlo(object):
         """
         Add a new constraint to the sampler
 
-        :param MCConstraint constraint: Constraint
+        Parameters:
+
+        constraint: MCConstraint
+            Instance of a constraint object
         """
         self.constraints.append(constraint)
 
     def add_bias(self, potential):
         """Add a new bias potential.
 
-        :param BiasPotential potential: Potential to be added
+        Parameters:
+
+
+        potential: Bias potential
+            Potential to be added
         """
         if not isinstance(potential, BiasPotential):
             raise TypeError("potential has to be of type BiasPotential")
@@ -317,9 +330,12 @@ class Montecarlo(object):
         Attach observers that is called on each MC step
         and receives information of which atoms get swapped
 
-        :param MCObserver obs: Observer to be added
-        :param int interval: the obs.__call__ method is called at mc steps
-                         separated by interval
+        Parameters
+
+        obs: MCObserver
+            Observer to be added
+        interval: int
+            How often the observer should be called
         """
         if (callable(obs)):
             self.observers.append((interval, obs))
@@ -329,7 +345,10 @@ class Montecarlo(object):
     def run(self, steps=100):
         """Run Monte Carlo simulation
 
-        :param int steps: Number of steps in the MC simulation
+        Parameters:
+
+        steps: int
+            Number of steps in the MC simulation
         """
         # Check the number of different elements are correct to avoid
         # infinite loops
@@ -392,9 +411,6 @@ class Montecarlo(object):
     def get_thermodynamic(self):
         """
         Compute thermodynamic quantities
-
-        :return: thermodynamic data
-        :rtype: dict
         """
         quantities = {}
         mean_energy = self.mean_energy.mean
@@ -422,8 +438,6 @@ class Montecarlo(object):
         """
         Perform a trial move by swapping two atoms
 
-        :return: Trial move
-        :rtype: list
         """
         n = len(self.atoms)
         self.rand_a = np.random.randint(0, n)
@@ -443,10 +457,10 @@ class Montecarlo(object):
         """
         Returns True if the trial step is accepted
 
-        :param list system_changes: List with the proposed system changes
+        Parameters:
 
-        :return: True/False if the move is accepted or not
-        :rtype: bool
+        system_changes: list
+            List with system changes
         """
         self.last_energies[0] = self.current_energy
 
@@ -473,9 +487,6 @@ class Montecarlo(object):
     def count_atoms(self):
         """
         Count the number of each species
-
-        :return: Number of each species
-        :rtype: dict
         """
         atom_count = {key: 0 for key in self.symbols}
         for atom in self.atoms:
