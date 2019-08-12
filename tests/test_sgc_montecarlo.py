@@ -79,7 +79,5 @@ class TestSGCMonteCarlo(unittest.TestCase):
                 self.assertTrue(atoms[index].symbol in allowed)
 
 
-
-
 if __name__ == '__main__':
     unittest.main()
