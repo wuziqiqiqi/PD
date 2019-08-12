@@ -1,4 +1,3 @@
-from ase.montecarlo.metropolis import Metropolis
-from ase.montecarlo.simulatedannealing import SimulatedAnnealing
+from ase.montecarlo import Montecarlo
 
-__all__ = ['Metropolis', 'SimulatedAnnealing']
+__all__ = ['Montecarlo']
