@@ -286,7 +286,8 @@ class NewStructures(object):
             else:
                 num_attempt = 0
 
-            _logger('Structure with E = {:.3f} generated.'.format(es.min_energy))
+            msg = 'Structure with E = {:.3f} generated.'.format(es.min_energy)
+            _logger(msg)
             kvp = self._get_kvp(gs_struct, formula_unit)
             tab_name = self.corr_func_table_name
             self.db.write(gs_struct, kvp, external_tables={tab_name: cf})
@@ -306,7 +307,8 @@ class NewStructures(object):
         """
         if not self._check_num_to_generate():
             return
-        _logger("Generating {} random structures (struct_per_gen={}, {} present)"
+        _logger("Generating {} random structures "
+                "(struct_per_gen={}, {} present)"
                 .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
 
         fail_counter = 0
@@ -360,8 +362,9 @@ class NewStructures(object):
 
         if not unique_structure_found:
             if verbose:
-                _logger("Could not find a structure that does not already exist "
-                        "in the DB within {} attempts.".format(max_attempt))
+                _logger("Could not find a structure that does not already "
+                        "exist in the DB within {} attempts."
+                        "".format(max_attempt))
             return False
 
         self.insert_structure(init_struct=new_atoms)

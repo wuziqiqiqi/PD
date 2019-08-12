@@ -59,6 +59,18 @@ class TemplateAtoms(object):
 
         return self.templates['atoms'][uid]
 
+    def get_largest_template(self):
+        """
+        Return the largest template
+        """
+        max_num = 0
+        largest_template = None
+        for atoms in self.templates['atoms']:
+            if len(atoms) > max_num:
+                largest_template = atoms
+                max_num = len(atoms)
+        return largest_template
+
     def get_uid_with_given_size(self, size, generate_template=False):
         """Get the UID of the template with given size.
 
