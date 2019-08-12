@@ -297,3 +297,6 @@ class Clease(Calculator):
         """
         self.eci = ecis
         self.updater.set_ecis(ecis)
+
+    def get_singlets(self):
+        return self.updater.get_singlets()

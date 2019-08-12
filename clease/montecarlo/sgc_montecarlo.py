@@ -1,4 +1,5 @@
 from clease.montecarlo import Montecarlo
+from clease.montecarlo.observers import SGCObserver
 import numpy as np
 from ase.units import kB
 from scipy import stats
@@ -35,7 +36,7 @@ class SGCMonteCarlo(Montecarlo):
         if len(self.symbols) <= 1:
             raise ValueError("At least 2 symbols have to be specified")
         self.averager = SGCObserver(
-            self.atoms.get_calculator(), self, len(self.symbols)-1)
+            self.atoms.get_calculator())
 
         self.chem_pots = []
         self.chem_pot_names = []
