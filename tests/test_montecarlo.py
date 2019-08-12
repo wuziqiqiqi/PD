@@ -18,7 +18,7 @@ def get_example_mc_system(db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu']])
     setting = CEBulk(db_name=db_name, concentration=conc,
                      crystalstructure='fcc', a=4.0,
-                     max_cluster_size=3, max_cluster_dia=[.0, 4.1],
+                     max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
                      size=[2, 2, 2])
 
     atoms = setting.atoms.copy()*(3, 3, 3)
