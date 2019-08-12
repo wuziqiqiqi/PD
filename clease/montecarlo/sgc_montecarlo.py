@@ -13,7 +13,7 @@ class SGCMonteCarlo(Montecarlo):
     Class for running Monte Carlo in the Semi-Grand Canonical Ensebmle
     (i.e. fixed number of atoms, but varying composition)
 
-    See docstring of :py:class:`clease.montecarlo.Montecarlo`
+    See docstring of `clease.montecarlo.Montecarlo`
 
     Parameters:
 
