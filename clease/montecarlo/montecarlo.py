@@ -389,7 +389,8 @@ class Montecarlo(object):
         v_info = sys.version_info
         meta_info = {
             "timestamp": st,
-            "python_version": "{}.{}.{}".format(v_info.major, v_info.minor, v_info.micro)
+            "python_version": "{}.{}.{}".format(v_info.major, v_info.minor,
+                                                v_info.micro)
         }
         return meta_info
 
