@@ -10,6 +10,7 @@ from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.observers import DiffractionObserver
 from clease.montecarlo.constraints import ConstrainSwapByBasis
+from clease.montecarlo.constraints import FixedElement
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -241,6 +242,45 @@ class TestMonteCarlo(unittest.TestCase):
         for basis, allowed in zip(i_by_basis, allowed_elements):
             for indx in basis:
                 self.assertTrue(atoms[indx].symbol in allowed)
+
+    def test_fixed_element(self):
+        db_name = 'test_fixed_element_constraint.db'
+        atoms = get_rocksalt_mc_system(db_name)
+
+        # Insert a few vacancies
+        num_X = 0
+        for atom in atoms:
+            if atom.symbol == 'Si':
+                atom.symbol = 'X'
+                num_X += 1
+
+            if num_X >= 20:
+                break
+
+        # Insert a few C
+        num_C = 0
+        for atom in atoms:
+            if atom.symbol == 'O':
+                atom.symbol = 'C'
+                num_C += 1
+
+            if num_C >= 20:
+                break
+
+        # Let's say that all Si atoms should be fixed
+        fixed_element = FixedElement('Si')
+
+        mc = Montecarlo(atoms, 10000)
+        mc.add_constraint(fixed_element)
+
+        si_indices = [atom.index for atom in atoms if atom.symbol == 'Si']
+        mc.run(steps=1000)
+
+        si_after = [atom.index for atom in atoms if atom.symbol == 'Si']
+        os.remove(db_name)
+        self.assertEqual(si_indices, si_after)
+
+
 
 if __name__ == '__main__':
     unittest.main()
