@@ -4,6 +4,7 @@ from clease.calculator import attach_calculator
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
 from clease.montecarlo.observers import Snapshot
+from clease.montecarlo.observers import EnergyEvolution
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -90,6 +91,27 @@ class TestMonteCarlo(unittest.TestCase):
         self.assertEqual(len(obs.traj), 10)
         os.remove(traj)
 
+    def test_energy_evolution(self):
+        db_name = 'test_energy_evolution.db'
+
+        atoms = get_example_mc_system(db_name)
+        atoms[0].symbol = 'Cu'
+        atoms[1].symbol = 'Cu'
+
+        obs = EnergyEvolution(atoms.get_calculator())
+
+        mc = Montecarlo(atoms, 600)
+        mc.attach(obs, interval=50)
+        mc.run(steps=1000)
+        fname = 'energy_evol.csv'
+
+        # Just confirm that the save function works
+        obs.save(fname=fname)
+        os.remove(fname)
+
+        # Check the number of energy values
+        os.remove(db_name)
+        self.assertEqual(20, len(obs.energies))
 
 
 if __name__ == '__main__':
