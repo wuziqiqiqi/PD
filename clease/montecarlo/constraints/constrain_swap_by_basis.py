@@ -8,6 +8,20 @@ class ConstrainSwapByBasis(MCConstraint):
     This constraint is intended to be used togerthing with canonical
     Monte Carlo calculations where the trial moves consist of swapping
     two atoms.
+
+    Parameters:
+
+    atoms: Atoms
+        Atoms object used in the MC simulation
+
+    index_by_basis: list
+        Indices ordered by basis (can be taken from ClusterExpansionSetting)
+        If an atoms object has 10 sites, and the first 4 belongs to one basis,
+        the three next belongs to one basis and the last three belongs to one
+        basis, this argument would be
+        [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+        Swaps are only allowed within each basis, not across two basis.
     """
     def __init__(self, atoms, index_by_basis):
         self.basis = np.zeros(len(atoms))
