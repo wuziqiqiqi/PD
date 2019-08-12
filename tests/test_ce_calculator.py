@@ -3,7 +3,7 @@ import os
 from random import randint
 import numpy as np
 from clease import CEBulk, CECrystal, CorrFunction, Concentration
-from clease.calculator import Clease
+from clease.calculator import Clease, attach_calculator
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
@@ -278,6 +278,45 @@ class TestCECalculator(unittest.TestCase):
         test_update_correlation_functions(
             sp_setting, sp_atoms, n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
+
+    def test_init_large_cell(self):
+        print('Init large cell')
+        db_name = 'cecalc_init_large_cell.db'
+        rs_setting, rs_atoms = rocksalt_with_self_interaction(
+            [1, 2, 3], db_name)
+
+        atoms = bulk('LiO', crystalstructure='rocksalt', a=4.05, cubic=True)
+        atoms = atoms*(2, 2, 2)
+        eci = generate_ex_eci(rs_setting)
+
+        # Use quick way of initialisation object
+        atoms = attach_calculator(setting=rs_setting, atoms=atoms,
+                                  eci=eci)
+
+        cf = CorrFunction(rs_setting)
+        init_cf = atoms.get_calculator().init_cf
+
+        final_cf = cf.get_cf(atoms)
+        for k, v in final_cf.items():
+            self.assertAlmostEqual(v, init_cf[k])
+
+        # Try some swaps
+        num_X = 0
+        num_Mn = 0
+        for atom in atoms:
+            if atom.symbol == 'Li' and num_X < 3:
+                atom.symbol = 'X'
+                num_X += 1
+            elif atom.symbol == 'Li' and num_Mn < 4:
+                atom.symbol = 'Mn'
+                num_Mn += 1
+        atoms.get_potential_energy()
+
+        final_cf = cf.get_cf(atoms)
+        calc_cf = atoms.get_calculator().get_cf()
+        os.remove(db_name)
+        for k, v in final_cf.items():
+            self.assertAlmostEqual(v, calc_cf[k])
 
 
 if __name__ == '__main__':
