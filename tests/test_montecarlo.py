@@ -1,11 +1,13 @@
 import os
 import unittest
+import numpy as np
 from clease.calculator import attach_calculator
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
 from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
+from clease.montecarlo.observers import LowestEnergyStructure
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -134,6 +136,26 @@ class TestMonteCarlo(unittest.TestCase):
         os.remove(db_name)
         self.assertTrue('site_order_average' in thermo.keys())
         self.assertTrue('site_order_std' in thermo.keys())
+
+    def test_lowest_energy_obs(self):
+        db_name = 'test_low_energy.db'
+        atoms = get_example_mc_system(db_name)
+
+        atoms[0].symbol = 'Cu'
+        atoms[1].symbol = 'Cu'
+        atoms[2].symbol = 'Cu'
+
+        low_en = LowestEnergyStructure(atoms)
+        energy_evol = EnergyEvolution(atoms.get_calculator())
+
+        mc = Montecarlo(atoms, 700)
+        mc.attach(low_en, interval=1)
+        mc.attach(energy_evol, interval=1)
+
+        mc.run(steps=1000)
+        os.remove(db_name)
+        self.assertAlmostEqual(np.min(energy_evol.energies),
+                               low_en.lowest_energy)
 
 if __name__ == '__main__':
     unittest.main()
