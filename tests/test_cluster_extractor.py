@@ -27,10 +27,21 @@ class TestClusterExtractor(unittest.TestCase):
 
         # Check correct numbers os third neighbours
         self.assertTrue(len(clusters[2]), 18)
-        
+
         # Check equivalent sites
         equiv = extractor.equivalent_sites(clusters[0][0])
         self.assertEqual(equiv[0], [0, 1])
+
+        # Try triplets
+        clusters = extractor.extract(ref_indx=ref_indx, size=3, cutoff=5.0)
+
+        # Confirm that all internal distances match
+        for cluster in clusters:
+            d_ref = sorted(extractor._get_internal_distances(cluster[0]))
+            for sub in cluster[1:]:
+                d = sorted(extractor._get_internal_distances(sub))
+                self.assertTrue(np.allclose(d_ref, d))
+
 
 if __name__ == '__main__':
     unittest.main()

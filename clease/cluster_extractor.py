@@ -72,10 +72,7 @@ class ClusterExtractor(object):
         """
         Order the indices by internal distances
         """
-        dists = []
-        for indx in cluster:
-            d = self.atoms.get_distances(indx, cluster)
-            dists.append(sorted(d.tolist(), reverse=True))
+        dists = self._get_internal_distances(cluster)
         zipped = sorted(list(zip(dists, cluster)), reverse=True)
         return [x[1] for x in zipped]
 
@@ -87,15 +84,18 @@ class ClusterExtractor(object):
         images = [self.atoms[x] for x in single_cluster]
         view(images)
 
-    def equivalent_sites(self, sub_cluster):
-        """
-        Finds the equivalent sites of a subcluster
-        """
+    def _get_internal_distances(self, sub_cluster):
         dists = []
         for indx in sub_cluster:
             d = self.atoms.get_distances(indx, sub_cluster)
             dists.append(sorted(d.tolist(), reverse=True))
+        return dists
 
+    def equivalent_sites(self, sub_cluster):
+        """
+        Finds the equivalent sites of a subcluster
+        """
+        dists = self._get_internal_distances(sub_cluster)
         equiv_sites = []
         for i in range(len(dists)):
             for j in range(i+1, len(dists)):
@@ -113,3 +113,11 @@ class ClusterExtractor(object):
             if not found_group:
                 merged.append(set(equiv))
         return [list(x) for x in merged]
+
+    def get_cluster_diameter(self, sub_cluster):
+        """
+        Return the diameter of the sub cluster
+        """
+        internal_dists = self._get_internal_distances(sub_cluster)
+        max_dists = [x[0] for x in internal_dists]
+        return max(max_dists)
