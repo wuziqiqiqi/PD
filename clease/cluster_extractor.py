@@ -86,3 +86,30 @@ class ClusterExtractor(object):
         from ase.visualize import view
         images = [self.atoms[x] for x in single_cluster]
         view(images)
+
+    def equivalent_sites(self, sub_cluster):
+        """
+        Finds the equivalent sites of a subcluster
+        """
+        dists = []
+        for indx in sub_cluster:
+            d = self.atoms.get_distances(indx, sub_cluster)
+            dists.append(sorted(d.tolist(), reverse=True))
+
+        equiv_sites = []
+        for i in range(len(dists)):
+            for j in range(i+1, len(dists)):
+                if np.allclose(dists[i], dists[j]):
+                    equiv_sites.append((i, j))
+
+        # Merge pairs into groups
+        merged = []
+        for equiv in equiv_sites:
+            found_group = False
+            for m in merged:
+                if any(equiv in m):
+                    m.update(equiv)
+                    found_group = True
+            if not found_group:
+                merged.append(set(equiv))
+        return [list(x) for x in merged]

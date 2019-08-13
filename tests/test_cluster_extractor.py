@@ -27,6 +27,10 @@ class TestClusterExtractor(unittest.TestCase):
 
         # Check correct numbers os third neighbours
         self.assertTrue(len(clusters[2]), 18)
+        
+        # Check equivalent sites
+        equiv = extractor.equivalent_sites(clusters[0][0])
+        self.assertEqual(equiv[0], [0, 1])
 
 if __name__ == '__main__':
     unittest.main()
