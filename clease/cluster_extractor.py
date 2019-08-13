@@ -85,6 +85,9 @@ class ClusterExtractor(object):
         view(images)
 
     def _get_internal_distances(self, sub_cluster):
+        """
+        Calculate all internal distances of the cluster
+        """
         dists = []
         for indx in sub_cluster:
             d = self.atoms.get_distances(indx, sub_cluster)
