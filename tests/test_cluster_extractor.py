@@ -4,6 +4,48 @@ from ase.build import bulk
 import numpy as np
 
 
+def internal_dists(sub_cluster, pos):
+    """
+    Calcualte all internal distances
+    """
+    dists = []
+    for indx in sub_cluster:
+        diff = pos[sub_cluster, :] - pos[indx, :]
+        dists += np.sqrt(np.sum(diff**2, axis=1)).tolist()
+    return sorted(dists)
+
+
+def internal_cos_angles(sub_cluster, pos):
+    """
+    Calculate the internal angles
+    """
+    cos_angles = []
+    for indx in sub_cluster:
+        diff = pos[sub_cluster, :] - pos[indx, :]
+        dot_prod = diff.dot(diff.T)
+        cos_angles += dot_prod.ravel().tolist()
+    return sorted(cos_angles)
+
+
+def dist_and_ang_match(cluster, pos):
+    """
+    Check that all internal distances and all internal angles in the
+    subclusters are identical
+    """
+    ref_dists = internal_dists(cluster[0], pos)
+    ref_cos_angles = internal_cos_angles(cluster[0], pos)
+
+    for sub_cl in cluster[1:]:
+        dists = internal_dists(sub_cl, pos)
+        cos_ang = internal_cos_angles(sub_cl, pos)
+        dists_ok = np.allclose(ref_dists, dists)
+        cos_ang_ok = np.allclose(ref_cos_angles, cos_ang)
+
+        if not dists_ok or not cos_ang_ok:
+            return False
+    return True
+
+
 class TestClusterExtractor(unittest.TestCase):
     def test_fcc(self):
         atoms = bulk("Al", a=4.05)*(10, 10, 10)
@@ -41,6 +83,43 @@ class TestClusterExtractor(unittest.TestCase):
             for sub in cluster[1:]:
                 d = sorted(extractor._get_internal_distances(sub))
                 self.assertTrue(np.allclose(d_ref, d))
+
+    def test_fluorite(self):
+        atoms = bulk('CaFF', crystalstructure='fluorite', a=4.0)
+        orig_pos = atoms.get_positions()
+        for atom in atoms:
+            atom.tag = atom.index
+        atoms = atoms*(8, 8, 8)
+
+        # Locate reference indices of each sublattice
+        ref_indices = []
+        for i in range(3):
+            diff = atoms.get_positions() - orig_pos[i, :]
+            lengths = np.sum(diff**2, axis=1)
+            ref_indices.append(np.argmin(lengths))
+
+        com = np.mean(atoms.get_positions(), axis=0)
+        atoms.translate(com)
+        atoms.wrap()
+        pos = atoms.get_positions()
+
+        extractor = ClusterExtractor(atoms)
+
+        # Try 3-body clusters
+        print("Testing 3-body clusters")
+        for indx in ref_indices:
+            clusters = extractor.extract(ref_indx=indx, size=3, cutoff=5.0)
+            for cluster in clusters:
+                self.assertTrue(dist_and_ang_match(cluster, pos))
+
+        # Try 4-bodu clusters
+        print("Testing 4-body clusters")
+        for indx in ref_indices:
+            clusters = extractor.extract(ref_indx=indx, size=4, cutoff=4.0)
+            extractor.view_subclusters(clusters[0])
+            for cluster in clusters:
+                self.assertTrue(dist_and_ang_match(cluster, pos))
+
 
 
 if __name__ == '__main__':
