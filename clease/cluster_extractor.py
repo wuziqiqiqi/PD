@@ -58,8 +58,8 @@ class ClusterExtractor(object):
         for comb in combinations(indices, r=size-1):
             all_indices = [ref_indx] + list(comb)
 
-            d = [max(x) for x in self._get_internal_distances(all_indices)]
-            if max(d) > cutoff:
+            d = self.get_cluster_diameter(all_indices)
+            if d > cutoff:
                 continue
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
