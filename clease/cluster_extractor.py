@@ -7,7 +7,7 @@ class ClusterExtractor(object):
     """
     Class that extracts clusters from an atoms object. Given a
     reference index. This class uses the singular values of the
-    covariance matrix of the coordinates of the atoms forming
+    inner product matrix of the coordinates of the atoms forming
     a cluster as a unique footprint of the cluster.
 
     Parameters
