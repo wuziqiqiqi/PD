@@ -14,7 +14,7 @@ class ClusterList(object):
 
         # Update the lookup
         for sub in cluster.indices:
-            key = sorted([cluster.ref_indx] + list(sub))
+            key = self._sub_cluster_key(cluster.ref_indx, sub)
             v = self.parent.get(tuple(key), [])
             v.append(len(self.clusters) - 1)
             self.parent[tuple(key)] = v
@@ -25,6 +25,10 @@ class ClusterList(object):
         """
         self.clusters = []
         self.parent = {}
+
+    def _sub_cluster_key(self, ref_indx, sub):
+        key = sorted([ref_indx] + list(sub))
+        return tuple(key)
 
     def names(self):
         return [c.name for c in self.clusters]
@@ -38,6 +42,27 @@ class ClusterList(object):
         Return all clusters in a given symmetry group
         """
         return [c for c in self.clusters if c.group == group]
+
+    def get_equivalent_clusters(self, cluster):
+        """
+        Return a list with all the equivalent clusters in other
+        translational symmetry groups
+
+        Parameters:
+
+        cluster: Cluster
+            Instance of cluster that should be matched with its corresponding
+            cluster in other translational symmetry groups
+        """
+        equiv_clusters = set()
+        for sub in cluster.indices:
+            key = self._sub_cluster_key(cluster.ref_indx, sub)
+            parents = self.parents[key]
+            equiv_clusters.update(parents)
+        equiv = []
+        for cluster_id in equiv_clusters:
+            equiv.append(self.clusters[cluster_id])
+        return equiv
 
     def __len__(self):
         return len(self.clusters)
