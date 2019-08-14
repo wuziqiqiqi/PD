@@ -37,7 +37,7 @@ class ClusterExtractor(object):
         x = self.atoms.get_positions()[ref_indx, :]
         indices = self.tree.query_ball_point(x, cutoff)
         indices.remove(ref_indx)
-        return self._group_clusters(ref_indx, indices, size)
+        return self._group_clusters(ref_indx, indices, size, cutoff)
 
     def _get_type(self, singular):
         if self.svds:
@@ -49,7 +49,7 @@ class ClusterExtractor(object):
         self.svds.append(singular)
         return len(self.svds) - 1
 
-    def _group_clusters(self, ref_indx, indices, size):
+    def _group_clusters(self, ref_indx, indices, size, cutoff):
         """
         Group sites in clusters based on their SVD
         """
@@ -57,6 +57,10 @@ class ClusterExtractor(object):
         clusters = []
         for comb in combinations(indices, r=size-1):
             all_indices = [ref_indx] + list(comb)
+
+            d = [max(x) for x in self._get_internal_distances(all_indices)]
+            if max(d) > cutoff:
+                continue
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
