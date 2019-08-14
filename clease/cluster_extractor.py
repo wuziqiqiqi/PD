@@ -6,9 +6,8 @@ from itertools import combinations
 class ClusterExtractor(object):
     """
     Class that extracts clusters from an atoms object. Given a
-    reference index. This class uses the singular values of the
-    inner product matrix of the coordinates of the atoms forming
-    a cluster as a unique footprint of the cluster.
+    reference index. This class uses the sorted flattened inner
+    product matrix.
 
     Parameters
     atoms: Atoms
@@ -64,7 +63,7 @@ class ClusterExtractor(object):
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
-            s = np.linalg.svd(X, full_matrices=False, compute_uv=False)
+            s = np.sort(X.ravel())
             group = self._get_type(s)
 
             all_indices = self._order_by_internal_distances(all_indices)
