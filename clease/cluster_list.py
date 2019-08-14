@@ -2,6 +2,11 @@
 class ClusterList(object):
     def __init__(self):
         self.clusters = []
+
+        # Maintain a datastructure tracking the parent cluster of all
+        # subclusters. Main purpose is to be able to quickly identify
+        # which clusters are exactly the same, but belonds to two different
+        # translational symmetry groups
         self.parent = {}
 
     def append(self, cluster):
@@ -11,8 +16,15 @@ class ClusterList(object):
         for sub in cluster.indices:
             key = sorted([cluster.ref_indx] + list(sub))
             v = self.parent.get(tuple(key), [])
-            v.append(len(self.clusters))
+            v.append(len(self.clusters) - 1)
             self.parent[tuple(key)] = v
+
+    def clear(self):
+        """
+        Clear the content
+        """
+        self.clusters = []
+        self.parent = {}
 
     def names(self):
         return [c.name for c in self.clusters]
