@@ -112,11 +112,10 @@ class TestClusterExtractor(unittest.TestCase):
             for cluster in clusters:
                 self.assertTrue(dist_and_ang_match(cluster, pos))
 
-        # Try 4-bodu clusters
+        # Try 4-body clusters
         print("Testing 4-body clusters")
         for indx in ref_indices:
             clusters = extractor.extract(ref_indx=indx, size=4, cutoff=4.0)
-            extractor.view_subclusters(clusters[0])
             for cluster in clusters:
                 self.assertTrue(dist_and_ang_match(cluster, pos))
 
