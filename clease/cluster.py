@@ -24,6 +24,9 @@ class Cluster(object):
         return (self.size, self.diameter, self.group) < \
             (other.size, other.diameter, other.group)
 
+    def __eq__(self, other):
+        return self.full_name == other.full_name
+
     def equiv_deco(self, deco):
         return equivalent_deco(deco, self.equiv_sites)
 
