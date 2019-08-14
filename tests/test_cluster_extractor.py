@@ -121,6 +121,5 @@ class TestClusterExtractor(unittest.TestCase):
                 self.assertTrue(dist_and_ang_match(cluster, pos))
 
 
-
 if __name__ == '__main__':
     unittest.main()
