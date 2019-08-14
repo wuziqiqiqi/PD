@@ -31,6 +31,12 @@ class ClusterExtractor(object):
 
         cutoff: float
             Maximum cutoff
+
+        return: list
+            List of sites that are belong to a cluster
+            [cluster1, cluster2, cluster3...]
+            where cluster1 (cluster2, cluster3 etc.) are
+            cluster1 = [[245, 432, 126], [567, 432, 127], ...]
         """
         self.svds = []
         x = self.atoms.get_positions()[ref_indx, :]
