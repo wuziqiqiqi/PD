@@ -16,7 +16,7 @@ class ClusterExtractor(object):
     def __init__(self, atoms):
         self.atoms = atoms
         self.tree = KDTree(self.atoms.get_positions())
-        self.svds = []
+        self.inner_prod = []
         self.tol = 1E-6
 
     def extract(self, ref_indx=0, size=2, cutoff=4.0):
@@ -38,21 +38,21 @@ class ClusterExtractor(object):
             where cluster1 (cluster2, cluster3 etc.) are
             cluster1 = [[245, 432, 126], [567, 432, 127], ...]
         """
-        self.svds = []
+        self.inner_prod = []
         x = self.atoms.get_positions()[ref_indx, :]
         indices = self.tree.query_ball_point(x, cutoff)
         indices.remove(ref_indx)
         return self._group_clusters(ref_indx, indices, size, cutoff)
 
-    def _get_type(self, singular):
-        if self.svds:
-            diff = [np.sum((x - singular)**2) for x in self.svds]
+    def _get_type(self, flat_inner_prod):
+        if self.inner_prod:
+            diff = [np.sum((x - flat_inner_prod)**2) for x in self.inner_prod]
             min_group = np.argmin(diff)
             if np.sqrt(diff[min_group]) < self.tol:
                 return min_group
 
-        self.svds.append(singular)
-        return len(self.svds) - 1
+        self.inner_prod.append(flat_inner_prod)
+        return len(self.inner_prod) - 1
 
     def _group_clusters(self, ref_indx, indices, size, cutoff):
         """
@@ -69,8 +69,8 @@ class ClusterExtractor(object):
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
-            s = np.sort(X.ravel())
-            group = self._get_type(s)
+            inner = np.sort(X.ravel())
+            group = self._get_type(inner)
 
             all_indices = self._order_by_internal_distances(all_indices)
             if group == len(clusters):
