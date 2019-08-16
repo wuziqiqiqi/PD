@@ -80,33 +80,28 @@ The extra concentration constraint can be specified in one of three ways.
 
 The first method is to specify the extra constraint using ``A_eq``, ``b_eq``,
 ``A_lb`` and ``b_lb``. For this particular case, the extra constraint is
-specified using ``A_lb`` and ``b_lb`` arguments as::
+specified using ``A_lb`` and ``b_lb`` arguments as
 
-  from ase.clease import Concentration
-
-  conc = Concentration(basis_elements=[['Au', 'Cu']],
-                       A_lb=[[2, 0]], b_lb=[1])
+  >>> from clease import Concentration
+  >>> conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
 
 The second method is to specify the concentration range using formula unit
 strings. The :class:`Concentration` class contains
 :meth:`~Concentration.set_conc_formula_unit()` method which accepts formula
-strings and variable range, which can be invoked as::
+strings and variable range, which can be invoked as
 
-  from ase.clease import Concentration
-
-  conc = Concentration(basis_elements=[['Au', 'Cu']])
-  conc.set_conc_formula_unit(formulas=["Au<x>Cu<1-x>"],
-                             variable_range={"x": (0, 0.5)})
+  >>> from clease import Concentration
+  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+  >>> conc.set_conc_formula_unit(formulas=["Au<x>Cu<1-x>"], variable_range={"x": (0, 0.5)})
 
 The last method is to specify the concentration range each constituting species
 using :meth:`~Concentration.set_conc_ranges()` method in :class:`Concentration`
 class. The lower and upper bound of species are specified in a nested list in
-the same order as the ``basis_elements`` as::
+the same order as the ``basis_elements`` as
 
-  from ase.clease import Concentration
-
-  conc = Concentration(basis_elements=[['Au', 'Cu']])
-  conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
+  >>> from ase.clease import Concentration
+  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+  >>> conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
 
 The above three methods yields the same results where :math:`x` is
 constrained to :math:`0 \leq x \leq 0.5`.
