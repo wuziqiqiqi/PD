@@ -15,3 +15,4 @@ clease.egg-info/*
 gui_tests/*.txt
 *.txt
 doc/build/*
+doc/*.db
