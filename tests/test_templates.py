@@ -47,6 +47,26 @@ class TestTemplates(unittest.TestCase):
 
         os.remove(db_name)
 
+    def test_fixed_volume(self):
+        db_name = 'templates_fixed_volume.db'
+        unit_cell = bulk("Al")
+        db = connect(db_name)
+        db.write(unit_cell, name='unit_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=5, size=None,
+                                       db_name=db_name)
+
+        # Create 20 templates with 2 atoms
+        diag_A = [2, 1, 1]
+        templates = template_atoms.get_templates_given_volume(
+            diag_A=diag_A, off_diag_range=1, num_templates=20)
+
+        vol = unit_cell.get_volume()
+        os.remove(db_name)
+        for template in templates:
+            self.assertEqual(len(template), 2)
+            self.assertAlmostEqual(2*vol, template.get_volume())
+
 
 if __name__ == '__main__':
     unittest.main()

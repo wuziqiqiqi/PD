@@ -403,6 +403,150 @@ class TemplateAtoms(object):
         for _, v in self.templates.items():
             assert len(v) == num_entries
 
+    def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
+                                                 off_diag_range):
+        """
+        Create integer matrices with a given determinant.
+
+        It utilizes that determinant of the dot product between an upper
+        triangular matrix and a lower triangular matrix is equal to the
+        product of the diagonal elements in the two matrices.
+
+        Example:
+
+        C = A.dot(B)
+
+            [a11, a, b]        [b11, 0, 0]
+        A = [0, a22, c],  B =  [d, b22, 0]
+            [0, 0, a33]        [e, f, b33]
+
+        the determinant of C is then equal to
+        det(C) = a11*a22*a33*b11*b22*b33.
+
+        Parameters:
+
+        diag_A: list of length 3
+            3 integers representing the diagonal in the A matrix
+
+        diag_B: list of length 3
+            3 integers representing the diagonal in the B matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen integers in the
+            range [-off_diag_range, off_diag_range]
+        """
+
+        A = np.diag(diag_A)  # Upper triangular matrix
+        B = np.diag(diag_B)  # Lower triangular matrix
+
+        # Generate random off diagonal elements
+        off_diag = np.random.randint(-off_diag_range, off_diag_range,
+                                     size=6)
+
+        A[0, 1] = off_diag[0]
+        A[0, 2] = off_diag[1]
+        A[1, 2] = off_diag[2]
+        B[1, 0] = off_diag[3]
+        B[2, 0] = off_diag[4]
+        B[2, 1] = off_diag[5]
+
+        C = A.dot(B)
+        return C
+
+    def get_template_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                  off_diag_range=2):
+        """
+        Generate a single template with a given volume. See doc string
+        of `clease.template_atoms._transformation_matrix_with_given_volume`
+        for details of the algorithm. The selected determinant is given by
+        np.prod(diag_A)*np.prod(diag_B).
+
+        Example:
+
+        If a template with a volume equal to 2 times the unit cell, the
+        following combinations of diag_A and diag_B would to the job
+        diag_A = [2, 1, 1] and diag_B = [1, 1, 1]
+        diag_A = [1, 2, 1] and diag_B = [1, 1, 1]
+        diag_A = [1, 1, 2] and diag_B = [1, 1, 1]
+        and all cases where diag_A and diag_B in the above list is swapped.
+
+        If a template with a volume equal to 4 times the volume of the unit
+        cell one can either have diag_A = [2, 2, 1] and diag_A = [4, 1, 1]
+        works (diag_B = [1, 1, 1]).
+
+        Parameters:
+
+        diag_A: list int
+            List of 3 integers representing the diagonal of the upper
+            triangular matrix
+
+        diag_B: list int
+            List of 3 integers representing the diagonal of the lower
+            triangular matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen in the range
+            [-off_diag_range, off_diag_range]
+        """
+        matrix = self._transformation_matrix_with_given_volume(
+            diag_A, diag_B, off_diag_range)
+        return make_supercell(self.unit_cell, matrix)
+
+    def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                   off_diag_range=2, num_templates=10):
+        """
+        Generate a given number of random templates with a fixed volume
+        See also `clease.template_atoms.get_template_given_volume`.
+
+        Parameters:
+
+        diag_A: list of int
+            List of 3 integers representing the diagonal of the upper
+            triangular matrix
+
+        diag_B: list of int
+            List of 3 integers repreenting the diagonal in the lower
+            triangular matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen in the range
+            [-off_diag_range, off_diag_range]
+
+        num_templates: int
+            Number of templates to generate
+        """
+        max_attempts = 1000
+        inverse_matrices = []
+        int_matrices = []
+
+        counter = 0
+        ucell = self.unit_cell.get_cell()
+        while len(int_matrices) < num_templates and counter < max_attempts:
+            counter += 1
+            matrix = self._transformation_matrix_with_given_volume(
+                diag_A, diag_B, off_diag_range)
+
+            sc = matrix.dot(ucell)
+
+            # Check if this matrix can be obtained with a unitary
+            # transformation of any of the other
+            already_exist = False
+            for mat in inverse_matrices:
+                S = sc.dot(mat)
+                if self._is_unitary(S):
+                    already_exist = True
+                    break
+
+            if not already_exist:
+                int_matrices.append(matrix)
+                inverse_matrices.append(np.linalg.inv(sc))
+
+        templates = []
+        for mat in int_matrices:
+            templates.append(make_supercell(self.unit_cell, mat))
+        return templates
+
+
 
 def is_3x3_matrix(array):
     return np.array(array).shape == (3, 3)
