@@ -105,11 +105,10 @@ new structures to be :math:`3 \times 3 \times 3` supercell by using
     ...                  max_cluster_dia=[6.0, 5.0, 5.0],
     ...                  basis_function='sanchez')
     >>> ns = NewStructures(setting=setting, generation_number=0,
-    ,,,                    struct_per_gen=10)
+    ...                    struct_per_gen=10)
 
-    >>> # get the template atoms with 3x3x3 size
     >>> atoms = connect('aucu_bulk.db').get(id=11).toatoms()
-    >>>ns.generate_random_structures(atoms)
+    >>> ns.generate_random_structures(atoms)
 
 
 .. autoclass:: NewStructures

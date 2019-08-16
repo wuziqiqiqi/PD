@@ -12,20 +12,19 @@ settings. :class:`CEBulk` class is used when the crystal structure is one of
 
 Here is how to specify the settings for performing CE on
 :mol:`Au_xCu_1_-_x` for all :math:`0 \leq x \leq 1` on FCC lattice with a
-lattice constant of 3.8 Å::
+lattice constant of 3.8 Å
 
-  from ase.clease import Concentration
-  from ase.clease import CEBulk
-
-  conc = Concentration(basis_elements=[['Au', 'Cu']])
-  setting = CEBulk(crystalstructure='fcc',
-                   a=3.8,
-                   supercell_factor=27,
-                   concentration=conc,
-                   db_name="aucu.db",
-                   max_cluster_size=4,
-                   max_cluster_dia=[6.0, 5.0, 5.0],
-                   basis_function='sanchez')
+  >>> from clease import Concentration
+  >>> from clease import CEBulk
+  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+  >>> setting = CEBulk(crystalstructure='fcc',
+  ...                  a=3.8,
+  ...                  supercell_factor=27,
+  ...                  concentration=conc,
+  ...                  db_name="aucu.db",
+  ...                  max_cluster_size=4,
+  ...                  max_cluster_dia=[6.0, 5.0, 5.0],
+  ...                  basis_function='sanchez')
 
 :class:`CEBulk` internally calls :func:`ase.build.bulk` function to generate a
 unit cell. Arguments ``crystalstructure``, ``a``, ``c``, ``covera``, ``u``,
