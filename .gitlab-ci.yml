@@ -33,5 +33,6 @@ doctest:
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install sphinx
     - python3 -m pip install sphinx_rtd_theme
+    - python3 -m pip install .
     - cd doc
     - make doctest
