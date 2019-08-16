@@ -1,21 +1,20 @@
 from itertools import product, permutations
 import numpy as np
-from clease.tools import wrap_and_sort_by_position
 
 
 class AtomsFilter(object):
     """
-    Base class for all template filters that requires a full
-    atoms object in order to decide if the template is valid
-    or not
+    Base class for all template filters that requires a full Atoms object in
+    order to decide the validity of the template.
     """
+
     def __call__(self, atoms):
         """
         The call method has to be implemented in derived classes.
-        It accepts an atoms object or a cell object and returns True
-        if the templates is valid and False if the templates is not valid.
+        It accepts an atoms object or a cell object and returns `True` if the
+        templates is valid and False if the templates is not valid.
         """
-        raise NotImplementedError("Has to be implemented in derived classes!")
+        raise NotImplementedError("Has to be implemented in derived classes.")
 
 
 class CellFilter(object):
@@ -24,13 +23,14 @@ class CellFilter(object):
     knowledge of the cell vectors in order to decide if the
     template is valid or not.
     """
+
     def __call__(self, cell):
-        raise NotImplementedError("Has to be implemented in derived classes")
+        raise NotImplementedError("Has to be implemented in derived classes.")
 
 
 class SkewnessFilter(CellFilter):
     """
-    Rejects cells that are too skew
+    A filter that rejects cells that are too skewed.
 
     Parameters:
 
@@ -38,6 +38,7 @@ class SkewnessFilter(CellFilter):
         Maximum accepted ratio between the longest and the
         shortest diagonal
     """
+
     def __init__(self, ratio):
         self.ratio = ratio
 
@@ -61,9 +62,10 @@ class SkewnessFilter(CellFilter):
 
 class EquivalentCellsFilter(CellFilter):
     """
-    Rejects templates that can be obtained by a unitary
-    transformation of an existing cell
+    A filter that rejects templates that can be obtained by a unitary
+    transformation of an existing cell.
     """
+
     def __init__(self, cell_list):
         self.cell_list = cell_list
 
@@ -92,13 +94,14 @@ class EquivalentCellsFilter(CellFilter):
 
 class ValidConcentrationFilter(AtomsFilter):
     """
-    Rejects template that has no valid concentration
+    A filter that rejects template that has no valid concentration
 
-    Parameters
+    Parameters:
 
     setting: ClusterExpansionSetting
         Instance of `ClusterExpansionSetting`
     """
+
     def __init__(self, setting):
         self.setting = setting
 
