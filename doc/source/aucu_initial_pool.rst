@@ -1,5 +1,5 @@
 .. _aucu_tutorial_initial_pool:
-.. module:: ase.clease.newStruct
+.. module:: clease.newStruct
 
 
 Generating initial structures

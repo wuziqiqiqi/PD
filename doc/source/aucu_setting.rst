@@ -1,5 +1,5 @@
 .. _aucu_tutorial_setting:
-.. module:: ase.clease.settings_bulk
+.. module:: clease.settings_bulk
 
 Specify CE settings
 ===================

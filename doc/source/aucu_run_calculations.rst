@@ -1,5 +1,5 @@
 .. _aucu_tutorial_run_calculations:
-.. module:: ase.clease.tools
+.. module:: clease.tools
 
 Running calculations on generated structures
 ============================================

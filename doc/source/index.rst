@@ -9,8 +9,9 @@ Welcome to CLEASE's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
+
    clease
+   ce_aucu
 
 
 

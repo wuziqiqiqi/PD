@@ -33,7 +33,5 @@ The use of CE in ASE is best learned through tutorials:
 .. toctree::
    :maxdepth: 1
 
-   ../../tutorials/ce/ce_aucu
-
 A simple tutorial explaining how to set up a database and perform a set of
 calculations for Cu-Au alloy can be found here: :ref:`ce_aucu_tutorial`
