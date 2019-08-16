@@ -1,5 +1,5 @@
 .. _aucu_tutorial_concentration:
-.. module:: ase.clease.concentration
+.. module:: clease.concentration
 
 
 Specify the concentration ranges of species
@@ -9,11 +9,10 @@ The first step in setting up CE in ASE is to specify the types of elements
 occupying each basis and their concentration ranges using
 :class:`Concentration` class. For AuCu alloys, we consider the entire
 composition range of :mol:`Au_xCu_1_-_x` where :math:`0 \leq x \leq 1`.
-The :class:`Concentration` object can be created simply as::
+The :class:`Concentration` object can be created simply as
 
-  from ase.clease import Concentration
-
-  conc = Concentration(basis_elements=[['Au', 'Cu']])
+  >>> from clease import Concentration
+  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 
 because there is no restriction imposed on the concentration range. Note that
 a nested list is passed for the ``basis_elements`` argument because
@@ -99,7 +98,7 @@ using :meth:`~Concentration.set_conc_ranges()` method in :class:`Concentration`
 class. The lower and upper bound of species are specified in a nested list in
 the same order as the ``basis_elements`` as
 
-  >>> from ase.clease import Concentration
+  >>> from clease import Concentration
   >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
   >>> conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
 
