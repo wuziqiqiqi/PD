@@ -11,7 +11,7 @@ settings. :class:`CEBulk` class is used when the crystal structure is one of
 "cesiumchloride", "fluorite" or "wurtzite".
 
 Here is how to specify the settings for performing CE on
-:mol:`Au_xCu_1_-_x` for all :math:`0 \leq x \leq 1` on FCC lattice with a
+Au\ :sub:`x`\ Cu\ :sub:`1_-_x` for all :math:`0 \leq x \leq 1` on FCC lattice with a
 lattice constant of 3.8 Å
 
   >>> from clease import Concentration

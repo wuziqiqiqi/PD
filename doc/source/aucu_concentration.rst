@@ -8,7 +8,7 @@ Specify the concentration ranges of species
 The first step in setting up CE in ASE is to specify the types of elements
 occupying each basis and their concentration ranges using
 :class:`Concentration` class. For AuCu alloys, we consider the entire
-composition range of :mol:`Au_xCu_1_-_x` where :math:`0 \leq x \leq 1`.
+composition range of Au\ :sub:`x`\ Cu\ :sub:`1-x` where :math:`0 \leq x \leq 1`.
 The :class:`Concentration` object can be created simply as
 
   >>> from clease import Concentration
@@ -17,7 +17,7 @@ The :class:`Concentration` object can be created simply as
 because there is no restriction imposed on the concentration range. Note that
 a nested list is passed for the ``basis_elements`` argument because
 the consituting elements are specified per basis and FCC (crystal structure of
-:mol:`Au_xCu_1_-_x` for all :math:`0 \leq x \leq 1`) has only one basis.
+Au\ :sub:`x`\ Cu\ _sub:`1_-_x` for all :math:`0 \leq x \leq 1`) has only one basis.
 The initialization automatically creates a linear algebra representation
 of the default concentration range constraints. The equality condition of
 
@@ -74,7 +74,7 @@ equal to zero.
 The AuCu system presented in this tutorial does not impose any concentration
 constraints. However, we demonstrate how one can impose extra constraints by
 using an example case where the concentration of interest is
-:mol:`Au_xCu_1_-_x` where :math:`0 \leq x \leq 0.5`.
+Au\ :sub:`x`\ Cu\ :sub:`1_-_x` where :math:`0 \leq x \leq 0.5`.
 The extra concentration constraint can be specified in one of three ways.
 
 The first method is to specify the extra constraint using ``A_eq``, ``b_eq``,
