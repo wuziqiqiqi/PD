@@ -907,10 +907,10 @@ void CEUpdater::read_trans_matrix( PyObject* py_trans_mat )
   set2vector( unique_indx, unique_indx_vec );
 
   unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
-  if ( max_indx == 0 )
-  {
-    throw runtime_error("It looks like no clusters are present. Max lookup index was 0 for ref_indx 0");
-  }
+  // if ( max_indx == 0 )
+  // {
+  //   throw runtime_error("It looks like no clusters are present. Max lookup index was 0 for ref_indx 0");
+  // }
 
   if ( is_list )
   {
