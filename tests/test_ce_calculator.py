@@ -282,8 +282,7 @@ class TestCECalculator(unittest.TestCase):
     def test_init_large_cell(self):
         print('Init large cell')
         db_name = 'cecalc_init_large_cell.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 2, 3], db_name)
+        rs_setting, _ = rocksalt_with_self_interaction([1, 2, 3], db_name)
 
         atoms = bulk('LiO', crystalstructure='rocksalt', a=4.05, cubic=True)
         atoms = atoms*(2, 2, 2)
