@@ -290,7 +290,7 @@ class TestCECalculator(unittest.TestCase):
 
         # Use quick way of initialisation object
         atoms = attach_calculator(setting=rs_setting, atoms=atoms,
-                                  eci=eci)
+                                  cluster_name_eci=eci)
 
         cf = CorrFunction(rs_setting)
         init_cf = atoms.get_calculator().init_cf
