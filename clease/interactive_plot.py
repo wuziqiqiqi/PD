@@ -8,9 +8,12 @@ class InteractivePlot(object):
 
     fig: Figure instance
         Instance of the figure object visualizing the data
+
     ax: Axes instance
         Instance of the axes object containing the lines
+
     lines: Array of Line objects that annotations apply to
+
     annotations: Nested list with annotations
         Each list contains one annotation for each (x, y) pair on that
         line
