@@ -95,10 +95,10 @@ class AtomsManager(object):
                 single_sites.append(atom.index)
         return single_sites
 
-    def tag_by_corresponding_atom(self, ref_atoms):
+    def tag_indices_of_corresponding_atom(self, ref_atoms):
         """
-        Tag `self.atoms` with the indices of its corresponding atom in
-        `ref_atoms` when the positions are wrapped.
+        Tag `self.atoms` with the indices of its corresponding atom (equivalent
+        position) in `ref_atoms` when the positions are wrapped.
 
         Parameters:
 

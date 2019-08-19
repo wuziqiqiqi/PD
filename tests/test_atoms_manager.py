@@ -79,7 +79,7 @@ class TestAtomsManager(unittest.TestCase):
 
         atoms = unit_cell*(2, 3, 4)
         manager = AtomsManager(atoms)
-        manager.tag_by_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(unit_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Mg':
@@ -94,7 +94,7 @@ class TestAtomsManager(unittest.TestCase):
         atoms = atoms*(3, 4, 5)
 
         manager = AtomsManager(atoms)
-        manager.tag_by_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(unit_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Na':
@@ -110,7 +110,7 @@ class TestAtomsManager(unittest.TestCase):
 
         manager = AtomsManager(atoms)
         with self.assertRaises(ValueError):
-            manager.tag_by_corresponding_atom(unit_cell)
+            manager.tag_indices_of_corresponding_atom(unit_cell)
 
 
 if __name__ == '__main__':
