@@ -119,7 +119,7 @@ class ClusterExpansionSetting(object):
             raise ValueError("list of elements is needed for each basis")
 
         if not os.path.exists(db_name):
-            self._create_cluster_info_and_trans_matrix()
+            self.create_cluster_info_and_trans_matrix()
             self._store_data()
         else:
             self._read_data()
@@ -180,7 +180,7 @@ class ClusterExpansionSetting(object):
         """Convert the current size into a string."""
         return nested_list2str(self.size)
 
-    def _prepare_new_active_template(self, uid):
+    def prepare_new_active_template(self, uid):
         """Prepare necessary data structures when setting new template."""
         self.template_atoms_uid = uid
         self.atoms, self.size = \
@@ -197,7 +197,7 @@ class ClusterExpansionSetting(object):
 
     def _set_active_template_by_uid(self, uid):
         """Set a fixed template atoms object as the active."""
-        self._prepare_new_active_template(uid)
+        self.prepare_new_active_template(uid)
 
         # Read information from database
         # Note that if the data is not found, it will generate
@@ -841,7 +841,7 @@ class ClusterExpansionSetting(object):
         max_dist *= 0.51
         return max_dist
 
-    def _create_cluster_info_and_trans_matrix(self):
+    def create_cluster_info_and_trans_matrix(self):
         self._create_cluster_information()
 
         symm_group = self._get_symm_groups()
@@ -935,7 +935,7 @@ class ClusterExpansionSetting(object):
             self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
-            self._create_cluster_info_and_trans_matrix()
+            self.create_cluster_info_and_trans_matrix()
             self._store_data()
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
@@ -1079,7 +1079,7 @@ class ClusterExpansionSetting(object):
         # current max_cluster_size and max_cluster_dia
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
-            self._create_cluster_info_and_trans_matrix()
+            self.create_cluster_info_and_trans_matrix()
             self._store_data()
         self._set_active_template_by_uid(0)
         _logger('Cluster data updated for all templates.\n'
