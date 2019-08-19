@@ -15,7 +15,8 @@ from clease.tools import (wrap_and_sort_by_position, index_by_position,
                           flatten, sort_by_internal_distances,
                           dec_string, get_unique_name,
                           nested_array2list, get_all_internal_distances,
-                          distance_string, nested_list2str)
+                          distance_string, nested_list2str,
+                          trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
@@ -118,6 +119,7 @@ class ClusterExpansionSetting(object):
             raise ValueError("list of elements is needed for each basis")
 
         if not os.path.exists(db_name):
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         else:
             self._read_data()
@@ -178,8 +180,8 @@ class ClusterExpansionSetting(object):
         """Convert the current size into a string."""
         return nested_list2str(self.size)
 
-    def _set_active_template_by_uid(self, uid):
-        """Set a fixed template atoms object as the active."""
+    def _prepare_new_active_template(self, uid):
+        """Prepare necessary data structures when setting new template."""
         self.template_atoms_uid = uid
         self.atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
@@ -192,6 +194,10 @@ class ClusterExpansionSetting(object):
         self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
+
+    def _set_active_template_by_uid(self, uid):
+        """Set a fixed template atoms object as the active."""
+        self._prepare_new_active_template(uid)
 
         # Read information from database
         # Note that if the data is not found, it will generate
@@ -384,6 +390,7 @@ class ClusterExpansionSetting(object):
         supercell_indices = []
         sc_pos = supercell.get_positions()
         wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
+
         dist_to_origin = np.sum(sc_pos**2, axis=1)
         for indx in indices:
             pos = self.atoms[indx].position
@@ -409,6 +416,34 @@ class ClusterExpansionSetting(object):
                     "to an internal distance. Try to increase the max"
                     "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
                 )
+
+    def _get_supercell(self, atoms):
+        for atom in atoms:
+            atom.tag = atom.index
+        supercell = close_to_cubic_supercell(atoms)
+        max_cluster_dia_in_sc = \
+            self._get_max_cluster_dia(supercell.get_cell().T)
+
+        # Make large enough supercell (4 times max_cluster_dia can go inside)
+        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
+        if scale < 1:
+            scale = 1
+        supercell = supercell*(scale, scale, scale)
+        supercell = wrap_and_sort_by_position(supercell)
+        ref_indices = self._corresponding_indices(self.ref_index_trans_symm,
+                                                  supercell)
+
+        # Calculate the center of atomic positions in a supercell
+        pos = supercell.get_positions()
+        com = np.mean(pos, axis=0)
+
+        # Calculate the center all the reference indices
+        com_ref = np.mean(pos[ref_indices, :], axis=0)
+
+        # Translate center of reference indices
+        supercell.translate(com - com_ref)
+        supercell.wrap()
+        return supercell, ref_indices
 
     def _create_cluster_information(self):
         """Create a set of parameters describing the structure.
@@ -480,33 +515,9 @@ class ClusterExpansionSetting(object):
         for atom in atoms_cpy:
             atom.tag = atom.index
 
-        supercell = close_to_cubic_supercell(atoms_cpy)
-        max_cluster_dia_in_sc = self._get_max_cluster_dia(
-            supercell.get_cell().T)
-
-        # Make supercell so large that we ca of 4 times max_cluster_ inside
-        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
-        if scale < 1:
-            scale = 1
-        supercell = supercell*(scale, scale, scale)
-        supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = self._corresponding_indices(
-            self.ref_index_trans_symm, supercell)
-
-        # Calculate the center of mass of the supercell
-        pos = supercell.get_positions()
-        com = np.mean(pos, axis=0)
-
-        # Calculate the center of mass of all the reference indices
-        com_ref = np.mean(pos[ref_indices, :], axis=0)
-
-        # Translate center of mass of reference indices to the center
-        # of mass of the cell
-        supercell.translate(com - com_ref)
-        supercell.wrap()
-
+        supercell, ref_indices = self._get_supercell(atoms_cpy)
         supercell.info['distances'] = get_all_internal_distances(
-            supercell, max(self.max_cluster_dia))
+            supercell, max(self.max_cluster_dia), ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
         positions = supercell.get_positions()
         cluster_info = []
@@ -636,6 +647,16 @@ class ClusterExpansionSetting(object):
             for _, info in item.items():
                 all_indices += flatten(info["indices"])
         return list(set(all_indices))
+
+    @property
+    def unique_indices_per_group(self):
+        index_per_group = []
+        for item in self.cluster_info:
+            unique_indices = set()
+            for _, info in item.items():
+                unique_indices.update(flatten(info["indices"]))
+            index_per_group.append(list(unique_indices))
+        return index_per_group
 
     @property
     def multiplicity_factor(self):
@@ -803,28 +824,80 @@ class ClusterExpansionSetting(object):
         return symm_groups.tolist()
 
     def _cutoff_for_tm_construction(self):
+        """ Get cutoff radius for translation matrix construction."""
         indices = self.unique_indices
-        max_dist = -1.0
+        # start with some small positive number
+        max_dist = 0.1
+
         for ref in indices:
-            distances = self.atoms.get_distances(ref, indices, mic=True)
-            if np.max(distances) > max_dist:
-                max_dist = np.max(distances)
-        return max_dist + 1E-5
+            # MIC distance is a lower bound for the distance used in the
+            # cluster
+            mic_distances = self.atoms.get_distances(ref, indices, mic=True)
+            dist = np.max(mic_distances)
+            if dist > max_dist:
+                max_dist = dist
 
-    def _store_data(self):
-        size_str = nested_list2str(self.size)
-        num = self.template_atoms_uid
-        num_templates = self.template_atoms.num_templates
-        _logger('Generating cluster data for template with size: {}. '
-                '({} of {})'.format(size_str, num+1, num_templates),
-                verbose=LogVerbosity.INFO)
+        # 0.5 * max_dist is the radius, but give a bit of buffer (0.1)
+        max_dist *= 0.51
+        return max_dist
 
+    def _create_cluster_info_and_trans_matrix(self):
         self._create_cluster_information()
 
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()
-        tmc = TransMatrixConstructor(self.atoms, tm_cutoff)
-        tm = tmc.construct(self.ref_index_trans_symm, symm_group)
+
+        # For smaller cell we currently have no method to decide how large
+        # cutoff we need in order to ensure that all indices in unique_indices
+        # are included. We therefore just probe the cutoff and increase it by
+        # a 1 angstrom until we achieve the what we want
+        all_included = False
+        counter = 0
+        max_attempts = 1000
+        supercell, ref_indices = self._get_supercell(self.atoms.copy())
+
+        # We need to get the symmetry groups of the supercell. We utilise that
+        # the supercell is tagged
+        symm_group_sc = [-1 for _ in range(len(supercell))]
+        for atom in supercell:
+            symm_group_sc[atom.index] = symm_group[atom.tag]
+
+        # Make as efficient as possible by evaluating only a subset of
+        # the indices
+        indices = [-1 for _ in range(len(self.atoms))]
+        for atom in supercell:
+            if indices[atom.tag] == -1:
+                indices[atom.tag] = atom.index
+
+        unique_index_symm = self.unique_indices_per_group
+        unique_index_symm = [set(x) for x in unique_index_symm]
+        all_unique_indices = set(self.unique_indices)
+        while not all_included and counter < max_attempts:
+            try:
+                tmc = TransMatrixConstructor(supercell, tm_cutoff)
+                tm_sc = tmc.construct(ref_indices, symm_group_sc,
+                                      indices=indices)
+
+                # Map supercell indices to normal indices
+                tm = trans_matrix_index2tags(tm_sc, supercell, indices=indices)
+                for i, row in enumerate(tm):
+                    _ = [row[k] for k in unique_index_symm[symm_group[i]]]
+
+                # For a simpler data structure in calculator store some
+                # additional data
+                for i, row in enumerate(tm):
+                    gr = symm_group[i]
+                    diff = all_unique_indices - unique_index_symm[gr]
+                    for i in diff:
+                        row[i] = -1  # Put -1 as this should never be accessed
+                all_included = True
+            except (KeyError, IndexError):
+                tm_cutoff += 3.0
+            counter += 1
+
+        if counter >= max_attempts:
+            raise RuntimeError("Could not find a cutoff such that all "
+                               "unique_indices are included")
         self.trans_matrix = [{k: row[k] for k in self.unique_indices}
                              for row in tm]
         if self.check_old_tm_algorithm:
@@ -833,6 +906,14 @@ class ClusterExpansionSetting(object):
                 assert self.trans_matrix_old[_] == self.trans_matrix[_]
             assert len(self.trans_matrix_old) == len(self.trans_matrix)
             assert self.trans_matrix_old == self.trans_matrix
+
+    def _store_data(self):
+        size_str = nested_list2str(self.size)
+        num = self.template_atoms_uid
+        num_templates = self.template_atoms.num_templates
+        _logger('Generating cluster data for template with size: {}. '
+                '({} of {})'.format(size_str, num+1, num_templates),
+                verbose=LogVerbosity.INFO)
 
         db = connect(self.db_name)
         data = {'cluster_info': self.cluster_info,
@@ -854,6 +935,7 @@ class ClusterExpansionSetting(object):
             self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
@@ -997,6 +1079,7 @@ class ClusterExpansionSetting(object):
         # current max_cluster_size and max_cluster_dia
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
+            self._create_cluster_info_and_trans_matrix()
             self._store_data()
         self._set_active_template_by_uid(0)
         _logger('Cluster data updated for all templates.\n'

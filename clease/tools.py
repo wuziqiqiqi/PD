@@ -269,7 +269,7 @@ def exclude_information_entries():
             ('name', '!=', 'float_classification')]
 
 
-def get_all_internal_distances(atoms, max_dist):
+def get_all_internal_distances(atoms, max_dist, ref_indices):
     """Obtain all internal distances of the passed atoms object and return a
        Numpy array containing all the distances sorted in an ascending order.
     """
@@ -277,9 +277,9 @@ def get_all_internal_distances(atoms, max_dist):
 
     tree = KDTree(atoms.get_positions())
     distances = []
-    for atom in atoms:
-        indices = tree.query_ball_point(atom.position, max_dist)
-        dists = atoms.get_distances(atom.index, indices)
+    for ind in ref_indices:
+        indices = tree.query_ball_point(atoms[ind].position, max_dist)
+        dists = atoms.get_distances(ind, indices)
         for d in dists:
             if np.any(np.abs(np.array(distances) - d) < 1E-6):
                 continue
@@ -452,17 +452,16 @@ def str2nested_list(string):
 
 def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     """
-    Create a close to cubic supercell
+    Create a close to cubic supercell.
 
     Parameters:
-    
+
     atoms: Atoms
         Cell to be used for construction
+
     zero_cutoff: float
         Value below this value will be considered as zero when the
         scaling factor is computed
-    max_relative_vol_increase: float
-        Maximum allowed relative increase in volume.
     """
     cell = atoms.get_cell()
     a = np.linalg.det(cell)**(1.0/3.0)
@@ -490,3 +489,44 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     for i, tag in enumerate(tags):
         sc[i].tag = tag
     return sc
+
+
+def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
+    """
+    Convert from indices to tags
+
+    Parameters:
+
+    tm: list of dict
+        Original translation matrix
+
+    tagged_atoms: Atoms
+        Atoms with a tag that should be used instead of the
+        index
+
+    indices: list of int
+        Atom indices corresponding to each row in tm. If None,
+        it is assumed that len(tm) == len(tagged_atoms) and each
+        row in tm corresponds to the atom with the same index in
+        tagged_atoms.
+    """
+    unique_tags = sorted(list(set(atom.tag for atom in tagged_atoms)))
+
+    if indices is None:
+        indices = list(range(len(tm)))
+
+    # Make sure we have a continuous series of tags
+    assert len(unique_tags) == max(unique_tags) + 1
+
+    new_tm = [{} for _ in range(len(unique_tags))]
+    used_tags = [False for _ in range(len(unique_tags))]
+
+    for i, row in enumerate(tm):
+        tag = tagged_atoms[indices[i]].tag
+        if used_tags[tag]:
+            continue
+        new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag
+                   for k, v in row.items()}
+        used_tags[tag] = True
+        new_tm[tag] = new_row
+    return new_tm

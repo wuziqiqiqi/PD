@@ -113,6 +113,18 @@ class TemplateAtoms(object):
 
         return self.templates['atoms'][uid]
 
+    def get_largest_template(self):
+        """
+        Return the largest template
+        """
+        max_num = 0
+        largest_template = None
+        for atoms in self.templates['atoms']:
+            if len(atoms) > max_num:
+                largest_template = atoms
+                max_num = len(atoms)
+        return largest_template
+
     def get_uid_with_given_size(self, size, generate_template=False):
         """Get the UID of the template with given size.
 
@@ -401,10 +413,13 @@ class TemplateAtoms(object):
     def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
                                                  off_diag_range):
         """
-        This function creates integer matrices with a given determinant.
-        It utilise that determinant of the dot product between an upper
+        Create integer matrices with a given determinant.
+
+        It utilizes that determinant of the dot product between an upper
         triangular matrix and a lower triangular matrix is equal to the
         product of the diagonal elements in the two matrices.
+
+        Example:
 
         C = A.dot(B)
 
@@ -419,8 +434,10 @@ class TemplateAtoms(object):
 
         diag_A: list of length 3
             3 integers representing the diagonal in the A matrix
+
         diag_B: list of length 3
             3 integers representing the diagonal in the B matrix
+
         off_diag_range: int
             The off diagonal elements are randomly chosen integers in the
             range [-off_diag_range, off_diag_range]
@@ -452,6 +469,7 @@ class TemplateAtoms(object):
         np.prod(diag_A)*np.prod(diag_B).
 
         Example:
+
         If a template with a volume equal to 2 times the unit cell, the
         following combinations of diag_A and diag_B would to the job
         diag_A = [2, 1, 1] and diag_B = [1, 1, 1]
@@ -464,12 +482,15 @@ class TemplateAtoms(object):
         works (diag_B = [1, 1, 1]).
 
         Parameters:
+
         diag_A: list int
             List of 3 integers representing the diagonal of the upper
             triangular matrix
+
         diag_B: list int
             List of 3 integers representing the diagonal of the lower
             triangular matrix
+
         off_diag_range: int
             The off diagonal elements are randomly chosen in the range
             [-off_diag_range, off_diag_range]
