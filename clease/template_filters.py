@@ -19,9 +19,8 @@ class AtomsFilter(object):
 
 class CellFilter(object):
     """
-    Base class for all template filters that only require
-    knowledge of the cell vectors in order to decide if the
-    template is valid or not.
+    Base class for all template filters that only require knowledge of the
+    cell vectors in order to decide if the template is valid or not.
     """
 
     def __call__(self, cell):
@@ -35,8 +34,7 @@ class SkewnessFilter(CellFilter):
     Parameters:
 
     ratio: float
-        Maximum accepted ratio between the longest and the
-        shortest diagonal
+        Maximum accepted ratio between the longest and the shortest diagonal
     """
 
     def __init__(self, ratio):
@@ -94,7 +92,7 @@ class EquivalentCellsFilter(CellFilter):
 
 class ValidConcentrationFilter(AtomsFilter):
     """
-    A filter that rejects template that has no valid concentration
+    A filter that rejects template that has no valid concentration.
 
     Parameters:
 

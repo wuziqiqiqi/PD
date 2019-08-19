@@ -88,7 +88,7 @@ class TestTemplates(unittest.TestCase):
         db = connect(db_name)
         db.write(unit_cell, name='unit_cell')
 
-        # Force vacancy concentration to be exactly 2/3 of the Cl 
+        # Force vacancy concentration to be exactly 2/3 of the Cl
         # concentration
         A_eq = [[0, 1, -2.0]]
         b_eq = [0.0]
@@ -98,7 +98,7 @@ class TestTemplates(unittest.TestCase):
         template_generator = TemplateAtoms(
             db_name=db_name, supercell_factor=20,
             skew_threshold=1000000000)
-        
+
         os.remove(db_name)
         conc_filter = ValidConcentrationFilter(settings)
         # Check that you cannot attach an AtomsFilter as a cell
@@ -116,8 +116,5 @@ class TestTemplates(unittest.TestCase):
             self.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
 
 
-
-
 if __name__ == '__main__':
     unittest.main()
-
