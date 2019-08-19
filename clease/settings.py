@@ -374,8 +374,9 @@ class ClusterExpansionSetting(object):
         self.cluster_info = new_cluster_info
 
     def _corresponding_indices(self, indices, supercell):
-        """Find the indices in supercell that correspond to the ones in
-           self.atoms
+        """
+        Find the indices in supercell that correspond to the ones in
+        self.atoms
 
         Parameters:
 
@@ -1202,10 +1203,10 @@ class ClusterExpansionSetting(object):
             return True
 
         if len(small_cluster[0]) >= len(large_cluster[0]):
-            raise ValueError("A cluster with size {} cannot be a "
-                             "subcluster of a cluster with size {}"
-                             "".format(len(small_cluster[0],
-                                       len(large_cluster[0]))))
+            msg = "A cluster with size {} ".format(len(small_cluster[0]))
+            msg += "cannot be a subcluster of a cluster with size "
+            msg += "{}".format(len(large_cluster[0]))
+            raise RuntimeError(msg)
 
         return any(set(s1).issubset(s2) for s1 in small_cluster
                    for s2 in large_cluster)

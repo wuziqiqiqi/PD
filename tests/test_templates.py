@@ -3,8 +3,19 @@ import os
 from clease.template_atoms import TemplateAtoms
 from ase.build import bulk
 from ase.db import connect
+from clease import Concentration, ValidConcentrationFilter
 import numpy as np
 import unittest
+
+
+class SettingsPlaceHolder(object):
+    """
+    Dummy object that simply holds the few variables needed for the test.
+    Only purpose of this is to make the test fast
+    """
+    atoms = None
+    index_by_basis = []
+    conc = None
 
 
 class TestTemplates(unittest.TestCase):
@@ -66,6 +77,43 @@ class TestTemplates(unittest.TestCase):
         for template in templates:
             self.assertEqual(len(template), 2)
             self.assertAlmostEqual(2*vol, template.get_volume())
+
+    def test_valid_concentration_filter(self):
+        unit_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
+        settings = SettingsPlaceHolder()
+        settings.atoms = unit_cell
+        settings.index_by_basis = [[0], [1]]
+
+        db_name = 'test_valid_concentration.db'
+        db = connect(db_name)
+        db.write(unit_cell, name='unit_cell')
+
+        # Force vacancy concentration to be exactly 2/3 of the Cl
+        # concentration
+        A_eq = [[0, 1, -2.0]]
+        b_eq = [0.0]
+        settings.conc = Concentration(
+            basis_elements=[['Na'], ['Cl', 'X']], A_eq=A_eq, b_eq=b_eq)
+
+        template_generator = TemplateAtoms(
+            db_name=db_name, supercell_factor=20,
+            skew_threshold=1000000000)
+
+        os.remove(db_name)
+        conc_filter = ValidConcentrationFilter(settings)
+        # Check that you cannot attach an AtomsFilter as a cell
+        # filter
+        with self.assertRaises(TypeError):
+            template_generator.add_cell_filter(conc_filter)
+
+        template_generator.clear_filters()
+        template_generator.add_atoms_filter(conc_filter)
+
+        templates = template_generator._generate_template_atoms()
+
+        for atoms in templates['atoms']:
+            num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
+            self.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
 
 
 if __name__ == '__main__':
