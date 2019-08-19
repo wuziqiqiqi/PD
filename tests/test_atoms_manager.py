@@ -26,9 +26,9 @@ class TestAtomsManager(unittest.TestCase):
                 atom.symbol = 'X'
 
         manager = AtomsManager(atoms)
-        ind_by_basis = manager.index_by_symbol(['Au', 'Cu', 'X'])
+        ind_by_symbol = manager.index_by_symbol(['Au', 'Cu', 'X'])
 
-        for i, items in enumerate(ind_by_basis):
+        for i, items in enumerate(ind_by_symbol):
             self.assertTrue(all(map(lambda x: x % 3 == i, items)))
 
     def test_group_by_symbol_grouped(self):
@@ -43,12 +43,12 @@ class TestAtomsManager(unittest.TestCase):
                 atom.symbol = 'Ag'
 
         manager = AtomsManager(atoms)
-        ind_by_basis = manager.index_by_symbol(['Au', ['Cu', 'X'], 'Ag'])
+        ind_by_symbol = manager.index_by_symbol(['Au', ['Cu', 'X'], 'Ag'])
 
-        self.assertTrue(all(map(lambda x: x % 4 == 0, ind_by_basis[0])))
+        self.assertTrue(all(map(lambda x: x % 4 == 0, ind_by_symbol[0])))
         self.assertTrue(all(map(lambda x: x % 4 == 1 or x % 4 == 2,
-                            ind_by_basis[1])))
-        self.assertTrue(all(map(lambda x: x % 4 == 3, ind_by_basis[2])))
+                                ind_by_symbol[1])))
+        self.assertTrue(all(map(lambda x: x % 4 == 3, ind_by_symbol[2])))
         self.assertEqual(sorted(manager.unique_elements()),
                          ['Ag', 'Au', 'Cu', 'X'])
 
@@ -56,7 +56,7 @@ class TestAtomsManager(unittest.TestCase):
         atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
         atoms = atoms*(5, 5, 5)
 
-        # Clhorine sites are background indices
+        # Chlorine sites are background indices
         basis_elements = [['Na', 'X'], ['Cl']]
         manager = AtomsManager(atoms)
         bkg_indices = manager.single_element_sites(basis_elements)
@@ -72,7 +72,7 @@ class TestAtomsManager(unittest.TestCase):
         unique_elem = manager.unique_elements(ignore=['Cl'])
         self.assertEqual(sorted(unique_elem), ['Na'])
 
-    def test_tag_by_corresponding(self):
+    def test_tag_by_corresponding_atom(self):
         unit_cell = bulk('Mg', crystalstructure='hcp')
         unit_cell[0].symbol = 'Mg'
         unit_cell[1].symbol = 'Zn'
@@ -111,7 +111,6 @@ class TestAtomsManager(unittest.TestCase):
         manager = AtomsManager(atoms)
         with self.assertRaises(ValueError):
             manager.tag_by_corresponding_atom(unit_cell)
-
 
 
 if __name__ == '__main__':
