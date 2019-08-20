@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
-import json
 from ase.utils import basestring
 from clease import CEBulk, CECrystal
 from clease.mp_logger import MultiprocessHandler
@@ -261,18 +260,11 @@ class Evaluate(object):
         fname: str
             file name does not contain an extension (`.json`)
         """
-        eci_dict = self.get_eci_dict()
-
-        extension = fname.split(".")[-1]
-
-        if extension == 'json':
-            with open(fname, 'w') as outfile:
-                json.dump(eci_dict, outfile, indent=2, separators=(",", ": "))
-        elif extension == 'txt':
-            with open(fname, 'r') as outfile:
-                outfile.write(eci_dict)
-        else:
-            raise TypeError('extension {} is not supported'.format(extension))
+        import json
+        full_fname = fname + '.json'
+        with open(full_fname, 'w') as outfile:
+            json.dump(self.get_eci_dict(), outfile, indent=2,
+                      separators=(",", ": "))
 
     def plot_fit(self, interactive=True, savefig=False, fname=None,
                  show_hull=True):
