@@ -18,7 +18,7 @@ class ECIOptimiser(object):
 
     def optimise(self):
         try:
-            self.fit_page.eci = self.evaluator.get_cluster_name_eci()
+            self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
 
