@@ -52,10 +52,10 @@ public:
   CEUpdater* copy() const;
 
   /** Initialize the object (cluster_info should contain duplication factors) */
-  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *ecis, PyObject *cluster_info);
+  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *eci, PyObject *cluster_info);
 
-  /** Change values of ecis */
-  void set_ecis( PyObject *ecis );
+  /** Change values of ECIs */
+  void set_eci( PyObject *eci );
 
   /** Returns True if the initialization process was successfull */
   bool ok() const { return status == Status_t::READY; };
@@ -168,8 +168,7 @@ private:
   //Matrix<int> trans_matrix;
   RowSparseStructMatrix trans_matrix;
   std::map<std::string,int> ctype_lookup;
-  //std::map<std::string,double> ecis;
-  NamedArray ecis;
+  NamedArray eci;
   std::map<std::string,std::string> cname_with_dec;
   std::vector<bool> is_background_index;
   bool ignore_background_indices{true};
