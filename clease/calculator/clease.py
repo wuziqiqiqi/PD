@@ -4,6 +4,8 @@ import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
+from clease import CorrFunction
+from clease.settings import ClusterExpansionSetting
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -18,10 +20,10 @@ class Clease(Calculator):
 
     Parameters:
 
-    setting: CEBulk or BulkSapcegroup object
+    setting: `ClusterExpansionSetting` object
 
-    cluster_name_eci: dictionary
-        Dictionary should contain cluster names and their ECI values
+    cluster_name_eci: dict
+        Dictionary containing cluster names and their ECI values
 
     init_cf: `None` or dictionary (optional)
         If the correlation function of Atoms object is known, one can supply
@@ -40,8 +42,6 @@ class Clease(Calculator):
 
     def __init__(self, setting, cluster_name_eci=None, init_cf=None,
                  logfile=None):
-        from clease import CorrFunction
-        from clease.settings import ClusterExpansionSetting
         Calculator.__init__(self)
 
         if not isinstance(setting, ClusterExpansionSetting):
@@ -50,16 +50,7 @@ class Clease(Calculator):
         self.parameters["eci"] = cluster_name_eci
         self.setting = setting
         self.corrFunc = CorrFunction(setting)
-
-        # read ECIs
-        if isinstance(cluster_name_eci, dict):
-            self.eci = cluster_name_eci
-        else:
-            msg = "'cluster_name_eci' must be a dictionary.\n"
-            msg += "It can be obtained using 'get_cluster_name_eci' method in "
-            msg += "Evaluate class."
-            raise TypeError(msg)
-
+        self.eci = cluster_name_eci
         # store cluster names
         self.cluster_names = list(cluster_name_eci.keys())
 

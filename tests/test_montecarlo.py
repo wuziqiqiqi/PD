@@ -21,7 +21,7 @@ class TestMonteCarlo(unittest.TestCase):
 
         eci['c0'] = -1.0
         eci['c2_01nn_0_00'] = -0.2
-        atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+        atoms = attach_calculator(setting, atoms=atoms, cluster_name_eci=eci)
 
         # Insert a few elements
         for i in range(10):
