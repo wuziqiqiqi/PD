@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """Monte Carlo method for ase."""
 from __future__ import division
-import sys
-import numpy as np
-import ase.units as units
 import time
-import logging
-from scipy import stats
-from ase.units import kJ, mol
+import numpy as np
+from ase.units import kB
 from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
 from clease.montecarlo import BiasPotential
@@ -28,13 +24,12 @@ class CanNotFindLegalMoveError(Exception):
 
 
 class Montecarlo(object):
-    """
-    Class for running Monte Carlo at fixed composition
+    """Class for running Monte Carlo at a fixed composition (canonical).
 
     Parameters:
 
     atoms: Atoms
-        ASE atoms object (with CE calculator attached!)
+        ASE atoms object (with CE calculator attached)
 
     temp: float
         Temperature of Monte Carlo simulation in Kelvin
@@ -103,10 +98,10 @@ class Montecarlo(object):
         self._remove_bias_from_empty_eci(self.energy_bias)
 
     def _remove_bias_from_empty_eci(self, bias):
-        """
-        Remove the energy bias from the zeroth ECI.
+        """Remove the energy bias from the empty cluster's ECI.
 
-        Parameters
+        Parameters:
+
         bias: float
             Energy bias
         """
@@ -116,7 +111,7 @@ class Montecarlo(object):
         c0_eci -= bias/len(self.atoms)
         eci['c0'] = c0_eci
 
-        calc.update_ecis(eci)
+        calc.update_eci(eci)
 
         # Force re-calculation of the energy
         self.current_energy = calc.calculate(None, None, None)
@@ -131,7 +126,7 @@ class Montecarlo(object):
     def _undo_energy_bias_from_eci(self):
         eci = self.atoms.get_calculator().eci
         eci['c0'] += self.energy_bias/len(self.atoms)
-        self.atoms.get_calculator().update_ecis(eci)
+        self.atoms.get_calculator().update_eci(eci)
         self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
@@ -158,15 +153,17 @@ class Montecarlo(object):
     def insert_symbol_random_places(self, symbol, num=1, swap_symbs=[]):
         """Insert random symbol.
 
-        Parameters
+        Parameters:
 
         symbol: str
             Symbol to insert
+
         num: int
-            Number of sites to insert at
+            Number of sites to insert
+
         swap_symbs: list
-            If given, will insert replace symbol with sites having symbols in
-            this list
+            If given, will insert the replace symbol with sites having symbols
+            in this list
         """
         from random import choice
         if not swap_symbs:
@@ -202,7 +199,8 @@ class Montecarlo(object):
 
     def update_current_energy(self):
         """Enforce a new energy evaluation."""
-        self.current_energy = self.atoms.get_calculator().calculate(None, None, None)
+        self.current_energy = \
+            self.atoms.get_calculator().calculate(None, None, None)
         self.bias_energy = 0.0
         for bias in self.bias_potentials:
             self.bias_energy += bias.calculate_from_scratch(self.atoms)
@@ -213,7 +211,6 @@ class Montecarlo(object):
 
         Parameters:
 
-
         symbs: list
             Symbols to insert. Has to have the same length as the
             attached atoms object.
@@ -222,13 +219,8 @@ class Montecarlo(object):
         self._build_atoms_list()
         self.update_current_energy()
 
-        if self.accept_first_trial_move_after_reset:
-            self.is_first = True
-
     def _check_symbols(self):
-        """
-        Checks that there is at least to different symbols
-        """
+        """Check that there is at least two different symbols."""
         symbs = [atom.symbol for atom in self.atoms]
         count = {}
         for symb in symbs:
@@ -242,7 +234,7 @@ class Montecarlo(object):
             raise TooFewElementsError(
                 "There is only one element in the given atoms object!")
         n_elems_more_than_2 = 0
-        for key, value in count.items():
+        for _, value in count.items():
             if value >= 2:
                 n_elems_more_than_2 += 1
         if n_elems_more_than_2 < 2:
@@ -250,9 +242,7 @@ class Montecarlo(object):
                 "There is only one element that has more than one atom")
 
     def log(self, msg, mode="info"):
-        """
-        Logs the message as info
-        """
+        """Logs the message as info."""
         allowed_modes = ["info", "warning"]
         if mode not in allowed_modes:
             raise ValueError("Mode has to be one of {}".format(allowed_modes))
@@ -260,8 +250,7 @@ class Montecarlo(object):
         _logger(msg)
 
     def _no_constraint_violations(self, system_changes):
-        """
-        Checks if the proposed moves violates any of the constraints
+        """Check if the proposed moves violate any of the constraints.
 
         Parameters:
 
@@ -274,10 +263,8 @@ class Montecarlo(object):
         return True
 
     def reset(self):
-        """
-        Reset all member variables to their original values
-        """
-        for interval, obs in self.observers:
+        """Reset all member variables to their original values."""
+        for _, obs in self.observers:
             obs.reset()
 
         self.filter.reset()
@@ -289,21 +276,18 @@ class Montecarlo(object):
 
     def _build_atoms_list(self):
         """
-        Creates a dictionary of the indices of each atom which is used to
+        Create a dictionary of the indices of each atom which is used to
         make sure that two equal atoms cannot be swapped
         """
         self.atoms_tracker.init_tracker(self.atoms)
         self.symbols = self.atoms_tracker.symbols
 
     def _update_tracker(self, system_changes):
-        """
-        Update the atom tracker
-        """
+        """Update the atom tracker."""
         self.atoms_tracker.update_swap_move(system_changes)
 
     def add_constraint(self, constraint):
-        """
-        Add a new constraint to the sampler
+        """Add a new constraint to the sampler.
 
         Parameters:
 
@@ -317,7 +301,6 @@ class Montecarlo(object):
 
         Parameters:
 
-
         potential: Bias potential
             Potential to be added
         """
@@ -326,14 +309,13 @@ class Montecarlo(object):
         self.bias_potentials.append(potential)
 
     def attach(self, obs, interval=1):
-        """
-        Attach observers that is called on each MC step
-        and receives information of which atoms get swapped
+        """Attach observers to be called on a given MC step interval.
 
-        Parameters
+        Parameters:
 
         obs: MCObserver
             Observer to be added
+
         interval: int
             How often the observer should be called
         """
@@ -343,7 +325,7 @@ class Montecarlo(object):
             raise ValueError("The observer has to be a callable class!")
 
     def run(self, steps=100):
-        """Run Monte Carlo simulation
+        """Run Monte Carlo simulation.
 
         Parameters:
 
@@ -361,7 +343,6 @@ class Montecarlo(object):
         self._mc_step()
 
         # self.current_step gets updated in the _mc_step function
-        log_status_conv = True
         self.reset()
 
         # Probe bias energy and remove bias
@@ -369,8 +350,9 @@ class Montecarlo(object):
         self.reset()
 
         start = time.time()
+        prev = self.current_step
         while(self.current_step < steps):
-            E, accept = self._mc_step()
+            E, _ = self._mc_step()
 
             self.mean_energy += E
             self.energy_squared += E**2
@@ -379,7 +361,6 @@ class Montecarlo(object):
                 ms_per_step = 1000.0 * self.status_every_sec / \
                     float(self.current_step - prev)
                 accept_rate = self.num_accepted / float(self.current_step)
-                log_status_conv = True
                 self.log(
                     "%d of %d steps. %.2f ms per step. Acceptance rate: %.2f" %
                     (self.current_step, steps, ms_per_step, accept_rate))
@@ -397,7 +378,6 @@ class Montecarlo(object):
         """Return dict with meta info."""
         import sys
         import datetime
-        import time
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         v_info = sys.version_info
@@ -416,8 +396,8 @@ class Montecarlo(object):
         mean_energy = self.mean_energy.mean
         quantities["energy"] = mean_energy + self.energy_bias
         mean_sq = self.energy_squared.mean
-        quantities["heat_capacity"] = (
-            mean_sq - mean_energy**2) / (units.kB * self.T**2)
+        quantities["heat_capacity"] = \
+            (mean_sq - mean_energy**2) / (kB * self.T**2)
         quantities["energy_var"] = mean_sq - mean_energy**2
         quantities["temperature"] = self.T
         at_count = self.count_atoms()
@@ -479,7 +459,7 @@ class Montecarlo(object):
         # Standard Metropolis acceptance criteria
         if (self.new_energy < self.current_energy):
             return True
-        kT = self.T * units.kB
+        kT = self.T * kB
         energy_diff = self.new_energy - self.current_energy
         probability = np.exp(-energy_diff / kT)
         return np.random.rand() <= probability

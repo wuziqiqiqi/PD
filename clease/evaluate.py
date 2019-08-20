@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
-import json
 from ase.utils import basestring
 from clease import CEBulk, CECrystal
 from clease.mp_logger import MultiprocessHandler
@@ -232,7 +231,7 @@ class Evaluate(object):
         self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
         return self.eci
 
-    def get_cluster_name_eci(self):
+    def get_eci_dict(self):
         """
         Determine cluster names and their corresponding ECI value and return
         them in a dictionary format."""
@@ -251,26 +250,21 @@ class Evaluate(object):
 
         return dict(pairs)
 
-    def save_cluster_name_eci(self, fname='cluster_eci.json'):
-        """Determine cluster names and their corresponding ECI value.
+    def save_eci(self, fname='eci'):
+        """
+        Save a dictionary of cluster names and their corresponding ECI value
+        in JSON file format.
 
         Parameters:
 
         fname: str
-            file name should end with either .json or .txt.
+            file name does not contain an extension (`.json`)
         """
-        eci_dict = self.get_cluster_name_eci()
-
-        extension = fname.split(".")[-1]
-
-        if extension == 'json':
-            with open(fname, 'w') as outfile:
-                json.dump(eci_dict, outfile, indent=2, separators=(",", ": "))
-        elif extension == 'txt':
-            with open(fname, 'r') as outfile:
-                outfile.write(eci_dict)
-        else:
-            raise TypeError('extension {} is not supported'.format(extension))
+        import json
+        full_fname = fname + '.json'
+        with open(full_fname, 'w') as outfile:
+            json.dump(self.get_eci_dict(), outfile, indent=2,
+                      separators=(",", ": "))
 
     def plot_fit(self, interactive=True, savefig=False, fname=None,
                  show_hull=True):
@@ -370,10 +364,9 @@ class Evaluate(object):
 
         # Create a plot with the residuals
 
-        gridspec_kw = {
-            "wspace": 0.0,
-            "width_ratios": [5, 1]
-        }
+        gridspec_kw = {"wspace": 0.0,
+                       "width_ratios": [5, 1]}
+
         fig_residual, ax_res = plt.subplots(ncols=2, sharey=True,
                                             gridspec_kw=gridspec_kw)
         ax_residual = ax_res[0]

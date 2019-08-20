@@ -41,7 +41,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   {
     throw invalid_argument("Could not retrieve the length of the atoms object!");
   }
-  
+
   vector<string> symbols;
   for ( unsigned int i=0;i<n_atoms;i++ )
   {
@@ -204,12 +204,12 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
 
   // Read the ECIs
   Py_ssize_t pos = 0;
-  map<string,double> temp_ecis;
+  map<string,double> temp_eci;
   while(PyDict_Next(pyeci, &pos, &key,&value))
   {
-    temp_ecis[py2string(key)] = PyFloat_AS_DOUBLE(value);
+    temp_eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
   }
-  ecis.init(temp_ecis);
+  eci.init(temp_eci);
   #ifdef CE_DEBUG
     cerr << "Parsing correlation function\n";
   #endif
@@ -217,7 +217,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   vector<string> flattened_cnames;
   flattened_cluster_names(flattened_cnames);
   //history = new CFHistoryTracker(flattened_cnames);
-  history = new CFHistoryTracker(ecis.get_names());
+  history = new CFHistoryTracker(eci.get_names());
   history->insert( corrFunc, nullptr );
 
   // Store the singlets names
@@ -246,7 +246,7 @@ double CEUpdater::get_energy()
 {
   double energy = 0.0;
   cf& corr_func = history->get_current();
-  energy = ecis.dot( corr_func );
+  energy = eci.dot( corr_func );
   return energy*symbols_with_id->size();
 }
 
@@ -263,11 +263,11 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
   for ( unsigned int i=0;i<num_indx;i++ )
   {
     double sp_temp = 1.0;
-    
+
     int indices[n_memb+1];
     indices[0] = ref_indx;
 
-    
+
 
     // Use pointer arithmetics in the inner most loop
     const int *indx_list_ptr = &indx_list[i][0];
@@ -362,10 +362,10 @@ void CEUpdater::update_cf( SymbolChange &symb_change )
   // As work load for different clusters are different due to a different
   // multiplicity factor, we need to apply a dynamic schedule
   //#pragma omp parallel for num_threads(cf_update_num_threads) schedule(dynamic)
-  for ( unsigned int i=0;i<ecis.size();i++ )
+  for ( unsigned int i=0;i<eci.size();i++ )
   {
     //const string &name = iter->first;
-    const string& name = ecis.name(i);
+    const string& name = eci.name(i);
     if ( name.find("c0") == 0 )
     {
       //next_cf[name] = current_cf[name];
@@ -566,12 +566,7 @@ void CEUpdater::clear_history()
 
 void CEUpdater::flattened_cluster_names( vector<string> &flattened )
 {
-  /*
-  for ( auto iter=ecis.begin(); iter != ecis.end(); ++iter )
-  {
-    flattened.push_back( iter->first );
-  }*/
-  flattened = ecis.get_names();
+  flattened = eci.get_names();
 
   // Sort the cluster names for consistency
   sort( flattened.begin(), flattened.end() );
@@ -604,7 +599,7 @@ CEUpdater* CEUpdater::copy() const
   obj->status = status;
   obj->trans_matrix = trans_matrix;
   obj->ctype_lookup = ctype_lookup;
-  obj->ecis = ecis;
+  obj->eci = eci;
   obj->cname_with_dec = cname_with_dec;
   obj->is_background_index = is_background_index;
   obj->history = new CFHistoryTracker(*history);
@@ -622,14 +617,14 @@ void CEUpdater::set_symbols( const vector<string> &new_symbs )
   symbols_with_id->set_symbols(new_symbs);
 }
 
-void CEUpdater::set_ecis( PyObject *new_ecis )
+void CEUpdater::set_eci( PyObject *new_eci )
 {
   PyObject *key;
   PyObject *value;
   Py_ssize_t pos = 0;
-  while( PyDict_Next(new_ecis, &pos, &key,&value) )
+  while( PyDict_Next(new_eci, &pos, &key,&value) )
   {
-    ecis[py2string(key)] = PyFloat_AS_DOUBLE(value);
+    eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
   }
 
   if ( !all_eci_corresponds_to_cf() )
@@ -778,7 +773,7 @@ void CEUpdater::build_trans_symm_group( PyObject *py_trans_symm_group )
 bool CEUpdater::all_eci_corresponds_to_cf()
 {
     cf& corrfunc = history->get_current();
-    return ecis.names_are_equal(corrfunc);
+    return eci.names_are_equal(corrfunc);
 }
 
 unsigned int CEUpdater::get_max_indx_of_zero_site() const
@@ -1111,7 +1106,7 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
       sp += sp_temp/equiv_deco.size();
       count += cluster.get().size();
     }
-    
+
     if (count == 0){
       cf[name] = 0.0;
     }
