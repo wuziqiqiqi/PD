@@ -42,7 +42,7 @@ class SGCMonteCarlo(Montecarlo):
         self.has_attached_avg = False
         self.name = "SGCMonteCarlo"
         self._chemical_potential = None
-        self.chem_pot_in_ecis = False
+        self.chem_pot_in_eci = False
         self.current_singlets = None
 
         has_attached_obs = False
@@ -109,14 +109,14 @@ class SGCMonteCarlo(Montecarlo):
                 "".format(list(chem_pot.keys())))
 
         self._chemical_potential = chem_pot
-        if self.chem_pot_in_ecis:
+        if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.atoms.get_calculator().eci)
-        self._include_chemical_potential_in_ecis(
+        self._include_chemical_potential_in_eci(
             chem_pot, self.atoms.get_calculator().eci)
 
-    def _include_chemical_potential_in_ecis(self, chem_pot, eci):
+    def _include_chemical_potential_in_eci(self, chem_pot, eci):
         """
-        Including the chemical potentials in the ecis
+        Including the chemical potentials in the ECIs
 
         :param dict chem_pot: Chemical potentials
         :param dict eci: Original ECIs
@@ -134,30 +134,28 @@ class SGCMonteCarlo(Montecarlo):
             current_eci = eci.get(key, 0.0)
             eci[key] = current_eci - chem_pot[key]
         calc = self.atoms.get_calculator()
-        calc.update_ecis(eci)
-        self.chem_pot_in_ecis = True
+        calc.update_eci(eci)
+        self.chem_pot_in_eci = True
         self.current_energy = calc.calculate(None, None, None)
         return eci
 
     def _reset_eci_to_original(self, eci_with_chem_pot):
         """
-        Resets the ecis to their original value
+        Resets the ECIs to their original value
 
         :parma dict eci_with_chem_pot: ECIs with chemical potential included
         """
         for name, val in zip(self.chem_pot_names, self.chem_pots):
             eci_with_chem_pot[name] += val
         calc = self.atoms.get_calculator()
-        calc.update_ecis(eci_with_chem_pot)
-        self.chem_pot_in_ecis = False
+        calc.update_eci(eci_with_chem_pot)
+        self.chem_pot_in_eci = False
         self.current_energy = calc.calculate(None, None, None)
         return eci_with_chem_pot
 
-    def reset_ecis(self):
-        """
-        Return the ECIs
-        """
-        if self.chem_pot_in_ecis:
+    def reset_eci(self):
+        """Return the ECIs."""
+        if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.atoms.get_calculator().eci)
 
     def run(self, steps=10, chem_pot=None):
@@ -207,11 +205,11 @@ class SGCMonteCarlo(Montecarlo):
             res[name] = x[i]
         return res
 
-    def get_thermodynamic(self, reset_ecis=True):
+    def get_thermodynamic(self, reset_eci=True):
         """
         Compute thermodynamic quantities
 
-        :param bool reset_ecis: If True, the chemical potential will be
+        :param bool reset_eci: If True, the chemical potential will be
             removed from the ECIs
 
         :return: Thermodynamic quantities
@@ -256,6 +254,6 @@ class SGCMonteCarlo(Montecarlo):
             print("Could not find average singlets!")
             print(exc)
 
-        if reset_ecis:
+        if reset_eci:
             self._reset_eci_to_original(self.atoms.get_calculator().eci)
         return quantities

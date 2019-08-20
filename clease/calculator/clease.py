@@ -276,7 +276,7 @@ class Clease(Calculator):
         self.logfile.write('{}\n'.format(self.energy))
         self.logfile.flush()
 
-    def update_ecis(self, ecis):
+    def update_eci(self, eci):
         """Update the ECI values.
 
         Parameters:
@@ -284,8 +284,8 @@ class Clease(Calculator):
         eci: dict
             Dictionary with new ECIs
         """
-        self.eci = ecis
-        self.updater.set_ecis(ecis)
+        self.eci = eci
+        self.updater.set_eci(eci)
 
     def get_singlets(self):
         return self.updater.get_singlets()

@@ -116,7 +116,7 @@ class Montecarlo(object):
         c0_eci -= bias/len(self.atoms)
         eci['c0'] = c0_eci
 
-        calc.update_ecis(eci)
+        calc.update_eci(eci)
 
         # Force re-calculation of the energy
         self.current_energy = calc.calculate(None, None, None)
@@ -131,7 +131,7 @@ class Montecarlo(object):
     def _undo_energy_bias_from_eci(self):
         eci = self.atoms.get_calculator().eci
         eci['c0'] += self.energy_bias/len(self.atoms)
-        self.atoms.get_calculator().update_ecis(eci)
+        self.atoms.get_calculator().update_eci(eci)
         self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
