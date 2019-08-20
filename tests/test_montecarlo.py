@@ -29,7 +29,7 @@ def get_example_mc_system(db_name):
 class TestMonteCarlo(unittest.TestCase):
     def test_run(self):
         db_name = 'mc_test_aucu.db'
-        atoms = get_example_mc_system(db_name)        
+        atoms = get_example_mc_system(db_name)
 
         # Insert a few elements
         for i in range(10):
@@ -81,15 +81,14 @@ class TestMonteCarlo(unittest.TestCase):
         atoms[0].symbol = 'Cu'
         atoms[1].symbol = 'Cu'
 
-        traj = 'snapshot.traj'
-        obs = Snapshot(trajfile=traj, atoms=atoms)
+        obs = Snapshot(fname='snapshot', atoms=atoms)
 
         mc = Montecarlo(atoms, 600)
         mc.attach(obs, interval=100)
         mc.run(steps=1000)
         os.remove(db_name)
         self.assertEqual(len(obs.traj), 10)
-        os.remove(traj)
+        os.remove('snapshot.traj')
 
     def test_energy_evolution(self):
         db_name = 'test_energy_evolution.db'

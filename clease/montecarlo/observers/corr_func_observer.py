@@ -4,16 +4,15 @@ from clease.montecarlo.observers import MCObserver
 class CorrelationFunctionObserver(MCObserver):
     """
     Track the history of the correlation function.
-    Only relevant if the calculator is a CE calculator
 
     Parameters:
 
-    calc: Clease calculator
+    calc: `clease.calculators.Clease`
         Clease calculator
 
     names: list
-        List with correlation functions to track. If None,
-        all correlation functions are tracked.
+        List with correlation functions to track.
+        If None, all correlation functions are tracked.
     """
     def __init__(self, calc, names=None):
         current_cf = calc.get_cf()

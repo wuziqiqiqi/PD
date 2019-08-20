@@ -528,8 +528,8 @@ class Concentration(object):
     def _get_coeff(self, string):
         """Get the coefficient in front of the symbol.
 
-        Arugments:
-        ==========
+        Parameters:
+
         string: str
             string of the following form 3x, 10y, 3z etc.
         """
@@ -754,14 +754,37 @@ class Concentration(object):
             raise InvalidConcentrationError(msg)
         return x
 
+    def to_float_conc(self, num_atoms_in_basis, int_conc):
+        """
+        Convert integer number to float concentration.
+        
+        Parameters:
+
+        num_atoms_in_basis: list of int
+            Number of sites in each basis (e.g., [27, 27], [64]).
+        
+        int_conc: array of int
+            Concentration per basis in an integer format, which 
+            corresponds to the number of corresponding element in that basis.
+        """
+        conc_index = 0
+        x = np.zeros(len(int_conc))
+        for i, elem in enumerate(self.basis_elements):
+            for _ in range(len(elem)):
+                x[conc_index] = int_conc[conc_index]/num_atoms_in_basis[i]
+                conc_index += 1
+        return x
+
     def conc_in_int(self, num_atoms_in_basis, conc):
-        """Converts concentration value to an integer that corresponds to the
+        """
+        Convert concentration value to an integer that corresponds to the
         number of corresponding elements.
 
         Parameters:
 
         num_atoms_in_basis: list of int
             Number of sites in each basis (e.g., [27, 27], [64]).
+
         conc: array of float
             Concentration per basis normalized to 1.
             (e.g., arrays returned by self.get_random_concentration,
