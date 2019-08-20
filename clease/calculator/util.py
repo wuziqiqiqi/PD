@@ -5,8 +5,8 @@ from clease.calculator import Clease
 from clease.tools import nested_list2str
 
 
-def attach_calculator(setting=None, atoms=None, eci={}, fname_prefix=None,
-                      load=True):
+def attach_calculator(setting=None, atoms=None, eci={},
+                      fname_prefix=None, load=True):
     """
     Utility function for efficient initialisation of large cells.
 
@@ -15,7 +15,7 @@ def attach_calculator(setting=None, atoms=None, eci={}, fname_prefix=None,
     setting: `ClusterExpansionSetting` object
 
     eci: dict
-        Dictionary with the effective cluster interactions.
+        Dictionary containing cluster names and their ECI values
 
     atoms: Atoms object
         Atoms object for MC simulations.
@@ -60,7 +60,7 @@ def attach_calculator(setting=None, atoms=None, eci={}, fname_prefix=None,
 
     atoms = setting.atoms.copy()
 
-    calc = Clease(setting, cluster_name_eci=eci, init_cf=init_cf)
+    calc = Clease(setting, eci=eci, init_cf=init_cf)
     atoms.set_calculator(calc)
     return atoms
 

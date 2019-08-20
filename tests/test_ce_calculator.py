@@ -140,7 +140,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
     cf = CorrFunction(setting)
 
     eci = generate_ex_eci(setting)
-    calc = Clease(setting, cluster_name_eci=eci)
+    calc = Clease(setting, eci=eci)
     atoms.set_calculator(calc)
 
     timings = []
@@ -176,7 +176,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
     from random import choice
     cf = CorrFunction(setting)
     eci = generate_ex_eci(setting)
-    calc = Clease(setting, cluster_name_eci=eci)
+    calc = Clease(setting, eci=eci)
     atoms.set_calculator(calc)
     elements = setting.unique_elements
     for _ in range(n_trial_configs):
@@ -201,7 +201,7 @@ class TestCECalculator(unittest.TestCase):
         db_name = 'indices_changes_symbol.db'
         setting, atoms = get_binary(db_name)
         eci = generate_ex_eci(setting)
-        calc = Clease(setting, cluster_name_eci=eci)
+        calc = Clease(setting, eci=eci)
         atoms.set_calculator(calc)
 
         changes = [2, 6]
@@ -289,8 +289,7 @@ class TestCECalculator(unittest.TestCase):
         eci = generate_ex_eci(rs_setting)
 
         # Use quick way of initialisation object
-        atoms = attach_calculator(setting=rs_setting, atoms=atoms,
-                                  eci=eci)
+        atoms = attach_calculator(setting=rs_setting, atoms=atoms, eci=eci)
 
         cf = CorrFunction(rs_setting)
         init_cf = atoms.get_calculator().init_cf

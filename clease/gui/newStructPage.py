@@ -61,7 +61,7 @@ class EminStructGenerator(object):
             self.generator.generate_gs_structure(
                 atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
                 num_temp=self.num_temps, num_steps_per_temp=self.num_steps,
-                cluster_name_eci=self.eci, random_composition=self.randomize)
+                eci=self.eci, random_composition=self.randomize)
             self.status.text = 'Finished generating GS structures...'
         except Exception as exc:
             self.status.text = str(exc)
@@ -71,7 +71,7 @@ class EminStructGenerator(object):
 class NewStructPage(Screen):
     _pop_up = None
     structure_generation_in_progress = False
-    
+
     def on_enter(self):
         self.on_new_struct_type_update(self.ids.newStructTypeSpinner.text)
 
@@ -164,7 +164,7 @@ class NewStructPage(Screen):
             # Don't allow user to initialise many threads
             # by successively clicking on the generate button
             return
-        
+
         self.structure_generation_in_progress = True
         settings = App.get_running_app().settings
 
@@ -254,7 +254,7 @@ class NewStructPage(Screen):
             final = self.ids.finalStructInput.text
 
             if final == '':
-                final_truct = None
+                final_struct = None
             else:
                 if not os.path.exists(final):
                     msg = 'Cannot find final structure {}'.format(final)

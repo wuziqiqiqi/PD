@@ -1,6 +1,7 @@
 """Module for generating new structures."""
 import os
 import math
+import time
 from random import choice, getrandbits
 from copy import deepcopy
 import numpy as np
@@ -10,7 +11,6 @@ from clease import CEBulk, CECrystal, CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from ase.units import kB
-import time
 from clease import _logger
 
 
@@ -39,7 +39,7 @@ class StructureGenerator(object):
         # eci set to 1 to ensure that all correlation functions are included
         # but the energy produced from this should never be used
         self.eci = {name: 1. for name in self.cluster_names}
-        calc = Clease(self.setting, cluster_name_eci=self.eci)
+        calc = Clease(self.setting, eci=self.eci)
         self.atoms.set_calculator(calc)
         self.output_every = 30
         self.init_temp = init_temp
@@ -112,7 +112,7 @@ class StructureGenerator(object):
                     self.atoms.get_calculator().restore()
 
         # Create a new calculator and attach it to the generated structure
-        calc = Clease(self.setting, cluster_name_eci=self.eci,
+        calc = Clease(self.setting, eci=self.eci,
                       init_cf=self.cf_generated_structure)
         self.generated_structure.set_calculator(calc)
 
@@ -413,19 +413,19 @@ class GSStructure(StructureGenerator):
     num_steps_per_temp: int
         number of steps per temperature in simulated annealing
 
-    cluster_name_eci: dict of list of tuples containing
-                      cluster names and ECI
+    eci: dict
+        Dictionary containing cluster names and their ECI values
     """
 
     def __init__(self, setting, atoms, struct_per_gen, init_temp=2000,
                  final_temp=10, num_temp=10, num_steps_per_temp=100000,
-                 cluster_name_eci=None):
+                 eci=None):
         StructureGenerator.__init__(self, setting, atoms, struct_per_gen,
                                     init_temp, final_temp, num_temp,
                                     num_steps_per_temp)
         self.alter_composition = False
-        self.eci = cluster_name_eci
-        calc = Clease(self.setting, cluster_name_eci=cluster_name_eci)
+        self.eci = eci
+        calc = Clease(self.setting, eci=eci)
         self.atoms.set_calculator(calc)
         self.old_energy = None
         self.min_energy = None
