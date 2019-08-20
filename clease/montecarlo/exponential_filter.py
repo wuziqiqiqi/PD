@@ -62,7 +62,7 @@ class ExponentialFilter(object):
 
     def slope(self, std_value=None):
         """Estimate the filter slope."""
-        x = -self.tau / 2.0
+        x = self.tau / -2.0
         y = self.get()
         var = 1 / self.tau
         Sx = np.sum(x / var)
@@ -85,7 +85,7 @@ class ExponentialFilter(object):
         at low temperature the energy always decreases and the
         this value can be a measure of the true ground state energy
         """
-        x = -self.tau/2.0
+        x = self.tau / -2.0
         y = self.get()
         x += x[-1]
 
