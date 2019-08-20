@@ -102,11 +102,10 @@ class TestMonteCarlo(unittest.TestCase):
         mc = Montecarlo(atoms, 600)
         mc.attach(obs, interval=50)
         mc.run(steps=1000)
-        fname = 'energy_evol.csv'
 
         # Just confirm that the save function works
-        obs.save(fname=fname)
-        os.remove(fname)
+        obs.save(fname='energy_evol')
+        os.remove('energy_evol.csv')
 
         # Check the number of energy values
         os.remove(db_name)
