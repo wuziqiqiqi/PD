@@ -2,7 +2,6 @@ from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import SGCObserver
 import numpy as np
 from ase.units import kB
-from scipy import stats
 
 
 class InvalidChemicalPotentialError(Exception):
@@ -12,9 +11,9 @@ class InvalidChemicalPotentialError(Exception):
 class SGCMonteCarlo(Montecarlo):
     """
     Class for running Monte Carlo in the Semi-Grand Canonical Ensebmle
-    (i.e. fixed number of atoms, but varying composition)
+    (i.e., fixed number of atoms, but varying composition)
 
-    See docstring of `clease.montecarlo.Montecarlo`
+    See the docstring of `clease.montecarlo.Montecarlo`
 
     Parameters:
 
@@ -55,8 +54,7 @@ class SGCMonteCarlo(Montecarlo):
             self.attach(self.averager)
 
     def _get_trial_move(self):
-        """
-        Generate a trial move by flipping the symbol of one atom
+        """Generate a trial move by flipping the symbol of one atom.
 
         :return: Proposed move
         :rtype: List of tuples
@@ -102,11 +100,13 @@ class SGCMonteCarlo(Montecarlo):
     def chemical_potential(self, chem_pot):
         eci = self.atoms.get_calculator().eci
         if any([k not in eci.keys() for k in chem_pot.keys()]):
-            raise InvalidChemicalPotentialError(
-                "A chemical potential that is currently not tracked is added. Make sure "
-                "that all the following keys are in the ECI before the ECI are passed to the "
-                "calculator: {} (if not add them with a zero value)"
-                "".format(list(chem_pot.keys())))
+            msg = "A chemical potential not being trackted is added. Make "
+            msg += "sure that all the following keys are in the ECIs before "
+            msg += "they are passed to the calculator: "
+            msg += "{}\n".format(list(chem_pot.keys()))
+            msg += "(Add them with a zero ECI value if they are not supposed "
+            msg += "to be included.)"
+            raise InvalidChemicalPotentialError(msg)
 
         self._chemical_potential = chem_pot
         if self.chem_pot_in_eci:

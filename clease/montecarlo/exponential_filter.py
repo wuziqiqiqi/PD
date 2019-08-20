@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize
 
+
 class ExponentialFilter(object):
     def __init__(self, min_time=1, max_time=10, n_subfilters=2, dt=1):
         self.min_time = min_time
@@ -13,7 +14,6 @@ class ExponentialFilter(object):
 
     def get_normalization_factors(self):
         """Return the normalization factors."""
-        # return self.tau*(1.0-np.exp(-self.n_samples*self.dt/self.tau))/self.dt
         norm_factor = 1.0 - np.exp(-self.n_samples * self.dt / self.tau)
         norm_factor /= (1.0 - np.exp(-self.dt / self.tau))
         return norm_factor
@@ -42,9 +42,7 @@ class ExponentialFilter(object):
         return std_value / np.sqrt(normalization)
 
     def status_msg(self, std_value=None):
-        """
-        Returns a status message as a string
-        """
+        """Return status message as a string."""
         msg = "======== EXPONENTIAL FILTER INFORMATION ========\n"
         msg += "Number of samples: {}\n".format(self.n_samples)
         values = self.get()
@@ -63,9 +61,7 @@ class ExponentialFilter(object):
         return msg
 
     def slope(self, std_value=None):
-        """
-        Estimate the filter slope
-        """
+        """Estimate the filter slope."""
         x = -self.tau / 2.0
         y = self.get()
         var = 1 / self.tau
@@ -84,7 +80,7 @@ class ExponentialFilter(object):
 
     def exponential_extrapolation(self):
         """
-        Returns the exponential extrapolated value at infinity
+        Return the exponential extrapolated value at infinity
         This can be useful in ground state searches as one knows
         at low temperature the energy always decreases and the
         this value can be a measure of the true ground state energy
