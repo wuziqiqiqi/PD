@@ -132,6 +132,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load ECI filename", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -141,6 +142,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load template atoms", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -270,9 +272,9 @@ class NewStructPage(Screen):
                 self.ids.status.text = msg
                 return
             generator = NewStructures(settings)
-            generator.insert_struct(init_struct=init_struct,
-                                    final_struct=final_struct,
-                                    generate_template=False)
+            generator.insert_structure(init_struct=init_struct,
+                                       final_struct=final_struct,
+                                       generate_template=False)
         except Exception as exc:
             self.ids.status.text = str(exc)
 
@@ -295,6 +297,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load initial structure", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -305,6 +308,7 @@ class NewStructPage(Screen):
             cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load final structure", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 

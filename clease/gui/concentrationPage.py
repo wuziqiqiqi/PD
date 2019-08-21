@@ -2,9 +2,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
 from kivy.app import App
+from kivy.clock import Clock
 from threading import Thread
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
@@ -30,13 +32,13 @@ class SettingsInitialiser(object):
                 self.app.settings = CECrystal(**self.kwargs)
             self.status.text = 'Database initialised'
         except AssertionError as exc:
-            self.status.text = "AssertError during initialisation " + str(exc)
+            self.status.text = "AssertError during initialization " + str(exc)
         except Exception as exc:
             self.status.text = str(exc)
 
 
 class ConcentrationPage(Screen):
-    num_constraints = 0
+    next_constraint_id = 0
     elements = []
     grouped_elements = []
     grouped_basis = None
@@ -79,16 +81,17 @@ class ConcentrationPage(Screen):
             self.grouped_elements = new_elements
             self.elements = elements
 
-            layout = GridLayout(cols=self.num_concentrations + 3,
-                                id='elemHeader')
+
+            layout = StackLayout(id='elemHeader',size_hint=[1, 0.05])
+            width = 1.0 / float(self.num_conc_vars + 3)
 
             for item in self.grouped_elements:
-                for symb in item:
-                    layout.add_widget(Label(text=symb))
+                for sym in item:
+                    layout.add_widget(Label(text=sym, size_hint=[width, 1]))
 
-            layout.add_widget(Label(text='Type'))
-            layout.add_widget(Label(text='Rhs'))
-            layout.add_widget(Label(text='Remove'))
+            layout.add_widget(Label(text='Type',size_hint=[width, 1]))
+            layout.add_widget(Label(text='Rhs',size_hint=[width, 1]))
+            layout.add_widget(Label(text='Remove',size_hint=[width, 1]))
             self.ids.mainConcLayout.add_widget(layout)
 
     def _group_elements(self, elements, grouped_basis):
@@ -101,24 +104,30 @@ class ConcentrationPage(Screen):
         return gr_elements
 
     @property
-    def num_concentrations(self):
+    def num_conc_vars(self):
         return sum(len(item) for item in self.grouped_elements)
 
     def add_constraint(self):
-        layout = GridLayout(cols=self.num_concentrations + 3,
-                            id="cnst{}".format(self.num_constraints))
-        for i in range(self.num_concentrations):
+        layout = StackLayout(id="cnst{}".format(self.next_constraint_id),
+                             size_hint=[1, 0.05])
+        width = 1.0 / float(self.num_conc_vars + 3)
+        for i in range(self.num_conc_vars):
             layout.add_widget(TextInput(text='0', multiline=False,
+                                        size_hint=[width, 1],
                                         id='conc{}'.format(i)))
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
-                                  id='comparisonSpinner'))
-        layout.add_widget(TextInput(text='0', multiline=False, id='rhs'))
+                                  id='comparisonSpinner',
+                                  size_hint=[width, 1]))
+        layout.add_widget(TextInput(text='0', size_hint=[width, 1],                                                 multiline=False, id='rhs'))
         layout.add_widget(
             Button(text='Remove',
+                   size_hint=[width, 1],
                    on_press=lambda _: self.remove_constraint(layout)))
 
         self.ids.mainConcLayout.add_widget(layout)
-        self.num_constraints += 1
+        self.next_constraint_id += 1
+        print('yes, {}'.format(self.next_constraint_id))
+        print(layout)
         return layout
 
     def remove_constraint(self, widget):
