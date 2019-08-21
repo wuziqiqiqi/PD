@@ -58,6 +58,7 @@ class Montecarlo(object):
         self.atoms_tracker = SwapMoveIndexTracker()
         self.symbols = []
         E0 = self.atoms.get_calculator().calculate(None, None, None)
+        self.atoms.get_calculator().clear_history()
         self._build_atoms_list()
         self.current_energy = E0
         self.bias_energy = 0.0
@@ -341,6 +342,7 @@ class Montecarlo(object):
         # Atoms object should have attached calculator
         # Add check that this is show
         self._mc_step()
+        print(self.atoms.get_calculator().get_cf())
 
         # self.current_step gets updated in the _mc_step function
         self.reset()
