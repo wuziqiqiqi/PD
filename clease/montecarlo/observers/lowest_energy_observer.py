@@ -4,15 +4,13 @@ import numpy as np
 
 
 class LowestEnergyStructure(MCObserver):
-    """
-    Observer that tracks the lowest energy state visited
-    during an MC run
+    """Track the lowest energy state visited during an MC run.
 
-    atoms: Atoms
+    atoms: Atoms object
         Atoms object used in Monte Carlo
 
     verbose: bool
-        If True progress messages will be printed
+        If `True`, progress messages will be printed
     """
 
     def __init__(self, atoms, verbose=True):
@@ -31,9 +29,12 @@ class LowestEnergyStructure(MCObserver):
 
     def __call__(self, system_changes):
         """
-        Checks if the current state has lower energy.
+        Check if the current state has lower energy.
         If it has lower energy, the new state will be stored
-        :param list system_changes: Last changes to the system
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         energy = self.atoms.get_calculator().results['energy']
         if (self.emin_atoms is None):

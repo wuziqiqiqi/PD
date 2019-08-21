@@ -49,7 +49,7 @@ class TestMonteCarlo(unittest.TestCase):
         cf_scratch = cf.get_cf(atoms)
 
         os.remove(db_name)
-        for k, v in cf_calc.items():
+        for k, v in cf_scratch.items():
             self.assertAlmostEqual(v, cf_calc[k])
 
         # Make sure that the energies are decreasing
@@ -68,7 +68,7 @@ class TestMonteCarlo(unittest.TestCase):
         mc.attach(obs, interval=1)
         mc.run(steps=1000)
         thermo = mc.get_thermodynamic_quantities()
-        avg = obs.get_averages()
+        _ = obs.get_averages()
         os.remove(db_name)
         self.assertEqual(obs.counter, 1001)
 

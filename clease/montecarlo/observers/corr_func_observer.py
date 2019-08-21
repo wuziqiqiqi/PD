@@ -2,8 +2,7 @@ from clease.montecarlo.observers import MCObserver
 
 
 class CorrelationFunctionObserver(MCObserver):
-    """
-    Track the history of the correlation function.
+    """Track the history of the correlation function.
 
     Parameters:
 
