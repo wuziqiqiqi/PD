@@ -18,7 +18,7 @@ class ECIOptimiser(object):
 
     def optimise(self):
         try:
-            self.fit_page.eci = self.evaluator.get_cluster_name_eci()
+            self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
 
@@ -225,7 +225,7 @@ class FitPage(Screen):
         except Exception as exc:
             self.ids.status.text = str(exc)
 
-    def fit_ecis(self):
+    def fit_eci(self):
         if self.fitting_in_progress:
             # We already optimising ECIs
             return
@@ -352,11 +352,11 @@ class FitPage(Screen):
     def set_mae(self, mae):
         self.ids.maeLabel.text = 'MAE: {:.3f} meV/atom'.format(mae)
 
-    def _ecis_has_been_fitted(self):
+    def _eci_has_been_fitted(self):
         return self.e_dft is not None and self.e_ce is not None
 
     def update_energy_plot(self, e_dft, e_ce):
-        if not self._ecis_has_been_fitted():
+        if not self._eci_has_been_fitted():
             self.ids.status.text = 'ECIs has not been fitted yet'
             return
         graph = self.ids.energyPlot.children[0]
