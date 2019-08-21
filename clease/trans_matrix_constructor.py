@@ -1,5 +1,4 @@
 from ase.neighborlist import neighbor_list
-import numpy as np
 
 
 class MICDistanceNotUniqueError(Exception):
@@ -28,9 +27,19 @@ class TransMatrixConstructor(object):
         # Transfer to more convenienct strucutre
         neighbor = [{"nb_index": [], "dist": []} for _ in range(len(atoms))]
 
+        # Re-group by first index
         for i in range(len(i_first)):
-            neighbor[i_first[i]]["nb_index"].append(i_second[i])
-            neighbor[i_first[i]]["dist"].append(d_vec[i])
+            neighbor[i_first[i]]["nb_index"].append(i_second[i].tolist())
+            d = d_vec[i].round(decimals=6) + 0
+            neighbor[i_first[i]]["dist"].append(d.tolist())
+
+        # Sort based on distance
+        for i in range(len(neighbor)):
+            srt = sorted(list(zip(neighbor[i]["dist"],
+                                  neighbor[i]["nb_index"])))
+            srt = list(zip(*srt))  # Unzip the list
+            neighbor[i]["dist"] = srt[0]
+            neighbor[i]["nb_index"] = srt[1]
         return neighbor
 
     def _map_one(self, indx, template_indx):
@@ -38,27 +47,12 @@ class TransMatrixConstructor(object):
         mapped = {template_indx: indx}
 
         nb_indx = self.neighbor[indx]["nb_index"]
-        nb_dist = self.neighbor[indx]["dist"]
         ref_indx = self.neighbor[template_indx]["nb_index"]
-        ref_dists = self.neighbor[template_indx]["dist"]
-
-        tol = 1E-6
-        for i, d in zip(nb_indx, nb_dist):
-            dist_vec = np.array(ref_dists) - np.array(d)
-            lengths = np.sum(dist_vec**2, axis=1)
-            short_lengths = lengths[lengths < tol]
-
-            if len(short_lengths) > 1:
-                raise MICDistanceNotUniqueError(
-                    'Multiple atoms has the same distance vector')
-            elif len(short_lengths) == 0:
-                raise MICDistanceNotUniqueError('No MIC distance vector match')
-
-            corresponding_indx = ref_indx[np.argmin(lengths)]
-            mapped[corresponding_indx] = i
+        mapped = {ref: ind for ref, ind in zip(ref_indx, nb_indx)}
+        mapped[template_indx] = indx
         return mapped
 
-    def construct(self, ref_symm_group, symm_group):
+    def construct(self, ref_symm_group, symm_group, indices=None):
         """Construct translation matrix.
 
         Parameters:
@@ -76,9 +70,16 @@ class TransMatrixConstructor(object):
             If it has two basis,  this can be [0, 0, 1, 1, 0, 1, ...].
             The index of the reference atom for the basis where the atom
             with index k belongs to is ref_symm_group[symm_group[k]]
+
+        indices: list of int
+            List of indices that the translation matrix should be calculated
+            for. If None, all indices will be used.
         """
         tm = []
-        for indx in range(self.num_atoms):
+        if indices is None:
+            indices = range(self.num_atoms)
+
+        for indx in indices:
             ref_indx = ref_symm_group[symm_group[indx]]
             mapped = self._map_one(indx, ref_indx)
             tm.append(mapped)

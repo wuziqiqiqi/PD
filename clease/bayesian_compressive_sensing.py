@@ -229,8 +229,9 @@ class BayesianCompressiveSensing(LinearRegression):
         X_sel = self.X[:, sel]
         prec = X_sel.dot(self.inverse_sigma).dot(X_sel.T)
 
-        self.S = np.diag(self.inv_variance*self.X.T.dot(self.X) -
-                         self.inv_variance**2 * self.X.T.dot(prec.dot(self.X)))
+        self.S = \
+            np.diag(self.inv_variance*self.X.T.dot(self.X)
+                    - self.inv_variance**2 * self.X.T.dot(prec.dot(self.X)))
         self.Q = self.inv_variance*self.X.T.dot(self.y) - \
             self.inv_variance**2 * self.X.T.dot(prec.dot(self.y))
 

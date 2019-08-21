@@ -9,7 +9,7 @@ cdef extern from "ce_updater.hpp":
       CEUpdater() except +
 
       # Initialize the object
-      void init(object atoms, object BC, object corrFunc, object ecis, object cluster_info) except +
+      void init(object atoms, object BC, object corrFunc, object eci, object cluster_info) except +
 
       # Clear update history
       void clear_history()
@@ -26,7 +26,7 @@ cdef extern from "ce_updater.hpp":
 
       object get_cf()
 
-      void set_ecis(object ecis)
+      void set_eci(object eci)
 
       object get_singlets()
 

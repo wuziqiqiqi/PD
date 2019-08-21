@@ -198,8 +198,7 @@ class NewStructures(object):
 
     def generate_gs_structure(self, atoms=None, init_temp=2000,
                               final_temp=1, num_temp=10,
-                              num_steps_per_temp=1000,
-                              cluster_name_eci=None,
+                              num_steps_per_temp=1000, eci=None,
                               random_composition=False):
         """Generate ground-state structure.
 
@@ -223,8 +222,8 @@ class NewStructures(object):
         num_steps_per_temp: int
             number of steps in simulated annealing
 
-        cluster_name_eci: dict of list of tuples
-            cluster names and ECI values for calculating the energy
+        eci: dict
+            Dictionary containing cluster names and their ECI values
 
         random_composition: bool
             -*False* and atoms = Atoms object: One ground-state structure with
@@ -267,7 +266,7 @@ class NewStructures(object):
                     .format(current_count + 1, len(structs)))
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
-                             num_steps_per_temp, cluster_name_eci)
+                             num_steps_per_temp, eci)
             gs_struct, cf = es.generate()
             formula_unit = self._get_formula_unit(gs_struct)
 
@@ -286,7 +285,8 @@ class NewStructures(object):
             else:
                 num_attempt = 0
 
-            _logger('Structure with E = {:.3f} generated.'.format(es.min_energy))
+            msg = 'Structure with E = {:.3f} generated.'.format(es.min_energy)
+            _logger(msg)
             kvp = self._get_kvp(gs_struct, formula_unit)
             tab_name = self.corr_func_table_name
             self.db.write(gs_struct, kvp, external_tables={tab_name: cf})
@@ -306,7 +306,8 @@ class NewStructures(object):
         """
         if not self._check_num_to_generate():
             return
-        _logger("Generating {} random structures (struct_per_gen={}, {} present)"
+        _logger("Generating {} random structures "
+                "(struct_per_gen={}, {} present)"
                 .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
 
         fail_counter = 0
@@ -360,8 +361,9 @@ class NewStructures(object):
 
         if not unique_structure_found:
             if verbose:
-                _logger("Could not find a structure that does not already exist "
-                        "in the DB within {} attempts.".format(max_attempt))
+                _logger("Could not find a structure that does not already "
+                        "exist in the DB within {} attempts."
+                        "".format(max_attempt))
             return False
 
         self.insert_structure(init_struct=new_atoms)

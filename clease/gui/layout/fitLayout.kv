@@ -49,7 +49,7 @@
                 BoxLayout:
                     id: eciPlot
                     size_hint: [0.8, 0.5]
-            
+
             StackLayout:
                 size_hint: [0.3, 0.9]
 
@@ -57,12 +57,12 @@
                     size_hint: [0.2, button_height]
                     id: eciLabel
                     text: 'ECI file'
-                
+
                 TextInput:
                     size_hint: [0.6, button_height]
                     id: eciFileInput
                     text: ''
-                
+
                 Button:
                     size_hint: [0.2, button_height]
                     id: loadEciInput
@@ -73,16 +73,16 @@
                     size_hint: [0.3, button_height]
                     id: dbSelectCondLabel
                     text: 'DB select'
-                
+
                 TextInput:
                     size_hint: [0.7, button_height]
                     id: dbSelectCondInput
                     text: ''
-                
+
                 Label:
                     size_hint: [0.7, button_height]
                     text: 'Max cluster size (cut)'
-                
+
                 TextInput:
                     size_hint: [0.3, button_height]
                     id: maxClusterSizeCut
@@ -102,7 +102,7 @@
                 Label:
                     size_hint: [0.7, button_height]
                     text: 'k-fold validation'
-                
+
                 TextInput:
                     size_hint: [0.3, button_height]
                     id: kFoldInput
@@ -144,7 +144,7 @@
                     size_hint: [1, button_height]
                     id: fitButton
                     text: 'Fit ECIs'
-                    on_release: root.fit_ecis()
+                    on_release: root.fit_eci()
                 Button:
                     size_hint: [1, button_height]
                     id: saveECIButton
@@ -170,4 +170,3 @@
                     id: maeLabel
                     text: 'MAE: 0.0 meV/atom'
 
-                
