@@ -30,9 +30,7 @@ class SGCObserver(MCObserver):
         }
 
     def reset(self):
-        """
-        Resets all variables to zero
-        """
+        """Reset all variables to zero."""
         self.quantities["singlets"][:] = 0.0
         self.quantities["singlets_sq"][:] = 0.0
         self.quantities["energy"].clear()
@@ -41,8 +39,7 @@ class SGCObserver(MCObserver):
         self.quantities["counter"] = 0
 
     def __call__(self, system_changes):
-        """
-        Updates all SGC parameters
+        """Update all SGC parameters.
 
         Parameters:
 

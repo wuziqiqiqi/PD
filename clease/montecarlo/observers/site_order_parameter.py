@@ -4,13 +4,12 @@ import numpy as np
 
 class SiteOrderParameter(MCObserver):
     """
-    Class that can be used to detect phase transitions.
-    It monitors the average number of sites that are different from the initial
-    value.
+    Detect phase transitions by monitoring the average number of sites that
+    are occupied by a different element from the initial structure.
 
-    Parameters
+    Parameters:
 
-    atoms: Atoms
+    atoms: Atoms object
         Atoms object use for Monte Carlo
     """
 
@@ -39,7 +38,10 @@ class SiteOrderParameter(MCObserver):
 
     def __call__(self, system_changes):
         """Get a new value for the order parameter.
-        :param list system_changes: Last changes to the system
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
 
         self.num_calls += 1
@@ -61,9 +63,9 @@ class SiteOrderParameter(MCObserver):
         self.avg_num_changed_sq += self.current_num_changed**2
 
     def get_averages(self):
-        """Get the number of sites different from the ground state.
-        :return: Average and standard deviation of the order parameters
-        :rtype: float, float
+        """
+        Get the average and standard deviation of the number of sites that
+        are different from the initial state.
         """
         average = float(self.avg_num_changed)/self.num_calls
         average_sq = float(self.avg_num_changed_sq)/self.num_calls

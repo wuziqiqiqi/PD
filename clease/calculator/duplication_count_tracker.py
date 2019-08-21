@@ -45,8 +45,8 @@ class DuplicationCountTracker(object):
     def index_key(self, ref_index, indices, order, equiv_sites):
         """Return a string representing the key for a given order.
 
-        Arguments
-        ==========
+        Parameters:
+
         ref_index: int
             Reference index
 

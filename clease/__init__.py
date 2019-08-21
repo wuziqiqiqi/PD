@@ -9,6 +9,8 @@ def set_verbosity(verbosity):
 def set_fd(fd):
     _logger.fd = fd
 
+from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
+from clease.template_filters import ValidConcentrationFilter
 from clease.settings_bulk import CEBulk, CECrystal
 from clease.evaluate import Evaluate
 from clease.corrFunc import CorrFunction
@@ -23,4 +25,5 @@ from clease.cluster_info_mapper import ClusterInfoMapper
 __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'NewStructures', 'NewStructures', 'Evaluate',
            'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
-           'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity']
+           'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
+           'SkewnessFilter']
