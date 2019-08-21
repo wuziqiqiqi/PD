@@ -28,8 +28,8 @@ class Montecarlo(object):
 
     Parameters:
 
-    atoms: Atoms
-        ASE atoms object (with CE calculator attached)
+    atoms: Atoms object
+        ASE Atoms object (with CE calculator attached)
 
     temp: float
         Temperature of Monte Carlo simulation in Kelvin
@@ -342,7 +342,6 @@ class Montecarlo(object):
         # Atoms object should have attached calculator
         # Add check that this is show
         self._mc_step()
-        print(self.atoms.get_calculator().get_cf())
 
         # self.current_step gets updated in the _mc_step function
         self.reset()
@@ -434,8 +433,7 @@ class Montecarlo(object):
         return system_changes
 
     def _accept(self, system_changes):
-        """
-        Returns True if the trial step is accepted
+        """Return `True` if the trial step is accepted.
 
         Parameters:
 
@@ -465,18 +463,14 @@ class Montecarlo(object):
         return np.random.rand() <= probability
 
     def count_atoms(self):
-        """
-        Count the number of each species
-        """
+        """Count the number of each element."""
         atom_count = {key: 0 for key in self.symbols}
         for atom in self.atoms:
             atom_count[atom.symbol] += 1
         return atom_count
 
-    def _mc_step(self, verbose=False):
-        """
-        Make one Monte Carlo step by swithing two atoms
-        """
+    def _mc_step(self):
+        """Make one Monte Carlo step by swithing two atoms."""
         self.current_step += 1
         self.last_energies[0] = self.current_energy
 

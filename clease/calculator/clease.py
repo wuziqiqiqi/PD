@@ -175,6 +175,12 @@ class Clease(Calculator):
         """
         Calculate the energy when the change is known. No checking will be
         performed.
+
+        Parameters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         self.update_cf(system_changes=system_changes)
         self.energy = self.updater.get_energy()
@@ -182,11 +188,20 @@ class Clease(Calculator):
         return self.energy
 
     def calculate(self, atoms, properties, system_changes):
-        """Calculate the energy of the passed atoms object.
+        """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
         reference structure to calculate the energy of the passed atoms.
         Returns energy.
+
+        Parameters:
+
+        atoms: Atoms object
+            ASE Atoms object
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         Calculator.calculate(self, atoms)
         self.update_energy()
@@ -198,7 +213,16 @@ class Clease(Calculator):
         self.updater.clear_history()
 
     def restore(self):
-        """Restore the old atoms and correlation functions to the reference."""
+        """Restore the Atoms object to its original configuration and energy.
+
+        This method reverts the Atoms object to its oldest state stored in
+        memory. The state is restored to either
+        (1) an initial state when the calculator was attached, or
+        (2) the state at which the `clear_history()` method was invoked last
+            time.
+
+        NOTE: The maximum capacity for the history buffer is 1000 steps
+        """
         self.updater.undo_changes()
         self.energy = self.updater.get_energy()
         self.results['energy'] = self.energy
@@ -237,7 +261,14 @@ class Clease(Calculator):
         return norm_fact
 
     def update_cf(self, system_changes=None):
-        """Update correlation function based on the reference value."""
+        """Update correlation function based on the reference value.
+
+        Paramters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
+        """
         if system_changes is None:
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
@@ -250,24 +281,6 @@ class Clease(Calculator):
     def cf(self):
         temp_cf = self.updater.get_cf()
         return [temp_cf[x] for x in self.cluster_names]
-
-    def _check_atoms(self, atoms):
-        """Check to see if the passed atoms argument valid.
-
-        This method checks that:
-            - atoms argument is Atoms object,
-            - atoms has the same size and atomic positions as
-                (1) setting.atoms,
-                (2) reference Atoms object.
-        """
-        if not isinstance(atoms, Atoms):
-            raise TypeError('Passed argument is not Atoms object')
-        if len(self.atoms) != len(atoms):
-            raise ValueError('Passed atoms does not have the same size '
-                             'as previous atoms')
-        if not np.allclose(self.atoms.positions, atoms.positions):
-            raise ValueError('Atomic postions of the passed atoms are '
-                             'different from init_atoms')
 
     def log(self):
         """Write energy to log file."""

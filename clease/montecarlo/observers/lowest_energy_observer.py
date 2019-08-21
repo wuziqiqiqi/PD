@@ -29,15 +29,15 @@ class LowestEnergyStructure(MCObserver):
 
     def __call__(self, system_changes):
         """
-        Check if the current state has lower energy.
-        If it has lower energy, the new state will be stored
+        Check if the current state has lower energy and store the current
+        state if it has a lower energy than the previous state.
 
         system_changes: list
             System changes. See doc-string of
             `clease.montecarlo.observers.MCObserver`
         """
         energy = self.atoms.get_calculator().results['energy']
-        if (self.emin_atoms is None):
+        if self.emin_atoms is None:
             calc = self.atoms.get_calculator()
             self.lowest_energy_cf = calc.get_cf()
             self.lowest_energy = energy
