@@ -4,3 +4,4 @@ from clease.montecarlo.observers.corr_func_observer import CorrelationFunctionOb
 from clease.montecarlo.observers.snapshot_observer import Snapshot
 from clease.montecarlo.observers.energy_evolution_obs import EnergyEvolution
 from clease.montecarlo.observers.site_order_parameter import SiteOrderParameter
+from clease.montecarlo.observers.lowest_energy_observer import LowestEnergyStructure

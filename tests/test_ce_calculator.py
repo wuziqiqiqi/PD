@@ -316,6 +316,65 @@ class TestCECalculator(unittest.TestCase):
         for k, v in final_cf.items():
             self.assertAlmostEqual(v, calc_cf[k])
 
+    def test_given_change_and_restore(self):
+        db_name = 'test_given_change.db'
+        setting, atoms = get_binary(db_name)
+
+        for atom in atoms:
+            atom.symbol = 'Au'
+
+        calc = Clease(setting, eci=generate_ex_eci(setting))
+        atoms.set_calculator(calc)
+
+        os.remove(db_name)
+        cf = CorrFunction(setting)
+
+        init_cf = cf.get_cf(atoms)
+
+        # Insert to Cu atoms
+        _ = atoms.get_calculator().get_energy_given_change(
+            [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')])
+
+        # We should have to Cu atoms now
+        num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
+        self.assertEqual(num_cu, 2)
+
+        cf_calc_two_inserts = atoms.get_calculator().get_cf()
+        cf_scratch = cf.get_cf(atoms)
+
+        for k, v in cf_calc_two_inserts.items():
+            self.assertAlmostEqual(v, cf_scratch[k])
+
+        atoms.get_calculator().restore()
+
+        # Now we should be back to pure Au
+        num_au = sum(1 for atom in atoms if atom.symbol == 'Au')
+        self.assertEqual(num_au, len(atoms))
+
+        cf_calc = calc.get_cf()
+        for k, v in cf_calc.items():
+            self.assertAlmostEqual(v, init_cf[k])
+
+        # Insert two atoms again
+        _ = atoms.get_calculator().get_energy_given_change(
+            [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')]
+        )
+
+        # Clear the history
+        atoms.get_calculator().clear_history()
+
+        # Restore should now not have any effect
+        atoms.get_calculator().restore()
+        cf_calc = calc.get_cf()
+
+        # Should still be two Cu atoms
+        num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
+        self.assertEqual(num_cu, 2)
+
+        for k, v in cf_calc_two_inserts.items():
+            self.assertAlmostEqual(cf_calc[k], v)
+        os.remove(db_name)
+
 
 if __name__ == '__main__':
     unittest.main()
