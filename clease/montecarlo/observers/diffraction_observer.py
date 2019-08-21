@@ -4,10 +4,10 @@ import numpy as np
 
 class DiffractionUpdater(object):
     """
-    Utility class for all objects that require tracing of a fourier
-    reflection.
+    Utility class for all objects that require tracing of Fourier reflection.
 
     Parameters:
+
     atoms: Atoms
         Atoms object used in Monte Carlo
 
@@ -20,7 +20,8 @@ class DiffractionUpdater(object):
     list all_symbols: list
         List of all symbols in the simulation
     """
-    def __init__(self, atoms=None, k_vector=[], active_symbols=[], 
+
+    def __init__(self, atoms=None, k_vector=[], active_symbols=[],
                  all_symbols=[]):
         MCObserver.__init__(self)
         self.orig_symbols = [atom.symbol for atom in atoms]
@@ -35,9 +36,7 @@ class DiffractionUpdater(object):
         self.prev_value = self.value
 
     def update(self, system_changes):
-        """
-        Update the reflection value
-        """
+        """Update the reflection value."""
         self.prev_value = self.value
         for change in system_changes:
             f_val = np.exp(1j*self.k_dot_r[change[0]])/self.N
@@ -67,9 +66,10 @@ class DiffractionUpdater(object):
 
 class DiffractionObserver(MCObserver):
     """
-    Observer that traces the reflection intensity
-    See docstring of DiffractionUpdater for explination of the arguments.
+    Trace the reflection intensity.
+    See docstring of DiffractionUpdater for explanation of the arguments.
     """
+
     def __init__(self, atoms=None, k_vector=[], active_symbols=[],
                  all_symbols=[], name="reflect"):
         MCObserver.__init__(self)
