@@ -40,7 +40,7 @@ class TestMonteCarlo(unittest.TestCase):
         for T in [1000, 500, 100]:
             mc = Montecarlo(atoms, T)
             mc.run(steps=10000)
-            E.append(mc.get_thermodynamic()['energy'])
+            E.append(mc.get_thermodynamic_quantities()['energy'])
 
         cf = CorrFunction(atoms.get_calculator().setting)
         cf_calc = atoms.get_calculator().get_cf()
@@ -65,7 +65,7 @@ class TestMonteCarlo(unittest.TestCase):
         obs = CorrelationFunctionObserver(atoms.get_calculator())
         mc.attach(obs, interval=1)
         mc.run(steps=1000)
-        thermo = mc.get_thermodynamic()
+        thermo = mc.get_thermodynamic_quantities()
         avg = obs.get_averages()
         os.remove(db_name)
         self.assertEqual(obs.counter, 1001)
@@ -127,7 +127,7 @@ class TestMonteCarlo(unittest.TestCase):
         avg = obs.get_averages()
         self.assertLessEqual(avg['site_order_average'], 6.0)
 
-        thermo = mc.get_thermodynamic()
+        thermo = mc.get_thermodynamic_quantities()
 
         os.remove(db_name)
         self.assertTrue('site_order_average' in thermo.keys())
