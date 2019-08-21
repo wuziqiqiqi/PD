@@ -57,8 +57,8 @@ class Montecarlo(object):
         self.status_every_sec = 30
         self.atoms_tracker = SwapMoveIndexTracker()
         self.symbols = []
-        self._build_atoms_list()
         E0 = self.atoms.get_calculator().calculate(None, None, None)
+        self._build_atoms_list()
         self.current_energy = E0
         self.bias_energy = 0.0
         self.new_bias_energy = self.bias_energy
