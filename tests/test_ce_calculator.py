@@ -373,6 +373,7 @@ class TestCECalculator(unittest.TestCase):
 
         for k, v in cf_calc_two_inserts.items():
             self.assertAlmostEqual(cf_calc[k], v)
+        os.remove(db_name)
 
 
 if __name__ == '__main__':
