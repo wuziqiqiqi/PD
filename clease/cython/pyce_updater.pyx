@@ -40,8 +40,8 @@ cdef class PyCEUpdater:
     def get_cf(self):
         return self.thisptr.get_cf()
 
-    def set_ecis(self, ecis):
-        self.thisptr.set_ecis(ecis)
+    def set_eci(self, eci):
+        self.thisptr.set_eci(eci)
 
     def get_singlets(self):
         return self.thisptr.get_singlets()
@@ -81,7 +81,7 @@ cdef class PyCEUpdater:
         cf_dict = {}
         cdef map_cpp[string, double].iterator it = cf.begin()
         cdef map_cpp[string, double].iterator end = cf.end()
-        
+
         # Transfer map[string, double] to dictionary
         while(it != end):
             cf_dict[dereference(it).first] = dereference(it).second

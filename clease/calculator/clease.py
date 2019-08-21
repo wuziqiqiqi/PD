@@ -4,6 +4,8 @@ import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
+from clease import CorrFunction
+from clease.settings import ClusterExpansionSetting
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -18,17 +20,16 @@ class Clease(Calculator):
 
     Parameters:
 
-    setting: CEBulk or BulkSapcegroup object
+    setting: `ClusterExpansionSetting` object
 
-    cluster_name_eci: dictionary
-        Dictionary should contain cluster names and their ECI values
+    eci: dict
+        Dictionary containing cluster names and their ECI values
 
     init_cf: `None` or dictionary (optional)
         If the correlation function of Atoms object is known, one can supply
         its correlation function values such that the initial assessment step
         is skipped. The dictionary should contain cluster names (same as the
-        ones provided in `cluster_name_eci`) and their correlation function
-        values.
+        ones provided in `eci`) and their correlation function values.
 
     logfile: file object or str
         If *logfile* is a string, a file with that name will be opened.
@@ -38,30 +39,19 @@ class Clease(Calculator):
     name = 'CLEASE'
     implemented_properties = ['energy']
 
-    def __init__(self, setting, cluster_name_eci=None, init_cf=None,
+    def __init__(self, setting, eci=None, init_cf=None,
                  logfile=None):
-        from clease import CorrFunction
-        from clease.settings import ClusterExpansionSetting
         Calculator.__init__(self)
 
         if not isinstance(setting, ClusterExpansionSetting):
             msg = "setting must be CEBulk or CECrystal object."
             raise TypeError(msg)
-        self.parameters["eci"] = cluster_name_eci
+        self.parameters["eci"] = eci
         self.setting = setting
         self.corrFunc = CorrFunction(setting)
-
-        # read ECIs
-        if isinstance(cluster_name_eci, dict):
-            self.eci = cluster_name_eci
-        else:
-            msg = "'cluster_name_eci' must be a dictionary.\n"
-            msg += "It can be obtained using 'get_cluster_name_eci' method in "
-            msg += "Evaluate class."
-            raise TypeError(msg)
-
+        self.eci = eci
         # store cluster names
-        self.cluster_names = list(cluster_name_eci.keys())
+        self.cluster_names = list(eci.keys())
 
         # calculate init_cf or convert init_cf to array
         if init_cf is None or isinstance(init_cf, dict):
@@ -286,17 +276,16 @@ class Clease(Calculator):
         self.logfile.write('{}\n'.format(self.energy))
         self.logfile.flush()
 
-    def update_ecis(self, ecis):
-        """
-        Update the ECIs
+    def update_eci(self, eci):
+        """Update the ECI values.
 
-        Parameters
+        Parameters:
 
         eci: dict
             Dictionary with new ECIs
         """
-        self.eci = ecis
-        self.updater.set_ecis(ecis)
+        self.eci = eci
+        self.updater.set_eci(eci)
 
     def get_singlets(self):
         return self.updater.get_singlets()

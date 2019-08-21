@@ -33,11 +33,21 @@ class SwapMoveIndexTracker(object):
             self.index_loc[atom.index] = len(self.tracker[atom.symbol])-1
 
     def move_already_updated(self, system_changes):
-        """Return True if system_changes have already been taken into account."""
+        """Return True if system_changes have already been taken into account.
+
+        Parameters:
+
+        system_changes:
+        """
         return system_changes == self._last_move
 
     def update_swap_move(self, system_changes):
-        """Update the atoms tracker."""
+        """Update the atoms tracker.
+
+        Parameters:
+
+        system_changes:
+        """
         if self.move_already_updated(system_changes):
             # This change has already been updated!
             return
@@ -68,7 +78,6 @@ class SwapMoveIndexTracker(object):
 
         self.update_swap_move(opposite_change)
         self._last_move = []
-
 
     def get_random_indx_of_symbol(self, symbol):
         return choice(self.tracker[symbol])

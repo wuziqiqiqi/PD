@@ -3,29 +3,26 @@ from ase.io.trajectory import TrajectoryWriter
 
 
 class Snapshot(MCObserver):
-    """
-    Store a snapshot in a trajectory file
+    """Store a snapshot in a trajectory file.
 
-    Parameters
+    Parameters:
 
-    trajfile: str
-        Filename of the trajectory file
+    fname: str
+        Name of the trajectory file (without .traj extension)
+
     atoms: Atoms
         Instance of the atoms objected modofied by the MC object
     """
 
-    def __init__(self, trajfile="default.traj", atoms=None):
+    def __init__(self, fname="snapshot", atoms=None):
         super(Snapshot, self).__init__()
         self.name = "Snapshot"
-        if not trajfile.endswith(".traj"):
-            msg = "This object stores all images in a trajectory file. "
-            msg += "File extension should be .traj"
-            raise ValueError(msg)
+        full_fname = fname + '.traj'
         if atoms is None:
             raise ValueError("No atoms object given!")
         self.atoms = atoms
-        self.traj = TrajectoryWriter(trajfile, mode="w")
-        self.fname = trajfile
+        self.traj = TrajectoryWriter(full_fname, mode="w")
+        self.fname = full_fname
 
     def __call__(self, system_changes):
         self.traj.write(self.atoms)
