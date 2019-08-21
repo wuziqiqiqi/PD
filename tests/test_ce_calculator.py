@@ -326,6 +326,7 @@ class TestCECalculator(unittest.TestCase):
         calc = Clease(setting, eci=generate_ex_eci(setting))
         atoms.set_calculator(calc)
 
+        os.remove(db_name)
         cf = CorrFunction(setting)
 
         init_cf = cf.get_cf(atoms)
