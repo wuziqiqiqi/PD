@@ -388,10 +388,8 @@ class Montecarlo(object):
         }
         return meta_info
 
-    def get_thermodynamic(self):
-        """
-        Compute thermodynamic quantities
-        """
+    def get_thermodynamic_quantities(self):
+        """Compute thermodynamic quantities."""
         quantities = {}
         mean_energy = self.mean_energy.mean
         quantities["energy"] = mean_energy + self.energy_bias

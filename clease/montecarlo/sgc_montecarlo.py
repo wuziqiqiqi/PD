@@ -205,15 +205,13 @@ class SGCMonteCarlo(Montecarlo):
             res[name] = x[i]
         return res
 
-    def get_thermodynamic(self, reset_eci=True):
-        """
-        Compute thermodynamic quantities
+    def get_thermodynamic_quantities(self, reset_eci=True):
+        """Compute thermodynamic quantities.
 
-        :param bool reset_eci: If True, the chemical potential will be
-            removed from the ECIs
+        Parameters:
 
-        :return: Thermodynamic quantities
-        :rtype: dict
+        reset_eci: bool
+            If True, the chemical potential will be removed from the ECIs
         """
         N = self.averager.counter
         quantities = {}

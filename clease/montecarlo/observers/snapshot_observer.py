@@ -25,6 +25,14 @@ class Snapshot(MCObserver):
         self.fname = full_fname
 
     def __call__(self, system_changes):
+        """Write a snapshot to a .traj file.
+
+        Parameters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
+        """
         self.traj.write(self.atoms)
 
     def reset(self):
