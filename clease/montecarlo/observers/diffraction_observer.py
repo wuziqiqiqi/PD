@@ -19,6 +19,29 @@ class DiffractionUpdater(object):
 
     list all_symbols: list
         List of all symbols in the simulation
+
+    Example:
+
+    Let's consider a FCC where Al, Mg and Si. We want to trace the occurence
+    of for instance Mg layers that separated by a distance 3*a where *a* is the
+    lattice parameter. Moreover, let's assume that the *y*-axis is normal to
+    the planes we want to trace.
+
+    In that case we specify active
+
+    >>> from ase.build import bulk
+    >>> import numpy as np
+    >>> a = 4.05
+    >>> atoms = bulk('Al, crystalstructure='fcc', a=a)
+    >>> k_vector = [2.0*np.pi/(3*a), 0, 0]
+    >>> active_elements = ['Mg']
+    >>> all_symbols = ['Al', 'Mg', 'Si']
+
+    If we don't want to distinguish to species, for instance we don't
+    care if it is a Mg layer or an Si layer (or a mix of those two)
+    we would change `active_elements` to
+
+    >>> active_elements = ['Mg', 'Si']
     """
 
     def __init__(self, atoms=None, k_vector=[], active_symbols=[],
