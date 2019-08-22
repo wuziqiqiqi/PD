@@ -8,15 +8,15 @@ class MCObserver(object):
         """
         Gets information about the system changes and can perform some action
 
-        Parameters
+        Parameters:
 
         system_changes: list
-            List of system changes if indx 23 changed
-            from Mg to Al this argument would be
-            [(23, Mg, Al)]
-            If site 26 with an Mg atom is swapped with site 12 with an Al atom
-            this would be
-            [(26, Mg, Al), (12, Al, Mg)]
+            List of system changes. For example, if the occupation of the
+            atomic index 23 is changed from Mg to Al,
+            system_change = [(23, Mg, Al)].
+            If an Mg atom occupying the atomic index 26 is swapped with an Al
+            atom occupying the atomic index 12,
+            system_change = [(26, Mg, Al), (12, Al, Mg)]
         """
         pass
 

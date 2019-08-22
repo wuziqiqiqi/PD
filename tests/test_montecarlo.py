@@ -52,7 +52,7 @@ def get_rocksalt_mc_system(db_name):
 class TestMonteCarlo(unittest.TestCase):
     def test_run(self):
         db_name = 'mc_test_aucu.db'
-        atoms = get_example_mc_system(db_name)        
+        atoms = get_example_mc_system(db_name)
 
         # Insert a few elements
         for i in range(10):
@@ -62,14 +62,14 @@ class TestMonteCarlo(unittest.TestCase):
         for T in [1000, 500, 100]:
             mc = Montecarlo(atoms, T)
             mc.run(steps=10000)
-            E.append(mc.get_thermodynamic()['energy'])
+            E.append(mc.get_thermodynamic_quantities()['energy'])
 
         cf = CorrFunction(atoms.get_calculator().setting)
         cf_calc = atoms.get_calculator().get_cf()
         cf_scratch = cf.get_cf(atoms)
 
         os.remove(db_name)
-        for k, v in cf_calc.items():
+        for k, v in cf_scratch.items():
             self.assertAlmostEqual(v, cf_calc[k])
 
         # Make sure that the energies are decreasing
@@ -87,8 +87,8 @@ class TestMonteCarlo(unittest.TestCase):
         obs = CorrelationFunctionObserver(atoms.get_calculator())
         mc.attach(obs, interval=1)
         mc.run(steps=1000)
-        thermo = mc.get_thermodynamic()
-        avg = obs.get_averages()
+        thermo = mc.get_thermodynamic_quantities()
+        _ = obs.get_averages()
         os.remove(db_name)
         self.assertEqual(obs.counter, 1001)
 
@@ -104,15 +104,14 @@ class TestMonteCarlo(unittest.TestCase):
         atoms[0].symbol = 'Cu'
         atoms[1].symbol = 'Cu'
 
-        traj = 'snapshot.traj'
-        obs = Snapshot(trajfile=traj, atoms=atoms)
+        obs = Snapshot(fname='snapshot', atoms=atoms)
 
         mc = Montecarlo(atoms, 600)
         mc.attach(obs, interval=100)
         mc.run(steps=1000)
         os.remove(db_name)
         self.assertEqual(len(obs.traj), 10)
-        os.remove(traj)
+        os.remove('snapshot.traj')
 
     def test_energy_evolution(self):
         db_name = 'test_energy_evolution.db'
@@ -126,11 +125,10 @@ class TestMonteCarlo(unittest.TestCase):
         mc = Montecarlo(atoms, 600)
         mc.attach(obs, interval=50)
         mc.run(steps=1000)
-        fname = 'energy_evol.csv'
 
         # Just confirm that the save function works
-        obs.save(fname=fname)
-        os.remove(fname)
+        obs.save(fname='energy_evol')
+        os.remove('energy_evol.csv')
 
         # Check the number of energy values
         os.remove(db_name)
@@ -151,7 +149,7 @@ class TestMonteCarlo(unittest.TestCase):
         avg = obs.get_averages()
         self.assertLessEqual(avg['site_order_average'], 6.0)
 
-        thermo = mc.get_thermodynamic()
+        thermo = mc.get_thermodynamic_quantities()
 
         os.remove(db_name)
         self.assertTrue('site_order_average' in thermo.keys())
@@ -193,7 +191,7 @@ class TestMonteCarlo(unittest.TestCase):
         mc.attach(obs)
 
         mc.run(steps=1000)
-        thermo = mc.get_thermodynamic()
+        thermo = mc.get_thermodynamic_quantities()
 
         os.remove(db_name)
         self.assertTrue('reflect1' in thermo.keys())
@@ -236,7 +234,7 @@ class TestMonteCarlo(unittest.TestCase):
         symbs = [atom.symbol for atom in atoms]
         os.remove(db_name)
         self.assertFalse(all(map(lambda x: x[0] == x[1],
-                         zip(orig_symbs, symbs))))
+                                 zip(orig_symbs, symbs))))
 
         allowed_elements = [['Si', 'X'], ['O', 'C']]
         for basis, allowed in zip(i_by_basis, allowed_elements):
@@ -279,7 +277,6 @@ class TestMonteCarlo(unittest.TestCase):
         si_after = [atom.index for atom in atoms if atom.symbol == 'Si']
         os.remove(db_name)
         self.assertEqual(si_indices, si_after)
-
 
 
 if __name__ == '__main__':

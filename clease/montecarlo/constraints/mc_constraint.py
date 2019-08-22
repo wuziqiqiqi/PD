@@ -7,11 +7,12 @@ class MCConstraint(object):
         self.name = "GenericConstraint"
 
     def __call__(self, system_changes):
-        """Return true if the trial move is valid.
+        """Return `True` if the trial move is valid.
 
-        Parameters
-        system_changes:
-            List of tuples with information about the changes introduced. See
-            doc string of MCObserver
+        Parameters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         return True

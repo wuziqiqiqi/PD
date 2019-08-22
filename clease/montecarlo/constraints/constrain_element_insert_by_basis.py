@@ -4,19 +4,25 @@ import numpy as np
 
 class ConstrainElementInserts(MCConstraint):
     """
-    Constrain elements insert by basis. This constraint is intended
+    Constrain inserting the elements by basis. This constraint is intended
     to be used together with SGCMonteCarlo
 
-    atoms: Atoms
-        Atoms object used in the simulation
+    atoms: Atoms object
+        ASE Atoms object used in the MC simulation
 
     index_by_basis: list
-        Indices ordered by basis. See ConstrainSwapByBasis.
+        Indices ordered by basis (same as `index_by_basis` parameter in
+        `ClusterExpansionSetting`).
+        If an Atoms object has 10 sites where the first 4 belongs to the
+        first basis, the next 3 belongs to the next basis and the last 3
+        belongs to the last basis, the `index_by_basis` would be
+        [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
     element_by_basis: list
-        List of which elements are allowed in each basis. If we have two
-        basis and Si and O is allowed in the fist and Si and C is allowed in
-        the second, this argument would be [['Si', 'O'], ['Si', 'C']]
+        List specifying which elements are allowed in each basis. If there are
+        two basis where Si and O are allowed in the fist basis while Si and C
+        are allowed in the second basis, the argument would be
+        [['Si', 'O'], ['Si', 'C']]
     """
     def __init__(self, atoms, index_by_basis, element_by_basis):
         self.basis = np.zeros(len(atoms), dtype=int)

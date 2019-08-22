@@ -7,9 +7,6 @@ from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
 from clease.gui.fitPage import FitPage
 from kivy.resources import resource_add_path
-import os
-import sys
-import time
 import os.path as op
 
 main_path = op.abspath(__file__)
