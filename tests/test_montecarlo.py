@@ -190,7 +190,7 @@ class TestMonteCarlo(unittest.TestCase):
         mc.attach(obs)
 
         mc.run(steps=1000)
-        thermo = mc.get_thermodynamic()
+        thermo = mc.get_thermodynamic_quantities()
 
         os.remove(db_name)
         self.assertTrue('reflect1' in thermo.keys())
