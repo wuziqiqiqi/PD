@@ -5,43 +5,7 @@ import numpy as np
 class DiffractionUpdater(object):
     """
     Utility class for all objects that require tracing of Fourier reflection.
-
-    Parameters:
-
-    atoms: Atoms
-        Atoms object used in Monte Carlo
-
-    k_vector: list
-        Fourier reflection to be traced
-
-    list active_symbols: list
-        List of symbols that reflects
-
-    list all_symbols: list
-        List of all symbols in the simulation
-
-    Example:
-
-    Let's consider a FCC where Al, Mg and Si. We want to trace the occurence
-    of for instance Mg layers that separated by a distance 3*a where *a* is the
-    lattice parameter. Moreover, let's assume that the *y*-axis is normal to
-    the planes we want to trace.
-
-    In that case we specify active
-
-    >>> from ase.build import bulk
-    >>> import numpy as np
-    >>> a = 4.05
-    >>> atoms = bulk('Al, crystalstructure='fcc', a=a)
-    >>> k_vector = [2.0*np.pi/(3*a), 0, 0]
-    >>> active_elements = ['Mg']
-    >>> all_symbols = ['Al', 'Mg', 'Si']
-
-    If we don't want to distinguish to species, for instance we don't
-    care if it is a Mg layer or an Si layer (or a mix of those two)
-    we would change `active_elements` to
-
-    >>> active_elements = ['Mg', 'Si']
+    See docstring of DiffractionObserver for explanation of the arguments.
     """
 
     def __init__(self, atoms=None, k_vector=[], active_symbols=[],
@@ -67,15 +31,11 @@ class DiffractionUpdater(object):
             self.value -= self.indicator[change[1]]*f_val
 
     def undo(self):
-        """
-        Undo the last update
-        """
+        """Undo the last update."""
         self.value = self.prev_value
 
     def reset(self):
-        """
-        Reset all values
-        """
+        """Reset all values."""
         self.value = self.calculate_from_scratch(self.orig_symbols)
         self.prev_value = self.value
 
@@ -90,15 +50,56 @@ class DiffractionUpdater(object):
 class DiffractionObserver(MCObserver):
     """
     Trace the reflection intensity.
-    See docstring of DiffractionUpdater for explanation of the arguments.
+
+    Parameters:
+
+    atoms: Atoms
+        Atoms object used in Monte Carlo
+
+    k_vector: list
+        Fourier reflection to be traced
+
+    active_symbols: list
+        List of symbols that reflects
+
+    all_symbols: list
+        List of all symbols in the simulation
+
+    name: str
+        Name of the DiffractionObserver
+        (users are given the freedom to set names because they can attach
+         multiple DiffractionObserver instances)
+
+
+    Example:
+
+    Consider a system where Al, Mg and Si occupy FCC lattice sites. We want to
+    trace the occurence of Mg layers that are separated by a distance 3*a
+    where *a* is the lattice parameter. We further assume that the *y*-axis is
+    normal to the planes we want to trace. In that case, we specify the
+    variables as
+
+    >>> from ase.build import bulk
+    >>> import numpy as np
+    >>> a = 4.05
+    >>> atoms = bulk('Al, crystalstructure='fcc', a=a)
+    >>> k_vector = [0, 2.0*np.pi/(3*a), 0]
+    >>> active_elements = ['Mg']
+    >>> all_symbols = ['Al', 'Mg', 'Si']
+
+    If we do not wish to distinguish Mi and Si (we do not distiguish Mg layer,
+    Si layer or a mixture of the two) the `active_elements` is changed to
+
+    >>> active_elements = ['Mg', 'Si']
     """
 
     def __init__(self, atoms=None, k_vector=[], active_symbols=[],
-                 all_symbols=[], name="reflect"):
+                 all_symbols=[], name="reflection1"):
         MCObserver.__init__(self)
-        self.updater = DiffractionUpdater(
-            atoms=atoms, k_vector=k_vector, active_symbols=active_symbols,
-            all_symbols=all_symbols)
+        self.updater = \
+            DiffractionUpdater(atoms=atoms, k_vector=k_vector,
+                               active_symbols=active_symbols,
+                               all_symbols=all_symbols)
         self.avg = self.updater.value
         self.num_updates = 1
         self.name = name
