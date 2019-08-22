@@ -561,4 +561,3 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
         used_tags[tag] = True
         new_tm[tag] = new_row
     return new_tm
-

@@ -48,5 +48,6 @@ class TestTools(unittest.TestCase):
         dist = min_distance_from_facet(x, atoms.get_cell())
         self.assertAlmostEqual(dist, 0.1)
 
+
 if __name__ == '__main__':
     unittest.main()

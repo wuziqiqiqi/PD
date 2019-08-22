@@ -9,6 +9,7 @@ from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.observers import DiffractionObserver
+from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -19,6 +20,23 @@ def get_example_mc_system(db_name):
                      max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
                      size=[2, 2, 2])
 
+    atoms = setting.atoms.copy()*(3, 3, 3)
+    cf = CorrFunction(setting)
+    cf_scratch = cf.get_cf(setting.atoms)
+    eci = {k: 0.0 for k, v in cf_scratch.items()}
+
+    eci['c0'] = -1.0
+    eci['c2_01nn_0_00'] = -0.2
+    atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+    return atoms
+
+
+def get_rocksalt_mc_system(db_name):
+    conc = Concentration(basis_elements=[['Si', 'X'], ['O', 'C']])
+    setting = CEBulk(db_name=db_name, concentration=conc,
+                     crystalstructure='rocksalt', a=4.0,
+                     max_cluster_size=3, max_cluster_dia=[2.51, 3.0],
+                     size=[2, 2, 2])
     atoms = setting.atoms.copy()*(3, 3, 3)
     cf = CorrFunction(setting)
     cf_scratch = cf.get_cf(setting.atoms)
@@ -176,6 +194,52 @@ class TestMonteCarlo(unittest.TestCase):
 
         os.remove(db_name)
         self.assertTrue('reflect1' in thermo.keys())
+
+    def test_constrain_swap(self):
+        db_name = 'test_constrain_swap.db'
+        atoms = get_rocksalt_mc_system(db_name)
+        setting = atoms.get_calculator().setting
+        i_by_basis = setting.index_by_basis
+
+        # Insert a few vacancies
+        num_X = 0
+        for atom in atoms:
+            if atom.symbol == 'Si':
+                atom.symbol = 'X'
+                num_X += 1
+
+            if num_X >= 20:
+                break
+
+        # Insert a few C
+        num_C = 0
+        for atom in atoms:
+            if atom.symbol == 'O':
+                atom.symbol = 'C'
+                num_C += 1
+
+            if num_C >= 20:
+                break
+
+        orig_symbs = [atom.symbol for atom in atoms]
+
+        cnst = ConstrainSwapByBasis(atoms, i_by_basis)
+
+        mc = Montecarlo(atoms, 600)
+        mc.add_constraint(cnst)
+        mc.run(steps=1000)
+
+        # Confirm that swaps have been made
+        symbs = [atom.symbol for atom in atoms]
+        os.remove(db_name)
+        self.assertFalse(all(map(lambda x: x[0] == x[1],
+                                 zip(orig_symbs, symbs))))
+
+        allowed_elements = [['Si', 'X'], ['O', 'C']]
+        for basis, allowed in zip(i_by_basis, allowed_elements):
+            for indx in basis:
+                self.assertTrue(atoms[indx].symbol in allowed)
+
 
 if __name__ == '__main__':
     unittest.main()
