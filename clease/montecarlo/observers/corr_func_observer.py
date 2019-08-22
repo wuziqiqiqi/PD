@@ -2,19 +2,18 @@ from clease.montecarlo.observers import MCObserver
 
 
 class CorrelationFunctionObserver(MCObserver):
-    """
-    Track the history of the correlation function.
-    Only relevant if the calculator is a CE calculator
+    """Track the history of the correlation function.
 
     Parameters:
 
-    calc: Clease calculator
+    calc: `clease.calculators.Clease`
         Clease calculator
 
     names: list
-        List with correlation functions to track. If None,
-        all correlation functions are tracked.
+        List with correlation functions to track.
+        If None, all correlation functions are tracked.
     """
+
     def __init__(self, calc, names=None):
         current_cf = calc.get_cf()
         self.names = names
@@ -26,7 +25,14 @@ class CorrelationFunctionObserver(MCObserver):
         self.counter = 1
 
     def __call__(self, system_changes):
-        """Update the correlation functions."""
+        """Update the correlation functions.
+
+        Parameters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
+        """
         new_cf = self.calc.get_cf()
         for name in self.names:
             self.cf[name] += new_cf[name]

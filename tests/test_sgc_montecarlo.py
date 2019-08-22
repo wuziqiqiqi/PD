@@ -28,7 +28,7 @@ class TestSGCMonteCarlo(unittest.TestCase):
         for T in [5000, 2000, 1000, 500, 100]:
             mc = SGCMonteCarlo(atoms, T, symbols=['Au', 'Cu'])
             mc.run(steps=10000, chem_pot={'c1_0': -0.02})
-            E.append(mc.get_thermodynamic()['energy'])
+            E.append(mc.get_thermodynamic_quantities()['energy'])
 
         cf_calc = atoms.get_calculator().get_cf()
         cf_scratch = cf.get_cf(atoms)

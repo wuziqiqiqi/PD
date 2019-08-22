@@ -4,6 +4,8 @@ import numpy as np
 from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
+from clease import CorrFunction
+from clease.settings import ClusterExpansionSetting
 from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
@@ -18,17 +20,16 @@ class Clease(Calculator):
 
     Parameters:
 
-    setting: CEBulk or BulkSapcegroup object
+    setting: `ClusterExpansionSetting` object
 
-    cluster_name_eci: dictionary
-        Dictionary should contain cluster names and their ECI values
+    eci: dict
+        Dictionary containing cluster names and their ECI values
 
     init_cf: `None` or dictionary (optional)
         If the correlation function of Atoms object is known, one can supply
         its correlation function values such that the initial assessment step
         is skipped. The dictionary should contain cluster names (same as the
-        ones provided in `cluster_name_eci`) and their correlation function
-        values.
+        ones provided in `eci`) and their correlation function values.
 
     logfile: file object or str
         If *logfile* is a string, a file with that name will be opened.
@@ -38,30 +39,19 @@ class Clease(Calculator):
     name = 'CLEASE'
     implemented_properties = ['energy']
 
-    def __init__(self, setting, cluster_name_eci=None, init_cf=None,
+    def __init__(self, setting, eci=None, init_cf=None,
                  logfile=None):
-        from clease import CorrFunction
-        from clease.settings import ClusterExpansionSetting
         Calculator.__init__(self)
 
         if not isinstance(setting, ClusterExpansionSetting):
             msg = "setting must be CEBulk or CECrystal object."
             raise TypeError(msg)
-        self.parameters["eci"] = cluster_name_eci
+        self.parameters["eci"] = eci
         self.setting = setting
         self.corrFunc = CorrFunction(setting)
-
-        # read ECIs
-        if isinstance(cluster_name_eci, dict):
-            self.eci = cluster_name_eci
-        else:
-            msg = "'cluster_name_eci' must be a dictionary.\n"
-            msg += "It can be obtained using 'get_cluster_name_eci' method in "
-            msg += "Evaluate class."
-            raise TypeError(msg)
-
+        self.eci = eci
         # store cluster names
-        self.cluster_names = list(cluster_name_eci.keys())
+        self.cluster_names = list(eci.keys())
 
         # calculate init_cf or convert init_cf to array
         if init_cf is None or isinstance(init_cf, dict):
@@ -185,6 +175,12 @@ class Clease(Calculator):
         """
         Calculate the energy when the change is known. No checking will be
         performed.
+
+        Parameters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         self.update_cf(system_changes=system_changes)
         self.energy = self.updater.get_energy()
@@ -192,11 +188,20 @@ class Clease(Calculator):
         return self.energy
 
     def calculate(self, atoms, properties, system_changes):
-        """Calculate the energy of the passed atoms object.
+        """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
         reference structure to calculate the energy of the passed atoms.
         Returns energy.
+
+        Parameters:
+
+        atoms: Atoms object
+            ASE Atoms object
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
         """
         Calculator.calculate(self, atoms)
         self.update_energy()
@@ -208,7 +213,16 @@ class Clease(Calculator):
         self.updater.clear_history()
 
     def restore(self):
-        """Restore the old atoms and correlation functions to the reference."""
+        """Restore the Atoms object to its original configuration and energy.
+
+        This method reverts the Atoms object to its oldest state stored in
+        memory. The state is restored to either
+        (1) an initial state when the calculator was attached, or
+        (2) the state at which the `clear_history()` method was invoked last
+            time.
+
+        NOTE: The maximum capacity for the history buffer is 1000 steps
+        """
         self.updater.undo_changes()
         self.energy = self.updater.get_energy()
         self.results['energy'] = self.energy
@@ -247,7 +261,14 @@ class Clease(Calculator):
         return norm_fact
 
     def update_cf(self, system_changes=None):
-        """Update correlation function based on the reference value."""
+        """Update correlation function based on the reference value.
+
+        Paramters:
+
+        system_changes: list
+            System changes. See doc-string of
+            `clease.montecarlo.observers.MCObserver`
+        """
         if system_changes is None:
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
@@ -261,24 +282,6 @@ class Clease(Calculator):
         temp_cf = self.updater.get_cf()
         return [temp_cf[x] for x in self.cluster_names]
 
-    def _check_atoms(self, atoms):
-        """Check to see if the passed atoms argument valid.
-
-        This method checks that:
-            - atoms argument is Atoms object,
-            - atoms has the same size and atomic positions as
-                (1) setting.atoms,
-                (2) reference Atoms object.
-        """
-        if not isinstance(atoms, Atoms):
-            raise TypeError('Passed argument is not Atoms object')
-        if len(self.atoms) != len(atoms):
-            raise ValueError('Passed atoms does not have the same size '
-                             'as previous atoms')
-        if not np.allclose(self.atoms.positions, atoms.positions):
-            raise ValueError('Atomic postions of the passed atoms are '
-                             'different from init_atoms')
-
     def log(self):
         """Write energy to log file."""
         if self.logfile is None:
@@ -286,17 +289,16 @@ class Clease(Calculator):
         self.logfile.write('{}\n'.format(self.energy))
         self.logfile.flush()
 
-    def update_ecis(self, ecis):
-        """
-        Update the ECIs
+    def update_eci(self, eci):
+        """Update the ECI values.
 
-        Parameters
+        Parameters:
 
         eci: dict
             Dictionary with new ECIs
         """
-        self.eci = ecis
-        self.updater.set_ecis(ecis)
+        self.eci = eci
+        self.updater.set_eci(eci)
 
     def get_singlets(self):
         return self.updater.get_singlets()
