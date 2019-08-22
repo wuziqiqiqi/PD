@@ -71,14 +71,12 @@ class TestSGCMonteCarlo(unittest.TestCase):
         os.remove(db_name)
         # Confirm that swaps have taken place
         self.assertFalse(all(map(lambda x: x[0] == x[1],
-                         zip(orig_symbols, new_symb))))
+                                 zip(orig_symbols, new_symb))))
 
         # Check that we only have correct entries
         for allowed, basis in zip(elem_basis, setting.index_by_basis):
             for index in basis:
                 self.assertTrue(atoms[index].symbol in allowed)
-
-
 
 
 if __name__ == '__main__':

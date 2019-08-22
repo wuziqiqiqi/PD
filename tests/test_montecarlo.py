@@ -233,12 +233,13 @@ class TestMonteCarlo(unittest.TestCase):
         symbs = [atom.symbol for atom in atoms]
         os.remove(db_name)
         self.assertFalse(all(map(lambda x: x[0] == x[1],
-                         zip(orig_symbs, symbs))))
+                                 zip(orig_symbs, symbs))))
 
         allowed_elements = [['Si', 'X'], ['O', 'C']]
         for basis, allowed in zip(i_by_basis, allowed_elements):
             for indx in basis:
                 self.assertTrue(atoms[indx].symbol in allowed)
+
 
 if __name__ == '__main__':
     unittest.main()

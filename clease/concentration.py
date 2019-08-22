@@ -757,14 +757,14 @@ class Concentration(object):
     def to_float_conc(self, num_atoms_in_basis, int_conc):
         """
         Convert integer number to float concentration.
-        
+
         Parameters:
 
         num_atoms_in_basis: list of int
             Number of sites in each basis (e.g., [27, 27], [64]).
-        
+
         int_conc: array of int
-            Concentration per basis in an integer format, which 
+            Concentration per basis in an integer format, which
             corresponds to the number of corresponding element in that basis.
         """
         conc_index = 0

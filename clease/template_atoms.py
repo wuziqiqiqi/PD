@@ -354,8 +354,7 @@ class TemplateAtoms(object):
         return np.allclose(sorted(dist1), sorted(dist2))
 
     def random_template(self, max_supercell_factor=1000):
-        """
-        Select a random template atoms.
+        """Select a random template atoms.
 
         Parameters:
 
@@ -412,8 +411,7 @@ class TemplateAtoms(object):
 
     def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
                                                  off_diag_range):
-        """
-        Create integer matrices with a given determinant.
+        """Create integer matrices with a given determinant.
 
         It utilizes that determinant of the dot product between an upper
         triangular matrix and a lower triangular matrix is equal to the
