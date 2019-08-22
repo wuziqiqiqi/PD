@@ -8,6 +8,7 @@ from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
+from clease.montecarlo.observers import DiffractionObserver
 from clease import Concentration, CEBulk, CorrFunction
 
 
@@ -154,6 +155,27 @@ class TestMonteCarlo(unittest.TestCase):
         os.remove(db_name)
         self.assertAlmostEqual(np.min(energy_evol.energies),
                                low_en.lowest_energy)
+
+    def test_diffraction_obs(self):
+        db_name = 'test_diffraction_observer.db'
+        atoms = get_example_mc_system(db_name)
+
+        atoms[0].symbol = 'Cu'
+        atoms[1].symbol = 'Cu'
+        atoms[2].symbol = 'Cu'
+
+        obs = DiffractionObserver(atoms=atoms, k_vector=[0.25, 0.0, 0.0],
+                                  name='reflect1', active_symbols=['Cu'],
+                                  all_symbols=['Au', 'Cu'])
+
+        mc = Montecarlo(atoms, 600)
+        mc.attach(obs)
+
+        mc.run(steps=1000)
+        thermo = mc.get_thermodynamic_quantities()
+
+        os.remove(db_name)
+        self.assertTrue('reflect1' in thermo.keys())
 
 if __name__ == '__main__':
     unittest.main()
