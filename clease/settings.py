@@ -527,8 +527,8 @@ class ClusterExpansionSetting(object):
         # (based on translation symmetry)
         # for site, ref_indx in enumerate(self.ref_index_trans_symm):
         for site, ref_indx in enumerate(ref_indices):
-            if (supercell[ref_indx].tag in self.background_indices
-                    and self.ignore_background_atoms):
+            if (supercell[ref_indx].tag in self.background_indices and
+                    self.ignore_background_atoms):
                 cluster_info.append({})
                 continue
             cluster_info_symm = {}
