@@ -1,5 +1,7 @@
 from kivy.uix.screenmanager import Screen
 from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib
+matplotlib.use("module://kivy.garden.matplotlib.backend_kivyagg")
 from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
@@ -18,7 +20,7 @@ class ECIOptimiser(object):
 
     def optimise(self):
         try:
-            self.fit_page.eci = self.evaluator.get_cluster_name_eci()
+            self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
 
@@ -50,7 +52,7 @@ class GAClusterSelector(object):
 
         try:
             ga = GAFit(self.settings, **self.kwargs)
-            cluster_names = ga.run()
+            _ = ga.run()
 
             optimiser = ECIOptimiser()
             optimiser.fit_page = self.fit_page
@@ -121,12 +123,14 @@ class FitPage(Screen):
     def show_lasso_editor(self):
         content = LassoEditor(close=self.close_lasso_editor)
         self._pop_up = Popup(title="LASSO Editor", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_l2_editor(self):
         content = L2Editor(close=self.close_l2_editor)
         self._pop_up = Popup(title="L2 Editor", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -134,6 +138,7 @@ class FitPage(Screen):
         content = BCSEditor(close=self.close_bcs_editor)
 
         self._pop_up = Popup(title="BCS Editor", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -141,6 +146,7 @@ class FitPage(Screen):
         content = GAEditor(close=self.close_ga_editor)
 
         self._pop_up = Popup(title="Genetic Algorithm Editor", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -190,6 +196,7 @@ class FitPage(Screen):
                              cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Load ECI file", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -225,7 +232,7 @@ class FitPage(Screen):
         except Exception as exc:
             self.ids.status.text = str(exc)
 
-    def fit_ecis(self):
+    def fit_eci(self):
         if self.fitting_in_progress:
             # We already optimising ECIs
             return
@@ -352,11 +359,11 @@ class FitPage(Screen):
     def set_mae(self, mae):
         self.ids.maeLabel.text = 'MAE: {:.3f} meV/atom'.format(mae)
 
-    def _ecis_has_been_fitted(self):
+    def _eci_has_been_fitted(self):
         return self.e_dft is not None and self.e_ce is not None
 
     def update_energy_plot(self, e_dft, e_ce):
-        if not self._ecis_has_been_fitted():
+        if not self._eci_has_been_fitted():
             self.ids.status.text = 'ECIs has not been fitted yet'
             return
         graph = self.ids.energyPlot.children[0]

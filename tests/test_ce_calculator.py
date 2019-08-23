@@ -3,7 +3,7 @@ import os
 from random import randint
 import numpy as np
 from clease import CEBulk, CECrystal, CorrFunction, Concentration
-from clease.calculator import Clease
+from clease.calculator import Clease, attach_calculator
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
@@ -140,7 +140,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
     cf = CorrFunction(setting)
 
     eci = generate_ex_eci(setting)
-    calc = Clease(setting, cluster_name_eci=eci)
+    calc = Clease(setting, eci=eci)
     atoms.set_calculator(calc)
 
     timings = []
@@ -176,7 +176,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
     from random import choice
     cf = CorrFunction(setting)
     eci = generate_ex_eci(setting)
-    calc = Clease(setting, cluster_name_eci=eci)
+    calc = Clease(setting, eci=eci)
     atoms.set_calculator(calc)
     elements = setting.unique_elements
     for _ in range(n_trial_configs):
@@ -201,7 +201,7 @@ class TestCECalculator(unittest.TestCase):
         db_name = 'indices_changes_symbol.db'
         setting, atoms = get_binary(db_name)
         eci = generate_ex_eci(setting)
-        calc = Clease(setting, cluster_name_eci=eci)
+        calc = Clease(setting, eci=eci)
         atoms.set_calculator(calc)
 
         changes = [2, 6]
@@ -277,6 +277,102 @@ class TestCECalculator(unittest.TestCase):
         sp_setting, sp_atoms = get_spacegroup(db_name)
         test_update_correlation_functions(
             sp_setting, sp_atoms, n_trial_configs=5, fixed=['Ta'])
+        os.remove(db_name)
+
+    def test_init_large_cell(self):
+        print('Init large cell')
+        db_name = 'cecalc_init_large_cell.db'
+        rs_setting, _ = rocksalt_with_self_interaction([1, 2, 3], db_name)
+
+        atoms = bulk('LiO', crystalstructure='rocksalt', a=4.05, cubic=True)
+        atoms = atoms*(2, 2, 2)
+        eci = generate_ex_eci(rs_setting)
+
+        # Use quick way of initialisation object
+        atoms = attach_calculator(setting=rs_setting, atoms=atoms, eci=eci)
+
+        cf = CorrFunction(rs_setting)
+        init_cf = atoms.get_calculator().init_cf
+
+        final_cf = cf.get_cf(atoms)
+        for k, v in final_cf.items():
+            self.assertAlmostEqual(v, init_cf[k])
+
+        # Try some swaps
+        num_X = 0
+        num_Mn = 0
+        for atom in atoms:
+            if atom.symbol == 'Li' and num_X < 3:
+                atom.symbol = 'X'
+                num_X += 1
+            elif atom.symbol == 'Li' and num_Mn < 4:
+                atom.symbol = 'Mn'
+                num_Mn += 1
+        atoms.get_potential_energy()
+
+        final_cf = cf.get_cf(atoms)
+        calc_cf = atoms.get_calculator().get_cf()
+        os.remove(db_name)
+        for k, v in final_cf.items():
+            self.assertAlmostEqual(v, calc_cf[k])
+
+    def test_given_change_and_restore(self):
+        db_name = 'test_given_change.db'
+        setting, atoms = get_binary(db_name)
+
+        for atom in atoms:
+            atom.symbol = 'Au'
+
+        calc = Clease(setting, eci=generate_ex_eci(setting))
+        atoms.set_calculator(calc)
+
+        os.remove(db_name)
+        cf = CorrFunction(setting)
+
+        init_cf = cf.get_cf(atoms)
+
+        # Insert to Cu atoms
+        _ = atoms.get_calculator().get_energy_given_change(
+            [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')])
+
+        # We should have to Cu atoms now
+        num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
+        self.assertEqual(num_cu, 2)
+
+        cf_calc_two_inserts = atoms.get_calculator().get_cf()
+        cf_scratch = cf.get_cf(atoms)
+
+        for k, v in cf_calc_two_inserts.items():
+            self.assertAlmostEqual(v, cf_scratch[k])
+
+        atoms.get_calculator().restore()
+
+        # Now we should be back to pure Au
+        num_au = sum(1 for atom in atoms if atom.symbol == 'Au')
+        self.assertEqual(num_au, len(atoms))
+
+        cf_calc = calc.get_cf()
+        for k, v in cf_calc.items():
+            self.assertAlmostEqual(v, init_cf[k])
+
+        # Insert two atoms again
+        _ = atoms.get_calculator().get_energy_given_change(
+            [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')]
+        )
+
+        # Clear the history
+        atoms.get_calculator().clear_history()
+
+        # Restore should now not have any effect
+        atoms.get_calculator().restore()
+        cf_calc = calc.get_cf()
+
+        # Should still be two Cu atoms
+        num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
+        self.assertEqual(num_cu, 2)
+
+        for k, v in cf_calc_two_inserts.items():
+            self.assertAlmostEqual(cf_calc[k], v)
         os.remove(db_name)
 
 

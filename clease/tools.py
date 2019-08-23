@@ -491,6 +491,37 @@ def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
     return sc
 
 
+def min_distance_from_facet(x, cell):
+    """
+    Calculate the minimum distance from a point to the cell facet.
+
+    Parameters:
+
+    x: np.array
+        Position from which to calculate the minimum distance
+
+    cell: Cell
+        Cell of an Atoms object
+    """
+    dists = []
+
+    for plane in combinations([0, 1, 2], r=2):
+        # Unit normal vector
+        n = np.cross(cell[plane[0], :], cell[plane[1], :])
+        n /= np.sqrt(n.dot(n))
+
+        # Plane with origin in it
+        dist = np.abs(n.dot(x))
+        dists.append(dist)
+
+        # Opposite facet
+        remaining = list(set([0, 1, 2]) - set(plane))[0]
+        vec = cell[remaining, :]
+        dist = np.abs(n.dot(x - vec))
+        dists.append(dist)
+    return min(dists)
+
+
 def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
     """
     Convert from indices to tags
