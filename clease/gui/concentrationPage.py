@@ -81,17 +81,16 @@ class ConcentrationPage(Screen):
             self.grouped_elements = new_elements
             self.elements = elements
 
-
-            layout = StackLayout(id='elemHeader',size_hint=[1, 0.05])
+            layout = StackLayout(id='elemHeader', size_hint=[1, 0.05])
             width = 1.0 / float(self.num_conc_vars + 3)
 
             for item in self.grouped_elements:
                 for sym in item:
                     layout.add_widget(Label(text=sym, size_hint=[width, 1]))
 
-            layout.add_widget(Label(text='Type',size_hint=[width, 1]))
-            layout.add_widget(Label(text='Rhs',size_hint=[width, 1]))
-            layout.add_widget(Label(text='Remove',size_hint=[width, 1]))
+            layout.add_widget(Label(text='Type', size_hint=[width, 1]))
+            layout.add_widget(Label(text='Rhs', size_hint=[width, 1]))
+            layout.add_widget(Label(text='Remove', size_hint=[width, 1]))
             self.ids.mainConcLayout.add_widget(layout)
 
     def _group_elements(self, elements, grouped_basis):
@@ -118,7 +117,8 @@ class ConcentrationPage(Screen):
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
                                   id='comparisonSpinner',
                                   size_hint=[width, 1]))
-        layout.add_widget(TextInput(text='0', size_hint=[width, 1],                                                 multiline=False, id='rhs'))
+        layout.add_widget(TextInput(text='0', size_hint=[width, 1],
+                                    multiline=False, id='rhs'))
         layout.add_widget(
             Button(text='Remove',
                    size_hint=[width, 1],
