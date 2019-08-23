@@ -5,10 +5,9 @@ from kivy.utils import get_color_from_hex
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 from clease.gui.util import parse_max_cluster_dia, parse_grouped_basis_elements
-from clease.gui.util import parse_size, parse_elements, parse_cellpar, parse_cell
-from clease.gui.util import parse_coordinate_basis
+from clease.gui.util import parse_size, parse_elements, parse_cellpar
+from clease.gui.util import parse_cell, parse_coordinate_basis
 import json
-import os
 
 
 class InputPage(Screen):
@@ -26,15 +25,15 @@ class InputPage(Screen):
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
-
         self._pop_up = Popup(title="Load structure DB", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_load_session_dialog(self):
         content = LoadDialog(load=self.load_session, cancel=self.dismiss_popup)
-
         self._pop_up = Popup(title="Load CLEASE session", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -59,9 +58,9 @@ class InputPage(Screen):
             self.ids.crdBasisInput.text = data['basis']
             self.ids.spInput.text = data['spacegroup']
             self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
-            self.ids.sizeModeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
-            self.ids.supercellFactorInput.text = data.get('supercell_factor', '20')
-            self.ids.skewnessFactorInput.text = data.get('skewness_factor', '4')
+            self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
+            self.ids.scFactorInput.text = data.get('supercell_factor', '20')
+            self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
             self.ids.groupedBasisInput.text = data.get('grouped_basis', '')
 
             self.ids.status.text = "Loaded session from {}".format(path)
@@ -70,8 +69,10 @@ class InputPage(Screen):
             rhs_lb = data['constraint']['rhs_lb']
             A_eq = data['constraint']['A_eq']
             rhs_eq = data['constraint']['rhs_eq']
-            self.manager.get_screen('Concentration').load_from_matrices(A_lb, rhs_lb, A_eq, rhs_eq)
-            self.manager.get_screen('NewStruct').from_dict(data.get('new_struct', {}))
+            self.manager.get_screen('Concentration').load_from_matrices(
+                A_lb, rhs_lb, A_eq, rhs_eq)
+            self.manager.get_screen('NewStruct').from_dict(
+                data.get('new_struct', {}))
             self.manager.get_screen('Fit').from_dict(data.get('fit_page', {}))
             self.current_session_file = filename[0]
         except Exception as e:
@@ -84,6 +85,7 @@ class InputPage(Screen):
         content = SaveDialog(save=self.save_session, cancel=self.dismiss_popup)
 
         self._pop_up = Popup(title="Save CLEASE session", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -104,9 +106,9 @@ class InputPage(Screen):
             'basis': self.ids.crdBasisInput.text,
             'spacegroup': self.ids.spInput.text,
             'cell_size': self.ids.sizeInput.text,
-            'cell_mode_spinner': self.ids.sizeModeSpinner.text,
-            'supercell_factor': self.ids.supercellFactorInput.text,
-            'skewness_factor': self.ids.skewnessFactorInput.text,
+            'cell_mode_spinner': self.ids.sizeSpinner.text,
+            'supercell_factor': self.ids.scFactorInput.text,
+            'skewness_factor': self.ids.skewFactorInput.text,
             'grouped_basis': self.ids.groupedBasisInput.text
         }
 
@@ -155,7 +157,7 @@ class InputPage(Screen):
 
     def on_enter(self):
         self.update_input_section(self.ids.typeSpinner.text)
-        self.update_size_section(self.ids.sizeModeSpinner.text)
+        self.update_size_section(self.ids.sizeSpinner.text)
 
     def _disable_CEBulk(self):
         color = get_color_from_hex(INACTIVE_TEXT_COLOR)
@@ -315,7 +317,8 @@ class InputPage(Screen):
 
             if isinstance(diameter, list):
                 if len(diameter) != cluster_size - 1:
-                    self.ids.status.text = 'Cluster dia has to be given for 2-body and beyond!'
+                    self.ids.status.text = \
+                        'Cluster dia has to be given for 2-body and beyond!'
                     return False
         except Exception as exc:
             self.ids.status.text = str(exc)
@@ -323,9 +326,7 @@ class InputPage(Screen):
         return True
 
     def cell_size_ok(self):
-        """
-        Check if the cell size is OK
-        """
+        """Check if the cell size is OK."""
         try:
             _ = parse_size(self.ids.sizeInput.text)
         except Exception as exc:
@@ -334,13 +335,11 @@ class InputPage(Screen):
         return True
 
     def check_user_input(self):
-        """
-        Check the input values from the user
-        """
+        """Check the input values from the user."""
 
         # Check max cluster size
         try:
-            cluster_size = int(self.ids.clusterSize.text)
+            _ = int(self.ids.clusterSize.text)
         except Exception:
             self.ids.status.text = "Max cluster size has to be an integer"
             return 1
@@ -350,15 +349,15 @@ class InputPage(Screen):
             return 1
 
         # Check that we can parse size
-        if self.ids.sizeModeSpinner.text == 'Fixed':
+        if self.ids.sizeSpinner.text == 'Fixed':
             if not self.cell_size_ok():
                 return 1
         else:
-            if self.ids.supercellFactorInput.text == '':
+            if self.ids.scFactorInput.text == '':
                 self.ids.status.text = 'Supercell factor has to be given'
                 return 1
 
-            if self.ids.skewnessFactorInput.text == '':
+            if self.ids.skewFactorInput.text == '':
                 self.ids.status.text = 'Skewness factor has to be given'
                 return 1
 
@@ -400,14 +399,14 @@ class InputPage(Screen):
             self.ids.supercellFactLabel.color = inactive
             self.ids.sizeLabel.color = active
 
-            self.ids.supercellFactorInput.disabled = True
-            self.ids.skewnessFactorInput.disabled = True
+            self.ids.scFactorInput.disabled = True
+            self.ids.skewFactorInput.disabled = True
             self.ids.sizeInput.disabled = False
         else:
             self.ids.skewnessLabel.color = active
             self.ids.supercellFactLabel.color = active
             self.ids.sizeLabel.color = inactive
 
-            self.ids.supercellFactorInput.disabled = False
-            self.ids.skewnessFactorInput.disabled = False
+            self.ids.scFactorInput.disabled = False
+            self.ids.skewFactorInput.disabled = False
             self.ids.sizeInput.disabled = True

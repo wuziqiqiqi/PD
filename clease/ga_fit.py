@@ -1,5 +1,5 @@
 from clease import LinearRegression
-from clease import _logger, LogVerbosity
+from clease import _logger
 import numpy as np
 import multiprocessing as mp
 import os
@@ -519,7 +519,7 @@ class GAFit(object):
             for name in self.selected_cluster_names:
                 out.write(name+"\n")
         _logger("Selected cluster names saved to "
-              "{}".format(self.fname_cluster_names))
+                "{}".format(self.fname_cluster_names))
 
     def plot_evolution(self):
         """Create a plot of the evolution."""

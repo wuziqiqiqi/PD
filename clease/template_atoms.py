@@ -1,8 +1,7 @@
 """Class containing a manager for creating template atoms."""
 import os
 import numpy as np
-from itertools import product, permutations
-from numpy.linalg import inv
+from itertools import product
 from random import choice
 from ase.db import connect
 from ase.build import cut
@@ -10,6 +9,8 @@ from itertools import combinations
 from ase.build import make_supercell
 from clease.tools import str2nested_list
 from clease import _logger
+from clease import SkewnessFilter, EquivalentCellsFilter
+from clease.template_filters import CellFilter, AtomsFilter
 
 
 class TemplateAtoms(object):
@@ -22,6 +23,13 @@ class TemplateAtoms(object):
 
         self.supercell_factor = supercell_factor
         self.size = size
+
+        self.cell_filters = []
+        self.atoms_filters = []
+
+        self.add_cell_filter(SkewnessFilter(skew_threshold))
+        self.all_cells = []
+        self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
 
         if self.size is not None:
             check_valid_conversion_matrix(self.size)
@@ -46,6 +54,52 @@ class TemplateAtoms(object):
     @property
     def num_templates(self):
         return len(self.templates['atoms'])
+
+    def add_cell_filter(self, cell_filter):
+        """Attach a new Cell filter."""
+        if not isinstance(cell_filter, CellFilter):
+            raise TypeError("filter has to be an instance of CellFilter")
+        self.cell_filters.append(cell_filter)
+
+    def add_atoms_filter(self, at_filter):
+        """Attach a new Atoms filter."""
+        if not isinstance(at_filter, AtomsFilter):
+            raise TypeError("filter has to be an instance of AtomsFilter")
+        self.atoms_filters.append(at_filter)
+
+    def clear_filters(self):
+        """Remove all filters."""
+        self.cell_filters = []
+        self.atoms_filters = []
+
+    def is_valid(self, atoms=None, cell=None):
+        """
+        Check the validity of the template.
+
+        Return `True` if templates are valid according to the attached filters.
+
+        Parameters:
+
+        atoms: Atoms object
+
+        cell: unit cell vector
+        """
+        if atoms is None and cell is None:
+            msg = "At least one of `atoms` or `cell` must be specified."
+            raise ValueError(msg)
+
+        cell_valid = True
+        if cell is not None:
+            cell_valid = all([filter(cell) for filter in self.cell_filters])
+
+        if not cell_valid:
+            return False
+
+        atoms_valid = True
+        if atoms is not None:
+            atoms_valid = all([f(atoms) for f in self.atoms_filters])
+
+        return cell_valid and atoms_valid
 
     def get_size(self):
         """Get size of the templates."""
@@ -125,8 +179,8 @@ class TemplateAtoms(object):
                 return uid
 
         if not generate_template:
-            raise ValueError("There is no template that matches the shape "
-                             "of given atoms object")
+            raise RuntimeError("There is no template that matches the shape "
+                               "of given atoms object")
 
         # get dims based on the passed atoms and append.
         _logger("Template that matches the size of passed atoms not found. "
@@ -145,8 +199,7 @@ class TemplateAtoms(object):
         """Construct templates based on arguments specified."""
         if self.size is None:
             self.supercell_factor = int(self.supercell_factor)
-            templates = self._generate_template_atoms()
-            self.templates = self._filter_equivalent_templates(templates)
+            self.templates = self._generate_template_atoms()
             if not self.templates['atoms']:
                 raise RuntimeError("No template atoms with matching criteria")
         else:
@@ -196,8 +249,11 @@ class TemplateAtoms(object):
                 continue
             matrix = np.diag(size)
             atoms = make_supercell(self.unit_cell, matrix)
-            templates['atoms'].append(atoms)
-            templates['size'].append(matrix.tolist())
+
+            if self.is_valid(atoms=atoms, cell=atoms.get_cell()):
+                templates['atoms'].append(atoms)
+                templates['size'].append(matrix.tolist())
+                self.all_cells.append(atoms.get_cell())
         return templates
 
     def _construct_templates_from_supercell(self, size):
@@ -257,9 +313,7 @@ class TemplateAtoms(object):
             if new_vol > V*self.supercell_factor:
                 continue
 
-            # Check diagonal
-            ratio = self._get_max_min_diag_ratio(atoms)
-            if ratio > self.skew_threshold:
+            if not self.is_valid(atoms=atoms, cell=atoms.get_cell()):
                 continue
 
             size = [[int(np.round(x)) for x in v1.tolist()],
@@ -287,22 +341,6 @@ class TemplateAtoms(object):
                          "repeating of the unit cells. Scale factors found "
                          "{}".format(size_factor))
 
-    def _is_unitary(self, matrix):
-        return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
-
-    def _are_equivalent(self, cell1, cell2):
-        """Compare two cells to check if they are equivalent.
-
-        It is assumed that the cell vectors are columns of each matrix.
-        """
-        inv_cell1 = inv(cell1)
-        for perm in permutations(range(3)):
-            permute_cell = cell2[:, perm]
-            R = permute_cell.dot(inv_cell1)
-            if self._is_unitary(R):
-                return True
-        return False
-
     def _internal_distances_are_equal(self, atoms1, atoms2):
         """Check if all internal distances are equivalent."""
         if len(atoms1) != len(atoms2):
@@ -315,45 +353,13 @@ class TemplateAtoms(object):
             dist2 += atoms2.get_distances(ref, remaining).tolist()
         return np.allclose(sorted(dist1), sorted(dist2))
 
-    def _filter_equivalent_templates(self, templates):
-        """Remove symmetrically equivalent clusters."""
-        templates = self._filter_very_skewed_templates(templates)
-        filtered = {'atoms': [], 'size': []}
-        for i, atoms in enumerate(templates['atoms']):
-            current = atoms.get_cell().T
-            duplicate = False
-            for j in range(0, len(filtered['atoms'])):
-                ref = filtered['atoms'][j].get_cell().T
-                if self._are_equivalent(current, ref):
-                    duplicate = True
-                    break
-                elif self._internal_distances_are_equal(
-                        atoms, filtered['atoms'][j]):
-                    duplicate = True
-                    break
-
-            if not duplicate:
-                filtered['atoms'].append(atoms)
-                filtered['size'].append(list(templates['size'][i]))
-        return filtered
-
-    def _filter_very_skewed_templates(self, templates):
-        """Remove templates that have a very skewed unit cell."""
-        filtered = {'atoms': [], 'size': []}
-        for i, atoms in enumerate(templates['atoms']):
-            ratio = self._get_max_min_diag_ratio(atoms)
-            if ratio < self.skew_threshold:
-                filtered['atoms'].append(atoms)
-                filtered['size'].append(list(templates['size'][i]))
-        return filtered
-
-    def random_template(self, max_supercell_factor=1000, return_size=False):
+    def random_template(self, max_supercell_factor=1000):
         """Select a random template atoms.
 
-        Arguments:
-        =========
+        Parameters:
+
         max_supercell_factor: int
-            Maximum supercell factor the returned object can have
+            Maximum supercell_factor the returned object can have
         """
         found = False
         num = 0
@@ -378,7 +384,7 @@ class TemplateAtoms(object):
         min_length = np.min(diag_lengths)
         return max_length/min_length
 
-    def weighted_random_template(self, return_size=False):
+    def weighted_random_template(self):
         """Select a random template atoms with a bias towards a cubic cell.
 
         The bias is towards cells that have similar values for x-, y- and
@@ -402,6 +408,146 @@ class TemplateAtoms(object):
         num_entries = len(self.templates['atoms'])
         for _, v in self.templates.items():
             assert len(v) == num_entries
+
+    def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
+                                                 off_diag_range):
+        """Create integer matrices with a given determinant.
+
+        It utilizes that determinant of the dot product between an upper
+        triangular matrix and a lower triangular matrix is equal to the
+        product of the diagonal elements in the two matrices.
+
+        Example:
+
+        C = A.dot(B)
+
+            [a11, a, b]        [b11, 0, 0]
+        A = [0, a22, c],  B =  [d, b22, 0]
+            [0, 0, a33]        [e, f, b33]
+
+        the determinant of C is then equal to
+        det(C) = a11*a22*a33*b11*b22*b33.
+
+        Parameters:
+
+        diag_A: list of length 3
+            3 integers representing the diagonal in the A matrix
+
+        diag_B: list of length 3
+            3 integers representing the diagonal in the B matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen integers in the
+            range [-off_diag_range, off_diag_range]
+        """
+
+        A = np.diag(diag_A)  # Upper triangular matrix
+        B = np.diag(diag_B)  # Lower triangular matrix
+
+        # Generate random off diagonal elements
+        off_diag = np.random.randint(-off_diag_range, off_diag_range,
+                                     size=6)
+
+        A[0, 1] = off_diag[0]
+        A[0, 2] = off_diag[1]
+        A[1, 2] = off_diag[2]
+        B[1, 0] = off_diag[3]
+        B[2, 0] = off_diag[4]
+        B[2, 1] = off_diag[5]
+
+        C = A.dot(B)
+        return C
+
+    def get_template_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                  off_diag_range=2):
+        """
+        Generate a single template with a given volume. See doc string
+        of `clease.template_atoms._transformation_matrix_with_given_volume`
+        for details of the algorithm. The selected determinant is given by
+        np.prod(diag_A)*np.prod(diag_B).
+
+        Example:
+
+        If a template with a volume equal to 2 times the unit cell, the
+        following combinations of diag_A and diag_B would to the job
+        diag_A = [2, 1, 1] and diag_B = [1, 1, 1]
+        diag_A = [1, 2, 1] and diag_B = [1, 1, 1]
+        diag_A = [1, 1, 2] and diag_B = [1, 1, 1]
+        and all cases where diag_A and diag_B in the above list is swapped.
+
+        If a template with a volume equal to 4 times the volume of the unit
+        cell one can either have diag_A = [2, 2, 1] and diag_A = [4, 1, 1]
+        works (diag_B = [1, 1, 1]).
+
+        Parameters:
+
+        diag_A: list int
+            List of 3 integers representing the diagonal of the upper
+            triangular matrix
+
+        diag_B: list int
+            List of 3 integers representing the diagonal of the lower
+            triangular matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen in the range
+            [-off_diag_range, off_diag_range]
+        """
+        matrix = self._transformation_matrix_with_given_volume(
+            diag_A, diag_B, off_diag_range)
+        return make_supercell(self.unit_cell, matrix)
+
+    def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
+                                   off_diag_range=2, num_templates=10):
+        """
+        Generate a given number of random templates with a fixed volume
+        See also `clease.template_atoms.get_template_given_volume`.
+
+        Parameters:
+
+        diag_A: list of int
+            List of 3 integers representing the diagonal of the upper
+            triangular matrix
+
+        diag_B: list of int
+            List of 3 integers repreenting the diagonal in the lower
+            triangular matrix
+
+        off_diag_range: int
+            The off diagonal elements are randomly chosen in the range
+            [-off_diag_range, off_diag_range]
+
+        num_templates: int
+            Number of templates to generate
+        """
+        max_attempts = 1000
+        matrices = []
+        int_matrices = []
+
+        # Use the equivalent cell filter to trace already selected templates
+        equiv_filter = EquivalentCellsFilter(matrices)
+
+        counter = 0
+        ucell = self.unit_cell.get_cell()
+        while len(int_matrices) < num_templates and counter < max_attempts:
+            counter += 1
+            matrix = self._transformation_matrix_with_given_volume(
+                diag_A, diag_B, off_diag_range)
+
+            sc = matrix.dot(ucell)
+
+            # Check if this matrix can be obtained with a unitary
+            # transformation of any of the other
+            valid = self.is_valid(cell=sc)
+
+            if valid and equiv_filter(sc):
+                int_matrices.append(matrix)
+                matrices.append(sc)
+
+        templates = []
+        for mat in int_matrices:
+            templates.append(make_supercell(self.unit_cell, mat))
+        return templates
 
 
 def is_3x3_matrix(array):
