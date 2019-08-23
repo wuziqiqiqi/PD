@@ -9,9 +9,10 @@ class ClusterExtractor(object):
     reference index. This class uses the sorted flattened inner
     product matrix.
 
-    Parameters
-    atoms: Atoms
-        Atoms object to use
+    Parameters:
+
+    atoms: Atoms object
+        ASE Atoms object
     """
     def __init__(self, atoms):
         self.atoms = atoms
@@ -20,8 +21,16 @@ class ClusterExtractor(object):
         self.tol = 1E-6
 
     def extract(self, ref_indx=0, size=2, cutoff=4.0):
-        """
-        Extract single clusters
+        """Extract single clusters.
+
+        This method returns a list of sites (atomic indices) belonging to
+        every clusters. If there are *N* clusters, it returns a list of a form
+            [cluster_1, cluster_2, cluster_3, cluster_N]
+        where cluster_x is a nested list in a form
+            cluster1 = [[245, 432, 126], [567, 432, 127], ...]
+
+
+        Parameters:
 
         ref_indx: int
             Reference index
@@ -31,12 +40,6 @@ class ClusterExtractor(object):
 
         cutoff: float
             Maximum cutoff
-
-        return: list
-            List of sites that are belong to a cluster
-            [cluster1, cluster2, cluster3...]
-            where cluster1 (cluster2, cluster3 etc.) are
-            cluster1 = [[245, 432, 126], [567, 432, 127], ...]
         """
         self.inner_prod = []
         x = self.atoms.get_positions()[ref_indx, :]
@@ -55,9 +58,7 @@ class ClusterExtractor(object):
         return len(self.inner_prod) - 1
 
     def _group_clusters(self, ref_indx, indices, size, cutoff):
-        """
-        Group sites in clusters based on their SVD
-        """
+        """Group sites in clusters based on their SVD."""
         pos = self.atoms.get_positions()
         clusters = []
         for comb in combinations(indices, r=size-1):
@@ -80,25 +81,19 @@ class ClusterExtractor(object):
         return clusters
 
     def _order_by_internal_distances(self, cluster):
-        """
-        Order the indices by internal distances
-        """
+        """Order the indices by internal distances."""
         dists = self._get_internal_distances(cluster)
         zipped = sorted(list(zip(dists, cluster)), reverse=True)
         return [x[1] for x in zipped]
 
     def view_subclusters(self, single_cluster):
-        """
-        Visualize clusters
-        """
+        """Visualize clusters."""
         from ase.visualize import view
         images = [self.atoms[x] for x in single_cluster]
         view(images)
 
     def _get_internal_distances(self, sub_cluster):
-        """
-        Calculate all internal distances of the cluster
-        """
+        """Calculate all internal distances of the cluster."""
         dists = []
         for indx in sub_cluster:
             d = self.atoms.get_distances(indx, sub_cluster)
@@ -106,9 +101,7 @@ class ClusterExtractor(object):
         return dists
 
     def equivalent_sites(self, sub_cluster):
-        """
-        Finds the equivalent sites of a subcluster
-        """
+        """Find the equivalent sites of a subcluster."""
         dists = self._get_internal_distances(sub_cluster)
         equiv_sites = []
         for i in range(len(dists)):
