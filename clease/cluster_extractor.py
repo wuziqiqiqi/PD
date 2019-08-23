@@ -5,9 +5,8 @@ from itertools import combinations
 
 class ClusterExtractor(object):
     """
-    Class that extracts clusters from an atoms object. Given a
-    reference index. This class uses the sorted flattened inner
-    product matrix.
+    Extract clusters that contain the suppied atomic index. 
+
 
     Parameters:
 
@@ -21,10 +20,12 @@ class ClusterExtractor(object):
         self.tol = 1E-6
 
     def extract(self, ref_indx=0, size=2, cutoff=4.0):
-        """Extract single clusters.
+        """
+        Extract all clusters with a given size if they are smaller than the
+        cutoff distance.
 
         This method returns a list of sites (atomic indices) belonging to
-        every clusters. If there are *N* clusters, it returns a list of a form
+        every cluster. If there are *N* clusters, it returns a list of a form
             [cluster_1, cluster_2, cluster_3, cluster_N]
         where cluster_x is a nested list in a form
             cluster1 = [[245, 432, 126], [567, 432, 127], ...]
@@ -33,13 +34,13 @@ class ClusterExtractor(object):
         Parameters:
 
         ref_indx: int
-            Reference index
+            Index to be included in all of the clusters
 
         size: int
-            Cluster size
+            Cluster size (i.e., number of atoms in a cluster)
 
         cutoff: float
-            Maximum cutoff
+            Maximum cutoff distance
         """
         self.inner_prod = []
         x = self.atoms.get_positions()[ref_indx, :]
@@ -48,6 +49,7 @@ class ClusterExtractor(object):
         return self._group_clusters(ref_indx, indices, size, cutoff)
 
     def _get_type(self, flat_inner_prod):
+        """Determine cluster type based on flattened inner product matrix."""
         if self.inner_prod:
             diff = [np.sum((x - flat_inner_prod)**2) for x in self.inner_prod]
             min_group = np.argmin(diff)
@@ -58,13 +60,13 @@ class ClusterExtractor(object):
         return len(self.inner_prod) - 1
 
     def _group_clusters(self, ref_indx, indices, size, cutoff):
-        """Group sites in clusters based on their SVD."""
+        """Group sites in clusters based on the inner product matrix."""
         pos = self.atoms.get_positions()
         clusters = []
         for comb in combinations(indices, r=size-1):
             all_indices = [ref_indx] + list(comb)
 
-            d = self.get_cluster_diameter(all_indices)
+            d = self.get_max_distance(all_indices)
             if d > cutoff:
                 continue
             X = pos[all_indices, :]
@@ -80,29 +82,29 @@ class ClusterExtractor(object):
                 clusters[group].append(all_indices)
         return clusters
 
-    def _order_by_internal_distances(self, cluster):
+    def _order_by_internal_distances(self, clusters):
         """Order the indices by internal distances."""
-        dists = self._get_internal_distances(cluster)
-        zipped = sorted(list(zip(dists, cluster)), reverse=True)
+        dists = self._get_internal_distances(clusters)
+        zipped = sorted(list(zip(dists, clusters)), reverse=True)
         return [x[1] for x in zipped]
 
-    def view_subclusters(self, single_cluster):
-        """Visualize clusters."""
+    def view_figures(self, cluster):
+        """Visualize figures of a cluster."""
         from ase.visualize import view
-        images = [self.atoms[x] for x in single_cluster]
-        view(images)
+        figures = [self.atoms[x] for x in cluster]
+        view(figures)
 
-    def _get_internal_distances(self, sub_cluster):
-        """Calculate all internal distances of the cluster."""
+    def _get_internal_distances(self, figure):
+        """Calculate all internal distances of a figure."""
         dists = []
-        for indx in sub_cluster:
-            d = self.atoms.get_distances(indx, sub_cluster)
+        for indx in figure:
+            d = self.atoms.get_distances(indx, figure)
             dists.append(sorted(d.tolist(), reverse=True))
         return dists
 
-    def equivalent_sites(self, sub_cluster):
-        """Find the equivalent sites of a subcluster."""
-        dists = self._get_internal_distances(sub_cluster)
+    def equivalent_sites(self, figure):
+        """Find the equivalent sites of a figure."""
+        dists = self._get_internal_distances(figure)
         equiv_sites = []
         for i in range(len(dists)):
             for j in range(i+1, len(dists)):
@@ -121,10 +123,8 @@ class ClusterExtractor(object):
                 merged.append(set(equiv))
         return [list(x) for x in merged]
 
-    def get_cluster_diameter(self, sub_cluster):
-        """
-        Return the diameter of the sub cluster
-        """
-        internal_dists = self._get_internal_distances(sub_cluster)
+    def get_max_distance(self, figure):
+        """Return the maximum distance of a figure."""
+        internal_dists = self._get_internal_distances(figure)
         max_dists = [x[0] for x in internal_dists]
         return max(max_dists)
