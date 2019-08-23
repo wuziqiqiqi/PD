@@ -5,20 +5,20 @@
 #:include l2EditorLayout.kv
 #:include bcsEditorLayout.kv
 #:include gaEditor.kv
-#: set button_height 0.05
+#: set height 0.05
 
 <InputPage>:
     StackLayout:
 
         Button:
             id: toInput
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             text: 'Input'
 
         Button:
             id: concEditor
             text: 'Concentration'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Concentration'
                 root.manager.transition.direction = 'left'
@@ -26,7 +26,7 @@
         Button:
             id: toNewStruct
             text: 'New structures'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'NewStruct'
                 root.manager.transition.direction = 'left'
@@ -34,7 +34,7 @@
         Button:
             id: toFit
             text: 'Fit'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Fit'
                 root.manager.transition.direction = 'left'
@@ -44,114 +44,114 @@
 
 
         Label:
-            size_hint: [1, 0.25*button_height]
+            size_hint: [1, 0.25*height]
             text: ''
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: ceType
             text: 'Type'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: bfLabel
             text: 'Basis func.'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: maxClusterSizeLabel
             text: 'Max cl. size'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: maxClusterDiaLabel
             text: 'Max cl. dia (ang)'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: sizeSpecificationType
             text: 'Size mode'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: sizeLabel
             text: 'Cell size'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: supercellFactLabel
             text: 'SC factor'
 
         Label:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: skewnessLabel
             text: 'Skew factor'
 
         Spinner:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: typeSpinner
             text: 'CEBulk'
             values: 'CEBulk', 'CECrystal'
             on_text: root.update_input_section(self.text)
 
         Spinner:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: bfSpinner
             text: 'Sanchez'
             values: 'Sanchez', 'van de Walle', 'Sluiter'
 
         TextInput:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: clusterSize
             text: '4'
             input_filter: 'int'
 
         TextInput:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: clusterDia
             text: '5.0'
 
         Spinner:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: sizeSpinner
             text: 'Fixed'
             values: 'Fixed', 'Mult. factor'
             on_text: root.update_size_section(self.text)
 
         TextInput:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: sizeInput
             text: '3, 3, 3'
 
         TextInput:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: scFactorInput
             text: '20'
             input_filter: 'int'
 
         TextInput:
-            size_hint: [0.125, button_height]
+            size_hint: [0.125, height]
             id: skewFactorInput
             text: '4'
             input_filter: 'int'
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
-            size_hint: [0.3, button_height]
+            size_hint: [0.3, height]
             id: dbChooser
             text: 'Structure database'
 
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: dbNameInput
             text: ''
 
         Button:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             id: loadDbButton
             text: 'Load'
             on_release: root.show_load_dialog()
@@ -161,54 +161,54 @@
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
             id: CEBulkTitle
-            size_hint: [1.0, 1.5*button_height]
+            size_hint: [1.0, 1.5*height]
             text: 'CEBulk parameters'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: crystStruct
             text: 'Crystal structure'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: aParameter
             text: 'a'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cParameter
             text: 'c'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: uParameter
             text: 'u'
 
         Spinner:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: crystStructSpinner
             text: 'fcc'
             values: 'fcc', 'hcp', 'bcc', 'diamond', 'zincblende', 'rocksalt', 'cesiumchloride', 'fluorite', 'wurtzite'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: aParameterInput
             text: ''
             input_filter: 'float'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cParameterInput
             text: ''
             input_filter: 'float'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: uParameterInput
             text: ''
             input_filter: 'float'
@@ -218,51 +218,51 @@
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
             id: CECrystalTitle
-            size_hint: [1.0, 1.5*button_height]
+            size_hint: [1.0, 1.5*height]
             text: 'CECrystal parameters'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cellPar
             text: 'Cellpar'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cell
             text: 'Cell'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: crBasisLabel
             text: 'Coordinate basis'
 
         Label:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: spLabel
             text: 'Spacegroup'
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cellParInput
             text: ''
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: cellInput
             text: ''
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: crdBasisInput
             text: ''
 
         TextInput:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: spInput
             text: '1'
 
@@ -270,27 +270,27 @@
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
             text: 'Concentration'
-            size_hint: [1.0, 1.5*button_height]
+            size_hint: [1.0, 1.5*height]
 
         Label:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             text: 'Elements'
 
         Label:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             text: 'Grouped basis'
 
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: elementInput
             text: ''
         TextInput:
-            size_hint: [0.5, button_height]
+            size_hint: [0.5, height]
             id: groupedBasisInput
             text: ''
 
@@ -300,28 +300,28 @@
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Button:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: reconfigureDBButton
             text: 'Reconfigure corr func'
 
         Button:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: saveAsSession
             text: 'Save As'
             on_release: root.show_save_dialog()
 
         Button:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: saveSession
             text: 'Save'
             on_release: root.save_session_to_current_file()
 
         Button:
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             id: loadSession
             text: 'Load session'
             on_release: root.show_load_session_dialog()
@@ -332,15 +332,15 @@
 
 
         Label:
-            size_hint: [1, 0.5*button_height]
+            size_hint: [1, 0.5*height]
             text: ''
 
         Label:
-            size_hint: [0.2, button_height]
+            size_hint: [0.2, height]
             text: 'Status:'
         Label:
             id: status
-            size_hint: [0.8, button_height]
+            size_hint: [0.8, height]
             text: 'Idle'
 
 
