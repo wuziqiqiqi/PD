@@ -23,7 +23,7 @@ class TestTemplates(unittest.TestCase):
         db_name = 'templates_fcc.db'
         prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
         db = connect(db_name)
-        db.write(prim_cell, name='prim_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         template_atoms = TemplateAtoms(supercell_factor=27, size=None,
                                        skew_threshold=4,
@@ -41,7 +41,7 @@ class TestTemplates(unittest.TestCase):
         db_name = 'templates_hcp.db'
         prim_cell = bulk("Mg")
         db = connect(db_name)
-        db.write(prim_cell, name='prim_cell')
+        db.write(prim_cell, name='primitive_cell')
         template_atoms = TemplateAtoms(supercell_factor=27, size=None,
                                        skew_threshold=5, db_name=db_name)
         dims = template_atoms.get_size()
@@ -62,7 +62,7 @@ class TestTemplates(unittest.TestCase):
         db_name = 'templates_fixed_volume.db'
         prim_cell = bulk("Al")
         db = connect(db_name)
-        db.write(prim_cell, name='prim_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         template_atoms = TemplateAtoms(supercell_factor=5, size=None,
                                        db_name=db_name)
@@ -86,7 +86,7 @@ class TestTemplates(unittest.TestCase):
 
         db_name = 'test_valid_concentration.db'
         db = connect(db_name)
-        db.write(prim_cell, name='prim_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         # Force vacancy concentration to be exactly 2/3 of the Cl
         # concentration

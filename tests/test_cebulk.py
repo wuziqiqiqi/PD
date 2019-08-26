@@ -175,10 +175,10 @@ class TestCEBulk(unittest.TestCase):
         self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c3_01nn_0"]))
 
         # Try to insert an atoms object with a strange
-        print(bc_setting.unit_cell.get_cell())
+        print(bc_setting.prim_cell.get_cell())
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
         self.assertGreater(np.linalg.det(P), 0)
-        atoms = make_supercell(bc_setting.unit_cell, P)
+        atoms = make_supercell(bc_setting.prim_cell, P)
 
         atoms[0].symbol = 'Cu'
         newstruct.insert_structure(init_struct=atoms, generate_template=True)
@@ -285,7 +285,7 @@ class TestCEBulk(unittest.TestCase):
 
         # Try to create a cell with previously failing size
         size = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]])
-        atoms = make_supercell(setting.unit_cell, size)
+        atoms = make_supercell(setting.prim_cell, size)
 
         # This will fail if coordinatation number is wrong
         setting.set_active_template(atoms=atoms, generate_template=True)
