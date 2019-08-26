@@ -21,9 +21,9 @@ class SettingsPlaceHolder(object):
 class TestTemplates(unittest.TestCase):
     def test_fcc(self):
         db_name = 'templates_fcc.db'
-        unit_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
         db = connect(db_name)
-        db.write(unit_cell, name='unit_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         template_atoms = TemplateAtoms(supercell_factor=27, size=None,
                                        skew_threshold=4,
@@ -39,9 +39,9 @@ class TestTemplates(unittest.TestCase):
 
     def test_hcp(self):
         db_name = 'templates_hcp.db'
-        unit_cell = bulk("Mg")
+        prim_cell = bulk("Mg")
         db = connect(db_name)
-        db.write(unit_cell, name='unit_cell')
+        db.write(prim_cell, name='primitive_cell')
         template_atoms = TemplateAtoms(supercell_factor=27, size=None,
                                        skew_threshold=5, db_name=db_name)
         dims = template_atoms.get_size()
@@ -60,9 +60,9 @@ class TestTemplates(unittest.TestCase):
 
     def test_fixed_volume(self):
         db_name = 'templates_fixed_volume.db'
-        unit_cell = bulk("Al")
+        prim_cell = bulk("Al")
         db = connect(db_name)
-        db.write(unit_cell, name='unit_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         template_atoms = TemplateAtoms(supercell_factor=5, size=None,
                                        db_name=db_name)
@@ -72,21 +72,21 @@ class TestTemplates(unittest.TestCase):
         templates = template_atoms.get_templates_given_volume(
             diag_A=diag_A, off_diag_range=1, num_templates=20)
 
-        vol = unit_cell.get_volume()
+        vol = prim_cell.get_volume()
         os.remove(db_name)
         for template in templates:
             self.assertEqual(len(template), 2)
             self.assertAlmostEqual(2*vol, template.get_volume())
 
     def test_valid_concentration_filter(self):
-        unit_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
+        prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings = SettingsPlaceHolder()
-        settings.atoms = unit_cell
+        settings.atoms = prim_cell
         settings.index_by_basis = [[0], [1]]
 
         db_name = 'test_valid_concentration.db'
         db = connect(db_name)
-        db.write(unit_cell, name='unit_cell')
+        db.write(prim_cell, name='primitive_cell')
 
         # Force vacancy concentration to be exactly 2/3 of the Cl
         # concentration

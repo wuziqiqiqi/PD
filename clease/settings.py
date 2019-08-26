@@ -21,7 +21,7 @@ from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
-from clease.tools import close_to_cubic_supercell
+from clease import AtomsManager
 from ase.geometry import wrap_positions
 
 
@@ -54,9 +54,9 @@ class ClusterExpansionSetting(object):
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
 
-        self.unit_cell = self._get_unit_cell()
-        self._tag_unit_cell()
-        self._store_unit_cell()
+        self.prim_cell = self._get_prim_cell()
+        self._tag_prim_cell()
+        self._store_prim_cell()
         self.float_max_dia, self.float_ang, self.float_dist = \
             self._init_floating_point_classifiers()
 
@@ -64,6 +64,7 @@ class ClusterExpansionSetting(object):
                                             size=self.size,
                                             skew_threshold=skew_threshold,
                                             db_name=self.db_name)
+        self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
@@ -124,22 +125,21 @@ class ClusterExpansionSetting(object):
         else:
             self._read_data()
 
+    @property
+    def atoms(self):
+        return self.atoms_mng.atoms
+
     def unique_element_without_background(self):
         """Remove backgound elements."""
         if not self.ignore_background_atoms:
-            return self.unique_elements
-        symbs = []
-        for indx in self.background_indices:
-            symbs.append(self.atoms[indx].symbol)
-        symbs = list(set(symbs))
+            bg_sym = set()
+        else:
+            bg_sym = set(x[0] for x in self.basis_elements if len(x) == 1)
 
-        for atom in self.atoms:
-            if atom.index in self.background_indices:
-                continue
-            if atom.symbol in symbs:
-                symbs.remove(atom.symbol)
-        filtered = [e for e in self.unique_elements if e not in symbs]
-        return filtered
+        unique_elem = set()
+        for x in self.basis_elements:
+            unique_elem.update(x)
+        return list(unique_elem - bg_sym)
 
     def _store_floating_point_classifiers(self):
         """Store classifiers in a separate DB entry."""
@@ -150,11 +150,9 @@ class ClusterExpansionSetting(object):
             return
 
         placeholder = Atoms()
-        data = {
-            "max_cluster_dia": self.float_max_dia.toJSON(),
-            "angles": self.float_ang.toJSON(),
-            "float_dist": self.float_dist.toJSON()
-        }
+        data = {"max_cluster_dia": self.float_max_dia.toJSON(),
+                "angles": self.float_ang.toJSON(),
+                "float_dist": self.float_dist.toJSON()}
         db.write(placeholder, data=data, name="float_classification")
 
     def _init_floating_point_classifiers(self):
@@ -183,15 +181,16 @@ class ClusterExpansionSetting(object):
     def prepare_new_active_template(self, uid):
         """Prepare necessary data structures when setting new template."""
         self.template_atoms_uid = uid
-        self.atoms, self.size = \
+        atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
-        self.atoms = wrap_and_sort_by_position(self.atoms)
+        self.atoms_mng.atoms = wrap_and_sort_by_position(atoms)
 
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
 
         self.background_indices = self._get_background_indices()
-        self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
+        self.index_by_trans_symm = \
+            self.atoms_mng.group_indices_by_trans_symmetry(self.prim_cell)
         self.num_trans_symm = len(self.index_by_trans_symm)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
 
@@ -219,24 +218,24 @@ class ClusterExpansionSetting(object):
             uid = self.template_atoms.weighted_random_template()
         self._set_active_template_by_uid(uid)
 
-    def _tag_unit_cell(self):
+    def _tag_prim_cell(self):
         """Add a tag to all the atoms in the unit cell to track the index."""
-        for atom in self.unit_cell:
+        for atom in self.prim_cell:
             atom.tag = atom.index
 
-    def _store_unit_cell(self):
+    def _store_prim_cell(self):
         """Store unit cell to the database."""
         db = connect(self.db_name)
-        shape = self.unit_cell.get_cell_lengths_and_angles()
-        for row in db.select(name='unit_cell'):
+        shape = self.prim_cell.get_cell_lengths_and_angles()
+        for row in db.select(name='primitive_cell'):
             uc_shape = row.toatoms().get_cell_lengths_and_angles()
             if np.allclose(shape, uc_shape):
                 return row.id
 
-        uid = db.write(self.unit_cell, name='unit_cell')
+        uid = db.write(self.prim_cell, name='primitive_cell')
         return uid
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         raise NotImplementedError("This function has to be implemented in "
                                   "in derived classes.")
 
@@ -296,59 +295,8 @@ class ClusterExpansionSetting(object):
 
     def _get_atoms(self):
         """Create atoms with a user-specified size."""
-        atoms = self.unit_cell.copy() * self.size
+        atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
-
-    def _group_indices_by_trans_symmetry(self):
-        """Group indices by translational symmetry."""
-        indices = [a.index for a in self.unit_cell]
-        ref_indx = indices[0]
-        # Group all the indices together if its atomic number and position
-        # sequences are same
-        indx_by_equiv = []
-        shifted = self.unit_cell.copy()
-        shifted = wrap_and_sort_by_position(shifted)
-        an = shifted.get_atomic_numbers()
-        pos = shifted.get_positions()
-
-        temp = [[indices[0]]]
-        equiv_group_an = [an]
-        equiv_group_pos = [pos]
-        for indx in indices[1:]:
-            vec = self.unit_cell.get_distance(indx, ref_indx, vector=True)
-            shifted = self.unit_cell.copy()
-            shifted.translate(vec)
-            shifted = wrap_and_sort_by_position(shifted)
-            an = shifted.get_atomic_numbers()
-            pos = shifted.get_positions()
-
-            for equiv_group in range(len(temp)):
-                if (an == equiv_group_an[equiv_group]).all() and\
-                        np.allclose(pos, equiv_group_pos[equiv_group]):
-                    temp[equiv_group].append(indx)
-                    break
-                else:
-                    if equiv_group == len(temp) - 1:
-                        temp.append([indx])
-                        equiv_group_an.append(an)
-                        equiv_group_pos.append(pos)
-
-        for equiv_group in temp:
-            indx_by_equiv.append(equiv_group)
-
-        # Now we have found the translational symmetry group of all the atoms
-        # in the unit cell, now put all the indices of self.atoms into the
-        # matrix based on the tag
-        indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
-        symm_group_of_tag = [-1 for _ in range(len(self.unit_cell))]
-        for gr_id, group in enumerate(indx_by_equiv):
-            for item in group:
-                symm_group_of_tag[item] = gr_id
-
-        for atom in self.atoms:
-            symm_gr = symm_group_of_tag[atom.tag]
-            indx_by_equiv_all_atoms[symm_gr].append(atom.index)
-        return indx_by_equiv_all_atoms
 
     def _assign_correct_family_identifier(self):
         """Make the familily IDs increase size."""
@@ -373,37 +321,6 @@ class ClusterExpansionSetting(object):
             new_cluster_info.append(new_dict)
         self.cluster_info = new_cluster_info
 
-    def _corresponding_indices(self, indices, supercell):
-        """
-        Find the indices in supercell that correspond to the ones in
-        self.atoms
-
-        Parameters:
-
-        indices: list of int
-            Indices in self.atoms
-
-        supercell: Atoms object
-            Supercell object where we want to find the indices
-            corresponding to the position in self.atoms
-        """
-        supercell_indices = []
-        sc_pos = supercell.get_positions()
-        wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
-
-        dist_to_origin = np.sum(sc_pos**2, axis=1)
-        for indx in indices:
-            pos = self.atoms[indx].position
-            dist = wrapped_sc_pos - pos
-            lengths_sq = np.sum(dist**2, axis=1)
-            candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
-
-            # Pick reference index that is closest the origin of the
-            # supercell
-            temp_indx = np.argmin(dist_to_origin[candidates])
-            supercell_indices.append(candidates[temp_indx])
-        return supercell_indices
-
     def _check_max_cluster_dia(self, internal_distances):
         """
         Check that the maximum cluster diameter does not exactly correspond
@@ -417,10 +334,10 @@ class ClusterExpansionSetting(object):
                     "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
                 )
 
-    def _get_supercell(self, atoms):
-        for atom in atoms:
-            atom.tag = atom.index
-        supercell = close_to_cubic_supercell(atoms)
+    def _get_supercell(self):
+        # for atom in atoms:
+        #     atom.tag = atom.index
+        supercell = self.atoms_mng.close_to_cubic_supercell()
         max_cluster_dia_in_sc = \
             self._get_max_cluster_dia(supercell.get_cell().T)
 
@@ -430,8 +347,9 @@ class ClusterExpansionSetting(object):
             scale = 1
         supercell = supercell*(scale, scale, scale)
         supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = self._corresponding_indices(self.ref_index_trans_symm,
-                                                  supercell)
+        ref_indices = \
+            self.atoms_mng.corresponding_indices(self.ref_index_trans_symm,
+                                                 supercell)
 
         # Calculate the center of atomic positions in a supercell
         pos = supercell.get_positions()
@@ -511,11 +429,7 @@ class ClusterExpansionSetting(object):
                                equiv_sites = [[0, 1, 2, 3]]
             }
         """
-        atoms_cpy = self.atoms.copy()
-        for atom in atoms_cpy:
-            atom.tag = atom.index
-
-        supercell, ref_indices = self._get_supercell(atoms_cpy)
+        supercell, ref_indices = self._get_supercell()
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia), ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
@@ -691,35 +605,6 @@ class ClusterExpansionSetting(object):
                 info.append(item[name])
         return info
 
-    def _create_translation_matrix(self):
-        """Create and return translation matrix.
-
-        Translation matrix maps the indices of the atoms when an atom with the
-        translational symmetry is moved to the location of the reference atom.
-        Used in conjunction with cluster_indx to calculate the correlation
-        function of the structure.
-        """
-        natoms = len(self.atoms)
-        unique_indices = self.unique_indices
-
-        tm = [{} for _ in range(natoms)]
-
-        for i, ref_indx in enumerate(self.ref_index_trans_symm):
-            indices = index_by_position(self.atoms)
-            tm[ref_indx] = {col: indices[col] for col in unique_indices}
-
-            for indx in self.index_by_trans_symm[i]:
-                if indx == ref_indx:
-                    continue
-                shifted = self.atoms.copy()
-                vec = self.atoms.get_distance(indx, ref_indx, vector=True)
-                shifted.translate(vec)
-                shifted.wrap()
-
-                indices = index_by_position(shifted)
-                tm[indx] = {col: indices[col] for col in unique_indices}
-        return tm
-
     def get_min_distance(self, cluster, positions):
         """Get minimum distances.
 
@@ -854,7 +739,7 @@ class ClusterExpansionSetting(object):
         all_included = False
         counter = 0
         max_attempts = 1000
-        supercell, ref_indices = self._get_supercell(self.atoms.copy())
+        supercell, ref_indices = self._get_supercell()
 
         # We need to get the symmetry groups of the supercell. We utilise that
         # the supercell is tagged
@@ -900,12 +785,6 @@ class ClusterExpansionSetting(object):
                                "unique_indices are included")
         self.trans_matrix = [{k: row[k] for k in self.unique_indices}
                              for row in tm]
-        if self.check_old_tm_algorithm:
-            self.trans_matrix_old = self._create_translation_matrix()
-            for _ in range(len(self.trans_matrix)):
-                assert self.trans_matrix_old[_] == self.trans_matrix[_]
-            assert len(self.trans_matrix_old) == len(self.trans_matrix)
-            assert self.trans_matrix_old == self.trans_matrix
 
     def _store_data(self):
         size_str = nested_list2str(self.size)
@@ -960,30 +839,8 @@ class ClusterExpansionSetting(object):
                 continue
 
     def _group_index_by_basis(self):
-        indx_by_basis = []
-        for basis in self.basis_elements:
-            indx_by_basis.append([a.index for a in self.atoms if
-                                  a.symbol == basis[0]])
-
-        for basis in indx_by_basis:
-            basis.sort()
-        self.index_by_basis = indx_by_basis
-        return self.index_by_basis
-
-    def _group_index_by_basis_group(self):
-        if self.concentration.grouped_basis is None:
-            return self.index_by_basis
-
-        index_by_grouped_basis = []
-        for group in self.concentration.grouped_basis:
-            indices = []
-            for basis in group:
-                indices.extend(self.index_by_basis[basis])
-            index_by_grouped_basis.append(indices)
-
-        for basis in index_by_grouped_basis:
-            basis.sort()
-        return index_by_grouped_basis
+        first_symb_in_basis = [x[0] for x in self.basis_elements]
+        return self.atoms_mng.index_by_symbol(first_symb_in_basis)
 
     def view_clusters(self):
         """Display all clusters along with their names."""
@@ -1125,15 +982,15 @@ class ClusterExpansionSetting(object):
 
     def _get_shortest_distance_in_unitcell(self):
         """Find the shortest distance between the atoms in the unit cell."""
-        if len(self.unit_cell) == 1:
-            lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
+        if len(self.prim_cell) == 1:
+            lengths = self.prim_cell.get_cell_lengths_and_angles()[:3]
             return min(lengths)
 
         dists = []
-        for ref_atom in range(len(self.unit_cell)):
-            indices = list(range(len(self.unit_cell)))
+        for ref_atom in range(len(self.prim_cell)):
+            indices = list(range(len(self.prim_cell)))
             indices.remove(ref_atom)
-            dists += list(self.unit_cell.get_distances(ref_atom, indices,
+            dists += list(self._cell.get_distances(ref_atom, indices,
                                                        mic=True))
         return min(dists)
 

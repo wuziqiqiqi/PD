@@ -108,7 +108,7 @@ class CEBulk(ClusterExpansionSetting):
 
         self._check_first_elements()
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         basis_elements = self.concentration.orig_basis_elements
         num_basis = len(basis_elements)
         if num_basis == 1:
@@ -130,9 +130,6 @@ class CEBulk(ClusterExpansionSetting):
                          c=self.c, covera=self.covera, u=self.u)
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
-
-    def _group_index_by_basis_group(self):
-        return self.index_by_basis
 
     @staticmethod
     def load(filename):
@@ -246,7 +243,7 @@ class CECrystal(ClusterExpansionSetting):
 
         self._check_first_elements()
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         atoms = crystal(symbols=self.symbols, basis=self.basis,
                         spacegroup=self.spacegroup, cell=self.cell,
                         cellpar=self.cellpar, ab_normal=self.ab_normal,
