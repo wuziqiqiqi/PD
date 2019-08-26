@@ -73,14 +73,14 @@ class ClusterExtractor(object):
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
 
-            diag = np.diag(X)
+            diag = np.diagonal(X)
             off_diag = []
             for i in range(1, X.shape[0]):
-                off_diag += np.diag(X, offset=i).tolist()
+                off_diag += np.diagonal(X, offset=i).tolist()
             N = X.shape[0]
             assert len(off_diag) == N*(N-1)/2
 
-            inner = sorted(diag) + sorted(off_diag)
+            inner = np.array(sorted(diag) + sorted(off_diag))
             group = self._get_type(inner)
 
             all_indices = self._order_by_internal_distances(all_indices)
