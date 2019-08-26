@@ -21,6 +21,7 @@ from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
+from clease import AtomsManager
 from clease.tools import close_to_cubic_supercell
 from ase.geometry import wrap_positions
 
@@ -54,9 +55,9 @@ class ClusterExpansionSetting(object):
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
 
-        self.unit_cell = self._get_unit_cell()
-        self._tag_unit_cell()
-        self._store_unit_cell()
+        self.prim_cell = self._get_prim_cell()
+        self._tag_prim_cell()
+        self._store_prim_cell()
         self.float_max_dia, self.float_ang, self.float_dist = \
             self._init_floating_point_classifiers()
 
@@ -64,6 +65,7 @@ class ClusterExpansionSetting(object):
                                             size=self.size,
                                             skew_threshold=skew_threshold,
                                             db_name=self.db_name)
+        self.atoms_manager = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
@@ -127,19 +129,24 @@ class ClusterExpansionSetting(object):
     def unique_element_without_background(self):
         """Remove backgound elements."""
         if not self.ignore_background_atoms:
-            return self.unique_elements
-        symbs = []
-        for indx in self.background_indices:
-            symbs.append(self.atoms[indx].symbol)
-        symbs = list(set(symbs))
+            return self.atoms_manager.unique_elements()
 
-        for atom in self.atoms:
-            if atom.index in self.background_indices:
-                continue
-            if atom.symbol in symbs:
-                symbs.remove(atom.symbol)
-        filtered = [e for e in self.unique_elements if e not in symbs]
-        return filtered
+        bg_sym = [x[0] for x in self.basis_elements if len(x) == 1]
+        return self.atoms_manager.unique_elements(ignore=bg_sym)
+        # if not self.ignore_background_atoms:
+        #     return self.unique_elements
+        # symbs = []
+        # for indx in self.background_indices:
+        #     symbs.append(self.atoms[indx].symbol)
+        # symbs = list(set(symbs))
+
+        # for atom in self.atoms:
+        #     if atom.index in self.background_indices:
+        #         continue
+        #     if atom.symbol in symbs:
+        #         symbs.remove(atom.symbol)
+        # filtered = [e for e in self.unique_elements if e not in symbs]
+        # return filtered
 
     def _store_floating_point_classifiers(self):
         """Store classifiers in a separate DB entry."""
@@ -217,24 +224,24 @@ class ClusterExpansionSetting(object):
             uid = self.template_atoms.weighted_random_template()
         self._set_active_template_by_uid(uid)
 
-    def _tag_unit_cell(self):
+    def _tag_prim_cell(self):
         """Add a tag to all the atoms in the unit cell to track the index."""
-        for atom in self.unit_cell:
+        for atom in self.prim_cell:
             atom.tag = atom.index
 
-    def _store_unit_cell(self):
+    def _store_prim_cell(self):
         """Store unit cell to the database."""
         db = connect(self.db_name)
-        shape = self.unit_cell.get_cell_lengths_and_angles()
-        for row in db.select(name='unit_cell'):
+        shape = self.prim_cell.get_cell_lengths_and_angles()
+        for row in db.select(name='primitive_cell'):
             uc_shape = row.toatoms().get_cell_lengths_and_angles()
             if np.allclose(shape, uc_shape):
                 return row.id
 
-        uid = db.write(self.unit_cell, name='unit_cell')
+        uid = db.write(self.prim_cell, name='primitive_cell')
         return uid
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         raise NotImplementedError("This function has to be implemented in "
                                   "in derived classes.")
 
@@ -294,17 +301,23 @@ class ClusterExpansionSetting(object):
 
     def _get_atoms(self):
         """Create atoms with a user-specified size."""
-        atoms = self.unit_cell.copy() * self.size
+        atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
 
     # def _group_indices_by_trans_symmetry(self):
     #     """Group indices by translational symmetry."""
-    #     indices = [a.index for a in self.unit_cell]
+
+    #     # Group by unit cell index scheme
+    #     groups = [[] for _ in self.prim_cell]
+    #     for atom in self.atoms:
+    #         groups[atom.tag].append(atom.index)
+    #     return groups
+    #     indices = [a.index for a in self.prim_cell]
     #     ref_indx = indices[0]
     #     # Group all the indices together if its atomic number and position
     #     # sequences are same
     #     indx_by_equiv = []
-    #     shifted = self.unit_cell.copy()
+    #     shifted = self.prim_cell.copy()
     #     shifted = wrap_and_sort_by_position(shifted)
     #     an = shifted.get_atomic_numbers()
     #     pos = shifted.get_positions()
@@ -313,8 +326,8 @@ class ClusterExpansionSetting(object):
     #     equiv_group_an = [an]
     #     equiv_group_pos = [pos]
     #     for indx in indices[1:]:
-    #         vec = self.unit_cell.get_distance(indx, ref_indx, vector=True)
-    #         shifted = self.unit_cell.copy()
+    #         vec = self.prim_cell.get_distance(indx, ref_indx, vector=True)
+    #         shifted = self.prim_cell.copy()
     #         shifted.translate(vec)
     #         shifted = wrap_and_sort_by_position(shifted)
     #         an = shifted.get_atomic_numbers()
@@ -338,7 +351,7 @@ class ClusterExpansionSetting(object):
     #     # in the unit cell, now put all the indices of self.atoms into the
     #     # matrix based on the tag
     #     indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
-    #     symm_group_of_tag = [-1 for _ in range(len(self.unit_cell))]
+    #     symm_group_of_tag = [-1 for _ in range(len(self.prim_cell))]
     #     for gr_id, group in enumerate(indx_by_equiv):
     #         for item in group:
     #             symm_group_of_tag[item] = gr_id
@@ -1123,15 +1136,15 @@ class ClusterExpansionSetting(object):
 
     def _get_shortest_distance_in_unitcell(self):
         """Find the shortest distance between the atoms in the unit cell."""
-        if len(self.unit_cell) == 1:
-            lengths = self.unit_cell.get_cell_lengths_and_angles()[:3]
+        if len(self.prim_cell) == 1:
+            lengths = self.prim_cell.get_cell_lengths_and_angles()[:3]
             return min(lengths)
 
         dists = []
-        for ref_atom in range(len(self.unit_cell)):
-            indices = list(range(len(self.unit_cell)))
+        for ref_atom in range(len(self.prim_cell)):
+            indices = list(range(len(self.prim_cell)))
             indices.remove(ref_atom)
-            dists += list(self.unit_cell.get_distances(ref_atom, indices,
+            dists += list(self._cell.get_distances(ref_atom, indices,
                                                        mic=True))
         return min(dists)
 

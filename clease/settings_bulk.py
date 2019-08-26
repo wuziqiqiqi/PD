@@ -108,7 +108,7 @@ class CEBulk(ClusterExpansionSetting):
 
         self._check_first_elements()
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         basis_elements = self.concentration.orig_basis_elements
         num_basis = len(basis_elements)
         if num_basis == 1:
@@ -246,7 +246,7 @@ class CECrystal(ClusterExpansionSetting):
 
         self._check_first_elements()
 
-    def _get_unit_cell(self):
+    def _get_prim_cell(self):
         atoms = crystal(symbols=self.symbols, basis=self.basis,
                         spacegroup=self.spacegroup, cell=self.cell,
                         cellpar=self.cellpar, ab_normal=self.ab_normal,

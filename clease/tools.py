@@ -264,7 +264,7 @@ def exclude_information_entries():
     """Return selection condition to exlcude all entries in the database that
        only contain information about the clusters.
     """
-    return [('name', '!=', 'unit_cell'),
+    return [('name', '!=', 'primitive_cell'),
             ('name', '!=', 'template'),
             ('name', '!=', 'float_classification')]
 

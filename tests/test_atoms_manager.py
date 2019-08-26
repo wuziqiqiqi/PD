@@ -73,13 +73,13 @@ class TestAtomsManager(unittest.TestCase):
         self.assertEqual(sorted(unique_elem), ['Na'])
 
     def test_tag_by_corresponding_atom(self):
-        unit_cell = bulk('Mg', crystalstructure='hcp')
-        unit_cell[0].symbol = 'Mg'
-        unit_cell[1].symbol = 'Zn'
+        prim_cell = bulk('Mg', crystalstructure='hcp')
+        prim_cell[0].symbol = 'Mg'
+        prim_cell[1].symbol = 'Zn'
 
-        atoms = unit_cell*(2, 3, 4)
+        atoms = prim_cell*(2, 3, 4)
         manager = AtomsManager(atoms)
-        manager.tag_indices_of_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(prim_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Mg':
@@ -88,13 +88,13 @@ class TestAtomsManager(unittest.TestCase):
                 self.assertEqual(atom.tag, 1)
 
     def test_tag_by_corresponding_primitive_conventional(self):
-        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
-        unit_cell.wrap()
+        prim_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        prim_cell.wrap()
         atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0, cubic=True)
         atoms = atoms*(3, 4, 5)
 
         manager = AtomsManager(atoms)
-        manager.tag_indices_of_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(prim_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Na':
@@ -103,14 +103,14 @@ class TestAtomsManager(unittest.TestCase):
                 self.assertEqual(atom.tag, 1)
 
     def test_raise_if_not_match(self):
-        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
-        unit_cell.wrap()
+        prim_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        prim_cell.wrap()
         atoms = bulk('Mg', crystalstructure='hcp')
         atoms = atoms*(3, 4, 5)
 
         manager = AtomsManager(atoms)
         with self.assertRaises(ValueError):
-            manager.tag_indices_of_corresponding_atom(unit_cell)
+            manager.tag_indices_of_corresponding_atom(prim_cell)
 
 
 if __name__ == '__main__':

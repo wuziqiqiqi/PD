@@ -6,19 +6,19 @@ from clease.tools import wrap_and_sort_by_position
 
 class AtomsManager(object):
     """
-    Class that manages the Atoms object used in a cluster expansion
-    context. This class can return indices of the Atoms object grouped
-    according to various schemes.
+    Manager class for the Atoms object used in a cluster expansion context.
+    This class can return indices of the Atoms object grouped according to
+    various schemes.
     """
 
     def __init__(self, atoms):
         self.atoms = atoms
 
     def index_by_tag(self):
-        """
-        Return atomic indices that are grouped by their tags.
-        Assumes that all atoms are tagged and the tags are in a continuous
-        sequence starting from 0.
+        """Return atomic indices that are grouped by their tags.
+
+        This method assumes that all atoms are tagged and the tags are in a
+        continuous sequence starting from 0.
         """
         tags = set()
         for atom in self.atoms:
@@ -66,7 +66,13 @@ class AtomsManager(object):
         return ind_by_symbol
 
     def unique_elements(self, ignore=[]):
-        """Return a list of symbols of unique elements."""
+        """Return a list of symbols of unique elements.
+
+        Parameters:
+
+        ignore: list
+            list of symbols to ignore in finding unique elements.
+        """
         all_unique = set([a.symbol for a in self.atoms])
         return list(all_unique - set(ignore))
 
@@ -134,10 +140,9 @@ class AtomsManager(object):
         # Group all the indices together if its atomic number and position
         # sequences are same
         indx_by_equiv = []
-        shifted = prim_cell.copy()
-        shifted = wrap_and_sort_by_position(shifted)
-        an = shifted.get_atomic_numbers()
-        pos = shifted.get_positions()
+        shifted = wrap_and_sort_by_position(prim_cell.copy())
+        an = shifted.get_atomic_numbers()   # atomic number
+        pos = shifted.get_positions()       # positions
 
         temp = [[indices[0]]]
         equiv_group_an = [an]
