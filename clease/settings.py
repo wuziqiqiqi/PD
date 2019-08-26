@@ -22,6 +22,7 @@ from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
+from clease.name_clusters import name_clusters
 from ase.geometry import wrap_positions
 
 
@@ -363,195 +364,220 @@ class ClusterExpansionSetting(object):
         supercell.wrap()
         return supercell, ref_indices
 
-    def _create_cluster_information(self):
-        """Create a set of parameters describing the structure.
-
-        Return cluster_info.
-
-        cluster_info: list
-            list of dictionaries with information of all clusters
-            The dictionaries have the following form:
-            {
-             "name": Unique name describing the cluster.
-                     Example:
-                        "c3_3p725_1"
-                     means it is a 3-body cluster (c3) with a cluster diameter
-                     3.725 angstroms (3p275). The last number is a unique
-                     family identification number assigned to all cluster
-                     families.
-
-             "descriptor": A string that contains a description of the cluster
-                           including all of the internal distances and angles.
-
-             "size": Number of atoms in the clusters.
-
-             "symm_group": Translational symmetry group of the cluster
-
-             "ref_indx": Index of a reference atom for the prototype cluster.
-
-             "indices": List containing the indices of atoms in a cluster.
-                        There can be more than on set of indices that form the
-                        same cluster family, so it is in a list of list format.
-                        An example of a three body cluster:
-                            ref_indx: 0
-                            indices: [[1, 2, 6], [7, 8, 27], [10, 19, 30]]
-                        A full list of indices in the cluster is obtained by
-                            [ref_indx] + [10, 19, 30] --> [0, 10, 19, 30]
-
-             "order": The order in which the atoms in the clusters are
-                      represented. The indices of atoms in a cluster need to be
-                      sorted in a prefined order to ensure a consistent
-                      assignment of the basis function.
-                      With the same 4-body cluster above, the 3 sets of indices
-                      can have the order defined as:
-                        [[0, 1, 2, 3], [1, 3, 2, 0], [2, 0, 3, 1]].
-                      Then, the third cluster in the example is sorted as
-                        Unordered: [ref_indx] + [10, 19, 30] -> [0, 10, 19, 30]
-                        Ordered: [19, 0, 30, 10]
-
-             "equiv_sites": List of indices of symmetrically equivalent sites.
-                            After ordering, the symmetrically equivalent sites
-                            are the same for all clusters in the family.
-                            The same 4-body cluster example:
-                            1) If the clusters have no equivalent sites,
-                               this equiv_sites = []
-                            2) If atoms in position 1 and 2 of the ordered
-                               cluster list are equivalent, then
-                               equiv_sites = [[1, 2]]. Which means that
-                               0 and 30 in the cluster [19, 0, 30, 10] are
-                               equivalent
-                            3) If atom 1, 2 are equivalent and atom 0, 3
-                               are equivalent equiv_sites = [[1, 2], [0, 3]]
-                               For the cluster [19, 0, 30, 10] that means that
-                               0 and 30 are equivalent, and 19 and 10 are
-                               equivalent
-                            4) If all atoms are symmetrically equivalent
-                               equiv_sites = [[0, 1, 2, 3]]
-            }
+    def _create_cluster_info(self):
+        """
+        Hello World
         """
         supercell, ref_indices = self._get_supercell()
-        supercell.info['distances'] = get_all_internal_distances(
-            supercell, max(self.max_cluster_dia), ref_indices)
+        supercell.info['distances'] = \
+            get_all_internal_distances(supercell, max(self.max_cluster_dia),
+                                       ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
-        positions = supercell.get_positions()
         cluster_info = []
-        fam_identifier = []
 
-        # determine cluster information for each inequivalent site
-        # (based on translation symmetry)
-        # for site, ref_indx in enumerate(self.ref_index_trans_symm):
-        for site, ref_indx in enumerate(ref_indices):
-            if (supercell[ref_indx].tag in self.background_indices and
-                    self.ignore_background_atoms):
-                cluster_info.append({})
-                continue
-            cluster_info_symm = {}
-            cluster_info_symm['c0'] = {
-                "indices": [],
-                "equiv_sites": [],
-                "order": [],
-                "ref_indx": self.ref_index_trans_symm[site],
-                "symm_group": site,
-                "descriptor": "empty",
-                "name": "c0",
-                "max_cluster_dia": 0.0,
-                "size": 0
-            }
+        extractor = ClusterExtractor(supercell)
+        for size in range(2, self.max_cluster_size+1):
+            all_clusters = []
+            all_equiv_sites = []
+            fingerprints = []
+            for ref_indx in ref_indices:
+                clusters = extractor.extract(ref_indx=ref_indx, size=size,
+                                             cutoff=self.max_cluster_dia[size])
+                #print("cluster", clusters)
+                equiv_sites = [x[0] for x in clusters]
+                all_equiv_sites.append(equiv_sites)
+                fingerprints += [x.tolist() for x in extractor.inner_prod]
+                all_clusters.append(clusters)
+            fingerprints.sort()
+            # print(fingerprints)
+            print('I am in create_cluster_info with size = {}'.format(size))
+            names = name_clusters(fingerprints)
+            print(names)
+        return cluster_info
 
-            cluster_info_symm['c1'] = {
-                "indices": [],
-                "equiv_sites": [],
-                "order": [0],
-                "ref_indx": self.ref_index_trans_symm[site],
-                "symm_group": site,
-                "descriptor": "point_cluster",
-                "name": 'c1',
-                "max_cluster_dia": 0.0,
-                "size": 1
-            }
+    # def _create_cluster_information(self):
+    #     """Create a set of parameters describing the structure.
 
-            for size in range(2, self.max_cluster_size + 1):
-                indices = self.indices_of_nearby_atom(ref_indx, size,
-                                                      positions)
-                if self.ignore_background_atoms:
-                    indices = [i for i in indices if
-                               supercell[i].tag not in self.background_indices]
-                indx_set = []
-                descriptor_str = []
-                order_set = []
-                equiv_sites_set = []
-                max_cluster_diameter = []
-                for k in combinations(indices, size - 1):
-                    d = self.get_min_distance((ref_indx,) + k, positions)
-                    if max(d) > self.max_cluster_dia[size]:
-                        continue
-                    order, eq_sites, string_description = \
-                        sort_by_internal_distances(supercell, (ref_indx,) + k,
-                                                   self.float_ang)
-                    descriptor_str.append(string_description)
-                    indx_set.append(k)
-                    order_set.append(order)
-                    equiv_sites_set.append(eq_sites)
-                    max_cluster_diameter.append(max(d))
+    #     Return cluster_info.
 
-                if not descriptor_str:
-                    msg = "There is no cluster with size {}.\n".format(size)
-                    msg += "Reduce max_cluster_size or "
-                    msg += "increase max_cluster_dia."
-                    raise ValueError(msg)
+    #     cluster_info: list
+    #         list of dictionaries with information of all clusters
+    #         The dictionaries have the following form:
+    #         {
+    #          "name": Unique name describing the cluster.
 
-                # categorize the distances
-                unique_descriptors = list(set(descriptor_str))
-                unique_descriptors = sorted(unique_descriptors, reverse=True)
+    #          "descriptor": A string that contains a description of the cluster
+    #                        including all of the internal distances and angles.
 
-                for descr in unique_descriptors:
-                    if descr not in fam_identifier:
-                        fam_identifier.append(descr)
+    #          "size": Number of atoms in the clusters.
 
-                for desc in unique_descriptors:
-                    # Find the maximum cluster diameter of this category
-                    indx = descriptor_str.index(desc)
-                    max_dia = distance_string(supercell.info["distances"],
-                                              max_cluster_diameter[indx])
+    #          "symm_group": Translational symmetry group of the cluster
 
-                    fam_id = fam_identifier.index(desc)
-                    name = get_unique_name(size, max_dia, fam_id)
+    #          "ref_indx": Index of a reference atom for the prototype cluster.
 
-                    cluster_info_symm[name] = {
-                        "indices": [],
-                        "equiv_sites": equiv_sites_set[indx],
-                        "order": [],
-                        "ref_indx": self.ref_index_trans_symm[site],
-                        "symm_group": site,
-                        "descriptor": desc,
-                        "name": name,
-                        "max_cluster_dia": max_cluster_diameter[indx],
-                        "size": size,
-                    }
+    #          "indices": List containing the indices of atoms in a cluster.
+    #                     There can be more than on set of indices that form the
+    #                     same cluster family, so it is in a list of list format.
+    #                     An example of a three body cluster:
+    #                         ref_indx: 0
+    #                         indices: [[1, 2, 6], [7, 8, 27], [10, 19, 30]]
+    #                     A full list of indices in the cluster is obtained by
+    #                         [ref_indx] + [10, 19, 30] --> [0, 10, 19, 30]
 
-                for x in range(len(indx_set)):
-                    category = unique_descriptors.index(descriptor_str[x])
-                    max_dia = distance_string(supercell.info["distances"],
-                                              max_cluster_diameter[x])
-                    fam_id = fam_identifier.index(unique_descriptors[category])
-                    name = get_unique_name(size, max_dia, fam_id)
+    #          "order": The order in which the atoms in the clusters are
+    #                   represented. The indices of atoms in a cluster need to be
+    #                   sorted in a prefined order to ensure a consistent
+    #                   assignment of the basis function.
+    #                   With the same 4-body cluster above, the 3 sets of indices
+    #                   can have the order defined as:
+    #                     [[0, 1, 2, 3], [1, 3, 2, 0], [2, 0, 3, 1]].
+    #                   Then, the third cluster in the example is sorted as
+    #                     Unordered: [ref_indx] + [10, 19, 30] -> [0, 10, 19, 30]
+    #                     Ordered: [19, 0, 30, 10]
 
-                    sc_index_set = indx_set[x]
-                    index_set = []
-                    for indx in sc_index_set:
-                        index_set.append(int(supercell[indx].tag))
-                    cluster_info_symm[name]["indices"].append(index_set)
-                    cluster_info_symm[name]["order"].append(order_set[x])
+    #          "equiv_sites": List of indices of symmetrically equivalent sites.
+    #                         After ordering, the symmetrically equivalent sites
+    #                         are the same for all clusters in the family.
+    #                         The same 4-body cluster example:
+    #                         1) If the clusters have no equivalent sites,
+    #                            this equiv_sites = []
+    #                         2) If atoms in position 1 and 2 of the ordered
+    #                            cluster list are equivalent, then
+    #                            equiv_sites = [[1, 2]]. Which means that
+    #                            0 and 30 in the cluster [19, 0, 30, 10] are
+    #                            equivalent
+    #                         3) If atom 1, 2 are equivalent and atom 0, 3
+    #                            are equivalent equiv_sites = [[1, 2], [0, 3]]
+    #                            For the cluster [19, 0, 30, 10] that means that
+    #                            0 and 30 are equivalent, and 19 and 10 are
+    #                            equivalent
+    #                         4) If all atoms are symmetrically equivalent
+    #                            equiv_sites = [[0, 1, 2, 3]]
+    #         }
+    #     """
+    #     supercell, ref_indices = self._get_supercell()
+    #     supercell.info['distances'] = get_all_internal_distances(
+    #         supercell, max(self.max_cluster_dia), ref_indices)
+    #     self._check_max_cluster_dia(supercell.info['distances'])
+    #     positions = supercell.get_positions()
+    #     cluster_info = []
+    #     fam_identifier = []
 
-                    assert cluster_info_symm[name]["equiv_sites"] \
-                        == equiv_sites_set[x]
-                    assert cluster_info_symm[name]["descriptor"] == \
-                        descriptor_str[x]
+    #     # determine cluster information for each inequivalent site
+    #     # (based on translation symmetry)
+    #     # for site, ref_indx in enumerate(self.ref_index_trans_symm):
+    #     for site, ref_indx in enumerate(ref_indices):
+    #         if (supercell[ref_indx].tag in self.background_indices and
+    #                 self.ignore_background_atoms):
+    #             cluster_info.append({})
+    #             continue
+    #         cluster_info_symm = {}
+    #         cluster_info_symm['c0'] = {
+    #             "indices": [],
+    #             "equiv_sites": [],
+    #             "order": [],
+    #             "ref_indx": self.ref_index_trans_symm[site],
+    #             "symm_group": site,
+    #             "descriptor": "empty",
+    #             "name": "c0",
+    #             "max_cluster_dia": 0.0,
+    #             "size": 0
+    #         }
 
-            cluster_info.append(cluster_info_symm)
-        self.cluster_info = cluster_info
-        self._assign_correct_family_identifier()
-        self._store_floating_point_classifiers()
+    #         cluster_info_symm['c1'] = {
+    #             "indices": [],
+    #             "equiv_sites": [],
+    #             "order": [0],
+    #             "ref_indx": self.ref_index_trans_symm[site],
+    #             "symm_group": site,
+    #             "descriptor": "point_cluster",
+    #             "name": 'c1',
+    #             "max_cluster_dia": 0.0,
+    #             "size": 1
+    #         }
+
+    #         for size in range(2, self.max_cluster_size + 1):
+    #             indices = self.indices_of_nearby_atom(ref_indx, size,
+    #                                                   positions)
+    #             if self.ignore_background_atoms:
+    #                 indices = [i for i in indices if
+    #                            supercell[i].tag not in self.background_indices]
+    #             indx_set = []
+    #             descriptor_str = []
+    #             order_set = []
+    #             equiv_sites_set = []
+    #             max_cluster_diameter = []
+    #             for k in combinations(indices, size - 1):
+    #                 d = self.get_min_distance((ref_indx,) + k, positions)
+    #                 if max(d) > self.max_cluster_dia[size]:
+    #                     continue
+    #                 order, eq_sites, string_description = \
+    #                     sort_by_internal_distances(supercell, (ref_indx,) + k,
+    #                                                self.float_ang)
+    #                 descriptor_str.append(string_description)
+    #                 indx_set.append(k)
+    #                 order_set.append(order)
+    #                 equiv_sites_set.append(eq_sites)
+    #                 max_cluster_diameter.append(max(d))
+
+    #             if not descriptor_str:
+    #                 msg = "There is no cluster with size {}.\n".format(size)
+    #                 msg += "Reduce max_cluster_size or "
+    #                 msg += "increase max_cluster_dia."
+    #                 raise ValueError(msg)
+
+    #             # categorize the distances
+    #             unique_descriptors = list(set(descriptor_str))
+    #             unique_descriptors = sorted(unique_descriptors, reverse=True)
+
+    #             for descr in unique_descriptors:
+    #                 if descr not in fam_identifier:
+    #                     fam_identifier.append(descr)
+
+    #             for desc in unique_descriptors:
+    #                 # Find the maximum cluster diameter of this category
+    #                 indx = descriptor_str.index(desc)
+    #                 max_dia = distance_string(supercell.info["distances"],
+    #                                           max_cluster_diameter[indx])
+
+    #                 fam_id = fam_identifier.index(desc)
+    #                 name = get_unique_name(size, max_dia, fam_id)
+
+    #                 cluster_info_symm[name] = {
+    #                     "indices": [],
+    #                     "equiv_sites": equiv_sites_set[indx],
+    #                     "order": [],
+    #                     "ref_indx": self.ref_index_trans_symm[site],
+    #                     "symm_group": site,
+    #                     "descriptor": desc,
+    #                     "name": name,
+    #                     "max_cluster_dia": max_cluster_diameter[indx],
+    #                     "size": size,
+    #                 }
+
+    #             for x in range(len(indx_set)):
+    #                 category = unique_descriptors.index(descriptor_str[x])
+    #                 max_dia = distance_string(supercell.info["distances"],
+    #                                           max_cluster_diameter[x])
+    #                 fam_id = fam_identifier.index(unique_descriptors[category])
+    #                 name = get_unique_name(size, max_dia, fam_id)
+
+    #                 sc_index_set = indx_set[x]
+    #                 index_set = []
+    #                 for indx in sc_index_set:
+    #                     index_set.append(int(supercell[indx].tag))
+    #                 cluster_info_symm[name]["indices"].append(index_set)
+    #                 cluster_info_symm[name]["order"].append(order_set[x])
+
+    #                 assert cluster_info_symm[name]["equiv_sites"] \
+    #                     == equiv_sites_set[x]
+    #                 assert cluster_info_symm[name]["descriptor"] == \
+    #                     descriptor_str[x]
+
+    #         cluster_info.append(cluster_info_symm)
+    #     self.cluster_info = cluster_info
+    #     self._assign_correct_family_identifier()
+    #     self._store_floating_point_classifiers()
 
     @property
     def unique_indices(self):
@@ -727,7 +753,7 @@ class ClusterExpansionSetting(object):
         return max_dist
 
     def create_cluster_info_and_trans_matrix(self):
-        self._create_cluster_information()
+        self._create_cluster_info()
 
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()

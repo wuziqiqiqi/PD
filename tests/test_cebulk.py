@@ -136,7 +136,8 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
         bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                            concentration=concentration, db_name=db_name)
+                            concentration=concentration,
+                            db_name=db_name)
 
         newstruct = NewStructures(bc_setting, struct_per_gen=3)
         newstruct.generate_initial_pool()

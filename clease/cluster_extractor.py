@@ -80,7 +80,7 @@ class ClusterExtractor(object):
             N = X.shape[0]
             assert len(off_diag) == N*(N-1)/2
 
-            inner = np.array(sorted(diag) + sorted(off_diag))
+            inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
             group = self._get_type(inner)
 
             all_indices = self._order_by_internal_distances(all_indices)
