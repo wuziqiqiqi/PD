@@ -824,7 +824,7 @@ class ClusterExpansionSetting(object):
             row = db.get(name="template", size=self._size2string())
             db.update(row.id, data=data)
         except KeyError:
-            db.write(self.atoms, name='template', data=data,
+            db.write(self.atoms_mng.atoms, name='template', data=data,
                      size=self._size2string())
 
     def _read_data(self):
@@ -862,15 +862,8 @@ class ClusterExpansionSetting(object):
                 continue
 
     def _group_index_by_basis(self):
-        indx_by_basis = []
-        for basis in self.basis_elements:
-            indx_by_basis.append([a.index for a in self.atoms if
-                                  a.symbol == basis[0]])
-
-        for basis in indx_by_basis:
-            basis.sort()
-        self.index_by_basis = indx_by_basis
-        return self.index_by_basis
+        first_symb_in_basis = [x[0] for x in self.basis_elements]
+        return self.atoms_mng.index_by_symbol(first_symb_in_basis)
 
     def _group_index_by_basis_group(self):
         if self.concentration.grouped_basis is None:
