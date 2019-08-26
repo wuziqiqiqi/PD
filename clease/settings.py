@@ -65,7 +65,7 @@ class ClusterExpansionSetting(object):
                                             size=self.size,
                                             skew_threshold=skew_threshold,
                                             db_name=self.db_name)
-        self.atoms_manager = AtomsManager(None)
+        self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
@@ -129,10 +129,10 @@ class ClusterExpansionSetting(object):
     def unique_element_without_background(self):
         """Remove backgound elements."""
         if not self.ignore_background_atoms:
-            return self.atoms_manager.unique_elements()
+            return self.atoms_mng.unique_elements()
 
         bg_sym = [x[0] for x in self.basis_elements if len(x) == 1]
-        return self.atoms_manager.unique_elements(ignore=bg_sym)
+        return self.atoms_mng.unique_elements(ignore=bg_sym)
 
     def _store_floating_point_classifiers(self):
         """Store classifiers in a separate DB entry."""
@@ -174,15 +174,15 @@ class ClusterExpansionSetting(object):
     def prepare_new_active_template(self, uid):
         """Prepare necessary data structures when setting new template."""
         self.template_atoms_uid = uid
-        self.atoms, self.size = \
+        atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
-        self.atoms = wrap_and_sort_by_position(self.atoms)
+        self.atoms_mng.atoms = wrap_and_sort_by_position(atoms)
 
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
 
         self.background_indices = self._get_background_indices()
-        self.index_by_trans_symm = self._group_indices_by_trans_symmetry()
+        self.index_by_trans_symm = self.atoms_mng.group_indices_by_trans_symmetry()
         self.num_trans_symm = len(self.index_by_trans_symm)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
 
