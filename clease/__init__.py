@@ -12,6 +12,7 @@ def set_fd(fd):
 from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import ValidConcentrationFilter
 from clease.atoms_manager import AtomsManager
+from clease.cluster_extractor import ClusterExtractor
 from clease.settings_bulk import CEBulk, CECrystal
 from clease.evaluate import Evaluate
 from clease.corrFunc import CorrFunction
@@ -27,4 +28,4 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'NewStructures', 'NewStructures', 'Evaluate', 'AtomsManager',
            'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
            'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
-           'SkewnessFilter']
+           'SkewnessFilter', 'ClusterExtractor']

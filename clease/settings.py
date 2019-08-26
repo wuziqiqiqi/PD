@@ -9,7 +9,7 @@ from copy import deepcopy
 import numpy as np
 from ase.db import connect
 
-from clease import _logger, LogVerbosity
+from clease import _logger, LogVerbosity, ClusterExtractor
 from clease.floating_point_classification import FloatingPointClassifier
 from clease.tools import (wrap_and_sort_by_position, index_by_position,
                           flatten, sort_by_internal_distances,
