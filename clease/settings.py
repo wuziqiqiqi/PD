@@ -725,7 +725,7 @@ class ClusterExpansionSetting(object):
         return clusters
 
     def _get_symm_groups(self):
-        symm_groups = -np.ones(len(self.atoms), dtype=int)
+        symm_groups = -np.ones(len(self.atoms_mng.atoms), dtype=int)
 
         for group, indices in enumerate(self.index_by_trans_symm):
             symm_groups[indices] = group
@@ -740,7 +740,7 @@ class ClusterExpansionSetting(object):
         for ref in indices:
             # MIC distance is a lower bound for the distance used in the
             # cluster
-            mic_distances = self.atoms.get_distances(ref, indices, mic=True)
+            mic_distances = self.atoms_mng.atoms.get_distances(ref, indices, mic=True)
             dist = np.max(mic_distances)
             if dist > max_dist:
                 max_dist = dist
@@ -772,7 +772,7 @@ class ClusterExpansionSetting(object):
 
         # Make as efficient as possible by evaluating only a subset of
         # the indices
-        indices = [-1 for _ in range(len(self.atoms))]
+        indices = [-1 for _ in range(len(self.atoms_mng.atoms))]
         for atom in supercell:
             if indices[atom.tag] == -1:
                 indices[atom.tag] = atom.index
@@ -905,7 +905,7 @@ class ClusterExpansionSetting(object):
             ref_indx = self.ref_index_trans_symm[symm]
             name = cluster["name"]
 
-            atoms = self.atoms.copy()
+            atoms = self.atoms_mng.atoms.copy()
 
             keep_indx = [ref_indx] + list(cluster["indices"][0])
             equiv = list(cluster["equiv_sites"])
