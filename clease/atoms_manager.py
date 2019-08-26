@@ -182,3 +182,34 @@ class AtomsManager(object):
             symm_gr = symm_group_of_tag[atom.tag]
             indx_by_equiv_all_atoms[symm_gr].append(atom.index)
         return indx_by_equiv_all_atoms
+
+    def corresponding_indices(self, indices, supercell):
+        """
+        Find the indices in supercell that correspond to the ones in
+        self.atoms
+
+        Parameters:
+
+        indices: list of int
+            Indices in self.atoms
+
+        supercell: Atoms object
+            Supercell object where we want to find the indices
+            corresponding to the position in self.atoms
+        """
+        supercell_indices = []
+        sc_pos = supercell.get_positions()
+        wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
+
+        dist_to_origin = np.sum(sc_pos**2, axis=1)
+        for indx in indices:
+            pos = self.atoms[indx].position
+            dist = wrapped_sc_pos - pos
+            lengths_sq = np.sum(dist**2, axis=1)
+            candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
+
+            # Pick reference index that is closest the origin of the
+            # supercell
+            temp_indx = np.argmin(dist_to_origin[candidates])
+            supercell_indices.append(candidates[temp_indx])
+        return supercell_indices

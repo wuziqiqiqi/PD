@@ -313,36 +313,37 @@ class ClusterExpansionSetting(object):
             new_cluster_info.append(new_dict)
         self.cluster_info = new_cluster_info
 
-    def _corresponding_indices(self, indices, supercell):
-        """
-        Find the indices in supercell that correspond to the ones in
-        self.atoms
+    # def _corresponding_indices(self, indices, supercell):
+    #     """
+    #     Find the indices in supercell that correspond to the ones in
+    #     self.atoms
 
-        Parameters:
+    #     Parameters:
 
-        indices: list of int
-            Indices in self.atoms
+    #     indices: list of int
+    #         Indices in self.atoms
 
-        supercell: Atoms object
-            Supercell object where we want to find the indices
-            corresponding to the position in self.atoms
-        """
-        supercell_indices = []
-        sc_pos = supercell.get_positions()
-        wrapped_sc_pos = wrap_positions(sc_pos, self.atoms.get_cell())
+    #     supercell: Atoms object
+    #         Supercell object where we want to find the indices
+    #         corresponding to the position in self.atoms
+    #     """
+    #     atoms = self.atoms_mng.atoms
+    #     supercell_indices = []
+    #     sc_pos = supercell.get_positions()
+    #     wrapped_sc_pos = wrap_positions(sc_pos, atoms.get_cell())
 
-        dist_to_origin = np.sum(sc_pos**2, axis=1)
-        for indx in indices:
-            pos = self.atoms[indx].position
-            dist = wrapped_sc_pos - pos
-            lengths_sq = np.sum(dist**2, axis=1)
-            candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
+    #     dist_to_origin = np.sum(sc_pos**2, axis=1)
+    #     for indx in indices:
+    #         pos = atoms[indx].position
+    #         dist = wrapped_sc_pos - pos
+    #         lengths_sq = np.sum(dist**2, axis=1)
+    #         candidates = np.nonzero(lengths_sq < 1E-6)[0].tolist()
 
-            # Pick reference index that is closest the origin of the
-            # supercell
-            temp_indx = np.argmin(dist_to_origin[candidates])
-            supercell_indices.append(candidates[temp_indx])
-        return supercell_indices
+    #         # Pick reference index that is closest the origin of the
+    #         # supercell
+    #         temp_indx = np.argmin(dist_to_origin[candidates])
+    #         supercell_indices.append(candidates[temp_indx])
+    #     return supercell_indices
 
     def _check_max_cluster_dia(self, internal_distances):
         """
@@ -370,8 +371,9 @@ class ClusterExpansionSetting(object):
             scale = 1
         supercell = supercell*(scale, scale, scale)
         supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = self._corresponding_indices(self.ref_index_trans_symm,
-                                                  supercell)
+        ref_indices = \
+            self.atoms_mng.corresponding_indices(self.ref_index_trans_symm,
+                                                 supercell)
 
         # Calculate the center of atomic positions in a supercell
         pos = supercell.get_positions()
