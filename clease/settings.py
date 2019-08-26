@@ -150,11 +150,9 @@ class ClusterExpansionSetting(object):
             return
 
         placeholder = Atoms()
-        data = {
-            "max_cluster_dia": self.float_max_dia.toJSON(),
-            "angles": self.float_ang.toJSON(),
-            "float_dist": self.float_dist.toJSON()
-        }
+        data = {"max_cluster_dia": self.float_max_dia.toJSON(),
+                "angles": self.float_ang.toJSON(),
+                "float_dist": self.float_dist.toJSON()}
         db.write(placeholder, data=data, name="float_classification")
 
     def _init_floating_point_classifiers(self):
@@ -299,56 +297,56 @@ class ClusterExpansionSetting(object):
         atoms = self.unit_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
 
-    def _group_indices_by_trans_symmetry(self):
-        """Group indices by translational symmetry."""
-        indices = [a.index for a in self.unit_cell]
-        ref_indx = indices[0]
-        # Group all the indices together if its atomic number and position
-        # sequences are same
-        indx_by_equiv = []
-        shifted = self.unit_cell.copy()
-        shifted = wrap_and_sort_by_position(shifted)
-        an = shifted.get_atomic_numbers()
-        pos = shifted.get_positions()
+    # def _group_indices_by_trans_symmetry(self):
+    #     """Group indices by translational symmetry."""
+    #     indices = [a.index for a in self.unit_cell]
+    #     ref_indx = indices[0]
+    #     # Group all the indices together if its atomic number and position
+    #     # sequences are same
+    #     indx_by_equiv = []
+    #     shifted = self.unit_cell.copy()
+    #     shifted = wrap_and_sort_by_position(shifted)
+    #     an = shifted.get_atomic_numbers()
+    #     pos = shifted.get_positions()
 
-        temp = [[indices[0]]]
-        equiv_group_an = [an]
-        equiv_group_pos = [pos]
-        for indx in indices[1:]:
-            vec = self.unit_cell.get_distance(indx, ref_indx, vector=True)
-            shifted = self.unit_cell.copy()
-            shifted.translate(vec)
-            shifted = wrap_and_sort_by_position(shifted)
-            an = shifted.get_atomic_numbers()
-            pos = shifted.get_positions()
+    #     temp = [[indices[0]]]
+    #     equiv_group_an = [an]
+    #     equiv_group_pos = [pos]
+    #     for indx in indices[1:]:
+    #         vec = self.unit_cell.get_distance(indx, ref_indx, vector=True)
+    #         shifted = self.unit_cell.copy()
+    #         shifted.translate(vec)
+    #         shifted = wrap_and_sort_by_position(shifted)
+    #         an = shifted.get_atomic_numbers()
+    #         pos = shifted.get_positions()
 
-            for equiv_group in range(len(temp)):
-                if (an == equiv_group_an[equiv_group]).all() and\
-                        np.allclose(pos, equiv_group_pos[equiv_group]):
-                    temp[equiv_group].append(indx)
-                    break
-                else:
-                    if equiv_group == len(temp) - 1:
-                        temp.append([indx])
-                        equiv_group_an.append(an)
-                        equiv_group_pos.append(pos)
+    #         for equiv_group in range(len(temp)):
+    #             if (an == equiv_group_an[equiv_group]).all() and\
+    #                     np.allclose(pos, equiv_group_pos[equiv_group]):
+    #                 temp[equiv_group].append(indx)
+    #                 break
+    #             else:
+    #                 if equiv_group == len(temp) - 1:
+    #                     temp.append([indx])
+    #                     equiv_group_an.append(an)
+    #                     equiv_group_pos.append(pos)
 
-        for equiv_group in temp:
-            indx_by_equiv.append(equiv_group)
+    #     for equiv_group in temp:
+    #         indx_by_equiv.append(equiv_group)
 
-        # Now we have found the translational symmetry group of all the atoms
-        # in the unit cell, now put all the indices of self.atoms into the
-        # matrix based on the tag
-        indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
-        symm_group_of_tag = [-1 for _ in range(len(self.unit_cell))]
-        for gr_id, group in enumerate(indx_by_equiv):
-            for item in group:
-                symm_group_of_tag[item] = gr_id
+    #     # Now we have found the translational symmetry group of all the atoms
+    #     # in the unit cell, now put all the indices of self.atoms into the
+    #     # matrix based on the tag
+    #     indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
+    #     symm_group_of_tag = [-1 for _ in range(len(self.unit_cell))]
+    #     for gr_id, group in enumerate(indx_by_equiv):
+    #         for item in group:
+    #             symm_group_of_tag[item] = gr_id
 
-        for atom in self.atoms:
-            symm_gr = symm_group_of_tag[atom.tag]
-            indx_by_equiv_all_atoms[symm_gr].append(atom.index)
-        return indx_by_equiv_all_atoms
+    #     for atom in self.atoms:
+    #         symm_gr = symm_group_of_tag[atom.tag]
+    #         indx_by_equiv_all_atoms[symm_gr].append(atom.index)
+    #     return indx_by_equiv_all_atoms
 
     def _assign_correct_family_identifier(self):
         """Make the familily IDs increase size."""

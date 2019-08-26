@@ -1,6 +1,7 @@
 from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
 import numpy as np
+from clease.tools import wrap_and_sort_by_position
 
 
 class AtomsManager(object):
@@ -31,8 +32,8 @@ class AtomsManager(object):
         return ind_by_tag
 
     def index_by_symbol(self, symbols):
-        """
-        Return atomic indices that are grouped by its atomic symbols.
+        """Group atomic indices by its atomic symbols.
+
 
         Example:
 
@@ -100,6 +101,7 @@ class AtomsManager(object):
         Tag `self.atoms` with the indices of its corresponding atom (equivalent
         position) in `ref_atoms` when the positions are wrapped.
 
+
         Parameters:
 
         ref_atoms: Atoms object
@@ -116,3 +118,62 @@ class AtomsManager(object):
 
         for atom, tag in zip(self.atoms, indices.tolist()):
             atom.tag = tag
+
+    def group_indices_by_trans_symmetry(self, prim_cell):
+        """Group indices by translational symmetry.
+
+
+        Parameters:
+
+        prim_cell: Atoms object
+            ASE Atoms object that corresponds to the primitive cell of
+            self.atoms
+        """
+        indices = [a.index for a in prim_cell]
+        ref_indx = indices[0]
+        # Group all the indices together if its atomic number and position
+        # sequences are same
+        indx_by_equiv = []
+        shifted = prim_cell.copy()
+        shifted = wrap_and_sort_by_position(shifted)
+        an = shifted.get_atomic_numbers()
+        pos = shifted.get_positions()
+
+        temp = [[indices[0]]]
+        equiv_group_an = [an]
+        equiv_group_pos = [pos]
+        for indx in indices[1:]:
+            vec = prim_cell.get_distance(indx, ref_indx, vector=True)
+            shifted = prim_cell.copy()
+            shifted.translate(vec)
+            shifted = wrap_and_sort_by_position(shifted)
+            an = shifted.get_atomic_numbers()
+            pos = shifted.get_positions()
+
+            for equiv_group in range(len(temp)):
+                if (an == equiv_group_an[equiv_group]).all() and\
+                        np.allclose(pos, equiv_group_pos[equiv_group]):
+                    temp[equiv_group].append(indx)
+                    break
+                else:
+                    if equiv_group == len(temp) - 1:
+                        temp.append([indx])
+                        equiv_group_an.append(an)
+                        equiv_group_pos.append(pos)
+
+        for equiv_group in temp:
+            indx_by_equiv.append(equiv_group)
+
+        # Now we have found the translational symmetry group of all the atoms
+        # in the unit cell, now put all the indices of self.atoms into the
+        # matrix based on the tag
+        indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
+        symm_group_of_tag = [-1 for _ in range(len(prim_cell))]
+        for gr_id, group in enumerate(indx_by_equiv):
+            for item in group:
+                symm_group_of_tag[item] = gr_id
+
+        for atom in self.atoms:
+            symm_gr = symm_group_of_tag[atom.tag]
+            indx_by_equiv_all_atoms[symm_gr].append(atom.index)
+        return indx_by_equiv_all_atoms
