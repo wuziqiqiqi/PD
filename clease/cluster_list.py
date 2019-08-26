@@ -7,9 +7,7 @@ class ClusterList(object):
         self.clusters.append(cluster)
 
     def clear(self):
-        """
-        Clear the content
-        """
+        """Clear the content."""
         self.clusters = []
 
     def names(self):
@@ -20,15 +18,11 @@ class ClusterList(object):
         return [c for c in self.clusters if c.size == size]
 
     def get_by_group(self, group):
-        """
-        Return all clusters in a given symmetry group
-        """
+        """Return all clusters in a given symmetry group."""
         return [c for c in self.clusters if c.group == group]
 
     def get_equivalent_clusters(self, cluster):
-        """
-        Return equivalent clusters in other symmetry groups
-        """
+        """Return equivalent clusters in other symmetry groups."""
         equiv = []
         for c in self.clusters:
             if c == cluster:

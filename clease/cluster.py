@@ -18,9 +18,7 @@ class Cluster(object):
         return self.full_name
 
     def __lt__(self, other):
-        """
-        Comparison operator
-        """
+        """Comparison operator."""
         return (self.size, self.diameter, self.group) < \
             (other.size, other.diameter, other.group)
 
@@ -31,9 +29,7 @@ class Cluster(object):
         return equivalent_deco(deco, self.equiv_sites)
 
     def todict(self):
-        """
-        Return a dictionary representation
-        """
+        """Return a dictionary representation."""
         return {
             'indices': self.indices,
             'size': self.size,
