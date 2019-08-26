@@ -865,21 +865,6 @@ class ClusterExpansionSetting(object):
         first_symb_in_basis = [x[0] for x in self.basis_elements]
         return self.atoms_mng.index_by_symbol(first_symb_in_basis)
 
-    def _group_index_by_basis_group(self):
-        if self.concentration.grouped_basis is None:
-            return self.index_by_basis
-
-        index_by_grouped_basis = []
-        for group in self.concentration.grouped_basis:
-            indices = []
-            for basis in group:
-                indices.extend(self.index_by_basis[basis])
-            index_by_grouped_basis.append(indices)
-
-        for basis in index_by_grouped_basis:
-            basis.sort()
-        return index_by_grouped_basis
-
     def view_clusters(self):
         """Display all clusters along with their names."""
         from ase.gui.gui import GUI

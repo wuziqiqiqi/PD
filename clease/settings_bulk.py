@@ -131,9 +131,6 @@ class CEBulk(ClusterExpansionSetting):
         atoms = wrap_and_sort_by_position(atoms)
         return atoms
 
-    def _group_index_by_basis_group(self):
-        return self.index_by_basis
-
     @staticmethod
     def load(filename):
         """Load settings from a file in JSON format.
