@@ -133,20 +133,6 @@ class ClusterExpansionSetting(object):
 
         bg_sym = [x[0] for x in self.basis_elements if len(x) == 1]
         return self.atoms_manager.unique_elements(ignore=bg_sym)
-        # if not self.ignore_background_atoms:
-        #     return self.unique_elements
-        # symbs = []
-        # for indx in self.background_indices:
-        #     symbs.append(self.atoms[indx].symbol)
-        # symbs = list(set(symbs))
-
-        # for atom in self.atoms:
-        #     if atom.index in self.background_indices:
-        #         continue
-        #     if atom.symbol in symbs:
-        #         symbs.remove(atom.symbol)
-        # filtered = [e for e in self.unique_elements if e not in symbs]
-        # return filtered
 
     def _store_floating_point_classifiers(self):
         """Store classifiers in a separate DB entry."""
@@ -303,63 +289,6 @@ class ClusterExpansionSetting(object):
         """Create atoms with a user-specified size."""
         atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
-
-    # def _group_indices_by_trans_symmetry(self):
-    #     """Group indices by translational symmetry."""
-
-    #     # Group by unit cell index scheme
-    #     groups = [[] for _ in self.prim_cell]
-    #     for atom in self.atoms:
-    #         groups[atom.tag].append(atom.index)
-    #     return groups
-    #     indices = [a.index for a in self.prim_cell]
-    #     ref_indx = indices[0]
-    #     # Group all the indices together if its atomic number and position
-    #     # sequences are same
-    #     indx_by_equiv = []
-    #     shifted = self.prim_cell.copy()
-    #     shifted = wrap_and_sort_by_position(shifted)
-    #     an = shifted.get_atomic_numbers()
-    #     pos = shifted.get_positions()
-
-    #     temp = [[indices[0]]]
-    #     equiv_group_an = [an]
-    #     equiv_group_pos = [pos]
-    #     for indx in indices[1:]:
-    #         vec = self.prim_cell.get_distance(indx, ref_indx, vector=True)
-    #         shifted = self.prim_cell.copy()
-    #         shifted.translate(vec)
-    #         shifted = wrap_and_sort_by_position(shifted)
-    #         an = shifted.get_atomic_numbers()
-    #         pos = shifted.get_positions()
-
-    #         for equiv_group in range(len(temp)):
-    #             if (an == equiv_group_an[equiv_group]).all() and\
-    #                     np.allclose(pos, equiv_group_pos[equiv_group]):
-    #                 temp[equiv_group].append(indx)
-    #                 break
-    #             else:
-    #                 if equiv_group == len(temp) - 1:
-    #                     temp.append([indx])
-    #                     equiv_group_an.append(an)
-    #                     equiv_group_pos.append(pos)
-
-    #     for equiv_group in temp:
-    #         indx_by_equiv.append(equiv_group)
-
-    #     # Now we have found the translational symmetry group of all the atoms
-    #     # in the unit cell, now put all the indices of self.atoms into the
-    #     # matrix based on the tag
-    #     indx_by_equiv_all_atoms = [[] for _ in range(len(indx_by_equiv))]
-    #     symm_group_of_tag = [-1 for _ in range(len(self.prim_cell))]
-    #     for gr_id, group in enumerate(indx_by_equiv):
-    #         for item in group:
-    #             symm_group_of_tag[item] = gr_id
-
-    #     for atom in self.atoms:
-    #         symm_gr = symm_group_of_tag[atom.tag]
-    #         indx_by_equiv_all_atoms[symm_gr].append(atom.index)
-    #     return indx_by_equiv_all_atoms
 
     def _assign_correct_family_identifier(self):
         """Make the familily IDs increase size."""
