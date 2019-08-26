@@ -6,10 +6,8 @@ from random import sample
 from ase.db import connect
 import json
 from clease import _logger
-from ase.build import make_supercell
 from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
-from math import gcd
 
 
 def index_by_position(atoms):
@@ -450,45 +448,45 @@ def str2nested_list(string):
             for item in string.split('x')]
 
 
-def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
-    """
-    Create a close to cubic supercell.
+# def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
+#     """
+#     Create a close to cubic supercell.
 
-    Parameters:
+#     Parameters:
 
-    atoms: Atoms
-        Cell to be used for construction
+#     atoms: Atoms
+#         Cell to be used for construction
 
-    zero_cutoff: float
-        Value below this value will be considered as zero when the
-        scaling factor is computed
-    """
-    cell = atoms.get_cell()
-    a = np.linalg.det(cell)**(1.0/3.0)
-    inv_cell = np.linalg.inv(cell)
-    scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
-    scale = np.round(scale).astype(np.int32)
-    min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
-    scale = np.true_divide(scale, min_gcd)
-    scale = min_gcd*np.max(scale)
-    integer_matrix = np.round(inv_cell*scale).astype(np.int32)
+#     zero_cutoff: float
+#         Value below this value will be considered as zero when the
+#         scaling factor is computed
+#     """
+#     cell = atoms.get_cell()
+#     a = np.linalg.det(cell)**(1.0/3.0)
+#     inv_cell = np.linalg.inv(cell)
+#     scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
+#     scale = np.round(scale).astype(np.int32)
+#     min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
+#     scale = np.true_divide(scale, min_gcd)
+#     scale = min_gcd*np.max(scale)
+#     integer_matrix = np.round(inv_cell*scale).astype(np.int32)
 
-    if np.linalg.det(integer_matrix) < 0:
-        integer_matrix *= -1
+#     if np.linalg.det(integer_matrix) < 0:
+#         integer_matrix *= -1
 
-    sc = make_supercell(atoms, integer_matrix)
-    sc = wrap_and_sort_by_position(sc)
+#     sc = make_supercell(atoms, integer_matrix)
+#     sc = wrap_and_sort_by_position(sc)
 
-    # We need to tag the atoms
-    sc_pos = sc.get_positions()
-    sc_pos = wrap_positions(sc_pos, atoms.get_cell())
+#     # We need to tag the atoms
+#     sc_pos = sc.get_positions()
+#     sc_pos = wrap_positions(sc_pos, atoms.get_cell())
 
-    tree = KDTree(atoms.get_positions())
-    dists, tags = tree.query(sc_pos)
-    assert np.allclose(dists, 0.0)
-    for i, tag in enumerate(tags):
-        sc[i].tag = tag
-    return sc
+#     tree = KDTree(atoms.get_positions())
+#     dists, tags = tree.query(sc_pos)
+#     assert np.allclose(dists, 0.0)
+#     for i, tag in enumerate(tags):
+#         sc[i].tag = tag
+#     return sc
 
 
 def min_distance_from_facet(x, cell):

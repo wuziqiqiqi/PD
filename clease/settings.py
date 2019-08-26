@@ -22,7 +22,6 @@ from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
-from clease.tools import close_to_cubic_supercell
 from ase.geometry import wrap_positions
 
 
@@ -358,10 +357,10 @@ class ClusterExpansionSetting(object):
                     "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
                 )
 
-    def _get_supercell(self, atoms):
-        for atom in atoms:
-            atom.tag = atom.index
-        supercell = close_to_cubic_supercell(atoms)
+    def _get_supercell(self):
+        # for atom in atoms:
+        #     atom.tag = atom.index
+        supercell = self.atoms_mng.close_to_cubic_supercell()
         max_cluster_dia_in_sc = \
             self._get_max_cluster_dia(supercell.get_cell().T)
 
@@ -453,11 +452,7 @@ class ClusterExpansionSetting(object):
                                equiv_sites = [[0, 1, 2, 3]]
             }
         """
-        atoms_cpy = self.atoms.copy()
-        for atom in atoms_cpy:
-            atom.tag = atom.index
-
-        supercell, ref_indices = self._get_supercell(atoms_cpy)
+        supercell, ref_indices = self._get_supercell()
         supercell.info['distances'] = get_all_internal_distances(
             supercell, max(self.max_cluster_dia), ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
@@ -796,7 +791,7 @@ class ClusterExpansionSetting(object):
         all_included = False
         counter = 0
         max_attempts = 1000
-        supercell, ref_indices = self._get_supercell(self.atoms.copy())
+        supercell, ref_indices = self._get_supercell()
 
         # We need to get the symmetry groups of the supercell. We utilise that
         # the supercell is tagged
