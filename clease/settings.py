@@ -183,7 +183,7 @@ class ClusterExpansionSetting(object):
         self.template_atoms_uid = uid
         atoms, self.size = \
             self.template_atoms.get_atoms(uid, return_size=True)
-        self.atoms = wrap_and_sort_by_position(atoms)
+        atoms = wrap_and_sort_by_position(atoms)
 
         self.index_by_basis = self._group_index_by_basis()
         self.cluster_info = []
