@@ -628,35 +628,6 @@ class ClusterExpansionSetting(object):
                 info.append(item[name])
         return info
 
-    def _create_translation_matrix(self):
-        """Create and return translation matrix.
-
-        Translation matrix maps the indices of the atoms when an atom with the
-        translational symmetry is moved to the location of the reference atom.
-        Used in conjunction with cluster_indx to calculate the correlation
-        function of the structure.
-        """
-        natoms = len(self.atoms)
-        unique_indices = self.unique_indices
-
-        tm = [{} for _ in range(natoms)]
-
-        for i, ref_indx in enumerate(self.ref_index_trans_symm):
-            indices = index_by_position(self.atoms)
-            tm[ref_indx] = {col: indices[col] for col in unique_indices}
-
-            for indx in self.index_by_trans_symm[i]:
-                if indx == ref_indx:
-                    continue
-                shifted = self.atoms.copy()
-                vec = self.atoms.get_distance(indx, ref_indx, vector=True)
-                shifted.translate(vec)
-                shifted.wrap()
-
-                indices = index_by_position(shifted)
-                tm[indx] = {col: indices[col] for col in unique_indices}
-        return tm
-
     def get_min_distance(self, cluster, positions):
         """Get minimum distances.
 
@@ -837,12 +808,6 @@ class ClusterExpansionSetting(object):
                                "unique_indices are included")
         self.trans_matrix = [{k: row[k] for k in self.unique_indices}
                              for row in tm]
-        if self.check_old_tm_algorithm:
-            self.trans_matrix_old = self._create_translation_matrix()
-            for _ in range(len(self.trans_matrix)):
-                assert self.trans_matrix_old[_] == self.trans_matrix[_]
-            assert len(self.trans_matrix_old) == len(self.trans_matrix)
-            assert self.trans_matrix_old == self.trans_matrix
 
     def _store_data(self):
         size_str = nested_list2str(self.size)
