@@ -559,3 +559,11 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
         used_tags[tag] = True
         new_tm[tag] = new_row
     return new_tm
+
+
+def indices2tags(supercell, clusters):
+    for cluster in clusters:
+        for i, figure in enumerate(cluster):
+            cluster[i] = [int(supercell[x].tag) for x in figure]
+    return clusters
+

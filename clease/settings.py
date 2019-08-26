@@ -11,11 +11,9 @@ from ase.db import connect
 
 from clease import _logger, LogVerbosity, ClusterExtractor
 from clease.floating_point_classification import FloatingPointClassifier
-from clease.tools import (wrap_and_sort_by_position, index_by_position,
-                          flatten, sort_by_internal_distances,
-                          dec_string, get_unique_name,
-                          nested_array2list, get_all_internal_distances,
-                          distance_string, nested_list2str,
+from clease.tools import (wrap_and_sort_by_position, flatten, dec_string,
+                          indices2tags, nested_array2list,
+                          get_all_internal_distances, nested_list2str,
                           trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
@@ -23,7 +21,6 @@ from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
 from clease.name_clusters import name_clusters
-from ase.geometry import wrap_positions
 
 
 class ClusterExpansionSetting(object):
@@ -373,7 +370,7 @@ class ClusterExpansionSetting(object):
             get_all_internal_distances(supercell, max(self.max_cluster_dia),
                                        ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
-        cluster_info = []
+        cluster_info = [{} for _ in range(len(self.ref_index_trans_symm))]
 
         extractor = ClusterExtractor(supercell)
         for size in range(2, self.max_cluster_size+1):
@@ -383,17 +380,39 @@ class ClusterExpansionSetting(object):
             for ref_indx in ref_indices:
                 clusters = extractor.extract(ref_indx=ref_indx, size=size,
                                              cutoff=self.max_cluster_dia[size])
-                #print("cluster", clusters)
-                equiv_sites = [x[0] for x in clusters]
+                clusters = indices2tags(supercell, clusters)
+                equiv_sites = \
+                    [extractor.equivalent_sites(c[0]) for c in clusters]
                 all_equiv_sites.append(equiv_sites)
                 fingerprints += [x.tolist() for x in extractor.inner_prod]
                 all_clusters.append(clusters)
             fingerprints.sort()
-            # print(fingerprints)
             print('I am in create_cluster_info with size = {}'.format(size))
             names = name_clusters(fingerprints)
-            print(names)
+            info = self.dict_representation(names, all_clusters,
+                                            all_equiv_sites, fingerprints, size)
+
+            for i, item in enumerate(info):
+                cluster_info[i].update(item)
         return cluster_info
+
+    def dict_representation(self, names, clusters, equiv_sites, fingerprints,
+                            size):
+        info = [{} for _ in range(len(clusters))]
+        counter = 0
+        for trans_symm in range(len(clusters)):
+            for cluster, equiv in zip(clusters[trans_symm],
+                                      equiv_sites[trans_symm]):
+                info[trans_symm][names[counter]] = {
+                    'indices': cluster,
+                    'equiv_sites': equiv,
+                    'symm_group': trans_symm,
+                    'ref_indx': self.ref_index_trans_symm[trans_symm],
+                    'fingerprint': list(fingerprints[counter]),
+                    'size': size
+                }
+                counter += 1
+        return info
 
     # def _create_cluster_information(self):
     #     """Create a set of parameters describing the structure.
@@ -737,6 +756,7 @@ class ClusterExpansionSetting(object):
     def _cutoff_for_tm_construction(self):
         """ Get cutoff radius for translation matrix construction."""
         indices = self.unique_indices
+        print(indices)
         # start with some small positive number
         max_dist = 0.1
 
@@ -753,7 +773,7 @@ class ClusterExpansionSetting(object):
         return max_dist
 
     def create_cluster_info_and_trans_matrix(self):
-        self._create_cluster_info()
+        self.cluster_info = self._create_cluster_info()
 
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()
@@ -1038,7 +1058,7 @@ class ClusterExpansionSetting(object):
             for item in cluster_info:
                 for k, v in item.items():
                     new_names.append(k)
-                    new_desc.append(v["descriptor"])
+                    new_desc.append(list(v["fingerprint"]))
                     if len(v["equiv_sites"]) == 0:
                         new_equiv_sites[k] = 0
                     else:
@@ -1056,7 +1076,7 @@ class ClusterExpansionSetting(object):
                 mult_factor = deepcopy(new_mult_factor)
 
             assert new_names == names
-            assert descriptors == new_desc
+            assert all(np.allclose(x, y) for x, y in zip(descriptors, new_desc))
             assert equiv_sites == new_equiv_sites
             assert mult_factor == new_mult_factor
 
