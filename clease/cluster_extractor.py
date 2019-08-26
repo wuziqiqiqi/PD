@@ -5,7 +5,7 @@ from itertools import combinations
 
 class ClusterExtractor(object):
     """
-    Extract clusters that contain the suppied atomic index. 
+    Extract clusters that contain the suppied atomic index.
 
 
     Parameters:
@@ -72,7 +72,15 @@ class ClusterExtractor(object):
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
-            inner = np.sort(X.ravel())
+
+            diag = np.diag(X)
+            off_diag = []
+            for i in range(1, X.shape[0]):
+                off_diag += np.diag(X, offset=i).tolist()
+            N = X.shape[0]
+            assert len(off_diag) == N*(N-1)/2
+
+            inner = sorted(diag) + sorted(off_diag)
             group = self._get_type(inner)
 
             all_indices = self._order_by_internal_distances(all_indices)
