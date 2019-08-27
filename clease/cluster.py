@@ -23,7 +23,7 @@ class Cluster(object):
             (other.size, other.diameter, other.group)
 
     def __eq__(self, other):
-        return self.full_name == other.full_name
+        return self.cf_name == other.cf_name
 
     def equiv_deco(self, deco):
         return equivalent_deco(deco, self.equiv_sites)
@@ -36,6 +36,6 @@ class Cluster(object):
             'order': self.order,
             'symm': self.group,
             'diameter': self.diameter,
-            'name': self.full_name,
-            'descriptor': self.full_name
+            'name': self.cf_name,
+            'fingerprint': self.cf_name
         }
