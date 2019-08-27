@@ -243,8 +243,8 @@ class TestCECalculator(unittest.TestCase):
     def test_insert_element_rocksalt_1x1x1(self):
         print('rocksalt with self interaction 1x1x1')
         db_name = 'cecalc_rs_1x1x1.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 1, 1], db_name)
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1],
+                                                              db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
         os.remove(db_name)
 

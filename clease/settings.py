@@ -189,6 +189,9 @@ class ClusterExpansionSetting(object):
         self.background_indices = self._get_background_indices()
         self.index_by_trans_symm = \
             self.atoms_mng.group_indices_by_trans_symmetry(self.prim_cell)
+        if self.ignore_background_atoms:
+            self.index_by_trans_symm = [x for x in self.index_by_trans_symm
+                                        if x[0] not in self.background_indices]
         self.num_trans_symm = len(self.index_by_trans_symm)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
 
@@ -372,6 +375,9 @@ class ClusterExpansionSetting(object):
         self._check_max_cluster_dia(supercell.info['distances'])
         cluster_info = [{} for _ in range(len(self.ref_index_trans_symm))]
 
+        sc_manager = AtomsManager(supercell)
+        bkg_sc_indices = sc_manager.single_element_sites(self.basis_elements)
+
         extractor = ClusterExtractor(supercell)
         for size in range(2, self.max_cluster_size+1):
             all_clusters = []
@@ -379,7 +385,8 @@ class ClusterExpansionSetting(object):
             fingerprints = []
             for ref_indx in ref_indices:
                 clusters = extractor.extract(ref_indx=ref_indx, size=size,
-                                             cutoff=self.max_cluster_dia[size])
+                                             cutoff=self.max_cluster_dia[size],
+                                             ignored_indices=bkg_sc_indices)
                 equiv_sites = \
                     [extractor.equivalent_sites(c[0]) for c in clusters]
                 all_equiv_sites.append(equiv_sites)

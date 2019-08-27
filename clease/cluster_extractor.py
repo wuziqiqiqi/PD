@@ -19,7 +19,7 @@ class ClusterExtractor(object):
         self.inner_prod = []
         self.tol = 1E-6
 
-    def extract(self, ref_indx=0, size=2, cutoff=4.0):
+    def extract(self, ref_indx=0, size=2, cutoff=4.0, ignored_indices=[]):
         """
         Extract all clusters with a given size if they are smaller than the
         cutoff distance.
@@ -41,11 +41,15 @@ class ClusterExtractor(object):
 
         cutoff: float
             Maximum cutoff distance
+
+        ignored_indices: list
+            all of the background indices to be ignored when creating clusters
         """
         self.inner_prod = []
         x = self.atoms.get_positions()[ref_indx, :]
         indices = self.tree.query_ball_point(x, cutoff)
         indices.remove(ref_indx)
+        indices = list(set(indices) - set(ignored_indices))
         return self._group_clusters(ref_indx, indices, size, cutoff)
 
     def _get_type(self, flat_inner_prod):

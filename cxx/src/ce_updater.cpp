@@ -1086,7 +1086,6 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
       {
         sp_temp += spin_product_one_atom(atom_no, cluster, deco, symbols_with_id->id(atom_no));
       }
-
       sp += sp_temp/equiv_deco.size();
       count += cluster.get().size();
     }

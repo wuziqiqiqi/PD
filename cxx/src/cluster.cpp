@@ -251,13 +251,6 @@ void Cluster::parse_info_dict(PyObject *info)
   PyObject* py_indx = PyDict_GetItemString(info, "indices");
   nested_list_to_cluster(py_indx, members);
 
-  // Read the order
-  // if (size >= 2)
-  // {
-  //   PyObject* py_order = PyDict_GetItemString(info, "order");
-  //   nested_list_to_cluster(py_order, order);
-  // }
-
   // Read equivalent sites
   PyObject *py_equiv_sites = PyDict_GetItemString(info, "equiv_sites");
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
