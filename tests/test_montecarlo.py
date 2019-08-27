@@ -27,7 +27,7 @@ def get_example_mc_system(db_name):
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
     eci['c0'] = -1.0
-    eci['c2_01nn_0_00'] = -0.2
+    eci['c2_d0000_0_00'] = -0.2
     atoms = attach_calculator(setting, atoms=atoms, eci=eci)
     return atoms
 
@@ -44,7 +44,7 @@ def get_rocksalt_mc_system(db_name):
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
     eci['c0'] = -1.0
-    eci['c2_01nn_0_00'] = -0.2
+    eci['c2_d0000_0_00'] = -0.2
     atoms = attach_calculator(setting, atoms=atoms, eci=eci)
     return atoms
 

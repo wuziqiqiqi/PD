@@ -265,7 +265,8 @@ class TestCEBulk(unittest.TestCase):
                          db_name=db_name,
                          max_cluster_size=2,
                          max_cluster_dia=[4.01])
-        fam_members = get_members_of_family(setting, "c2_06nn_0")
+        print(setting.cluster_names)
+        fam_members = get_members_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_members[0]), 6)
         self.assertEqual(len(fam_members[1]), 6)
         self.assertEqual(len(fam_members[2]), 6)
