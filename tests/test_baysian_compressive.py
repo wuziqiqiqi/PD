@@ -29,7 +29,8 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         self.assertTrue(np.allclose(eci, expected_eci, rtol=1E-4))
 
     def test_fit_more_coeff(self):
-        self.bayes = BayesianCompressiveSensing(fname=fname, noise=0.1)
+        self.bayes = BayesianCompressiveSensing(fname=fname, noise=0.1,
+                                                maxiter=1000)
         X = np.random.rand(30, 400)
         coeff = [6.0, -2.0, 5.0, 50.0, -30.0]
         indx = [0, 23, 19, 18, 11]
@@ -48,7 +49,7 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
 
     def test_fit_linear_dep_col(self):
         bayes = BayesianCompressiveSensing(fname=fname, noise=0.2,
-                                           penalty=1E-2)
+                                           penalty=1E-2, maxiter=1000)
         X = np.random.rand(30, 400)
         X[:, 2] = X[:, 0]
         X[:, 8] = X[:, 20]
