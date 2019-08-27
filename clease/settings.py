@@ -380,10 +380,10 @@ class ClusterExpansionSetting(object):
             for ref_indx in ref_indices:
                 clusters = extractor.extract(ref_indx=ref_indx, size=size,
                                              cutoff=self.max_cluster_dia[size])
-                clusters = indices2tags(supercell, clusters)
                 equiv_sites = \
                     [extractor.equivalent_sites(c[0]) for c in clusters]
                 all_equiv_sites.append(equiv_sites)
+                clusters = indices2tags(supercell, clusters)
                 fingerprints += [x.tolist() for x in extractor.inner_prod]
                 all_clusters.append(clusters)
 
