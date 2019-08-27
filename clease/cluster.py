@@ -2,10 +2,10 @@ from clease.tools import equivalent_deco
 
 
 class Cluster(object):
-    def __init__(self, size, full_name, indices, order, equiv_sites,
+    def __init__(self, size, cf_name, indices, order, equiv_sites,
                  trans_symm_group, diameter, ref_indx):
         self.size = size
-        self.full_name = full_name
+        self.cf_name = cf_name
         self.indices = indices
         self.order = order
         self.equiv_sites = equiv_sites
@@ -14,8 +14,8 @@ class Cluster(object):
         self.ref_indx = ref_indx
 
     @property
-    def name(self):
-        return self.full_name
+    def cf_name(self):
+        return self.cf_name
 
     def __lt__(self, other):
         """Comparison operator."""

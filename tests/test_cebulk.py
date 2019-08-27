@@ -162,18 +162,19 @@ class TestCEBulk(unittest.TestCase):
             sub_cl = set(bc_setting.subclusters(name))
             self.assertTrue(sub_cl == set(["c0", "c1"]))
 
+
         # Test a few known clusters. Triplet nearest neighbour
-        name = "c3_01nn_0"
+        name = "c3_d0000_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0"]))
 
-        name = "c3_02nn_0"
+        name = "c3_d0001_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c2_02nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
 
-        name = "c4_01nn_0"
+        name = "c4_d0000_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c3_01nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
         print(bc_setting.prim_cell.get_cell())

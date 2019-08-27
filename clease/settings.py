@@ -386,7 +386,6 @@ class ClusterExpansionSetting(object):
                 all_equiv_sites.append(equiv_sites)
                 fingerprints += [x.tolist() for x in extractor.inner_prod]
                 all_clusters.append(clusters)
-            fingerprints.sort()
 
             names = name_clusters(fingerprints)
             info = self.dict_representation(names, all_clusters,
@@ -394,6 +393,14 @@ class ClusterExpansionSetting(object):
 
             for i, item in enumerate(info):
                 cluster_info[i].update(item)
+
+        # Update with empty info
+        for info, empty_info in zip(cluster_info, self.empty_cluster_info):
+            info.update(empty_info)
+
+        # Update with singlet info
+        for info, point_cluster_info in zip(cluster_info, self.point_cluster_info):
+            info.update(point_cluster_info)
         return cluster_info
 
     def dict_representation(self, names, clusters, equiv_sites, fingerprints,
@@ -415,6 +422,39 @@ class ClusterExpansionSetting(object):
                 }
                 counter += 1
         return info
+
+    @property
+    def empty_cluster_info(self):
+        empty_info = []
+        num_trans_symm = len(self.ref_index_trans_symm)
+        for symm in range(num_trans_symm):
+            empty_dict = {'name': 'c0',
+                          'max_cluster_dia': 0.0,
+                          'size': 0,
+                          'indices': [],
+                          'symm_group': symm,
+                          'ref_indx': self.ref_index_trans_symm[symm],
+                          'equiv_sites': [],
+                          'fingerprint': [0.0]}
+            empty_info.append({'c0': empty_dict})
+        return empty_info
+
+    @property
+    def point_cluster_info(self):
+        point_cluster_info = []
+        num_trans_symm = len(self.ref_index_trans_symm)
+        for symm in range(num_trans_symm):
+            point_dict = {'name': 'c1',
+                          'size': 1,
+                          'max_cluster_dia': 0.0,
+                          'indices': [],
+                          'symm_group': symm,
+                          'ref_indx': self.ref_index_trans_symm[symm],
+                          'equiv_sites': [],
+                          'fingerprint': [0.0]}
+            point_cluster_info.append({'c1': point_dict})
+        return point_cluster_info
+
 
     # def _create_cluster_information(self):
     #     """Create a set of parameters describing the structure.
@@ -704,13 +744,12 @@ class ClusterExpansionSetting(object):
                 # 3) Unique descriptor
                 sort_list.append((c_info["size"],
                                   cname.rpartition("_")[0],
-                                  c_info["descriptor"],
                                   cname))
         sort_list.sort()
         sorted_names = []
         for item in sort_list:
-            if item[3] not in sorted_names:
-                sorted_names.append(item[3])
+            if item[2] not in sorted_names:
+                sorted_names.append(item[2])
         return sorted_names
 
     @property
@@ -927,17 +966,14 @@ class ClusterExpansionSetting(object):
                     break
             if cluster["size"] <= 1:
                 continue
-            ref_indx = self.ref_index_trans_symm[symm]
             name = cluster["name"]
+            assert name == unique_name
 
             atoms = self.atoms.copy()
 
-            keep_indx = [ref_indx] + list(cluster["indices"][0])
+            keep_indx = cluster['indices'][0]
             equiv = list(cluster["equiv_sites"])
-            order = list(cluster["order"][0])
 
-            if order is not None:
-                keep_indx = [keep_indx[n] for n in order]
 
             for tag, indx in enumerate(keep_indx):
                 atoms[indx].tag = tag

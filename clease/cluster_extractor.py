@@ -124,7 +124,7 @@ class ClusterExtractor(object):
         for equiv in equiv_sites:
             found_group = False
             for m in merged:
-                if any(equiv in m):
+                if any(x in m for x in equiv):
                     m.update(equiv)
                     found_group = True
             if not found_group:

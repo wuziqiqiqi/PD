@@ -1,12 +1,9 @@
 import numpy as np
 
 def name_clusters(fingerprints):
-    """
-    """
+    """Name clusters based on its size and diameter."""
     s = size(fingerprints[0])
-    distance_list = []
-    for fp in fingerprints:
-        distance_list += list(2*np.sqrt(fp[:s]))
+    distance_list = [2*np.sqrt(fp[0]) for fp in fingerprints]
 
     distance_list = np.round(distance_list, decimals=6)
     distance_list = np.unique(distance_list)
@@ -23,8 +20,10 @@ def name_clusters(fingerprints):
             assert abs(dia - distance_list[index]) < 2E-6
 
             if index < 10:
-                prefix = 'c{}_d00{}'.format(s, index)
+                prefix = 'c{}_d000{}'.format(s, index)
             elif index < 100:
+                prefix = 'c{}_d00{}'.format(s, index)
+            elif index < 1000:
                 prefix = 'c{}_d0{}'.format(s, index)
             else:
                 prefix = 'c{}_d{}'.format(s, index)
