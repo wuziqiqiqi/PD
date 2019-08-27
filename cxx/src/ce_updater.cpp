@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <iterator>
 
-//#define CE_DEBUG
+#define CE_DEBUG
 using namespace std;
 
 CEUpdater::CEUpdater(){};
@@ -132,7 +132,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     Py_ssize_t pos = 0;
     PyObject *key;
     PyObject *value;
-    while( PyDict_Next(info_dicts, &pos, &key, &value) )
+    while(PyDict_Next(info_dicts, &pos, &key, &value))
     {
       string cluster_name = py2string(key);
       #ifdef CE_DEBUG
@@ -246,7 +246,7 @@ double CEUpdater::get_energy()
 {
   double energy = 0.0;
   cf& corr_func = history->get_current();
-  energy = eci.dot( corr_func );
+  energy = eci.dot(corr_func);
   return energy*symbols_with_id->size();
 }
 
@@ -255,32 +255,30 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
   double sp = 0.0;
 
   const vector< vector<int> >& indx_list = cluster.get();
-  const vector< vector<int> >& order = cluster.get_order();
+  // const vector< vector<int> >& order = cluster.get_order();
   const vector<double>& dup_factors = cluster.get_duplication_factors();
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();
 
-  for ( unsigned int i=0;i<num_indx;i++ )
+  for (unsigned int i=0;i<num_indx;i++)
   {
     double sp_temp = 1.0;
 
-    int indices[n_memb+1];
-    indices[0] = ref_indx;
+    // int indices[n_memb+1];
+    // indices[0] = ref_indx;
 
 
 
     // Use pointer arithmetics in the inner most loop
-    const int *indx_list_ptr = &indx_list[i][0];
-    for (unsigned int j=0;j<n_memb;j++)
-    {
-      indices[j+1] = trans_matrix(ref_indx, *(indx_list_ptr+j));
-    }
-    sort_indices(indices, order[i], n_memb+1);
+    //const int *indx_list_ptr = &indx_list[i][0];
+    const int *indices = &indx_list[i][0];
+    // for (unsigned int j=0;j<n_memb;j++)
+    // {
+    //   indices[j+1] = trans_matrix(ref_indx, *(indx_list_ptr+j));
+    // }
+    // sort_indices(indices, order[i], n_memb+1);
 
-    // TODO: Basis functions is a vector of dictionaries
-    // it hurts performance to lookup values in a map
-    // with string key.
-    for ( unsigned int j=0;j<n_memb+1;j++ )
+    for (unsigned int j=0;j<n_memb;j++)
     {
       if (indices[j] == ref_indx)
       {
@@ -296,18 +294,18 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
   return sp;
 }
 
-void CEUpdater::update_cf( PyObject *single_change )
+void CEUpdater::update_cf(PyObject *single_change)
 {
   SymbolChange symb_change;
-  py_tuple_to_symbol_change( single_change, symb_change );
-  update_cf( symb_change );
+  py_tuple_to_symbol_change(single_change, symb_change);
+  update_cf(symb_change);
 }
 
 SymbolChange& CEUpdater::py_tuple_to_symbol_change( PyObject *single_change, SymbolChange &symb_change )
 {
-  symb_change.indx = py2int( PyTuple_GetItem(single_change,0) );
-  symb_change.old_symb = py2string( PyTuple_GetItem(single_change,1) );
-  symb_change.new_symb = py2string( PyTuple_GetItem(single_change,2) );
+  symb_change.indx = py2int(PyTuple_GetItem(single_change,0));
+  symb_change.old_symb = py2string(PyTuple_GetItem(single_change,1));
+  symb_change.new_symb = py2string(PyTuple_GetItem(single_change,2));
   return symb_change;
 }
 

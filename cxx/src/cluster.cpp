@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <set>
+#define CLUSTER_DEBUG
 
 using namespace std;
 
@@ -16,14 +17,14 @@ Cluster::Cluster(PyObject *info_dict)
 ostream& operator <<( ostream& out, const Cluster &cluster )
 {
   out << "Name: " << cluster.name << "\n";
-  out << "Descriptor: " << cluster.descriptor << "\n";
+  // out << "Descriptor: " << cluster.descriptor << "\n";
   out << "Max cluster dia: " << cluster.max_cluster_dia << "\n";
   out << "Size: " << cluster.size << "\n";
   out << "ref_indx: " << cluster.ref_indx << "\n";
   out << "Members:\n";
   out << cluster.get();
-  out << "\nOrder:\n",
-  out << cluster.get_order();
+  // out << "\nOrder:\n",
+  // out << cluster.get_order();
   out << "\nEquivalent sites:\n";
   out << cluster.get_equiv();
   return out;
@@ -41,6 +42,9 @@ void Cluster::deco2string(const vector<int> &deco, string &name)
 
 void Cluster::construct_equivalent_deco(int n_basis_funcs)
 {
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading equivalent deco...\n";
+  #endif
   vector< vector<int> > bf_indx;
   all_deco(n_basis_funcs, bf_indx);
   if (equiv_sites.size() == 0)
@@ -54,6 +58,10 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
       vector< vector<int> > one_vector = {deco};
       equiv_deco[deco_str] = one_vector;
     }
+
+    #ifdef CLUSTER_DEBUG
+      cerr << "Finished reading equiv deco (no equiv sites)\n";
+    #endif
     return;
   }
 
@@ -126,6 +134,10 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
   Py_DECREF(ce_tools_mod);
   Py_DECREF(equiv_deco_func);
   Py_DECREF(py_eq_sites);
+
+  #ifdef CLUSTER_DEBUG
+      cerr << "Finished reading equiv deco\n";
+  #endif
 }
 
 
@@ -185,14 +197,23 @@ const equiv_deco_t& Cluster::get_equiv_deco(const std::vector<int> &deco) const
 
 void Cluster::parse_info_dict(PyObject *info)
 {
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading ref_indx\n";
+  #endif
   // Read reference index
   PyObject* py_ref_indx = PyDict_GetItemString(info, "ref_indx");
   ref_indx = py2int(py_ref_indx);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading size\n";
+  #endif
   // Read size
   PyObject* py_size = PyDict_GetItemString(info, "size");
   size = py2int(py_size);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading max_cluster_dia\n";
+  #endif
   // Read max_cluster_dia
   PyObject* py_mx_dia = PyDict_GetItemString(info, "max_cluster_dia");
   if (size <= 1)
@@ -203,34 +224,47 @@ void Cluster::parse_info_dict(PyObject *info)
   {
     max_cluster_dia = PyFloat_AS_DOUBLE(py_mx_dia);
   }
+
+  #ifdef CLUSTER_DEBUG
+    cerr << "Read symm_group\n";
+  #endif
   // Read symmetry group
   PyObject* py_symm = PyDict_GetItemString(info, "symm_group");
   symm_group = py2int(py_symm);
 
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Read name\n";
+  #endif
   // Read the name
   PyObject* py_name = PyDict_GetItemString(info, "name");
   name = py2string(py_name);
 
-  // Read descriptor
-  PyObject* py_desc = PyDict_GetItemString(info, "descriptor");
-  descriptor = py2string(py_desc);
+  // // Read descriptor
+  // PyObject* py_desc = PyDict_GetItemString(info, "descriptor");
+  // descriptor = py2string(py_desc);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading indices...\n";
+  #endif
   // Read indices
   PyObject* py_indx = PyDict_GetItemString(info, "indices");
   nested_list_to_cluster(py_indx, members);
 
   // Read the order
-  if (size >= 2)
-  {
-    PyObject* py_order = PyDict_GetItemString(info, "order");
-    nested_list_to_cluster(py_order, order);
-  }
+  // if (size >= 2)
+  // {
+  //   PyObject* py_order = PyDict_GetItemString(info, "order");
+  //   nested_list_to_cluster(py_order, order);
+  // }
 
   // Read equivalent sites
   PyObject *py_equiv_sites = PyDict_GetItemString(info, "equiv_sites");
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading duplication factors\n";
+  #endif
   // Read duplication factors
   PyObject *key = string2py("dup_factors");
   if (PyDict_Contains(info, key)){
@@ -245,7 +279,7 @@ void Cluster::parse_info_dict(PyObject *info)
     }
   }
   Py_DECREF(key);
-  
+
 
   // Sanity check
   check_consistency();

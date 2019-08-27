@@ -387,7 +387,7 @@ class ClusterExpansionSetting(object):
                 fingerprints += [x.tolist() for x in extractor.inner_prod]
                 all_clusters.append(clusters)
             fingerprints.sort()
-            print('I am in create_cluster_info with size = {}'.format(size))
+
             names = name_clusters(fingerprints)
             info = self.dict_representation(names, all_clusters,
                                             all_equiv_sites, fingerprints, size)
@@ -409,7 +409,9 @@ class ClusterExpansionSetting(object):
                     'symm_group': trans_symm,
                     'ref_indx': self.ref_index_trans_symm[trans_symm],
                     'fingerprint': list(fingerprints[counter]),
-                    'size': size
+                    'size': size,
+                    'name': names[counter],
+                    'max_cluster_dia': 2*np.sqrt(fingerprints[counter][0])
                 }
                 counter += 1
         return info
