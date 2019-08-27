@@ -98,10 +98,8 @@ class Clease(Calculator):
                 cluster = info[-1][k]
 
                 dup_factors = \
-                    [self.dupl_tracker.factor(cluster, non_trans, order)
-                     for non_trans, order in zip(cluster["indices"],
-                                                 cluster["order"])]
-
+                    [self.dupl_tracker.factor(cluster, ind)
+                     for ind in cluster["indices"]]
                 info[-1][k]["dup_factors"] = dup_factors
         return info
 

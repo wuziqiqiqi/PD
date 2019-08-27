@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <set>
-#define CLUSTER_DEBUG
+//#define CLUSTER_DEBUG
 
 using namespace std;
 
@@ -319,7 +319,7 @@ void Cluster::calculate_scaling_factors(PyObject *pylist){
       unique_values.insert(indx);
     }
 
-    double scale = static_cast<double>(unique_values.size())/(members[i].size() + 1);
+    double scale = static_cast<double>(unique_values.size())/(members[i].size());
     duplication_factors.push_back(factor*scale);
   }
 }

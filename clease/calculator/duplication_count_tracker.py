@@ -113,7 +113,7 @@ class DuplicationCountTracker(object):
             indices = [self.trans_matrix[new_ref_indx][indx] for indx in sub]
             indices = self._order_equiv_sites(cluster["equiv_sites"], indices)
             if np.allclose(indices, target_cluster):
-                return indices
+                return self._order_equiv_sites(cluster["equiv_sites"], sub)
 
         raise RuntimeError("There are no matching subcluster. "
                            "This should never happen. This is a bug.")

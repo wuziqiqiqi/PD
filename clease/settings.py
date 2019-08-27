@@ -797,7 +797,6 @@ class ClusterExpansionSetting(object):
     def _cutoff_for_tm_construction(self):
         """ Get cutoff radius for translation matrix construction."""
         indices = self.unique_indices
-        print(indices)
         # start with some small positive number
         max_dist = 0.1
 
@@ -913,7 +912,6 @@ class ClusterExpansionSetting(object):
                 cluster['indices'] = nested_array2list(cluster['indices'])
                 cluster['equiv_sites'] = \
                     nested_array2list(cluster['equiv_sites'])
-                cluster['order'] = nested_array2list(cluster['order'])
 
     def _get_name_indx(self, unique_name):
         size = int(unique_name[1])
