@@ -375,8 +375,10 @@ class ClusterExpansionSetting(object):
         self._check_max_cluster_dia(supercell.info['distances'])
         cluster_info = [{} for _ in range(len(self.ref_index_trans_symm))]
 
-        sc_manager = AtomsManager(supercell)
-        bkg_sc_indices = sc_manager.single_element_sites(self.basis_elements)
+        bkg_sc_indices = []
+        if self.ignore_background_atoms:
+            sc_manager = AtomsManager(supercell)
+            bkg_sc_indices = sc_manager.single_element_sites(self.basis_elements)
 
         extractor = ClusterExtractor(supercell)
         for size in range(2, self.max_cluster_size+1):
