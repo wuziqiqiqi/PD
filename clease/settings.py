@@ -21,6 +21,7 @@ from clease.concentration import Concentration
 from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
 from clease.name_clusters import name_clusters
+from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class ClusterExpansionSetting(object):
@@ -393,9 +394,8 @@ class ClusterExpansionSetting(object):
                     [extractor.equivalent_sites(c[0]) for c in clusters]
                 all_equiv_sites.append(equiv_sites)
                 clusters = indices2tags(supercell, clusters)
-                fingerprints += [x.tolist() for x in extractor.inner_prod]
+                fingerprints += extractor.inner_prod
                 all_clusters.append(clusters)
-
             names = name_clusters(fingerprints)
             info = self.dict_representation(names, all_clusters,
                                             all_equiv_sites, fingerprints, size)
@@ -424,7 +424,7 @@ class ClusterExpansionSetting(object):
                     'equiv_sites': equiv,
                     'symm_group': trans_symm,
                     'ref_indx': self.ref_index_trans_symm[trans_symm],
-                    'fingerprint': list(fingerprints[counter]),
+                    'fingerprint': fingerprints[counter],
                     'size': size,
                     'name': names[counter],
                     'max_cluster_dia': 2*np.sqrt(fingerprints[counter][0])
@@ -444,7 +444,7 @@ class ClusterExpansionSetting(object):
                           'symm_group': symm,
                           'ref_indx': self.ref_index_trans_symm[symm],
                           'equiv_sites': [],
-                          'fingerprint': [0.0]}
+                          'fingerprint': ClusterFingerprint([0.0])}
             empty_info.append({'c0': empty_dict})
         return empty_info
 
@@ -460,7 +460,7 @@ class ClusterExpansionSetting(object):
                           'symm_group': symm,
                           'ref_indx': self.ref_index_trans_symm[symm],
                           'equiv_sites': [],
-                          'fingerprint': [0.0]}
+                          'fingerprint': ClusterFingerprint([0.0])}
             point_cluster_info.append({'c1': point_dict})
         return point_cluster_info
 
@@ -921,6 +921,9 @@ class ClusterExpansionSetting(object):
                 cluster['indices'] = nested_array2list(cluster['indices'])
                 cluster['equiv_sites'] = \
                     nested_array2list(cluster['equiv_sites'])
+                fp = ClusterFingerprint([])
+                fp.fromJSON(cluster['fingerprint'])
+                cluster['fingerprint'] = fp
 
     def _get_name_indx(self, unique_name):
         size = int(unique_name[1])
@@ -1121,7 +1124,7 @@ class ClusterExpansionSetting(object):
 
             assert len(fingerprints) == len(new_fingerprints)
             for key in fingerprints:
-                assert np.allclose(fingerprints[key], new_fingerprints[key])
+                assert fingerprints[key] == new_fingerprints[key]
 
             assert new_names == names
             assert equiv_sites == new_equiv_sites

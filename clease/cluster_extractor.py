@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
 from itertools import combinations
+from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class ClusterExtractor(object):
@@ -52,15 +53,16 @@ class ClusterExtractor(object):
         indices = list(set(indices) - set(ignored_indices))
         return self._group_clusters(ref_indx, indices, size, cutoff)
 
-    def _get_type(self, flat_inner_prod):
+    def _get_type(self, fingerprint):
         """Determine cluster type based on flattened inner product matrix."""
         if self.inner_prod:
-            diff = [np.sum((x - flat_inner_prod)**2) for x in self.inner_prod]
-            min_group = np.argmin(diff)
-            if np.sqrt(diff[min_group]) < self.tol:
-                return min_group
+            try:
+                group = self.inner_prod.index(fingerprint)
+                return group
+            except ValueError:
+                pass
 
-        self.inner_prod.append(flat_inner_prod)
+        self.inner_prod.append(fingerprint)
         return len(self.inner_prod) - 1
 
     def _group_clusters(self, ref_indx, indices, size, cutoff):
@@ -85,7 +87,8 @@ class ClusterExtractor(object):
             assert len(off_diag) == N*(N-1)/2
 
             inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
-            group = self._get_type(inner)
+            fp = ClusterFingerprint(list(inner))
+            group = self._get_type(fp)
 
             all_indices = self._order_by_internal_distances(all_indices)
             if group == len(clusters):
