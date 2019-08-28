@@ -1,19 +1,57 @@
 import numpy as np
 
-def name_clusters(fingerprints):
+class Fingerprint(object):
+    def __init__(self, fp, tol=1E-9):
+        self.fp = fp
+        self.tol = tol
+
+    def __lt__(self, other):
+        if len(self.fp) < len(other.fp):
+            return True
+        elif len(self.fp) > len(other.fp):
+            return False
+
+        for x, y in zip(self.fp, other.fp):
+            diff = x - y
+            if diff < -self.tol:
+                return True
+            elif diff > self.tol:
+                return False
+        return False
+
+    def __eq__(self, other):
+        if len(self.fp) != len(other.fp):
+            return False
+
+        for x, y in zip(self.fp, other.fp):
+            if abs(x - y) > self.tol:
+                return False
+        return True
+
+    def __getitem__(self, i):
+        return self.fp[i]
+
+    def __len__(self):
+        return len(self.fp)
+
+    def __str__(self):
+        return ','.join(str(x) for x in self.fp)
+
+def name_clusters(fingerprint_list):
     """Name clusters based on its size and diameter."""
+    fingerprints = [Fingerprint(fp) for fp in fingerprint_list]
     s = size(fingerprints[0])
     distance_list = [2*np.sqrt(fp[0]) for fp in fingerprints]
 
     distance_list = np.round(distance_list, decimals=6)
     distance_list = np.unique(distance_list)
     distance_list.sort()
-    names = []
-    num_occurences = {}
+    prefixes = []
+    prefix_dict = {}
     for i, fp in enumerate(fingerprints):
         match = get_first_match(fp, fingerprints[:i])
         if match != -1:
-            names.append(names[match])
+            prefix = prefixes[match]
         else:
             dia = diameter(fp)
             index = np.argmin(np.abs(distance_list - dia))
@@ -27,16 +65,20 @@ def name_clusters(fingerprints):
                 prefix = 'c{}_d0{}'.format(s, index)
             else:
                 prefix = 'c{}_d{}'.format(s, index)
-            counter = 0
-            if prefix not in num_occurences.keys():
-                num_occurences[prefix] = 1
-                counter = 0
-            else:
-                counter = num_occurences[prefix]
-                num_occurences[prefix] += 1
+            prefixes.append(prefix)
 
-            name = prefix + '_{}'.format(counter)
-            names.append(name)
+        fp_list = prefix_dict.get(prefix, [])
+        fp_list.append(fp)
+        prefix_dict[prefix] = fp_list
+
+    # Sort prefix dict
+    for _, v in prefix_dict.items():
+        v.sort()
+
+    names = []
+    for prefix, fp in zip(prefixes, fingerprints):
+        suffix = prefix_dict[prefix].index(fp)
+        names.append(prefix+'_{}'.format(suffix))
     return names
 
 

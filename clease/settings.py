@@ -1082,28 +1082,28 @@ class ClusterExpansionSetting(object):
             indices = list(range(len(self.prim_cell)))
             indices.remove(ref_atom)
             dists += list(self._cell.get_distances(ref_atom, indices,
-                                                       mic=True))
+                                                   mic=True))
         return min(dists)
 
     def _check_cluster_info_consistency(self):
         """Check that cluster names in all templates' info entries match."""
         db = connect(self.db_name)
         names = []
-        descriptors = []
         equiv_sites = {}
         mult_factor = {}
+        fingerprints = {}
         for row in db.select(name='template'):
             cluster_info = row.data["cluster_info"]
-
             new_names = []
-            new_desc = []
             new_equiv_sites = {}
             new_mult_factor = {}
+            new_fingerprints = {}
+
             # Extract all names
             for item in cluster_info:
                 for k, v in item.items():
                     new_names.append(k)
-                    new_desc.append(list(v["fingerprint"]))
+                    new_fingerprints[k] = list(v["fingerprint"])
                     if len(v["equiv_sites"]) == 0:
                         new_equiv_sites[k] = 0
                     else:
@@ -1111,19 +1111,22 @@ class ClusterExpansionSetting(object):
                     new_mult_factor[k] = len(v["indices"])
 
             new_names = sorted(new_names)
-            new_desc = sorted(new_desc)
 
             if not names:
                 # This is the first entry
                 names = deepcopy(new_names)
-                descriptors = deepcopy(new_desc)
+                fingerprints = deepcopy(new_fingerprints)
                 equiv_sites = deepcopy(new_equiv_sites)
                 mult_factor = deepcopy(new_mult_factor)
 
+            assert len(fingerprints) == len(new_fingerprints)
+            for key in fingerprints:
+                assert np.allclose(fingerprints[key], new_fingerprints[key])
+
             assert new_names == names
-            assert all(np.allclose(x, y) for x, y in zip(descriptors, new_desc))
             assert equiv_sites == new_equiv_sites
             assert mult_factor == new_mult_factor
+            # assert fingerprints == new_fingerprints
 
     def subclusters(self, cluster_name):
         """Return all the sub-clusters of cluster."""
