@@ -14,7 +14,7 @@ src_files = ['cf_history_tracker.cpp',
              'additional_tools.cpp', 'cluster.cpp',
              'row_sparse_struct_matrix.cpp',
              'named_array.cpp', 'symbols_with_numbers.cpp',
-             'basis_function.cpp']
+             'basis_function.cpp', 'cluster_list.cpp']
 
 src_files = [cxx_src_folder + x for x in src_files]
 src_files.append('clease/cython/clease_cxx.pyx')
