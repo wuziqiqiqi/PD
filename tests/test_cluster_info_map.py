@@ -31,7 +31,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         atoms_small = wrap_and_sort_by_position(atoms_small)
 
         info_mapper = ClusterInfoMapper(
-            setting.atoms, setting.trans_matrix, setting.cluster_info)
+            setting.atoms, setting.trans_matrix, setting.cluster_list)
 
         map_info, map_tm = info_mapper.map_info(atoms_small)
 
@@ -45,7 +45,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         cf1 = cf.get_cf(atoms_small)
 
         # Change the info to the mapped one
-        setting.cluster_info = map_info
+        setting.cluster_list = map_info
         setting.trans_matrix = map_tm
         cf2 = cf.get_cf(atoms_small)
 
@@ -85,7 +85,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         atoms_small = atoms_small = wrap_and_sort_by_position(atoms_small)
 
         info_mapper = \
-            ClusterInfoMapper(bsg.atoms, bsg.trans_matrix, bsg.cluster_info)
+            ClusterInfoMapper(bsg.atoms, bsg.trans_matrix, bsg.cluster_list)
 
         map_info, map_tm = info_mapper.map_info(atoms_small)
 
@@ -106,7 +106,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         cf1 = cf.get_cf(atoms_small)
 
         # Change the info to the mapped one
-        bsg.cluster_info = map_info
+        bsg.cluster_list = map_info
         bsg.trans_matrix = map_tm
         cf2 = cf.get_cf(atoms_small)
 
