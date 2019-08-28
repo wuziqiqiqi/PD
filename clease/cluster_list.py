@@ -1,5 +1,6 @@
 from clease.tools import dec_string
 from itertools import product
+from clease.tools import flatten
 
 class ClusterList(object):
     def __init__(self):
@@ -35,7 +36,6 @@ class ClusterList(object):
     def get_cf_names(cluster, num_bf):
         """Return all possible correlation function names.
 
-
         Parameters:
 
         cluster: Cluster
@@ -67,9 +67,52 @@ class ClusterList(object):
             all_cf_names += self.get_cf_names(cluster, num_bf)
         return all_cf_names
 
-
     def __len__(self):
         return len(self.clusters)
 
     def __getitem__(self, i):
         return self.clusters[i]
+
+    def __array__(self):
+        return self.clusters
+
+    def __eq__(self, other):
+        print(len(self.clusters), len(other.clusters))
+        if len(self.clusters) != len(other.clusters):
+            return False
+
+        for c1, c2 in zip(self.clusters, other.clusters):
+            if c1 != c2:
+                print(c1, c2)
+                return False
+        return True
+
+    def sort(self):
+        self.clusters.sort()
+
+    @property
+    def dtype(self):
+        return 'ClusterList'
+
+    def tolist(self):
+        return self.clusters
+
+    @property
+    def unique_indices(self):
+        all_indices = set()
+        for cluster in self.clusters:
+            all_indices.update(flatten(cluster.indices))
+        return list(all_indices)
+
+    @property
+    def num_symm_groups(self):
+        return max(c.group for c in self.clusters)
+
+    @property
+    def unique_indices_per_group(self):
+        indices_per_group = []
+        for i in range(self.num_symm_groups + 1):
+            indices_per_group.append(set())
+            for c in self.get_by_group(i):
+                indices_per_group[i].update(flatten(c.indices))
+        return [list(x) for x in indices_per_group]

@@ -121,6 +121,40 @@ class TestClusterList(unittest.TestCase):
         expected_cf_names = expected_cf_names1 + expected_cf_names2
         self.assertEqual(all_cf_names, expected_cf_names)
 
+    def test_unique_indices(self):
+        cluster1 = Cluster(None, None, None, None, None,
+                           [[0, 3, 3], [9, 9, 9]], None, None)
+        cluster2 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
+                           None, None)
+        cluster_list = ClusterList()
+        cluster_list.append(cluster1)
+        cluster_list.append(cluster2)
+        indices = cluster_list.unique_indices
+        indices.sort()
+        expected = [0, 2, 3, 5, 9, 10, 12]
+        self.assertEqual(indices, expected)
+
+    def test_unique_indices_per_symm_group(self):
+        cluster1 = Cluster(None, None, None, None, None,
+                           [[0, 3, 3], [9, 9, 9]], None, 0)
+        cluster2 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
+                           None, 0)
+        cluster3 = Cluster(None, None, None, None, None,
+                           [[0, 3, 3], [9, 9, 9]], None, 1)
+        cluster4 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
+                           None, 2)
+
+        cluster_list = ClusterList()
+        cluster_list.append(cluster1)
+        cluster_list.append(cluster2)
+        cluster_list.append(cluster3)
+        cluster_list.append(cluster4)
+
+        indices = cluster_list.unique_indices_per_group
+        indices = [sorted(x) for x in indices]
+        expected = [[0, 2, 3, 5, 9, 10, 12], [0, 3, 9], [2, 5, 10, 12]]
+        self.assertEqual(indices, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
