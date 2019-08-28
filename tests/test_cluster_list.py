@@ -61,7 +61,6 @@ class TestClusterList(unittest.TestCase):
             indices = [[x] for x in indices]
 
             dia = 2.0
-            order = [[0, 1] for _ in range(len(indices))]
             equiv_sites = [[0, 1]]
             name = '01nn'
             fp = ClusterFingerprint([4.5, 4.3, 2.4, -1.0, -3.4, -1.0])
