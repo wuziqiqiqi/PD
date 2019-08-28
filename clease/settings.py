@@ -392,12 +392,6 @@ class ClusterExpansionSetting(object):
         num_sites_in_group = [len(x) for x in self.index_by_trans_symm]
         return self.cluster_list.multiplicity_factors(num_sites_in_group)
 
-    def _get_distance(self, x0, x1):
-        """Compute the Euclidean distance between two points."""
-        diff = x1 - x0
-        length = np.sqrt(diff.dot(diff))
-        return length
-
     @property
     def all_cf_names(self):
         num_bf = len(self.basis_functions)
