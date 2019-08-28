@@ -46,14 +46,12 @@ class ClusterExpansionSetting(object):
             raise TypeError("concentration has to be either dict or "
                             "instance of Concentration")
 
-        self.check_old_tm_algorithm = False
         self.kwargs["concentration"] = self.concentration.to_dict()
         self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self.num_basis = len(self.basis_elements)
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
-        self.cluster_info = []
 
         self.prim_cell = self._get_prim_cell()
         self._tag_prim_cell()
@@ -78,7 +76,6 @@ class ClusterExpansionSetting(object):
 
         self.index_by_trans_symm = []
         self.ref_index_trans_symm = []
-        self.kd_trees = None
         self.template_atoms_uid = 0
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
@@ -517,8 +514,6 @@ class ClusterExpansionSetting(object):
             for item in info_str:
                 cluster = Cluster.load(item)
                 self.cluster_list.append(cluster)
-            # self.cluster_info = row.data.cluster_info
-            # self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
             self.create_cluster_list_and_trans_matrix()
