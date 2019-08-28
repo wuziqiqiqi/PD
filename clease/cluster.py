@@ -1,3 +1,4 @@
+import numpy as np
 from clease.tools import equivalent_deco, nested_array2list
 from clease.cluster_fingerprint import ClusterFingerprint
 
