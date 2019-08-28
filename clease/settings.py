@@ -4,15 +4,15 @@ This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
 import os
-from itertools import combinations, product
+from itertools import product
 from copy import deepcopy
 import numpy as np
 from ase.db import connect
 
 from clease import _logger, LogVerbosity, ClusterExtractor
-from clease.tools import (wrap_and_sort_by_position, dec_string,
-                          indices2tags, get_all_internal_distances,
-                          nested_list2str, trans_matrix_index2tags)
+from clease.tools import (wrap_and_sort_by_position, indices2tags,
+                          get_all_internal_distances, nested_list2str,
+                          trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
@@ -135,7 +135,6 @@ class ClusterExpansionSetting(object):
         for x in self.basis_elements:
             unique_elem.update(x)
         return list(unique_elem - bg_sym)
-
 
     def _size2string(self):
         """Convert the current size into a string."""
@@ -399,7 +398,6 @@ class ClusterExpansionSetting(object):
         """Return the number of correlation functions."""
         return len(self.all_cf_names)
 
-
     def _get_symm_groups(self):
         symm_groups = -np.ones(len(self.atoms), dtype=int)
 
@@ -608,6 +606,7 @@ class ClusterExpansionSetting(object):
                 ref_clust_list = cluster_list
 
             assert cluster_list == ref_clust_list
+
 
 def to_3x3_matrix(size):
     if size is None:

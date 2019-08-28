@@ -2,6 +2,7 @@ from clease.tools import dec_string
 from itertools import product
 from clease.tools import flatten
 
+
 class ClusterList(object):
     def __init__(self):
         self.clusters = []
@@ -126,7 +127,8 @@ class ClusterList(object):
         for cluster in self.clusters:
             current_factor = mult_factors.get(cluster.name, 0)
             current_norm = norm.get(cluster.name, 0)
-            current_factor += len(cluster.indices)*num_sites_per_group[cluster.group]
+            current_factor += \
+                len(cluster.indices)*num_sites_per_group[cluster.group]
             current_norm += num_sites_per_group[cluster.group]
 
             mult_factors[cluster.name] = current_factor
