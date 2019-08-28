@@ -6,15 +6,14 @@ from random import sample
 from ase.db import connect
 import json
 from clease import _logger
-from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
 
 
 class ApproxEqualityList(object):
     """
-    Wrapper around a list which implements a new comparison operator. If two items
-    in the list is equal within a given tolerance, the items are considered to be
-    equal.
+    Wrapper around a list which implements a new comparison operator. If two
+    items in the list is equal within a given tolerance, the items are
+    considered to be equal.
 
     Parameters:
     ===========
@@ -25,6 +24,7 @@ class ApproxEqualityList(object):
     tol: float
         Toleracnce for comparison check
     """
+
     def __init__(self, array, tol=1E-5):
         self.array = array
         self.tol = tol
@@ -48,6 +48,7 @@ def index_by_position(atoms):
 
     indices = [i for tag, i in deco]
     return indices
+
 
 def sort_by_position(atoms):
     """Sort atoms by its position."""

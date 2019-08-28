@@ -155,6 +155,32 @@ class TestClusterList(unittest.TestCase):
         expected = [[0, 2, 3, 5, 9, 10, 12], [0, 3, 9], [2, 5, 10, 12]]
         self.assertEqual(indices, expected)
 
+    def test_subcluster(self):
+        triplet = Cluster(None, None, None, None, None,
+                          [[0, 3, 5], [1, 4, 6]], None, 2)
+        doub = Cluster(None, 2, None, None, None, [[0, 3], [10, 12]], None, 2)
+        self.assertTrue(doub.is_subcluster(triplet))
+        self.assertFalse(triplet.is_subcluster(doub))
+
+        doublet = Cluster(None, None, None, None, None, [[0, 8], [10, 12]],
+                          None, 2)
+        self.assertFalse(doublet.is_subcluster(triplet))
+
+    def test_get_subclusters(self):
+        trip = Cluster(None, 3, None, None, None, [[0, 3, 5], [1, 4, 6]],
+                       None, 2)
+        d1 = Cluster(None, 2, None, None, None, [[0, 3], [10, 12]], None, 2)
+        d2 = Cluster(None, 2, None, None, None, [[0, 8], [10, 12]], None, 2)
+        d3 = Cluster(None, 2, None, None, None, [[0, 5], [4, 6]], None, 2)
+        cluster_list = ClusterList()
+        cluster_list.append(trip)
+        cluster_list.append(d1)
+        cluster_list.append(d2)
+        cluster_list.append(d3)
+
+        subclusters = cluster_list.get_subclusters(trip)
+        expected = [d1, d3]
+        self.assertEqual(expected, subclusters)
 
 if __name__ == '__main__':
     unittest.main()

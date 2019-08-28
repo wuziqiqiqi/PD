@@ -11,7 +11,7 @@ from ase.db import connect
 
 from clease import _logger, LogVerbosity, ClusterExtractor
 from clease.floating_point_classification import FloatingPointClassifier
-from clease.tools import (wrap_and_sort_by_position, flatten, dec_string,
+from clease.tools import (wrap_and_sort_by_position, dec_string,
                           indices2tags, get_all_internal_distances,
                           nested_list2str, trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
@@ -62,7 +62,6 @@ class ClusterExpansionSetting(object):
         self.float_max_dia, self.float_ang, self.float_dist = \
             self._init_floating_point_classifiers()
 
-
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
                                             skew_threshold=skew_threshold,
@@ -80,7 +79,6 @@ class ClusterExpansionSetting(object):
         self.num_unique_elements = len(self.unique_elements)
         self.index_by_basis = None
 
-        self.cluster_info = []
         self.index_by_trans_symm = []
         self.ref_index_trans_symm = []
         self.kd_trees = None
@@ -357,7 +355,8 @@ class ClusterExpansionSetting(object):
         bkg_sc_indices = []
         if self.ignore_background_atoms:
             sc_manager = AtomsManager(supercell)
-            bkg_sc_indices = sc_manager.single_element_sites(self.basis_elements)
+            bkg_sc_indices = \
+                sc_manager.single_element_sites(self.basis_elements)
 
         extractor = ClusterExtractor(supercell)
         for size in range(2, self.max_cluster_size+1):
@@ -375,8 +374,8 @@ class ClusterExpansionSetting(object):
                 fingerprints += extractor.inner_prod
                 all_clusters.append(clusters)
             names = name_clusters(fingerprints)
-            self._update_cluster_list(names, all_clusters, all_equiv_sites, fingerprints,
-                                      size)
+            self._update_cluster_list(names, all_clusters, all_equiv_sites,
+                                      fingerprints, size)
 
         # Update with empty info
         for cluster in self.empty_clusters:
@@ -385,7 +384,6 @@ class ClusterExpansionSetting(object):
         # Update with singlet info
         for cluster in self.point_clusters:
             self.cluster_list.append(cluster)
-
 
     def _update_cluster_list(self, names, clusters, equiv_sites, fingerprints,
                              size):
@@ -423,57 +421,40 @@ class ClusterExpansionSetting(object):
             )
         return point
 
-    # @property
-    # def unique_indices(self):
-    #     """Creates a list with the unique indices."""
-    #     all_indices = deepcopy(self.ref_index_trans_symm)
-    #     for item in self.cluster_info:
-    #         for _, info in item.items():
-    #             all_indices += flatten(info["indices"])
-    #     return list(set(all_indices))
-
-    # @property
-    # def unique_indices_per_group(self):
-    #     index_per_group = []
-    #     for item in self.cluster_info:
-    #         unique_indices = set()
-    #         for _, info in item.items():
-    #             unique_indices.update(flatten(info["indices"]))
-    #         index_per_group.append(list(unique_indices))
-    #     return index_per_group
-
     @property
     def multiplicity_factor(self):
         """Return the multiplicity factor of each cluster."""
-        names = self.cluster_family_names
-        mult_factor = {name: 0. for name in names}
-        name_found = {name: False for name in names}
-        normalization = {name: 0 for name in names}
-        for name in names:
-            for item in self.cluster_info:
-                if name not in item.keys():
-                    continue
-                name_found[name] = True
-                cluster = item[name]
-                num_in_group = \
-                    len(self.index_by_trans_symm[cluster["symm_group"]])
-                mult_factor[name] += len(cluster["indices"]) * num_in_group
-                normalization[name] += num_in_group
+        num_sites_in_group = [len(x) for x in self.index_by_trans_symm]
+        return self.cluster_list.multiplicity_factors(num_sites_in_group)
+        # names = self.cluster_family_names
+        # mult_factor = {name: 0. for name in names}
+        # name_found = {name: False for name in names}
+        # normalization = {name: 0 for name in names}
+        # for name in names:
+        #     for item in self.cluster_info:
+        #         if name not in item.keys():
+        #             continue
+        #         name_found[name] = True
+        #         cluster = item[name]
+        #         num_in_group = \
+        #             len(self.index_by_trans_symm[cluster["symm_group"]])
+        #         mult_factor[name] += len(cluster["indices"]) * num_in_group
+        #         normalization[name] += num_in_group
 
-        for name in mult_factor.keys():
-            mult_factor[name] = mult_factor[name] / normalization[name]
-        for _, found in name_found.items():
-            assert found
-        return mult_factor
+        # for name in mult_factor.keys():
+        #     mult_factor[name] = mult_factor[name] / normalization[name]
+        # for _, found in name_found.items():
+        #     assert found
+        # return mult_factor
 
-    def cluster_info_by_name(self, name):
-        """Get info entries of all clusters with name."""
-        name = str(name)
-        info = []
-        for item in self.cluster_info:
-            if name in item.keys():
-                info.append(item[name])
-        return info
+    # def cluster_info_by_name(self, name):
+    #     """Get info entries of all clusters with name."""
+    #     name = str(name)
+    #     info = []
+    #     for item in self.cluster_info:
+    #         if name in item.keys():
+    #             info.append(item[name])
+    #     return info
 
     def get_min_distance(self, cluster, positions):
         """Get minimum distances.
@@ -652,8 +633,8 @@ class ClusterExpansionSetting(object):
         if counter >= max_attempts:
             raise RuntimeError("Could not find a cutoff such that all "
                                "unique_indices are included")
-        self.trans_matrix = [{k: row[k] for k in self.cluster_list.unique_indices}
-                             for row in tm]
+        self.trans_matrix = [{k: row[k] for k in
+                              self.cluster_list.unique_indices} for row in tm]
 
     def _store_data(self):
         size_str = nested_list2str(self.size)
@@ -871,7 +852,6 @@ class ClusterExpansionSetting(object):
                 ref_clust_list = cluster_list
 
             assert cluster_list == ref_clust_list
-
 
     def subclusters(self, cluster_name):
         """Return all the sub-clusters of cluster."""

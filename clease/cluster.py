@@ -2,7 +2,6 @@ from clease.tools import equivalent_deco, nested_array2list
 from clease.cluster_fingerprint import ClusterFingerprint
 
 
-
 class Cluster(object):
     def __init__(self,  name, size, diameter, fingerprint, ref_indx, indices,
                  equiv_sites, trans_symm_group):
@@ -67,6 +66,17 @@ class Cluster(object):
         data['equiv_sites'] = nested_array2list(data['equiv_sites'])
         cluster.from_dict(data)
         return cluster
+
+    def is_subcluster(self, other):
+        """Check if the passed cluster is a subcluster of the current."""
+        if len(self.indices) == 0:
+            return True
+
+        if len(self.indices[0]) >= len(other.indices[0]):
+            return False
+
+        return any(set(s1).issubset(s2) for s1 in self.indices
+                   for s2 in other.indices)
 
     def __str__(self):
         str_rep = 'Name: {}\n'.format(self.name)

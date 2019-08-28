@@ -116,3 +116,23 @@ class ClusterList(object):
             for c in self.get_by_group(i):
                 indices_per_group[i].update(flatten(c.indices))
         return [list(x) for x in indices_per_group]
+
+    def multiplicity_factors(self, num_sites_per_group):
+        mult_factors = {}
+        norm = {}
+        for cluster in self.clusters:
+            current_factor = mult_factors.get(cluster.name, 0)
+            current_norm = norm.get(cluster.name, 0)
+            current_factor += len(cluster.indices)*num_sites_per_group[cluster.group]
+            current_norm += num_sites_per_group[cluster.group]
+
+            mult_factors[cluster.name] = current_factor
+            norm[cluster.name] = current_norm
+
+        for k in mult_factors.keys():
+            mult_factors[k] /= norm[k]
+        return mult_factors
+
+    def get_subclusters(self, cluster):
+        """Return all all subclusters of the passed cluster in the list."""
+        return [c for c in self.clusters if c.is_subcluster(cluster)]
