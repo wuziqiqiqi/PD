@@ -177,7 +177,6 @@ class TestCEBulk(unittest.TestCase):
         self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
-        print(bc_setting.prim_cell.get_cell())
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
         self.assertGreater(np.linalg.det(P), 0)
         atoms = make_supercell(bc_setting.prim_cell, P)
@@ -265,7 +264,6 @@ class TestCEBulk(unittest.TestCase):
                          db_name=db_name,
                          max_cluster_size=2,
                          max_cluster_dia=[4.01])
-        print(setting.cluster_names)
         fam_members = get_members_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_members[0]), 6)
         self.assertEqual(len(fam_members[1]), 6)

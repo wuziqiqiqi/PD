@@ -31,7 +31,8 @@ def name_clusters(fingerprints):
         prefixes.append(prefix)
 
         fp_list = prefix_dict.get(prefix, [])
-        fp_list.append(fp)
+        if fp not in fp_list:
+            fp_list.append(fp)
         prefix_dict[prefix] = fp_list
 
     # Sort prefix dict

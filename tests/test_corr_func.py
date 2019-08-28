@@ -70,7 +70,6 @@ class TestCorrFunc(unittest.TestCase):
                          db_name=db_name_sc,
                          max_cluster_size=3,
                          max_cluster_dia=[7.0, 4.0])
-        print(setting.cluster_names)
         corr = CorrFunction(setting)
         atoms = setting.atoms
         # No error should occure
