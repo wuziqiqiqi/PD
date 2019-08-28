@@ -144,7 +144,9 @@ class ClusterList(object):
         figures = []
         self.clusters.sort()
         for cluster in self.clusters:
+            if cluster.name == 'c0' or cluster.name == 'c1':
+                continue
             figure = cluster.get_figure(atoms)
-            figure.info = cluster.name
-            figures.append(figures)
+            figure.info = {'name': cluster.name}
+            figures.append(figure)
         return figures

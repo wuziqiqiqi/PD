@@ -84,8 +84,8 @@ class Cluster(object):
 
     def get_figure(self, atoms):
         figure = atoms[self.indices[0]]
-        figure_center = np.mean(figure.get_positions(), axis=1)
-        cell_center = np.mean(figure.get_cell(), axis=1)/2.0
+        figure_center = np.mean(figure.get_positions(), axis=0)
+        cell_center = np.mean(figure.get_cell(), axis=0)/2.0
         figure.translate(cell_center - figure_center)
         figure.wrap()
         return figure

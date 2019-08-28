@@ -128,9 +128,9 @@ class TemplateAtoms(object):
     @property
     def largest_template_by_diag(self):
         """Return the largest template based on the shortest diagonal."""
-        diag = 0.0
+        length = 0.0
         largest_template = None
-        for atoms in self.template['atoms']:
+        for atoms in self.templates['atoms']:
             diag_lengths = []
             cell = atoms.get_cell().T
             for w in product([-1, 0, 1], repeat=3):
@@ -141,9 +141,10 @@ class TemplateAtoms(object):
                 diag_lengths.append(length)
 
             min_length = np.min(diag_lengths)
-            if min_length > diag:
+
+            if min_length > length:
                 largest_template = atoms
-                diag = min_length
+                length = min_length
 
         return largest_template
 
