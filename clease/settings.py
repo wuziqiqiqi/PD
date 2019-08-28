@@ -392,19 +392,6 @@ class ClusterExpansionSetting(object):
         num_sites_in_group = [len(x) for x in self.index_by_trans_symm]
         return self.cluster_list.multiplicity_factors(num_sites_in_group)
 
-    def get_min_distance(self, cluster, positions):
-        """Get minimum distances.
-
-        Get the minimum distances between the atoms in a cluster according to
-        dist_matrix and return the sorted distances (reverse order)
-        """
-        d = []
-        for x in combinations(cluster, 2):
-            x0 = positions[x[0], :]
-            x1 = positions[x[1], :]
-            d.append(self._get_distance(x0, x1))
-        return np.array(sorted(d, reverse=True))
-
     def _get_distance(self, x0, x1):
         """Compute the Euclidean distance between two points."""
         diff = x1 - x0
