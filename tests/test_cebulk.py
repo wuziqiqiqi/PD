@@ -136,7 +136,8 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
         bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                            concentration=concentration, db_name=db_name)
+                            concentration=concentration,
+                            db_name=db_name)
 
         newstruct = NewStructures(bc_setting, struct_per_gen=3)
         newstruct.generate_initial_pool()
@@ -161,21 +162,21 @@ class TestCEBulk(unittest.TestCase):
             sub_cl = set(bc_setting.subclusters(name))
             self.assertTrue(sub_cl == set(["c0", "c1"]))
 
+
         # Test a few known clusters. Triplet nearest neighbour
-        name = "c3_01nn_0"
+        name = "c3_d0000_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0"]))
 
-        name = "c3_02nn_0"
+        name = "c3_d0001_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c2_02nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
 
-        name = "c4_01nn_0"
+        name = "c4_d0000_0"
         sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c3_01nn_0"]))
+        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
-        print(bc_setting.prim_cell.get_cell())
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
         self.assertGreater(np.linalg.det(P), 0)
         atoms = make_supercell(bc_setting.prim_cell, P)
@@ -263,7 +264,7 @@ class TestCEBulk(unittest.TestCase):
                          db_name=db_name,
                          max_cluster_size=2,
                          max_cluster_dia=[4.01])
-        fam_members = get_members_of_family(setting, "c2_06nn_0")
+        fam_members = get_members_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_members[0]), 6)
         self.assertEqual(len(fam_members[1]), 6)
         self.assertEqual(len(fam_members[2]), 6)
@@ -327,12 +328,16 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
+    def tearDown(self):
+        if update_reference_file:
+            print("Updating the reference correlation function file")
+            print("This should normally not be done.")
+            with open("reference_corr_funcs_bulk.py", 'w') as outfile:
+                json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+        return super().tearDown()
+
 
 if __name__ == '__main__':
     unittest.main()
 
-    if update_reference_file:
-        print("Updating the reference correlation function file")
-        print("This should normally not be done.")
-        with open("reference_corr_funcs_bulk.py", 'w') as outfile:
-            json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+

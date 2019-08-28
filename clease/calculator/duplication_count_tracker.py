@@ -24,7 +24,7 @@ class DuplicationCountTracker(object):
         self.occ_count_all = self._occurence_count_all_symm_groups()
         self._norm_factors = self._get_norm_factors()
 
-    def factor(self, cluster, indices, order):
+    def factor(self, cluster, indices):
         """Get the normalization factor to correct for self interactions.
 
         Parameters:
@@ -34,15 +34,12 @@ class DuplicationCountTracker(object):
 
         indices: list
             Indices of the particular sub cluster
-
-        order: list
-            Order of the indices in the sub cluster
         """
-        key = self.index_key(cluster["ref_indx"], indices, order,
+        key = self.index_key(cluster["ref_indx"], indices,
                              cluster["equiv_sites"])
         return self._norm_factors[cluster["symm_group"]][cluster["name"]][key]
 
-    def index_key(self, ref_index, indices, order, equiv_sites):
+    def index_key(self, ref_index, indices, equiv_sites):
         """Return a string representing the key for a given order.
 
         Parameters:
@@ -52,13 +49,8 @@ class DuplicationCountTracker(object):
 
         indices: list
             List representing the indices in a sub-cluster
-
-        order: list
-            Order of the indices in the sub cluster
         """
-        index_with_ref = [ref_index] + indices
-        srt_indices = [index_with_ref[i] for i in order]
-        return list2str(self._order_equiv_sites(equiv_sites, srt_indices))
+        return list2str(self._order_equiv_sites(equiv_sites, indices))
 
     def _get_norm_factors(self):
         """Calculate all normalization factors."""
@@ -100,8 +92,8 @@ class DuplicationCountTracker(object):
             A dictionary with info about a particular cluster
         """
         occ_count = {}
-        for indices, order in zip(cluster["indices"], cluster["order"]):
-            key = self.index_key(cluster["ref_indx"], indices, order,
+        for indices in cluster["indices"]:
+            key = self.index_key(cluster["ref_indx"], indices,
                                  cluster["equiv_sites"])
             occ_count[key] = occ_count.get(key, 0) + 1
         return occ_count
@@ -117,20 +109,14 @@ class DuplicationCountTracker(object):
     def _corresponding_subcluster(self, new_ref_indx, target_cluster, name):
         """Find the corresponding cluster when another index is ref_index."""
         cluster = self.cluster_info[self.symm_group[new_ref_indx]][name]
-        for sub, order in zip(cluster["indices"], cluster["order"]):
+        for sub in cluster["indices"]:
             indices = [self.trans_matrix[new_ref_indx][indx] for indx in sub]
-            indices = [new_ref_indx] + indices
-            indices = [indices[j] for j in order]
             indices = self._order_equiv_sites(cluster["equiv_sites"], indices)
-
             if np.allclose(indices, target_cluster):
-                subcluster = [cluster["ref_indx"]] + sub
-                subcluster = [subcluster[i] for i in order]
-                return self._order_equiv_sites(cluster["equiv_sites"],
-                                               subcluster)
+                return self._order_equiv_sites(cluster["equiv_sites"], sub)
 
         raise RuntimeError("There are no matching subcluster. "
-                           "This should never happen and is a bug.")
+                           "This should never happen. This is a bug.")
 
     def _total_number_of_occurences(self, key, name):
         """Get the total number of occurences."""

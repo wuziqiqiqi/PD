@@ -36,7 +36,7 @@ public:
   unsigned int ref_indx;
   unsigned int symm_group;
   double max_cluster_dia;
-  std::string descriptor;
+  // std::string descriptor;
 private:
   cluster_t members;
   cluster_t order;

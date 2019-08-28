@@ -36,42 +36,6 @@ class TestCorrFunc(unittest.TestCase):
             self.assertAlmostEqual(dist, ref_dist)
         os.remove(db_name)
 
-    def test_order_indep_ref_indx(self):
-        """
-        Check that the order of the elements are independent of the ref index.
-        This does only apply for clusters with only inequivalent sites
-        """
-        db_name = 'test_corrfunc_order_indep_ref_indx.db'
-        bc_setting = get_bc_setting(db_name)
-        for _, clst in bc_setting.cluster_info_given_size(3)[0].items():
-            if clst["equiv_sites"]:
-                # The cluster contains symmetrically equivalent sites
-                # and then this test does not apply
-                continue
-            cluster = clst["indices"]
-            cluster_order = clst["order"]
-
-            init_cluster = [0] + list(cluster[0])
-            init_cluster = [init_cluster[indx] for indx in cluster_order[0]]
-
-            # Make sure that when the other indices in init_cluster are ref
-            # indices, the order is the same
-            for ref_indx in cluster[0]:
-                found_cluster = False
-                for subcluster, order in zip(cluster, cluster_order):
-                    new_cluster = [ref_indx]
-                    for indx in subcluster:
-                        trans_indx = bc_setting.trans_matrix[ref_indx][indx]
-                        new_cluster.append(trans_indx)
-
-                    # Check if all elements are the same
-                    if sorted(new_cluster) == sorted(init_cluster):
-                        new_cluster = [new_cluster[indx] for indx in order]
-                        found_cluster = True
-                        self.assertEqual(init_cluster, new_cluster)
-                self.assertTrue(found_cluster)
-        os.remove(db_name)
-
     def test_supercell_consistency(self):
         from clease.tools import wrap_and_sort_by_position
         basis_elements = [['Li', 'X'], ['O', 'X']]
@@ -106,15 +70,14 @@ class TestCorrFunc(unittest.TestCase):
                          db_name=db_name_sc,
                          max_cluster_size=3,
                          max_cluster_dia=[7.0, 4.0])
-
         corr = CorrFunction(setting)
         atoms = setting.atoms
         # No error should occure
-        corr.get_cf_by_cluster_names(atoms, ['c3_03nn_0_000'])
+        corr.get_cf_by_cluster_names(atoms, ['c3_d0000_0_000'])
 
         # Try a quadruplet: Have to raise error
         with self.assertRaises(ClusterNotTrackedError):
-            corr.get_cf_by_cluster_names(atoms, ['c4_01nn_0_0000'])
+            corr.get_cf_by_cluster_names(atoms, ['c4_d0001_0_0000'])
 
     def tearDown(self):
         try:

@@ -287,12 +287,16 @@ class TestCECrystal(unittest.TestCase):
             print(str(exc))
         os.remove(db_name)
 
+    def tearDown(self):
+        if update_reference_file:
+            print("Updating the reference correlation function file")
+            print("This should normally not be done.")
+            with open("reference_corr_funcs_crystal.py", 'w') as outfile:
+                json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+        return super().tearDown()
+
 
 if __name__ == '__main__':
     unittest.main()
 
-    if update_reference_file:
-        print("Updating the reference correlation function file")
-        print("This should normally not be done.")
-        with open("reference_corr_funcs_crystal.py", 'w') as outfile:
-            json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+

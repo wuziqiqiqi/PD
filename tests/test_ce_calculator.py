@@ -120,7 +120,8 @@ def get_spacegroup(db_name):
                         concentration=concentration,
                         db_name=db_name,
                         max_cluster_size=3,
-                        max_cluster_dia=[5.0, 5.0])
+                        max_cluster_dia=[5.0, 5.0],
+                        ignore_background_atoms=False)
 
     atoms = crystal(symbols=['O', 'X', 'O', 'Ta'], basis=basis,
                     spacegroup=spacegroup, cell=None,
@@ -227,47 +228,50 @@ class TestCECalculator(unittest.TestCase):
         db_name = 'cecalc_corr_func_ternary.db'
         print('ternary')
         tern_setting, tern_atoms = get_ternary(db_name)
-        test_update_correlation_functions(
-            tern_setting, tern_atoms, n_trial_configs=5)
+        test_update_correlation_functions(tern_setting, tern_atoms,
+                                          n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_rocksalt(self):
         db_name = 'cecalc_corr_func_rocksalt.db'
         print('rocksalt')
         rs_setting, rs_atoms = get_rocksalt(db_name)
-        test_update_correlation_functions(
-            rs_setting, rs_atoms, n_trial_configs=5, fixed=['O'])
+        test_update_correlation_functions(rs_setting, rs_atoms,
+                                          n_trial_configs=5, fixed=['O'])
         os.remove(db_name)
+
 
     def test_insert_element_rocksalt_1x1x1(self):
         print('rocksalt with self interaction 1x1x1')
         db_name = 'cecalc_rs_1x1x1.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 1, 1], db_name)
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1],
+                                                              db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x2(self):
         db_name = 'cecalc_rs_1x1x2.db'
         print('rocksalt with self interaction 1x1x2')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 1, 2], db_name)
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2],
+                                                              db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
         os.remove(db_name)
+
 
     def test_insert_element_rocksalt_1x1x3(self):
         db_name = 'cecalc_rs_1x1x3.db'
         print('rocksalt with self interaction 1x1x3')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 1, 3], db_name)
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3],
+                                                              db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
+
 
     def test_insert_element_rocksalt_1x2x3(self):
         print('rocksalt with self interaction 1x2x3')
         db_name = 'cecalc_rs_1x2x3.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction(
-            [1, 2, 3], db_name)
+        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3],
+                                                              db_name)
         test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
@@ -275,8 +279,8 @@ class TestCECalculator(unittest.TestCase):
         print('spacegroup')
         db_name = 'cecalc_corrfunc_spacegroup.db'
         sp_setting, sp_atoms = get_spacegroup(db_name)
-        test_update_correlation_functions(
-            sp_setting, sp_atoms, n_trial_configs=5, fixed=['Ta'])
+        test_update_correlation_functions(sp_setting, sp_atoms,
+                                          n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
 
     def test_init_large_cell(self):
