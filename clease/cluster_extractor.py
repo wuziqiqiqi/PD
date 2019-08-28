@@ -14,6 +14,7 @@ class ClusterExtractor(object):
     atoms: Atoms object
         ASE Atoms object
     """
+
     def __init__(self, atoms):
         self.atoms = atoms
         self.tree = KDTree(self.atoms.get_positions())
