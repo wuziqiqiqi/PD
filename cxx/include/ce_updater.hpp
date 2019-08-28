@@ -14,6 +14,7 @@
 #include "named_array.hpp"
 #include "symbols_with_numbers.hpp"
 #include "basis_function.hpp"
+#include "cluster_list.hpp"
 
 // Read values from name_list
 // name_list[symm_group][cluster_size] = vector of string variables of all the cluster names
@@ -52,7 +53,7 @@ public:
   CEUpdater* copy() const;
 
   /** Initialize the object (cluster_info should contain duplication factors) */
-  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *eci, PyObject *cluster_info);
+  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *eci, PyObject *cluster_list);
 
   /** Change values of ECIs */
   void set_eci( PyObject *eci );
@@ -156,7 +157,8 @@ private:
 
   //std::vector<std::string> symbols;
   Symbols *symbols_with_id{nullptr};
-  std::vector<cluster_dict> clusters;
+  //std::vector<cluster_dict> clusters;
+  ClusterList clusters;
   std::vector<int> trans_symm_group;
   std::vector<int> trans_symm_group_count;
   std::map<std::string,int> normalisation_factor;

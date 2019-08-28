@@ -21,7 +21,7 @@ CEUpdater::~CEUpdater()
   delete basis_functions; basis_functions=nullptr;
 }
 
-void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_info)
+void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_list)
 {
   atoms = py_atoms;
   if (setting == nullptr)
@@ -112,48 +112,71 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   Py_DECREF(py_num_elements);
 
 
-  if (cluster_info == nullptr)
+  if (cluster_list == nullptr)
   {
-    throw invalid_argument("cluster_info is nullptr!");
+    throw invalid_argument("cluster_list is nullptr!");
   }
-  unsigned int num_trans_symm = list_size(cluster_info);
+  //unsigned int num_trans_symm = list_size(cluster_info);
+  unsigned int num_clusters = PySequence_Size(cluster_list);
 
   #ifdef CE_DEBUG
-    cerr << "Parsing cluster info...\n";
+    cerr << "Parsing cluster list...\n";
   #endif
-  for (unsigned int i=0;i<num_trans_symm;i++)
-  {
-    #ifdef CE_DEBUG
-      cerr << "Parsing trans_symm group " << i << endl;
-    #endif
 
-    PyObject *info_dicts = PyList_GetItem(cluster_info, i);
-    cluster_dict new_clusters;
-    Py_ssize_t pos = 0;
-    PyObject *key;
-    PyObject *value;
-    while(PyDict_Next(info_dicts, &pos, &key, &value))
+  for (unsigned int i=0;i<num_clusters;i++){
+    PyObject* py_cluster = PySequence_GetItem(cluster_list, i);
+
+    Cluster new_clst(py_cluster);
+    PyObject* py_cluster_name = get_attr(py_cluster, "name");
+    string cluster_name = py2string(py_cluster_name);
+    Py_DECREF(py_cluster_name);
+    Py_DECREF(py_cluster);
+
+    new_clst.construct_equivalent_deco(num_bfs);
+    clusters.append(new_clst);
+
+    if (normalisation_factor.find(cluster_name) == normalisation_factor.end())
     {
-      string cluster_name = py2string(key);
-      #ifdef CE_DEBUG
-        cerr << "Extracting cluster " << cluster_name << endl;
-      #endif
-
-      Cluster new_clst(value);
-      new_clst.construct_equivalent_deco(num_bfs);
-      new_clusters[cluster_name] = new_clst;
-
-      if (normalisation_factor.find(cluster_name) == normalisation_factor.end())
-      {
-        normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[i];
-      }
-      else
-      {
-        normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[i];
-      }
+      normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[i];
     }
-    clusters.push_back(new_clusters);
+    else
+    {
+      normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[i];
+    }
   }
+  // for (unsigned int i=0;i<num_trans_symm;i++)
+  // {
+  //   #ifdef CE_DEBUG
+  //     cerr << "Parsing trans_symm group " << i << endl;
+  //   #endif
+
+  //   PyObject *info_dicts = PyList_GetItem(cluster_info, i);
+  //   cluster_dict new_clusters;
+  //   Py_ssize_t pos = 0;
+  //   PyObject *key;
+  //   PyObject *value;
+  //   while(PyDict_Next(info_dicts, &pos, &key, &value))
+  //   {
+  //     string cluster_name = py2string(key);
+  //     #ifdef CE_DEBUG
+  //       cerr << "Extracting cluster " << cluster_name << endl;
+  //     #endif
+
+  //     Cluster new_clst(value);
+  //     new_clst.construct_equivalent_deco(num_bfs);
+  //     new_clusters[cluster_name] = new_clst;
+
+  //     if (normalisation_factor.find(cluster_name) == normalisation_factor.end())
+  //     {
+  //       normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[i];
+  //     }
+  //     else
+  //     {
+  //       normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[i];
+  //     }
+  //   }
+  //   clusters.push_back(new_clusters);
+  // }
   //Py_DECREF(cluster_info);
   #ifdef CE_DEBUG
     cout << "Finished reading cluster_info\n";
@@ -323,6 +346,12 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
   cf *next_cf_ptr=nullptr;
   history->get_next(&next_cf_ptr, &symb_change_track);
   cf &next_cf = *next_cf_ptr;
+
+  // Transfer current cf
+  for (unsigned int i=0;eci.size();i++){
+    next_cf[i] = current_cf[i];
+  }
+
   symb_change_track->indx = symb_change.indx;
   symb_change_track->old_symb = symb_change.old_symb;
   symb_change_track->new_symb = symb_change.new_symb;
