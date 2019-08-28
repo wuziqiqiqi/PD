@@ -701,20 +701,6 @@ class ClusterExpansionSetting(object):
         with open(filename, 'w') as outfile:
             json.dump(self.kwargs, outfile, indent=2)
 
-    def _get_shortest_distance_in_unitcell(self):
-        """Find the shortest distance between the atoms in the unit cell."""
-        if len(self.prim_cell) == 1:
-            lengths = self.prim_cell.get_cell_lengths_and_angles()[:3]
-            return min(lengths)
-
-        dists = []
-        for ref_atom in range(len(self.prim_cell)):
-            indices = list(range(len(self.prim_cell)))
-            indices.remove(ref_atom)
-            dists += list(self._cell.get_distances(ref_atom, indices,
-                                                   mic=True))
-        return min(dists)
-
     def _check_cluster_list_consistency(self):
         """Check that cluster names in all templates' info entries match."""
         db = connect(self.db_name)
