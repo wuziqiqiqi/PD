@@ -114,10 +114,9 @@ class TemplateAtoms(object):
 
         return self.templates['atoms'][uid]
 
-    def get_largest_template(self):
-        """
-        Return the largest template
-        """
+    @property
+    def largest_template_by_num_atom(self):
+        """Return the largest template based on number of atoms it has."""
         max_num = 0
         largest_template = None
         for atoms in self.templates['atoms']:
@@ -125,6 +124,29 @@ class TemplateAtoms(object):
                 largest_template = atoms
                 max_num = len(atoms)
         return largest_template
+
+    @property
+    def largest_template_by_diag(self):
+        """Return the largest template based on the shortest diagonal."""
+        diag = 0.0
+        largest_template = None
+        for atoms in self.template['atoms']:
+            diag_lengths = []
+            cell = atoms.get_cell().T
+            for w in product([-1, 0, 1], repeat=3):
+                if np.allclose(w, 0):
+                    continue
+                diag = cell.dot(w)
+                length = np.sqrt(diag.dot(diag))
+                diag_lengths.append(length)
+
+            min_length = np.min(diag_lengths)
+            if min_length > diag:
+                largest_template = atoms
+                diag = min_length
+
+        return largest_template
+
 
     def get_uid_with_given_size(self, size, generate_template=False):
         """Get the UID of the template with given size.

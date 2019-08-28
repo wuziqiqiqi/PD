@@ -140,3 +140,12 @@ class ClusterList(object):
     def get_subclusters(self, cluster):
         """Return all all subclusters of the passed cluster in the list."""
         return [c for c in self.clusters if c.is_subcluster(cluster)]
+
+    def get_figures(self, atoms):
+        figures = []
+        self.clusters.sort()
+        for cluster in self.clusters:
+            figure = cluster.get_figure(atoms)
+            figure.info = cluster.name
+            figures.append(figures)
+        return figures

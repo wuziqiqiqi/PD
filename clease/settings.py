@@ -530,82 +530,22 @@ class ClusterExpansionSetting(object):
         first_symb_in_basis = [x[0] for x in self.basis_elements]
         return self.atoms_mng.index_by_symbol(first_symb_in_basis)
 
+    def _activate_lagest_template(self):
+        atoms = self.template_atoms.largest_template_by_diag
+        self.set_active_template(atoms)
+
     def view_clusters(self):
         """Display all clusters along with their names."""
         from ase.gui.gui import GUI
         from ase.gui.images import Images
-
-        # set the active template which has the best chance of displaying
-        # the largest diameter
-        sizes = []
-        for i in range(self.template_atoms.num_templates):
-            atoms = self.template_atoms.get_atoms(i)
-            lengths = atoms.get_cell_lengths_and_angles()[:3]
-            sizes.append(lengths)
-
-        uid = 0
-        candidates = []
-        for i, size in enumerate(sizes):
-            if i == 0:
-                candidates.append(min(size))
-                uid = i
-                continue
-            if min(size) <= max(candidates):
-                continue
-            uid = i
-        self._set_active_template_by_uid(uid)
-
-        already_included_names = []
-        cluster_atoms = []
-        for unique_name in self.cluster_family_names_by_size:
-            if unique_name in already_included_names:
-                continue
-            already_included_names.append(unique_name)
-            for _, entry in enumerate(self.cluster_info):
-                if unique_name in entry:
-                    cluster = entry[unique_name]
-                    break
-            if cluster["size"] <= 1:
-                continue
-            name = cluster["name"]
-            assert name == unique_name
-
-            atoms = self.atoms.copy()
-
-            keep_indx = cluster['indices'][0]
-            equiv = list(cluster["equiv_sites"])
-
-            for tag, indx in enumerate(keep_indx):
-                atoms[indx].tag = tag
-            if equiv:
-                for group in equiv:
-                    for i in range(1, len(group)):
-                        atoms[keep_indx[group[i]]].tag = \
-                            atoms[keep_indx[group[0]]].tag
-            # atoms = create_cluster(atoms, keep_indx)
-
-            # Extract the atoms in cluster for visualization
-            atoms = atoms[keep_indx]
-            positions = atoms.get_positions()
-            cell = atoms.get_cell()
-            origin = cell[0, :] + cell[1, :] + cell[2, :]
-            supercell = atoms.copy()*(3, 3, 3)
-            size = len(keep_indx)
-            origin += positions[0, :]
-            pos_sc = supercell.get_positions()
-            lengths_sq = np.sum((pos_sc - origin)**2, axis=1)
-            indices = np.argsort(lengths_sq)[:size]
-            atoms = supercell[indices]
-
-            atoms.info = {'name': name}
-            cluster_atoms.append(atoms)
+        self._activate_lagest_template()
+        figures = self.cluster_list.get_figures()
 
         images = Images()
-        images.initialize(cluster_atoms)
+        images.initialize(figures)
         gui = GUI(images, expr='')
         gui.show_name = True
         gui.run()
-        self._set_active_template_by_uid(0)
 
     def reconfigure_settings(self):
         """Reconfigure templates stored in DB file."""

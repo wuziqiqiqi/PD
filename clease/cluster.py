@@ -81,6 +81,14 @@ class Cluster(object):
         return any(set(s1).issubset(s2) for s1 in self.indices
                    for s2 in other.indices)
 
+    def get_figure(self, atoms):
+        figure = atoms[self.indices[0]]
+        figure_center = np.mean(figure.get_positions(), axis=1)
+        cell_center = np.mean(figure.get_cell(), axis=1)/2.0
+        figure.translate(cell_center - figure_center)
+        figure.wrap()
+        return figure
+
     def __str__(self):
         str_rep = 'Name: {}\n'.format(self.name)
         str_rep += 'Diameter: {}\n'.format(self.diameter)
