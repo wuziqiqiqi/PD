@@ -48,7 +48,7 @@ def attach_calculator(setting=None, atoms=None, eci={},
         setting.trans_matrix = data['trans_matrix']
         loaded_info = True
     else:
-        setting.create_cluster_info_and_trans_matrix()
+        setting.create_cluster_list_and_trans_matrix()
 
     data = {'cluster_info': setting.cluster_info,
             'trans_matrix': setting.trans_matrix,

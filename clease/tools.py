@@ -207,8 +207,7 @@ def exclude_information_entries():
        only contain information about the clusters.
     """
     return [('name', '!=', 'primitive_cell'),
-            ('name', '!=', 'template'),
-            ('name', '!=', 'float_classification')]
+            ('name', '!=', 'template')]
 
 
 def get_all_internal_distances(atoms, max_dist, ref_indices):

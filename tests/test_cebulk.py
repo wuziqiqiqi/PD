@@ -174,23 +174,29 @@ class TestCEBulk(unittest.TestCase):
         Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
-        for cluster in bc_setting.cluster_info_given_size(2):
-            name = list(cluster.keys())[0]
-            sub_cl = set(bc_setting.subclusters(name))
-            self.assertTrue(sub_cl == set(["c0", "c1"]))
+        for cluster in bc_setting.cluster_list.get_by_size(2):
+            sub_cl = set(bc_setting.cluster_list.get_subclusters(cluster))
+            sub_cl_name = set([c.name for c in sub_cl])
+            self.assertTrue(sub_cl_name == set(["c0", "c1"]))
 
 
         # Test a few known clusters. Triplet nearest neighbour
         name = "c3_d0000_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0"]))
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = set(bc_setting.cluster_list.get_subclusters(triplet))
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0"]))
 
         name = "c3_d0001_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = set(bc_setting.cluster_list.get_subclusters(triplet))
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
 
         name = "c4_d0000_0"
-        sub_cl = set(bc_setting.subclusters(name))
+        quad = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = set(bc_setting.cluster_list.get_subclusters(quad))
+        sub_cl_name = set([c.name for c in sub_cl])
         self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange

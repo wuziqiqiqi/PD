@@ -13,8 +13,12 @@ class ClusterList(object):
         """Clear the content."""
         self.clusters = []
 
+    @property
     def names(self):
-        return [c.name for c in self.clusters]
+        return list(set([c.name for c in self.clusters]))
+
+    def get_by_name(self, name):
+        return [c for c in self.clusters if c.name == name]
 
     def get_by_size(self, size):
         # Return all clusters with a given size

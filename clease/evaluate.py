@@ -22,7 +22,7 @@ class Evaluate(object):
 
     setting: CEBulk or BulkSapcegroup object
 
-    cluster_names: list
+    cf_names: list
         Names of clusters to include in the evalutation.
         If None, all of the possible clusters are included.
 
@@ -67,7 +67,7 @@ class Evaluate(object):
         validation score obtained in each of the runs.
     """
 
-    def __init__(self, setting, cluster_names=None, select_cond=None,
+    def __init__(self, setting, cf_names=None, select_cond=None,
                  parallel=False, num_core="all", fitting_scheme="ridge",
                  alpha=1E-5, max_cluster_size=None, max_cluster_dia=None,
                  scoring_scheme='loocv', min_weight=1.0, nsplits=10,
@@ -78,10 +78,10 @@ class Evaluate(object):
             raise TypeError(msg)
 
         self.setting = setting
-        if cluster_names is None:
-            self.cluster_names = sorted(self.setting.cluster_names)
+        if cf_names is None:
+            self.cf_names = sorted(self.setting.all_cf_names)
         else:
-            self.cluster_names = sorted(cluster_names)
+            self.cf_names = sorted(cf_names)
         self.num_elements = setting.num_elements
         self.scoring_scheme = scoring_scheme
         if max_cluster_size is None:
@@ -238,12 +238,12 @@ class Evaluate(object):
         self.get_eci()
 
         # sanity check
-        if len(self.cluster_names) != len(self.eci):
-            raise ValueError('lengths of cluster_names and ECIs are not same')
+        if len(self.cf_names) != len(self.eci):
+            raise ValueError('lengths of cf_names and ECIs are not same')
 
         i_nonzeros = np.nonzero(self.eci)[0]
         pairs = []
-        for i, cname in enumerate(self.cluster_names):
+        for i, cname in enumerate(self.cf_names):
             if i not in i_nonzeros:
                 continue
             pairs.append((cname, self.eci[i]))
@@ -697,7 +697,7 @@ class Evaluate(object):
 
         # Structure the ECIs in terms by size
         eci_by_size = {}
-        for name, d, eci in zip(self.cluster_names, distances, self.eci):
+        for name, d, eci in zip(self.cf_names, distances, self.eci):
             size = int(name[1])
             if size not in eci_by_size.keys():
                 eci_by_size[size] = {"d": [], "eci": [], "name": []}
@@ -739,7 +739,7 @@ class Evaluate(object):
     def _distance_from_names(self):
         """Get a list with all the distances for each name."""
         dists = []
-        for name in self.cluster_names:
+        for name in self.cf_names:
             if name == "c0" or name.startswith("c1"):
                 dists.append(0)
                 continue
@@ -848,7 +848,7 @@ class Evaluate(object):
             return
 
         filtered_cnames = []
-        for name in self.cluster_names:
+        for name in self.cf_names:
             size = int(name[1])
             if size < 2:
                 dia = -1
@@ -859,7 +859,7 @@ class Evaluate(object):
             if (size <= self.max_cluster_size
                     and dia < self.max_cluster_dia[size]):
                 filtered_cnames.append(name)
-        self.cluster_names = filtered_cnames
+        self.cf_names = filtered_cnames
 
     def _make_cf_matrix(self):
         """Return a matrix containing the correlation functions.
@@ -872,7 +872,7 @@ class Evaluate(object):
         db = connect(self.setting.db_name)
         tab_name = "{}_cf".format(self.setting.bf_scheme.name)
         for row in db.select(self.select_cond):
-            cfm.append([row[tab_name][x] for x in self.cluster_names])
+            cfm.append([row[tab_name][x] for x in self.cf_names])
         return np.array(cfm, dtype=float)
 
     def _get_dft_energy_per_atom(self):
@@ -900,7 +900,7 @@ class Evaluate(object):
 
     def _get_cf_from_atoms_row(self, row):
         """Obtain the correlation functions from an Atoms Row object."""
-        return [row[x] for x in self.cluster_names]
+        return [row[x] for x in self.cf_names]
 
     def generalization_error(self, validation_id):
         """

@@ -145,8 +145,7 @@ class Clease(Calculator):
 
         if self.init_cf is None:
             self.init_cf = \
-                self.corrFunc.get_cf_by_cluster_names(self.atoms,
-                                                      self.cluster_names)
+                self.corrFunc.get_cf_by_names(self.atoms, self.cluster_names)
 
         if len(self.setting.atoms) != len(atoms):
             msg = "Passed Atoms object and setting.atoms should have same "

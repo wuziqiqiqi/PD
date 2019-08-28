@@ -164,7 +164,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
         start = time.time()
         atoms.get_potential_energy()
         timings.append(time.time() - start)
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        brute_force_cf = cf.get_cf_by_names(atoms, calc.cluster_names)
         calc_cf = calc.get_cf()
 
         for key in calc_cf.keys():
@@ -189,7 +189,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
             symb2 = choice(elements)
         atoms[indx1].symbol = symb2
         atoms.get_potential_energy()
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        brute_force_cf = cf.get_cf_by_names(atoms, calc.cluster_names)
         calc_cf = calc.get_cf()
         for k in calc_cf.keys():
             if k.startswith("c0") or k.startswith("c1"):

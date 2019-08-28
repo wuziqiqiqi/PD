@@ -21,13 +21,18 @@ tol = 1E-9
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
     members = []
-    for sym_grp_indx, sym_grp_name in zip(setting.cluster_indx,
-                                          setting.cluster_names):
-        size = int(cname[1])
-        for fam_indx, fam_name in zip(sym_grp_indx[size], sym_grp_name[size]):
-            if cname == fam_name:
-                members.append(fam_indx)
+    clusters = setting.cluster_list.get_by_name(cname)
+    for cluster in clusters:
+        members.append(cluster.indices)
     return members
+    # for sym_grp_indx, sym_grp_name in zip(setting.cluster_indx,
+    #                                       setting.all_cf_names):
+    #     size = int(cname[1])
+    #     for fam_indx, fam_name in zip(sym_grp_indx[size], sym_grp_name[size]):
+    #         if cname == fam_name:
+    #             members.append(fam_indx)
+
+    # return members
 
 
 class TestCECrystal(unittest.TestCase):

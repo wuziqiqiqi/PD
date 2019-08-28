@@ -13,6 +13,7 @@ class Cluster(object):
         self.indices = indices
         self.equiv_sites = equiv_sites
         self.group = trans_symm_group
+        self.info = {}
 
     def __lt__(self, other):
         """Comparison operator."""
@@ -45,7 +46,8 @@ class Cluster(object):
                 'name': self.name,
                 'fingerprint': self.fp,
                 'ref_indx': self.ref_indx,
-                'equiv_sites': self.equiv_sites}
+                'equiv_sites': self.equiv_sites,
+                'info': self.info}
 
     def from_dict(self, data):
         self.indices = data['indices']
@@ -56,6 +58,7 @@ class Cluster(object):
         self.fp = data['fingerprint']
         self.ref_indx = data['ref_indx']
         self.equiv_sites = data['equiv_sites']
+        self.info = data['info']
 
     @staticmethod
     def load(data):

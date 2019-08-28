@@ -73,11 +73,11 @@ class TestCorrFunc(unittest.TestCase):
         corr = CorrFunction(setting)
         atoms = setting.atoms
         # No error should occure
-        corr.get_cf_by_cluster_names(atoms, ['c3_d0000_0_000'])
+        corr.get_cf_by_names(atoms, ['c3_d0000_0_000'])
 
         # Try a quadruplet: Have to raise error
         with self.assertRaises(ClusterNotTrackedError):
-            corr.get_cf_by_cluster_names(atoms, ['c4_d0001_0_0000'])
+            corr.get_cf_by_names(atoms, ['c4_d0001_0_0000'])
 
     def tearDown(self):
         try:

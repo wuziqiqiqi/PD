@@ -10,7 +10,6 @@ import numpy as np
 from ase.db import connect
 
 from clease import _logger, LogVerbosity, ClusterExtractor
-from clease.floating_point_classification import FloatingPointClassifier
 from clease.tools import (wrap_and_sort_by_position, dec_string,
                           indices2tags, get_all_internal_distances,
                           nested_list2str, trans_matrix_index2tags)
@@ -59,8 +58,6 @@ class ClusterExpansionSetting(object):
         self.prim_cell = self._get_prim_cell()
         self._tag_prim_cell()
         self._store_prim_cell()
-        self.float_max_dia, self.float_ang, self.float_dist = \
-            self._init_floating_point_classifiers()
 
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
@@ -142,38 +139,6 @@ class ClusterExpansionSetting(object):
             unique_elem.update(x)
         return list(unique_elem - bg_sym)
 
-    def _store_floating_point_classifiers(self):
-        """Store classifiers in a separate DB entry."""
-        from ase.atoms import Atoms
-        db = connect(self.db_name)
-        if sum(1 for row in db.select(name="float_classification")) >= 1:
-            # Entry already exists
-            return
-
-        placeholder = Atoms()
-        data = {"max_cluster_dia": self.float_max_dia.toJSON(),
-                "angles": self.float_ang.toJSON(),
-                "float_dist": self.float_dist.toJSON()}
-        db.write(placeholder, data=data, name="float_classification")
-
-    def _init_floating_point_classifiers(self):
-        """Initialize the floating point classifiers from the DB if they
-           exist, otherwise initialize a new one."""
-
-        db = connect(self.db_name)
-        try:
-            row = db.get(name="float_classification")
-            max_dia = row.data["max_cluster_dia"]
-            angles = row.data["angles"]
-            dists = row.data["float_dist"]
-            float_max_dia = FloatingPointClassifier.fromJSON(max_dia)
-            float_ang = FloatingPointClassifier.fromJSON(angles)
-            dists = FloatingPointClassifier.fromJSON(dists)
-        except KeyError:
-            float_max_dia = FloatingPointClassifier(3)
-            float_ang = FloatingPointClassifier(0)
-            dists = FloatingPointClassifier(3)
-        return float_max_dia, float_ang, dists
 
     def _size2string(self):
         """Convert the current size into a string."""
@@ -426,35 +391,6 @@ class ClusterExpansionSetting(object):
         """Return the multiplicity factor of each cluster."""
         num_sites_in_group = [len(x) for x in self.index_by_trans_symm]
         return self.cluster_list.multiplicity_factors(num_sites_in_group)
-        # names = self.cluster_family_names
-        # mult_factor = {name: 0. for name in names}
-        # name_found = {name: False for name in names}
-        # normalization = {name: 0 for name in names}
-        # for name in names:
-        #     for item in self.cluster_info:
-        #         if name not in item.keys():
-        #             continue
-        #         name_found[name] = True
-        #         cluster = item[name]
-        #         num_in_group = \
-        #             len(self.index_by_trans_symm[cluster["symm_group"]])
-        #         mult_factor[name] += len(cluster["indices"]) * num_in_group
-        #         normalization[name] += num_in_group
-
-        # for name in mult_factor.keys():
-        #     mult_factor[name] = mult_factor[name] / normalization[name]
-        # for _, found in name_found.items():
-        #     assert found
-        # return mult_factor
-
-    # def cluster_info_by_name(self, name):
-    #     """Get info entries of all clusters with name."""
-    #     name = str(name)
-    #     info = []
-    #     for item in self.cluster_info:
-    #         if name in item.keys():
-    #             info.append(item[name])
-    #     return info
 
     def get_min_distance(self, cluster, positions):
         """Get minimum distances.
@@ -489,67 +425,15 @@ class ClusterExpansionSetting(object):
         return nearby_indices
 
     @property
-    def cluster_family_names(self):
-        """Return a list of all cluster names."""
-        families = []
-        for item in self.cluster_info:
-            families += list(item.keys())
-        return list(set(families))
+    def all_cf_names(self):
+        num_bf = len(self.basis_functions)
+        return self.cluster_list.get_all_cf_names(num_bf)
 
     @property
-    def cluster_family_names_by_size(self):
-        """Return a list of cluster familes sorted by size."""
-        sort_list = []
-        for item in self.cluster_info:
-            for cname, c_info in item.items():
-                # Sorted by:
-                # 1) Number of atoms in cluster
-                # 2) diameter (since cname starts with c3_04nn etc.)
-                # 3) Unique descriptor
-                sort_list.append((c_info["size"],
-                                  cname.rpartition("_")[0],
-                                  cname))
-        sort_list.sort()
-        sorted_names = []
-        for item in sort_list:
-            if item[2] not in sorted_names:
-                sorted_names.append(item[2])
-        return sorted_names
+    def num_cf(self):
+        """Return the number of correlation functions."""
+        return len(self.all_cf_names)
 
-    @property
-    def cluster_names(self):
-        """Return the cluster names including decoration numbers."""
-        names = ["c0"]
-        bf_list = list(range(len(self.basis_functions)))
-        for item in self.cluster_info:
-            for name, info in item.items():
-                if info["size"] == 0:
-                    continue
-                eq_sites = list(info["equiv_sites"])
-                for dec in product(bf_list, repeat=info["size"]):
-                    dec_str = dec_string(dec, eq_sites)
-                    names.append(name + '_' + dec_str)
-        return list(set(names))
-
-    @property
-    def num_clusters(self):
-        """Return the number of clusters.
-
-        Note: clusters with the same shape but with different decoration
-              numbers are counted as a different cluster
-        """
-        return len(self.cluster_names)
-
-    def cluster_info_given_size(self, size):
-        """Get the cluster info of all clusters with a given size."""
-        clusters = []
-        for item in self.cluster_info:
-            info_dict = {}
-            for key, info in item.items():
-                if info["size"] == size:
-                    info_dict[key] = info
-            clusters.append(info_dict)
-        return clusters
 
     def _get_symm_groups(self):
         symm_groups = -np.ones(len(self.atoms), dtype=int)
@@ -576,7 +460,7 @@ class ClusterExpansionSetting(object):
         max_dist *= 0.51
         return max_dist
 
-    def create_cluster_info_and_trans_matrix(self):
+    def create_cluster_list_and_trans_matrix(self):
         self._create_cluster_list()
 
         symm_group = self._get_symm_groups()
@@ -669,7 +553,7 @@ class ClusterExpansionSetting(object):
             # self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
-            self.create_cluster_info_and_trans_matrix()
+            self.create_cluster_list_and_trans_matrix()
             self._store_data()
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
@@ -768,17 +652,12 @@ class ClusterExpansionSetting(object):
     def reconfigure_settings(self):
         """Reconfigure templates stored in DB file."""
         db = connect(self.db_name)
-        # Reconfigure the float point classification based on setting
-        ids = [row.id for row in db.select(name='float_classification')]
-        db.delete(ids)
-        self.float_max_dia, self.float_ang, self.float_dist = \
-            self._init_floating_point_classifiers()
 
         # Reconfigure the cluster information for each template based on
         # current max_cluster_size and max_cluster_dia
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
-            self.create_cluster_info_and_trans_matrix()
+            self.create_cluster_list_and_trans_matrix()
             self._store_data()
         self._set_active_template_by_uid(0)
         _logger('Cluster data updated for all templates.\n'
@@ -852,41 +731,6 @@ class ClusterExpansionSetting(object):
                 ref_clust_list = cluster_list
 
             assert cluster_list == ref_clust_list
-
-    def subclusters(self, cluster_name):
-        """Return all the sub-clusters of cluster."""
-        info = self.cluster_info_by_name(cluster_name)
-
-        sub_clst = []
-
-        # Loop over symmetry groups
-        for symm, item in enumerate(info):
-            indices = item["indices"]
-            size = item["size"]
-
-            # Search in clusters up it the current size
-            for s in range(size):
-                clst_size = self.cluster_info_given_size(s)[symm]
-                for _, v in clst_size.items():
-                    if self._is_subcluster(v["indices"], indices):
-                        sub_clst.append(v["name"])
-        return list(set(sub_clst))
-
-    def _is_subcluster(self, small_cluster, large_cluster):
-        """Return True if small cluster is part of large cluster."""
-        if len(small_cluster) == 0:
-            # Singlet and empty is always a sub cluster
-            return True
-
-        if len(small_cluster[0]) >= len(large_cluster[0]):
-            msg = "A cluster with size {} ".format(len(small_cluster[0]))
-            msg += "cannot be a subcluster of a cluster with size "
-            msg += "{}".format(len(large_cluster[0]))
-            raise RuntimeError(msg)
-
-        return any(set(s1).issubset(s2) for s1 in small_cluster
-                   for s2 in large_cluster)
-
 
 def to_3x3_matrix(size):
     if size is None:
