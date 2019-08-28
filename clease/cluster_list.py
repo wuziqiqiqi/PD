@@ -81,7 +81,6 @@ class ClusterList(object):
         return self.clusters
 
     def __eq__(self, other):
-        print(len(self.clusters), len(other.clusters))
         if len(self.clusters) != len(other.clusters):
             return False
 
