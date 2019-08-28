@@ -2,10 +2,33 @@ import unittest
 from ase.build import bulk
 from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
+from clease.cluster_fingerprint import ClusterFingerprint
 import numpy as np
 
 
 class TestClusterList(unittest.TestCase):
+    def test_to_from_dict(self):
+        fp1 = ClusterFingerprint([4.5, 4.3, 2.4, -1.0, -3.4, -1.0])
+        cluster1 = Cluster('c3_d0001_0', 3, 5.4, fp1,
+                           0, [[0, 3, 3], [1, 0, 5]], [[0, 1]], 0)
+        cluster1_dict = cluster1.todict()
+
+        # Make another cluster
+        fp2 = ClusterFingerprint([2.0, 1.9, 2.1])
+        cluster2 = Cluster('c2_d0002_0', 4, 5.1, fp2,
+                           1, [[1, 0], [10, 1]], [], 2)
+
+        # Transfer the properties from cluster1
+        cluster2.from_dict(cluster1_dict)
+
+        self.assertEqual(cluster1.name, cluster2.name)
+        self.assertEqual(cluster1.size, cluster2.size)
+        self.assertAlmostEqual(cluster1.diameter, cluster2.diameter)
+        self.assertEqual(cluster1.fp, cluster2.fp)
+        self.assertEqual(cluster1.ref_indx, cluster2.ref_indx)
+        self.assertEqual(cluster1.indices, cluster2.indices)
+        self.assertEqual(cluster1.group, cluster2.group)
+
     def test_parent_tracker(self):
         atoms = bulk("NaCl", crystalstructure='rocksalt', a=4.0)
         atoms.wrap()

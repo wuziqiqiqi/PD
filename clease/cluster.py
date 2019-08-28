@@ -2,36 +2,51 @@ from clease.tools import equivalent_deco
 
 
 class Cluster(object):
-    def __init__(self, size, name, indices, order, equiv_sites,
-                 trans_symm_group, diameter, ref_indx):
-        self.size = size
+    def __init__(self,  name, size, diameter, fingerprint, ref_indx, indices,
+                 equiv_sites, trans_symm_group):
         self.name = name
+        self.size = size
+        self.diameter = diameter
+        self.fp = fingerprint
+        self.ref_indx = ref_indx
         self.indices = indices
-        self.order = order
         self.equiv_sites = equiv_sites
         self.group = trans_symm_group
-        self.diameter = diameter
-        self.ref_indx = ref_indx
 
     def __lt__(self, other):
         """Comparison operator."""
-        return (self.size, self.diameter, self.group) < \
-            (other.size, other.diameter, other.group)
+        fp_lt = self.fp < other.fp
+        if fp_lt:
+            assert self.name < other.name
+        else:
+            assert self.name > other.name
+        return fp_lt
 
     def __eq__(self, other):
-        return self.name == other.name
+        """Equality operator."""
+        fp_equal = self.fp == other.fp
+        if fp_equal:
+            assert self.name == other.name
+        return fp_equal
 
     def equiv_deco(self, deco):
         return equivalent_deco(deco, self.equiv_sites)
 
     def todict(self):
         """Return a dictionary representation."""
-        return {
-            'indices': self.indices,
-            'size': self.size,
-            'order': self.order,
-            'symm': self.group,
-            'diameter': self.diameter,
-            'name': self.name,
-            'fingerprint': self.name
-        }
+        return {'indices': self.indices,
+                'size': self.size,
+                'symm': self.group,
+                'diameter': self.diameter,
+                'name': self.name,
+                'fingerprint': self.fp,
+                'ref_indx': self.ref_indx}
+
+    def from_dict(self, data):
+        self.indices = data['indices']
+        self.size = data['size']
+        self.group = data['symm']
+        self.diameter = data['diameter']
+        self.name = data['name']
+        self.fp = data['fingerprint']
+        self.ref_indx = data['ref_indx']
