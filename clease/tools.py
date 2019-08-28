@@ -10,7 +10,21 @@ from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
 
 
-class ApproxComparableList(object):
+class ApproxEqualityList(object):
+    """
+    Wrapper around a list which implements a new comparison operator. If two items
+    in the list is equal within a given tolerance, the items are considered to be
+    equal.
+
+    Parameters:
+    ===========
+
+    array: list
+        List that is wrapped
+
+    tol: float
+        Toleracnce for comparison check
+    """
     def __init__(self, array, tol=1E-5):
         self.array = array
         self.tol = tol
@@ -29,7 +43,7 @@ def index_by_position(atoms):
     # add zero to avoid negative zeros
     tags = atoms.get_positions() + 0
     tags = tags.tolist()
-    tags = [ApproxComparableList(x) for x in tags]
+    tags = [ApproxEqualityList(x) for x in tags]
     deco = sorted([(tag, i) for i, tag in enumerate(tags)])
 
     indices = [i for tag, i in deco]
