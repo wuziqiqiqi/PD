@@ -63,9 +63,9 @@ class TestClusterList(unittest.TestCase):
             dia = 2.0
             order = [[0, 1] for _ in range(len(indices))]
             equiv_sites = [[0, 1]]
-            descriptor = '01nn'
-            new_clust = Cluster(2, descriptor, indices, order, equiv_sites, i,
-                                2.0, ref)
+            name = '01nn'
+            fp = ClusterFingerprint([4.5, 4.3, 2.4, -1.0, -3.4, -1.0])
+            new_clust = Cluster(name, 2, dia, fp, ref, indices, equiv_sites, i)
 
             clist.append(new_clust)
 
