@@ -47,3 +47,9 @@ class ClusterFingerprint(object):
     def fromJSON(self, data):
         self.tol = data['tol']
         self.fp = list(data['fp'])
+
+    @staticmethod
+    def load(data):
+        fp = ClusterFingerprint(None)
+        fp.fromJSON(data)
+        return fp

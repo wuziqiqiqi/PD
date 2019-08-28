@@ -13,6 +13,7 @@ from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
+from ase.build import bulk
 from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
@@ -41,6 +42,22 @@ def calculate_cf(setting, atoms):
 
 
 class TestCEBulk(unittest.TestCase):
+    def test_load_from_db(self):
+        db_name = 'test_load_from_db.db'
+        basis_elements = [['Au', 'Cu']]
+        concentration = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[1, 1, 1],
+                         concentration=concentration, db_name=db_name,
+                         max_cluster_dia=[4.3, 4.3, 4.3],
+                         max_cluster_size=4)
+        orig_atoms = setting.atoms.copy()
+        atoms = bulk('Au', crystalstructure='fcc', a=4.05, cubic=True)
+        setting.set_active_template(atoms=atoms, generate_template=True)
+
+        # Try to read back the old atoms
+        setting.set_active_template(atoms=orig_atoms)
+        #os.remove(db_name)
+
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]

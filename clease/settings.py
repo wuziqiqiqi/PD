@@ -12,9 +12,8 @@ from ase.db import connect
 from clease import _logger, LogVerbosity, ClusterExtractor
 from clease.floating_point_classification import FloatingPointClassifier
 from clease.tools import (wrap_and_sort_by_position, flatten, dec_string,
-                          indices2tags, nested_array2list,
-                          get_all_internal_distances, nested_list2str,
-                          trans_matrix_index2tags)
+                          indices2tags, get_all_internal_distances,
+                          nested_list2str, trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
@@ -50,16 +49,19 @@ class ClusterExpansionSetting(object):
 
         self.check_old_tm_algorithm = False
         self.kwargs["concentration"] = self.concentration.to_dict()
+        self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self.num_basis = len(self.basis_elements)
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
+        self.cluster_info = []
 
         self.prim_cell = self._get_prim_cell()
         self._tag_prim_cell()
         self._store_prim_cell()
         self.float_max_dia, self.float_ang, self.float_dist = \
             self._init_floating_point_classifiers()
+
 
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
@@ -87,7 +89,7 @@ class ClusterExpansionSetting(object):
             self._set_active_template_by_uid(uid)
         # Set the initial template atoms to 0, which is the smallest cell
         self._set_active_template_by_uid(0)
-        self._check_cluster_info_consistency()
+        self._check_cluster_list_consistency()
 
         unique_element_no_bkg = self.unique_element_without_background()
         if isinstance(basis_function, BasisFunction):
@@ -121,7 +123,7 @@ class ClusterExpansionSetting(object):
             raise ValueError("list of elements is needed for each basis")
 
         if not os.path.exists(db_name):
-            self.create_cluster_info_and_trans_matrix()
+            self.create_cluster_list_and_trans_matrix()
             self._store_data()
         else:
             self._read_data()
@@ -187,7 +189,6 @@ class ClusterExpansionSetting(object):
         self.atoms_mng.atoms = wrap_and_sort_by_position(atoms)
 
         self.index_by_basis = self._group_index_by_basis()
-        self.cluster_info = []
 
         self.background_indices = self._get_background_indices()
         self.index_by_trans_symm = \
@@ -302,29 +303,6 @@ class ClusterExpansionSetting(object):
         atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
 
-    def _assign_correct_family_identifier(self):
-        """Make the familily IDs increase size."""
-        new_names = {}
-        prev_id = {}
-        for name in self.cluster_family_names_by_size:
-            if name == "c0" or name == "c1":
-                new_names[name] = name
-            else:
-                prefix = name.rpartition("_")[0]
-                new_id = prev_id.get(prefix, -1) + 1
-                new_name = prefix + "_{}".format(new_id)
-                new_names[name] = new_name
-                prev_id[prefix] = new_id
-
-        new_cluster_info = []
-        for item in self.cluster_info:
-            new_dict = {}
-            for name, info in item.items():
-                new_dict[new_names[name]] = info
-                new_dict[new_names[name]]["name"] = new_names[name]
-            new_cluster_info.append(new_dict)
-        self.cluster_info = new_cluster_info
-
     def _check_max_cluster_dia(self, internal_distances):
         """
         Check that the maximum cluster diameter does not exactly correspond
@@ -367,14 +345,14 @@ class ClusterExpansionSetting(object):
         supercell.wrap()
         return supercell, ref_indices
 
-    def _create_cluster_info(self):
+    def _create_cluster_list(self):
         """Generate information for clusters."""
+        self.cluster_list.clear()
         supercell, ref_indices = self._get_supercell()
         supercell.info['distances'] = \
             get_all_internal_distances(supercell, max(self.max_cluster_dia),
                                        ref_indices)
         self._check_max_cluster_dia(supercell.info['distances'])
-        cluster_info = [{} for _ in range(len(self.ref_index_trans_symm))]
 
         bkg_sc_indices = []
         if self.ignore_background_atoms:
@@ -397,92 +375,72 @@ class ClusterExpansionSetting(object):
                 fingerprints += extractor.inner_prod
                 all_clusters.append(clusters)
             names = name_clusters(fingerprints)
-            info = self.dict_representation(names, all_clusters,
-                                            all_equiv_sites, fingerprints,
-                                            size)
-
-            for i, item in enumerate(info):
-                cluster_info[i].update(item)
+            self._update_cluster_list(names, all_clusters, all_equiv_sites, fingerprints,
+                                      size)
 
         # Update with empty info
-        for info, empty_info in zip(cluster_info, self.empty_cluster_info):
-            info.update(empty_info)
+        for cluster in self.empty_clusters:
+            self.cluster_list.append(cluster)
 
         # Update with singlet info
-        for info, pc_info in zip(cluster_info, self.point_cluster_info):
-            info.update(pc_info)
-        return cluster_info
+        for cluster in self.point_clusters:
+            self.cluster_list.append(cluster)
 
-    def dict_representation(self, names, clusters, equiv_sites, fingerprints,
-                            size):
-        info = [{} for _ in range(len(clusters))]
+
+    def _update_cluster_list(self, names, clusters, equiv_sites, fingerprints,
+                             size):
         counter = 0
         for trans_symm in range(len(clusters)):
             for cluster, equiv in zip(clusters[trans_symm],
                                       equiv_sites[trans_symm]):
-                info[trans_symm][names[counter]] = {
-                    'indices': cluster,
-                    'equiv_sites': equiv,
-                    'symm_group': trans_symm,
-                    'ref_indx': self.ref_index_trans_symm[trans_symm],
-                    'fingerprint': fingerprints[counter],
-                    'size': size,
-                    'name': names[counter],
-                    'max_cluster_dia': 2*np.sqrt(fingerprints[counter][0])
-                }
+                clst = Cluster(names[counter], size,
+                               2*np.sqrt(fingerprints[counter][0]),
+                               fingerprints[counter],
+                               self.ref_index_trans_symm[trans_symm],
+                               cluster, equiv, trans_symm)
+                self.cluster_list.append(clst)
                 counter += 1
-        return info
 
     @property
-    def empty_cluster_info(self):
-        empty_info = []
+    def empty_clusters(self):
+        empty = []
         num_trans_symm = len(self.ref_index_trans_symm)
         for symm in range(num_trans_symm):
-            empty_dict = {'name': 'c0',
-                          'max_cluster_dia': 0.0,
-                          'size': 0,
-                          'indices': [],
-                          'symm_group': symm,
-                          'ref_indx': self.ref_index_trans_symm[symm],
-                          'equiv_sites': [],
-                          'fingerprint': ClusterFingerprint([0.0])}
-            empty_info.append({'c0': empty_dict})
-        return empty_info
+            empty.append(
+                Cluster('c0', 0, 0.0, ClusterFingerprint([0.0]),
+                        self.ref_index_trans_symm[symm], [], [], symm)
+            )
+        return empty
 
     @property
-    def point_cluster_info(self):
-        point_cluster_info = []
+    def point_clusters(self):
+        point = []
         num_trans_symm = len(self.ref_index_trans_symm)
         for symm in range(num_trans_symm):
-            point_dict = {'name': 'c1',
-                          'size': 1,
-                          'max_cluster_dia': 0.0,
-                          'indices': [],
-                          'symm_group': symm,
-                          'ref_indx': self.ref_index_trans_symm[symm],
-                          'equiv_sites': [],
-                          'fingerprint': ClusterFingerprint([0.0])}
-            point_cluster_info.append({'c1': point_dict})
-        return point_cluster_info
+            point.append(
+                Cluster('c1', 1, 0.0, ClusterFingerprint([1.0]),
+                        self.ref_index_trans_symm[symm], [], [], symm)
+            )
+        return point
 
-    @property
-    def unique_indices(self):
-        """Creates a list with the unique indices."""
-        all_indices = deepcopy(self.ref_index_trans_symm)
-        for item in self.cluster_info:
-            for _, info in item.items():
-                all_indices += flatten(info["indices"])
-        return list(set(all_indices))
+    # @property
+    # def unique_indices(self):
+    #     """Creates a list with the unique indices."""
+    #     all_indices = deepcopy(self.ref_index_trans_symm)
+    #     for item in self.cluster_info:
+    #         for _, info in item.items():
+    #             all_indices += flatten(info["indices"])
+    #     return list(set(all_indices))
 
-    @property
-    def unique_indices_per_group(self):
-        index_per_group = []
-        for item in self.cluster_info:
-            unique_indices = set()
-            for _, info in item.items():
-                unique_indices.update(flatten(info["indices"]))
-            index_per_group.append(list(unique_indices))
-        return index_per_group
+    # @property
+    # def unique_indices_per_group(self):
+    #     index_per_group = []
+    #     for item in self.cluster_info:
+    #         unique_indices = set()
+    #         for _, info in item.items():
+    #             unique_indices.update(flatten(info["indices"]))
+    #         index_per_group.append(list(unique_indices))
+    #     return index_per_group
 
     @property
     def multiplicity_factor(self):
@@ -621,7 +579,7 @@ class ClusterExpansionSetting(object):
 
     def _cutoff_for_tm_construction(self):
         """ Get cutoff radius for translation matrix construction."""
-        indices = self.unique_indices
+        indices = self.cluster_list.unique_indices
         # start with some small positive number
         max_dist = 0.1
 
@@ -638,7 +596,7 @@ class ClusterExpansionSetting(object):
         return max_dist
 
     def create_cluster_info_and_trans_matrix(self):
-        self.cluster_info = self._create_cluster_info()
+        self._create_cluster_list()
 
         symm_group = self._get_symm_groups()
         tm_cutoff = self._cutoff_for_tm_construction()
@@ -665,9 +623,9 @@ class ClusterExpansionSetting(object):
             if indices[atom.tag] == -1:
                 indices[atom.tag] = atom.index
 
-        unique_index_symm = self.unique_indices_per_group
+        unique_index_symm = self.cluster_list.unique_indices_per_group
         unique_index_symm = [set(x) for x in unique_index_symm]
-        all_unique_indices = set(self.unique_indices)
+        all_unique_indices = set(self.cluster_list.unique_indices)
         while not all_included and counter < max_attempts:
             try:
                 tmc = TransMatrixConstructor(supercell, tm_cutoff)
@@ -694,7 +652,7 @@ class ClusterExpansionSetting(object):
         if counter >= max_attempts:
             raise RuntimeError("Could not find a cutoff such that all "
                                "unique_indices are included")
-        self.trans_matrix = [{k: row[k] for k in self.unique_indices}
+        self.trans_matrix = [{k: row[k] for k in self.cluster_list.unique_indices}
                              for row in tm]
 
     def _store_data(self):
@@ -706,7 +664,7 @@ class ClusterExpansionSetting(object):
                 verbose=LogVerbosity.INFO)
 
         db = connect(self.db_name)
-        data = {'cluster_info': self.cluster_info,
+        data = {'cluster_list': self.cluster_list,
                 'trans_matrix': self.trans_matrix}
         try:
             row = db.get(name="template", size=self._size2string())
@@ -721,25 +679,19 @@ class ClusterExpansionSetting(object):
             select_cond = [('name', '=', 'template'),
                            ('size', '=', self._size2string())]
             row = db.get(select_cond)
-            self.cluster_info = row.data.cluster_info
-            self._info_entries_to_list()
+            info_str = row.data.cluster_list
+            self.cluster_list.clear()
+            for item in info_str:
+                cluster = Cluster.load(item)
+                self.cluster_list.append(cluster)
+            # self.cluster_info = row.data.cluster_info
+            # self._info_entries_to_list()
             self.trans_matrix = row.data.trans_matrix
         except KeyError:
             self.create_cluster_info_and_trans_matrix()
             self._store_data()
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
-
-    def _info_entries_to_list(self):
-        """Convert entries in cluster info to list."""
-        for info in self.cluster_info:
-            for _, cluster in info.items():
-                cluster['indices'] = nested_array2list(cluster['indices'])
-                cluster['equiv_sites'] = \
-                    nested_array2list(cluster['equiv_sites'])
-                fp = ClusterFingerprint([])
-                fp.fromJSON(cluster['fingerprint'])
-                cluster['fingerprint'] = fp
 
     def _get_name_indx(self, unique_name):
         size = int(unique_name[1])
@@ -903,48 +855,23 @@ class ClusterExpansionSetting(object):
                                                    mic=True))
         return min(dists)
 
-    def _check_cluster_info_consistency(self):
+    def _check_cluster_list_consistency(self):
         """Check that cluster names in all templates' info entries match."""
         db = connect(self.db_name)
-        names = []
-        equiv_sites = {}
-        mult_factor = {}
-        fingerprints = {}
+        ref_clust_list = None
         for row in db.select(name='template'):
-            cluster_info = row.data["cluster_info"]
-            new_names = []
-            new_equiv_sites = {}
-            new_mult_factor = {}
-            new_fingerprints = {}
+            cluster_list_str = row.data['cluster_list']
+            cluster_list = ClusterList()
+            for item in cluster_list_str:
+                cluster = Cluster.load(item)
+                cluster_list.append(cluster)
+            cluster_list.sort()
 
-            # Extract all names
-            for item in cluster_info:
-                for k, v in item.items():
-                    new_names.append(k)
-                    new_fingerprints[k] = list(v["fingerprint"])
-                    if len(v["equiv_sites"]) == 0:
-                        new_equiv_sites[k] = 0
-                    else:
-                        new_equiv_sites[k] = len(v["equiv_sites"][0])
-                    new_mult_factor[k] = len(v["indices"])
+            if ref_clust_list is None:
+                ref_clust_list = cluster_list
 
-            new_names = sorted(new_names)
+            assert cluster_list == ref_clust_list
 
-            if not names:
-                # This is the first entry
-                names = deepcopy(new_names)
-                fingerprints = deepcopy(new_fingerprints)
-                equiv_sites = deepcopy(new_equiv_sites)
-                mult_factor = deepcopy(new_mult_factor)
-
-            assert len(fingerprints) == len(new_fingerprints)
-            for key in fingerprints:
-                assert fingerprints[key] == new_fingerprints[key]
-
-            assert new_names == names
-            assert equiv_sites == new_equiv_sites
-            assert mult_factor == new_mult_factor
-            # assert fingerprints == new_fingerprints
 
     def subclusters(self, cluster_name):
         """Return all the sub-clusters of cluster."""
