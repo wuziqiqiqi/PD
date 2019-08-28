@@ -73,6 +73,54 @@ class TestClusterList(unittest.TestCase):
         equiv = clist.get_equivalent_clusters(clist.clusters[0])
         self.assertEqual(len(equiv), 2)
 
+    def test_cf_names_no_equiv_sites(self):
+        fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
+        prefix = 'c3_d0001_0'
+        cluster = Cluster(prefix, 3, 5.4, fp, 0,
+                          [[1, 0,], [3, 4]], [], 0)
+
+        cf_names = ClusterList.get_cf_names(cluster, 2)
+        expected_suffix = ['_000', '_001', '_010', '_011', '_100', '_101',
+                           '_110', '_111']
+        expected_cf_names = [prefix + s for s in expected_suffix]
+        self.assertEqual(cf_names, expected_cf_names)
+
+    def test_cf_names_with_equiv_sites(self):
+        fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
+        prefix = 'c3_d0001_0'
+        cluster = Cluster(prefix, 3, 5.4, fp, 0,
+                          [[1, 0,], [3, 4]], [[0, 1]], 0)
+
+        cf_names = ClusterList.get_cf_names(cluster, 2)
+        expected_suffix = ['_000', '_001', '_010', '_011', '_110', '_111']
+        expected_cf_names = [prefix + s for s in expected_suffix]
+        self.assertEqual(cf_names, expected_cf_names)
+
+    def test_get_all_cf_names(self):
+        cluster_list = ClusterList()
+        fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
+        prefix1 = 'c3_d0001_0'
+        cluster1 = Cluster(prefix1, 3, 5.4, fp, 0,
+                           [[1, 0,], [3, 4]], [[0, 1]], 0)
+
+        fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
+        prefix2 = 'c3_d0002_0'
+        cluster2 = Cluster(prefix2, 3, 5.4, fp, 0,
+                           [[1, 0,], [3, 4]], [], 0)
+
+        cluster_list.append(cluster1)
+        cluster_list.append(cluster2)
+        all_cf_names = cluster_list.get_all_cf_names(2)
+
+        expected_suffix1 = ['_000', '_001', '_010', '_011', '_110', '_111']
+        expected_cf_names1 = [prefix1 + s for s in expected_suffix1]
+        expected_suffix2 = ['_000', '_001', '_010', '_011', '_100', '_101',
+                           '_110', '_111']
+        expected_cf_names2 = [prefix2 + s for s in expected_suffix2]
+
+        expected_cf_names = expected_cf_names1 + expected_cf_names2
+        self.assertEqual(all_cf_names, expected_cf_names)
+
 
 if __name__ == '__main__':
     unittest.main()

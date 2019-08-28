@@ -22,6 +22,8 @@ from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
 from clease.name_clusters import name_clusters
 from clease.cluster_fingerprint import ClusterFingerprint
+from clease.cluster import Cluster
+from clease.cluster_list import ClusterList
 
 
 class ClusterExpansionSetting(object):
