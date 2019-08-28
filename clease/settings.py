@@ -411,19 +411,6 @@ class ClusterExpansionSetting(object):
         length = np.sqrt(diff.dot(diff))
         return length
 
-    def indices_of_nearby_atom(self, ref_indx, size, pos):
-        """Return the indices of the atoms nearby.
-
-        Indices of the atoms are only included if distances smaller than
-        specified by max_cluster_dia from the reference atom index.
-        """
-        nearby_indices = []
-        dists = np.sqrt(np.sum((pos - pos[ref_indx, :])**2, axis=1))
-        cutoff = self.max_cluster_dia[size]
-        nearby_indices = np.nonzero(dists <= cutoff)[0].tolist()
-        nearby_indices.remove(ref_indx)
-        return nearby_indices
-
     @property
     def all_cf_names(self):
         num_bf = len(self.basis_functions)
