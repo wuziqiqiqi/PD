@@ -558,16 +558,6 @@ class ClusterExpansionSetting(object):
         except (AssertionError, AttributeError, RuntimeError):
             self.reconfigure_settings()
 
-    def _get_name_indx(self, unique_name):
-        size = int(unique_name[1])
-        for symm in range(self.num_trans_symm):
-            name_list = self.cluster_names[symm][size]
-            try:
-                n_indx = name_list.index(unique_name)
-                return symm, n_indx
-            except ValueError:
-                continue
-
     def _group_index_by_basis(self):
         first_symb_in_basis = [x[0] for x in self.basis_elements]
         return self.atoms_mng.index_by_symbol(first_symb_in_basis)
@@ -651,8 +641,6 @@ class ClusterExpansionSetting(object):
 
     def reconfigure_settings(self):
         """Reconfigure templates stored in DB file."""
-        db = connect(self.db_name)
-
         # Reconfigure the cluster information for each template based on
         # current max_cluster_size and max_cluster_dia
         for uid in range(self.template_atoms.num_templates):
