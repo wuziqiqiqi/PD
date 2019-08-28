@@ -338,7 +338,7 @@ unsigned int Cluster::max_index() const{
   return max;
 }
 
-void Cluster::unique_indices(set<int> &indices){
+void Cluster::unique_indices(set<int> &indices) const{
   for (auto& vec : members){
     for (auto& value : vec){
       indices.insert(value);
