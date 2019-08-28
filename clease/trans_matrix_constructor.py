@@ -1,4 +1,5 @@
 from ase.neighborlist import neighbor_list
+from clease.tools import ApproxEqualityList
 
 
 class MICDistanceNotUniqueError(Exception):
@@ -30,15 +31,15 @@ class TransMatrixConstructor(object):
         # Re-group by first index
         for i in range(len(i_first)):
             neighbor[i_first[i]]["nb_index"].append(i_second[i].tolist())
-            d = d_vec[i].round(decimals=6) + 0
-            neighbor[i_first[i]]["dist"].append(d.tolist())
+            neighbor[i_first[i]]["dist"].append(
+                ApproxEqualityList(d_vec[i].tolist()))
 
         # Sort based on distance
         for i in range(len(neighbor)):
             srt = sorted(list(zip(neighbor[i]["dist"],
                                   neighbor[i]["nb_index"])))
             srt = list(zip(*srt))  # Unzip the list
-            neighbor[i]["dist"] = srt[0]
+            neighbor[i]["dist"] = [l.array for l in srt[0]]
             neighbor[i]["nb_index"] = srt[1]
         return neighbor
 

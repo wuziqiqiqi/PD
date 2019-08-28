@@ -37,7 +37,8 @@ class TemplateAtoms(object):
         self.templates = None
         self.db_name = db_name
         self.db = connect(db_name)
-        self.prim_cell = list(self.db.select(name='primitive_cell'))[0].toatoms()
+        self.prim_cell = \
+            list(self.db.select(name='primitive_cell'))[0].toatoms()
         self._set_based_on_setting()
         self._append_templates_from_db()
 

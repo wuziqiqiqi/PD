@@ -396,7 +396,8 @@ class ClusterExpansionSetting(object):
                 all_clusters.append(clusters)
             names = name_clusters(fingerprints)
             info = self.dict_representation(names, all_clusters,
-                                            all_equiv_sites, fingerprints, size)
+                                            all_equiv_sites, fingerprints,
+                                            size)
 
             for i, item in enumerate(info):
                 cluster_info[i].update(item)
@@ -406,8 +407,8 @@ class ClusterExpansionSetting(object):
             info.update(empty_info)
 
         # Update with singlet info
-        for info, point_cluster_info in zip(cluster_info, self.point_cluster_info):
-            info.update(point_cluster_info)
+        for info, pc_info in zip(cluster_info, self.point_cluster_info):
+            info.update(pc_info)
         return cluster_info
 
     def dict_representation(self, names, clusters, equiv_sites, fingerprints,
@@ -796,7 +797,6 @@ class ClusterExpansionSetting(object):
 
             keep_indx = cluster['indices'][0]
             equiv = list(cluster["equiv_sites"])
-
 
             for tag, indx in enumerate(keep_indx):
                 atoms[indx].tag = tag
