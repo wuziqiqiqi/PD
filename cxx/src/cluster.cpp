@@ -217,7 +217,7 @@ void Cluster::parse_info_dict(PyObject *info)
     cerr << "Reading max_cluster_dia\n";
   #endif
   // Read max_cluster_dia
-  PyObject* py_mx_dia = get_attr(info, "max_cluster_dia");
+  PyObject* py_mx_dia = get_attr(info, "diameter");
   if (size <= 1)
   {
     max_cluster_dia = 0.0;
@@ -232,7 +232,7 @@ void Cluster::parse_info_dict(PyObject *info)
     cerr << "Read symm_group\n";
   #endif
   // Read symmetry group
-  PyObject* py_symm = get_attr(info, "symm_group");
+  PyObject* py_symm = get_attr(info, "group");
   symm_group = py2int(py_symm);
   Py_DECREF(py_symm);
 

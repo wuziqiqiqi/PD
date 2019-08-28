@@ -68,7 +68,10 @@ class ClusterList(object):
         """
         all_cf_names = []
         for cluster in self.clusters:
-            all_cf_names += self.get_cf_names(cluster, num_bf)
+            if cluster.name == 'c0':
+                all_cf_names.append('c0')
+            else:
+                all_cf_names += self.get_cf_names(cluster, num_bf)
         return all_cf_names
 
     def __len__(self):
