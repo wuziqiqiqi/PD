@@ -10,15 +10,30 @@ from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
 
 
+class ApproxComparableList(object):
+    def __init__(self, array, tol=1E-5):
+        self.array = array
+        self.tol = tol
+
+    def __lt__(self, other):
+        for x, y in zip(self.array, other.array):
+            if x - y < -self.tol:
+                return True
+            elif x - y > self.tol:
+                return False
+        return False
+
+
 def index_by_position(atoms):
     """Set atomic indices by its position."""
     # add zero to avoid negative zeros
-    tags = atoms.get_positions().round(decimals=6) + 0
+    tags = atoms.get_positions() + 0
     tags = tags.tolist()
+    tags = [ApproxComparableList(x) for x in tags]
     deco = sorted([(tag, i) for i, tag in enumerate(tags)])
+
     indices = [i for tag, i in deco]
     return indices
-
 
 def sort_by_position(atoms):
     """Sort atoms by its position."""
@@ -185,8 +200,6 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
     """Obtain all internal distances of the passed atoms object and return a
        Numpy array containing all the distances sorted in an ascending order.
     """
-    from scipy.spatial import cKDTree as KDTree
-
     tree = KDTree(atoms.get_positions())
     distances = []
     for ind in ref_indices:
@@ -428,4 +441,3 @@ def indices2tags(supercell, clusters):
         for i, figure in enumerate(cluster):
             cluster[i] = [int(supercell[x].tag) for x in figure]
     return clusters
-
