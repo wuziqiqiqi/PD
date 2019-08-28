@@ -110,7 +110,7 @@ public:
   const std::vector<std::string>& get_symbols() const { return symbols_with_id->get_symbols(); };
 
   /** Returns the cluster members */
-  const std::vector<cluster_dict>& get_clusters() const {return clusters;};
+  const ClusterList& get_clusters() const {return clusters;};
 
   /** Return the cluster with the given name
   * The key in the map is the symmetry group

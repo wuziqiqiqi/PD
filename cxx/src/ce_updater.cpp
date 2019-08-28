@@ -347,11 +347,6 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
   history->get_next(&next_cf_ptr, &symb_change_track);
   cf &next_cf = *next_cf_ptr;
 
-  // Transfer current cf
-  for (unsigned int i=0;eci.size();i++){
-    next_cf[i] = current_cf[i];
-  }
-
   symb_change_track->indx = symb_change.indx;
   symb_change_track->old_symb = symb_change.old_symb;
   symb_change_track->new_symb = symb_change.new_symb;
@@ -407,12 +402,14 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
 
     double delta_sp = 0.0;
     int symm = trans_symm_group[symb_change.indx];
-    if (clusters[symm].find(prefix) == clusters[symm].end())
+
+    if (!clusters.is_in_symm_group(prefix, symm))
     {
       next_cf[i] = current_cf[i];
       continue;
     }
-    const Cluster& cluster = clusters[symm].at(prefix);
+
+    const Cluster& cluster = clusters.get(prefix, symm);
     unsigned int size = cluster.size;
     assert(bfs.size() == size);
 
@@ -793,52 +790,52 @@ bool CEUpdater::all_eci_corresponds_to_cf()
     return eci.names_are_equal(corrfunc);
 }
 
-unsigned int CEUpdater::get_max_indx_of_zero_site() const
-{
-  int max_indx = 0;
-  // Loop over cluster sizes
-  for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
-  {
-    for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
-    {
-      const vector <vector<int> >& mems = subiter->second.get();
-      // Loop over clusters
-      for (unsigned int i=0;i<mems.size();i++)
-      {
-        // Loop over members in subcluster
-        for (unsigned int j=0;j<mems[i].size();j++)
-        {
-          if (mems[i][j] > max_indx)
-          {
-            max_indx = mems[i][j];
-          }
-        }
-      }
-    }
-  }
-  return max_indx;
-}
+// unsigned int CEUpdater::get_max_indx_of_zero_site() const
+// {
+//   int max_indx = 0;
+//   // Loop over cluster sizes
+//   for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
+//   {
+//     for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
+//     {
+//       const vector <vector<int> >& mems = subiter->second.get();
+//       // Loop over clusters
+//       for (unsigned int i=0;i<mems.size();i++)
+//       {
+//         // Loop over members in subcluster
+//         for (unsigned int j=0;j<mems[i].size();j++)
+//         {
+//           if (mems[i][j] > max_indx)
+//           {
+//             max_indx = mems[i][j];
+//           }
+//         }
+//       }
+//     }
+//   }
+//   return max_indx;
+// }
 
 
-void CEUpdater::get_unique_indx_in_clusters(set<int> &unique_indx)
-{
-  for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
-  {
-    for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
-    {
-      const vector <vector<int> >& mems = subiter->second.get();
-      // Loop over clusters
-      for (unsigned int i=0;i<mems.size();i++)
-      {
-        // Loop over members in subcluster
-        for (unsigned int j=0;j<mems[i].size();j++)
-        {
-          unique_indx.insert(mems[i][j]);
-        }
-      }
-    }
-  }
-}
+// void CEUpdater::get_unique_indx_in_clusters(set<int> &unique_indx)
+// {
+//   for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
+//   {
+//     for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
+//     {
+//       const vector <vector<int> >& mems = subiter->second.get();
+//       // Loop over clusters
+//       for (unsigned int i=0;i<mems.size();i++)
+//       {
+//         // Loop over members in subcluster
+//         for (unsigned int j=0;j<mems[i].size();j++)
+//         {
+//           unique_indx.insert(mems[i][j]);
+//         }
+//       }
+//     }
+//   }
+// }
 
 double CEUpdater::calculate(vector<swap_move> &sequence)
 {
@@ -864,48 +861,48 @@ double CEUpdater::calculate(vector<SymbolChange> &sequence)
 }
 
 
-void CEUpdater::verify_clusters_only_exits_in_one_symm_group()
-{
-  for (unsigned int symm_group=0;symm_group<clusters.size();symm_group++)
-  {
-    for (auto iter=clusters[symm_group].begin(); iter != clusters[symm_group].end(); ++iter)
-    {
-      for (unsigned int symm2=symm_group+1;symm2<clusters.size();symm2++)
-      {
-        for (auto iter2=clusters[symm2].begin(); iter2 != clusters[symm2].end();++iter2)
-        {
-          if (iter->first == iter2->first)
-          {
-            stringstream msg;
-            msg << "A cluster with the name " << iter->first << " name appears to exits in symmetry group ";
-            msg << symm_group << " and " << symm2;
-            throw invalid_argument(msg.str());
-          }
-        }
-      }
-    }
-  }
-}
+// void CEUpdater::verify_clusters_only_exits_in_one_symm_group()
+// {
+//   for (unsigned int symm_group=0;symm_group<clusters.size();symm_group++)
+//   {
+//     for (auto iter=clusters[symm_group].begin(); iter != clusters[symm_group].end(); ++iter)
+//     {
+//       for (unsigned int symm2=symm_group+1;symm2<clusters.size();symm2++)
+//       {
+//         for (auto iter2=clusters[symm2].begin(); iter2 != clusters[symm2].end();++iter2)
+//         {
+//           if (iter->first == iter2->first)
+//           {
+//             stringstream msg;
+//             msg << "A cluster with the name " << iter->first << " name appears to exits in symmetry group ";
+//             msg << symm_group << " and " << symm2;
+//             throw invalid_argument(msg.str());
+//           }
+//         }
+//       }
+//     }
+//   }
+// }
 
 
-void CEUpdater::get_clusters(const string &cname, map<unsigned int, const Cluster*> &clst) const
-{
-  for (unsigned int i=0;i<clusters.size();i++)
-  {
-    auto iter = clusters[i].find(cname);
-    if (iter != clusters[i].end())
-    {
-      clst[i] = &iter->second;
-    }
-  }
-}
+// void CEUpdater::get_clusters(const string &cname, map<unsigned int, const Cluster*> &clst) const
+// {
+//   for (unsigned int i=0;i<clusters.size();i++)
+//   {
+//     auto iter = clusters[i].find(cname);
+//     if (iter != clusters[i].end())
+//     {
+//       clst[i] = &iter->second;
+//     }
+//   }
+// }
 
 
-void CEUpdater::get_clusters(const char* cname, map<unsigned int, const Cluster*> &clst) const
-{
-  string cname_str(cname);
-  get_clusters(cname_str, clst);
-}
+// void CEUpdater::get_clusters(const char* cname, map<unsigned int, const Cluster*> &clst) const
+// {
+//   string cname_str(cname);
+//   get_clusters(cname_str, clst);
+// }
 
 
 void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
@@ -914,12 +911,13 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
   bool is_list = PyList_Check(py_trans_mat);
 
   set<int> unique_indx;
-  get_unique_indx_in_clusters(unique_indx);
+  clusters.unique_indices(unique_indx);
+  //get_unique_indx_in_clusters(unique_indx);
   vector<int> unique_indx_vec;
   set2vector(unique_indx, unique_indx_vec);
 
-  unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
-
+  //unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
+  unsigned int max_indx = clusters.max_index();
   if (is_list)
   {
     unsigned int size = list_size(py_trans_mat);
@@ -1081,29 +1079,35 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
     string prefix = name.substr(0,pos);
     string dec_str = name.substr(pos+1);
 
-    vector<const Cluster*> clust_per_symm_group;
+    //vector<const Cluster*> clust_per_symm_group;
 
-    for (unsigned int symm=0;symm<clusters.size();symm++){
-      if (clusters[symm].find(prefix) == clusters[symm].end())
-      {
-        clust_per_symm_group.push_back(nullptr);
-      }
-      else{
-        clust_per_symm_group.push_back(&clusters[symm].at(prefix));
-      }
-    }
+    // for (unsigned int symm=0;symm<clusters.size();symm++){
+    //   if (clusters[symm].find(prefix) == clusters[symm].end())
+    //   {
+    //     clust_per_symm_group.push_back(nullptr);
+    //   }
+    //   else{
+    //     clust_per_symm_group.push_back(&clusters[symm].at(prefix));
+    //   }
+    // }
 
     double sp = 0.0;
     double cf_temp = 0.0;
     double count = 0;
     for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
       int symm = trans_symm_group[atom_no];
-      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no] && ignore_background_indices))
+      // if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no] && ignore_background_indices))
+      // {
+      //   continue;
+      // }
+
+      if ((!clusters.is_in_symm_group(prefix, symm)) || (is_background_index[atom_no] && ignore_background_indices))
       {
         continue;
       }
 
-      const Cluster& cluster = *clust_per_symm_group[symm];
+      //const Cluster& cluster = *clust_per_symm_group[symm];
+      const Cluster& cluster = clusters.get(prefix, symm);
       unsigned int size = cluster.size;
       assert(cluster_indices[0].size() == size);
       assert(bfs.size() == size);
