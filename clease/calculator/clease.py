@@ -79,7 +79,7 @@ class Clease(Calculator):
         self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
-        self._set_norm_factors()
+        # #self._set_norm_factors()
         # self.dupl_tracker = DuplicationCountTracker(self.setting)
         # self.equiv_deco = self._precalculate_equivalent_decorations()
         # self.clusters_per_symm_group, self.one_body = \
@@ -106,7 +106,7 @@ class Clease(Calculator):
             for key in fig_keys:
                 num_occ[key] = cluster_list.num_occ_figure(key, 
                     cluster.name, symm_group, self.setting.trans_matrix)
-            num_fig_occ = cluster.num_fig_occ
+            num_fig_occ = cluster.num_fig_occurences
             norm_factors = {}
             for key in fig_keys:
                 tot_num = num_occ[key]
@@ -194,10 +194,9 @@ class Clease(Calculator):
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
         self.is_backround_index[self.setting.background_indices] = 1
 
-        info = \
-            self._get_cluster_info_with_dup_factors(self.setting.cluster_info)
+        self._set_norm_factors()
         self.updater = PyCEUpdater(self.atoms, self.setting, self.init_cf,
-                                   self.eci, info)
+                                   self.eci, self.setting.cluster_list)
 
     def get_energy_given_change(self, system_changes):
         """
@@ -276,17 +275,17 @@ class Clease(Calculator):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
 
-    def _generate_normalization_factor(self):
-        """Return a dictionary with all the normalization factors."""
-        norm_fact = {}
-        for symm, item in enumerate(self.setting.cluster_info):
-            num_atoms = len(self.setting.index_by_trans_symm[symm])
-            for name, info in item.items():
-                if name not in norm_fact.keys():
-                    norm_fact[name] = len(info["indices"]) * num_atoms
-                else:
-                    norm_fact[name] += len(info["indices"]) * num_atoms
-        return norm_fact
+    # def _generate_normalization_factor(self):
+    #     """Return a dictionary with all the normalization factors."""
+    #     norm_fact = {}
+    #     for symm, item in enumerate(self.setting.cluster_info):
+    #         num_atoms = len(self.setting.index_by_trans_symm[symm])
+    #         for name, info in item.items():
+    #             if name not in norm_fact.keys():
+    #                 norm_fact[name] = len(info["indices"]) * num_atoms
+    #             else:
+    #                 norm_fact[name] += len(info["indices"]) * num_atoms
+    #     return norm_fact
 
     def update_cf(self, system_changes=None):
         """Update correlation function based on the reference value.

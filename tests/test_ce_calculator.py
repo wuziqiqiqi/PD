@@ -198,6 +198,23 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
 
 
 class TestCECalculator(unittest.TestCase):
+    def test_normfactors_no_self_interaction(self):
+        print('binary_norm_factor')
+        db_name = 'cecalc_binary_norm_fac.db'
+        setting, atoms = get_binary(db_name)
+
+        eci = generate_ex_eci(setting)
+        calc = Clease(setting, eci=eci)
+        atoms.set_calculator(calc)
+
+        for cluster in setting.cluster_list:
+            if cluster.name == 'c0' or cluster.name == 'c1':
+                continue
+            print(cluster)
+            norm_factors = cluster.info['normalization_factor']
+            self.assertTrue(np.allclose(norm_factors, 1.0))
+        
+
     def test_indices_of_changed_symbols(self):
         db_name = 'indices_changes_symbol.db'
         setting, atoms = get_binary(db_name)

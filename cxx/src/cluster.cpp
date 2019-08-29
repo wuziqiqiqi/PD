@@ -14,7 +14,7 @@ Cluster::Cluster(PyObject *info_dict)
   parse_info_dict(info_dict);
 }
 
-ostream& operator <<( ostream& out, const Cluster &cluster )
+ostream& operator <<(ostream& out, const Cluster &cluster)
 {
   out << "Name: " << cluster.name << "\n";
   // out << "Descriptor: " << cluster.descriptor << "\n";
@@ -23,8 +23,6 @@ ostream& operator <<( ostream& out, const Cluster &cluster )
   out << "ref_indx: " << cluster.ref_indx << "\n";
   out << "Members:\n";
   out << cluster.get();
-  // out << "\nOrder:\n",
-  // out << cluster.get_order();
   out << "\nEquivalent sites:\n";
   out << cluster.get_equiv();
   return out;

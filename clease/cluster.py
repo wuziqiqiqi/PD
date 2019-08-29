@@ -100,6 +100,7 @@ class Cluster(object):
         str_rep += 'Indices: {}\n'.format(self.indices)
         str_rep += 'Equiv. sites: {}\n'.format(self.equiv_sites)
         str_rep += 'Fingerprint: {}\n'.format(self.fp)
+        str_rep += 'Information: {}\n'.format(self.info)
         return str_rep
 
     def get_figure_key(self, figure):
