@@ -125,3 +125,26 @@ class Cluster(object):
             current_num = occ_count.get(key, 0)
             occ_count[key] = current_num + 1
         return occ_count
+
+    def corresponding_figure(self, ref_indx, target_figure, trans_matrix):
+        """Find figures that correspond to another reference index.
+
+        Parameters:
+
+        ref_indx: int
+            reference index
+
+        taget_figres: list of indices
+            list of atomic indices that constitute the original figure before
+            translating
+        
+        tran_matrix: np.array
+            translation matrix
+        """
+        for figure in self.indices:
+            translated_figure = [trans_matrix[ref_indx][x] for x in figure]
+            translated_figure = self._order_equiv_sites(translated_figure)
+            if translated_figure == target_figure:
+                return self._order_equiv_sites(figure)
+        
+        raise RuntimeError("There are no matching figure!")

@@ -205,7 +205,18 @@ class TestClusterList(unittest.TestCase):
         expected = {'0-3-0': 2, '0-4-5': 1}
         for k in expected.keys():
             self.assertEqual(occ_count[k], expected[k])
-        
+
+    def test_corresponding_figure(self):
+        c1 = Cluster(size=4, ref_indx=0,
+                     indices=[[0, 2, 5, 1], [0, 4, 6, 7]])
+        trans_matrix = [{0: 0, 1: 1, 2: 2, 4: 4, 5: 5, 6: 6, 7: 7},
+                        {0: 0, 1: 7, 2: 4, 4: 2, 5: 6, 6: 5, 7: 1},
+                        {0: 0, 1: 6, 2: 4, 4: 2, 5: 3, 6: 5, 7: 1}]
+        corresponding = c1.corresponding_figure(1, [0, 4, 6, 7], trans_matrix)
+        self.assertEqual(corresponding, [0, 2, 5, 1])
+
+        corresponding = c1.corresponding_figure(2, [0, 2, 5, 1], trans_matrix)
+        self.assertEqual(corresponding, [0, 4, 6, 7])
 
 if __name__ == '__main__':
     unittest.main()
