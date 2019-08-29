@@ -13,6 +13,7 @@ from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
+from ase.build import bulk
 from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
@@ -24,15 +25,13 @@ import unittest
 update_reference_file = False
 tol = 1E-9
 
-
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
     members = []
-    info = setting.cluster_info_by_name(cname)
-    for entry in info:
-        members.append(entry["indices"])
+    clusters = setting.cluster_list.get_by_name(cname)
+    for cluster in clusters:
+        members.append(cluster.indices)
     return members
-
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
@@ -41,6 +40,22 @@ def calculate_cf(setting, atoms):
 
 
 class TestCEBulk(unittest.TestCase):
+    def test_load_from_db(self):
+        db_name = 'test_load_from_db.db'
+        basis_elements = [['Au', 'Cu']]
+        concentration = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[1, 1, 1],
+                         concentration=concentration, db_name=db_name,
+                         max_cluster_dia=[4.3, 4.3, 4.3],
+                         max_cluster_size=4)
+        orig_atoms = setting.atoms.copy()
+        atoms = bulk('Au', crystalstructure='fcc', a=4.05, cubic=True)
+        setting.set_active_template(atoms=atoms, generate_template=True)
+
+        # Try to read back the old atoms
+        setting.set_active_template(atoms=orig_atoms)
+        #os.remove(db_name)
+
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]
@@ -157,24 +172,30 @@ class TestCEBulk(unittest.TestCase):
         Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
-        for cluster in bc_setting.cluster_info_given_size(2):
-            name = list(cluster.keys())[0]
-            sub_cl = set(bc_setting.subclusters(name))
-            self.assertTrue(sub_cl == set(["c0", "c1"]))
+        for cluster in bc_setting.cluster_list.get_by_size(2):
+            sub_cl = bc_setting.cluster_list.get_subclusters(cluster)
+            sub_cl_name = set([c.name for c in sub_cl])
+            self.assertTrue(sub_cl_name == set(["c0", "c1"]))
 
 
         # Test a few known clusters. Triplet nearest neighbour
         name = "c3_d0000_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0"]))
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_setting.cluster_list.get_subclusters(triplet)
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0"]))
 
         name = "c3_d0001_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = (bc_setting.cluster_list.get_subclusters(triplet))
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
 
         name = "c4_d0000_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
+        quad = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_setting.cluster_list.get_subclusters(quad)
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]

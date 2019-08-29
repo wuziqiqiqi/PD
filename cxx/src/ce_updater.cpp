@@ -21,7 +21,7 @@ CEUpdater::~CEUpdater()
   delete basis_functions; basis_functions=nullptr;
 }
 
-void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_info)
+void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_list)
 {
   atoms = py_atoms;
   if (setting == nullptr)
@@ -112,49 +112,38 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   Py_DECREF(py_num_elements);
 
 
-  if (cluster_info == nullptr)
+  if (cluster_list == nullptr)
   {
-    throw invalid_argument("cluster_info is nullptr!");
+    throw invalid_argument("cluster_list is nullptr!");
   }
-  unsigned int num_trans_symm = list_size(cluster_info);
+  //unsigned int num_trans_symm = list_size(cluster_info);
+  unsigned int num_clusters = PySequence_Size(cluster_list);
 
   #ifdef CE_DEBUG
-    cerr << "Parsing cluster info...\n";
+    cerr << "Parsing cluster list...\n";
   #endif
-  for (unsigned int i=0;i<num_trans_symm;i++)
-  {
-    #ifdef CE_DEBUG
-      cerr << "Parsing trans_symm group " << i << endl;
-    #endif
 
-    PyObject *info_dicts = PyList_GetItem(cluster_info, i);
-    cluster_dict new_clusters;
-    Py_ssize_t pos = 0;
-    PyObject *key;
-    PyObject *value;
-    while(PyDict_Next(info_dicts, &pos, &key, &value))
+  for (unsigned int i=0;i<num_clusters;i++){
+    PyObject* py_cluster = PySequence_GetItem(cluster_list, i);
+
+    Cluster new_clst(py_cluster);
+    PyObject* py_cluster_name = get_attr(py_cluster, "name");
+    string cluster_name = py2string(py_cluster_name);
+    Py_DECREF(py_cluster_name);
+    Py_DECREF(py_cluster);
+
+    new_clst.construct_equivalent_deco(num_bfs);
+    clusters.append(new_clst);
+
+    if (normalisation_factor.find(cluster_name) == normalisation_factor.end())
     {
-      string cluster_name = py2string(key);
-      #ifdef CE_DEBUG
-        cerr << "Extracting cluster " << cluster_name << endl;
-      #endif
-
-      Cluster new_clst(value);
-      new_clst.construct_equivalent_deco(num_bfs);
-      new_clusters[cluster_name] = new_clst;
-
-      if (normalisation_factor.find(cluster_name) == normalisation_factor.end())
-      {
-        normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[i];
-      }
-      else
-      {
-        normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[i];
-      }
+      normalisation_factor[cluster_name] = new_clst.get().size()*trans_symm_group_count[new_clst.symm_group];
     }
-    clusters.push_back(new_clusters);
+    else
+    {
+      normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[new_clst.symm_group];
+    }
   }
-  //Py_DECREF(cluster_info);
   #ifdef CE_DEBUG
     cout << "Finished reading cluster_info\n";
   #endif
@@ -323,6 +312,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
   cf *next_cf_ptr=nullptr;
   history->get_next(&next_cf_ptr, &symb_change_track);
   cf &next_cf = *next_cf_ptr;
+
   symb_change_track->indx = symb_change.indx;
   symb_change_track->old_symb = symb_change.old_symb;
   symb_change_track->new_symb = symb_change.new_symb;
@@ -378,12 +368,14 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
 
     double delta_sp = 0.0;
     int symm = trans_symm_group[symb_change.indx];
-    if (clusters[symm].find(prefix) == clusters[symm].end())
+
+    if (!clusters.is_in_symm_group(prefix, symm))
     {
       next_cf[i] = current_cf[i];
       continue;
     }
-    const Cluster& cluster = clusters[symm].at(prefix);
+
+    const Cluster& cluster = clusters.get(prefix, symm);
     unsigned int size = cluster.size;
     assert(bfs.size() == size);
 
@@ -447,7 +439,6 @@ void CEUpdater::undo_changes(int num_steps)
 
 void CEUpdater::undo_changes_tracker(int num_steps)
 {
-  //cout << "Undoing changes, keep track\n";
   SymbolChange *last_change;
   SymbolChange *first_change;
   tracker_t& trk = *tracker;
@@ -462,8 +453,6 @@ void CEUpdater::undo_changes_tracker(int num_steps)
   }
   symbols_with_id->set_symbol(first_change->indx, first_change->old_symb);
   symbols_with_id->set_symbol(last_change->indx, last_change->old_symb);
-  //cerr << "History cleaned!\n";
-  //cerr << history->history_size() << endl;
 }
 
 double CEUpdater::calculate(PyObject *system_changes)
@@ -750,6 +739,7 @@ void CEUpdater::build_trans_symm_group(PyObject *py_trans_symm_group)
 
   // Count the number of atoms in each symmetry group
   trans_symm_group_count.resize(py_list_size);
+  fill(trans_symm_group_count.begin(), trans_symm_group_count.end(), 0);
   for (unsigned int i=0;i<trans_symm_group.size();i++)
   {
     if (trans_symm_group[i] >= 0){
@@ -762,53 +752,6 @@ bool CEUpdater::all_eci_corresponds_to_cf()
 {
     cf& corrfunc = history->get_current();
     return eci.names_are_equal(corrfunc);
-}
-
-unsigned int CEUpdater::get_max_indx_of_zero_site() const
-{
-  int max_indx = 0;
-  // Loop over cluster sizes
-  for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
-  {
-    for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
-    {
-      const vector <vector<int> >& mems = subiter->second.get();
-      // Loop over clusters
-      for (unsigned int i=0;i<mems.size();i++)
-      {
-        // Loop over members in subcluster
-        for (unsigned int j=0;j<mems[i].size();j++)
-        {
-          if (mems[i][j] > max_indx)
-          {
-            max_indx = mems[i][j];
-          }
-        }
-      }
-    }
-  }
-  return max_indx;
-}
-
-
-void CEUpdater::get_unique_indx_in_clusters(set<int> &unique_indx)
-{
-  for (auto iter=clusters.begin(); iter != clusters.end(); ++iter)
-  {
-    for (auto subiter=iter->begin(); subiter != iter->end(); ++subiter)
-    {
-      const vector <vector<int> >& mems = subiter->second.get();
-      // Loop over clusters
-      for (unsigned int i=0;i<mems.size();i++)
-      {
-        // Loop over members in subcluster
-        for (unsigned int j=0;j<mems[i].size();j++)
-        {
-          unique_indx.insert(mems[i][j]);
-        }
-      }
-    }
-  }
 }
 
 double CEUpdater::calculate(vector<swap_move> &sequence)
@@ -834,63 +777,19 @@ double CEUpdater::calculate(vector<SymbolChange> &sequence)
   return get_energy();
 }
 
-
-void CEUpdater::verify_clusters_only_exits_in_one_symm_group()
-{
-  for (unsigned int symm_group=0;symm_group<clusters.size();symm_group++)
-  {
-    for (auto iter=clusters[symm_group].begin(); iter != clusters[symm_group].end(); ++iter)
-    {
-      for (unsigned int symm2=symm_group+1;symm2<clusters.size();symm2++)
-      {
-        for (auto iter2=clusters[symm2].begin(); iter2 != clusters[symm2].end();++iter2)
-        {
-          if (iter->first == iter2->first)
-          {
-            stringstream msg;
-            msg << "A cluster with the name " << iter->first << " name appears to exits in symmetry group ";
-            msg << symm_group << " and " << symm2;
-            throw invalid_argument(msg.str());
-          }
-        }
-      }
-    }
-  }
-}
-
-
-void CEUpdater::get_clusters(const string &cname, map<unsigned int, const Cluster*> &clst) const
-{
-  for (unsigned int i=0;i<clusters.size();i++)
-  {
-    auto iter = clusters[i].find(cname);
-    if (iter != clusters[i].end())
-    {
-      clst[i] = &iter->second;
-    }
-  }
-}
-
-
-void CEUpdater::get_clusters(const char* cname, map<unsigned int, const Cluster*> &clst) const
-{
-  string cname_str(cname);
-  get_clusters(cname_str, clst);
-}
-
-
 void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
 {
 
   bool is_list = PyList_Check(py_trans_mat);
 
   set<int> unique_indx;
-  get_unique_indx_in_clusters(unique_indx);
+  clusters.unique_indices(unique_indx);
+  //get_unique_indx_in_clusters(unique_indx);
   vector<int> unique_indx_vec;
   set2vector(unique_indx, unique_indx_vec);
 
-  unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
-
+  //unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
+  unsigned int max_indx = clusters.max_index();
   if (is_list)
   {
     unsigned int size = list_size(py_trans_mat);
@@ -953,13 +852,6 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
     }
     Py_DECREF(trans_mat);
   }
-  /**
-  trans_matrix.set_size(size[0], size[1]);
-  for (unsigned int i=0;i<size[0];i++)
-  for (unsigned int j=0;j<size[1];j++)
-  {
-    trans_matrix(i,j) = *static_cast<int*>(PyArray_GETPTR2(trans_mat,i,j));
-  }*/
 }
 
 void CEUpdater::sort_indices(int indices[], const vector<int> &order, unsigned int n_indices)
@@ -1052,29 +944,19 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
     string prefix = name.substr(0,pos);
     string dec_str = name.substr(pos+1);
 
-    vector<const Cluster*> clust_per_symm_group;
-
-    for (unsigned int symm=0;symm<clusters.size();symm++){
-      if (clusters[symm].find(prefix) == clusters[symm].end())
-      {
-        clust_per_symm_group.push_back(nullptr);
-      }
-      else{
-        clust_per_symm_group.push_back(&clusters[symm].at(prefix));
-      }
-    }
-
     double sp = 0.0;
     double cf_temp = 0.0;
     double count = 0;
     for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
       int symm = trans_symm_group[atom_no];
-      if ((clust_per_symm_group[symm] == nullptr) || (is_background_index[atom_no] && ignore_background_indices))
+
+      if ((!clusters.is_in_symm_group(prefix, symm)) || (is_background_index[atom_no] && ignore_background_indices))
       {
         continue;
       }
 
-      const Cluster& cluster = *clust_per_symm_group[symm];
+      //const Cluster& cluster = *clust_per_symm_group[symm];
+      const Cluster& cluster = clusters.get(prefix, symm);
       unsigned int size = cluster.size;
       assert(cluster_indices[0].size() == size);
       assert(bfs.size() == size);

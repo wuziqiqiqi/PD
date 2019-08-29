@@ -25,7 +25,7 @@ class StructureGenerator(object):
 
         self.setting = setting
         self.trans_matrix = setting.trans_matrix
-        self.cluster_names = self.setting.cluster_names
+        self.cf_names = self.setting.all_cf_names
         self.corrFunc = CorrFunction(setting)
         self.cfm = self._get_full_cf_matrix()
         self.atoms = wrap_and_sort_by_position(atoms.copy())
@@ -38,7 +38,7 @@ class StructureGenerator(object):
 
         # eci set to 1 to ensure that all correlation functions are included
         # but the energy produced from this should never be used
-        self.eci = {name: 1. for name in self.cluster_names}
+        self.eci = {name: 1. for name in self.cf_names}
         calc = Clease(self.setting, eci=self.eci)
         self.atoms.set_calculator(calc)
         self.output_every = 30
@@ -249,7 +249,7 @@ class StructureGenerator(object):
     def _check_consistency(self):
         # Check to see if the cf is indeed preserved
         final_cf = \
-            self.corrFunc.get_cf_by_cluster_names(
+            self.corrFunc.get_cf_by_names(
                 self.generated_structure,
                 self.atoms.get_calculator().cluster_names)
         for k in final_cf:
@@ -263,7 +263,7 @@ class StructureGenerator(object):
         db = connect(self.setting.db_name)
         tab_name = "{}_cf".format(self.setting.bf_scheme.name)
         for row in db.select(struct_type='initial'):
-            cfm.append([row[tab_name][x] for x in self.cluster_names])
+            cfm.append([row[tab_name][x] for x in self.cf_names])
         cfm = np.array(cfm, dtype=float)
         return cfm
 

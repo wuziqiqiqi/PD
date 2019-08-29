@@ -14,7 +14,7 @@ Cluster::Cluster(PyObject *info_dict)
   parse_info_dict(info_dict);
 }
 
-ostream& operator <<( ostream& out, const Cluster &cluster )
+ostream& operator <<(ostream& out, const Cluster &cluster)
 {
   out << "Name: " << cluster.name << "\n";
   // out << "Descriptor: " << cluster.descriptor << "\n";
@@ -23,8 +23,6 @@ ostream& operator <<( ostream& out, const Cluster &cluster )
   out << "ref_indx: " << cluster.ref_indx << "\n";
   out << "Members:\n";
   out << cluster.get();
-  // out << "\nOrder:\n",
-  // out << cluster.get_order();
   out << "\nEquivalent sites:\n";
   out << cluster.get_equiv();
   return out;
@@ -147,7 +145,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
   {
     return;
   }
-  else if (get_size() == 2)
+  else if(get_size() == 2)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -156,7 +154,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
       deco.push_back(vec);
     }
   }
-  else if (get_size() == 3)
+  else if(get_size() == 3)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -201,21 +199,23 @@ void Cluster::parse_info_dict(PyObject *info)
     cerr << "Reading ref_indx\n";
   #endif
   // Read reference index
-  PyObject* py_ref_indx = PyDict_GetItemString(info, "ref_indx");
+  PyObject* py_ref_indx = get_attr(info, "ref_indx");
   ref_indx = py2int(py_ref_indx);
+  Py_DECREF(py_ref_indx);
 
   #ifdef CLUSTER_DEBUG
     cerr << "Reading size\n";
   #endif
   // Read size
-  PyObject* py_size = PyDict_GetItemString(info, "size");
+  PyObject* py_size = get_attr(info, "size");
   size = py2int(py_size);
+  Py_DECREF(py_size);
 
   #ifdef CLUSTER_DEBUG
     cerr << "Reading max_cluster_dia\n";
   #endif
   // Read max_cluster_dia
-  PyObject* py_mx_dia = PyDict_GetItemString(info, "max_cluster_dia");
+  PyObject* py_mx_dia = get_attr(info, "diameter");
   if (size <= 1)
   {
     max_cluster_dia = 0.0;
@@ -224,44 +224,48 @@ void Cluster::parse_info_dict(PyObject *info)
   {
     max_cluster_dia = PyFloat_AS_DOUBLE(py_mx_dia);
   }
+  Py_DECREF(py_mx_dia);
 
   #ifdef CLUSTER_DEBUG
     cerr << "Read symm_group\n";
   #endif
   // Read symmetry group
-  PyObject* py_symm = PyDict_GetItemString(info, "symm_group");
+  PyObject* py_symm = get_attr(info, "group");
   symm_group = py2int(py_symm);
+  Py_DECREF(py_symm);
 
 
   #ifdef CLUSTER_DEBUG
     cerr << "Read name\n";
   #endif
   // Read the name
-  PyObject* py_name = PyDict_GetItemString(info, "name");
+  PyObject* py_name = get_attr(info, "name");
   name = py2string(py_name);
+  Py_DECREF(py_name);
 
-  // // Read descriptor
-  // PyObject* py_desc = PyDict_GetItemString(info, "descriptor");
-  // descriptor = py2string(py_desc);
 
   #ifdef CLUSTER_DEBUG
     cerr << "Reading indices...\n";
   #endif
   // Read indices
-  PyObject* py_indx = PyDict_GetItemString(info, "indices");
+  PyObject* py_indx = get_attr(info, "indices");
   nested_list_to_cluster(py_indx, members);
+  Py_DECREF(py_indx);
 
   // Read equivalent sites
-  PyObject *py_equiv_sites = PyDict_GetItemString(info, "equiv_sites");
+  PyObject *py_equiv_sites = get_attr(info, "equiv_sites");
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
+  Py_DECREF(py_equiv_sites);
 
   #ifdef CLUSTER_DEBUG
-    cerr << "Reading duplication factors\n";
+    cerr << "Reading normalization factors\n";
   #endif
-  // Read duplication factors
-  PyObject *key = string2py("dup_factors");
-  if (PyDict_Contains(info, key)){
-    PyObject *py_dup_factors = PyDict_GetItemString(info, "dup_factors");
+
+  // Read normalization factors
+  PyObject *cluster_info_dict = get_attr(info, "info");
+  PyObject *key = string2py("normalization_factor");
+  if (PyDict_Contains(cluster_info_dict, key)){
+    PyObject *py_dup_factors = PyDict_GetItemString(cluster_info_dict, "normalization_factor");
     calculate_scaling_factors(py_dup_factors);
   }
   else{
@@ -314,5 +318,25 @@ void Cluster::calculate_scaling_factors(PyObject *pylist){
 
     double scale = static_cast<double>(unique_values.size())/(members[i].size());
     duplication_factors.push_back(factor*scale);
+  }
+}
+
+unsigned int Cluster::max_index() const{
+  unsigned int max = 0;
+  for (const auto& vec : members){
+    for (auto& value : vec){
+      if (value > max){
+        max = value;
+      }
+    }
+  }
+  return max;
+}
+
+void Cluster::unique_indices(set<int> &indices) const{
+  for (auto& vec : members){
+    for (auto& value : vec){
+      indices.insert(value);
+    }
   }
 }

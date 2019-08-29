@@ -164,7 +164,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
         start = time.time()
         atoms.get_potential_energy()
         timings.append(time.time() - start)
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        brute_force_cf = cf.get_cf_by_names(atoms, calc.cluster_names)
         calc_cf = calc.get_cf()
 
         for key in calc_cf.keys():
@@ -189,7 +189,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
             symb2 = choice(elements)
         atoms[indx1].symbol = symb2
         atoms.get_potential_energy()
-        brute_force_cf = cf.get_cf_by_cluster_names(atoms, calc.cluster_names)
+        brute_force_cf = cf.get_cf_by_names(atoms, calc.cluster_names)
         calc_cf = calc.get_cf()
         for k in calc_cf.keys():
             if k.startswith("c0") or k.startswith("c1"):
@@ -198,6 +198,21 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
 
 
 class TestCECalculator(unittest.TestCase):
+    def test_normfactors_no_self_interaction(self):
+        db_name = 'cecalc_binary_norm_fac.db'
+        setting, atoms = get_binary(db_name)
+
+        eci = generate_ex_eci(setting)
+        calc = Clease(setting, eci=eci)
+        atoms.set_calculator(calc)
+
+        for cluster in setting.cluster_list:
+            if cluster.name == 'c0' or cluster.name == 'c1':
+                continue
+            norm_factors = cluster.info['normalization_factor']
+            self.assertTrue(np.allclose(norm_factors, 1.0))
+
+
     def test_indices_of_changed_symbols(self):
         db_name = 'indices_changes_symbol.db'
         setting, atoms = get_binary(db_name)
