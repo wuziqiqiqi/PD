@@ -114,7 +114,7 @@ class GAFit(object):
         self.setting = setting
         self.eff_num = evaluator.effective_num_data_pts
         self.W = np.diag(evaluator.weight_matrix)
-        self.cluster_names = evaluator.cluster_names
+        self.cf_names = evaluator.cf_names
         self.include_subclusters = include_subclusters
         self.sub_constraint = None
         self.super_constraint = None
@@ -133,7 +133,7 @@ class GAFit(object):
         self.sparsity_slope = sparsity_slope
         # Read required attributes from evaluate
         self.cf_matrix = evaluator.cf_matrix
-        self.cluster_names = evaluator.cluster_names
+        self.cf_names = evaluator.cf_names
         self.e_dft = evaluator.e_dft
         self.fname = fname
         self.fname_cluster_names = \
@@ -315,7 +315,7 @@ class GAFit(object):
         individual[indx] = (individual[indx] + 1) % 2
 
         if individual[indx] == 0 and self.include_subclusters:
-            name = self.cluster_names[indx]
+            name = self.cf_names[indx]
             individual = self._remove_super_clusters(name, individual)
         return individual
 
@@ -491,7 +491,7 @@ class GAFit(object):
     def selected_cluster_names(self):
         from itertools import compress
         individual = self.best_individual
-        return list(compress(self.cluster_names, individual))
+        return list(compress(self.cf_names, individual))
 
     def index_of_selected_clusters(self, individual):
         """Return the indices of the selected clusters
@@ -619,7 +619,7 @@ class GAFit(object):
             individual_cpy = deepcopy(individual)
             individual_cpy[flip_indx] = (individual_cpy[flip_indx]+1) % 2
             if individual_cpy[flip_indx] == 0 and self.include_subclusters:
-                name = self.cluster_names[flip_indx]
+                name = self.cf_names[flip_indx]
                 individual_cpy = self._remove_super_clusters(name,
                                                              individual_cpy)
             individual_cpy = self.make_valid(individual_cpy)
@@ -642,12 +642,17 @@ class GAFit(object):
     def _initialize_sub_cluster_constraint(self):
         """Initialize the sub-cluster constraint."""
         must_be_active = []
-        for name in self.cluster_names:
+        for name in self.cf_names:
             prefix = name.rpartition("_")[0]
-            sub = self.setting.subclusters(prefix)
+            if prefix == 'c0' or prefix == 'c1' or prefix == '':
+                must_be_active.append([])
+                continue
+            cluster = self.setting.cluster_list.get_by_name(prefix)[0]
+            sub = self.setting.cluster_list.get_subclusters(cluster)
+            sub_names = [c.name for c in sub]
             indx = []
-            for sub_name in sub:
-                indices = [i for i, name in enumerate(self.cluster_names)
+            for sub_name in sub_names:
+                indices = [i for i, name in enumerate(self.cf_names)
                            if name.startswith(sub_name)]
                 indx += indices
             must_be_active.append(indx)
@@ -656,15 +661,20 @@ class GAFit(object):
     def _initialize_super_cluster_constraint(self):
         """Initialize the super-clusters."""
         deactivate = {}
-        for name in self.cluster_names:
+        for name in self.cf_names:
             prefix = name.rpartition("_")[0]
             if prefix in deactivate.keys():
                 continue
             indx = []
-            for i, name2 in enumerate(self.cluster_names):
+            for i, name2 in enumerate(self.cf_names):
                 prefix2 = name2.rpartition("_")[0]
-                sub = self.setting.subclusters(prefix2)
-                if prefix in sub:
+
+                if prefix2 == 'c0' or prefix2 == 'c1' or prefix2 == '':
+                    continue
+                cluster = self.setting.cluster_list.get_by_name(prefix2)[0]
+                sub = self.setting.cluster_list.get_subclusters(cluster)
+                sub_names = [c.name for c in sub]
+                if prefix in sub_names:
                     indx.append(i)
             deactivate[prefix] = indx
         return deactivate
