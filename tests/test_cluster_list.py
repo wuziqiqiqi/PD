@@ -218,5 +218,35 @@ class TestClusterList(unittest.TestCase):
         corresponding = c1.corresponding_figure(2, [0, 2, 5, 1], trans_matrix)
         self.assertEqual(corresponding, [0, 4, 6, 7])
 
+    def test_num_occ_figure(self):
+        c1 = Cluster(size=4, ref_indx=0, name='c4_d0000_0',
+                     indices=[[0, 2, 5, 1], [0, 4, 6, 7]], trans_symm_group=0)
+        c2 = Cluster(size=4, ref_indx=1, name='c4_d0000_0',
+                     indices=[[1, 3, 6, 2], [0, 2, 5, 1]], trans_symm_group=1)
+        c3 = Cluster(size=3, ref_indx=1, name='c3_d0000_0',
+                     indices=[[1, 3, 6], [1, 5, 7]], trans_symm_group=1)
+
+        cluster_list = ClusterList()
+        cluster_list.append(c1)
+        cluster_list.append(c2)
+        cluster_list.append(c3)
+        
+        # 0 is the reference index of symm group 0
+        # 1 is the reference index of symm group 1
+        tm = [{0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8},
+              {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}]
+        
+        fig_key = '0-2-5-1'
+        symm_groups = [0, 1, 0, 0, 1, 0, 1, 0, 1]
+        num_fig_occ = cluster_list.num_occ_figure(fig_key, 'c4_d0000_0',
+                                                  symm_groups, tm)
+        self.assertEqual(num_fig_occ, 4)
+
 if __name__ == '__main__':
     unittest.main()

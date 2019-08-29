@@ -1,4 +1,4 @@
-from clease.tools import dec_string
+from clease.tools import dec_string, list2str
 from itertools import product
 from clease.tools import flatten
 
@@ -20,6 +20,14 @@ class ClusterList(object):
 
     def get_by_name(self, name):
         return [c for c in self.clusters if c.name == name]
+
+    def get_by_name_and_group(self, name, group):
+        clusters = self.get_by_name(name)
+        for c in clusters:
+            if c.group == group:
+                return c
+        raise ValueError("There are no cluster named {} and group {}"
+                         "".format(name, group))
 
     def get_by_size(self, size):
         # Return all clusters with a given size
@@ -157,7 +165,42 @@ class ClusterList(object):
         return figures
 
     def get_occurence_counts(self):
+        """Count the number of occurences of all figures."""
         occ_counts = []
         for cluster in self.clusters:
             occ_counts.append(cluster.num_fig_occurence)
         return occ_counts
+
+    def num_occ_figure(self, fig_key, c_name, symm_groups, trans_matrix):
+        """Determine the number of occurences of a figure across the structure.
+        
+        Parameter:
+
+        fig_key: str
+            string containing the indices of consituting atomic indices
+
+        c_name: str
+            name of the cluster of the figure
+        
+        symm_groups: list
+            list containing the symmetry group number of the atomic indices
+
+        tran_matrix: list of dicts
+            translation matrix
+        """
+        figure = list(map(int, fig_key.split("-")))
+        tot_num = 0
+        clusters = self.get_by_name(c_name)
+        occ_count = {}
+        for cluster in clusters:
+            occ_count[cluster.group] = cluster.num_fig_occurences
+
+        for ref in figure:
+            group = symm_groups[ref]
+            cluster = self.get_by_name_and_group(c_name, group)
+            
+            corr_figure = cluster.corresponding_figure(ref, figure,
+                                                       trans_matrix)
+            corr_fig_key = list2str(corr_figure)
+            tot_num += occ_count[cluster.group][corr_fig_key]
+        return tot_num
