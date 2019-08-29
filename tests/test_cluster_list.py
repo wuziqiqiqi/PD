@@ -202,10 +202,7 @@ class TestClusterList(unittest.TestCase):
         c1 = Cluster(size=3, indices=[[3, 0, 0], [0, 3, 0], [0, 4, 5]],
                      equiv_sites=[[0, 1]])
         occ_count = c1.num_fig_occurences
-        expected = {
-            '0-3-0': 2,
-            '0-4-5': 1
-        }
+        expected = {'0-3-0': 2, '0-4-5': 1}
         for k in expected.keys():
             self.assertEqual(occ_count[k], expected[k])
         
