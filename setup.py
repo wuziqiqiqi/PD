@@ -81,5 +81,15 @@ setup(
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
     include_package_data=True,
-    data_files=[('layout', find_layout_files())]
+    data_files=[('layout', find_layout_files())],
+    license='MPL-2.0',
+    keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'License :: OSI Approved :: MPL-2.0',
+        'Programming Language :: Python :: 3',  
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
+    ]
 )
