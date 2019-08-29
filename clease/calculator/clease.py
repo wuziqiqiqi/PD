@@ -6,7 +6,7 @@ from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction
 from clease.settings import ClusterExpansionSetting
-from clease.calculator.duplication_count_tracker import DuplicationCountTracker
+# from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
 
@@ -79,66 +79,97 @@ class Clease(Calculator):
         self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
-        self.dupl_tracker = DuplicationCountTracker(self.setting)
-
-        self.equiv_deco = self._precalculate_equivalent_decorations()
-
-        self.clusters_per_symm_group, self.one_body = \
-            self._place_clusters_in_symm_groups()
+        self._set_norm_factors()
+        # self.dupl_tracker = DuplicationCountTracker(self.setting)
+        # self.equiv_deco = self._precalculate_equivalent_decorations()
+        # self.clusters_per_symm_group, self.one_body = \
+        #     self._place_clusters_in_symm_groups()
 
         # C++ updater initialised when atoms are set
         self.updater = None
 
-    def _get_cluster_info_with_dup_factors(self, cluster_info):
-        info = []
-        for all_info in cluster_info:
-            info.append(all_info)
+    def _set_norm_factors(self):
+        """Set normalization factor for each cluster.
 
-            for k in all_info.keys():
-                cluster = info[-1][k]
+        The normalization factor only kicks in when the cell is too small and 
+        thus, include self-interactions. This methods corrects the impact of
+        self-interactions.
+        """
+        symm_group = np.zeros(len(self.setting.atoms), dtype=np.uint8)
+        for num, group in enumerate(self.setting.index_by_trans_symm):
+            symm_group[group] = num
 
-                dup_factors = \
-                    [self.dupl_tracker.factor(cluster, ind)
-                     for ind in cluster["indices"]]
-                info[-1][k]["dup_factors"] = dup_factors
-        return info
+        cluster_list = self.setting.cluster_list
+        for cluster in cluster_list:
+            fig_keys = cluster.get_all_figure_keys()
+            num_occ = {}
+            for key in fig_keys:
+                num_occ[key] = cluster_list.num_occ_figure(key, 
+                    cluster.name, symm_group, self.setting.trans_matrix)
+            num_fig_occ = cluster.num_fig_occ
+            norm_factors = {}
+            for key in fig_keys:
+                tot_num = num_occ[key]
+                num_unique = len(set(key.split("-")))
+                norm_factors[key] = \
+                    float(tot_num)/(num_unique*num_fig_occ[key])
+            
+            norm_factor_list = []
+            for fig in cluster.indices:
+                key = cluster.get_figure_key(fig)
+                norm_factor_list.append(norm_factors[key])
+            cluster.info['normalization_factor'] = norm_factor_list
 
-    def _precalculate_equivalent_decorations(self):
-        from clease.tools import equivalent_deco
-        equiv_decos = []
+    # def _get_cluster_info_with_dup_factors(self, cluster_info):
+    #     info = []
+    #     for all_info in cluster_info:
+    #         info.append(all_info)
 
-        for symm in range(0, len(self.setting.cluster_info)):
-            equiv_decos.append({})
-            for name in self.cluster_names:
-                prefix = (name.rpartition('_')[0])
-                if prefix not in self.setting.cluster_info[symm].keys():
-                    continue
+    #         for k in all_info.keys():
+    #             cluster = info[-1][k]
 
-                dec_str = name.rpartition('_')[-1]
-                dec = [int(x) for x in dec_str]
-                cluster = self.setting.cluster_info[symm][prefix]
-                equiv_deco = \
-                    np.array(equivalent_deco(dec, cluster["equiv_sites"]),
-                             dtype=np.int32)
-                equiv_decos[-1][name] = equiv_deco
-        return equiv_decos
+    #             dup_factors = \
+    #                 [self.dupl_tracker.factor(cluster, ind)
+    #                  for ind in cluster["indices"]]
+    #             info[-1][k]["dup_factors"] = dup_factors
+    #     return info
 
-    def _place_clusters_in_symm_groups(self):
-        clst_per_symm_group = []
-        for info in self.setting.cluster_info:
-            clst_in_symm_group = []
-            for cf_num, name in enumerate(self.cluster_names):
-                prefix = name.rpartition('_')[0]
+    # def _precalculate_equivalent_decorations(self):
+    #     from clease.tools import equivalent_deco
+    #     equiv_decos = []
 
-                if prefix in info.keys() and prefix[:2] not in ['c0', 'c1']:
-                    clst_in_symm_group.append((cf_num, name))
-            clst_per_symm_group.append(clst_in_symm_group)
+    #     for symm in range(0, len(self.setting.cluster_info)):
+    #         equiv_decos.append({})
+    #         for name in self.cluster_names:
+    #             prefix = (name.rpartition('_')[0])
+    #             if prefix not in self.setting.cluster_info[symm].keys():
+    #                 continue
 
-        one_body = []
-        for i, name in enumerate(self.cluster_names):
-            if name.startswith('c1'):
-                one_body.append((i, name))
-        return clst_per_symm_group, one_body
+    #             dec_str = name.rpartition('_')[-1]
+    #             dec = [int(x) for x in dec_str]
+    #             cluster = self.setting.cluster_info[symm][prefix]
+    #             equiv_deco = \
+    #                 np.array(equivalent_deco(dec, cluster["equiv_sites"]),
+    #                          dtype=np.int32)
+    #             equiv_decos[-1][name] = equiv_deco
+    #     return equiv_decos
+
+    # def _place_clusters_in_symm_groups(self):
+    #     clst_per_symm_group = []
+    #     for info in self.setting.cluster_info:
+    #         clst_in_symm_group = []
+    #         for cf_num, name in enumerate(self.cluster_names):
+    #             prefix = name.rpartition('_')[0]
+
+    #             if prefix in info.keys() and prefix[:2] not in ['c0', 'c1']:
+    #                 clst_in_symm_group.append((cf_num, name))
+    #         clst_per_symm_group.append(clst_in_symm_group)
+
+    #     one_body = []
+    #     for i, name in enumerate(self.cluster_names):
+    #         if name.startswith('c1'):
+    #             one_body.append((i, name))
+    #     return clst_per_symm_group, one_body
 
     def set_atoms(self, atoms):
         self.atoms = atoms

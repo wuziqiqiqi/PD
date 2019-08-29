@@ -148,3 +148,6 @@ class Cluster(object):
                 return self._order_equiv_sites(figure)
         
         raise RuntimeError("There are no matching figure!")
+
+    def get_all_fig_keys(self):
+        return [self.get_figure_key(fig) for fig in self.indices]

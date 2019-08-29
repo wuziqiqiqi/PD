@@ -86,8 +86,8 @@ class ClusterList(object):
     def __len__(self):
         return len(self.clusters)
 
-    def __getitem__(self, i):
-        return self.clusters[i]
+    def __getitem__(self, index):
+        return self.clusters[index]
 
     def __array__(self):
         return self.clusters
@@ -198,9 +198,8 @@ class ClusterList(object):
         for ref in figure:
             group = symm_groups[ref]
             cluster = self.get_by_name_and_group(c_name, group)
-            
-            corr_figure = cluster.corresponding_figure(ref, figure,
-                                                       trans_matrix)
+            corr_figure = \
+                cluster.corresponding_figure(ref, figure, trans_matrix)
             corr_fig_key = list2str(corr_figure)
             tot_num += occ_count[cluster.group][corr_fig_key]
         return tot_num
