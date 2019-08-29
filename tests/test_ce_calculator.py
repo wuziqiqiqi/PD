@@ -179,8 +179,6 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
     eci = generate_ex_eci(setting)
     calc = Clease(setting, eci=eci)
     atoms.set_calculator(calc)
-    for cluster in setting.cluster_list:
-        print(cluster)
     elements = setting.unique_elements
     for _ in range(n_trial_configs):
         indx1 = randint(0, len(atoms)-1)
@@ -213,7 +211,7 @@ class TestCECalculator(unittest.TestCase):
                 continue
             norm_factors = cluster.info['normalization_factor']
             self.assertTrue(np.allclose(norm_factors, 1.0))
-        
+
 
     def test_indices_of_changed_symbols(self):
         db_name = 'indices_changes_symbol.db'

@@ -81,7 +81,7 @@ class ClusterList(object):
                 all_cf_names.append('c0')
             else:
                 all_cf_names += self.get_cf_names(cluster, num_bf)
-        return all_cf_names
+        return list(set(all_cf_names))
 
     def __len__(self):
         return len(self.clusters)
@@ -173,7 +173,7 @@ class ClusterList(object):
 
     def num_occ_figure(self, fig_key, c_name, symm_groups, trans_matrix):
         """Determine the number of occurences of a figure across the structure.
-        
+
         Parameter:
 
         fig_key: str
@@ -181,7 +181,7 @@ class ClusterList(object):
 
         c_name: str
             name of the cluster of the figure
-        
+
         symm_groups: list
             list containing the symmetry group number of the atomic indices
 
