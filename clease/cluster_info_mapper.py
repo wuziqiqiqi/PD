@@ -1,5 +1,7 @@
 from scipy.spatial import cKDTree as KDTree
 from ase.geometry import wrap_positions
+from clease.cluster_list import ClusterList
+from clease.cluster import Cluster
 from copy import deepcopy
 import numpy as np
 
@@ -21,14 +23,14 @@ class ClusterInfoMapper(object):
     tm_matrix: list of dict
         Translation matrix for the large cell
 
-    cluster_info: list of dict (see setting)
+    cluster_list: ClusterList
         Cluster info the for the large cell
     """
 
-    def __init__(self, atoms, tm_matrix, cluster_info):
+    def __init__(self, atoms, tm_matrix, cluster_list):
         self.atoms = atoms
         self.tm_matrix = tm_matrix
-        self.cluster_info = cluster_info
+        self.cluster_list = cluster_list
         self.tree = KDTree(self.atoms.get_positions())
 
     def _map_indices(self, small_atoms):
@@ -54,14 +56,15 @@ class ClusterInfoMapper(object):
         Map cluster info of the large cell to the corresponding cluster info
         of the small cell
         """
-        new_info = deepcopy(self.cluster_info)
-        for new_item, old_item in zip(new_info, self.cluster_info):
-            for k, v in new_item.items():
-                v['ref_indx'] = int(index_map[old_item[k]['ref_indx']])
-                o_indx = old_item[k]['indices']
-                v['indices'] = [[int(index_map[x]) for x in sub] for sub
-                                in o_indx]
-        return new_info
+        new_cluster_list = ClusterList()
+
+        for cluster in self.cluster_list:
+            new_cluster = deepcopy(cluster)
+            new_cluster.ref_indx = int(index_map[cluster.ref_indx])
+            new_cluster.indices = [[int(index_map[x]) for x in sub] for sub
+                                    in cluster.indices]
+            new_cluster_list.append(new_cluster)
+        return new_cluster_list
 
     def _map_trans_matrix(self, index_map):
         """Map translation matrix."""
