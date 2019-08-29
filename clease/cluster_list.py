@@ -195,7 +195,7 @@ class ClusterList(object):
         for cluster in clusters:
             occ_count[cluster.group] = cluster.num_fig_occurences
 
-        for ref in figure:
+        for ref in set(figure):
             group = symm_groups[ref]
             cluster = self.get_by_name_and_group(c_name, group)
             corr_figure = \
