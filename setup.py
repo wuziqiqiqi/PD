@@ -77,7 +77,7 @@ setup(
     name="clease",
     ext_modules=cythonize(clease_cxx),
     scripts=['bin/clease'],
-    version=1.0,
+    version='0.9.0',
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
     include_package_data=True,

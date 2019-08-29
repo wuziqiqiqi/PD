@@ -1,4 +1,28 @@
 #!/usr/bin/env python
-from clease.gui.cleaseGUI import CleaseGUI
+import sys
 
-CleaseGUI().run()
+def print_help_msg():
+    msg = "==================================================\n"
+    msg += "'clease' command requires additional argument(s).\n"
+    msg += "Currently, allowed arguments are:\n"
+    msg += "gui : launch GUI for CLEASE\n"
+    msg += "==================================================\n"
+    print(msg)
+
+
+def main(argv):
+    num_args = len(argv)
+    if num_args == 1:
+        print_help_msg()
+        return
+
+    if argv[1] == 'gui':
+        from clease.gui.cleaseGUI import CleaseGUI
+        CleaseGUI().run()
+
+    elif argv[1] in ['-help', '-h', '--help', 'help']:
+        print_help_msg()
+        return
+
+if __name__ == "__main__":
+    main(sys.argv)
