@@ -13,6 +13,5 @@ clease.egg-info/*
 *.so
 *.o
 gui_tests/*.txt
-*.txt
 doc/build/*
 doc/*.db
