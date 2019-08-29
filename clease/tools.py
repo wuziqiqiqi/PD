@@ -455,3 +455,7 @@ def indices2tags(supercell, clusters):
         for i, figure in enumerate(cluster):
             cluster[i] = [int(supercell[x].tag) for x in figure]
     return clusters
+
+
+def list2str(array):
+    return "-".join(str(x) for x in array)
