@@ -263,14 +263,14 @@ void Cluster::parse_info_dict(PyObject *info)
   Py_DECREF(py_equiv_sites);
 
   #ifdef CLUSTER_DEBUG
-    cerr << "Reading duplication factors\n";
+    cerr << "Reading normalization factors\n";
   #endif
 
-  // Read duplication factors
+  // Read normalization factors
   PyObject *cluster_info_dict = get_attr(info, "info");
-  PyObject *key = string2py("dup_factors");
+  PyObject *key = string2py("normalization_factor");
   if (PyDict_Contains(cluster_info_dict, key)){
-    PyObject *py_dup_factors = PyDict_GetItemString(cluster_info_dict, "dup_factors");
+    PyObject *py_dup_factors = PyDict_GetItemString(cluster_info_dict, "normalization_factor");
     calculate_scaling_factors(py_dup_factors);
   }
   else{
