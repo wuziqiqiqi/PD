@@ -25,15 +25,13 @@ import unittest
 update_reference_file = False
 tol = 1E-9
 
-
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
     members = []
-    info = setting.cluster_info_by_name(cname)
-    for entry in info:
-        members.append(entry["indices"])
+    clusters = setting.cluster_list.get_by_name(cname)
+    for cluster in clusters:
+        members.append(cluster.indices)
     return members
-
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
