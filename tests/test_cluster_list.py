@@ -190,5 +190,25 @@ class TestClusterList(unittest.TestCase):
         key = cluster.get_figure_key([6, 4, 0])
         self.assertEqual(key, '4-6-0')
 
+    def test_num_occurences(self):
+        c1 = Cluster(size=3, indices=[[3, 0, 0], [0, 3, 0], [0, 4, 5]],
+                     equiv_sites=[])
+        occ_count = c1.num_fig_occurences
+        expected = {'3-0-0': 1, '0-3-0': 1, '0-4-5': 1}
+        for k in expected.keys():
+            self.assertEqual(occ_count[k], expected[k])
+
+    def test_num_occurences_equiv_sites(self):
+        c1 = Cluster(size=3, indices=[[3, 0, 0], [0, 3, 0], [0, 4, 5]],
+                     equiv_sites=[[0, 1]])
+        occ_count = c1.num_fig_occurences
+        expected = {
+            '0-3-0': 2,
+            '0-4-5': 1
+        }
+        for k in expected.keys():
+            self.assertEqual(occ_count[k], expected[k])
+        
+
 if __name__ == '__main__':
     unittest.main()

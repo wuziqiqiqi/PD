@@ -155,3 +155,9 @@ class ClusterList(object):
             figure.info = {'name': cluster.name}
             figures.append(figure)
         return figures
+
+    def get_occurence_counts(self):
+        occ_counts = []
+        for cluster in self.clusters:
+            occ_counts.append(cluster.num_fig_occurence)
+        return occ_counts

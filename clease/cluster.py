@@ -115,3 +115,13 @@ class Cluster(object):
             for count, i in enumerate(eq_group):
                 figure_cpy[i] = equiv_indices[count]
         return figure_cpy
+
+    @property
+    def num_fig_occurences(self):
+        """Number of currences for each figures."""
+        occ_count = {}
+        for figure in self.indices:
+            key = self.get_figure_key(figure)
+            current_num = occ_count.get(key, 0)
+            occ_count[key] = current_num + 1
+        return occ_count
