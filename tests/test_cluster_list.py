@@ -122,10 +122,8 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(all_cf_names, expected_cf_names)
 
     def test_unique_indices(self):
-        cluster1 = Cluster(None, None, None, None, None,
-                           [[0, 3, 3], [9, 9, 9]], None, None)
-        cluster2 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
-                           None, None)
+        cluster1 = Cluster(indices=[[0, 3, 3], [9, 9, 9]])
+        cluster2 = Cluster(indices=[[10, 12], [2, 5]])
         cluster_list = ClusterList()
         cluster_list.append(cluster1)
         cluster_list.append(cluster2)
@@ -135,14 +133,10 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(indices, expected)
 
     def test_unique_indices_per_symm_group(self):
-        cluster1 = Cluster(None, None, None, None, None,
-                           [[0, 3, 3], [9, 9, 9]], None, 0)
-        cluster2 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
-                           None, 0)
-        cluster3 = Cluster(None, None, None, None, None,
-                           [[0, 3, 3], [9, 9, 9]], None, 1)
-        cluster4 = Cluster(None, None, None, None, None, [[10, 12], [2, 5]],
-                           None, 2)
+        cluster1 = Cluster(indices=[[0, 3, 3], [9, 9, 9]], trans_symm_group=0)
+        cluster2 = Cluster(indices=[[10, 12], [2, 5]], trans_symm_group=0)
+        cluster3 = Cluster(indices=[[0, 3, 3], [9, 9, 9]], trans_symm_group=1)
+        cluster4 = Cluster(indices=[[10, 12], [2, 5]], trans_symm_group=2)
 
         cluster_list = ClusterList()
         cluster_list.append(cluster1)
@@ -156,22 +150,23 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(indices, expected)
 
     def test_subcluster(self):
-        triplet = Cluster(None, None, None, None, None,
-                          [[0, 3, 5], [1, 4, 6]], None, 2)
-        doub = Cluster(None, 2, None, None, None, [[0, 3], [10, 12]], None, 2)
-        self.assertTrue(doub.is_subcluster(triplet))
-        self.assertFalse(triplet.is_subcluster(doub))
+        triplet = Cluster(size=3, indices=[[0, 3, 5], [1, 4, 6]],
+                          trans_symm_group=2)
+        doublet = Cluster(size=2, indices= [[0, 3], [10, 12]], 
+                       trans_symm_group=2)
+        self.assertTrue(doublet.is_subcluster(triplet))
+        self.assertFalse(triplet.is_subcluster(doublet))
 
-        doublet = Cluster(None, None, None, None, None, [[0, 8], [10, 12]],
-                          None, 2)
+        doublet = Cluster(size=2, indices=[[0, 8], [10, 12]],
+                          trans_symm_group=2)
         self.assertFalse(doublet.is_subcluster(triplet))
 
     def test_get_subclusters(self):
-        trip = Cluster(None, 3, None, None, None, [[0, 3, 5], [1, 4, 6]],
-                       None, 2)
-        d1 = Cluster(None, 2, None, None, None, [[0, 3], [10, 12]], None, 2)
-        d2 = Cluster(None, 2, None, None, None, [[0, 8], [10, 12]], None, 2)
-        d3 = Cluster(None, 2, None, None, None, [[0, 5], [4, 6]], None, 2)
+        trip = Cluster(size=3, indices=[[0, 3, 5], [1, 4, 6]],
+                       trans_symm_group=2)
+        d1 = Cluster(size=2, indices=[[0, 3], [10, 12]], trans_symm_group=2)
+        d2 = Cluster(size=2, indices=[[0, 8], [10, 12]], trans_symm_group=2)
+        d3 = Cluster(size=2, indices=[[0, 5], [4, 6]], trans_symm_group=2)
         cluster_list = ClusterList()
         cluster_list.append(trip)
         cluster_list.append(d1)
@@ -181,6 +176,19 @@ class TestClusterList(unittest.TestCase):
         subclusters = cluster_list.get_subclusters(trip)
         expected = [d1, d3]
         self.assertEqual(expected, subclusters)
+
+    def test_get_key(self):
+        cluster = Cluster(size=3, indices=[[3, 0, 5], [1, 4, 6]], equiv_sites=[])
+        key = cluster.get_figure_key([3, 0, 5])
+        self.assertEqual(key, '3-0-5')
+
+        cluster.equiv_sites = [[0, 1]]
+        key = cluster.get_figure_key([3, 0, 5])
+        self.assertEqual(key, '0-3-5')
+
+        # Try to pass a figure that mimics translated indices
+        key = cluster.get_figure_key([6, 4, 0])
+        self.assertEqual(key, '4-6-0')
 
 if __name__ == '__main__':
     unittest.main()
