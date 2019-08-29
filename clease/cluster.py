@@ -1,11 +1,12 @@
 import numpy as np
-from clease.tools import equivalent_deco, nested_array2list
+from copy import deepcopy
+from clease.tools import equivalent_deco, nested_array2list, list2str
 from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class Cluster(object):
-    def __init__(self,  name, size, diameter, fingerprint, ref_indx, indices,
-                 equiv_sites, trans_symm_group):
+    def __init__(self, name='c0', size=0, diameter=0.0, fingerprint=[],
+                 ref_indx=0, indices=[], equiv_sites=[], trans_symm_group=0):
         self.name = name
         self.size = size
         self.diameter = diameter
@@ -100,3 +101,17 @@ class Cluster(object):
         str_rep += 'Equiv. sites: {}\n'.format(self.equiv_sites)
         str_rep += 'Fingerprint: {}\n'.format(self.fp)
         return str_rep
+
+    def get_figure_key(self, figure):
+        """Return a key representation of the figure."""
+        return list2str(self._order_equiv_sites(figure))
+
+    def _order_equiv_sites(self, figure):
+        """Sort equivalent sites."""
+        figure_cpy = deepcopy(figure)
+        for eq_group in self.equiv_sites:
+            equiv_indices = [figure[i] for i in eq_group]
+            equiv_indices.sort()
+            for count, i in enumerate(eq_group):
+                figure_cpy[i] = equiv_indices[count]
+        return figure_cpy
