@@ -854,8 +854,8 @@ class Evaluate(object):
                 dia = -1
             else:
                 prefix = name.rpartition("_")[0]
-                info = self.setting.cluster_info_by_name(prefix)[0]
-                dia = info["max_cluster_dia"]
+                cluster = self.setting.cluster_list.get_by_name(prefix)[0]
+                dia = cluster.diameter
             if (size <= self.max_cluster_size
                     and dia < self.max_cluster_dia[size]):
                 filtered_cnames.append(name)
