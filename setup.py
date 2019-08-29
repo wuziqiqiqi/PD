@@ -80,6 +80,7 @@ setup(
     version='0.9.0',
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
+    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.0/clease-v0.9.0.zip',
     include_package_data=True,
     data_files=[('layout', find_layout_files())],
     license='MPL-2.0',
