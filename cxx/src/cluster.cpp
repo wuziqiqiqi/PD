@@ -145,7 +145,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
   {
     return;
   }
-  else if (get_size() == 2)
+  else if(get_size() == 2)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -154,7 +154,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
       deco.push_back(vec);
     }
   }
-  else if (get_size() == 3)
+  else if(get_size() == 3)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -243,9 +243,6 @@ void Cluster::parse_info_dict(PyObject *info)
   name = py2string(py_name);
   Py_DECREF(py_name);
 
-  // // Read descriptor
-  // PyObject* py_desc = PyDict_GetItemString(info, "descriptor");
-  // descriptor = py2string(py_desc);
 
   #ifdef CLUSTER_DEBUG
     cerr << "Reading indices...\n";
