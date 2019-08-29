@@ -87,7 +87,7 @@ setup(
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
     classifiers=[
         'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: MPL-2.0',
+        'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
         'Programming Language :: Python :: 3',  
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
