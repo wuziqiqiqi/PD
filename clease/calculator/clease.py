@@ -79,11 +79,6 @@ class Clease(Calculator):
         self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
-        # #self._set_norm_factors()
-        # self.dupl_tracker = DuplicationCountTracker(self.setting)
-        # self.equiv_deco = self._precalculate_equivalent_decorations()
-        # self.clusters_per_symm_group, self.one_body = \
-        #     self._place_clusters_in_symm_groups()
 
         # C++ updater initialised when atoms are set
         self.updater = None
@@ -101,7 +96,7 @@ class Clease(Calculator):
 
         cluster_list = self.setting.cluster_list
         for cluster in cluster_list:
-            fig_keys = cluster.get_all_figure_keys()
+            fig_keys = list(set(cluster.get_all_figure_keys()))
             num_occ = {}
             for key in fig_keys:
                 num_occ[key] = cluster_list.num_occ_figure(key, 
@@ -119,57 +114,6 @@ class Clease(Calculator):
                 key = cluster.get_figure_key(fig)
                 norm_factor_list.append(norm_factors[key])
             cluster.info['normalization_factor'] = norm_factor_list
-
-    # def _get_cluster_info_with_dup_factors(self, cluster_info):
-    #     info = []
-    #     for all_info in cluster_info:
-    #         info.append(all_info)
-
-    #         for k in all_info.keys():
-    #             cluster = info[-1][k]
-
-    #             dup_factors = \
-    #                 [self.dupl_tracker.factor(cluster, ind)
-    #                  for ind in cluster["indices"]]
-    #             info[-1][k]["dup_factors"] = dup_factors
-    #     return info
-
-    # def _precalculate_equivalent_decorations(self):
-    #     from clease.tools import equivalent_deco
-    #     equiv_decos = []
-
-    #     for symm in range(0, len(self.setting.cluster_info)):
-    #         equiv_decos.append({})
-    #         for name in self.cluster_names:
-    #             prefix = (name.rpartition('_')[0])
-    #             if prefix not in self.setting.cluster_info[symm].keys():
-    #                 continue
-
-    #             dec_str = name.rpartition('_')[-1]
-    #             dec = [int(x) for x in dec_str]
-    #             cluster = self.setting.cluster_info[symm][prefix]
-    #             equiv_deco = \
-    #                 np.array(equivalent_deco(dec, cluster["equiv_sites"]),
-    #                          dtype=np.int32)
-    #             equiv_decos[-1][name] = equiv_deco
-    #     return equiv_decos
-
-    # def _place_clusters_in_symm_groups(self):
-    #     clst_per_symm_group = []
-    #     for info in self.setting.cluster_info:
-    #         clst_in_symm_group = []
-    #         for cf_num, name in enumerate(self.cluster_names):
-    #             prefix = name.rpartition('_')[0]
-
-    #             if prefix in info.keys() and prefix[:2] not in ['c0', 'c1']:
-    #                 clst_in_symm_group.append((cf_num, name))
-    #         clst_per_symm_group.append(clst_in_symm_group)
-
-    #     one_body = []
-    #     for i, name in enumerate(self.cluster_names):
-    #         if name.startswith('c1'):
-    #             one_body.append((i, name))
-    #     return clst_per_symm_group, one_body
 
     def set_atoms(self, atoms):
         self.atoms = atoms
@@ -274,18 +218,6 @@ class Clease(Calculator):
     def get_cf(self):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
-
-    # def _generate_normalization_factor(self):
-    #     """Return a dictionary with all the normalization factors."""
-    #     norm_fact = {}
-    #     for symm, item in enumerate(self.setting.cluster_info):
-    #         num_atoms = len(self.setting.index_by_trans_symm[symm])
-    #         for name, info in item.items():
-    #             if name not in norm_fact.keys():
-    #                 norm_fact[name] = len(info["indices"]) * num_atoms
-    #             else:
-    #                 norm_fact[name] += len(info["indices"]) * num_atoms
-    #     return norm_fact
 
     def update_cf(self, system_changes=None):
         """Update correlation function based on the reference value.
