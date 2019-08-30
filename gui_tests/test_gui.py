@@ -3,10 +3,10 @@ import unittest
 import time
 from kivy.clock import Clock
 from functools import partial
-from gui_tests.input_page_tests import InputPageTests
-from gui_tests.concentraton_page_tests import ConcentrationPageTest
-from gui_tests.new_struct_page_test import NewStructPageTest
-from gui_tests.fit_page_tests import FitPageTests
+from input_page_tests import InputPageTests
+from concentraton_page_tests import ConcentrationPageTest
+from new_struct_page_test import NewStructPageTest
+from fit_page_tests import FitPageTests
 
 
 class TestInputPage(unittest.TestCase):

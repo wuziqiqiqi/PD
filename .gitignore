@@ -15,3 +15,8 @@ clease.egg-info/*
 gui_tests/*.txt
 doc/build/*
 doc/*.db
+dist/*
+build/*
+cxx/cython/clease_cxx.cpp
+*editor.txt
+*.log
