@@ -163,7 +163,7 @@ class NewStructPage(Screen):
         from ase.io import read
 
         if self.structure_generation_in_progress:
-            # Don't allow user to initialise many threads
+            # Don't allow user to initialize many threads
             # by successively clicking on the generate button
             return
 

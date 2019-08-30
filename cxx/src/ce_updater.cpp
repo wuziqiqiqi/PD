@@ -906,7 +906,7 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, m
 
   cf.clear();
 
-  // Initialise all cluster names
+  // Initialize all cluster names
   for (const string& name : cluster_names){
     cf[name] = 0.0;
   }

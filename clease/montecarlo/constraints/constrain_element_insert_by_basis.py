@@ -35,7 +35,7 @@ class ConstrainElementInserts(MCConstraint):
         self.element_allowed = {x: np.zeros(num_basis, dtype=np.uint8)
                                 for x in unique_elem}
 
-        # Initialise the element lookup
+        # Initialize the element lookup
         for i, elements in enumerate(element_by_basis):
             for elem in elements:
                 self.element_allowed[elem][i] = 1

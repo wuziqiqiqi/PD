@@ -13,24 +13,21 @@ from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 from clease.gui.util import parse_size
 
 
-class SettingsInitialiser(object):
-    """
-    Class to be able to perform settings initialisation on a separate
-    thread.
-    """
+class SettingsInitializer(object):
+    """Perform settings initialization on a separate thread."""
     type = 'CEBulk'
     kwargs = None
     app = None
     status = None
 
-    def initialise(self):
+    def initialize(self):
         from clease import CEBulk, CECrystal
         try:
             if self.type == 'CEBulk':
                 self.app.settings = CEBulk(**self.kwargs)
             elif self.type == 'CECrystal':
                 self.app.settings = CECrystal(**self.kwargs)
-            self.status.text = 'Database initialised'
+            self.status.text = 'Database initialized'
         except AssertionError as exc:
             self.status.text = "AssertError during initialization " + str(exc)
         except Exception as exc:
@@ -230,9 +227,9 @@ class ConcentrationPage(Screen):
             else:
                 size = parse_size(inputPage['cell_size'])
 
-            initialiser = SettingsInitialiser()
-            initialiser.app = App.get_running_app()
-            initialiser.status = self.ids.status
+            initializer = SettingsInitializer()
+            initializer.app = App.get_running_app()
+            initializer.status = self.ids.status
 
             if inputPage["type"] == 'CEBulk':
                 if inputPage['aParameter'] == '':
@@ -259,10 +256,10 @@ class ConcentrationPage(Screen):
                     size=size, supercell_factor=supercell_factor,
                     skew_threshold=skewness_factor
                 )
-                self.ids.status.text = "Initialising database..."
-                initialiser.type = 'CEBulk'
-                initialiser.kwargs = kwargs
-                Thread(target=initialiser.initialise).start()
+                self.ids.status.text = "Initializing database..."
+                initializer.type = 'CEBulk'
+                initializer.kwargs = kwargs
+                Thread(target=initializer.initialize).start()
             else:
                 if inputPage['cellpar'] == '':
                     cellpar = None
@@ -291,9 +288,9 @@ class ConcentrationPage(Screen):
                     concentration=conc, db_name=inputPage['db_name'],
                     spacegroup=sp
                 )
-                initialiser.type = 'CECrystal'
-                initialiser.kwargs = kwargs
-                Thread(target=initialiser.initialise).start()
+                initializer.type = 'CECrystal'
+                initializer.kwargs = kwargs
+                Thread(target=initializer.initialize).start()
         except Exception as exc:
             self.ids.status.text = str(exc)
             return
@@ -344,5 +341,5 @@ class ConcentrationPage(Screen):
                 elif child.id == 'comparisonSpinner':
                     child.text = '='
 
-        # Initialise settings class
+        # Initialize settings class
         self.init_settings_class()
