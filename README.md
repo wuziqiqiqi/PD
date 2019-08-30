@@ -28,7 +28,7 @@ garden install matplotlib
 
 To launch a GUI simply type
 ```
-clease
+clease gui
 ```
 on the command line.
 

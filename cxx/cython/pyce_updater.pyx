@@ -1,6 +1,6 @@
 # distutils: language = c++
 
-from clease.cython.ce_updater cimport CEUpdater
+from ce_updater cimport CEUpdater
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp.map cimport map as map_cpp
