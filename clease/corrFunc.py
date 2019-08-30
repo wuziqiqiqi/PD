@@ -43,10 +43,10 @@ class CorrFunction(object):
         """
         if not isinstance(atoms, Atoms):
             raise TypeError('atoms must be an Atoms object')
-        cnames = self.setting.cluster_names
-        return self.get_cf_by_cluster_names(atoms, cnames)
+        cf_names = self.setting.all_cf_names
+        return self.get_cf_by_names(atoms, cf_names)
 
-    def get_cf_by_cluster_names(self, atoms, cluster_names, warm=False):
+    def get_cf_by_names(self, atoms, cf_names, warm=False):
         """
         Calculate correlation functions of the specified clusters and return
         them in a dictionary format.
@@ -55,9 +55,9 @@ class CorrFunction(object):
 
         atoms: Atoms object
 
-        cluster_names: list
-            names (str) of the clusters for which the correlation functions are
-            calculated for the structure provided in atoms
+        cf_names: list
+            names of correlation functions that will be calculated for
+            the structure provided in atoms
         """
 
         if isinstance(atoms, Atoms):
@@ -65,13 +65,13 @@ class CorrFunction(object):
         else:
             raise TypeError('atoms must be Atoms object')
 
-        self._confirm_cluster_names_exists(cluster_names)
+        self._confirm_cf_names_exists(cf_names)
 
-        eci = {name: 1.0 for name in cluster_names}
-        cf = {name: 1.0 for name in cluster_names}
+        eci = {name: 1.0 for name in cf_names}
+        cf = {name: 1.0 for name in cf_names}
         updater = PyCEUpdater(atoms, self.setting, cf, eci,
-                              self.setting.cluster_info)
-        cf = updater.calculate_cf_from_scratch(atoms, cluster_names)
+                              self.setting.cluster_list)
+        cf = updater.calculate_cf_from_scratch(atoms, cf_names)
         return cf
 
     def reconfigure_db_entries(self, select_cond=None, verbose=True):
@@ -149,12 +149,12 @@ class CorrFunction(object):
         """
         db = connect(self.setting.db_name)
         tab_name = "{}_cf".format(self.setting.bf_scheme.name)
-        cnames = sorted(self.setting.cluster_names.copy())
+        cf_names = sorted(self.setting.all_cf_names)
         inconsistent_ids = []
         for row in db.select('struct_type=initial'):
             tab_entries = row.get(tab_name, {})
             row_cnames = sorted(list(tab_entries.keys()))
-            if row_cnames != cnames:
+            if row_cnames != cf_names:
                 inconsistent_ids.append(row.id)
 
         if len(inconsistent_ids) > 0:
@@ -177,7 +177,7 @@ class CorrFunction(object):
         self.setting.set_active_template(atoms=atoms, generate_template=True)
         return atoms
 
-    def _cluster_name_exists(self, cluster_name):
+    def _cf_name_exists(self, cf_name):
         """Return True if cluster name exists. Otherwise False.
 
         Parameters:
@@ -185,10 +185,10 @@ class CorrFunction(object):
         cluster_name: str
             Cluster name to check
         """
-        return cluster_name in self.setting.cluster_names
+        return cf_name in self.setting.all_cf_names
 
-    def _confirm_cluster_names_exists(self, cluster_names):
-        if not set(cluster_names).issubset(self.setting.cluster_names):
+    def _confirm_cf_names_exists(self, cf_names):
+        if not set(cf_names).issubset(self.setting.all_cf_names):
             raise ClusterNotTrackedError(
                 "The correlation function of non-existing cluster is "
                 "requested, but the name does not exist in "

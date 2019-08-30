@@ -1,11 +1,12 @@
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
 from itertools import combinations
+from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class ClusterExtractor(object):
     """
-    Extract clusters that contain the suppied atomic index. 
+    Extract clusters that contain the suppied atomic index.
 
 
     Parameters:
@@ -13,13 +14,14 @@ class ClusterExtractor(object):
     atoms: Atoms object
         ASE Atoms object
     """
+
     def __init__(self, atoms):
         self.atoms = atoms
         self.tree = KDTree(self.atoms.get_positions())
         self.inner_prod = []
         self.tol = 1E-6
 
-    def extract(self, ref_indx=0, size=2, cutoff=4.0):
+    def extract(self, ref_indx=0, size=2, cutoff=4.0, ignored_indices=[]):
         """
         Extract all clusters with a given size if they are smaller than the
         cutoff distance.
@@ -41,22 +43,27 @@ class ClusterExtractor(object):
 
         cutoff: float
             Maximum cutoff distance
+
+        ignored_indices: list
+            all of the background indices to be ignored when creating clusters
         """
         self.inner_prod = []
         x = self.atoms.get_positions()[ref_indx, :]
         indices = self.tree.query_ball_point(x, cutoff)
         indices.remove(ref_indx)
+        indices = list(set(indices) - set(ignored_indices))
         return self._group_clusters(ref_indx, indices, size, cutoff)
 
-    def _get_type(self, flat_inner_prod):
+    def _get_type(self, fingerprint):
         """Determine cluster type based on flattened inner product matrix."""
         if self.inner_prod:
-            diff = [np.sum((x - flat_inner_prod)**2) for x in self.inner_prod]
-            min_group = np.argmin(diff)
-            if np.sqrt(diff[min_group]) < self.tol:
-                return min_group
+            try:
+                group = self.inner_prod.index(fingerprint)
+                return group
+            except ValueError:
+                pass
 
-        self.inner_prod.append(flat_inner_prod)
+        self.inner_prod.append(fingerprint)
         return len(self.inner_prod) - 1
 
     def _group_clusters(self, ref_indx, indices, size, cutoff):
@@ -72,8 +79,17 @@ class ClusterExtractor(object):
             X = pos[all_indices, :]
             X -= np.mean(X, axis=0)
             X = X.dot(X.T)
-            inner = np.sort(X.ravel())
-            group = self._get_type(inner)
+
+            diag = np.diagonal(X)
+            off_diag = []
+            for i in range(1, X.shape[0]):
+                off_diag += np.diagonal(X, offset=i).tolist()
+            N = X.shape[0]
+            assert len(off_diag) == N*(N-1)/2
+
+            inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
+            fp = ClusterFingerprint(list(inner))
+            group = self._get_type(fp)
 
             all_indices = self._order_by_internal_distances(all_indices)
             if group == len(clusters):
@@ -116,7 +132,7 @@ class ClusterExtractor(object):
         for equiv in equiv_sites:
             found_group = False
             for m in merged:
-                if any(equiv in m):
+                if any(x in m for x in equiv):
                     m.update(equiv)
                     found_group = True
             if not found_group:

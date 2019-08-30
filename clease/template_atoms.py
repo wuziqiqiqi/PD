@@ -37,7 +37,8 @@ class TemplateAtoms(object):
         self.templates = None
         self.db_name = db_name
         self.db = connect(db_name)
-        self.unit_cell = list(self.db.select(name='unit_cell'))[0].toatoms()
+        self.prim_cell = \
+            list(self.db.select(name='primitive_cell'))[0].toatoms()
         self._set_based_on_setting()
         self._append_templates_from_db()
 
@@ -113,16 +114,38 @@ class TemplateAtoms(object):
 
         return self.templates['atoms'][uid]
 
-    def get_largest_template(self):
-        """
-        Return the largest template
-        """
+    @property
+    def largest_template_by_num_atom(self):
+        """Return the largest template based on number of atoms it has."""
         max_num = 0
         largest_template = None
         for atoms in self.templates['atoms']:
             if len(atoms) > max_num:
                 largest_template = atoms
                 max_num = len(atoms)
+        return largest_template
+
+    @property
+    def largest_template_by_diag(self):
+        """Return the largest template based on the shortest diagonal."""
+        length = 0.0
+        largest_template = None
+        for atoms in self.templates['atoms']:
+            diag_lengths = []
+            cell = atoms.get_cell().T
+            for w in product([-1, 0, 1], repeat=3):
+                if np.allclose(w, 0):
+                    continue
+                diag = cell.dot(w)
+                length = np.sqrt(diag.dot(diag))
+                diag_lengths.append(length)
+
+            min_length = np.min(diag_lengths)
+
+            if min_length > length:
+                largest_template = atoms
+                length = min_length
+
         return largest_template
 
     def get_uid_with_given_size(self, size, generate_template=False):
@@ -153,8 +176,8 @@ class TemplateAtoms(object):
         _logger("Template that matches the specified size not found. "
                 "Generating...")
         check_valid_conversion_matrix(size)
-        unit_cell = self.unit_cell
-        self.templates['atoms'].append(unit_cell*size)
+        prim_cell = self.prim_cell
+        self.templates['atoms'].append(prim_cell*size)
         self.templates['size'].append(size)
         self._check_templates_datastructure()
 
@@ -188,9 +211,9 @@ class TemplateAtoms(object):
         size = self._get_conversion_matrix(atoms)
         assert is_3x3_matrix(size)
 
-        unit_cell = self.unit_cell
+        prim_cell = self.prim_cell
 
-        self.templates['atoms'].append(make_supercell(unit_cell, size))
+        self.templates['atoms'].append(make_supercell(prim_cell, size))
         self.templates['size'].append(list(size))
         self._check_templates_datastructure()
         return len(self.templates['atoms']) - 1
@@ -206,8 +229,8 @@ class TemplateAtoms(object):
             assert is_3x3_matrix(self.size)
             # if size and supercell_factor are both specified,
             # size will be used
-            unit_cell = self.unit_cell
-            self.templates = {'atoms': [make_supercell(unit_cell, self.size)],
+            prim_cell = self.prim_cell
+            self.templates = {'atoms': [make_supercell(prim_cell, self.size)],
                               'size': [self.size]}
         self._check_templates_datastructure()
 
@@ -224,7 +247,7 @@ class TemplateAtoms(object):
                     break
 
             if not found:
-                atoms = make_supercell(self.unit_cell, size)
+                atoms = make_supercell(self.prim_cell, size)
                 self.templates['atoms'].append(atoms)
                 self.templates['size'].append(size)
         self._check_templates_datastructure()
@@ -236,7 +259,7 @@ class TemplateAtoms(object):
         if self.size is not None:
             assert is_3x3_matrix(self.size)
 
-            atoms = make_supercell(self.unit_cell, self.size)
+            atoms = make_supercell(self.prim_cell, self.size)
             templates['atoms'].append(atoms)
             templates['size'].append(self.size)
             return templates
@@ -248,7 +271,7 @@ class TemplateAtoms(object):
             if np.prod(size) > self.supercell_factor:
                 continue
             matrix = np.diag(size)
-            atoms = make_supercell(self.unit_cell, matrix)
+            atoms = make_supercell(self.prim_cell, matrix)
 
             if self.is_valid(atoms=atoms, cell=atoms.get_cell()):
                 templates['atoms'].append(atoms)
@@ -261,7 +284,7 @@ class TemplateAtoms(object):
         templates = {'atoms': [], 'size': []}
 
         # Select the first unit cell entry in the DB
-        ucell = self.unit_cell
+        ucell = self.prim_cell
         V = ucell.get_volume()
 
         supercell = ucell*size
@@ -325,9 +348,9 @@ class TemplateAtoms(object):
 
     def _get_conversion_matrix(self, atoms):
         """Return the conversion matrix factor."""
-        unit_cell = self.unit_cell
+        prim_cell = self.prim_cell
 
-        small_cell = unit_cell.get_cell()
+        small_cell = prim_cell.get_cell()
         inv_cell = np.linalg.inv(small_cell)
 
         large_cell = atoms.get_cell()
@@ -495,7 +518,7 @@ class TemplateAtoms(object):
         """
         matrix = self._transformation_matrix_with_given_volume(
             diag_A, diag_B, off_diag_range)
-        return make_supercell(self.unit_cell, matrix)
+        return make_supercell(self.prim_cell, matrix)
 
     def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
                                    off_diag_range=2, num_templates=10):
@@ -528,7 +551,7 @@ class TemplateAtoms(object):
         equiv_filter = EquivalentCellsFilter(matrices)
 
         counter = 0
-        ucell = self.unit_cell.get_cell()
+        ucell = self.prim_cell.get_cell()
         while len(int_matrices) < num_templates and counter < max_attempts:
             counter += 1
             matrix = self._transformation_matrix_with_given_volume(
@@ -546,7 +569,7 @@ class TemplateAtoms(object):
 
         templates = []
         for mat in int_matrices:
-            templates.append(make_supercell(self.unit_cell, mat))
+            templates.append(make_supercell(self.prim_cell, mat))
         return templates
 
 

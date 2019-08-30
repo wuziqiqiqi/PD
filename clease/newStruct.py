@@ -704,7 +704,7 @@ class NewStructures(object):
                 'specified in the *num_samples_var* argument.\n'
                 '===========================================================')
         count = 0
-        cfm = np.zeros((num_samples_var, len(self.setting.cluster_names)),
+        cfm = np.zeros((num_samples_var, len(self.setting.all_cf_names)),
                        dtype=float)
         while count < num_samples_var:
             atoms = self._get_struct_at_conc(conc_type='random')

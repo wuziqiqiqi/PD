@@ -13,6 +13,10 @@ clease.egg-info/*
 *.so
 *.o
 gui_tests/*.txt
-*.txt
 doc/build/*
 doc/*.db
+dist/*
+build/*
+cxx/cython/clease_cxx.cpp
+*editor.txt
+*.log

@@ -21,7 +21,7 @@ class TestSGCMonteCarlo(unittest.TestCase):
         eci = {k: 0.0 for k, v in cf_scratch.items()}
 
         eci['c0'] = -1.0
-        eci['c2_01nn_0_00'] = -0.2
+        eci['c2_d0000_0_00'] = -0.2
         atoms = attach_calculator(setting, atoms=atoms, eci=eci)
 
         E = []
@@ -54,7 +54,7 @@ class TestSGCMonteCarlo(unittest.TestCase):
         eci = {k: 0.0 for k, v in cf_scratch.items()}
 
         eci['c0'] = -1.0
-        eci['c2_01nn_0_00'] = -0.2
+        eci['c2_d0000_0_00'] = -0.2
         atoms = attach_calculator(setting, atoms=atoms, eci=eci)
 
         mc = SGCMonteCarlo(atoms, 100000, symbols=['Si', 'X', 'O', 'C'])

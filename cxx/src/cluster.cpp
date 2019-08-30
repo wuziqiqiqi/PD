@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <set>
+//#define CLUSTER_DEBUG
 
 using namespace std;
 
@@ -13,17 +14,15 @@ Cluster::Cluster(PyObject *info_dict)
   parse_info_dict(info_dict);
 }
 
-ostream& operator <<( ostream& out, const Cluster &cluster )
+ostream& operator <<(ostream& out, const Cluster &cluster)
 {
   out << "Name: " << cluster.name << "\n";
-  out << "Descriptor: " << cluster.descriptor << "\n";
+  // out << "Descriptor: " << cluster.descriptor << "\n";
   out << "Max cluster dia: " << cluster.max_cluster_dia << "\n";
   out << "Size: " << cluster.size << "\n";
   out << "ref_indx: " << cluster.ref_indx << "\n";
   out << "Members:\n";
   out << cluster.get();
-  out << "\nOrder:\n",
-  out << cluster.get_order();
   out << "\nEquivalent sites:\n";
   out << cluster.get_equiv();
   return out;
@@ -41,6 +40,9 @@ void Cluster::deco2string(const vector<int> &deco, string &name)
 
 void Cluster::construct_equivalent_deco(int n_basis_funcs)
 {
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading equivalent deco...\n";
+  #endif
   vector< vector<int> > bf_indx;
   all_deco(n_basis_funcs, bf_indx);
   if (equiv_sites.size() == 0)
@@ -54,6 +56,10 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
       vector< vector<int> > one_vector = {deco};
       equiv_deco[deco_str] = one_vector;
     }
+
+    #ifdef CLUSTER_DEBUG
+      cerr << "Finished reading equiv deco (no equiv sites)\n";
+    #endif
     return;
   }
 
@@ -126,6 +132,10 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
   Py_DECREF(ce_tools_mod);
   Py_DECREF(equiv_deco_func);
   Py_DECREF(py_eq_sites);
+
+  #ifdef CLUSTER_DEBUG
+      cerr << "Finished reading equiv deco\n";
+  #endif
 }
 
 
@@ -135,7 +145,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
   {
     return;
   }
-  else if (get_size() == 2)
+  else if(get_size() == 2)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -144,7 +154,7 @@ void Cluster::all_deco(int num_bfs, vector< vector<int> > &deco) const
       deco.push_back(vec);
     }
   }
-  else if (get_size() == 3)
+  else if(get_size() == 3)
   {
     for (int i=0;i<num_bfs;i++)
     for (int j=0;j<num_bfs;j++)
@@ -185,16 +195,27 @@ const equiv_deco_t& Cluster::get_equiv_deco(const std::vector<int> &deco) const
 
 void Cluster::parse_info_dict(PyObject *info)
 {
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading ref_indx\n";
+  #endif
   // Read reference index
-  PyObject* py_ref_indx = PyDict_GetItemString(info, "ref_indx");
+  PyObject* py_ref_indx = get_attr(info, "ref_indx");
   ref_indx = py2int(py_ref_indx);
+  Py_DECREF(py_ref_indx);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading size\n";
+  #endif
   // Read size
-  PyObject* py_size = PyDict_GetItemString(info, "size");
+  PyObject* py_size = get_attr(info, "size");
   size = py2int(py_size);
+  Py_DECREF(py_size);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading max_cluster_dia\n";
+  #endif
   // Read max_cluster_dia
-  PyObject* py_mx_dia = PyDict_GetItemString(info, "max_cluster_dia");
+  PyObject* py_mx_dia = get_attr(info, "diameter");
   if (size <= 1)
   {
     max_cluster_dia = 0.0;
@@ -203,38 +224,48 @@ void Cluster::parse_info_dict(PyObject *info)
   {
     max_cluster_dia = PyFloat_AS_DOUBLE(py_mx_dia);
   }
+  Py_DECREF(py_mx_dia);
+
+  #ifdef CLUSTER_DEBUG
+    cerr << "Read symm_group\n";
+  #endif
   // Read symmetry group
-  PyObject* py_symm = PyDict_GetItemString(info, "symm_group");
+  PyObject* py_symm = get_attr(info, "group");
   symm_group = py2int(py_symm);
+  Py_DECREF(py_symm);
 
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Read name\n";
+  #endif
   // Read the name
-  PyObject* py_name = PyDict_GetItemString(info, "name");
+  PyObject* py_name = get_attr(info, "name");
   name = py2string(py_name);
+  Py_DECREF(py_name);
 
-  // Read descriptor
-  PyObject* py_desc = PyDict_GetItemString(info, "descriptor");
-  descriptor = py2string(py_desc);
 
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading indices...\n";
+  #endif
   // Read indices
-  PyObject* py_indx = PyDict_GetItemString(info, "indices");
+  PyObject* py_indx = get_attr(info, "indices");
   nested_list_to_cluster(py_indx, members);
-
-  // Read the order
-  if (size >= 2)
-  {
-    PyObject* py_order = PyDict_GetItemString(info, "order");
-    nested_list_to_cluster(py_order, order);
-  }
+  Py_DECREF(py_indx);
 
   // Read equivalent sites
-  PyObject *py_equiv_sites = PyDict_GetItemString(info, "equiv_sites");
+  PyObject *py_equiv_sites = get_attr(info, "equiv_sites");
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
+  Py_DECREF(py_equiv_sites);
 
-  // Read duplication factors
-  PyObject *key = string2py("dup_factors");
-  if (PyDict_Contains(info, key)){
-    PyObject *py_dup_factors = PyDict_GetItemString(info, "dup_factors");
+  #ifdef CLUSTER_DEBUG
+    cerr << "Reading normalization factors\n";
+  #endif
+
+  // Read normalization factors
+  PyObject *cluster_info_dict = get_attr(info, "info");
+  PyObject *key = string2py("normalization_factor");
+  if (PyDict_Contains(cluster_info_dict, key)){
+    PyObject *py_dup_factors = PyDict_GetItemString(cluster_info_dict, "normalization_factor");
     calculate_scaling_factors(py_dup_factors);
   }
   else{
@@ -245,7 +276,7 @@ void Cluster::parse_info_dict(PyObject *info)
     }
   }
   Py_DECREF(key);
-  
+
 
   // Sanity check
   check_consistency();
@@ -285,7 +316,27 @@ void Cluster::calculate_scaling_factors(PyObject *pylist){
       unique_values.insert(indx);
     }
 
-    double scale = static_cast<double>(unique_values.size())/(members[i].size() + 1);
+    double scale = static_cast<double>(unique_values.size())/(members[i].size());
     duplication_factors.push_back(factor*scale);
+  }
+}
+
+unsigned int Cluster::max_index() const{
+  unsigned int max = 0;
+  for (const auto& vec : members){
+    for (auto& value : vec){
+      if (value > max){
+        max = value;
+      }
+    }
+  }
+  return max;
+}
+
+void Cluster::unique_indices(set<int> &indices) const{
+  for (auto& vec : members){
+    for (auto& value : vec){
+      indices.insert(value);
+    }
   }
 }

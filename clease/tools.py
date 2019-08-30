@@ -6,18 +6,46 @@ from random import sample
 from ase.db import connect
 import json
 from clease import _logger
-from ase.build import make_supercell
-from ase.geometry import wrap_positions
 from scipy.spatial import cKDTree as KDTree
-from math import gcd
+
+
+class ApproxEqualityList(object):
+    """
+    Wrapper around a list which implements a new comparison operator. If two
+    items in the list is equal within a given tolerance, the items are
+    considered to be equal.
+
+    Parameters:
+    ===========
+
+    array: list
+        List that is wrapped
+
+    tol: float
+        Toleracnce for comparison check
+    """
+
+    def __init__(self, array, tol=1E-5):
+        self.array = array
+        self.tol = tol
+
+    def __lt__(self, other):
+        for x, y in zip(self.array, other.array):
+            if x - y < -self.tol:
+                return True
+            elif x - y > self.tol:
+                return False
+        return False
 
 
 def index_by_position(atoms):
     """Set atomic indices by its position."""
     # add zero to avoid negative zeros
-    tags = atoms.get_positions().round(decimals=6) + 0
+    tags = atoms.get_positions() + 0
     tags = tags.tolist()
+    tags = [ApproxEqualityList(x) for x in tags]
     deco = sorted([(tag, i) for i, tag in enumerate(tags)])
+
     indices = [i for tag, i in deco]
     return indices
 
@@ -39,91 +67,11 @@ def wrap_and_sort_by_position(atoms):
     return atoms
 
 
-def create_cluster(atoms, indices):
-    """Create a cluster centered in the unit cell."""
-    return atoms[indices]
-
-
 def shift(array):
     ref = array[-1]
     array[1:] = array[:-1]
     array[0] = ref
     return array
-
-
-def distances_and_angles(atoms, ref_indx, float_obj_angle):
-    """Get sorted internal angles of a."""
-    indices = [a.index for a in atoms if a.index != ref_indx]
-    if len(atoms) < 2:
-        raise ValueError("distances and angles cannot be called for"
-                         "{} body clusters".format(len(atoms)))
-    if len(atoms) == 2:
-        dist = atoms.get_distance(ref_indx, indices[0])
-        classifier = distance_string(atoms.info["distances"], dist)
-        return [classifier]
-
-    angles = []
-    dists = []
-
-    for comb in combinations(indices, r=2):
-        angle = atoms.get_angle(comb[0], ref_indx, comb[1])
-        ang_classifier = float_obj_angle.get(angle)
-        angles.append(ang_classifier)
-
-    dists = atoms.get_distances(ref_indx, indices, mic=True)
-    dists = sorted(dists.tolist(), reverse=True)
-    dists = [distance_string(atoms.info["distances"], d) for d in dists]
-    return dists + sorted(angles, reverse=True)
-
-
-def get_cluster_descriptor(cluster, float_obj_angle):
-    """Create a unique descriptor for each cluster."""
-    dist_ang_tuples = []
-    for ref_indx in range(len(cluster)):
-        dist_ang_list = distances_and_angles(cluster, ref_indx,
-                                             float_obj_angle)
-        dist_ang_tuples.append(dist_ang_list)
-    return dist_ang_tuples
-
-
-def sort_by_internal_distances(atoms, indices, float_obj_ang):
-    """Sort the indices according to the distance to the other elements."""
-    if len(indices) <= 1:
-        return list(range(len(indices))), "point"
-
-    cluster = create_cluster(atoms, indices)
-    if len(indices) == 2:
-        dist_ang = get_cluster_descriptor(cluster, float_obj_ang)
-        order = list(range(len(indices)))
-        eq_sites = [(0, 1)]
-        descr = "{}_0".format(dist_ang[0][0])
-        return order, eq_sites, descr
-
-    dist_ang = get_cluster_descriptor(cluster, float_obj_ang)
-    sort_order = [ind for _, ind in sorted(zip(dist_ang, range(len(indices))))]
-    dist_ang.sort()
-    equivalent_sites = [[i] for i in range(len(indices))]
-    site_types = [i for i in range(len(indices))]
-    for i in range(len(sort_order)):
-        for j in range(i + 1, len(sort_order)):
-            if dist_ang[i] == dist_ang[j]:
-                if site_types[j] > i:
-                    # This site has not been assigned to another category yet
-                    site_types[j] = i
-                st = site_types[j]
-                if j not in equivalent_sites[st]:
-                    equivalent_sites[st].append(j)
-
-    # Remove empty lists from equivalent_sites
-    equivalent_sites = [entry for entry in equivalent_sites if len(entry) > 1]
-
-    # Create a string descriptor of the clusters
-    dist_ang_strings = []
-    for item in dist_ang:
-        strings = [str(x) for x in item]
-        dist_ang_strings.append("_".join(strings))
-    string_description = "-".join(dist_ang_strings)
-    return sort_order, equivalent_sites, string_description
 
 
 def ndarray2list(data):
@@ -179,12 +127,6 @@ def flatten(x):
         return [a for i in x for a in flatten(i)]
     else:
         return [x]
-
-
-def get_unique_name(size, max_dia, fam_id):
-    """Get unique cluster names."""
-    name = "c{}_{}_{}".format(size, max_dia, fam_id)
-    return name
 
 
 def nested_array2list(array):
@@ -264,17 +206,14 @@ def exclude_information_entries():
     """Return selection condition to exlcude all entries in the database that
        only contain information about the clusters.
     """
-    return [('name', '!=', 'unit_cell'),
-            ('name', '!=', 'template'),
-            ('name', '!=', 'float_classification')]
+    return [('name', '!=', 'primitive_cell'),
+            ('name', '!=', 'template')]
 
 
 def get_all_internal_distances(atoms, max_dist, ref_indices):
     """Obtain all internal distances of the passed atoms object and return a
        Numpy array containing all the distances sorted in an ascending order.
     """
-    from scipy.spatial import cKDTree as KDTree
-
     tree = KDTree(atoms.get_positions())
     distances = []
     for ind in ref_indices:
@@ -289,17 +228,6 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
     # Make sure that the first element is 0
     assert distances[0] < 1E-6
     return np.array(distances[1:])
-
-
-def distance_string(distance_array, distance):
-    """Provide a name of the passed distance in terms of the nearest neighbor
-       based on the internal distances in an array."""
-    indx = np.argmin(np.abs(distance_array - distance))
-    assert abs(distance_array[indx] - distance) < 1E-6
-
-    if indx < 9:
-        return "0{}nn".format(indx+1)
-    return "{}nn".format(indx+1)
 
 
 def reconfigure(setting, select_cond=None):
@@ -450,47 +378,6 @@ def str2nested_list(string):
             for item in string.split('x')]
 
 
-def close_to_cubic_supercell(atoms, zero_cutoff=0.1):
-    """
-    Create a close to cubic supercell.
-
-    Parameters:
-
-    atoms: Atoms
-        Cell to be used for construction
-
-    zero_cutoff: float
-        Value below this value will be considered as zero when the
-        scaling factor is computed
-    """
-    cell = atoms.get_cell()
-    a = np.linalg.det(cell)**(1.0/3.0)
-    inv_cell = np.linalg.inv(cell)
-    scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
-    scale = np.round(scale).astype(np.int32)
-    min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
-    scale = np.true_divide(scale, min_gcd)
-    scale = min_gcd*np.max(scale)
-    integer_matrix = np.round(inv_cell*scale).astype(np.int32)
-
-    if np.linalg.det(integer_matrix) < 0:
-        integer_matrix *= -1
-
-    sc = make_supercell(atoms, integer_matrix)
-    sc = wrap_and_sort_by_position(sc)
-
-    # We need to tag the atoms
-    sc_pos = sc.get_positions()
-    sc_pos = wrap_positions(sc_pos, atoms.get_cell())
-
-    tree = KDTree(atoms.get_positions())
-    dists, tags = tree.query(sc_pos)
-    assert np.allclose(dists, 0.0)
-    for i, tag in enumerate(tags):
-        sc[i].tag = tag
-    return sc
-
-
 def min_distance_from_facet(x, cell):
     """
     Calculate the minimum distance from a point to the cell facet.
@@ -561,3 +448,14 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
         used_tags[tag] = True
         new_tm[tag] = new_row
     return new_tm
+
+
+def indices2tags(supercell, clusters):
+    for cluster in clusters:
+        for i, figure in enumerate(cluster):
+            cluster[i] = [int(supercell[x].tag) for x in figure]
+    return clusters
+
+
+def list2str(array):
+    return "-".join(str(x) for x in array)

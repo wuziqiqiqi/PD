@@ -13,6 +13,7 @@ from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
+from ase.build import bulk
 from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
@@ -24,15 +25,13 @@ import unittest
 update_reference_file = False
 tol = 1E-9
 
-
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
     members = []
-    info = setting.cluster_info_by_name(cname)
-    for entry in info:
-        members.append(entry["indices"])
+    clusters = setting.cluster_list.get_by_name(cname)
+    for cluster in clusters:
+        members.append(cluster.indices)
     return members
-
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
@@ -41,6 +40,22 @@ def calculate_cf(setting, atoms):
 
 
 class TestCEBulk(unittest.TestCase):
+    def test_load_from_db(self):
+        db_name = 'test_load_from_db.db'
+        basis_elements = [['Au', 'Cu']]
+        concentration = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[1, 1, 1],
+                         concentration=concentration, db_name=db_name,
+                         max_cluster_dia=[4.3, 4.3, 4.3],
+                         max_cluster_size=4)
+        orig_atoms = setting.atoms.copy()
+        atoms = bulk('Au', crystalstructure='fcc', a=4.05, cubic=True)
+        setting.set_active_template(atoms=atoms, generate_template=True)
+
+        # Try to read back the old atoms
+        setting.set_active_template(atoms=orig_atoms)
+        #os.remove(db_name)
+
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]
@@ -136,7 +151,8 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
         bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                            concentration=concentration, db_name=db_name)
+                            concentration=concentration,
+                            db_name=db_name)
 
         newstruct = NewStructures(bc_setting, struct_per_gen=3)
         newstruct.generate_initial_pool()
@@ -156,29 +172,35 @@ class TestCEBulk(unittest.TestCase):
         Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
-        for cluster in bc_setting.cluster_info_given_size(2):
-            name = list(cluster.keys())[0]
-            sub_cl = set(bc_setting.subclusters(name))
-            self.assertTrue(sub_cl == set(["c0", "c1"]))
+        for cluster in bc_setting.cluster_list.get_by_size(2):
+            sub_cl = bc_setting.cluster_list.get_subclusters(cluster)
+            sub_cl_name = set([c.name for c in sub_cl])
+            self.assertTrue(sub_cl_name == set(["c0", "c1"]))
+
 
         # Test a few known clusters. Triplet nearest neighbour
-        name = "c3_01nn_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0"]))
+        name = "c3_d0000_0"
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_setting.cluster_list.get_subclusters(triplet)
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0"]))
 
-        name = "c3_02nn_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c2_02nn_0"]))
+        name = "c3_d0001_0"
+        triplet = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = (bc_setting.cluster_list.get_subclusters(triplet))
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
 
-        name = "c4_01nn_0"
-        sub_cl = set(bc_setting.subclusters(name))
-        self.assertTrue(sub_cl == set(["c0", "c1", "c2_01nn_0", "c3_01nn_0"]))
+        name = "c4_d0000_0"
+        quad = bc_setting.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_setting.cluster_list.get_subclusters(quad)
+        sub_cl_name = set([c.name for c in sub_cl])
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
-        print(bc_setting.unit_cell.get_cell())
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
         self.assertGreater(np.linalg.det(P), 0)
-        atoms = make_supercell(bc_setting.unit_cell, P)
+        atoms = make_supercell(bc_setting.prim_cell, P)
 
         atoms[0].symbol = 'Cu'
         newstruct.insert_structure(init_struct=atoms, generate_template=True)
@@ -263,7 +285,7 @@ class TestCEBulk(unittest.TestCase):
                          db_name=db_name,
                          max_cluster_size=2,
                          max_cluster_dia=[4.01])
-        fam_members = get_members_of_family(setting, "c2_06nn_0")
+        fam_members = get_members_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_members[0]), 6)
         self.assertEqual(len(fam_members[1]), 6)
         self.assertEqual(len(fam_members[2]), 6)
@@ -285,7 +307,7 @@ class TestCEBulk(unittest.TestCase):
 
         # Try to create a cell with previously failing size
         size = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]])
-        atoms = make_supercell(setting.unit_cell, size)
+        atoms = make_supercell(setting.prim_cell, size)
 
         # This will fail if coordinatation number is wrong
         setting.set_active_template(atoms=atoms, generate_template=True)
@@ -327,12 +349,16 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
+    def tearDown(self):
+        if update_reference_file:
+            print("Updating the reference correlation function file")
+            print("This should normally not be done.")
+            with open("reference_corr_funcs_bulk.py", 'w') as outfile:
+                json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+        return super().tearDown()
+
 
 if __name__ == '__main__':
     unittest.main()
 
-    if update_reference_file:
-        print("Updating the reference correlation function file")
-        print("This should normally not be done.")
-        with open("reference_corr_funcs_bulk.py", 'w') as outfile:
-            json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+

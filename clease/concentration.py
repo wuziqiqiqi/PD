@@ -219,16 +219,14 @@ class Concentration(object):
 
         if A_lb.shape[1] != self.num_concs:
             raise InvalidConstraintError(
-                "The number of columns in A_lb has to "
-                "match the number of concentration "
-                "variables. Hence, A_lb needs to have "
+                "The number of columns in A_lb has to match the number of "
+                "concentration variables. Hence, A_lb needs to have "
                 "{} columns".format(self.num_concs))
 
         if A_lb.shape[0] != len(b_lb):
             raise InvalidConstraintError(
-                "The length of b_lb has to be "
-                "the same as the number of rows in "
-                "A_lb.")
+                "The length of b_lb has to be the same as the number of rows "
+                "in A_lb.")
 
         self.A_lb = np.vstack((self.A_lb, A_lb))
         self.b_lb = np.append(self.b_lb, b_lb)

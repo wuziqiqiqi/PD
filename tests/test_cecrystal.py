@@ -21,12 +21,9 @@ tol = 1E-9
 def get_members_of_family(setting, cname):
     """Return the members of a given cluster family."""
     members = []
-    for sym_grp_indx, sym_grp_name in zip(setting.cluster_indx,
-                                          setting.cluster_names):
-        size = int(cname[1])
-        for fam_indx, fam_name in zip(sym_grp_indx[size], sym_grp_name[size]):
-            if cname == fam_name:
-                members.append(fam_indx)
+    clusters = setting.cluster_list.get_by_name(cname)
+    for cluster in clusters:
+        members.append(cluster.indices)
     return members
 
 
@@ -153,6 +150,7 @@ class TestCECrystal(unittest.TestCase):
                         db_name=db_name,
                         max_cluster_size=3,
                         max_cluster_dia=[3.0, 3.0])
+
         self.assertTrue(bsg.unique_elements == ['O', 'Ta', 'X'])
         self.assertTrue(bsg.spin_dict == {'O': 1.0, 'Ta': -1.0, 'X': 0.0})
         self.assertEqual(len(bsg.basis_functions), 2)
@@ -286,12 +284,16 @@ class TestCECrystal(unittest.TestCase):
             print(str(exc))
         os.remove(db_name)
 
+    def tearDown(self):
+        if update_reference_file:
+            print("Updating the reference correlation function file")
+            print("This should normally not be done.")
+            with open("reference_corr_funcs_crystal.py", 'w') as outfile:
+                json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+        return super().tearDown()
+
 
 if __name__ == '__main__':
     unittest.main()
 
-    if update_reference_file:
-        print("Updating the reference correlation function file")
-        print("This should normally not be done.")
-        with open("reference_corr_funcs_crystal.py", 'w') as outfile:
-            json.dump(all_cf, outfile, indent=2, separators=(',', ': '))
+

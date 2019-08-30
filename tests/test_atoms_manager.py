@@ -1,6 +1,8 @@
 import unittest
 from clease.atoms_manager import AtomsManager
 from ase.build import bulk
+from ase.spacegroup import crystal
+import numpy as np
 
 
 class TestAtomsManager(unittest.TestCase):
@@ -73,13 +75,13 @@ class TestAtomsManager(unittest.TestCase):
         self.assertEqual(sorted(unique_elem), ['Na'])
 
     def test_tag_by_corresponding_atom(self):
-        unit_cell = bulk('Mg', crystalstructure='hcp')
-        unit_cell[0].symbol = 'Mg'
-        unit_cell[1].symbol = 'Zn'
+        prim_cell = bulk('Mg', crystalstructure='hcp')
+        prim_cell[0].symbol = 'Mg'
+        prim_cell[1].symbol = 'Zn'
 
-        atoms = unit_cell*(2, 3, 4)
+        atoms = prim_cell*(2, 3, 4)
         manager = AtomsManager(atoms)
-        manager.tag_indices_of_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(prim_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Mg':
@@ -88,13 +90,13 @@ class TestAtomsManager(unittest.TestCase):
                 self.assertEqual(atom.tag, 1)
 
     def test_tag_by_corresponding_primitive_conventional(self):
-        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
-        unit_cell.wrap()
+        prim_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        prim_cell.wrap()
         atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0, cubic=True)
         atoms = atoms*(3, 4, 5)
 
         manager = AtomsManager(atoms)
-        manager.tag_indices_of_corresponding_atom(unit_cell)
+        manager.tag_indices_of_corresponding_atom(prim_cell)
 
         for atom in manager.atoms:
             if atom.symbol == 'Na':
@@ -103,14 +105,50 @@ class TestAtomsManager(unittest.TestCase):
                 self.assertEqual(atom.tag, 1)
 
     def test_raise_if_not_match(self):
-        unit_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
-        unit_cell.wrap()
+        prim_cell = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        prim_cell.wrap()
         atoms = bulk('Mg', crystalstructure='hcp')
         atoms = atoms*(3, 4, 5)
 
         manager = AtomsManager(atoms)
         with self.assertRaises(ValueError):
-            manager.tag_indices_of_corresponding_atom(unit_cell)
+            manager.tag_indices_of_corresponding_atom(prim_cell)
+
+    def test_cubic_sc_fcc(self):
+        a = 4.05
+        atoms = bulk("Al", a=a, crystalstructure="fcc")
+        manager = AtomsManager(atoms)
+        sc = manager.close_to_cubic_supercell()
+        expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
+        self.assertTrue(np.allclose(expected_cell, sc.get_cell()))
+
+    def test_sp217(self):
+        a = 10.553
+        b = 10.553
+        c = 10.553
+        alpha = 90
+        beta = 90
+        gamma = 90
+        cellpar = [a, b, c, alpha, beta, gamma]
+        basis = [(0, 0, 0), (0.324, 0.324, 0.324),
+                 (0.3582, 0.3582, 0.0393), (0.0954, 0.0954, 0.2725)]
+
+        atoms = crystal(symbols=['Mg', 'Mg', 'Mg', 'Al'],
+                        cellpar=cellpar, spacegroup=217,
+                        basis=basis, primitive_cell=True)
+
+        manager = AtomsManager(atoms)
+        sc = manager.close_to_cubic_supercell()
+        expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
+        self.assertTrue(np.allclose(expected_cell, sc.get_cell()))
+
+    def test_bcc(self):
+        a = 3.8
+        atoms = bulk("Fe", a=a, crystalstructure="bcc")
+        manager = AtomsManager(atoms)
+        sc = manager.close_to_cubic_supercell()
+        expected_cell = np.array([[a, 0, 0], [0, a, 0], [0, 0, a]])
+        self.assertTrue(np.allclose(sc.get_cell(), expected_cell))
 
 
 if __name__ == '__main__':

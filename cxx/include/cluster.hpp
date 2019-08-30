@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <set>
 #include <iostream>
 #include <Python.h>
 
@@ -26,6 +27,10 @@ public:
   unsigned int num_subclusters() const {return members.size();};
   const equiv_deco_t& get_equiv_deco(const std::string &dec_string) const;
   const equiv_deco_t& get_equiv_deco(const std::vector<int> &deco) const;
+  void unique_indices(std::set<int> &indices) const;
+
+  /** Return the max index in the cluster */
+  unsigned int max_index() const;
 
 /** Finds all the equivalent decoration numbers */
   void construct_equivalent_deco(int n_basis_funcs);
@@ -36,7 +41,7 @@ public:
   unsigned int ref_indx;
   unsigned int symm_group;
   double max_cluster_dia;
-  std::string descriptor;
+  // std::string descriptor;
 private:
   cluster_t members;
   cluster_t order;
