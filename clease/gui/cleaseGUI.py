@@ -20,11 +20,11 @@ class CleaseGUI(App):
     def __init__(self):
         App.__init__(self)
         self.screen_manager = ScreenManager()
-        self.screen_manager.add_widget(InputPage(name="Input"))
         self.screen_manager.add_widget(ConcentrationPage(name="Concentration"))
+        self.screen_manager.add_widget(InputPage(name="Input"))
         self.screen_manager.add_widget(NewStructPage(name='NewStruct'))
         self.screen_manager.add_widget(FitPage(name='Fit'))
-        self.screen_manager.current = "Input"
+        self.screen_manager.current = "Concentration"
         self.settings = None
 
     def build(self):
