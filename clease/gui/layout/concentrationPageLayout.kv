@@ -36,30 +36,49 @@
                 root.manager.current = 'Fit'
                 root.manager.transition.direction = 'left'
 
-
-        Label:
+        StackLayout:
             size_hint: [1, 0.25*height]
-            text: ''
+            Label:
+                size_hint: [1, 1]
+                text: ''
+
         Label:
             size_hint: [1, height]
             text: 'Concentration'
 
         Label:
-            size_hint: [0.5, height]
+            size_hint: [0.1, height]
+            text: ''
+
+        Label:
+            size_hint: [0.4, height]
             text: 'Elements'
 
         Label:
-            size_hint: [0.5, height]
+            size_hint: [0.4, height]
             text: 'Grouped basis'
 
+        Label:
+            size_hint: [0.1, height]
+            text: ''
+
+        Label:
+            size_hint: [0.1, height]
+            text: ''
+
         TextInput:
-            size_hint: [0.5, height]
+            size_hint: [0.4, height]
             id: elementInput
             text: ''
         TextInput:
-            size_hint: [0.5, height]
+            size_hint: [0.4, height]
             id: groupedBasisInput
             text: ''
+
+        Label:
+            size_hint: [0.1, height]
+            text: ''
+
 
 
 
