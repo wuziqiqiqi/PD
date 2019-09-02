@@ -98,7 +98,7 @@ public:
   void clear_history();
 
   /** Populates the given vector with all the cluster names */
-  void flattened_cluster_names( std::vector<std::string> &flattened );
+  void flattened_cf_names( std::vector<std::string> &flattened );
 
   /** Returns the correlaation functions as a dictionary. Only the ones that corresponds to one of the ECIs */
   PyObject* get_cf();
@@ -109,7 +109,7 @@ public:
   /** Read-only reference to the symbols */
   const std::vector<std::string>& get_symbols() const { return symbols_with_id->get_symbols(); };
 
-  /** Returns the cluster members */
+  /** Returns the cluster figures */
   const ClusterList& get_clusters() const {return clusters;};
 
   /** Return the cluster with the given name
@@ -138,7 +138,7 @@ public:
   void get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const;
 
   /** Calculate correlation functions from scratch */
-  void calculate_cf_from_scratch(const std::vector<std::string> &cluster_names, std::map<std::string, double> &cf);
+  void calculate_cf_from_scratch(const std::vector<std::string> &cf_names, std::map<std::string, double> &cf);
 
   /** Set a new atoms object */
   void set_atoms(PyObject *atoms);

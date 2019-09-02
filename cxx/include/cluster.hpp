@@ -19,12 +19,12 @@ public:
   Cluster(PyObject *info_dict);
 
   /** Returns the built in list */
-  const cluster_t& get() const { return members; };
+  const cluster_t& get() const { return figures; };
   const cluster_t& get_order() const { return order; };
   const cluster_t& get_equiv() const { return equiv_sites; };
   const std::vector<double>& get_duplication_factors() const { return duplication_factors;};
   unsigned int get_size() const {return size;};
-  unsigned int num_subclusters() const {return members.size();};
+  unsigned int num_subclusters() const {return figures.size();};
   const equiv_deco_t& get_equiv_deco(const std::string &dec_string) const;
   const equiv_deco_t& get_equiv_deco(const std::vector<int> &deco) const;
   void unique_indices(std::set<int> &indices) const;
@@ -43,7 +43,7 @@ public:
   double max_cluster_dia;
   // std::string descriptor;
 private:
-  cluster_t members;
+  cluster_t figures;
   cluster_t order;
   cluster_t equiv_sites;
   all_equiv_deco_t equiv_deco;
@@ -56,7 +56,7 @@ private:
 
   static void nested_list_to_cluster(PyObject *py_list, cluster_t &vec);
 
-  /** Initialize members based on the info dictionary */
+  /** Initialize figures based on the info dictionary */
   void parse_info_dict(PyObject *info_dict);
 
   /** Calculate additional factor due to duplications */

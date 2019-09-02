@@ -35,7 +35,7 @@ class GAFit(object):
     fname: str
         File name used to backup the population. If this file exists, the next
         run will load the population from the file and start from there.
-        Another file named 'fname'_cluster_names.txt is created to store the
+        Another file named 'fname'_cf_names.txt is created to store the
         names of selected clusters.
 
     num_individuals: int or str
@@ -136,8 +136,8 @@ class GAFit(object):
         self.cf_names = evaluator.cf_names
         self.e_dft = evaluator.e_dft
         self.fname = fname
-        self.fname_cluster_names = \
-            fname.rpartition(".")[0] + "_cluster_names.txt"
+        self.fname_cf_names = \
+            fname.rpartition(".")[0] + "_cf_names.txt"
         if num_individuals == "auto":
             self.pop_size = 10*self.cf_matrix.shape[1]
         else:
@@ -488,7 +488,7 @@ class GAFit(object):
         raise TypeError("Does not make sense to create an instance array GA.")
 
     @property
-    def selected_cluster_names(self):
+    def selected_cf_names(self):
         from itertools import compress
         individual = self.best_individual
         return list(compress(self.cf_names, individual))
@@ -513,13 +513,13 @@ class GAFit(object):
                 out.write("\n")
         _logger("\nPopulation written to {}".format(self.fname))
 
-    def save_cluster_names(self):
+    def save_cf_names(self):
         """Store cluster names of best population to file."""
-        with open(self.fname_cluster_names, 'w') as out:
-            for name in self.selected_cluster_names:
+        with open(self.fname_cf_names, 'w') as out:
+            for name in self.selected_cf_names:
                 out.write(name+"\n")
         _logger("Selected cluster names saved to "
-                "{}".format(self.fname_cluster_names))
+                "{}".format(self.fname_cf_names))
 
     def plot_evolution(self):
         """Create a plot of the evolution."""
@@ -587,7 +587,7 @@ class GAFit(object):
 
             if gen % save_interval == 0:
                 self.save_population()
-                self.save_cluster_names()
+                self.save_cf_names()
 
             if num_gen_without_change >= gen_without_change:
                 self.log("\nReached {} generations without sufficient "
@@ -599,8 +599,8 @@ class GAFit(object):
             # Perform a last local optimization
             self._local_optimization()
         self.save_population()
-        self.save_cluster_names()
-        return self.selected_cluster_names
+        self.save_cf_names()
+        return self.selected_cf_names
 
     def _local_optimization(self, indx=None):
         """Perform a local optimization strategy to the best individual."""

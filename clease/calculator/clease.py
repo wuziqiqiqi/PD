@@ -51,7 +51,7 @@ class Clease(Calculator):
         self.corrFunc = CorrFunction(setting)
         self.eci = eci
         # store cluster names
-        self.cluster_names = list(eci.keys())
+        self.cf_names = list(eci.keys())
 
         # calculate init_cf or convert init_cf to array
         if init_cf is None or isinstance(init_cf, dict):
@@ -120,7 +120,7 @@ class Clease(Calculator):
 
         if self.init_cf is None:
             self.init_cf = \
-                self.corrFunc.get_cf_by_names(self.atoms, self.cluster_names)
+                self.corrFunc.get_cf_by_names(self.atoms, self.cf_names)
 
         if len(self.setting.atoms) != len(atoms):
             msg = "Passed Atoms object and setting.atoms should have same "
@@ -239,7 +239,7 @@ class Clease(Calculator):
     @property
     def cf(self):
         temp_cf = self.updater.get_cf()
-        return [temp_cf[x] for x in self.cluster_names]
+        return [temp_cf[x] for x in self.cf_names]
 
     def log(self):
         """Write energy to log file."""
