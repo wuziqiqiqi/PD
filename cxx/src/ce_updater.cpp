@@ -204,7 +204,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   #endif
 
   vector<string> flattened_cnames;
-  flattened_cluster_names(flattened_cnames);
+  flattened_cf_names(flattened_cnames);
   //history = new CFHistoryTracker(flattened_cnames);
   history = new CFHistoryTracker(eci.get_names());
   history->insert(corrFunc, nullptr);
@@ -541,7 +541,7 @@ void CEUpdater::clear_history()
   history->clear();
 }
 
-void CEUpdater::flattened_cluster_names(vector<string> &flattened)
+void CEUpdater::flattened_cf_names(vector<string> &flattened)
 {
   flattened = eci.get_names();
 
@@ -902,17 +902,17 @@ void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::ve
   }
 }
 
-void CEUpdater::calculate_cf_from_scratch(const vector<string> &cluster_names, map<string, double> &cf){
+void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<string, double> &cf){
 
   cf.clear();
 
   // Initialise all cluster names
-  for (const string& name : cluster_names){
+  for (const string& name : cf_names){
     cf[name] = 0.0;
   }
 
   // Loop over all clusters
-  for (const string& name : cluster_names){
+  for (const string& name : cf_names){
 
     // Handle empty cluster
     if (name.find("c0") == 0)
