@@ -50,7 +50,7 @@ private:
     /** Syncronize the IDs with the symbols vector */
     void update_ids();
 
-    /** Transfer members to other class */
+    /** Transfer figures to other class */
     void swap(Symbols &other) const;
 };
 #endif

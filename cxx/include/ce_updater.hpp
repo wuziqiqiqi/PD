@@ -109,7 +109,7 @@ public:
   /** Read-only reference to the symbols */
   const std::vector<std::string>& get_symbols() const { return symbols_with_id->get_symbols(); };
 
-  /** Returns the cluster members */
+  /** Returns the cluster figures */
   const ClusterList& get_clusters() const {return clusters;};
 
   /** Return the cluster with the given name

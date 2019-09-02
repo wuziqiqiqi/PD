@@ -18,13 +18,13 @@ update_reference_file = False
 tol = 1E-9
 
 
-def get_members_of_family(setting, cname):
-    """Return the members of a given cluster family."""
-    members = []
+def get_figures_of_family(setting, cname):
+    """Return the figures of a given cluster family."""
+    figures = []
     clusters = setting.cluster_list.get_by_name(cname)
     for cluster in clusters:
-        members.append(cluster.indices)
-    return members
+        figures.append(cluster.indices)
+    return figures
 
 
 class TestCECrystal(unittest.TestCase):

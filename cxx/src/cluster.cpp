@@ -249,7 +249,7 @@ void Cluster::parse_info_dict(PyObject *info)
   #endif
   // Read indices
   PyObject* py_indx = get_attr(info, "indices");
-  nested_list_to_cluster(py_indx, members);
+  nested_list_to_cluster(py_indx, figures);
   Py_DECREF(py_indx);
 
   // Read equivalent sites
@@ -271,7 +271,7 @@ void Cluster::parse_info_dict(PyObject *info)
   else{
     // Fill duplication factors with 1.0
     duplication_factors.clear();
-    for (unsigned int i=0;i<members.size();i++){
+    for (unsigned int i=0;i<figures.size();i++){
       duplication_factors.push_back(1.0);
     }
   }
@@ -300,7 +300,7 @@ void Cluster::nested_list_to_cluster(PyObject *py_list, cluster_t &vec)
 }
 
 void Cluster::check_consistency() const{
-  if (duplication_factors.size() != members.size()){
+  if (duplication_factors.size() != figures.size()){
     throw runtime_error("A duplication factor for each member is required!");
   }
 }
@@ -312,18 +312,18 @@ void Cluster::calculate_scaling_factors(PyObject *pylist){
     // Calculate unique sites in the sub cluster
     set<int> unique_values;
     unique_values.insert(ref_indx);
-    for (int indx : members[i]){
+    for (int indx : figures[i]){
       unique_values.insert(indx);
     }
 
-    double scale = static_cast<double>(unique_values.size())/(members[i].size());
+    double scale = static_cast<double>(unique_values.size())/(figures[i].size());
     duplication_factors.push_back(factor*scale);
   }
 }
 
 unsigned int Cluster::max_index() const{
   unsigned int max = 0;
-  for (const auto& vec : members){
+  for (const auto& vec : figures){
     for (auto& value : vec){
       if (value > max){
         max = value;
@@ -334,7 +334,7 @@ unsigned int Cluster::max_index() const{
 }
 
 void Cluster::unique_indices(set<int> &indices) const{
-  for (auto& vec : members){
+  for (auto& vec : figures){
     for (auto& value : vec){
       indices.insert(value);
     }
