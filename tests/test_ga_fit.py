@@ -60,8 +60,8 @@ class TestGAFit(unittest.TestCase):
         self.assertTrue(np.allclose(individuals, selector.individuals))
         os.remove(backup)
 
-        if os.path.exists("ga_test_cluster_names.txt"):
-            os.remove("ga_test_cluster_names.txt")
+        if os.path.exists("ga_test_cf_names.txt"):
+            os.remove("ga_test_cf_names.txt")
 
     def tearDown(self):
         try:

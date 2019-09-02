@@ -145,7 +145,7 @@ class CorrFunction(object):
         """Get IDs of the structures with inconsistent correlation functions.
 
         Note: consisent structures have the exactly the same list of cluster
-              names as stored in setting.cluster_names.
+              names as stored in setting.cf_names.
         """
         db = connect(self.setting.db_name)
         tab_name = "{}_cf".format(self.setting.bf_scheme.name)

@@ -251,7 +251,7 @@ class StructureGenerator(object):
         final_cf = \
             self.corrFunc.get_cf_by_names(
                 self.generated_structure,
-                self.atoms.get_calculator().cluster_names)
+                self.atoms.get_calculator().cf_names)
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'

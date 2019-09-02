@@ -13,6 +13,9 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.constraints import FixedElement
 from clease import Concentration, CEBulk, CorrFunction
 
+# Set the random seed
+np.random.seed(0)
+
 
 def get_example_mc_system(db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu']])
