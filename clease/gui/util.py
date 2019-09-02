@@ -21,9 +21,7 @@ def parse_max_cluster_dia(string):
 
 
 def parse_grouped_basis_elements(string):
-    """
-    Parse grouped basis argument
-    """
+    """Parse grouped basis argument."""
     string = string.replace('(', '')
     split = string.split('),')
     split = [x.replace(')', '') for x in split]
@@ -76,9 +74,7 @@ def parse_size(string):
 
 
 def parse_elements(string):
-    """
-    Parse elements given by user
-    """
+    """Parse elements given by user."""
     from ase.data import chemical_symbols
     try:
         if string.count(')') == 0:
@@ -104,7 +100,7 @@ def parse_elements(string):
 
     msg = 'Elements has to be a list of comma separated chemical symbols '
     msg += '(i.e. Al, Mg, Cu) \nin the case of a single sublattice and a list '
-    msg += 'with symbels for each sublattice \nin case of many (i.e. (Al, Mg)'
+    msg += 'with symbols for each sublattice \nin case of many (i.e. (Al, Mg)'
     msg += ', (Zn, Cu), (X, Zn, Cu)'
     raise ValueError(msg)
 
