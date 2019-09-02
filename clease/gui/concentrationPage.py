@@ -52,9 +52,8 @@ class ConcentrationPage(Screen):
                    for a, b in zip(self.grouped_elements, new_elements))
 
     def on_pre_enter(self):
-        elem_str = self.manager.get_screen("Input").ids.elementInput.text
-        grouped_basis = \
-            self.manager.get_screen("Input").ids.groupedBasisInput.text
+        elem_str = self.ids.elementInput.text
+        grouped_basis = self.ids.groupedBasisInput.text
         try:
             if grouped_basis != '':
                 self.grouped_basis = \

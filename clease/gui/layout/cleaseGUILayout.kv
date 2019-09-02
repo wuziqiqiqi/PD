@@ -11,17 +11,17 @@
     StackLayout:
 
         Button:
-            id: toInput
-            size_hint: [0.25, height]
-            text: 'Input'
-
-        Button:
             id: concEditor
             text: 'Concentration'
             size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Concentration'
-                root.manager.transition.direction = 'left'
+                root.manager.transition.direction = 'right'
+
+        Button:
+            id: toInput
+            size_hint: [0.25, height]
+            text: 'Input'
 
         Button:
             id: toNewStruct
@@ -269,30 +269,31 @@
 
 
 
-        Label:
-            size_hint: [1, 0.5*height]
-            text: ''
+        # Label:
+        #     size_hint: [1, 0.5*height]
+        #     text: ''
 
-        Label:
-            text: 'Concentration'
-            size_hint: [1.0, 1.5*height]
+        # Label:
+        #     text: 'Concentration'
+        #     size_hint: [1.0, 1.5*height]
 
-        Label:
-            size_hint: [0.5, height]
-            text: 'Elements'
+        # Label:
+        #     size_hint: [0.5, height]
+        #     text: 'Elements'
 
-        Label:
-            size_hint: [0.5, height]
-            text: 'Grouped basis'
+        # Label:
+        #     size_hint: [0.5, height]
+        #     text: 'Grouped basis'
 
-        TextInput:
-            size_hint: [0.5, height]
-            id: elementInput
-            text: ''
-        TextInput:
-            size_hint: [0.5, height]
-            id: groupedBasisInput
-            text: ''
+        # TextInput:
+        #     size_hint: [0.5, height]
+        #     id: elementInput
+        #     text: ''
+
+        # TextInput:
+        #     size_hint: [0.5, height]
+        #     id: groupedBasisInput
+        #     text: ''
 
 
 

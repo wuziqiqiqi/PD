@@ -262,7 +262,7 @@ class InputPage(Screen):
         return True
 
     def elem_ok(self):
-        elems = self.ids.elementInput.text
+        elems = self.manager.get_screen("Input").ids.elementInput.text
         try:
             _ = parse_elements(elems)
         except Exception as exc:
@@ -271,7 +271,7 @@ class InputPage(Screen):
         return True
 
     def grouped_basis_ok(self):
-        gr_basis = self.ids.groupedBasisInput.text
+        gr_basis = self.manager.get_screen("Input").ids.groupedBasisInput.text
         try:
             _ = parse_grouped_basis_elements(gr_basis)
         except Exception as exc:

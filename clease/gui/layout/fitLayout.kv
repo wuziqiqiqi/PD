@@ -2,6 +2,14 @@
 <FitPage>:
     StackLayout:
         Button:
+            id: concEditor
+            text: 'Concentration'
+            size_hint: [0.25, button_height]
+            on_release:
+                root.manager.current = 'Concentration'
+                root.manager.transition.direction = 'right'
+        
+        Button:
             id: toInput
             size_hint: [0.25, button_height]
             text: 'Input'
@@ -9,13 +17,7 @@
                 root.manager.current = 'Input'
                 root.manager.transition.direction = 'right'
 
-        Button:
-            id: concEditor
-            text: 'Concentration'
-            size_hint: [0.25, button_height]
-            on_release:
-                root.manager.current = 'Concentration'
-                root.manager.transition.direction = 'right'
+        
 
         Button:
             id: toNewStruct
