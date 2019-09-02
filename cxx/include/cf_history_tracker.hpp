@@ -22,7 +22,7 @@ struct SymbolChange
 class CFHistoryTracker
 {
 public:
-  CFHistoryTracker( const std::vector<std::string> &cluster_names );
+  CFHistoryTracker( const std::vector<std::string> &cf_names );
   CFHistoryTracker( const CFHistoryTracker &other );
   CFHistoryTracker& operator=( const CFHistoryTracker& other );
 
@@ -61,6 +61,6 @@ private:
   unsigned int buffer_size{0};
 
   /** Initialize all the keys */
-  void init_all_keys( cf &entry, const std::vector<std::string> &cluster_names );
+  void init_all_keys( cf &entry, const std::vector<std::string> &cf_names );
 };
 #endif

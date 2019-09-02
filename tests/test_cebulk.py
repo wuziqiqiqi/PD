@@ -25,13 +25,13 @@ import unittest
 update_reference_file = False
 tol = 1E-9
 
-def get_members_of_family(setting, cname):
-    """Return the members of a given cluster family."""
-    members = []
+def get_figures_of_family(setting, cname):
+    """Return the figures of a given cluster family."""
+    figures = []
     clusters = setting.cluster_list.get_by_name(cname)
     for cluster in clusters:
-        members.append(cluster.indices)
-    return members
+        figures.append(cluster.indices)
+    return figures
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
@@ -285,10 +285,10 @@ class TestCEBulk(unittest.TestCase):
                          db_name=db_name,
                          max_cluster_size=2,
                          max_cluster_dia=[4.01])
-        fam_members = get_members_of_family(setting, "c2_d0005_0")
-        self.assertEqual(len(fam_members[0]), 6)
-        self.assertEqual(len(fam_members[1]), 6)
-        self.assertEqual(len(fam_members[2]), 6)
+        fam_figures = get_figures_of_family(setting, "c2_d0005_0")
+        self.assertEqual(len(fam_figures[0]), 6)
+        self.assertEqual(len(fam_figures[1]), 6)
+        self.assertEqual(len(fam_figures[2]), 6)
         self.assertEqual(setting.num_basis, 2)
         self.assertEqual(len(setting.index_by_basis), 2)
         self.assertTrue(setting.spin_dict == {'Ce': 1.0, 'O': -1.0, 'Zr': 0})

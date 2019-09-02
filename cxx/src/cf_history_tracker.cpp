@@ -4,14 +4,14 @@
 
 using namespace std;
 
-CFHistoryTracker::CFHistoryTracker( const vector<string> &cluster_names )
+CFHistoryTracker::CFHistoryTracker( const vector<string> &cf_names )
 {
   for ( unsigned int i=0;i<max_history;i++ )
   {
     cf_history[i] = new cf;
     changes[i] = new SymbolChange;
-    cf_history[i]->set_order(cluster_names);
-    //init_all_keys(*cf_history[i],cluster_names);
+    cf_history[i]->set_order(cf_names);
+    //init_all_keys(*cf_history[i],cf_names);
   }
 }
 
@@ -35,11 +35,11 @@ CFHistoryTracker::~CFHistoryTracker()
   }
 }
 
-void CFHistoryTracker::init_all_keys( cf &entry, const vector<string> &cluster_names )
+void CFHistoryTracker::init_all_keys( cf &entry, const vector<string> &cf_names )
 {
-  for ( unsigned int i=0;i<cluster_names.size();i++ )
+  for ( unsigned int i=0;i<cf_names.size();i++ )
   {
-    entry[cluster_names[i]] = 0.0;
+    entry[cf_names[i]] = 0.0;
   }
 }
 
