@@ -62,12 +62,13 @@ class InputPage(Screen):
             self.ids.scFactorInput.text = data.get('supercell_factor', '20')
             self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
 
-            self.ids.status.text = "Loaded session from {}".format(path)
+            self.ids.status.text = \
+                "Loaded session from {}".format(filename[0])
 
             # variables for "Concentration" screen
             conc_page = self.manager.get_screen('Concentration')
             elements = data['conc']['elements']
-            grouped_basis = data['conc'].get('grouped_basis', '')
+            grouped_basis = data['conc']['grouped_basis']
             conc_page.set_Elements_GroupedBasis(elements, grouped_basis)
 
             A_lb = data['conc']['A_lb']
@@ -95,25 +96,23 @@ class InputPage(Screen):
         self._pop_up.open()
 
     def to_dict(self):
-        return {
-            'type': self.ids.typeSpinner.text,
-            'basis_function': self.ids.bfSpinner.text,
-            'cluster_size': self.ids.clusterSize.text,
-            'max_cluster_dia': self.ids.clusterDia.text,
-            'db_name': self.ids.dbNameInput.text,
-            'crystalstructure': self.ids.crystStructSpinner.text,
-            'aParameter': self.ids.aParameterInput.text,
-            'cParameter': self.ids.cParameterInput.text,
-            'uParameter': self.ids.uParameterInput.text,
-            'cellpar': self.ids.cellParInput.text,
-            'cell': self.ids.cellInput.text,
-            'basis': self.ids.crdBasisInput.text,
-            'spacegroup': self.ids.spInput.text,
-            'cell_size': self.ids.sizeInput.text,
-            'cell_mode_spinner': self.ids.sizeSpinner.text,
-            'supercell_factor': self.ids.scFactorInput.text,
-            'skewness_factor': self.ids.skewFactorInput.text
-        }
+        return {'type': self.ids.typeSpinner.text,
+                'basis_function': self.ids.bfSpinner.text,
+                'cluster_size': self.ids.clusterSize.text,
+                'max_cluster_dia': self.ids.clusterDia.text,
+                'db_name': self.ids.dbNameInput.text,
+                'crystalstructure': self.ids.crystStructSpinner.text,
+                'aParameter': self.ids.aParameterInput.text,
+                'cParameter': self.ids.cParameterInput.text,
+                'uParameter': self.ids.uParameterInput.text,
+                'cellpar': self.ids.cellParInput.text,
+                'cell': self.ids.cellInput.text,
+                'basis': self.ids.crdBasisInput.text,
+                'spacegroup': self.ids.spInput.text,
+                'cell_size': self.ids.sizeInput.text,
+                'cell_mode_spinner': self.ids.sizeSpinner.text,
+                'supercell_factor': self.ids.scFactorInput.text,
+                'skewness_factor': self.ids.skewFactorInput.text}
 
     def save_session(self, path, selection, user_filename):
         if self.check_user_input() != 0:
@@ -219,9 +218,7 @@ class InputPage(Screen):
         self.ids.crdBasisInput.disabled = False
 
     def _check_cebulk_parameters(self):
-        """
-        Check the user input of the CE bulk parameters
-        """
+        """Check the user input of the CE bulk parameters."""
         try:
             _ = float(self.ids.aParameterInput.text)
         except Exception:
@@ -390,7 +387,7 @@ class InputPage(Screen):
         if not self.elem_ok():
             return 1
 
-        gr_basis = conc_page.groupedBasisInput.text
+        gr_basis = conc_page.ids.groupedBasisInput.text
 
         if gr_basis != '':
             if not self.grouped_basis_ok():
