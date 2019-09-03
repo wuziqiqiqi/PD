@@ -4,9 +4,9 @@ import unittest
 class InputPageTests(unittest.TestCase):
     def run_test_naviation(self, app):
         # Make sure that we are on the InputPage
-        self.assertEqual('Input', app.screen_manager.current)
+        self.assertEqual('Concentration', app.screen_manager.current)
 
-        screens = ['Input', 'Concentration', 'NewStruct', 'Fit']
+        screens = ['Concentration', 'Input', 'NewStruct', 'Fit']
         for main_screen in screens:
             screen = app.screen_manager.get_screen(main_screen)
 
@@ -105,9 +105,10 @@ class InputPageTests(unittest.TestCase):
         self.assertTrue(screen.cell_ok())
 
     def run_check_element_input(self, app):
-        screen = app.screen_manager.get_screen('Input')
+        screen = app.screen_manager.get_screen('Concentration')
         elem_in = screen.ids.elementInput
 
+        screen = app.screen_manager.get_screen('Input')
         elem_in.text = 'Al, Cu'
         self.assertTrue(screen.elem_ok())
 
@@ -115,9 +116,10 @@ class InputPageTests(unittest.TestCase):
         self.assertTrue(screen.elem_ok())
 
     def run_check_grouped_basis(self, app):
+        screen = app.screen_manager.get_screen('Concentration')
+        gr_basis = screen.ids.groupedBasisInput
         screen = app.screen_manager.get_screen('Input')
 
-        gr_basis = screen.ids.groupedBasisInput
         gr_basis.text = '1, 2'
         self.assertTrue(screen.grouped_basis_ok())
 
@@ -129,6 +131,7 @@ class InputPageTests(unittest.TestCase):
 
     def run_save_as_button(self, app):
         screen = app.screen_manager.get_screen('Input')
+        conc_screen = app.screen_manager.get_screen('Concentration')
         self.assertTrue(screen._pop_up is None)
 
         # Call save button with an incomplete page
@@ -138,7 +141,7 @@ class InputPageTests(unittest.TestCase):
         # Populate the fields with a valid input
         screen.ids.aParameterInput.text = '4.05'
         screen.ids.dbNameInput.text = 'test_gui.db'
-        screen.ids.elementInput.text = 'Au, Cu'
+        conc_screen.ids.elementInput.text = 'Au, Cu'
         screen.ids.saveAsSession.dispatch('on_release')
         self.assertTrue(screen._pop_up is not None)
         self.assertEqual(screen._pop_up.title, "Save CLEASE session")
