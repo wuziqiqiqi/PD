@@ -122,8 +122,6 @@ class ConcentrationPage(Screen):
 
         self.ids.mainConcLayout.add_widget(layout)
         self.next_constraint_id += 1
-        print('yes, {}'.format(self.next_constraint_id))
-        print(layout)
         return layout
 
     def remove_constraint(self, widget):
@@ -210,7 +208,6 @@ class ConcentrationPage(Screen):
                     parse_grouped_basis_elements(grouped_basis)
 
             elements = parse_elements(elem_str)
-            print(elements)
         except Exception as exc:
             self.ids.status.text = str(exc)
             return
