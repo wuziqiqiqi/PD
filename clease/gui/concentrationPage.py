@@ -199,7 +199,7 @@ class ConcentrationPage(Screen):
         row = [z[1] for z in zipped]
         return row, rhs, equality
 
-    def set_Elements_GroupedBasis(self):
+    def apply_Elements_GroupedBasis(self):
         elem_str = self.ids.elementInput.text
         grouped_basis = self.ids.groupedBasisInput.text
         try:
@@ -339,6 +339,11 @@ class ConcentrationPage(Screen):
             'rhs_eq': rhs_eq
         }
         return data
+
+    def set_Elements_GroupedBasis(self, elements, grouped_basis):
+        self.ids.elementInput.text = elements
+        self.ids.groupedBasisInput.text = grouped_basis
+        self.set_Elements_GroupedBasis()
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
         self.on_pre_enter()

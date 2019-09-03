@@ -42,6 +42,7 @@ class InputPage(Screen):
             with open(filename[0], 'r') as infile:
                 data = json.load(infile)
 
+            # variables for "Input" screen
             self.ids.typeSpinner.text = data['type']
             self.ids.bfSpinner.text = data['basis_function']
             self.ids.clusterSize.text = data['cluster_size']
@@ -54,23 +55,27 @@ class InputPage(Screen):
             self.ids.uParameterInput.text = data['uParameter']
             self.ids.cellParInput.text = data['cellpar']
             self.ids.cellInput.text = data['cell']
-            self.ids.elementInput.text = data['elements']
             self.ids.crdBasisInput.text = data['basis']
             self.ids.spInput.text = data['spacegroup']
             self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
             self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
             self.ids.scFactorInput.text = data.get('supercell_factor', '20')
             self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
-            self.ids.groupedBasisInput.text = data.get('grouped_basis', '')
 
             self.ids.status.text = "Loaded session from {}".format(path)
 
-            A_lb = data['constraint']['A_lb']
-            rhs_lb = data['constraint']['rhs_lb']
-            A_eq = data['constraint']['A_eq']
-            rhs_eq = data['constraint']['rhs_eq']
-            self.manager.get_screen('Concentration').load_from_matrices(
-                A_lb, rhs_lb, A_eq, rhs_eq)
+            # variables for "Concentration" screen
+            conc_page = self.manager.get_screen('Concentration')
+            elements = data['conc']['elements']
+            grouped_basis = data['conc'].get('grouped_basis', '')
+            conc_page.set_Elements_GroupedBasis(elements, grouped_basis)
+
+            A_lb = data['conc']['A_lb']
+            rhs_lb = data['conc']['rhs_lb']
+            A_eq = data['conc']['A_eq']
+            rhs_eq = data['conc']['rhs_eq']
+            conc_page.load_from_matrices(A_lb, rhs_lb, A_eq, rhs_eq)
+
             self.manager.get_screen('NewStruct').from_dict(
                 data.get('new_struct', {}))
             self.manager.get_screen('Fit').from_dict(data.get('fit_page', {}))
@@ -102,14 +107,12 @@ class InputPage(Screen):
             'uParameter': self.ids.uParameterInput.text,
             'cellpar': self.ids.cellParInput.text,
             'cell': self.ids.cellInput.text,
-            'elements': self.ids.elementInput.text,
             'basis': self.ids.crdBasisInput.text,
             'spacegroup': self.ids.spInput.text,
             'cell_size': self.ids.sizeInput.text,
             'cell_mode_spinner': self.ids.sizeSpinner.text,
             'supercell_factor': self.ids.scFactorInput.text,
-            'skewness_factor': self.ids.skewFactorInput.text,
-            'grouped_basis': self.ids.groupedBasisInput.text
+            'skewness_factor': self.ids.skewFactorInput.text
         }
 
     def save_session(self, path, selection, user_filename):
@@ -121,7 +124,7 @@ class InputPage(Screen):
             fname = selection[0]
 
         data = self.to_dict()
-        data['constraint'] = self.manager.get_screen('Concentration').to_dict()
+        data['conc'] = self.manager.get_screen('Concentration').to_dict()
         data['new_struct'] = self.manager.get_screen('NewStruct').to_dict()
         data['fit_page'] = self.manager.get_screen('Fit').to_dict()
 
@@ -262,7 +265,8 @@ class InputPage(Screen):
         return True
 
     def elem_ok(self):
-        elems = self.manager.get_screen("Input").ids.elementInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        elems = conc_page.ids.elementInput.text
         try:
             _ = parse_elements(elems)
         except Exception as exc:
@@ -271,7 +275,8 @@ class InputPage(Screen):
         return True
 
     def grouped_basis_ok(self):
-        gr_basis = self.manager.get_screen("Input").ids.groupedBasisInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        gr_basis = conc_page.ids.groupedBasisInput.text
         try:
             _ = parse_grouped_basis_elements(gr_basis)
         except Exception as exc:
@@ -376,7 +381,8 @@ class InputPage(Screen):
             if error_code != 0:
                 return error_code
 
-        elems = self.ids.elementInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        elems = conc_page.ids.elementInput.text
         if elems == '':
             self.ids.status.text = 'No elements are given'
             return 1
@@ -384,7 +390,7 @@ class InputPage(Screen):
         if not self.elem_ok():
             return 1
 
-        gr_basis = self.ids.groupedBasisInput.text
+        gr_basis = conc_page.groupedBasisInput.text
 
         if gr_basis != '':
             if not self.grouped_basis_ok():
