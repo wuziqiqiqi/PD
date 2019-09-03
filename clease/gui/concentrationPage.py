@@ -51,43 +51,43 @@ class ConcentrationPage(Screen):
         return any(any(symb1 != symb2 for symb1, symb2 in zip(a, b))
                    for a, b in zip(self.grouped_elements, new_elements))
 
-    def on_pre_enter(self):
-        elem_str = self.ids.elementInput.text
-        grouped_basis = self.ids.groupedBasisInput.text
-        try:
-            if grouped_basis != '':
-                self.grouped_basis = \
-                    parse_grouped_basis_elements(grouped_basis)
+    # def on_pre_enter(self):
+    #     elem_str = self.ids.elementInput.text
+    #     grouped_basis = self.ids.groupedBasisInput.text
+    #     try:
+    #         if grouped_basis != '':
+    #             self.grouped_basis = \
+    #                 parse_grouped_basis_elements(grouped_basis)
 
-            elements = parse_elements(elem_str)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
-            return
-        new_elements = self._group_elements(elements, self.grouped_basis)
+    #         elements = parse_elements(elem_str)
+    #     except Exception as exc:
+    #         self.ids.status.text = str(exc)
+    #         return
+    #     new_elements = self._group_elements(elements, self.grouped_basis)
 
-        if self._elements_changed(new_elements):
-            for child in self.ids.mainConcLayout.children[:]:
-                if child.id is None:
-                    continue
-                if child.id.startswith('cnst'):
-                    self.ids.mainConcLayout.remove_widget(child)
-                elif child.id == 'elemHeader':
-                    self.ids.mainConcLayout.remove_widget(child)
+    #     if self._elements_changed(new_elements):
+    #         for child in self.ids.mainConcLayout.children[:]:
+    #             if child.id is None:
+    #                 continue
+    #             if child.id.startswith('cnst'):
+    #                 self.ids.mainConcLayout.remove_widget(child)
+    #             elif child.id == 'elemHeader':
+    #                 self.ids.mainConcLayout.remove_widget(child)
 
-            self.grouped_elements = new_elements
-            self.elements = elements
+    #         self.grouped_elements = new_elements
+    #         self.elements = elements
 
-            layout = StackLayout(id='elemHeader', size_hint=[1, 0.05])
-            width = 1.0 / float(self.num_conc_vars + 3)
+    #         layout = StackLayout(id='elemHeader', size_hint=[1, 0.05])
+    #         width = 1.0 / float(self.num_conc_vars + 3)
 
-            for item in self.grouped_elements:
-                for sym in item:
-                    layout.add_widget(Label(text=sym, size_hint=[width, 1]))
+    #         for item in self.grouped_elements:
+    #             for sym in item:
+    #                 layout.add_widget(Label(text=sym, size_hint=[width, 1]))
 
-            layout.add_widget(Label(text='Type', size_hint=[width, 1]))
-            layout.add_widget(Label(text='Rhs', size_hint=[width, 1]))
-            layout.add_widget(Label(text='Remove', size_hint=[width, 1]))
-            self.ids.mainConcLayout.add_widget(layout)
+    #         layout.add_widget(Label(text='Type', size_hint=[width, 1]))
+    #         layout.add_widget(Label(text='Rhs', size_hint=[width, 1]))
+    #         layout.add_widget(Label(text='Remove', size_hint=[width, 1]))
+    #         self.ids.mainConcLayout.add_widget(layout)
 
     def _group_elements(self, elements, grouped_basis):
         if grouped_basis is None:
@@ -343,7 +343,7 @@ class ConcentrationPage(Screen):
     def set_Elements_GroupedBasis(self, elements, grouped_basis):
         self.ids.elementInput.text = elements
         self.ids.groupedBasisInput.text = grouped_basis
-        self.set_Elements_GroupedBasis()
+        self.apply_Elements_GroupedBasis()
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
         self.on_pre_enter()
