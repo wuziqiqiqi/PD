@@ -137,6 +137,15 @@ class ConcentrationPage(Screen):
                     rhs_lb.append(rhs)
         return A_lb, rhs_lb, A_eq, rhs_eq
 
+    def _clear_constraints(self):
+        for child in self.ids.mainConcLayout.children[:]:
+            if child.id is None:
+                continue
+            if child.id.startswith('cnst'):
+                self.ids.mainConcLayout.remove_widget(child)
+            elif child.id == 'elemHeader':
+                self.ids.mainConcLayout.remove_widget(child)
+
     def _extract_row(self, widget):
         row = []
         ids = []
@@ -183,13 +192,7 @@ class ConcentrationPage(Screen):
         new_elements = self._group_elements(elements, self.grouped_basis)
 
         if self._elements_changed(new_elements):
-            for child in self.ids.mainConcLayout.children[:]:
-                if child.id is None:
-                    continue
-                if child.id.startswith('cnst'):
-                    self.ids.mainConcLayout.remove_widget(child)
-                elif child.id == 'elemHeader':
-                    self.ids.mainConcLayout.remove_widget(child)
+            self._clear_constraints()
 
             self.grouped_elements = new_elements
             self.elements = elements
@@ -319,11 +322,7 @@ class ConcentrationPage(Screen):
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
         # remove constraints if there are any
-        for child in self.ids.mainConcLayout.children:
-            if child.id is None:
-                    continue
-            if child.id.startswith('cnst'):
-                self.remove_constraint(child)
+        self._clear_constraints()
 
         for i in range(len(A_lb)):
             layout = self.add_constraint()
