@@ -10,7 +10,7 @@ from clease.gui.util import parse_cell, parse_coordinate_basis
 import json
 
 
-class InputPage(Screen):
+class SettingsPage(Screen):
     cebulk_input_backup = {
         'crystStructSpinner': ''
     }
@@ -42,7 +42,7 @@ class InputPage(Screen):
             with open(filename[0], 'r') as infile:
                 data = json.load(infile)
 
-            # variables for "Input" screen
+            # variables for "Settings" screen
             self.ids.typeSpinner.text = data['type']
             if data['basis_function'] == 'vandewalle':
                 self.ids.bfSpinner.text = 'van de Walle'

@@ -216,9 +216,9 @@ class ConcentrationPage(Screen):
             from clease import Concentration
             A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
 
-            input_page = self.manager.get_screen("Input")
+            input_page = self.manager.get_screen("Settings")
             if input_page.check_user_input() != 0:
-                self.ids.status.text = 'Error in input. Check the Input page.'
+                self.ids.status.text = 'Error in input. Check the Settings page.'
                 return
 
             inputPage = input_page.to_dict()

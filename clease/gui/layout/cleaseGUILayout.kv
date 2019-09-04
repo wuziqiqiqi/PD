@@ -7,7 +7,7 @@
 #:include gaEditor.kv
 #: set height 0.05
 
-<InputPage>:
+<SettingsPage>:
     StackLayout:
 
         Button:
@@ -19,11 +19,11 @@
                 root.manager.transition.direction = 'right'
 
         Button:
-            id: toInput
+            id: toSettings
             size_hint: [0.25, height]
-            text: 'Input'
+            text: 'Settings'
             on_release:
-                root.manager.current = 'Input'
+                root.manager.current = 'Settings'
 
         Button:
             id: toNewStruct
