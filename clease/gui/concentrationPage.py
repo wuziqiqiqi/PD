@@ -11,6 +11,7 @@ from threading import Thread
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 from clease.gui.util import parse_size
+import traceback
 
 
 class SettingsInitializer(object):
@@ -29,8 +30,10 @@ class SettingsInitializer(object):
                 self.app.settings = CECrystal(**self.kwargs)
             self.status.text = 'Database initialized'
         except AssertionError as exc:
+            traceback.print_exc()
             self.status.text = "AssertError during initialization " + str(exc)
         except Exception as exc:
+            traceback.print_exc()
             self.status.text = str(exc)
 
 
@@ -104,6 +107,7 @@ class ConcentrationPage(Screen):
                         try:
                             _ = float(child.text)
                         except Exception:
+                            traceback.print_exc()
                             msg = "All constraints need to be float"
                             self.ids.status.text = msg
                             return 1
@@ -173,6 +177,7 @@ class ConcentrationPage(Screen):
 
             elements = parse_elements(elem_str)
         except Exception as exc:
+            traceback.print_exc()
             self.ids.status.text = str(exc)
             return
         new_elements = self._group_elements(elements, self.grouped_basis)
@@ -293,6 +298,7 @@ class ConcentrationPage(Screen):
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
         except Exception as exc:
+            traceback.print_exc()
             self.ids.status.text = str(exc)
             return
 
@@ -312,7 +318,8 @@ class ConcentrationPage(Screen):
         self.apply_Elements_GroupedBasis()
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
-        # self.on_pre_enter()
+        # remove constraints if there are any
+
 
         for i in range(len(A_lb)):
             layout = self.add_constraint()
