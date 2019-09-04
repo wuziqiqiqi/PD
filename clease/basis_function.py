@@ -91,8 +91,13 @@ class Sanchez(BasisFunction):
             [0.0, 0.0, 0.0, 0.0, np.sqrt(7. / 2) / 20]])
 
         col = self.num_unique_elements - 2
-        bf_list = []
+        if col > 5:
+            msg = "Sanchez correlation function scheme only supports up to 6 "
+            msg += "elements. \nPlease change to another correlation function "
+            msg += "scheme."
+            raise RuntimeError(msg)
 
+        bf_list = []
         bf = {}
         for key, value in self.spin_dict.items():
             bf[key] = coeff_d[0][col] * value
