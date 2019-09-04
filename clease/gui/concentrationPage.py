@@ -319,7 +319,11 @@ class ConcentrationPage(Screen):
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
         # remove constraints if there are any
-
+        for child in self.ids.mainConcLayout.children:
+            if child.id is None:
+                    continue
+            if child.id.startswith('cnst'):
+                self.remove_constraint(child)
 
         for i in range(len(A_lb)):
             layout = self.add_constraint()
