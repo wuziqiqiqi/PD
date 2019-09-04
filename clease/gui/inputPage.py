@@ -44,7 +44,10 @@ class InputPage(Screen):
 
             # variables for "Input" screen
             self.ids.typeSpinner.text = data['type']
-            self.ids.bfSpinner.text = data['basis_function']
+            if data['basis_function'] == 'vandewalle':
+                self.ids.bfSpinner.text = 'van de Walle'
+            else:
+                self.ids.bfSpinner.text = data['basis_function']
             self.ids.clusterSize.text = data['cluster_size']
             self.ids.clusterDia.text = data['max_cluster_dia']
             self.db_name = data['db_name']
@@ -96,8 +99,12 @@ class InputPage(Screen):
         self._pop_up.open()
 
     def to_dict(self):
+        if self.ids.bfSpinner.text == 'van de Walle':
+            basis_function = 'vandewalle'
+        else:
+            basis_function = self.ids.bfSpinner.text
         return {'type': self.ids.typeSpinner.text,
-                'basis_function': self.ids.bfSpinner.text,
+                'basis_function': basis_function,
                 'cluster_size': self.ids.clusterSize.text,
                 'max_cluster_dia': self.ids.clusterDia.text,
                 'db_name': self.ids.dbNameInput.text,
