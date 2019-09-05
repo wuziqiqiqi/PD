@@ -42,121 +42,172 @@
                 root.manager.transition.direction = 'left'
 
 
-
-
-
-        Label:
+        StackLayout:
             size_hint: [1, 0.25*height]
-            text: ''
-
-        Label:
-            size_hint: [0.125, height]
-            id: ceType
-            text: 'Type'
-
-        Label:
-            size_hint: [0.125, height]
-            id: bfLabel
-            text: 'Basis func.'
-
-        Label:
-            size_hint: [0.125, height]
-            id: maxClusterSizeLabel
-            text: 'Max cl. size'
-
-        Label:
-            size_hint: [0.125, height]
-            id: maxClusterDiaLabel
-            text: 'Max cl. dia (ang)'
-
-        Label:
-            size_hint: [0.125, height]
-            id: sizeSpecificationType
-            text: 'Size mode'
-
-        Label:
-            size_hint: [0.125, height]
-            id: sizeLabel
-            text: 'Cell size'
-
-        Label:
-            size_hint: [0.125, height]
-            id: supercellFactLabel
-            text: 'SC factor'
-
-        Label:
-            size_hint: [0.125, height]
-            id: skewnessLabel
-            text: 'Skew factor'
-
-        Spinner:
-            size_hint: [0.125, height]
-            id: typeSpinner
-            text: 'CEBulk'
-            values: 'CEBulk', 'CECrystal'
-            on_text: root.update_input_section(self.text)
-
-        Spinner:
-            size_hint: [0.125, height]
-            id: bfSpinner
-            text: 'Sanchez'
-            values: 'Sanchez', 'van de Walle', 'Sluiter'
-
-        TextInput:
-            size_hint: [0.125, height]
-            id: clusterSize
-            text: '4'
-            input_filter: 'int'
-
-        TextInput:
-            size_hint: [0.125, height]
-            id: clusterDia
-            text: '5.0'
-
-        Spinner:
-            size_hint: [0.125, height]
-            id: sizeSpinner
-            text: 'Fixed'
-            values: 'Fixed', 'Mult. factor'
-            on_text: root.update_size_section(self.text)
-
-        TextInput:
-            size_hint: [0.125, height]
-            id: sizeInput
-            text: '3, 3, 3'
-
-        TextInput:
-            size_hint: [0.125, height]
-            id: scFactorInput
-            text: '20'
-            input_filter: 'int'
-
-        TextInput:
-            size_hint: [0.125, height]
-            id: skewFactorInput
-            text: '4'
-            input_filter: 'int'
 
 
-        Label:
-            size_hint: [1, 0.5*height]
-            text: ''
+        StackLayout:
+            size_hint: [1, height]
 
-        Label:
-            size_hint: [0.3, height]
-            id: dbChooser
-            text: 'Structure database'
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
 
-        TextInput:
-            size_hint: [0.5, height]
-            id: dbNameInput
-            text: ''
+            Label:
+                size_hint: [0.225, 1]
+                id: ceType
+                text: 'Type'
 
-        Button:
-            size_hint: [0.2, height]
-            id: loadDbButton
-            text: 'Load'
-            on_release: root.show_load_dialog()
+            Label:
+                size_hint: [0.225, 1]
+                id: bfLabel
+                text: 'Basis func.'
+
+            Label:
+                size_hint: [0.225, 1]
+                id: maxClusterSizeLabel
+                text: 'Max cl. size'
+
+            Label:
+                size_hint: [0.225, 1]
+                id: maxClusterDiaLabel
+                text: 'Max cl. dia (ang)'
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+        StackLayout:
+            size_hint: [1, height]
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+            Spinner:
+                size_hint: [0.225, 1]
+                id: typeSpinner
+                text: 'CEBulk'
+                values: 'CEBulk', 'CECrystal'
+                on_text: root.update_input_section(self.text)
+
+            Spinner:
+                size_hint: [0.225, 1]
+                id: bfSpinner
+                text: 'Sanchez'
+                values: 'Sanchez', 'van de Walle', 'Sluiter'
+
+            TextInput:
+                size_hint: [0.225, 1]
+                id: clusterSize
+                text: '4'
+                input_filter: 'int'
+
+            TextInput:
+                size_hint: [0.225, 1]
+                id: clusterDia
+                text: '5.0'
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+        StackLayout:
+            size_hint: [1, height]
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+            Label:
+                size_hint: [0.225, 1]
+                id: sizeSpecificationType
+                text: 'Size mode'
+
+            Label:
+                size_hint: [0.225, 1]
+                id: sizeLabel
+                text: 'Cell size'
+
+            Label:
+                size_hint: [0.225, 1]
+                id: supercellFactLabel
+                text: 'SC factor'
+
+            Label:
+                size_hint: [0.225, 1]
+                id: skewnessLabel
+                text: 'Skew factor'
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+        StackLayout:
+            size_hint: [1, height]
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+            Spinner:
+                size_hint: [0.225, 1]
+                id: sizeSpinner
+                text: 'Fixed'
+                values: 'Fixed', 'Mult. factor'
+                on_text: root.update_size_section(self.text)
+
+            TextInput:
+                size_hint: [0.225, 1]
+                id: sizeInput
+                text: '3, 3, 3'
+
+            TextInput:
+                size_hint: [0.225, 1]
+                id: scFactorInput
+                text: '20'
+                input_filter: 'int'
+
+            TextInput:
+                size_hint: [0.225, 1]
+                id: skewFactorInput
+                text: '4'
+                input_filter: 'int'
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+        StackLayout:
+            size_hint: [1, height]
+
+
+        StackLayout:
+            size_hint: [1, height]
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
+
+            Label:
+                size_hint: [0.3, 1]
+                id: dbChooser
+                text: 'Structure database'
+
+            TextInput:
+                size_hint: [0.4, 1]
+                id: dbNameInput
+                text: ''
+
+            Button:
+                size_hint: [0.2, 1]
+                id: loadDbButton
+                text: 'Load'
+                on_release: root.show_load_dialog()
+
+            Label:
+                size_hint: [0.05, 1]
+                text: ''
 
 
 
@@ -268,34 +319,6 @@
             id: spInput
             text: '1'
 
-
-
-
-        # Label:
-        #     size_hint: [1, 0.5*height]
-        #     text: ''
-
-        # Label:
-        #     text: 'Concentration'
-        #     size_hint: [1.0, 1.5*height]
-
-        # Label:
-        #     size_hint: [0.5, height]
-        #     text: 'Elements'
-
-        # Label:
-        #     size_hint: [0.5, height]
-        #     text: 'Grouped basis'
-
-        # TextInput:
-        #     size_hint: [0.5, height]
-        #     id: elementInput
-        #     text: ''
-
-        # TextInput:
-        #     size_hint: [0.5, height]
-        #     id: groupedBasisInput
-        #     text: ''
 
 
 
