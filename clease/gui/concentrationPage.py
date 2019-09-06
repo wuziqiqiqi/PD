@@ -70,8 +70,7 @@ class ConcentrationPage(Screen):
     def add_constraint(self):
         layout = StackLayout(id="cnst{}".format(self.next_constraint_id),
                              size_hint=[1, 0.05])
-        width = 0.9 / float((self.num_conc_vars + 3))
-        layout.add_widget(Label(text='', size_hint=[0.05, 1]))
+        width = 1.0 / float((self.num_conc_vars + 3))
         for i in range(self.num_conc_vars):
             layout.add_widget(TextInput(text='0', multiline=False,
                                         size_hint=[width, 1],
@@ -85,7 +84,6 @@ class ConcentrationPage(Screen):
             Button(text='Remove',
                    size_hint=[width, 1],
                    on_press=lambda _: self.remove_constraint(layout)))
-        layout.add_widget(Label(text='', size_hint=[0.05, 1]))
 
         self.ids.mainConcLayout.add_widget(layout)
         self.next_constraint_id += 1
@@ -137,13 +135,13 @@ class ConcentrationPage(Screen):
                     rhs_lb.append(rhs)
         return A_lb, rhs_lb, A_eq, rhs_eq
 
-    def _clear_constraints(self):
+    def _clear_constraints(self, clear_elemHeader=True):
         for child in self.ids.mainConcLayout.children[:]:
             if child.id is None:
                 continue
             if child.id.startswith('cnst'):
                 self.ids.mainConcLayout.remove_widget(child)
-            elif child.id == 'elemHeader':
+            elif child.id == 'elemHeader' and clear_elemHeader:
                 self.ids.mainConcLayout.remove_widget(child)
 
     def _extract_row(self, widget):
@@ -197,18 +195,17 @@ class ConcentrationPage(Screen):
             self.grouped_elements = new_elements
             self.elements = elements
 
-            layout = StackLayout(id='elemHeader', size_hint=[1, 0.05])
-            width = 0.9 / float(self.num_conc_vars + 3)
-            layout.add_widget(Label(text='', size_hint=[0.05, 1]))
+            layout = StackLayout(id='elemHeader', size_hint=[1, 0.10])
+            width = 1.0 / float(self.num_conc_vars + 3)
+            layout.add_widget(Label(text='', size_hint=[1, 0.5]))
 
             for item in self.grouped_elements:
                 for sym in item:
-                    layout.add_widget(Label(text=sym, size_hint=[width, 1]))
+                    layout.add_widget(Label(text=sym, size_hint=[width, 0.5]))
 
-            layout.add_widget(Label(text='Type', size_hint=[width, 1]))
-            layout.add_widget(Label(text='RHS', size_hint=[width, 1]))
-            layout.add_widget(Label(text='', size_hint=[width, 1]))
-            layout.add_widget(Label(text='', size_hint=[0.05, 1]))
+            layout.add_widget(Label(text='Type', size_hint=[width, 0.5]))
+            layout.add_widget(Label(text='RHS', size_hint=[width, 0.5]))
+            layout.add_widget(Label(text='', size_hint=[width, 0.5]))
             self.ids.mainConcLayout.add_widget(layout)
 
     def init_settings_class(self):
@@ -322,7 +319,7 @@ class ConcentrationPage(Screen):
 
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
         # remove constraints if there are any
-        self._clear_constraints()
+        self._clear_constraints(clear_elemHeader=False)
 
         for i in range(len(A_lb)):
             layout = self.add_constraint()

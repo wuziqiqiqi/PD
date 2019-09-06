@@ -5,7 +5,6 @@
 
 <ConcentrationPage>:
     StackLayout:
-        id: mainConcLayout
         orientation: 'lr-tb'
 
         Button:
@@ -46,7 +45,7 @@
 
             StackLayout:
                 size_hint: [0.90, main_field]
-
+                id: mainConcLayout
 
                 StackLayout:
                     size_hint: [1, 0.25*button_height]
@@ -119,7 +118,7 @@
 
         FloatLayout:
             size_hint: [1, status_height]
-            pos_hint: {"x": 0.0, 'bottom':0.0}
+            pos_hint: {"x": 0.0, 'bottom':0.5}
 
             Label:
                 size_hint: [0.2, 1]
