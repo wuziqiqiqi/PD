@@ -42,7 +42,7 @@
                 size_hint: [0.05, main_field]
 
             BoxLayout:
-                size_hint: [0.60, main_field]
+                size_hint: [0.45, main_field]
                 orientation: 'vertical'
                 BoxLayout:
                     id: energyPlot
@@ -52,8 +52,14 @@
                     id: eciPlot
                     size_hint: [1, 0.5]
 
+            BoxLayout:
+                size_hint: [0.05, main_field]
+
             StackLayout:
-                size_hint: [0.30, main_field]
+                size_hint: [0.40, main_field]
+
+                StackLayout:
+                    size_hint: [1, 0.25*button_height]
 
                 Label:
                     size_hint: [0.2, button_height]
@@ -129,7 +135,7 @@
 
                 Label:
                     size_hint: [0.8, button_height]
-                    text: 'Optimise on main thread'
+                    text: 'Optimize on main thread'
 
                 Spinner:
                     size_hint: [1, button_height]
