@@ -1,28 +1,30 @@
-#: set button_height 0.05
+#: set height 0.05
+#: set status_height 2*height
+#: set main_field 1.0 - height - status_height
+#: set button_height height/main_field
+
 <FitPage>:
     StackLayout:
         Button:
             id: concEditor
             text: 'Concentration'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Concentration'
                 root.manager.transition.direction = 'right'
 
         Button:
             id: toSettings
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             text: 'Settings'
             on_release:
                 root.manager.current = 'Settings'
                 root.manager.transition.direction = 'right'
 
-
-
         Button:
             id: toNewStruct
             text: 'New structures'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'NewStruct'
                 root.manager.transition.direction = 'right'
@@ -30,30 +32,28 @@
         Button:
             id: toFit
             text: 'Fit'
-            size_hint: [0.25, button_height]
+            size_hint: [0.25, height]
             on_release:
                 root.manager.current = 'Fit'
 
 
-        Label:
-            size_hint: [1, button_height]
-            id: status
-            text: 'Idle'
-
         StackLayout:
             BoxLayout:
-                size_hint: [0.7, 0.9]
+                size_hint: [0.05, main_field]
+
+            BoxLayout:
+                size_hint: [0.60, main_field]
                 orientation: 'vertical'
                 BoxLayout:
                     id: energyPlot
-                    size_hint: [0.8, 0.5]
+                    size_hint: [1, 0.5]
 
                 BoxLayout:
                     id: eciPlot
-                    size_hint: [0.8, 0.5]
+                    size_hint: [1, 0.5]
 
             StackLayout:
-                size_hint: [0.3, 0.9]
+                size_hint: [0.30, main_field]
 
                 Label:
                     size_hint: [0.2, button_height]
@@ -171,4 +171,24 @@
                     size_hint: [1, button_height]
                     id: maeLabel
                     text: 'MAE: 0.0 meV/atom'
+
+            BoxLayout:
+                size_hint: [0.05, main_field]
+
+
+
+        FloatLayout:
+            size_hint: [1, status_height]
+            pos_hint: {"x": 0.0, 'bottom':0.0}
+
+            Label:
+                size_hint: [0.2, 1]
+                pos_hint: {"x": 0.0, 'bottom':0.0}
+                text: 'Status:'
+
+            Label:
+                id: status
+                size_hint: [0.8, 1]
+                pos_hint: {"x": 0.2, 'bottom':0.0}
+                text: 'Idle'
 
