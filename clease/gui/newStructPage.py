@@ -25,7 +25,7 @@ class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
-            self.status.text = 'Finished generating random structures...'
+            self.status.text = 'Finished generating random structures.'
         except Exception as exc:
             self.status.text = str(exc)
         self.page.structure_generation_in_progress = False

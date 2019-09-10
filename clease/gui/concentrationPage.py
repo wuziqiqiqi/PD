@@ -5,36 +5,11 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
-from kivy.app import App
-from kivy.clock import Clock
-from threading import Thread
+
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 from clease.gui.util import parse_size
 import traceback
-
-
-class SettingsInitializer(object):
-    """Perform settings initialization on a separate thread."""
-    type = 'CEBulk'
-    kwargs = None
-    app = None
-    status = None
-
-    def initialize(self):
-        from clease import CEBulk, CECrystal
-        try:
-            if self.type == 'CEBulk':
-                self.app.settings = CEBulk(**self.kwargs)
-            elif self.type == 'CECrystal':
-                self.app.settings = CECrystal(**self.kwargs)
-            self.status.text = 'Database initialized'
-        except AssertionError as exc:
-            traceback.print_exc()
-            self.status.text = "AssertError during initialization " + str(exc)
-        except Exception as exc:
-            traceback.print_exc()
-            self.status.text = str(exc)
 
 
 class ConcentrationPage(Screen):
@@ -194,6 +169,7 @@ class ConcentrationPage(Screen):
 
             self.grouped_elements = new_elements
             self.elements = elements
+            print(self.elements, self.grouped_basis)
 
             layout = StackLayout(id='elemHeader', size_hint=[1, 0.10])
             width = 1.0 / float(self.num_conc_vars + 3)
@@ -207,100 +183,6 @@ class ConcentrationPage(Screen):
             layout.add_widget(Label(text='RHS', size_hint=[width, 0.5]))
             layout.add_widget(Label(text='', size_hint=[width, 0.5]))
             self.ids.mainConcLayout.add_widget(layout)
-
-    def init_settings_class(self):
-        try:
-            from clease import Concentration
-            A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
-
-            input_page = self.manager.get_screen("Settings")
-            if input_page.check_user_input() != 0:
-                self.ids.status.text = 'Error in input. Check the Settings page.'
-                return
-
-            inputPage = input_page.to_dict()
-
-            conc = Concentration(basis_elements=self.elements, A_lb=A_lb,
-                                 b_lb=rhs_lb, A_eq=A_eq, b_eq=rhs_eq,
-                                 grouped_basis=self.grouped_basis)
-
-            supercell_factor = int(inputPage['supercell_factor'])
-            skewness_factor = int(inputPage['skewness_factor'])
-            size = None
-
-            if inputPage['cell_size'] == '':
-                size = None
-            else:
-                size = parse_size(inputPage['cell_size'])
-
-            initializer = SettingsInitializer()
-            initializer.app = App.get_running_app()
-            initializer.status = self.ids.status
-
-            if inputPage["type"] == 'CEBulk':
-                if inputPage['aParameter'] == '':
-                    a = None
-                else:
-                    a = float(inputPage['aParameter'])
-
-                if inputPage['cParameter'] == '':
-                    c = None
-                else:
-                    c = float(inputPage['cParameter'])
-
-                if inputPage['uParameter'] == '':
-                    u = None
-                else:
-                    u = float(inputPage['uParameter'])
-                kwargs = dict(
-                    crystalstructure=inputPage['crystalstructure'], a=a,
-                    c=c, u=u,
-                    db_name=inputPage['db_name'], concentration=conc,
-                    max_cluster_dia=float(inputPage['max_cluster_dia']),
-                    max_cluster_size=int(inputPage['cluster_size']),
-                    basis_function=inputPage['basis_function'],
-                    size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor
-                )
-                self.ids.status.text = "Initializing database..."
-                initializer.type = 'CEBulk'
-                initializer.kwargs = kwargs
-                Thread(target=initializer.initialize).start()
-            else:
-                if inputPage['cellpar'] == '':
-                    cellpar = None
-                else:
-                    cellpar = parse_cellpar(inputPage['cellpar'])
-
-                if inputPage['basis'] == '':
-                    basis = None
-                else:
-                    basis = parse_coordinate_basis(inputPage['basis'])
-
-                if inputPage['cell'] == '':
-                    cell = None
-                else:
-                    cell = parse_cell(inputPage['cell'])
-
-                sp = int(inputPage['spacegroup'])
-                self.ids.status.text = "Initialising database..."
-                kwargs = dict(
-                    basis=basis, cellpar=cellpar, cell=cell,
-                    max_cluster_dia=float(inputPage['max_cluster_dia']),
-                    max_cluster_size=int(inputPage['cluster_size']),
-                    basis_function=inputPage['basis_function'],
-                    size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor,
-                    concentration=conc, db_name=inputPage['db_name'],
-                    spacegroup=sp
-                )
-                initializer.type = 'CECrystal'
-                initializer.kwargs = kwargs
-                Thread(target=initializer.initialize).start()
-        except Exception as exc:
-            traceback.print_exc()
-            self.ids.status.text = str(exc)
-            return
 
     def to_dict(self):
         A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
@@ -354,5 +236,3 @@ class ConcentrationPage(Screen):
                 elif child.id == 'comparisonSpinner':
                     child.text = '='
 
-        # Initialize settings class
-        self.init_settings_class()

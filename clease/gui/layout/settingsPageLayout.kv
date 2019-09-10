@@ -61,17 +61,17 @@
                     Label:
                         size_hint: [0.25, 1]
                         id: bfLabel
-                        text: 'Basis func.'
+                        text: 'Basis function'
 
                     Label:
                         size_hint: [0.25, 1]
                         id: maxClusterSizeLabel
-                        text: 'Max cl. size'
+                        text: 'Max cluster size'
 
                     Label:
                         size_hint: [0.25, 1]
                         id: maxClusterDiaLabel
-                        text: 'Max cl. dia (ang)'
+                        text: 'Max cluster dia (Å)'
 
 
                 StackLayout:
@@ -118,7 +118,7 @@
                     Label:
                         size_hint: [0.25, 1]
                         id: supercellFactLabel
-                        text: 'SC factor'
+                        text: 'Supercell factor'
 
                     Label:
                         size_hint: [0.25, 1]
@@ -303,7 +303,29 @@
 
 
                 StackLayout:
+                    size_hint: [1, 0.5*button_height]
+
+
+                StackLayout:
                     size_hint: [1, button_height]
+
+                    Label:
+                        size_hint: [0.35, 1]
+                        text: ''
+                    
+                    Button:
+                        size_hint: [0.3, 1]
+                        id: reconfigureButton
+                        text: 'Apply settings'
+                        on_release: root.apply_update_settings()
+
+                    Label:
+                        size_hint: [0.35, 1]
+                        text: ''
+
+
+                StackLayout:
+                    size_hint: [1, 0.5*button_height]
 
 
                 StackLayout:
@@ -312,7 +334,7 @@
                     Button:
                         size_hint: [0.25, 1]
                         id: reconfigureDBButton
-                        text: 'Reconfigure corr func'
+                        text: 'Reconfigure corr. func.'
 
                     Button:
                         size_hint: [0.25, 1]
