@@ -70,6 +70,9 @@
                     size_hint: [0.6, button_height]
                     id: eciFileInput
                     text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 Button:
                     size_hint: [0.2, button_height]
@@ -86,6 +89,9 @@
                     size_hint: [0.7, button_height]
                     id: dbSelectCondInput
                     text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 Label:
                     size_hint: [0.7, button_height]
@@ -96,6 +102,9 @@
                     id: maxClusterSizeCut
                     text: ''
                     input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 Label:
                     size_hint: [0.7, button_height]
@@ -106,6 +115,9 @@
                     id: maxClusterDiaCut
                     text: ''
                     input_filter: 'float'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 Label:
                     size_hint: [0.7, button_height]
@@ -116,6 +128,9 @@
                     id: kFoldInput
                     text: '10'
                     input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 Label:
                     size_hint: [0.7, button_height]
@@ -126,6 +141,9 @@
                     id: numRepititionsInput
                     text: '1'
                     input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.fit_eci()
 
                 CheckBox:
                     size_hint: [0.2, button_height]
@@ -142,6 +160,7 @@
                     id: fitAlgSpinner
                     text: 'LASSO'
                     values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
+
                 Button:
                     size_hint: [1, button_height]
                     id: fitEditorButton
@@ -153,6 +172,7 @@
                     id: fitButton
                     text: 'Fit ECIs'
                     on_release: root.fit_eci()
+
                 Button:
                     size_hint: [1, button_height]
                     id: saveECIButton
