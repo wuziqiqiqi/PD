@@ -182,7 +182,7 @@ class TestCECrystal(unittest.TestCase):
                 atoms = row.toatoms()
                 cf = corr.get_cf(atoms)
                 for key, value in cf.items():
-                    self.assertAlmostEqual(row["sanchez_cf"][key], value)
+                    self.assertAlmostEqual(row["polynomial_cf"][key], value)
 
         except MaxAttemptReachedError as exc:
             print(str(exc))
@@ -247,7 +247,7 @@ class TestCECrystal(unittest.TestCase):
                 atoms = row.toatoms()
                 cf = corr.get_cf(atoms)
                 for key, value in cf.items():
-                    self.assertAlmostEqual(row["sanchez_cf"][key], value)
+                    self.assertAlmostEqual(row["polynomial_cf"][key], value)
 
         except MaxAttemptReachedError as exc:
             print(str(exc))

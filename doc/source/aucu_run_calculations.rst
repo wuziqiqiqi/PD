@@ -63,7 +63,7 @@ generated using :meth:`generate_initial_pool` method as::
   ...                  db_name="aucu_bulk.db",
   ...                  max_cluster_size=4,
   ...                  max_cluster_dia=[6.0, 5.0, 5.0],
-  ...                  basis_function='sanchez')
+  ...                  basis_function='polynomial')
   >>> ns = NewStructures(setting=setting, generation_number=0,
   ...                    struct_per_gen=10)
   >>> ns.generate_initial_pool()
@@ -97,7 +97,7 @@ the above script with
     ...                  db_name="aucu_bulk.db",
     ...                  max_cluster_size=4,
     ...                  max_cluster_dia=[6.0, 5.0, 5.0],
-    ...                  basis_function='sanchez')
+    ...                  basis_function='polynomial')
     >>> ns = NewStructures(setting=setting, generation_number=0,
     ...                    struct_per_gen=10)
     >>> ns.generate_random_structures()
@@ -119,7 +119,7 @@ new structures to be :math:`3 \times 3 \times 3` supercell by using::
     ...                  db_name="aucu_bulk.db",
     ...                  max_cluster_size=4,
     ...                  max_cluster_dia=[6.0, 5.0, 5.0],
-    ...                  basis_function='sanchez')
+    ...                  basis_function='polynomial')
     >>> ns = NewStructures(setting=setting, generation_number=0,
     ...                    struct_per_gen=10)
     >>>

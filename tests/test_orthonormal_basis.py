@@ -100,9 +100,9 @@ def check_orthonormal(setting):
         assert abs(sum) < tol
 
 
-basis_function = 'sanchez'
+basis_function = 'polynomial'
 
-bfs = ['sanchez', 'vandewalle']
+bfs = ['polynomial', 'trigonometric']
 
 
 class TestOrthonormal(unittest.TestCase):

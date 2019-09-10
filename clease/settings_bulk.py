@@ -55,7 +55,7 @@ class CEBulk(ClusterExpansionSetting):
         (in Å)
 
     basis_function: str
-        One of "sanchez", "vandewalle" or "sluiter"
+        One of "polynomial", "trigonometric" or "binary-linear"
 
     skew_threshold: int
         The maximum acceptable skew level (ratio of max and min diagonals of
@@ -71,7 +71,7 @@ class CEBulk(ClusterExpansionSetting):
                  a=None, c=None, covera=None, u=None,
                  size=None, supercell_factor=None,
                  concentration=None, db_name=None, max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='sanchez',
+                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
                  skew_threshold=4, ignore_background_atoms=False):
 
         # Initialization
@@ -196,7 +196,7 @@ class CECrystal(ClusterExpansionSetting):
         (in Å)
 
     basis_function: str
-        One of "sanchez", "vandewalle" or "sluiter"
+        One of "polynomial", "triogonometric" or "binary-linear"
 
     skew_threshold: int
         The maximum acceptable skew level (ratio of max and min diagonals of
@@ -212,7 +212,7 @@ class CECrystal(ClusterExpansionSetting):
                  cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
                  supercell_factor=None, concentration=None, db_name=None,
                  max_cluster_size=4, max_cluster_dia=[5.0, 5.0, 5.0],
-                 basis_function='sanchez', skew_threshold=4,
+                 basis_function='polynomial', skew_threshold=4,
                  ignore_background_atoms=False):
 
         # Initialization
