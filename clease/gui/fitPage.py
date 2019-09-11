@@ -84,6 +84,8 @@ class FitPage(Screen):
 
     def on_enter(self):
         if not self.graphs_added:
+            matplotlib.rcParams.update({'font.size': 20})
+
             fig = plt.figure()
             fig.patch.set_facecolor(BACKGROUND_COLOR)
             ax = fig.add_subplot(1, 1, 1)
@@ -94,8 +96,9 @@ class FitPage(Screen):
             ax.tick_params(axis='x', colors=FOREGROUND_TEXT_COLOR)
             ax.tick_params(axis='y', colors=FOREGROUND_TEXT_COLOR)
             ax.set_xlabel("DFT energy (eV/atom)")
-            ax.set_ylabel("E_CE - E_DFT (meV/atom)")
+            ax.set_ylabel(r"$E_{CE} - E_{DFT}$ (meV/atom)")
             ax.set_facecolor(BACKGROUND_COLOR)
+            fig.tight_layout()
             self.ids.energyPlot.add_widget(FigureCanvasKivyAgg(fig))
 
             eci_fig = plt.figure()
@@ -108,7 +111,10 @@ class FitPage(Screen):
             ax.tick_params(axis='x', colors=FOREGROUND_TEXT_COLOR)
             ax.tick_params(axis='y', colors=FOREGROUND_TEXT_COLOR)
             ax.set_ylabel("ECI (eV/atom)")
+            ax.set_xlabel("Clusters")
             ax.set_facecolor(BACKGROUND_COLOR)
+            eci_fig.tight_layout()
+
             self.ids.eciPlot.add_widget(FigureCanvasKivyAgg(eci_fig))
 
             self.graphs_added = True
@@ -370,7 +376,7 @@ class FitPage(Screen):
         ax = graph.figure.axes[0]
         ax.clear()
         ax.set_xlabel("DFT energy (eV/atom)")
-        ax.set_ylabel("E_CE - E_DFT (meV/atom)")
+        ax.set_ylabel(r"$E_{CE} - E_{DFT}$ (meV/atom)")
         diff = [(x - y)*1000.0 for x, y in zip(e_ce, e_dft)]
         ax.axhline(0.0, ls='--')
         ax.plot(e_dft, diff, 'o', mfc='none')
@@ -381,6 +387,7 @@ class FitPage(Screen):
         ax = graph.figure.axes[0]
         ax.clear()
         ax.set_ylabel("ECI (eV/atom)")
+        ax.set_xlabel("Clusters")
         ax.axhline(y=0.0, ls='--')
         eci_by_size = {}
 

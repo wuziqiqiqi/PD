@@ -5,36 +5,11 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
-from kivy.app import App
-from kivy.clock import Clock
-from threading import Thread
+
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 from clease.gui.util import parse_size
-
-
-class SettingsInitialiser(object):
-    """
-    Class to be able to perform settings initialisation on a separate
-    thread.
-    """
-    type = 'CEBulk'
-    kwargs = None
-    app = None
-    status = None
-
-    def initialise(self):
-        from clease import CEBulk, CECrystal
-        try:
-            if self.type == 'CEBulk':
-                self.app.settings = CEBulk(**self.kwargs)
-            elif self.type == 'CECrystal':
-                self.app.settings = CECrystal(**self.kwargs)
-            self.status.text = 'Database initialised'
-        except AssertionError as exc:
-            self.status.text = "AssertError during initialization " + str(exc)
-        except Exception as exc:
-            self.status.text = str(exc)
+import traceback
 
 
 class ConcentrationPage(Screen):
@@ -54,46 +29,6 @@ class ConcentrationPage(Screen):
         return any(any(symb1 != symb2 for symb1, symb2 in zip(a, b))
                    for a, b in zip(self.grouped_elements, new_elements))
 
-    def on_pre_enter(self):
-        elem_str = self.manager.get_screen("Input").ids.elementInput.text
-        grouped_basis = \
-            self.manager.get_screen("Input").ids.groupedBasisInput.text
-        try:
-            if grouped_basis != '':
-                self.grouped_basis = \
-                    parse_grouped_basis_elements(grouped_basis)
-
-            elements = parse_elements(elem_str)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
-            return
-        new_elements = self._group_elements(elements, self.grouped_basis)
-
-        if self._elements_changed(new_elements):
-            for child in self.ids.mainConcLayout.children[:]:
-                if child.id is None:
-                    continue
-                if child.id.startswith('cnst'):
-                    self.ids.mainConcLayout.remove_widget(child)
-                elif child.id == 'elemHeader':
-                    self.ids.mainConcLayout.remove_widget(child)
-
-            self.grouped_elements = new_elements
-            self.elements = elements
-
-
-            layout = StackLayout(id='elemHeader',size_hint=[1, 0.05])
-            width = 1.0 / float(self.num_conc_vars + 3)
-
-            for item in self.grouped_elements:
-                for sym in item:
-                    layout.add_widget(Label(text=sym, size_hint=[width, 1]))
-
-            layout.add_widget(Label(text='Type',size_hint=[width, 1]))
-            layout.add_widget(Label(text='Rhs',size_hint=[width, 1]))
-            layout.add_widget(Label(text='Remove',size_hint=[width, 1]))
-            self.ids.mainConcLayout.add_widget(layout)
-
     def _group_elements(self, elements, grouped_basis):
         if grouped_basis is None:
             return elements
@@ -110,7 +45,7 @@ class ConcentrationPage(Screen):
     def add_constraint(self):
         layout = StackLayout(id="cnst{}".format(self.next_constraint_id),
                              size_hint=[1, 0.05])
-        width = 1.0 / float(self.num_conc_vars + 3)
+        width = 1.0 / float((self.num_conc_vars + 3))
         for i in range(self.num_conc_vars):
             layout.add_widget(TextInput(text='0', multiline=False,
                                         size_hint=[width, 1],
@@ -118,7 +53,8 @@ class ConcentrationPage(Screen):
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
                                   id='comparisonSpinner',
                                   size_hint=[width, 1]))
-        layout.add_widget(TextInput(text='0', size_hint=[width, 1],                                                 multiline=False, id='rhs'))
+        layout.add_widget(TextInput(text='0', size_hint=[width, 1],
+                                    multiline=False, id='rhs'))
         layout.add_widget(
             Button(text='Remove',
                    size_hint=[width, 1],
@@ -126,8 +62,6 @@ class ConcentrationPage(Screen):
 
         self.ids.mainConcLayout.add_widget(layout)
         self.next_constraint_id += 1
-        print('yes, {}'.format(self.next_constraint_id))
-        print(layout)
         return layout
 
     def remove_constraint(self, widget):
@@ -146,6 +80,7 @@ class ConcentrationPage(Screen):
                         try:
                             _ = float(child.text)
                         except Exception:
+                            traceback.print_exc()
                             msg = "All constraints need to be float"
                             self.ids.status.text = msg
                             return 1
@@ -174,6 +109,15 @@ class ConcentrationPage(Screen):
                     A_lb.append(matrix_row)
                     rhs_lb.append(rhs)
         return A_lb, rhs_lb, A_eq, rhs_eq
+
+    def _clear_constraints(self, clear_elemHeader=True):
+        for child in self.ids.mainConcLayout.children[:]:
+            if child.id is None:
+                continue
+            if child.id.startswith('cnst'):
+                self.ids.mainConcLayout.remove_widget(child)
+            elif child.id == 'elemHeader' and clear_elemHeader:
+                self.ids.mainConcLayout.remove_widget(child)
 
     def _extract_row(self, widget):
         row = []
@@ -205,111 +149,59 @@ class ConcentrationPage(Screen):
         row = [z[1] for z in zipped]
         return row, rhs, equality
 
-    def init_settings_class(self):
+    def apply_Elements_GroupedBasis(self):
+        elem_str = self.ids.elementInput.text
+        grouped_basis = self.ids.groupedBasisInput.text
         try:
-            from clease import Concentration
-            A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
+            if grouped_basis != '':
+                self.grouped_basis = \
+                    parse_grouped_basis_elements(grouped_basis)
 
-            input_page = self.manager.get_screen("Input")
-            if input_page.check_user_input() != 0:
-                self.ids.status.text = 'Error in input. Check the Input page.'
-                return
-
-            inputPage = input_page.to_dict()
-
-            conc = Concentration(basis_elements=self.elements, A_lb=A_lb,
-                                 b_lb=rhs_lb, A_eq=A_eq, b_eq=rhs_eq,
-                                 grouped_basis=self.grouped_basis)
-
-            supercell_factor = int(inputPage['supercell_factor'])
-            skewness_factor = int(inputPage['skewness_factor'])
-            size = None
-
-            if inputPage['cell_size'] == '':
-                size = None
-            else:
-                size = parse_size(inputPage['cell_size'])
-
-            initialiser = SettingsInitialiser()
-            initialiser.app = App.get_running_app()
-            initialiser.status = self.ids.status
-
-            if inputPage["type"] == 'CEBulk':
-                if inputPage['aParameter'] == '':
-                    a = None
-                else:
-                    a = float(inputPage['aParameter'])
-
-                if inputPage['cParameter'] == '':
-                    c = None
-                else:
-                    c = float(inputPage['cParameter'])
-
-                if inputPage['uParameter'] == '':
-                    u = None
-                else:
-                    u = float(inputPage['uParameter'])
-                kwargs = dict(
-                    crystalstructure=inputPage['crystalstructure'], a=a,
-                    c=c, u=u,
-                    db_name=inputPage['db_name'], concentration=conc,
-                    max_cluster_dia=float(inputPage['max_cluster_dia']),
-                    max_cluster_size=int(inputPage['cluster_size']),
-                    basis_function=inputPage['basis_function'],
-                    size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor
-                )
-                self.ids.status.text = "Initialising database..."
-                initialiser.type = 'CEBulk'
-                initialiser.kwargs = kwargs
-                Thread(target=initialiser.initialise).start()
-            else:
-                if inputPage['cellpar'] == '':
-                    cellpar = None
-                else:
-                    cellpar = parse_cellpar(inputPage['cellpar'])
-
-                if inputPage['basis'] == '':
-                    basis = None
-                else:
-                    basis = parse_coordinate_basis(inputPage['basis'])
-
-                if inputPage['cell'] == '':
-                    cell = None
-                else:
-                    cell = parse_cell(inputPage['cell'])
-
-                sp = int(inputPage['spacegroup'])
-                self.ids.status.text = "Initialising database..."
-                kwargs = dict(
-                    basis=basis, cellpar=cellpar, cell=cell,
-                    max_cluster_dia=float(inputPage['max_cluster_dia']),
-                    max_cluster_size=int(inputPage['cluster_size']),
-                    basis_function=inputPage['basis_function'],
-                    size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor,
-                    concentration=conc, db_name=inputPage['db_name'],
-                    spacegroup=sp
-                )
-                initialiser.type = 'CECrystal'
-                initialiser.kwargs = kwargs
-                Thread(target=initialiser.initialise).start()
+            elements = parse_elements(elem_str)
         except Exception as exc:
+            traceback.print_exc()
             self.ids.status.text = str(exc)
             return
+        new_elements = self._group_elements(elements, self.grouped_basis)
+
+        if self._elements_changed(new_elements):
+            self._clear_constraints()
+
+            self.grouped_elements = new_elements
+            self.elements = elements
+            print(self.elements, self.grouped_basis)
+
+            layout = StackLayout(id='elemHeader', size_hint=[1, 0.10])
+            width = 1.0 / float(self.num_conc_vars + 3)
+            layout.add_widget(Label(text='', size_hint=[1, 0.5]))
+
+            for item in self.grouped_elements:
+                for sym in item:
+                    layout.add_widget(Label(text=sym, size_hint=[width, 0.5]))
+
+            layout.add_widget(Label(text='Type', size_hint=[width, 0.5]))
+            layout.add_widget(Label(text='RHS', size_hint=[width, 0.5]))
+            layout.add_widget(Label(text='', size_hint=[width, 0.5]))
+            self.ids.mainConcLayout.add_widget(layout)
 
     def to_dict(self):
         A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
-        data = {
-            'A_lb': A_lb,
-            'rhs_lb': rhs_lb,
-            'A_eq': A_eq,
-            'rhs_eq': rhs_eq
-        }
+        data = {'elements': self.ids.elementInput.text,
+                'grouped_basis': self.ids.groupedBasisInput.text,
+                'A_lb': A_lb,
+                'rhs_lb': rhs_lb,
+                'A_eq': A_eq,
+                'rhs_eq': rhs_eq}
         return data
 
+    def set_Elements_GroupedBasis(self, elements, grouped_basis):
+        self.ids.elementInput.text = elements
+        self.ids.groupedBasisInput.text = grouped_basis
+        self.apply_Elements_GroupedBasis()
+
     def load_from_matrices(self, A_lb, rhs_lb, A_eq, rhs_eq):
-        self.on_pre_enter()
+        # remove constraints if there are any
+        self._clear_constraints(clear_elemHeader=False)
 
         for i in range(len(A_lb)):
             layout = self.add_constraint()
@@ -320,7 +212,7 @@ class ConcentrationPage(Screen):
                     continue
                 if child.id.startswith('conc'):
                     col = int(child.id[-1])
-                    child.text = str(A_lb[i][col])
+                    child.text = str(abs(A_lb[i][col]))
                 elif child.id == 'rhs':
                     child.text = str(abs(rhs_lb[i]))
                 elif child.id == 'comparisonSpinner':
@@ -344,5 +236,3 @@ class ConcentrationPage(Screen):
                 elif child.id == 'comparisonSpinner':
                     child.text = '='
 
-        # Initialise settings class
-        self.init_settings_class()

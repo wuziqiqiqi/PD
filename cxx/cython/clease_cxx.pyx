@@ -1,6 +1,6 @@
 # distutils: language = c++
 # cython: c_string_type=str, c_string_encoding=ascii
-cimport numpy as np  # Initialise the Numpy API
+cimport numpy as np  # Initialize the Numpy API
 np.import_array()
 include "pyce_updater.pyx"
 

@@ -80,13 +80,13 @@ class Clease(Calculator):
         self.symmetry_group = None
         self.is_backround_index = None
 
-        # C++ updater initialised when atoms are set
+        # C++ updater initialized when atoms are set
         self.updater = None
 
     def _set_norm_factors(self):
         """Set normalization factor for each cluster.
 
-        The normalization factor only kicks in when the cell is too small and 
+        The normalization factor only kicks in when the cell is too small and
         thus, include self-interactions. This methods corrects the impact of
         self-interactions.
         """
@@ -99,7 +99,7 @@ class Clease(Calculator):
             fig_keys = list(set(cluster.get_all_figure_keys()))
             num_occ = {}
             for key in fig_keys:
-                num_occ[key] = cluster_list.num_occ_figure(key, 
+                num_occ[key] = cluster_list.num_occ_figure(key,
                     cluster.name, symm_group, self.setting.trans_matrix)
             num_fig_occ = cluster.num_fig_occurences
             norm_factors = {}
@@ -108,7 +108,7 @@ class Clease(Calculator):
                 num_unique = len(set(key.split("-")))
                 norm_factors[key] = \
                     float(tot_num)/(num_unique*num_fig_occ[key])
-            
+
             norm_factor_list = []
             for fig in cluster.indices:
                 key = cluster.get_figure_key(fig)

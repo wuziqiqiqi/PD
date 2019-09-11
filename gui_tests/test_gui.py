@@ -3,13 +3,13 @@ import unittest
 import time
 from kivy.clock import Clock
 from functools import partial
-from input_page_tests import InputPageTests
+from settings_page_tests import SettingsPageTests
 from concentraton_page_tests import ConcentrationPageTest
 from new_struct_page_test import NewStructPageTest
 from fit_page_tests import FitPageTests
 
 
-class TestInputPage(unittest.TestCase):
+class TestSettingsPage(unittest.TestCase):
     framecount = 0
     interval = 0.0001
 
@@ -23,7 +23,7 @@ class TestInputPage(unittest.TestCase):
         """
         Clock.schedule_interval(self.pause, self.interval)
 
-        input_page_tests = InputPageTests()
+        input_page_tests = SettingsPageTests()
         input_page_tests.run(app)
 
         conc_page_test = ConcentrationPageTest()

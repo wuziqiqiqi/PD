@@ -25,7 +25,7 @@ class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
-            self.status.text = 'Finished generating random structures...'
+            self.status.text = 'Finished generating random structures.'
         except Exception as exc:
             self.status.text = str(exc)
         self.page.structure_generation_in_progress = False
@@ -163,7 +163,7 @@ class NewStructPage(Screen):
         from ase.io import read
 
         if self.structure_generation_in_progress:
-            # Don't allow user to initialise many threads
+            # Don't allow user to initialize many threads
             # by successively clicking on the generate button
             return
 

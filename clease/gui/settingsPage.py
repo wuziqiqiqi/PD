@@ -1,6 +1,8 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.utils import get_color_from_hex
+from kivy.app import App
+from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
@@ -8,12 +10,34 @@ from clease.gui.util import parse_max_cluster_dia, parse_grouped_basis_elements
 from clease.gui.util import parse_size, parse_elements, parse_cellpar
 from clease.gui.util import parse_cell, parse_coordinate_basis
 import json
+import traceback
 
 
-class InputPage(Screen):
-    cebulk_input_backup = {
-        'crystStructSpinner': ''
-    }
+class SettingsInitializer(object):
+    """Perform settings initialization on a separate thread."""
+    type = 'CEBulk'
+    kwargs = None
+    app = None
+    status = None
+
+    def initialize(self):
+        from clease import CEBulk, CECrystal
+        try:
+            if self.type == 'CEBulk':
+                self.app.settings = CEBulk(**self.kwargs)
+            elif self.type == 'CECrystal':
+                self.app.settings = CECrystal(**self.kwargs)
+            self.status.text = 'Database initialized'
+        except AssertionError as exc:
+            traceback.print_exc()
+            self.status.text = "AssertError during initialization " + str(exc)
+        except Exception as exc:
+            traceback.print_exc()
+            self.status.text = str(exc)
+
+
+class SettingsPage(Screen):
+    cebulk_input_backup = {'crystStructSpinner': ''}
     current_session_file = None
     _pop_up = None
 
@@ -42,8 +66,12 @@ class InputPage(Screen):
             with open(filename[0], 'r') as infile:
                 data = json.load(infile)
 
+            # variables for "Settings" screen
             self.ids.typeSpinner.text = data['type']
-            self.ids.bfSpinner.text = data['basis_function']
+            if data['basis_function'] == 'vandewalle':
+                self.ids.bfSpinner.text = 'van de Walle'
+            else:
+                self.ids.bfSpinner.text = data['basis_function']
             self.ids.clusterSize.text = data['cluster_size']
             self.ids.clusterDia.text = data['max_cluster_dia']
             self.db_name = data['db_name']
@@ -54,27 +82,34 @@ class InputPage(Screen):
             self.ids.uParameterInput.text = data['uParameter']
             self.ids.cellParInput.text = data['cellpar']
             self.ids.cellInput.text = data['cell']
-            self.ids.elementInput.text = data['elements']
             self.ids.crdBasisInput.text = data['basis']
             self.ids.spInput.text = data['spacegroup']
             self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
             self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
             self.ids.scFactorInput.text = data.get('supercell_factor', '20')
             self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
-            self.ids.groupedBasisInput.text = data.get('grouped_basis', '')
 
-            self.ids.status.text = "Loaded session from {}".format(path)
+            # variables for "Concentration" screen
+            conc_page = self.manager.get_screen('Concentration')
+            elements = data['conc']['elements']
+            grouped_basis = data['conc']['grouped_basis']
+            conc_page.set_Elements_GroupedBasis(elements, grouped_basis)
 
-            A_lb = data['constraint']['A_lb']
-            rhs_lb = data['constraint']['rhs_lb']
-            A_eq = data['constraint']['A_eq']
-            rhs_eq = data['constraint']['rhs_eq']
-            self.manager.get_screen('Concentration').load_from_matrices(
-                A_lb, rhs_lb, A_eq, rhs_eq)
+            A_lb = data['conc']['A_lb']
+            rhs_lb = data['conc']['rhs_lb']
+            A_eq = data['conc']['A_eq']
+            rhs_eq = data['conc']['rhs_eq']
+            conc_page.load_from_matrices(A_lb, rhs_lb, A_eq, rhs_eq)
+            self.apply_update_settings()
+
             self.manager.get_screen('NewStruct').from_dict(
                 data.get('new_struct', {}))
             self.manager.get_screen('Fit').from_dict(data.get('fit_page', {}))
             self.current_session_file = filename[0]
+
+            self.ids.status.text = \
+                "Loaded session from {}".format(current_session_file)
+
         except Exception as e:
             self.ids.status.text = "An error occured during load: " + str(e)
         self.dismiss_popup()
@@ -90,27 +125,27 @@ class InputPage(Screen):
         self._pop_up.open()
 
     def to_dict(self):
-        return {
-            'type': self.ids.typeSpinner.text,
-            'basis_function': self.ids.bfSpinner.text,
-            'cluster_size': self.ids.clusterSize.text,
-            'max_cluster_dia': self.ids.clusterDia.text,
-            'db_name': self.ids.dbNameInput.text,
-            'crystalstructure': self.ids.crystStructSpinner.text,
-            'aParameter': self.ids.aParameterInput.text,
-            'cParameter': self.ids.cParameterInput.text,
-            'uParameter': self.ids.uParameterInput.text,
-            'cellpar': self.ids.cellParInput.text,
-            'cell': self.ids.cellInput.text,
-            'elements': self.ids.elementInput.text,
-            'basis': self.ids.crdBasisInput.text,
-            'spacegroup': self.ids.spInput.text,
-            'cell_size': self.ids.sizeInput.text,
-            'cell_mode_spinner': self.ids.sizeSpinner.text,
-            'supercell_factor': self.ids.scFactorInput.text,
-            'skewness_factor': self.ids.skewFactorInput.text,
-            'grouped_basis': self.ids.groupedBasisInput.text
-        }
+        if self.ids.bfSpinner.text == 'van de Walle':
+            basis_function = 'vandewalle'
+        else:
+            basis_function = self.ids.bfSpinner.text
+        return {'type': self.ids.typeSpinner.text,
+                'basis_function': basis_function,
+                'cluster_size': self.ids.clusterSize.text,
+                'max_cluster_dia': self.ids.clusterDia.text,
+                'db_name': self.ids.dbNameInput.text,
+                'crystalstructure': self.ids.crystStructSpinner.text,
+                'aParameter': self.ids.aParameterInput.text,
+                'cParameter': self.ids.cParameterInput.text,
+                'uParameter': self.ids.uParameterInput.text,
+                'cellpar': self.ids.cellParInput.text,
+                'cell': self.ids.cellInput.text,
+                'basis': self.ids.crdBasisInput.text,
+                'spacegroup': self.ids.spInput.text,
+                'cell_size': self.ids.sizeInput.text,
+                'cell_mode_spinner': self.ids.sizeSpinner.text,
+                'supercell_factor': self.ids.scFactorInput.text,
+                'skewness_factor': self.ids.skewFactorInput.text}
 
     def save_session(self, path, selection, user_filename):
         if self.check_user_input() != 0:
@@ -121,7 +156,7 @@ class InputPage(Screen):
             fname = selection[0]
 
         data = self.to_dict()
-        data['constraint'] = self.manager.get_screen('Concentration').to_dict()
+        data['conc'] = self.manager.get_screen('Concentration').to_dict()
         data['new_struct'] = self.manager.get_screen('NewStruct').to_dict()
         data['fit_page'] = self.manager.get_screen('Fit').to_dict()
 
@@ -216,9 +251,7 @@ class InputPage(Screen):
         self.ids.crdBasisInput.disabled = False
 
     def _check_cebulk_parameters(self):
-        """
-        Check the user input of the CE bulk parameters
-        """
+        """Check the user input of the CE bulk parameters."""
         try:
             _ = float(self.ids.aParameterInput.text)
         except Exception:
@@ -262,7 +295,8 @@ class InputPage(Screen):
         return True
 
     def elem_ok(self):
-        elems = self.ids.elementInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        elems = conc_page.ids.elementInput.text
         try:
             _ = parse_elements(elems)
         except Exception as exc:
@@ -271,7 +305,8 @@ class InputPage(Screen):
         return True
 
     def grouped_basis_ok(self):
-        gr_basis = self.ids.groupedBasisInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        gr_basis = conc_page.ids.groupedBasisInput.text
         try:
             _ = parse_grouped_basis_elements(gr_basis)
         except Exception as exc:
@@ -376,7 +411,8 @@ class InputPage(Screen):
             if error_code != 0:
                 return error_code
 
-        elems = self.ids.elementInput.text
+        conc_page = self.manager.get_screen("Concentration")
+        elems = conc_page.ids.elementInput.text
         if elems == '':
             self.ids.status.text = 'No elements are given'
             return 1
@@ -384,7 +420,7 @@ class InputPage(Screen):
         if not self.elem_ok():
             return 1
 
-        gr_basis = self.ids.groupedBasisInput.text
+        gr_basis = conc_page.ids.groupedBasisInput.text
 
         if gr_basis != '':
             if not self.grouped_basis_ok():
@@ -410,3 +446,104 @@ class InputPage(Screen):
             self.ids.scFactorInput.disabled = False
             self.ids.skewFactorInput.disabled = False
             self.ids.sizeInput.disabled = True
+
+    def apply_update_settings(self):
+        try:
+            from clease import Concentration
+            conc_page = self.manager.get_screen("Concentration")
+            if conc_page.check_user_input() != 0:
+                self.ids.status.text = 'Error in input in Concentration panel.'
+
+            A_lb, rhs_lb, A_eq, rhs_eq = conc_page.get_constraint_matrices()
+            basis_elements = conc_page.elements
+            grouped_basis = conc_page.grouped_basis
+            conc = Concentration(basis_elements=basis_elements,
+                                 A_lb=A_lb, b_lb=rhs_lb,
+                                 A_eq=A_eq, b_eq=rhs_eq,
+                                 grouped_basis=grouped_basis)
+
+            if self.check_user_input() != 0:
+                self.ids.status.text = 'Error in input in Settings panel.'
+                return
+
+            inputPage = self.to_dict()
+            supercell_factor = int(inputPage['supercell_factor'])
+            skewness_factor = int(inputPage['skewness_factor'])
+            size = None
+
+            if inputPage['cell_size'] == '':
+                size = None
+            else:
+                size = parse_size(inputPage['cell_size'])
+
+            initializer = SettingsInitializer()
+            initializer.app = App.get_running_app()
+            initializer.status = self.ids.status
+
+            if inputPage["type"] == 'CEBulk':
+                if inputPage['aParameter'] == '':
+                    a = None
+                else:
+                    a = float(inputPage['aParameter'])
+
+                if inputPage['cParameter'] == '':
+                    c = None
+                else:
+                    c = float(inputPage['cParameter'])
+
+                if inputPage['uParameter'] == '':
+                    u = None
+                else:
+                    u = float(inputPage['uParameter'])
+                kwargs = dict(
+                    crystalstructure=inputPage['crystalstructure'], a=a,
+                    c=c, u=u,
+                    db_name=inputPage['db_name'], concentration=conc,
+                    max_cluster_dia=float(inputPage['max_cluster_dia']),
+                    max_cluster_size=int(inputPage['cluster_size']),
+                    basis_function=inputPage['basis_function'],
+                    size=size, supercell_factor=supercell_factor,
+                    skew_threshold=skewness_factor
+                )
+                self.ids.status.text = "Initializing database..."
+                initializer.type = 'CEBulk'
+                initializer.kwargs = kwargs
+                Thread(target=initializer.initialize).start()
+            else:
+                if inputPage['cellpar'] == '':
+                    cellpar = None
+                else:
+                    cellpar = parse_cellpar(inputPage['cellpar'])
+
+                if inputPage['basis'] == '':
+                    basis = None
+                else:
+                    basis = parse_coordinate_basis(inputPage['basis'])
+
+                if inputPage['cell'] == '':
+                    cell = None
+                else:
+                    cell = parse_cell(inputPage['cell'])
+
+                sp = int(inputPage['spacegroup'])
+                self.ids.status.text = "Initializing database..."
+                kwargs = dict(
+                    basis=basis, cellpar=cellpar, cell=cell,
+                    max_cluster_dia=float(inputPage['max_cluster_dia']),
+                    max_cluster_size=int(inputPage['cluster_size']),
+                    basis_function=inputPage['basis_function'],
+                    size=size, supercell_factor=supercell_factor,
+                    skew_threshold=skewness_factor,
+                    concentration=conc, db_name=inputPage['db_name'],
+                    spacegroup=sp
+                )
+                initializer.type = 'CECrystal'
+                initializer.kwargs = kwargs
+                Thread(target=initializer.initialize).start()
+            
+            # self.ids.status.text = "Idle"
+
+        except Exception as exc:
+            traceback.print_exc()
+            self.ids.status.text = str(exc)
+            return

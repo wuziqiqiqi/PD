@@ -7,7 +7,8 @@ class ConcentrationPageTest(unittest.TestCase):
         screen = app.screen_manager.get_screen('Concentration')
         num_children = len(screen.ids.mainConcLayout.children)
         screen.ids.addConstraintButton.dispatch('on_release')
-        self.assertEqual(len(screen.ids.mainConcLayout.children), num_children+1)
+        self.assertEqual(len(screen.ids.mainConcLayout.children),
+                         num_children + 1)
 
         # Locate the remove button
         for widget in screen.ids.mainConcLayout.children:
@@ -17,17 +18,14 @@ class ConcentrationPageTest(unittest.TestCase):
                 for ch in widget.children:
                     if ch.text == 'Remove':
                         ch.dispatch('on_press')
-        self.assertEqual(len(screen.ids.mainConcLayout.children), num_children)
+        self.assertEqual(len(screen.ids.mainConcLayout.children),
+                         num_children)
 
     def check_matrices(self, app):
-        input_screen = app.screen_manager.get_screen('Input')
-        input_screen.ids.elementInput.text = 'Al, Mg, Si'
-        input_screen.ids.groupedBasisInput.text = ''
-
-        # Navigate to concentration screen
-        input_screen.ids.concEditor.dispatch('on_release')
-
         screen = app.screen_manager.get_screen('Concentration')
+        screen.ids.elementInput.text = 'Al, Mg, Si'
+        screen.ids.groupedBasisInput.text = ''
+        screen.ids.applyElemGroupButton.dispatch('on_release')
 
         # Constraint counter is on 1 after the check_add_constraint
         self.assertEqual(screen.next_constraint_id, 1)
@@ -39,8 +37,6 @@ class ConcentrationPageTest(unittest.TestCase):
         for widget in screen.ids.mainConcLayout.children:
             if widget.id is None:
                 continue
-            if widget.id.startswith('cnst'):
-                self.assertEqual(len(widget.children), 6)
 
             if widget.id == 'cnst1':
                 for ch in widget.children:
@@ -90,8 +86,6 @@ class ConcentrationPageTest(unittest.TestCase):
             for x, y in zip(row, row_exp):
                 self.assertAlmostEqual(x, y)
 
-        print(rhs_lb)
-        print(rhs_lb_expect)
         for x, y in zip(rhs_lb, rhs_lb_expect):
             self.assertAlmostEqual(x, y)
 
