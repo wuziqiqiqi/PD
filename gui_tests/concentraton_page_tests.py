@@ -4,7 +4,7 @@ import unittest
 class ConcentrationPageTest(unittest.TestCase):
 
     def check_add_constraint(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         num_children = len(screen.ids.mainConcLayout.children)
         screen.ids.addConstraintButton.dispatch('on_release')
         self.assertEqual(len(screen.ids.mainConcLayout.children),
@@ -22,7 +22,7 @@ class ConcentrationPageTest(unittest.TestCase):
                          num_children)
 
     def check_matrices(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         screen.ids.elementInput.text = 'Al, Mg, Si'
         screen.ids.groupedBasisInput.text = ''
         screen.ids.applyElemGroupButton.dispatch('on_release')

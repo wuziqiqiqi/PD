@@ -4,25 +4,25 @@ import unittest
 class SettingsPageTests(unittest.TestCase):
     def run_test_naviation(self, app):
         # Make sure that we are on the SettingsPage
-        self.assertEqual('Concentration', app.screen_manager.current)
+        self.assertEqual('Concentration', app.root.ids.sm.current)
 
         screens = ['Concentration', 'Settings', 'NewStruct', 'Fit']
         for main_screen in screens:
-            screen = app.screen_manager.get_screen(main_screen)
+            screen = app.root.ids.sm.get_screen(main_screen)
 
             screen.ids.toSettings.dispatch('on_release')
-            self.assertEqual('Settings', app.screen_manager.current)
+            self.assertEqual('Settings', app.root.ids.sm.current)
 
             screen.ids.concEditor.dispatch('on_release')
 
             screen.ids.toNewStruct.dispatch('on_release')
-            self.assertEqual('NewStruct', app.screen_manager.current)
+            self.assertEqual('NewStruct', app.root.ids.sm.current)
 
             screen.ids.toFit.dispatch('on_release')
-            self.assertEqual('Fit', app.screen_manager.current)
+            self.assertEqual('Fit', app.root.ids.sm.current)
 
     def run_max_cluster_dia_input(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
 
         # Set maximum cluster size to 4
         screen.ids.clusterSize.text = '4'
@@ -48,7 +48,7 @@ class SettingsPageTests(unittest.TestCase):
         self.assertTrue(screen.max_cluster_dia_ok())
 
     def run_cell_size_ok(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
         screen.ids.sizeInput.text = 'df'
         self.assertFalse(screen.cell_size_ok())
 
@@ -71,13 +71,13 @@ class SettingsPageTests(unittest.TestCase):
         self.assertTrue(screen.cell_size_ok())
 
     def run_load_dialog(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
         screen.ids.loadDbButton.dispatch('on_release')
         self.assertEqual(screen._pop_up.title, 'Load structure DB')
         screen._pop_up.content.ids.cancelButton.dispatch('on_release')
 
     def run_check_cellpar(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
 
         screen.ids.cellParInput.text = 'dx'
         self.assertFalse(screen.cellpar_ok())
@@ -95,7 +95,7 @@ class SettingsPageTests(unittest.TestCase):
         self.assertFalse(screen.cellpar_ok())
 
     def run_check_cell_input(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
         cell_inp = screen.ids.cellInput
 
         cell_inp.text = 'db'
@@ -105,10 +105,10 @@ class SettingsPageTests(unittest.TestCase):
         self.assertTrue(screen.cell_ok())
 
     def run_check_element_input(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         elem_in = screen.ids.elementInput
 
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
         elem_in.text = 'Al, Cu'
         self.assertTrue(screen.elem_ok())
 
@@ -116,9 +116,9 @@ class SettingsPageTests(unittest.TestCase):
         self.assertTrue(screen.elem_ok())
 
     def run_check_grouped_basis(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         gr_basis = screen.ids.groupedBasisInput
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
 
         gr_basis.text = '1, 2'
         self.assertTrue(screen.grouped_basis_ok())
@@ -130,8 +130,8 @@ class SettingsPageTests(unittest.TestCase):
         self.assertTrue(screen.grouped_basis_ok())
 
     def run_save_as_button(self, app):
-        screen = app.screen_manager.get_screen('Settings')
-        conc_screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Settings')
+        conc_screen = app.root.ids.sm.get_screen('Concentration')
         self.assertTrue(screen._pop_up is None)
 
         # Call save button with an incomplete page
@@ -148,7 +148,7 @@ class SettingsPageTests(unittest.TestCase):
         screen.dismiss_popup()
 
     def run_load_session_button(self, app):
-        screen = app.screen_manager.get_screen('Settings')
+        screen = app.root.ids.sm.get_screen('Settings')
 
         self.assertTrue(screen._pop_up is None)
         screen.ids.loadSession.dispatch('on_release')

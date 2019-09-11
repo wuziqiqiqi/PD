@@ -1,6 +1,6 @@
 from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager
 from kivy.lang import Builder
+from kivy.uix.boxlayout import BoxLayout
 
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
@@ -15,20 +15,16 @@ resource_add_path(main_path + '/layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 
+class WindowFrame(BoxLayout):
+    pass
 
 class CleaseGUI(App):
     def __init__(self):
         App.__init__(self)
-        self.screen_manager = ScreenManager()
-        self.screen_manager.add_widget(ConcentrationPage(name="Concentration"))
-        self.screen_manager.add_widget(SettingsPage(name="Settings"))
-        self.screen_manager.add_widget(NewStructPage(name='NewStruct'))
-        self.screen_manager.add_widget(FitPage(name='Fit'))
-        self.screen_manager.current = "Concentration"
         self.settings = None
 
     def build(self):
-        return self.screen_manager
+        return WindowFrame()
 
 
 if __name__ == "__main__":

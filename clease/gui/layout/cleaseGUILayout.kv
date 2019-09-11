@@ -9,6 +9,69 @@
 #: set height 0.05
 
 
+<ActionBar>:
+    pos_hint: {'top':1}
+    size_hint: [1, 0.05]
+    ActionView:
+        use_separator: True
+        ActionPrevious:
+            title: 'CLEASE GUI'
+            with_previous: False
+            app_icon: 'clease_logo.png'
+
+        ActionGroup:
+            id: App_ActionGroup
+            mode: 'spinner'
+            text: 'Jump to Screen'
+
+            ActionButton:
+                text: 'Concentration'
+                on_release:  app.root.ids.sm.current = 'Concentration'
+            ActionButton:
+                text: 'Settings'
+                on_release:  app.root.ids.sm.current = 'Settings'
+            ActionButton:
+                text: 'NewStruct'
+                on_release:  app.root.ids.sm.current = 'NewStruct'
+            ActionButton:
+                text: 'Fit'
+                on_release:  app.root.ids.sm.current = 'Fit'
+
+        ActionGroup:
+            id: File_ActionGroup
+            mode: 'spinner'
+            text: 'File'
+
+            ActionButton:
+                text: 'Save'
+                # on_press: app.
+            ActionButton:
+                text: 'Save As...'
+            ActionButton:
+                text: 'Open'
+            ActionButton:
+                text: 'Close'
+                on_press: app.get_running_app().stop()
+
+
+<WindowFrame>:
+    orientation: 'vertical'
+
+    ActionBar:
+        id: ActionBar
+
+    ScreenManager:
+        id: sm
+        size_hint: 1, .8
+        ConcentrationPage:
+        SettingsPage:
+        NewStructPage:
+        FitPage:
+
+    # StatusBar:
+    #     id: sb
+
+
 <LoadDialog>:
     StackLayout:
         size_hint: [1, 0.9]
