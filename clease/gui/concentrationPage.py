@@ -47,14 +47,15 @@ class ConcentrationPage(Screen):
                              size_hint=[1, 0.05])
         width = 1.0 / float((self.num_conc_vars + 3))
         for i in range(self.num_conc_vars):
-            layout.add_widget(TextInput(text='0', multiline=False,
-                                        size_hint=[width, 1],
+            layout.add_widget(TextInput(text='0', size_hint=[width, 1],
+                                        write_tab=False, multiline=False,
                                         id='conc{}'.format(i)))
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
                                   id='comparisonSpinner',
                                   size_hint=[width, 1]))
         layout.add_widget(TextInput(text='0', size_hint=[width, 1],
-                                    multiline=False, id='rhs'))
+                                    write_tab=False, multiline=False,
+                                    id='rhs'))
         layout.add_widget(
             Button(text='Remove',
                    size_hint=[width, 1],

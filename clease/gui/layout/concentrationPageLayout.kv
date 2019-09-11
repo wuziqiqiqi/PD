@@ -70,11 +70,17 @@
                         size_hint: [0.5, 1]
                         id: elementInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_Elements_GroupedBasis()
 
                     TextInput:
                         size_hint: [0.5, 1]
                         id: groupedBasisInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_Elements_GroupedBasis()
 
                 StackLayout:
                     size_hint: [1, 0.5*button_height]
@@ -85,12 +91,6 @@
                     Label:
                         size_hint: [0.1, 1]
                         text: ''
-
-                    # Button:
-                    #     size_hint: [0.3, 1]
-                    #     id: reconfigureButton
-                    #     text: 'Update settings'
-                    #     on_release: root.init_settings_class()
 
                     Button:
                         size_hint: [0.3, 1]

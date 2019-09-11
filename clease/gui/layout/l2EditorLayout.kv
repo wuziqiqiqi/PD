@@ -11,6 +11,9 @@
             id: alpha
             input_filter: 'float'
             text: '0.0001'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.alpha.text)
 
         Button:
             size_hint: [0.25, 0.1]

@@ -68,6 +68,9 @@
                         size_hint: [0.6, 1]
                         id: initStructInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.import_structures()
 
                     Button:
                         size_hint: [0.2, 1]
@@ -87,6 +90,9 @@
                         size_hint: [0.6, 1]
                         id: finalStructInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.import_structures()
 
                     Button:
                         size_hint: [0.2, 1]
@@ -181,24 +187,36 @@
                         id: tempMaxInput
                         input_filter: 'float'
                         text: '10000'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: tempMinInput
                         input_filter: 'float'
                         text: '1'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: numTempInput
                         input_filter: 'int'
                         text: '100'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: numSweepsInput
                         input_filter: 'int'
                         text: '100'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
 
                 StackLayout:
@@ -217,6 +235,9 @@
                         size_hint: [0.6, 1]
                         id: templateAtomsInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
                     Button:
                         size_hint: [0.2, 1]
@@ -238,6 +259,9 @@
                         size_hint: [0.6, 1]
                         id: eciFileInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.generate()
 
                     Button:
                         size_hint: [0.2, 1]

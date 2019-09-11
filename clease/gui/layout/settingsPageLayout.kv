@@ -95,11 +95,17 @@
                         id: clusterSize
                         text: '4'
                         input_filter: 'int'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: clusterDia
                         text: '5.0'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
 
                 StackLayout:
@@ -139,18 +145,27 @@
                         size_hint: [0.25, 1]
                         id: sizeInput
                         text: '3, 3, 3'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: scFactorInput
                         text: '20'
                         input_filter: 'int'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: skewFactorInput
                         text: '4'
                         input_filter: 'int'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                 StackLayout:
                     size_hint: [1, button_height]
@@ -168,6 +183,9 @@
                         size_hint: [0.5, 1]
                         id: dbNameInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     Button:
                         size_hint: [0.2, 1]
@@ -226,18 +244,27 @@
                         id: aParameterInput
                         text: ''
                         input_filter: 'float'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: cParameterInput
                         text: ''
                         input_filter: 'float'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: uParameterInput
                         text: ''
                         input_filter: 'float'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
 
                 StackLayout:
@@ -280,26 +307,37 @@
                 StackLayout:
                     size_hint: [1, button_height]
 
-
                     TextInput:
                         size_hint: [0.25, 1]
                         id: cellParInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: cellInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: crdBasisInput
                         text: ''
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
                     TextInput:
                         size_hint: [0.25, 1]
                         id: spInput
                         text: '1'
+                        write_tab: False
+                        multiline: False
+                        on_text_validate: root.apply_update_settings()
 
 
                 StackLayout:
@@ -310,17 +348,17 @@
                     size_hint: [1, button_height]
 
                     Label:
-                        size_hint: [0.35, 1]
+                        size_hint: [0.4, 1]
                         text: ''
 
                     Button:
-                        size_hint: [0.3, 1]
+                        size_hint: [0.2, 1]
                         id: reconfigureButton
                         text: 'Apply settings'
                         on_release: root.apply_update_settings()
 
                     Label:
-                        size_hint: [0.35, 1]
+                        size_hint: [0.4, 1]
                         text: ''
 
 

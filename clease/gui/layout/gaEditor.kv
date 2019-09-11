@@ -11,6 +11,9 @@
             size_hint: [0.3, ga_button_height]
             text: '1'
             input_filter: 'int'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -21,6 +24,9 @@
             text: '0.1'
             input_filter: 'float'
             size_hint: [0.3, ga_button_height]
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -31,6 +37,9 @@
             size_hint: [0.3, ga_button_height]
             text: '100'
             input_filter: 'int'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -41,10 +50,14 @@
             size_hint: [0.3, ga_button_height]
             text: '150'
             input_filter: 'int'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
             text: 'Cost function'
+
         Spinner:
             id: costFuncSpinner
             size_hint: [0.3, ga_button_height]
@@ -60,6 +73,9 @@
             size_hint: [0.3, ga_button_height]
             text: '1.0'
             input_filter: 'float'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
