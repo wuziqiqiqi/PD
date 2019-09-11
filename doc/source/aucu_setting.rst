@@ -24,7 +24,7 @@ lattice constant of 3.8 Å
   ...                  db_name="aucu.db",
   ...                  max_cluster_size=4,
   ...                  max_cluster_dia=[6.0, 5.0, 5.0],
-  ...                  basis_function='sanchez')
+  ...                  basis_function='polynomial')
 
 :class:`CEBulk` internally calls :func:`ase.build.bulk` function to generate a
 unit cell. Arguments ``crystalstructure``, ``a``, ``c``, ``covera``, ``u``,
@@ -49,11 +49,11 @@ from two-body clusters are specified in ``max_cluster_dia`` in ascending order.
 There are several flavors of cluter expansion formalism in specifying the basis
 function for setting the site variable. Three types of basis functions are
 currently supported in ASE. The type of basis function can be selected by
-passing one of "sanchez", "vandewalle" and "sluiter" to ``basis_function``
-argument. More information on each basis function can be found in the
-following articles.
+passing one of "polynomial", "trigonometric" and "binary-linear" to
+``basis_function`` argument. More information on each basis function can be
+found in the following articles.
 
-"sanchez":
+"polynomial":
 
    | Sanchez, J. M., Ducastelle, F. and Gratias, D. (1984)
    | `Generalized cluster description of multicomponent systems`__
@@ -61,7 +61,7 @@ following articles.
 
    __ https://doi.org/10.1016/0378-4371(84)90096-7
 
-"vandewalle":
+"trigonometric":
 
     | van de Walle, A. (2009)
     | `Multicomponent multisublattice alloys, nonconfigurational entropy and other additions to the Alloy Theoretic Automated Toolkit`__
@@ -69,7 +69,7 @@ following articles.
 
     __ https://doi.org/10.1016/j.calphad.2008.12.005
 
-"sluiter":
+"binary-linear":
 
     | Zhang, X. and Sluiter M. (2016)
     | `Cluster expansions for thermodynamics and kinetics of multicomponent alloys.`__

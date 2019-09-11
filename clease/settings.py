@@ -29,7 +29,7 @@ class ClusterExpansionSetting(object):
 
     def __init__(self, size=None, supercell_factor=None, concentration=None,
                  db_name=None, max_cluster_size=4, max_cluster_dia=None,
-                 basis_function='sanchez', skew_threshold=4,
+                 basis_function='polynomial', skew_threshold=4,
                  ignore_background_atoms=False):
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
@@ -91,15 +91,15 @@ class ClusterExpansionSetting(object):
             self.bf_scheme = basis_function
 
         elif isinstance(basis_function, str):
-            if basis_function.lower() == 'sanchez':
-                from clease.basis_function import Sanchez
-                self.bf_scheme = Sanchez(unique_element_no_bkg)
-            elif basis_function.lower() == 'vandewalle':
-                from clease.basis_function import VandeWalle
-                self.bf_scheme = VandeWalle(unique_element_no_bkg)
-            elif basis_function.lower() == "sluiter":
-                from clease.basis_function import Sluiter
-                self.bf_scheme = Sluiter(unique_element_no_bkg)
+            if basis_function.lower() == 'polynomial':
+                from clease.basis_function import Polynomial
+                self.bf_scheme = Polynomial(unique_element_no_bkg)
+            elif basis_function.lower() == 'trigonometric':
+                from clease.basis_function import Trigonometric
+                self.bf_scheme = Trigonometric(unique_element_no_bkg)
+            elif basis_function.lower() == "binary-linear":
+                from clease.basis_function import BinaryLinear
+                self.bf_scheme = BinaryLinear(unique_element_no_bkg)
             else:
                 msg = "basis function scheme {} ".format(basis_function)
                 msg += "is not supported."

@@ -68,10 +68,7 @@ class SettingsPage(Screen):
 
             # variables for "Settings" screen
             self.ids.typeSpinner.text = data['type']
-            if data['basis_function'] == 'vandewalle':
-                self.ids.bfSpinner.text = 'van de Walle'
-            else:
-                self.ids.bfSpinner.text = data['basis_function']
+            self.ids.bfSpinner.text = data['basis_function']
             self.ids.clusterSize.text = data['cluster_size']
             self.ids.clusterDia.text = data['max_cluster_dia']
             self.db_name = data['db_name']
@@ -125,12 +122,8 @@ class SettingsPage(Screen):
         self._pop_up.open()
 
     def to_dict(self):
-        if self.ids.bfSpinner.text == 'van de Walle':
-            basis_function = 'vandewalle'
-        else:
-            basis_function = self.ids.bfSpinner.text
         return {'type': self.ids.typeSpinner.text,
-                'basis_function': basis_function,
+                'basis_function': self.ids.bfSpinner.text,
                 'cluster_size': self.ids.clusterSize.text,
                 'max_cluster_dia': self.ids.clusterDia.text,
                 'db_name': self.ids.dbNameInput.text,
@@ -540,7 +533,7 @@ class SettingsPage(Screen):
                 initializer.type = 'CECrystal'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
-            
+
             # self.ids.status.text = "Idle"
 
         except Exception as exc:

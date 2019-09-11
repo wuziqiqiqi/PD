@@ -93,7 +93,7 @@ def rocksalt_with_self_interaction(size, db_name):
                      concentration=concentration,
                      db_name=db_name,
                      max_cluster_size=3,
-                     basis_function='vandewalle',
+                     basis_function='trigonometric',
                      max_cluster_dia=[7.0, 4.0])
     atoms = setting.atoms.copy()
     return setting, atoms

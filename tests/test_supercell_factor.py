@@ -12,7 +12,7 @@ class TestSupercelLFactor(unittest.TestCase):
                          supercell_factor=8,
                          concentration=conc, db_name=db_name,
                          max_cluster_size=4, max_cluster_dia=4.01,
-                         basis_function='sanchez', skew_threshold=4,
+                         basis_function='polynomial', skew_threshold=4,
                          ignore_background_atoms=False)
 
         self.assertEqual(setting.template_atoms.num_templates, 3)
@@ -23,7 +23,7 @@ class TestSupercelLFactor(unittest.TestCase):
                          supercell_factor=8, size=[2, 2, 2],
                          concentration=conc, db_name=db_name,
                          max_cluster_size=4, max_cluster_dia=4.0,
-                         basis_function='sanchez', skew_threshold=4,
+                         basis_function='polynomial', skew_threshold=4,
                          ignore_background_atoms=False)
 
         self.assertEqual(setting.template_atoms.num_templates, 1)
@@ -47,7 +47,7 @@ class TestSupercelLFactor(unittest.TestCase):
                             supercell_factor=10,
                             concentration=concentration,
                             db_name=db_name,
-                            basis_function='sluiter',
+                            basis_function='binary-linear',
                             max_cluster_size=3,
                             max_cluster_dia=3.0)
 

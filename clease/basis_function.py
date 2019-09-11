@@ -30,7 +30,7 @@ class BasisFunction(object):
         return full_cluster_name
 
 
-class Sanchez(BasisFunction):
+class Polynomial(BasisFunction):
     """Pseudospin and basis function from Sanchez et al.
 
     Sanchez, J. M., Ducastelle, F. and Gratias, D. (1984).
@@ -40,11 +40,11 @@ class Sanchez(BasisFunction):
 
     def __init__(self, unique_elements):
         BasisFunction.__init__(self, unique_elements)
-        self.name = "sanchez"
+        self.name = "polynomial"
         if self.num_unique_elements > 6:
             raise ValueError("Only systems consisting up to 6 types of "
-                             "elements are currently supported for the scheme "
-                             "by Sanchez et al.")
+                             "elements are currently supported for the "
+                             "Polynomial basis function scheme.")
 
     def get_spin_dict(self):
         """Define pseudospins for all consistuting elements."""
@@ -92,8 +92,8 @@ class Sanchez(BasisFunction):
 
         col = self.num_unique_elements - 2
         if col > 5:
-            msg = "Sanchez correlation function scheme only supports up to 6 "
-            msg += "elements. \nPlease change to another correlation function "
+            msg = "Polynomial basis function scheme only supports up "
+            msg += "to 6 elements. \nPlease change to another basis function "
             msg += "scheme."
             raise RuntimeError(msg)
 
@@ -134,7 +134,7 @@ class Sanchez(BasisFunction):
         return bf_list
 
 
-class VandeWalle(BasisFunction):
+class Trigonometric(BasisFunction):
     """Pseudospin and basis function from van de Walle.
 
     van de Walle, A. (2009).
@@ -145,7 +145,7 @@ class VandeWalle(BasisFunction):
 
     def __init__(self, unique_elements):
         BasisFunction.__init__(self, unique_elements)
-        self.name = "vandewalle"
+        self.name = "trigonometric"
 
     def get_spin_dict(self):
         """Define pseudospins for all consistuting elements."""
@@ -191,8 +191,8 @@ def kronecker(i, j):
     return 0
 
 
-class Sluiter(BasisFunction):
-    """Pseudospin and basis function from Sluiter.
+class BinaryLinear(BasisFunction):
+    """Pseudospin and basis function from Zhang and Sluiter.
 
     Zhang, X. and Sluiter M.
     Cluster expansions for thermodynamics and kinetics of multicomponent
@@ -206,7 +206,7 @@ class Sluiter(BasisFunction):
         else:
             self.redundant_element = reduntant_element
         BasisFunction.__init__(self, unique_elements)
-        self.name = "sluiter"
+        self.name = "binary-linear"
 
     def get_spin_dict(self):
         """Define pseudospins for all consistuting elements."""

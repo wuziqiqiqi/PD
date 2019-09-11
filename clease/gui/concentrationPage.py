@@ -169,7 +169,6 @@ class ConcentrationPage(Screen):
 
             self.grouped_elements = new_elements
             self.elements = elements
-            print(self.elements, self.grouped_basis)
 
             layout = StackLayout(id='elemHeader', size_hint=[1, 0.10])
             width = 1.0 / float(self.num_conc_vars + 3)
