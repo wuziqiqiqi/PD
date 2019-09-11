@@ -342,7 +342,7 @@
 
 
                 StackLayout:
-                    size_hint: [1, 0.5*button_height]
+                    size_hint: [1, button_height]
 
 
                 StackLayout:
@@ -361,37 +361,6 @@
                     Label:
                         size_hint: [0.4, 1]
                         text: ''
-
-
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Button:
-                        size_hint: [0.25, 1]
-                        id: reconfigureDBButton
-                        text: 'Reconfigure corr. func.'
-
-                    Button:
-                        size_hint: [0.25, 1]
-                        id: saveAsSession
-                        text: 'Save As'
-                        on_release: root.show_save_dialog()
-
-                    Button:
-                        size_hint: [0.25, 1]
-                        id: saveSession
-                        text: 'Save'
-                        on_release: root.save_session_to_current_file()
-
-                    Button:
-                        size_hint: [0.25, 1]
-                        id: loadSession
-                        text: 'Load session'
-                        on_release: root.show_load_session_dialog()
 
 
             BoxLayout:
