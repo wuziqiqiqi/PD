@@ -124,9 +124,9 @@ class CleaseGUI(App):
     def __init__(self):
         App.__init__(self)
         self.settings = None
-        self.icon = 'clease_logo.png'
 
     def build(self):
+        self.icon = 'clease_logo.png'
         return WindowFrame()
 
 
