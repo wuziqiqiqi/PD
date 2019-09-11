@@ -448,6 +448,12 @@ class SettingsPage(Screen):
                 self.ids.status.text = 'Error in input in Concentration panel.'
 
             A_lb, rhs_lb, A_eq, rhs_eq = conc_page.get_constraint_matrices()
+
+            if not conc_page.elements:
+                msg = 'It seems like the Apply button in concentration page '
+                msg += 'was not clicked.'
+                self.ids.status.text = msg
+                return
             basis_elements = conc_page.elements
             grouped_basis = conc_page.grouped_basis
             conc = Concentration(basis_elements=basis_elements,
