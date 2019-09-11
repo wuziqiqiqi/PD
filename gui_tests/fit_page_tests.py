@@ -17,7 +17,6 @@ class FitPageTests(unittest.TestCase):
 
         last_pop_title = ""
         for value in spinner.values:
-            print("Opening editor for {}".format(value))
             spinner.text = value
             self.assertTrue(screen._pop_up is None)
             screen.ids.fitEditorButton.dispatch('on_release')

@@ -7,8 +7,6 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
 
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
-from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
-from clease.gui.util import parse_size
 import traceback
 
 
@@ -69,6 +67,19 @@ class ConcentrationPage(Screen):
         self.ids.mainConcLayout.remove_widget(widget)
 
     def check_user_input(self):
+        elems = self.ids.elementInput.text
+        if elems == '':
+            self.ids.status.text = 'No elements are given'
+            return 1
+
+        if not self.elem_ok():
+            return 1
+
+        gr_basis = self.ids.groupedBasisInput.text
+        if gr_basis != '':
+            if not self.grouped_basis_ok():
+                return 1
+
         for widget in self.ids.mainConcLayout.children:
             if widget.id is None:
                 continue
@@ -85,11 +96,12 @@ class ConcentrationPage(Screen):
                             msg = "All constraints need to be float"
                             self.ids.status.text = msg
                             return 1
+
         return 0
 
     def get_constraint_matrices(self):
         if self.check_user_input() != 0:
-            raise ValueError("Could not parse constraints")
+            raise ValueError("Could not parse elements or constraints")
 
         # Loop across widgets
         A_lb = []
@@ -235,4 +247,22 @@ class ConcentrationPage(Screen):
                     child.text = str(abs(rhs_eq[i]))
                 elif child.id == 'comparisonSpinner':
                     child.text = '='
+
+    def elem_ok(self):
+        elems = self.ids.elementInput.text
+        try:
+            _ = parse_elements(elems)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
+
+    def grouped_basis_ok(self):
+        gr_basis = self.ids.groupedBasisInput.text
+        try:
+            _ = parse_grouped_basis_elements(gr_basis)
+        except Exception as exc:
+            self.ids.status.text = str(exc)
+            return False
+        return True
 

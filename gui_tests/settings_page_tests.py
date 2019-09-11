@@ -104,57 +104,6 @@ class SettingsPageTests(unittest.TestCase):
         cell_inp.text = '(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)'
         self.assertTrue(screen.cell_ok())
 
-    def run_check_element_input(self, app):
-        screen = app.root.ids.sm.get_screen('Concentration')
-        elem_in = screen.ids.elementInput
-
-        screen = app.root.ids.sm.get_screen('Settings')
-        elem_in.text = 'Al, Cu'
-        self.assertTrue(screen.elem_ok())
-
-        elem_in.text = '(Al, Cu), (Mg, Si)'
-        self.assertTrue(screen.elem_ok())
-
-    def run_check_grouped_basis(self, app):
-        screen = app.root.ids.sm.get_screen('Concentration')
-        gr_basis = screen.ids.groupedBasisInput
-        screen = app.root.ids.sm.get_screen('Settings')
-
-        gr_basis.text = '1, 2'
-        self.assertTrue(screen.grouped_basis_ok())
-
-        gr_basis.text = '(1, 2), 3'
-        self.assertTrue(screen.grouped_basis_ok())
-
-        gr_basis = '(1, 2), (3, 4)'
-        self.assertTrue(screen.grouped_basis_ok())
-
-    def run_save_as_button(self, app):
-        screen = app.root.ids.sm.get_screen('Settings')
-        conc_screen = app.root.ids.sm.get_screen('Concentration')
-        self.assertTrue(screen._pop_up is None)
-
-        # Call save button with an incomplete page
-        screen.ids.saveAsSession.dispatch('on_release')
-        self.assertTrue(screen._pop_up is None)
-
-        # Populate the fields with a valid input
-        screen.ids.aParameterInput.text = '4.05'
-        screen.ids.dbNameInput.text = 'test_gui.db'
-        conc_screen.ids.elementInput.text = 'Au, Cu'
-        screen.ids.saveAsSession.dispatch('on_release')
-        self.assertTrue(screen._pop_up is not None)
-        self.assertEqual(screen._pop_up.title, "Save CLEASE session")
-        screen.dismiss_popup()
-
-    def run_load_session_button(self, app):
-        screen = app.root.ids.sm.get_screen('Settings')
-
-        self.assertTrue(screen._pop_up is None)
-        screen.ids.loadSession.dispatch('on_release')
-        self.assertFalse(screen._pop_up is None)
-        self.assertTrue(screen._pop_up.title, "Load CLEASE session")
-        screen.dismiss_popup()
 
     def run(self, app):
         self.run_test_naviation(app)
@@ -163,7 +112,3 @@ class SettingsPageTests(unittest.TestCase):
         self.run_load_dialog(app)
         self.run_check_cellpar(app)
         self.run_check_cell_input(app)
-        self.run_check_element_input(app)
-        self.run_check_grouped_basis(app)
-        self.run_save_as_button(app)
-        self.run_load_session_button(app)
