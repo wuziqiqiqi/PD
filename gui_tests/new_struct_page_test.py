@@ -3,7 +3,7 @@ import unittest
 
 class NewStructPageTest(unittest.TestCase):
     def load_pop_ups(self, app):
-        screen = app.screen_manager.get_screen('NewStruct')
+        screen = app.root.ids.sm.get_screen('NewStruct')
 
         self.assertTrue(screen._pop_up is None)
         screen.ids.loadInitStruct.dispatch('on_release')

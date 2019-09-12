@@ -3,7 +3,7 @@ import unittest
 
 class FitPageTests(unittest.TestCase):
     def eci_popup(self, app):
-        screen = app.screen_manager.get_screen('Fit')
+        screen = app.root.ids.sm.get_screen('Fit')
 
         self.assertTrue(screen._pop_up is None)
         screen.ids.loadEciInput.dispatch('on_release')
@@ -12,12 +12,11 @@ class FitPageTests(unittest.TestCase):
         screen.dismiss_popup()
 
     def open_fit_alg_editors(self, app):
-        screen = app.screen_manager.get_screen('Fit')
+        screen = app.root.ids.sm.get_screen('Fit')
         spinner = screen.ids.fitAlgSpinner
 
         last_pop_title = ""
         for value in spinner.values:
-            print("Opening editor for {}".format(value))
             spinner.text = value
             self.assertTrue(screen._pop_up is None)
             screen.ids.fitEditorButton.dispatch('on_release')

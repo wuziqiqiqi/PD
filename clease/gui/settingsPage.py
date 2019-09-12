@@ -6,10 +6,8 @@ from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
-from clease.gui.util import parse_max_cluster_dia, parse_grouped_basis_elements
-from clease.gui.util import parse_size, parse_elements, parse_cellpar
-from clease.gui.util import parse_cell, parse_coordinate_basis
-import json
+from clease.gui.util import parse_max_cluster_dia, parse_size, parse_elements
+from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 import traceback
 
 
@@ -38,7 +36,6 @@ class SettingsInitializer(object):
 
 class SettingsPage(Screen):
     cebulk_input_backup = {'crystStructSpinner': ''}
-    current_session_file = None
     _pop_up = None
 
     def dismiss_popup(self):
@@ -50,73 +47,6 @@ class SettingsPage(Screen):
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
         self._pop_up = Popup(title="Load structure DB", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
-                             size_hint=(0.9, 0.9))
-        self._pop_up.open()
-
-    def show_load_session_dialog(self):
-        content = LoadDialog(load=self.load_session, cancel=self.dismiss_popup)
-        self._pop_up = Popup(title="Load CLEASE session", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
-                             size_hint=(0.9, 0.9))
-        self._pop_up.open()
-
-    def load_session(self, path, filename):
-        try:
-            with open(filename[0], 'r') as infile:
-                data = json.load(infile)
-
-            # variables for "Settings" screen
-            self.ids.typeSpinner.text = data['type']
-            self.ids.bfSpinner.text = data['basis_function']
-            self.ids.clusterSize.text = data['cluster_size']
-            self.ids.clusterDia.text = data['max_cluster_dia']
-            self.db_name = data['db_name']
-            self.ids.dbNameInput.text = self.db_name
-            self.ids.crystStructSpinner.text = data['crystalstructure']
-            self.ids.aParameterInput.text = data['aParameter']
-            self.ids.cParameterInput.text = data['cParameter']
-            self.ids.uParameterInput.text = data['uParameter']
-            self.ids.cellParInput.text = data['cellpar']
-            self.ids.cellInput.text = data['cell']
-            self.ids.crdBasisInput.text = data['basis']
-            self.ids.spInput.text = data['spacegroup']
-            self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
-            self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
-            self.ids.scFactorInput.text = data.get('supercell_factor', '20')
-            self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
-
-            # variables for "Concentration" screen
-            conc_page = self.manager.get_screen('Concentration')
-            elements = data['conc']['elements']
-            grouped_basis = data['conc']['grouped_basis']
-            conc_page.set_Elements_GroupedBasis(elements, grouped_basis)
-
-            A_lb = data['conc']['A_lb']
-            rhs_lb = data['conc']['rhs_lb']
-            A_eq = data['conc']['A_eq']
-            rhs_eq = data['conc']['rhs_eq']
-            conc_page.load_from_matrices(A_lb, rhs_lb, A_eq, rhs_eq)
-            self.apply_update_settings()
-
-            self.manager.get_screen('NewStruct').from_dict(
-                data.get('new_struct', {}))
-            self.manager.get_screen('Fit').from_dict(data.get('fit_page', {}))
-            self.current_session_file = filename[0]
-
-            self.ids.status.text = \
-                "Loaded session from {}".format(current_session_file)
-
-        except Exception as e:
-            self.ids.status.text = "An error occured during load: " + str(e)
-        self.dismiss_popup()
-
-    def show_save_dialog(self):
-        if self.check_user_input() != 0:
-            return
-        content = SaveDialog(save=self.save_session, cancel=self.dismiss_popup)
-
-        self._pop_up = Popup(title="Save CLEASE session", content=content,
                              pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
@@ -140,31 +70,25 @@ class SettingsPage(Screen):
                 'supercell_factor': self.ids.scFactorInput.text,
                 'skewness_factor': self.ids.skewFactorInput.text}
 
-    def save_session(self, path, selection, user_filename):
-        if self.check_user_input() != 0:
-            return
-        if len(selection) == 0:
-            fname = path + '/' + user_filename
-        else:
-            fname = selection[0]
-
-        data = self.to_dict()
-        data['conc'] = self.manager.get_screen('Concentration').to_dict()
-        data['new_struct'] = self.manager.get_screen('NewStruct').to_dict()
-        data['fit_page'] = self.manager.get_screen('Fit').to_dict()
-
-        with open(fname, 'w') as outfile:
-            json.dump(data, outfile, separators=(',', ': '), indent=2)
-
-        self.ids.status.text = 'Session saved to {}'.format(fname)
-        self.dismiss_popup()
-        self.current_session_file = fname
-
-    def save_session_to_current_file(self):
-        if self.current_session_file is None:
-            self.ids.status.text = "No session file. Try Save As instead"
-            return
-        self.save_session(None, [self.current_session_file], None)
+    def from_dict(self, data):
+        self.ids.typeSpinner.text = data['type']
+        self.ids.bfSpinner.text = data['basis_function']
+        self.ids.clusterSize.text = data['cluster_size']
+        self.ids.clusterDia.text = data['max_cluster_dia']
+        self.db_name = data['db_name']
+        self.ids.dbNameInput.text = data['db_name']
+        self.ids.crystStructSpinner.text = data['crystalstructure']
+        self.ids.aParameterInput.text = data['aParameter']
+        self.ids.cParameterInput.text = data['cParameter']
+        self.ids.uParameterInput.text = data['uParameter']
+        self.ids.cellParInput.text = data['cellpar']
+        self.ids.cellInput.text = data['cell']
+        self.ids.crdBasisInput.text = data['basis']
+        self.ids.spInput.text = data['spacegroup']
+        self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
+        self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
+        self.ids.scFactorInput.text = data.get('supercell_factor', '20')
+        self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
 
     def load(self, path, filename):
         self.db_path = path
@@ -287,26 +211,6 @@ class SettingsPage(Screen):
             return False
         return True
 
-    def elem_ok(self):
-        conc_page = self.manager.get_screen("Concentration")
-        elems = conc_page.ids.elementInput.text
-        try:
-            _ = parse_elements(elems)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
-            return False
-        return True
-
-    def grouped_basis_ok(self):
-        conc_page = self.manager.get_screen("Concentration")
-        gr_basis = conc_page.ids.groupedBasisInput.text
-        try:
-            _ = parse_grouped_basis_elements(gr_basis)
-        except Exception as exc:
-            self.ids.status.text = str(exc)
-            return False
-        return True
-
     def _check_cecrystal_input(self):
         cellPar = self.ids.cellParInput.text
         sufficient_cell_info_given = False
@@ -404,20 +308,6 @@ class SettingsPage(Screen):
             if error_code != 0:
                 return error_code
 
-        conc_page = self.manager.get_screen("Concentration")
-        elems = conc_page.ids.elementInput.text
-        if elems == '':
-            self.ids.status.text = 'No elements are given'
-            return 1
-
-        if not self.elem_ok():
-            return 1
-
-        gr_basis = conc_page.ids.groupedBasisInput.text
-
-        if gr_basis != '':
-            if not self.grouped_basis_ok():
-                return 1
         return 0
 
     def update_size_section(self, text):

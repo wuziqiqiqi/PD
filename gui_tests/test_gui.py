@@ -7,6 +7,7 @@ from settings_page_tests import SettingsPageTests
 from concentraton_page_tests import ConcentrationPageTest
 from new_struct_page_test import NewStructPageTest
 from fit_page_tests import FitPageTests
+from actionbar_tests import ActionBarTests
 
 
 class TestSettingsPage(unittest.TestCase):
@@ -34,6 +35,10 @@ class TestSettingsPage(unittest.TestCase):
 
         fit_page_test = FitPageTests()
         fit_page_test.run(app)
+
+        actionbar_test = ActionBarTests()
+        actionbar_test.run(app)
+
         app.stop()
 
     def test_gui(self):

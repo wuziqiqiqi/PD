@@ -42,13 +42,13 @@ class ProbeStructureGenerator(BaseGenerator):
             self.generator.generate_probe_structure(
                 atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
                 num_temp=self.num_temp, num_steps_per_temp=self.num_steps)
-            self.status.text = 'Finished generating probe strcutres...'
+            self.status.text = 'Finished generating probe strcutres.'
         except Exception as exc:
             self.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
 
-class EminStructGenerator(object):
+class GSStructGenerator(object):
     Tmax = None
     Tmin = None
     num_temps = None
@@ -62,7 +62,7 @@ class EminStructGenerator(object):
                 atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
                 num_temp=self.num_temps, num_steps_per_temp=self.num_steps,
                 eci=self.eci, random_composition=self.randomize)
-            self.status.text = 'Finished generating GS structures...'
+            self.status.text = 'Finished generating ground-state structures.'
         except Exception as exc:
             self.status.text = str(exc)
         self.page.structure_generation_in_progress = False
@@ -107,7 +107,7 @@ class NewStructPage(Screen):
             self.ids.eciFileInput.disabled = True
             self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = True
-        elif text == 'Minimum energy structure':
+        elif text == 'Ground-state structure':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
@@ -217,26 +217,26 @@ class NewStructPage(Screen):
                 prb_generator.num_steps = num_steps
                 prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
-            elif struct_type == 'Minimum energy structure':
+            elif struct_type == 'Ground-state structure':
                 eci_file = self.ids.eciFileInput.text
                 eci = self.load_eci(eci_file)
-                self.ids.status.text = 'Generating minimum energy structures.'
+                self.ids.status.text = 'Generating ground-state structures.'
                 random_comp = self.ids.randomizeCompositionSpinner.text
                 randomize = random_comp == 'Random composition'
 
-                emin_generator = EminStructGenerator()
-                emin_generator.atoms = atoms
-                emin_generator.generator = generator
-                emin_generator.status = self.ids.status
-                emin_generator.Tmax = Tmax
-                emin_generator.Tmin = Tmin
-                emin_generator.num_temps = num_temps
-                emin_generator.num_steps = num_steps
-                emin_generator.eci = eci
-                emin_generator.randomize = randomize
-                emin_generator.page = self
+                gs_generator = GSStructGenerator()
+                gs_generator.atoms = atoms
+                gs_generator.generator = generator
+                gs_generator.status = self.ids.status
+                gs_generator.Tmax = Tmax
+                gs_generator.Tmin = Tmin
+                gs_generator.num_temps = num_temps
+                gs_generator.num_steps = num_steps
+                gs_generator.eci = eci
+                gs_generator.randomize = randomize
+                gs_generator.page = self
 
-                Thread(target=emin_generator.generate).start()
+                Thread(target=gs_generator.generate).start()
         except RuntimeError as exc:
             self.ids.status.text = str(exc)
 

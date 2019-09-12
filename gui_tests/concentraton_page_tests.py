@@ -4,7 +4,7 @@ import unittest
 class ConcentrationPageTest(unittest.TestCase):
 
     def check_add_constraint(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         num_children = len(screen.ids.mainConcLayout.children)
         screen.ids.addConstraintButton.dispatch('on_release')
         self.assertEqual(len(screen.ids.mainConcLayout.children),
@@ -22,7 +22,7 @@ class ConcentrationPageTest(unittest.TestCase):
                          num_children)
 
     def check_matrices(self, app):
-        screen = app.screen_manager.get_screen('Concentration')
+        screen = app.root.ids.sm.get_screen('Concentration')
         screen.ids.elementInput.text = 'Al, Mg, Si'
         screen.ids.groupedBasisInput.text = ''
         screen.ids.applyElemGroupButton.dispatch('on_release')
@@ -92,6 +92,29 @@ class ConcentrationPageTest(unittest.TestCase):
         for x, y in zip(rhs_eq, rhs_eq_expect):
             self.assertAlmostEqual(x, y)
 
+    def run_check_element_input(self, app):
+        screen = app.root.ids.sm.get_screen('Concentration')
+        elem_in = screen.ids.elementInput
+        elem_in.text = 'Al, Cu'
+        self.assertTrue(screen.elem_ok())
+
+        elem_in.text = '(Al, Cu), (Mg, Si)'
+        self.assertTrue(screen.elem_ok())
+
+    def run_check_grouped_basis(self, app):
+        screen = app.root.ids.sm.get_screen('Concentration')
+        gr_basis = screen.ids.groupedBasisInput
+        gr_basis.text = '1, 2'
+        self.assertTrue(screen.grouped_basis_ok())
+
+        gr_basis.text = '(1, 2), 3'
+        self.assertTrue(screen.grouped_basis_ok())
+
+        gr_basis = '(1, 2), (3, 4)'
+        self.assertTrue(screen.grouped_basis_ok())
+
     def run(self, app):
         self.check_add_constraint(app)
         self.check_matrices(app)
+        self.run_check_element_input(app)
+        self.run_check_grouped_basis(app)
