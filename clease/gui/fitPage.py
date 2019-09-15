@@ -33,10 +33,10 @@ class ECIOptimiser(object):
             self.fit_page.set_cv(cv)
             self.fit_page.set_rmse(rmse)
             self.fit_page.set_mae(mae)
-            self.fit_page.ids.status.text = 'Idle'
+            App.get_running_app().root.ids.status.text = 'Idle'
             self.fit_page.fitting_in_progress = False
         except Exception as exc:
-            self.fit_page.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
             return
 
@@ -68,7 +68,7 @@ class GAClusterSelector(object):
                 fitting_scheme=LinearRegression())
             optimiser.optimise()
         except Exception as exc:
-            self.fit_page.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text.text = str(exc)
 
 
 class FitPage(Screen):
@@ -229,14 +229,16 @@ class FitPage(Screen):
         fname = self.ids.eciFileInput.text
 
         if not fname.endswith('.json'):
-            self.ids.status.text = 'ECI file should be a JSON file'
+            msg = 'ECI file should be a JSON file'
+            App.get_running_app().root.ids.status.text = msg
 
         try:
             with open(fname, 'w') as out:
                 json.dump(self.eci, out, separators=(',', ': '), indent=2)
-            self.ids.status.text = 'ECIs saved to {}'.format(fname)
+            msg = 'ECIs saved to {}'.format(fname)
+            App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
     def fit_eci(self):
         if self.fitting_in_progress:
@@ -248,7 +250,7 @@ class FitPage(Screen):
 
         if settings is None:
             msg = 'Settings not set. Call Update settings first.'
-            self.ids.status.text = msg
+            App.get_running_app().root.ids.status.text = msg
             return
 
         if self.ids.maxClusterDiaCut.text == '':
@@ -258,7 +260,7 @@ class FitPage(Screen):
                 max_cluster_dia_cut = \
                     parse_max_cluster_dia(self.ids.maxClusterDiaCut.text)
             except Exception as exc:
-                self.ids.status.text = str(exc)
+                App.get_running_app().root.ids.status.text = str(exc)
                 return
 
         if self.ids.maxClusterSizeCut.text == '':
@@ -268,7 +270,8 @@ class FitPage(Screen):
 
         k_fold = self.ids.kFoldInput.text
         if k_fold == '':
-            self.ids.status.text = 'K-fold has to be given'
+            msg = 'K-fold has to be given'
+            App.get_running_app().root.ids.status.text = msg
             return
         k_fold = int(k_fold)
 
@@ -281,7 +284,7 @@ class FitPage(Screen):
         scheme = self.fitting_params.get('algorithm', None)
         if scheme is None:
             msg = 'Open the fitting scheme editor prior to the fit'
-            self.ids.status.text = msg
+            App.get_running_app().root.ids.status.text = msg
             return
 
         scheme = scheme.lower()
@@ -322,7 +325,8 @@ class FitPage(Screen):
             # therefore we have a separate runner and return
             # after the runner is finished...
             if self.fit_on_separate_thread:
-                self.ids.status.text = 'Selecting clusters with GA..'
+                msg = 'Selecting clusters with GA..'
+                App.get_running_app().root.ids.status.text = msg
                 Thread(target=ga_runner.run).start()
                 return
             else:
@@ -341,7 +345,7 @@ class FitPage(Screen):
                 max_cluster_dia=max_cluster_dia_cut, nsplits=k_fold,
                 num_repetitions=num_rep, scoring_scheme=scoring_scheme)
 
-            self.ids.status.text = 'Optimising ECIs...'
+            App.get_running_app().root.ids.status.text = 'Optimizing ECIs...'
             eci_optimiser = ECIOptimiser()
             eci_optimiser.fit_page = self
             eci_optimiser.evaluator = evaluator
@@ -354,7 +358,7 @@ class FitPage(Screen):
                 self.update_energy_plot(self.e_dft, self.e_ce)
                 self.update_eci_plot(self.eci)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
     def set_cv(self, cv):
         self.ids.cvLabel.text = 'CV: {:.3f} meV/atom'.format(cv)
@@ -370,7 +374,8 @@ class FitPage(Screen):
 
     def update_energy_plot(self, e_dft, e_ce):
         if not self._eci_has_been_fitted():
-            self.ids.status.text = 'ECIs has not been fitted yet'
+            msg = 'ECIs has not been fitted yet'
+            App.get_running_app().root.ids.status.text = msg
             return
         graph = self.ids.energyPlot.children[0]
         ax = graph.figure.axes[0]
@@ -417,7 +422,7 @@ class FitPage(Screen):
         if self.fitting_in_progress:
             msg = 'Performing ECI opmisation in the background. '
             msg += 'Wait until the process is finished.'
-            self.ids.status.text = msg
+            App.get_running_app().root.ids.status.text = msg
 
         self.update_energy_plot(self.e_dft, self.e_ce)
         self.update_eci_plot(self.eci)
