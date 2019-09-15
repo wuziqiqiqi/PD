@@ -18,16 +18,18 @@ class BaseGenerator(object):
 
     def generate(self):
         if self.status is None:
-            self.status.text = 'Generate function needs to be implemented'
+            msg = 'Generate function needs to be implemented.'
+            App.get_running_app().root.ids.status.text = msg
 
 
 class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
-            self.status.text = 'Finished generating random structures.'
+            msg = 'Random structures generated.'
+            App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
-            self.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
 
@@ -42,9 +44,10 @@ class ProbeStructureGenerator(BaseGenerator):
             self.generator.generate_probe_structure(
                 atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
                 num_temp=self.num_temp, num_steps_per_temp=self.num_steps)
-            self.status.text = 'Finished generating probe strcutres.'
+            msg = 'Probe strcutres generated.'
+            App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
-            self.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
 
@@ -62,9 +65,10 @@ class GSStructGenerator(object):
                 atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
                 num_temp=self.num_temps, num_steps_per_temp=self.num_steps,
                 eci=self.eci, random_composition=self.randomize)
-            self.status.text = 'Finished generating ground-state structures.'
+            msg = 'Ground-state structures generated.'
+            App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
-            self.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
 
@@ -171,8 +175,9 @@ class NewStructPage(Screen):
         settings = App.get_running_app().settings
 
         if settings is None:
-            msg = 'Settings is not set. Make sure Update settings was clicked.'
-            self.ids.status.text = msg
+            msg = "Settings is not set. "
+            msg += "Make sure Apply settings button was clicked.'"
+            App.get_running_app().root.ids.status.text = msg
             return
 
         try:
@@ -181,11 +186,12 @@ class NewStructPage(Screen):
             fname = self.ids.templateAtomsInput.text
             if fname == '':
                 msg = 'No atoms template given. Using active template.'
-                self.ids.status.text = msg
+                App.get_running_app().root.ids.status.text = msg
                 atoms = settings.atoms.copy()
             else:
                 if not os.path.exists(fname):
-                    self.ids.status.text = "Cannot find file {}".format(fname)
+                    msg = "Cannot find file {}".format(fname)
+                    App.get_running_app().root.ids.status.text = msg
                     return
 
                 atoms = read(fname)
@@ -198,7 +204,8 @@ class NewStructPage(Screen):
             num_steps = int(self.ids.numSweepsInput.text)*len(atoms)
 
             if struct_type == 'Random structure':
-                self.ids.status.text = "Generating random structures..."
+                msg = "Generating random structures..."
+                App.get_running_app().root.ids.status.text = msg
                 rnd_generator = RandomStructureGenerator()
                 rnd_generator.generator = generator
                 rnd_generator.atoms = atoms
@@ -206,7 +213,8 @@ class NewStructPage(Screen):
                 rnd_generator.page = self
                 Thread(target=rnd_generator.generate).start()
             elif struct_type == 'Probe structure':
-                self.ids.status.text = 'Generating probe structures...'
+                msg = 'Generating probe structures...'
+                App.get_running_app().root.ids.status.text = msg
                 prb_generator = ProbeStructureGenerator()
                 prb_generator.atoms = atoms
                 prb_generator.generator = generator
@@ -220,7 +228,8 @@ class NewStructPage(Screen):
             elif struct_type == 'Ground-state structure':
                 eci_file = self.ids.eciFileInput.text
                 eci = self.load_eci(eci_file)
-                self.ids.status.text = 'Generating ground-state structures.'
+                msg = 'Generating ground-state structures...'
+                App.get_running_app().root.ids.status.text = msg
                 random_comp = self.ids.randomizeCompositionSpinner.text
                 randomize = random_comp == 'Random composition'
 
@@ -238,7 +247,7 @@ class NewStructPage(Screen):
 
                 Thread(target=gs_generator.generate).start()
         except RuntimeError as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
     def import_structures(self):
         from ase.io import read
@@ -247,7 +256,7 @@ class NewStructPage(Screen):
 
         if init == '' or not os.path.exists(init):
             msg = 'Cannot find initial structure {}'.format(init)
-            self.ids.status.text = msg
+            App.get_running_app().root.ids.status.text = msg
             return
 
         try:
@@ -260,7 +269,7 @@ class NewStructPage(Screen):
             else:
                 if not os.path.exists(final):
                     msg = 'Cannot find final structure {}'.format(final)
-                    self.ids.status.text = msg
+                    App.get_running_app().root.ids.status.text = msg
                     return
                 final_struct = read(final)
 
@@ -268,8 +277,8 @@ class NewStructPage(Screen):
 
             if settings is None:
                 msg = 'Settings is not set. '
-                msg += 'Make sure Update settings was clicked.'
-                self.ids.status.text = msg
+                msg += 'Make sure Apply settings button was clicked.'
+                App.get_running_app().root.ids.status.text = msg
                 return
             generator = NewStructures(settings)
             generator.insert_structure(init_struct=init_struct,
@@ -280,7 +289,7 @@ class NewStructPage(Screen):
 
     def load_structures(self, path, filename, is_init):
         if len(filename) == 0:
-            self.ids.status.text = 'No file selecton...'
+            App.get_running_app().root.ids.status.text = 'No file selecton...'
             self.dismiss_popup()
             return
 
