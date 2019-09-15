@@ -1,7 +1,6 @@
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.boxlayout import BoxLayout
-
+from kivy.uix.stacklayout import StackLayout
 
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
@@ -21,7 +20,7 @@ resource_add_path(main_path + '/layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 
-class WindowFrame(BoxLayout):
+class WindowFrame(StackLayout):
     _pop_up = None
     current_session_file = None
 
