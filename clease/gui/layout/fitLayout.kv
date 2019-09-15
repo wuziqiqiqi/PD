@@ -5,218 +5,218 @@
 
 <FitPage>:
     name: 'Fit'
+    # StackLayout:
+
+    #     Button:
+    #         id: concEditor
+    #         text: 'Concentration'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Concentration'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toSettings
+    #         size_hint: [0.25, height]
+    #         text: 'Settings'
+    #         on_release:
+    #             root.manager.current = 'Settings'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toNewStruct
+    #         text: 'New structures'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'NewStruct'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toFit
+    #         text: 'Fit'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Fit'
+
+
     StackLayout:
+        BoxLayout:
+            size_hint: [0.05, main_field]
 
-        Button:
-            id: concEditor
-            text: 'Concentration'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Concentration'
-                root.manager.transition.direction = 'right'
+        BoxLayout:
+            size_hint: [0.45, main_field]
+            orientation: 'vertical'
+            BoxLayout:
+                id: energyPlot
+                size_hint: [1, 0.5]
 
-        Button:
-            id: toSettings
-            size_hint: [0.25, height]
-            text: 'Settings'
-            on_release:
-                root.manager.current = 'Settings'
-                root.manager.transition.direction = 'right'
+            BoxLayout:
+                id: eciPlot
+                size_hint: [1, 0.5]
 
-        Button:
-            id: toNewStruct
-            text: 'New structures'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'NewStruct'
-                root.manager.transition.direction = 'right'
-
-        Button:
-            id: toFit
-            text: 'Fit'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Fit'
-
+        BoxLayout:
+            size_hint: [0.05, main_field]
 
         StackLayout:
-            BoxLayout:
-                size_hint: [0.05, main_field]
-
-            BoxLayout:
-                size_hint: [0.45, main_field]
-                orientation: 'vertical'
-                BoxLayout:
-                    id: energyPlot
-                    size_hint: [1, 0.5]
-
-                BoxLayout:
-                    id: eciPlot
-                    size_hint: [1, 0.5]
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+            size_hint: [0.40, main_field]
 
             StackLayout:
-                size_hint: [0.40, main_field]
+                size_hint: [1, 0.25*button_height]
 
-                StackLayout:
-                    size_hint: [1, 0.25*button_height]
+            Label:
+                size_hint: [0.2, button_height]
+                id: eciLabel
+                text: 'ECI file'
 
-                Label:
-                    size_hint: [0.2, button_height]
-                    id: eciLabel
-                    text: 'ECI file'
+            TextInput:
+                size_hint: [0.6, button_height]
+                id: eciFileInput
+                text: ''
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.6, button_height]
-                    id: eciFileInput
-                    text: ''
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            Button:
+                size_hint: [0.2, button_height]
+                id: loadEciInput
+                text: 'Load'
+                on_release: root.show_load_ECI_file_dialog()
 
-                Button:
-                    size_hint: [0.2, button_height]
-                    id: loadEciInput
-                    text: 'Load'
-                    on_release: root.show_load_ECI_file_dialog()
+            Label:
+                size_hint: [0.3, button_height]
+                id: dbSelectCondLabel
+                text: 'DB select'
 
-                Label:
-                    size_hint: [0.3, button_height]
-                    id: dbSelectCondLabel
-                    text: 'DB select'
+            TextInput:
+                size_hint: [0.7, button_height]
+                id: dbSelectCondInput
+                text: ''
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.7, button_height]
-                    id: dbSelectCondInput
-                    text: ''
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            Label:
+                size_hint: [0.7, button_height]
+                text: 'Max cluster size (cut)'
 
-                Label:
-                    size_hint: [0.7, button_height]
-                    text: 'Max cluster size (cut)'
+            TextInput:
+                size_hint: [0.3, button_height]
+                id: maxClusterSizeCut
+                text: ''
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.3, button_height]
-                    id: maxClusterSizeCut
-                    text: ''
-                    input_filter: 'int'
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            Label:
+                size_hint: [0.7, button_height]
+                text: 'Max cluster dia (cut)'
 
-                Label:
-                    size_hint: [0.7, button_height]
-                    text: 'Max cluster dia (cut)'
+            TextInput:
+                size_hint: [0.3, button_height]
+                id: maxClusterDiaCut
+                text: ''
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.3, button_height]
-                    id: maxClusterDiaCut
-                    text: ''
-                    input_filter: 'float'
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            Label:
+                size_hint: [0.7, button_height]
+                text: 'k-fold validation'
 
-                Label:
-                    size_hint: [0.7, button_height]
-                    text: 'k-fold validation'
+            TextInput:
+                size_hint: [0.3, button_height]
+                id: kFoldInput
+                text: '10'
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.3, button_height]
-                    id: kFoldInput
-                    text: '10'
-                    input_filter: 'int'
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            Label:
+                size_hint: [0.7, button_height]
+                text: 'No. repetition'
 
-                Label:
-                    size_hint: [0.7, button_height]
-                    text: 'No. repetition'
+            TextInput:
+                size_hint: [0.3, button_height]
+                id: numRepititionsInput
+                text: '1'
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+                on_text_validate: root.fit_eci()
 
-                TextInput:
-                    size_hint: [0.3, button_height]
-                    id: numRepititionsInput
-                    text: '1'
-                    input_filter: 'int'
-                    write_tab: False
-                    multiline: False
-                    on_text_validate: root.fit_eci()
+            CheckBox:
+                size_hint: [0.2, button_height]
+                id: separateThread
+                value: False
+                on_active: root.thread_check_box_active(self.active)
 
-                CheckBox:
-                    size_hint: [0.2, button_height]
-                    id: separateThread
-                    value: False
-                    on_active: root.thread_check_box_active(self.active)
+            Label:
+                size_hint: [0.8, button_height]
+                text: 'Optimize on main thread'
 
-                Label:
-                    size_hint: [0.8, button_height]
-                    text: 'Optimize on main thread'
+            Spinner:
+                size_hint: [1, button_height]
+                id: fitAlgSpinner
+                text: 'LASSO'
+                values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
 
-                Spinner:
-                    size_hint: [1, button_height]
-                    id: fitAlgSpinner
-                    text: 'LASSO'
-                    values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
+            Button:
+                size_hint: [1, button_height]
+                id: fitEditorButton
+                text: 'Launch Fitting Algorithm Editor'
+                on_release: root.launch_fit_alg_editor()
 
-                Button:
-                    size_hint: [1, button_height]
-                    id: fitEditorButton
-                    text: 'Launch Fitting Algorithm Editor'
-                    on_release: root.launch_fit_alg_editor()
+            Button:
+                size_hint: [1, button_height]
+                id: fitButton
+                text: 'Fit ECIs'
+                on_release: root.fit_eci()
 
-                Button:
-                    size_hint: [1, button_height]
-                    id: fitButton
-                    text: 'Fit ECIs'
-                    on_release: root.fit_eci()
+            Button:
+                size_hint: [1, button_height]
+                id: saveECIButton
+                text: 'Save ECIs'
+                on_release: root.save_eci()
 
-                Button:
-                    size_hint: [1, button_height]
-                    id: saveECIButton
-                    text: 'Save ECIs'
-                    on_release: root.save_eci()
+            Button:
+                size_hint: [1, button_height]
+                id: updateFit
+                text: 'Update plots'
+                on_release: root.update_plots()
 
-                Button:
-                    size_hint: [1, button_height]
-                    id: updateFit
-                    text: 'Update plots'
-                    on_release: root.update_plots()
+            Label:
+                size_hint: [1, button_height]
+                id: cvLabel
+                text: 'CV: 0.0 meV/atom'
+            Label:
+                size_hint: [1, button_height]
+                id: rmseLabel
+                text: 'RMSE: 0.0 meV/atom'
+            Label:
+                size_hint: [1, button_height]
+                id: maeLabel
+                text: 'MAE: 0.0 meV/atom'
 
-                Label:
-                    size_hint: [1, button_height]
-                    id: cvLabel
-                    text: 'CV: 0.0 meV/atom'
-                Label:
-                    size_hint: [1, button_height]
-                    id: rmseLabel
-                    text: 'RMSE: 0.0 meV/atom'
-                Label:
-                    size_hint: [1, button_height]
-                    id: maeLabel
-                    text: 'MAE: 0.0 meV/atom'
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+        BoxLayout:
+            size_hint: [0.05, main_field]
 
 
 
-        FloatLayout:
-            size_hint: [1, status_height]
+    FloatLayout:
+        size_hint: [1, status_height]
+        pos_hint: {"x": 0.0, 'bottom':0.0}
+
+        Label:
+            size_hint: [0.2, 1]
             pos_hint: {"x": 0.0, 'bottom':0.0}
+            text: 'Status:'
 
-            Label:
-                size_hint: [0.2, 1]
-                pos_hint: {"x": 0.0, 'bottom':0.0}
-                text: 'Status:'
-
-            Label:
-                id: status
-                size_hint: [0.8, 1]
-                pos_hint: {"x": 0.2, 'bottom':0.0}
-                text: 'Idle'
+        Label:
+            id: status
+            size_hint: [0.8, 1]
+            pos_hint: {"x": 0.2, 'bottom':0.0}
+            text: 'Idle'
 

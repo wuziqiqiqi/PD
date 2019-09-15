@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 
+
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage

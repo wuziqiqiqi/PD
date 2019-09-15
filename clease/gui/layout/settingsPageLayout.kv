@@ -5,380 +5,380 @@
 
 <SettingsPage>:
     name: "Settings"
+    # StackLayout:
+
+    #     Button:
+    #         id: concEditor
+    #         text: 'Concentration'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Concentration'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toSettings
+    #         size_hint: [0.25, height]
+    #         text: 'Settings'
+    #         on_release:
+    #             root.manager.current = 'Settings'
+
+    #     Button:
+    #         id: toNewStruct
+    #         text: 'New structures'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'NewStruct'
+    #             root.manager.transition.direction = 'left'
+
+    #     Button:
+    #         id: toFit
+    #         text: 'Fit'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Fit'
+    #             root.manager.transition.direction = 'left'
+
+
     StackLayout:
 
-        Button:
-            id: concEditor
-            text: 'Concentration'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Concentration'
-                root.manager.transition.direction = 'right'
-
-        Button:
-            id: toSettings
-            size_hint: [0.25, height]
-            text: 'Settings'
-            on_release:
-                root.manager.current = 'Settings'
-
-        Button:
-            id: toNewStruct
-            text: 'New structures'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'NewStruct'
-                root.manager.transition.direction = 'left'
-
-        Button:
-            id: toFit
-            text: 'Fit'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Fit'
-                root.manager.transition.direction = 'left'
-
+        BoxLayout:
+            size_hint: [0.05, main_field]
 
         StackLayout:
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+            size_hint: [0.90, main_field]
 
             StackLayout:
-                size_hint: [0.90, main_field]
-
-                StackLayout:
-                    size_hint: [1, 0.25*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: ceType
-                        text: 'Type'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: bfLabel
-                        text: 'Basis function'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: maxClusterSizeLabel
-                        text: 'Max cluster size'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: maxClusterDiaLabel
-                        text: 'Max cluster dia (Å)'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Spinner:
-                        size_hint: [0.25, 1]
-                        id: typeSpinner
-                        text: 'CEBulk'
-                        values: 'CEBulk', 'CECrystal'
-                        on_text: root.update_input_section(self.text)
-
-                    Spinner:
-                        size_hint: [0.25, 1]
-                        id: bfSpinner
-                        text: 'polynomial'
-                        values: 'polynomial', 'trigonometric', 'binary-linear'
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: clusterSize
-                        text: '4'
-                        input_filter: 'int'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: clusterDia
-                        text: '5.0'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: sizeSpecificationType
-                        text: 'Size mode'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: sizeLabel
-                        text: 'Cell size'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: supercellFactLabel
-                        text: 'Supercell factor'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: skewnessLabel
-                        text: 'Skew factor'
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Spinner:
-                        size_hint: [0.25, 1]
-                        id: sizeSpinner
-                        text: 'Fixed'
-                        values: 'Fixed', 'Mult. factor'
-                        on_text: root.update_size_section(self.text)
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: sizeInput
-                        text: '3, 3, 3'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: scFactorInput
-                        text: '20'
-                        input_filter: 'int'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: skewFactorInput
-                        text: '4'
-                        input_filter: 'int'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.3, 1]
-                        id: dbChooser
-                        text: 'Structure database'
-
-                    TextInput:
-                        size_hint: [0.5, 1]
-                        id: dbNameInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: loadDbButton
-                        text: 'Load'
-                        on_release: root.show_load_dialog()
-
-
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, 1.5*button_height]
-
-                    Label:
-                        id: CEBulkTitle
-                        size_hint: [1.0, 1]
-                        text: 'CEBulk parameters'
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: crystStruct
-                        text: 'Crystal structure'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: aParameter
-                        text: 'a'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: cParameter
-                        text: 'c'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: uParameter
-                        text: 'u'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Spinner:
-                        size_hint: [0.25, 1]
-                        id: crystStructSpinner
-                        text: 'fcc'
-                        values: 'fcc', 'hcp', 'bcc', 'diamond', 'zincblende', 'rocksalt', 'cesiumchloride', 'fluorite', 'wurtzite'
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: aParameterInput
-                        text: ''
-                        input_filter: 'float'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: cParameterInput
-                        text: ''
-                        input_filter: 'float'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: uParameterInput
-                        text: ''
-                        input_filter: 'float'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, 1.5*button_height]
-
-                    Label:
-                        id: CECrystalTitle
-                        size_hint: [1, 1]
-                        text: 'CECrystal parameters'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: cellPar
-                        text: 'Cellpar'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: cell
-                        text: 'Cell'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: crBasisLabel
-                        text: 'Coordinate basis'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: spLabel
-                        text: 'Spacegroup'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: cellParInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: cellInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: crdBasisInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: spInput
-                        text: '1'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_update_settings()
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
-
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: reconfigureButton
-                        text: 'Apply settings'
-                        on_release: root.apply_update_settings()
-
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
-
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
-
-
-
-        FloatLayout:
-            size_hint: [1, status_height]
+                size_hint: [1, 0.25*button_height]
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: ceType
+                    text: 'Type'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: bfLabel
+                    text: 'Basis function'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: maxClusterSizeLabel
+                    text: 'Max cluster size'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: maxClusterDiaLabel
+                    text: 'Max cluster dia (Å)'
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Spinner:
+                    size_hint: [0.25, 1]
+                    id: typeSpinner
+                    text: 'CEBulk'
+                    values: 'CEBulk', 'CECrystal'
+                    on_text: root.update_input_section(self.text)
+
+                Spinner:
+                    size_hint: [0.25, 1]
+                    id: bfSpinner
+                    text: 'polynomial'
+                    values: 'polynomial', 'trigonometric', 'binary-linear'
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: clusterSize
+                    text: '4'
+                    input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: clusterDia
+                    text: '5.0'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: sizeSpecificationType
+                    text: 'Size mode'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: sizeLabel
+                    text: 'Cell size'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: supercellFactLabel
+                    text: 'Supercell factor'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: skewnessLabel
+                    text: 'Skew factor'
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Spinner:
+                    size_hint: [0.25, 1]
+                    id: sizeSpinner
+                    text: 'Fixed'
+                    values: 'Fixed', 'Mult. factor'
+                    on_text: root.update_size_section(self.text)
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: sizeInput
+                    text: '3, 3, 3'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: scFactorInput
+                    text: '20'
+                    input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: skewFactorInput
+                    text: '4'
+                    input_filter: 'int'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.3, 1]
+                    id: dbChooser
+                    text: 'Structure database'
+
+                TextInput:
+                    size_hint: [0.5, 1]
+                    id: dbNameInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                Button:
+                    size_hint: [0.2, 1]
+                    id: loadDbButton
+                    text: 'Load'
+                    on_release: root.show_load_dialog()
+
+
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
+
+
+            StackLayout:
+                size_hint: [1, 1.5*button_height]
+
+                Label:
+                    id: CEBulkTitle
+                    size_hint: [1.0, 1]
+                    text: 'CEBulk parameters'
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: crystStruct
+                    text: 'Crystal structure'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: aParameter
+                    text: 'a'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: cParameter
+                    text: 'c'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: uParameter
+                    text: 'u'
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Spinner:
+                    size_hint: [0.25, 1]
+                    id: crystStructSpinner
+                    text: 'fcc'
+                    values: 'fcc', 'hcp', 'bcc', 'diamond', 'zincblende', 'rocksalt', 'cesiumchloride', 'fluorite', 'wurtzite'
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: aParameterInput
+                    text: ''
+                    input_filter: 'float'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: cParameterInput
+                    text: ''
+                    input_filter: 'float'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: uParameterInput
+                    text: ''
+                    input_filter: 'float'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
+
+
+            StackLayout:
+                size_hint: [1, 1.5*button_height]
+
+                Label:
+                    id: CECrystalTitle
+                    size_hint: [1, 1]
+                    text: 'CECrystal parameters'
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: cellPar
+                    text: 'Cellpar'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: cell
+                    text: 'Cell'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: crBasisLabel
+                    text: 'Coordinate basis'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: spLabel
+                    text: 'Spacegroup'
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: cellParInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: cellInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: crdBasisInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: spInput
+                    text: '1'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_update_settings()
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
+
+                Button:
+                    size_hint: [0.2, 1]
+                    id: reconfigureButton
+                    text: 'Apply settings'
+                    on_release: root.apply_update_settings()
+
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
+
+
+        BoxLayout:
+            size_hint: [0.05, main_field]
+
+
+
+    FloatLayout:
+        size_hint: [1, status_height]
+        pos_hint: {"x": 0.0, 'bottom':0.0}
+
+        Label:
+            size_hint: [0.2, 1]
             pos_hint: {"x": 0.0, 'bottom':0.0}
+            text: 'Status:'
 
-            Label:
-                size_hint: [0.2, 1]
-                pos_hint: {"x": 0.0, 'bottom':0.0}
-                text: 'Status:'
-
-            Label:
-                id: status
-                size_hint: [0.8, 1]
-                pos_hint: {"x": 0.2, 'bottom':0.0}
-                text: 'Idle'
+        Label:
+            id: status
+            size_hint: [0.8, 1]
+            pos_hint: {"x": 0.2, 'bottom':0.0}
+            text: 'Idle'
