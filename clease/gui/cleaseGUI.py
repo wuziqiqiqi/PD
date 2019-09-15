@@ -67,11 +67,14 @@ class WindowFrame(BoxLayout):
             fit_page.from_dict(data.get('fit_page', {}))
             self.current_session_file = filename[0]
 
-            settings_page.ids.status.text = \
-                "Loaded session from {}".format(self.current_session_file)
+            msg ="Loaded session from {}".format(self.current_session_file)
+            App.get_running_app().root.ids.status.text = msg
+
 
         except Exception as e:
-            settings_page.ids.status.text = "An error occured during load: " + str(e)
+            msg = "An error occured during load: " + str(e)
+            App.get_running_app().root.ids.status.text = msg
+
         self.dismiss_popup()
 
     def save_session_to_current_file(self):
@@ -101,8 +104,8 @@ class WindowFrame(BoxLayout):
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
-        self.ids.sm.get_screen('Settings').ids.status.text = \
-            'Session saved to {}'.format(fname)
+        msg = 'Session saved to {}'.format(fname)
+        App.get_running_app().root.ids.status.text = msg
         self.dismiss_popup()
         self.current_session_file = fname
 
