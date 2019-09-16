@@ -25,10 +25,10 @@
                 on_release: app.root.reconfig_settings()
             ActionButton:
                 text: 'DB'
-                # on_release:  app.root.ids.sm.current = 'NewStruct'
+                on_release: app.root.reconfig_db()
             ActionButton:
                 text: 'Settings & DB'
-                # on_release:  app.root.ids.sm.current = 'Fit'
+                on_release: app.root.reconfig_settings_db()
 
         ActionGroup:
             id: File_AG
