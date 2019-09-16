@@ -157,8 +157,12 @@ class WindowFrame(StackLayout):
             App.get_running_app().root.ids.status.text = msg
 
     def reconfig_db(self):
-        msg = "Reconfiguring in progress..."
-        App.get_running_app().root.ids.status.text = msg
+        if self._settings_applied():
+            from clease import CorrFunction
+            cf = CorrFunction(self.settings)
+            cf.reconfigure_db_entries()
+            msg = "Correlation functions of all DB entries are reconfigured."
+            App.get_running_app().root.ids.status.text = msg
 
     def reconfig_settings_db(self):
         msg = "Reconfiguring in progress..."
