@@ -58,7 +58,7 @@ class WindowFrame(StackLayout):
             # variables for "Settings" screen
             settings_page = self.ids.sm.get_screen('Settings')
             settings_page.from_dict(data.get('settings', {}))
-            settings_page.apply_update_settings()
+            settings_page.apply_settings()
 
             newstruct_page = self.ids.sm.get_screen('NewStruct')
             newstruct_page.from_dict(data.get('new_struct', {}))
@@ -135,6 +135,17 @@ class WindowFrame(StackLayout):
             direction = 'right'
         self.ids.sm.transition.direction = direction
         self.ids.sm.current = new_screen
+
+    def reconfig_settings(self):
+        msg = "Reconfiguring in progress..."
+        App.get_running_app().root.ids.status.text = msg
+        self.ids.sm.get_screen('Settings').apply_settings()
+        self.settings.reconfigure_settings()
+        msg = "Cluster data updated for all templates.\nPlease also "
+        msg += "reconfigure DB entries if there are any structures stored "
+        msg += "in DB."
+        App.get_running_app().root.ids.status.text = msg
+
 
 
 class CleaseGUI(App):

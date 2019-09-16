@@ -13,9 +13,11 @@ class SettingsInitializer(object):
         from clease import CEBulk, CECrystal
         try:
             if self.type == 'CEBulk':
-                self.app.settings = CEBulk(**self.kwargs)
+                # self.app.settings = CEBulk(**self.kwargs)
+                App.get_running_app().root.settings = CEBulk(**self.kwargs)
             elif self.type == 'CECrystal':
-                self.app.settings = CECrystal(**self.kwargs)
+                # self.app.settings = CECrystal(**self.kwargs)
+                App.get_running_app().root.settings = CECrystal(**self.kwargs)
             msg = "Database initialized"
             App.get_running_app().root.ids.status.text = msg
 
