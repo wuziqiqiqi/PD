@@ -82,19 +82,19 @@
         Button:
             id: toConc
             text: 'Concentration'
-            on_release: app.root.ids.sm.current = 'Concentration'
+            on_release: app.root.change_screen('Concentration')
         Button:
             id: toSettings
             text: 'Settings'
-            on_release: app.root.ids.sm.current = 'Settings'
+            on_release: app.root.change_screen('Settings')
         Button:
             id: toNewStruct
             text: 'New Structures'
-            on_release: app.root.ids.sm.current = 'NewStruct'
+            on_release: app.root.change_screen('NewStruct')
         Button:
             id: toFit
             text: 'Fit'
-            on_release: app.root.ids.sm.current = 'Fit'
+            on_release: app.root.change_screen('Fit')
 
 
     ScreenManager:

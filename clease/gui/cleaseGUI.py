@@ -122,6 +122,20 @@ class WindowFrame(StackLayout):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
+    def change_screen(self, new_screen):
+        current = self.ids.sm.current
+        all_screens = self.ids.sm.screen_names
+
+        index_current = all_screens.index(current)
+        index_new = all_screens.index(new_screen)
+
+        direction = 'left'
+
+        if index_current > index_new:
+            direction = 'right'
+        self.ids.sm.transition.direction = direction
+        self.ids.sm.current = new_screen
+
 
 class CleaseGUI(App):
     def __init__(self):
