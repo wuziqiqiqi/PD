@@ -418,7 +418,9 @@ class SettingsPage(Screen):
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
 
+            return True
+
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
-            return
+            return False
