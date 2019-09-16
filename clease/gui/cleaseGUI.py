@@ -1,6 +1,6 @@
 from kivy.app import App
 from kivy.lang import Builder
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.stacklayout import StackLayout
 
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
@@ -20,7 +20,8 @@ resource_add_path(main_path + '/layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 
-class WindowFrame(BoxLayout):
+
+class WindowFrame(StackLayout):
     _pop_up = None
     current_session_file = None
 
@@ -66,11 +67,13 @@ class WindowFrame(BoxLayout):
             fit_page.from_dict(data.get('fit_page', {}))
             self.current_session_file = filename[0]
 
-            settings_page.ids.status.text = \
-                "Loaded session from {}".format(self.current_session_file)
+            msg = "Loaded session from {}".format(self.current_session_file)
+            App.get_running_app().root.ids.status.text = msg
 
         except Exception as e:
-            settings_page.ids.status.text = "An error occured during load: " + str(e)
+            msg = "An error occured during load: " + str(e)
+            App.get_running_app().root.ids.status.text = msg
+
         self.dismiss_popup()
 
     def save_session_to_current_file(self):
@@ -100,8 +103,8 @@ class WindowFrame(BoxLayout):
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
-        self.ids.sm.get_screen('Settings').ids.status.text = \
-            'Session saved to {}'.format(fname)
+        msg = 'Session saved to {}'.format(fname)
+        App.get_running_app().root.ids.status.text = msg
         self.dismiss_popup()
         self.current_session_file = fname
 
@@ -119,6 +122,20 @@ class WindowFrame(BoxLayout):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
+    def change_screen(self, new_screen):
+        current = self.ids.sm.current
+        all_screens = self.ids.sm.screen_names
+
+        index_current = all_screens.index(current)
+        index_new = all_screens.index(new_screen)
+
+        direction = 'left'
+
+        if index_current > index_new:
+            direction = 'right'
+        self.ids.sm.transition.direction = direction
+        self.ids.sm.current = new_screen
+
 
 class CleaseGUI(App):
     def __init__(self):
@@ -126,6 +143,7 @@ class CleaseGUI(App):
         self.settings = None
 
     def build(self):
+        self.icon = 'clease_logo.png'
         return WindowFrame()
 
 

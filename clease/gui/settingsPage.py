@@ -5,8 +5,8 @@ from kivy.app import App
 from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
-from clease.gui.load_save_dialog import LoadDialog, SaveDialog
-from clease.gui.util import parse_max_cluster_dia, parse_size, parse_elements
+from clease.gui.load_save_dialog import LoadDialog
+from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 import traceback
 
@@ -25,13 +25,15 @@ class SettingsInitializer(object):
                 self.app.settings = CEBulk(**self.kwargs)
             elif self.type == 'CECrystal':
                 self.app.settings = CECrystal(**self.kwargs)
-            self.status.text = 'Database initialized'
+            App.get_running_app().root.ids.status.text = \
+                'Database initialized'
         except AssertionError as exc:
             traceback.print_exc()
-            self.status.text = "AssertError during initialization " + str(exc)
+            App.get_running_app().root.ids.status.text =\
+                "AssertError during initialization " + str(exc)
         except Exception as exc:
             traceback.print_exc()
-            self.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
 
 class SettingsPage(Screen):
@@ -172,7 +174,8 @@ class SettingsPage(Screen):
         try:
             _ = float(self.ids.aParameterInput.text)
         except Exception:
-            self.ids.status.text = "a has to be a float"
+            App.get_running_app().root.ids.status.text =\
+                "a has to be a float"
             return 1
 
         c = self.ids.cParameterInput.text
@@ -180,7 +183,8 @@ class SettingsPage(Screen):
             try:
                 _ = float(c)
             except Exception:
-                self.ids.status.text = "c has to be float"
+                App.get_running_app().root.ids.status.text =\
+                    "c has to be float"
                 return 1
 
         u = self.ids.uParameterInput.text
@@ -189,7 +193,8 @@ class SettingsPage(Screen):
             try:
                 _ = float(u)
             except Exception:
-                self.ids.status.text = "u has to be float"
+                App.get_running_app().root.ids.status.text =\
+                    "u has to be float"
                 return 1
         return 0
 
@@ -198,7 +203,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_cellpar(cellPar)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
 
@@ -207,7 +212,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_cell(cell)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
 
@@ -226,19 +231,21 @@ class SettingsPage(Screen):
             sufficient_cell_info_given = True
 
         if not sufficient_cell_info_given:
-            self.ids.status.text = 'Either cellpar or cell has to be given'
+            msg = 'Either cellpar or cell has to be given'
+            App.get_running_app().root.ids.status.text = msg
             return 1
 
         try:
             _ = parse_coordinate_basis(self.ids.crdBasisInput.text)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return 1
 
         try:
             _ = int(self.ids.spInput.text)
         except Exception:
-            self.ids.status.text = "Spacegroup has to be an integer"
+            msg = "Spacegroup has to be an integer."
+            App.get_running_app().root.ids.status.text = msg
             return 1
         return 0
 
@@ -249,11 +256,11 @@ class SettingsPage(Screen):
 
             if isinstance(diameter, list):
                 if len(diameter) != cluster_size - 1:
-                    self.ids.status.text = \
-                        'Cluster dia has to be given for 2-body and beyond!'
+                    msg = 'Cluster dia has to be given for 2-body and beyond!'
+                    App.get_running_app().root.ids.status.text = msg
                     return False
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
 
@@ -262,7 +269,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_size(self.ids.sizeInput.text)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
 
@@ -273,7 +280,8 @@ class SettingsPage(Screen):
         try:
             _ = int(self.ids.clusterSize.text)
         except Exception:
-            self.ids.status.text = "Max cluster size has to be an integer"
+            msg = "Max cluster size has to be an integer."
+            App.get_running_app().root.ids.status.text = msg
             return 1
 
         # Check that we can parse the max cluster diameter
@@ -286,16 +294,19 @@ class SettingsPage(Screen):
                 return 1
         else:
             if self.ids.scFactorInput.text == '':
-                self.ids.status.text = 'Supercell factor has to be given'
+                msg = 'Supercell factor has to be given'
+                App.get_running_app().root.ids.status.text = msg
                 return 1
 
             if self.ids.skewFactorInput.text == '':
-                self.ids.status.text = 'Skewness factor has to be given'
+                msg = 'Skewness factor has to be given'
+                App.get_running_app().root.ids.status.text = msg
                 return 1
 
         db_name = self.ids.dbNameInput.text
         if db_name == '':
-            self.ids.status.text = "No database given"
+            msg = "No database given"
+            App.get_running_app().root.ids.status.text = msg
             return 1
 
         if self.ids.typeSpinner.text == "CEBulk":
@@ -335,7 +346,7 @@ class SettingsPage(Screen):
             from clease import Concentration
             conc_page = self.manager.get_screen("Concentration")
             if conc_page.check_user_input() != 0:
-                self.ids.status.text = 'Error in input in Concentration panel.'
+                return
 
             A_lb, rhs_lb, A_eq, rhs_eq = conc_page.get_constraint_matrices()
 
@@ -352,7 +363,6 @@ class SettingsPage(Screen):
                                  grouped_basis=grouped_basis)
 
             if self.check_user_input() != 0:
-                self.ids.status.text = 'Error in input in Settings panel.'
                 return
 
             inputPage = self.to_dict()
@@ -394,7 +404,8 @@ class SettingsPage(Screen):
                     size=size, supercell_factor=supercell_factor,
                     skew_threshold=skewness_factor
                 )
-                self.ids.status.text = "Initializing database..."
+                msg = "Initializing database..."
+                App.get_running_app().root.ids.status.text = msg
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
@@ -415,7 +426,8 @@ class SettingsPage(Screen):
                     cell = parse_cell(inputPage['cell'])
 
                 sp = int(inputPage['spacegroup'])
-                self.ids.status.text = "Initializing database..."
+                msg = "Initializing database..."
+                App.get_running_app().root.ids.status.text = msg
                 kwargs = dict(
                     basis=basis, cellpar=cellpar, cell=cell,
                     max_cluster_dia=float(inputPage['max_cluster_dia']),
@@ -430,9 +442,7 @@ class SettingsPage(Screen):
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
 
-            # self.ids.status.text = "Idle"
-
         except Exception as exc:
             traceback.print_exc()
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return

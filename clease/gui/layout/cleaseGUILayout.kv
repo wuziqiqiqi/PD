@@ -10,8 +10,7 @@
 
 
 <ActionBar>:
-    pos_hint: {'top':1}
-    size_hint: [1, 0.04]
+
     ActionView:
         use_separator: True
         ActionPrevious:
@@ -72,21 +71,56 @@
 
 
 <WindowFrame>:
-    orientation: 'vertical'
 
     ActionBar:
         id: ActionBar
+        size_hint: [1, 0.05]
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: [1, 0.05]
+        Button:
+            id: toConc
+            text: 'Concentration'
+            on_release: app.root.change_screen('Concentration')
+        Button:
+            id: toSettings
+            text: 'Settings'
+            on_release: app.root.change_screen('Settings')
+        Button:
+            id: toNewStruct
+            text: 'New Structures'
+            on_release: app.root.change_screen('NewStruct')
+        Button:
+            id: toFit
+            text: 'Fit'
+            on_release: app.root.change_screen('Fit')
+
 
     ScreenManager:
         id: sm
-        size_hint: 1, .8
+        size_hint: [1, 0.80]
         ConcentrationPage:
         SettingsPage:
         NewStructPage:
         FitPage:
 
-    # StatusBar:
-    #     id: sb
+
+    FloatLayout:
+        size_hint: [1, 0.10]
+        pos_hint: {"x": 0.0, 'bottom':0.0}
+
+        Label:
+            size_hint: [0.2, 1]
+            pos_hint: {"x": 0.0, 'bottom':0.0}
+            text: 'Status:'
+
+        Label:
+            id: status
+            size_hint: [0.8, 1]
+            pos_hint: {"x": 0.2, 'bottom':0.0}
+            text: 'Idle'
+
 
 
 <LoadDialog>:

@@ -47,18 +47,18 @@ class Concentration(object):
         specifying concentration (e.g., useful when two basis are shared by
         the same set of elements and no distinctions are made between them)
 
-    A_lb: list or numpy array (optional, only used for linear algebra representation)
+    A_lb: list (optional, only used for linear algebra representation)
         A two-dimention matrix (or nested list) used to specify the lower
         bounds of the concentration ranges.
 
-    b_lb: list or numpy list (optional, only used for linear algebra representation)
+    b_lb: list (optional, only used for linear algebra representation)
         A list used tp specify the lower bounds of the concentration ranges.
 
-    A_eq: list or numpy array (optional, only used for linear algegra representation)
+    A_eq: list (optional, only used for linear algegra representation)
         A two-dimention matrix (or nested list) used to specify the equality
         conditions of the concentration ranges.
 
-    b_eq: list or numpy list (optional, only used for linear algegra representation)
+    b_eq: list (optional, only used for linear algegra representation)
         A list used tp specify the equality condisitons of the concentration
         ranges.
     """

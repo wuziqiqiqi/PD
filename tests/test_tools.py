@@ -1,7 +1,5 @@
 import unittest
-import numpy as np
 from ase.build import bulk
-from ase.spacegroup import crystal
 from clease.tools import min_distance_from_facet
 
 

@@ -1,137 +1,119 @@
 #: set height 0.05
-#: set status_height 2*height
-#: set main_field 1.0 - height - status_height
+#: set main_field 0.80
 #: set button_height height/main_field
-
 
 <ConcentrationPage>:
     name: "Concentration"
+    # StackLayout:
+        # orientation: 'lr-tb'
+
+        # Button:
+        #     id: concEditor
+        #     text: 'Concentration'
+        #     size_hint: [0.25, height]
+        #     on_release:
+        #         root.manager.current = 'Concentration'
+
+        # Button:
+        #     id: toSettings
+        #     size_hint: [0.25, height]
+        #     text: 'Settings'
+        #     on_release:
+        #         root.manager.current = 'Settings'
+        #         root.manager.transition.direction = 'left'
+
+        # Button:
+        #     id: toNewStruct
+        #     text: 'New structures'
+        #     size_hint: [0.25, height]
+        #     on_release:
+        #         root.manager.current = 'NewStruct'
+        #         root.manager.transition.direction = 'left'
+
+        # Button:
+        #     id: toFit
+        #     text: 'Fit'
+        #     size_hint: [0.25, height]
+        #     on_release:
+        #         root.manager.current = 'Fit'
+        #         root.manager.transition.direction = 'left'
+
     StackLayout:
-        orientation: 'lr-tb'
 
-        Button:
-            id: concEditor
-            text: 'Concentration'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Concentration'
-
-        Button:
-            id: toSettings
-            size_hint: [0.25, height]
-            text: 'Settings'
-            on_release:
-                root.manager.current = 'Settings'
-                root.manager.transition.direction = 'left'
-
-        Button:
-            id: toNewStruct
-            text: 'New structures'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'NewStruct'
-                root.manager.transition.direction = 'left'
-
-        Button:
-            id: toFit
-            text: 'Fit'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Fit'
-                root.manager.transition.direction = 'left'
+        BoxLayout:
+            size_hint: [0.05, 1]
 
         StackLayout:
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+            size_hint: [0.90, 1]
+            id: mainConcLayout
 
             StackLayout:
-                size_hint: [0.90, main_field]
-                id: mainConcLayout
-
-                StackLayout:
-                    size_hint: [1, 0.25*button_height]
+                size_hint: [1, 0.25*button_height]
 
 
-                StackLayout:
-                    size_hint: [1, button_height]
+            StackLayout:
+                size_hint: [1, button_height]
 
-                    Label:
-                        size_hint: [0.5, 1]
-                        text: 'Elements in basis'
+                Label:
+                    size_hint: [0.5, 1]
+                    text: 'Elements in basis'
 
-                    Label:
-                        size_hint: [0.5, 1]
-                        text: 'Grouped basis'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    TextInput:
-                        size_hint: [0.5, 1]
-                        id: elementInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_Elements_GroupedBasis()
-
-                    TextInput:
-                        size_hint: [0.5, 1]
-                        id: groupedBasisInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.apply_Elements_GroupedBasis()
-
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.1, 1]
-                        text: ''
-
-                    Button:
-                        size_hint: [0.3, 1]
-                        id: applyElemGroupButton
-                        text: 'Apply'
-                        on_release: root.apply_Elements_GroupedBasis()
-
-                    Label:
-                        size_hint: [0.2, 1]
-                        text: ''
-
-                    Button:
-                        size_hint: [0.3, 1]
-                        id: addConstraintButton
-                        text: 'Add constraint'
-                        on_release: root.add_constraint()
-
-                    Label:
-                        size_hint: [0.1, 1]
-                        text: ''
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+                Label:
+                    size_hint: [0.5, 1]
+                    text: 'Grouped basis'
 
 
-        FloatLayout:
-            size_hint: [1, status_height]
-            pos_hint: {"x": 0.0, 'bottom':0.5}
+            StackLayout:
+                size_hint: [1, button_height]
 
-            Label:
-                size_hint: [0.2, 1]
-                pos_hint: {"x": 0.0, 'bottom':0.0}
-                text: 'Status:'
+                TextInput:
+                    size_hint: [0.5, 1]
+                    id: elementInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_Elements_GroupedBasis()
 
-            Label:
-                id: status
-                size_hint: [0.8, 1]
-                pos_hint: {"x": 0.2, 'bottom':0.0}
-                text: 'Idle'
+                TextInput:
+                    size_hint: [0.5, 1]
+                    id: groupedBasisInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.apply_Elements_GroupedBasis()
+
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.1, 1]
+                    text: ''
+
+                Button:
+                    size_hint: [0.3, 1]
+                    id: applyElemGroupButton
+                    text: 'Apply'
+                    on_release: root.apply_Elements_GroupedBasis()
+
+                Label:
+                    size_hint: [0.2, 1]
+                    text: ''
+
+                Button:
+                    size_hint: [0.3, 1]
+                    id: addConstraintButton
+                    text: 'Add constraint'
+                    on_release: root.add_constraint()
+
+                Label:
+                    size_hint: [0.1, 1]
+                    text: ''
+
+        BoxLayout:
+            size_hint: [0.05, 1]
 
 
 # <SmoothButton@Button>:

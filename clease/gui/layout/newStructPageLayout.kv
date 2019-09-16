@@ -1,331 +1,330 @@
 #: set height 0.05
-#: set status_height 3*height
-#: set main_field 1.0 - height - status_height
+#: set main_field 0.80
 #: set button_height height/main_field
 
 
 <NewStructPage>:
     name: 'NewStruct'
+    # StackLayout:
+
+    #     Button:
+    #         id: concEditor
+    #         text: 'Concentration'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Concentration'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toSettings
+    #         size_hint: [0.25, height]
+    #         text: 'Settings'
+    #         on_release:
+    #             root.manager.current = 'Settings'
+    #             root.manager.transition.direction = 'right'
+
+    #     Button:
+    #         id: toNewStruct
+    #         text: 'New structures'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'NewStruct'
+
+    #     Button:
+    #         id: toFit
+    #         text: 'Fit'
+    #         size_hint: [0.25, height]
+    #         on_release:
+    #             root.manager.current = 'Fit'
+    #             root.manager.transition.direction = 'left'
+
+
     StackLayout:
 
-        Button:
-            id: concEditor
-            text: 'Concentration'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Concentration'
-                root.manager.transition.direction = 'right'
-
-        Button:
-            id: toSettings
-            size_hint: [0.25, height]
-            text: 'Settings'
-            on_release:
-                root.manager.current = 'Settings'
-                root.manager.transition.direction = 'right'
-
-        Button:
-            id: toNewStruct
-            text: 'New structures'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'NewStruct'
-
-        Button:
-            id: toFit
-            text: 'Fit'
-            size_hint: [0.25, height]
-            on_release:
-                root.manager.current = 'Fit'
-                root.manager.transition.direction = 'left'
-
+        BoxLayout:
+            size_hint: [0.05, 1]
 
         StackLayout:
-
-            BoxLayout:
-                size_hint: [0.05, main_field]
+            size_hint: [0.90, 1]
 
             StackLayout:
-                size_hint: [0.90, main_field]
+                size_hint: [1, 1.5*button_height]
 
-                StackLayout:
-                    size_hint: [1, 1.5*button_height]
+                Label:
+                    size_hint: [1, 1]
+                    text: 'Import Structure'
 
-                    Label:
-                        size_hint: [1, 1]
-                        text: 'Import Structure'
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.2, 1]
+                    text: 'Initial structure'
 
-                    Label:
-                        size_hint: [0.2, 1]
-                        text: 'Initial structure'
+                TextInput:
+                    size_hint: [0.6, 1]
+                    id: initStructInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.import_structures()
 
-                    TextInput:
-                        size_hint: [0.6, 1]
-                        id: initStructInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.import_structures()
+                Button:
+                    size_hint: [0.2, 1]
+                    id: loadInitStruct
+                    text: 'Load'
+                    on_release: root.show_load_init_struct_dialog()
 
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: loadInitStruct
-                        text: 'Load'
-                        on_release: root.show_load_init_struct_dialog()
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.2, 1]
+                    text: 'Final structure'
 
-                    Label:
-                        size_hint: [0.2, 1]
-                        text: 'Final structure'
+                TextInput:
+                    size_hint: [0.6, 1]
+                    id: finalStructInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.import_structures()
 
-                    TextInput:
-                        size_hint: [0.6, 1]
-                        id: finalStructInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.import_structures()
+                Button:
+                    size_hint: [0.2, 1]
+                    id: loadFinalStruct
+                    text: 'Load'
+                    on_release: root.show_load_final_struct_dialog()
+
+
+            StackLayout:
+                size_hint: [1, 0.7*button_height]
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
+                Button:
+                    size_hint: [0.2, 1]
+                    id: importStructures
+                    text: 'Import'
+                    on_release: root.import_structures()
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
+
+
+            StackLayout:
+                size_hint: [1, 0.7*button_height]
+
+
+            StackLayout:
+                size_hint: [1, 1.5*button_height]
+
+                Label:
+                    size_hint: [1, 1]
+                    text: 'Generate Structure'
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.15, 1]
+                    text: ''
+
+                Label:
+                    size_hint: [0.3, 1]
+                    text: 'Generation Scheme'
+
+                Spinner:
+                    size_hint: [0.4, 1]
+                    id: newStructTypeSpinner
+                    text: 'Random structure'
+                    values: 'Random structure', 'Ground-state structure', 'Probe structure'
+                    on_text: root.on_new_struct_type_update(self.text)
+
+                Label:
+                    size_hint: [0.15, 1]
+                    text: ''
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: tempMaxLabel
+                    text: 'Max. temperature'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: tempMinLabel
+                    text: 'Min. temperature'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: numTempLabel
+                    text: 'No. temperatures'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    id: numSweepsLabel
+                    text: 'Sweeps per temp.'
+
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: tempMaxInput
+                    input_filter: 'float'
+                    text: '10000'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: tempMinInput
+                    input_filter: 'float'
+                    text: '1'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: numTempInput
+                    input_filter: 'int'
+                    text: '100'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
+
+                TextInput:
+                    size_hint: [0.25, 1]
+                    id: numSweepsInput
+                    input_filter: 'int'
+                    text: '100'
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
 
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: loadFinalStruct
-                        text: 'Load'
-                        on_release: root.show_load_final_struct_dialog()
-
-
-                StackLayout:
-                    size_hint: [1, 0.7*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: importStructures
-                        text: 'Import'
-                        on_release: root.import_structures()
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
-
-
-                StackLayout:
-                    size_hint: [1, 0.7*button_height]
-
-
-                StackLayout:
-                    size_hint: [1, 1.5*button_height]
-
-                    Label:
-                        size_hint: [1, 1]
-                        text: 'Generate Structure'
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.15, 1]
-                        text: ''
-
-                    Label:
-                        size_hint: [0.3, 1]
-                        text: 'Generation Scheme'
-
-                    Spinner:
-                        size_hint: [0.4, 1]
-                        id: newStructTypeSpinner
-                        text: 'Random structure'
-                        values: 'Random structure', 'Ground-state structure', 'Probe structure'
-                        on_text: root.on_new_struct_type_update(self.text)
-
-                    Label:
-                        size_hint: [0.15, 1]
-                        text: ''
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: tempMaxLabel
-                        text: 'Max. temperature'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: tempMinLabel
-                        text: 'Min. temperature'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: numTempLabel
-                        text: 'No. temperatures'
-
-                    Label:
-                        size_hint: [0.25, 1]
-                        id: numSweepsLabel
-                        text: 'Sweeps per temp.'
-
-
-                StackLayout:
-                    size_hint: [1, button_height]
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: tempMaxInput
-                        input_filter: 'float'
-                        text: '10000'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: tempMinInput
-                        input_filter: 'float'
-                        text: '1'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: numTempInput
-                        input_filter: 'int'
-                        text: '100'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
-
-                    TextInput:
-                        size_hint: [0.25, 1]
-                        id: numSweepsInput
-                        input_filter: 'int'
-                        text: '100'
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
 
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
 
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.2, 1]
+                    id: templateAtomsLabel
+                    text: 'Template'
 
-                    Label:
-                        size_hint: [0.2, 1]
-                        id: templateAtomsLabel
-                        text: 'Template'
+                TextInput:
+                    size_hint: [0.6, 1]
+                    id: templateAtomsInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
 
-                    TextInput:
-                        size_hint: [0.6, 1]
-                        id: templateAtomsInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
+                Button:
+                    size_hint: [0.2, 1]
+                    id: loadTemplateAtoms
+                    text: 'Load'
+                    on_release: root.show_load_template_dialog()
 
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: loadTemplateAtoms
-                        text: 'Load'
-                        on_release: root.show_load_template_dialog()
 
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.2, 1]
+                    id: eciFileLabel
+                    text: 'ECI file'
 
-                    Label:
-                        size_hint: [0.2, 1]
-                        id: eciFileLabel
-                        text: 'ECI file'
+                TextInput:
+                    size_hint: [0.6, 1]
+                    id: eciFileInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+                    on_text_validate: root.generate()
 
-                    TextInput:
-                        size_hint: [0.6, 1]
-                        id: eciFileInput
-                        text: ''
-                        write_tab: False
-                        multiline: False
-                        on_text_validate: root.generate()
+                Button:
+                    size_hint: [0.2, 1]
+                    id: loadECIFile
+                    text: 'Load'
+                    on_release: root.show_load_eci_dialog()
 
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: loadECIFile
-                        text: 'Load'
-                        on_release: root.show_load_eci_dialog()
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.25, 1]
+                    text: 'Composition Scheme'
 
-                    Label:
-                        size_hint: [0.25, 1]
-                        text: 'Composition Scheme'
+                Label:
+                    size_hint: [0.15, 1]
+                    text: ''
 
-                    Label:
-                        size_hint: [0.15, 1]
-                        text: ''
+                Spinner:
+                    size_hint: [0.6, 1]
+                    id: randomizeCompositionSpinner
+                    text: 'Random composition'
+                    values: 'Random composition', 'Composition in template'
 
-                    Spinner:
-                        size_hint: [0.6, 1]
-                        id: randomizeCompositionSpinner
-                        text: 'Random composition'
-                        values: 'Random composition', 'Composition in template'
 
 
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
 
-                StackLayout:
-                    size_hint: [1, 0.5*button_height]
 
+            StackLayout:
+                size_hint: [1, button_height]
 
-                StackLayout:
-                    size_hint: [1, button_height]
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
 
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
+                Button:
+                    size_hint: [0.2, 1]
+                    id: generateButton
+                    text: 'Generate'
+                    on_release: root.generate()
 
-                    Button:
-                        size_hint: [0.2, 1]
-                        id: generateButton
-                        text: 'Generate'
-                        on_release: root.generate()
+                Label:
+                    size_hint: [0.4, 1]
+                    text: ''
 
-                    Label:
-                        size_hint: [0.4, 1]
-                        text: ''
 
+        BoxLayout:
+            size_hint: [0.05, 1]
 
-            BoxLayout:
-                size_hint: [0.05, main_field]
 
 
+    # FloatLayout:
+    #     size_hint: [1, status_height]
+    #     pos_hint: {"x": 0.0, 'bottom':0.0}
 
-        FloatLayout:
-            size_hint: [1, status_height]
-            pos_hint: {"x": 0.0, 'bottom':0.0}
+    #     Label:
+    #         size_hint: [0.2, 1]
+    #         pos_hint: {"x": 0.0, 'bottom':0.0}
+    #         text: 'Status:'
 
-            Label:
-                size_hint: [0.2, 1]
-                pos_hint: {"x": 0.0, 'bottom':0.0}
-                text: 'Status:'
-
-            Label:
-                id: status
-                size_hint: [0.8, 1]
-                pos_hint: {"x": 0.2, 'bottom':0.0}
-                text: 'Idle'
+    #     Label:
+    #         id: status
+    #         size_hint: [0.8, 1]
+    #         pos_hint: {"x": 0.2, 'bottom':0.0}
+    #         text: 'Idle'

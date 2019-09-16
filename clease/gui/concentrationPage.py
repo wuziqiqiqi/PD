@@ -1,10 +1,10 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
+from kivy.app import App
 
 from clease.gui.util import parse_grouped_basis_elements, parse_elements
 import traceback
@@ -69,7 +69,8 @@ class ConcentrationPage(Screen):
     def check_user_input(self):
         elems = self.ids.elementInput.text
         if elems == '':
-            self.ids.status.text = 'No elements are given'
+            msg = 'No elements are given.'
+            App.get_running_app().root.ids.status.text = msg
             return 1
 
         if not self.elem_ok():
@@ -94,7 +95,7 @@ class ConcentrationPage(Screen):
                         except Exception:
                             traceback.print_exc()
                             msg = "All constraints need to be float"
-                            self.ids.status.text = msg
+                            App.get_running_app().root.ids.status.text = msg
                             return 1
 
         return 0
@@ -173,7 +174,7 @@ class ConcentrationPage(Screen):
             elements = parse_elements(elem_str)
         except Exception as exc:
             traceback.print_exc()
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return
         new_elements = self._group_elements(elements, self.grouped_basis)
 
@@ -195,6 +196,9 @@ class ConcentrationPage(Screen):
             layout.add_widget(Label(text='RHS', size_hint=[width, 0.5]))
             layout.add_widget(Label(text='', size_hint=[width, 0.5]))
             self.ids.mainConcLayout.add_widget(layout)
+
+        msg = "Applied Elements and Grouped basis fields."
+        App.get_running_app().root.ids.status.text = msg
 
     def to_dict(self):
         A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
@@ -253,7 +257,7 @@ class ConcentrationPage(Screen):
         try:
             _ = parse_elements(elems)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
 
@@ -262,7 +266,6 @@ class ConcentrationPage(Screen):
         try:
             _ = parse_grouped_basis_elements(gr_basis)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
-

@@ -7,18 +7,19 @@ class SettingsPageTests(unittest.TestCase):
         self.assertEqual('Concentration', app.root.ids.sm.current)
 
         screens = ['Concentration', 'Settings', 'NewStruct', 'Fit']
-        for main_screen in screens:
-            screen = app.root.ids.sm.get_screen(main_screen)
+        for current_screen in screens:
+            screen = app.root.ids.sm.get_screen(current_screen)
 
-            screen.ids.toSettings.dispatch('on_release')
+            app.root.ids.toConc.dispatch('on_release')
+            self.assertEqual('Concentration', app.root.ids.sm.current)
+
+            app.root.ids.toSettings.dispatch('on_release')
             self.assertEqual('Settings', app.root.ids.sm.current)
 
-            screen.ids.concEditor.dispatch('on_release')
-
-            screen.ids.toNewStruct.dispatch('on_release')
+            app.root.ids.toNewStruct.dispatch('on_release')
             self.assertEqual('NewStruct', app.root.ids.sm.current)
 
-            screen.ids.toFit.dispatch('on_release')
+            app.root.ids.toFit.dispatch('on_release')
             self.assertEqual('Fit', app.root.ids.sm.current)
 
     def run_max_cluster_dia_input(self, app):
