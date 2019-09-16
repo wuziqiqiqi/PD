@@ -16,7 +16,6 @@ class ApproxEqualityList(object):
     considered to be equal.
 
     Parameters:
-    ===========
 
     array: list
         List that is wrapped
