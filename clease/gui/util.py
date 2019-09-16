@@ -98,10 +98,10 @@ def parse_elements(string):
     except Exception:
         pass
 
-    msg = 'Elements has to be a list of comma separated chemical symbols '
-    msg += '(i.e. Al, Mg, Cu) \nin the case of a single sublattice and a list '
-    msg += 'with symbols for each sublattice \nin case of many (i.e. (Al, Mg)'
-    msg += ', (Zn, Cu), (X, Zn, Cu)'
+    msg = 'Elements must be a comma-separated chemical symbols '
+    msg += '(i.e. Al, Mg, Cu) for single sublattice\nand a list '
+    msg += 'of symbols for each sublattice otherwise (i.e. (Al, Mg)'
+    msg += ', (Zn, Cu), (X, Zn, Cu))'
     raise ValueError(msg)
 
 

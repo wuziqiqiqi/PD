@@ -1,5 +1,5 @@
 #: set height 0.05
-#: set main_field 0.75
+#: set main_field 0.80
 #: set button_height height/main_field
 
 <SettingsPage>:
@@ -39,12 +39,13 @@
 
 
     StackLayout:
+        size_hint: [1, 1]
 
         BoxLayout:
-            size_hint: [0.05, main_field]
+            size_hint: [0.05, 1]
 
         StackLayout:
-            size_hint: [0.90, main_field]
+            size_hint: [0.90, 1]
 
             StackLayout:
                 size_hint: [1, 0.25*button_height]
@@ -341,7 +342,7 @@
 
 
             StackLayout:
-                size_hint: [1, button_height]
+                size_hint: [1, 0.5*button_height]
 
 
             StackLayout:
@@ -363,21 +364,4 @@
 
 
         BoxLayout:
-            size_hint: [0.05, main_field]
-
-
-
-    # FloatLayout:
-    #     size_hint: [1, status_height]
-    #     pos_hint: {"x": 0.0, 'bottom':0.0}
-
-    #     Label:
-    #         size_hint: [0.2, 1]
-    #         pos_hint: {"x": 0.0, 'bottom':0.0}
-    #         text: 'Status:'
-
-    #     Label:
-    #         id: status
-    #         size_hint: [0.8, 1]
-    #         pos_hint: {"x": 0.2, 'bottom':0.0}
-    #         text: 'Idle'
+            size_hint: [0.05, 1]
