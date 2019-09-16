@@ -80,21 +80,21 @@
         orientation: 'horizontal'
         size_hint: [1, 0.05]
         Button:
-            text: 'Concentration'
             id: toConc
-            on_press: app.root.ids.sm.current = 'Concentration'
+            text: 'Concentration'
+            on_release: app.root.ids.sm.current = 'Concentration'
         Button:
-            text: 'Settings'
             id: toSettings
-            on_press: app.root.ids.sm.current = 'Settings'
+            text: 'Settings'
+            on_release: app.root.ids.sm.current = 'Settings'
         Button:
+            id: toNewStruct
             text: 'New Structures'
-            id: toNewStruc
-            on_press: app.root.ids.sm.current = 'NewStruct'
+            on_release: app.root.ids.sm.current = 'NewStruct'
         Button:
-            text: 'Fit'
             id: toFit
-            on_press: app.root.ids.sm.current = 'Fit'
+            text: 'Fit'
+            on_release: app.root.ids.sm.current = 'Fit'
 
 
     ScreenManager:
