@@ -317,7 +317,7 @@ class SettingsPage(Screen):
             self.ids.skewFactorInput.disabled = False
             self.ids.sizeInput.disabled = True
 
-    def apply_update_settings(self):
+    def apply_settings(self):
         try:
             from clease import Concentration
             conc_page = self.manager.get_screen("Concentration")
