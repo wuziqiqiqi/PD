@@ -172,7 +172,7 @@ class NewStructPage(Screen):
             return
 
         self.structure_generation_in_progress = True
-        settings = App.get_running_app().settings
+        settings = App.get_running_app().root.settings
 
         if settings is None:
             msg = "Settings is not set. "
@@ -209,7 +209,7 @@ class NewStructPage(Screen):
                 rnd_generator = RandomStructureGenerator()
                 rnd_generator.generator = generator
                 rnd_generator.atoms = atoms
-                rnd_generator.status = self.ids.status
+                rnd_generator.status = App.get_running_app().root.ids.status
                 rnd_generator.page = self
                 Thread(target=rnd_generator.generate).start()
             elif struct_type == 'Probe structure':
@@ -218,7 +218,7 @@ class NewStructPage(Screen):
                 prb_generator = ProbeStructureGenerator()
                 prb_generator.atoms = atoms
                 prb_generator.generator = generator
-                prb_generator.status = self.ids.status
+                prb_generator.status = App.get_running_app().root.ids.status
                 prb_generator.Tmax = Tmax
                 prb_generator.Tmin = Tmin
                 prb_generator.num_temp = num_temps
@@ -236,7 +236,7 @@ class NewStructPage(Screen):
                 gs_generator = GSStructGenerator()
                 gs_generator.atoms = atoms
                 gs_generator.generator = generator
-                gs_generator.status = self.ids.status
+                gs_generator.status = App.get_running_app().root.ids.status
                 gs_generator.Tmax = Tmax
                 gs_generator.Tmin = Tmin
                 gs_generator.num_temps = num_temps
@@ -273,7 +273,7 @@ class NewStructPage(Screen):
                     return
                 final_struct = read(final)
 
-            settings = App.get_running_app().settings
+            settings = App.get_running_app().root.settings
 
             if settings is None:
                 msg = 'Settings is not set. '
@@ -285,7 +285,7 @@ class NewStructPage(Screen):
                                        final_struct=final_struct,
                                        generate_template=False)
         except Exception as exc:
-            self.ids.status.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
     def load_structures(self, path, filename, is_init):
         if len(filename) == 0:
