@@ -20,6 +20,7 @@ resource_add_path(main_path + '/layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 
+
 class WindowFrame(StackLayout):
     _pop_up = None
     current_session_file = None
@@ -66,9 +67,8 @@ class WindowFrame(StackLayout):
             fit_page.from_dict(data.get('fit_page', {}))
             self.current_session_file = filename[0]
 
-            msg ="Loaded session from {}".format(self.current_session_file)
+            msg = "Loaded session from {}".format(self.current_session_file)
             App.get_running_app().root.ids.status.text = msg
-
 
         except Exception as e:
             msg = "An error occured during load: " + str(e)

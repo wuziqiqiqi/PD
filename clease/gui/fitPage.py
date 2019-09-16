@@ -1,7 +1,3 @@
-from kivy.uix.screenmanager import Screen
-from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
-import matplotlib
-matplotlib.use("module://kivy.garden.matplotlib.backend_kivyagg")
 from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
@@ -12,6 +8,10 @@ import json
 from clease.gui.util import parse_max_cluster_dia
 from clease.gui.constants import BACKGROUND_COLOR, FOREGROUND_TEXT_COLOR
 from threading import Thread
+from kivy.uix.screenmanager import Screen
+from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+import matplotlib
+matplotlib.use("module://kivy.garden.matplotlib.backend_kivyagg")
 
 
 class ECIOptimiser(object):

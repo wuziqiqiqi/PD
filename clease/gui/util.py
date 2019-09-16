@@ -114,6 +114,7 @@ def parse_cellpar(string):
         if len(cellpar) != 6:
             raise ValueError()
         return cellpar
+
     except Exception as exc:
         pass
 

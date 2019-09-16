@@ -138,7 +138,7 @@ class Cluster(object):
         taget_figres: list of indices
             list of atomic indices that constitute the original figure before
             translating
-        
+
         tran_matrix: list of dicts
             translation matrix
         """
@@ -147,7 +147,7 @@ class Cluster(object):
             translated_figure = self._order_equiv_sites(translated_figure)
             if translated_figure == target_figure:
                 return self._order_equiv_sites(figure)
-        
+
         raise RuntimeError("There are no matching figure!")
 
     def get_all_figure_keys(self):

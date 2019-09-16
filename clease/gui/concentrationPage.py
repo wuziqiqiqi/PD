@@ -1,7 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.spinner import Spinner
 from kivy.uix.button import Button
@@ -270,4 +269,3 @@ class ConcentrationPage(Screen):
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
-

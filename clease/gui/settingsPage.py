@@ -5,8 +5,8 @@ from kivy.app import App
 from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
-from clease.gui.load_save_dialog import LoadDialog, SaveDialog
-from clease.gui.util import parse_max_cluster_dia, parse_size, parse_elements
+from clease.gui.load_save_dialog import LoadDialog
+from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 import traceback
 
@@ -256,7 +256,7 @@ class SettingsPage(Screen):
 
             if isinstance(diameter, list):
                 if len(diameter) != cluster_size - 1:
-                    msg ='Cluster dia has to be given for 2-body and beyond!'
+                    msg = 'Cluster dia has to be given for 2-body and beyond!'
                     App.get_running_app().root.ids.status.text = msg
                     return False
         except Exception as exc:
@@ -435,7 +435,6 @@ class SettingsPage(Screen):
                 initializer.type = 'CECrystal'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
-
 
         except Exception as exc:
             traceback.print_exc()
