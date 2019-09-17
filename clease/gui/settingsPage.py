@@ -14,7 +14,6 @@ import traceback
 
 
 class SettingsPage(Screen):
-    cebulk_input_backup = {'crystStructSpinner': ''}
     _pop_up = None
 
     def dismiss_popup(self):
@@ -381,7 +380,7 @@ class SettingsPage(Screen):
                     size=size, supercell_factor=supercell_factor,
                     skew_threshold=skewness_factor
                 )
-                msg = "Initializing database..."
+                msg = "Applying settings to database..."
                 App.get_running_app().root.ids.status.text = msg
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
@@ -403,7 +402,7 @@ class SettingsPage(Screen):
                     cell = parse_cell(inputPage['cell'])
 
                 sp = int(inputPage['spacegroup'])
-                msg = "Initializing database..."
+                msg = "Applying settings to database..."
                 App.get_running_app().root.ids.status.text = msg
                 kwargs = dict(
                     basis=basis, cellpar=cellpar, cell=cell,
