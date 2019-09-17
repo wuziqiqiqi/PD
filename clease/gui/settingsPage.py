@@ -417,7 +417,8 @@ class SettingsPage(Screen):
                 initializer.type = 'CECrystal'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
-
+                msg = "Settings initialized."
+                App.get_running_app().root.ids.status.text = msg
             return True
 
         except Exception as exc:
