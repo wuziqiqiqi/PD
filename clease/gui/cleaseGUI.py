@@ -1,16 +1,18 @@
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.stacklayout import StackLayout
+from kivy.resources import resource_add_path
+from kivy.uix.popup import Popup
 
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
 from clease.gui.fitPage import FitPage
-from kivy.resources import resource_add_path
-
+from clease.gui.reconfigDB import ReconfigDB
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
-from kivy.uix.popup import Popup
+
 import json
+from threading import Thread
 
 import os.path as op
 
@@ -137,19 +139,29 @@ class WindowFrame(StackLayout):
         self.ids.sm.transition.direction = direction
         self.ids.sm.current = new_screen
 
-    def _settings_applied(self):
-        msg = "Reconfiguring in progress..."
-        App.get_running_app().root.ids.status.text = msg
-        if not self.ids.sm.get_screen('Settings').apply_settings():
-            msg = "Couldn't initialize settings based on the values specified "
-            msg += "in the fields on Concentration\nand Settings panels. "
-            msg += "Please ensure that all of the values are correct."
-            App.get_running_app().root.ids.status.text = msg
-            return False
-        return True
+    # def _settings_applied(self):
+    #     msg = "Reconfiguring in progress..."
+    #     App.get_running_app().root.ids.status.text = msg
+    #     if not self.ids.sm.get_screen('Settings').apply_settings():
+    #         msg = "Couldn't initialize settings based on the values specified "
+    #         msg += "in the fields on Concentration\nand Settings panels. "
+    #         msg += "Please ensure that all of the values are correct."
+    #         App.get_running_app().root.ids.status.text = msg
+    #         return False
+    #     return True
 
     def reconfig_settings(self):
-        if self._settings_applied():
+        if self.reconfig_in_progress:
+            # Do no allow user to initialize many threads
+            return
+
+        reconfig = ReconfigDB()
+        reconfig.app = App.get_running_app()
+        reconfig.settings = App.get_running_app().root.settings
+        reconfig.status = App.get_running_app().root.ids.status
+
+        if Thread(target=self._settings_applied).start():
+            print('hello')
             self.settings.reconfigure_settings()
             msg = "Cluster data updated for all templates.\nPlease also "
             msg += "reconfigure DB entries if there are any structures stored "
@@ -157,6 +169,11 @@ class WindowFrame(StackLayout):
             App.get_running_app().root.ids.status.text = msg
 
     def reconfig_db(self):
+        if self.reconfig_in_progress:
+            # Do no allow user to initialize many threads
+            return
+
+
         if self._settings_applied():
             from clease import CorrFunction
             cf = CorrFunction(self.settings)
@@ -165,6 +182,10 @@ class WindowFrame(StackLayout):
             App.get_running_app().root.ids.status.text = msg
 
     def reconfig_settings_db(self):
+        if self.reconfig_in_progress:
+            # Do no allow user to initialize many threads
+            return
+        
         if self._settings_applied():
             from clease.tools import reconfigure
             reconfigure(self.settings)
