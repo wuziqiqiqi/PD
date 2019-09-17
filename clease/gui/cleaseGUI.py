@@ -166,22 +166,6 @@ class WindowFrame(StackLayout):
             Thread(target=reconfig.reconfig_settings_db).start()
 
 
-
-
-    def reconfig_settings_db(self):
-        if self.reconfig_in_progress:
-            # Do no allow user to initialize many threads
-            return
-
-        if self._settings_applied():
-            from clease.tools import reconfigure
-            reconfigure(self.settings)
-            msg = "Settings and correlation functions of all DB entries are "
-            msg += "reconfigured."
-            App.get_running_app().root.ids.status.text = msg
-
-
-
 class CleaseGUI(App):
     def __init__(self):
         App.__init__(self)
