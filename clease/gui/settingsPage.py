@@ -2,7 +2,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.utils import get_color_from_hex
 from kivy.app import App
-from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog
