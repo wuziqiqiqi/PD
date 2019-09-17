@@ -22,13 +22,13 @@
 
             ActionButton:
                 text: 'Settings'
-                on_release: app.root.reconfig_settings()
+                on_release: app.root.reconfig('settings')
             ActionButton:
                 text: 'DB'
-                on_release: app.root.reconfig_db()
+                on_release: app.root.reconfig('db')
             ActionButton:
                 text: 'Settings & DB'
-                on_release: app.root.reconfig_settings_db()
+                on_release: app.root.reconfig('settings_db')
 
         ActionGroup:
             id: File_AG
