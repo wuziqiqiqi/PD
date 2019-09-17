@@ -27,6 +27,7 @@ class WindowFrame(StackLayout):
     _pop_up = None
     current_session_file = None
     settings = None
+    reconfig_in_progress = False
 
     def dismiss_popup(self):
         if self._pop_up is None:
@@ -139,53 +140,39 @@ class WindowFrame(StackLayout):
         self.ids.sm.transition.direction = direction
         self.ids.sm.current = new_screen
 
-    # def _settings_applied(self):
-    #     msg = "Reconfiguring in progress..."
-    #     App.get_running_app().root.ids.status.text = msg
-    #     if not self.ids.sm.get_screen('Settings').apply_settings():
-    #         msg = "Couldn't initialize settings based on the values specified "
-    #         msg += "in the fields on Concentration\nand Settings panels. "
-    #         msg += "Please ensure that all of the values are correct."
-    #         App.get_running_app().root.ids.status.text = msg
-    #         return False
-    #     return True
+    def reconfig(self, target=None):
+        """Reconfigure target.
 
-    def reconfig_settings(self):
+        Parameters:
+
+        target: str
+            one of "settings", "db" and "settings_db"
+        """
         if self.reconfig_in_progress:
             # Do no allow user to initialize many threads
             return
+
+        self.reconfig_in_progress = True
 
         reconfig = ReconfigDB()
         reconfig.app = App.get_running_app()
-        reconfig.settings = App.get_running_app().root.settings
         reconfig.status = App.get_running_app().root.ids.status
 
-        if Thread(target=self._settings_applied).start():
-            print('hello')
-            self.settings.reconfigure_settings()
-            msg = "Cluster data updated for all templates.\nPlease also "
-            msg += "reconfigure DB entries if there are any structures stored "
-            msg += "in DB."
-            App.get_running_app().root.ids.status.text = msg
-
-    def reconfig_db(self):
-        if self.reconfig_in_progress:
-            # Do no allow user to initialize many threads
-            return
+        if target == 'settings':
+            Thread(target=reconfig.reconfig_settings).start()
+        elif target == 'db':
+            Thread(target=reconfig.reconfig_db).start()
+        else:
+            Thread(target=reconfig.reconfig_settings_db).start()
 
 
-        if self._settings_applied():
-            from clease import CorrFunction
-            cf = CorrFunction(self.settings)
-            cf.reconfigure_db_entries()
-            msg = "Correlation functions of all DB entries are reconfigured."
-            App.get_running_app().root.ids.status.text = msg
+
 
     def reconfig_settings_db(self):
         if self.reconfig_in_progress:
             # Do no allow user to initialize many threads
             return
-        
+
         if self._settings_applied():
             from clease.tools import reconfigure
             reconfigure(self.settings)
