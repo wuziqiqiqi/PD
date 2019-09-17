@@ -46,3 +46,16 @@ class ReconfigDB(object):
                 self.status.text = str(exc)
 
         self.app.root.reconfig_in_progress = False
+
+    def reconfig_settings_db(self):
+        if self.apply_settings():
+            try:
+                from clease.tools import reconfigure
+                reconfigure(self.app.root.settings)
+                msg = "Settings andall DB entries are reconfigured."
+                self.status.text = msg
+
+            except Exception as exc:
+                self.status.text = str(exc)
+
+        self.app.root.reconfig_in_progress = False
