@@ -2,42 +2,18 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.popup import Popup
 from kivy.utils import get_color_from_hex
 from kivy.app import App
-from threading import Thread
 
 from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog
 from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
+from clease.gui.settingInitializer import SettingsInitializer
+from threading import Thread
+
 import traceback
 
 
-class SettingsInitializer(object):
-    """Perform settings initialization on a separate thread."""
-    type = 'CEBulk'
-    kwargs = None
-    app = None
-    status = None
-
-    def initialize(self):
-        from clease import CEBulk, CECrystal
-        try:
-            if self.type == 'CEBulk':
-                self.app.settings = CEBulk(**self.kwargs)
-            elif self.type == 'CECrystal':
-                self.app.settings = CECrystal(**self.kwargs)
-            App.get_running_app().root.ids.status.text = \
-                'Database initialized'
-        except AssertionError as exc:
-            traceback.print_exc()
-            App.get_running_app().root.ids.status.text =\
-                "AssertError during initialization " + str(exc)
-        except Exception as exc:
-            traceback.print_exc()
-            App.get_running_app().root.ids.status.text = str(exc)
-
-
 class SettingsPage(Screen):
-    cebulk_input_backup = {'crystStructSpinner': ''}
     _pop_up = None
 
     def dismiss_popup(self):
@@ -341,7 +317,7 @@ class SettingsPage(Screen):
             self.ids.skewFactorInput.disabled = False
             self.ids.sizeInput.disabled = True
 
-    def apply_update_settings(self):
+    def apply_settings(self):
         try:
             from clease import Concentration
             conc_page = self.manager.get_screen("Concentration")
@@ -351,9 +327,9 @@ class SettingsPage(Screen):
             A_lb, rhs_lb, A_eq, rhs_eq = conc_page.get_constraint_matrices()
 
             if not conc_page.elements:
-                msg = 'It seems like the Apply button in concentration page '
+                msg = 'It appears that the Apply button in Concentration panel '
                 msg += 'was not clicked.'
-                self.ids.status.text = msg
+                App.get_running_app().root.ids.status.text = msg
                 return
             basis_elements = conc_page.elements
             grouped_basis = conc_page.grouped_basis
@@ -377,7 +353,7 @@ class SettingsPage(Screen):
 
             initializer = SettingsInitializer()
             initializer.app = App.get_running_app()
-            initializer.status = self.ids.status
+            initializer.status = App.get_running_app().root.ids.status
 
             if inputPage["type"] == 'CEBulk':
                 if inputPage['aParameter'] == '':
@@ -404,7 +380,7 @@ class SettingsPage(Screen):
                     size=size, supercell_factor=supercell_factor,
                     skew_threshold=skewness_factor
                 )
-                msg = "Initializing database..."
+                msg = "Applying settings to database..."
                 App.get_running_app().root.ids.status.text = msg
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
@@ -426,7 +402,7 @@ class SettingsPage(Screen):
                     cell = parse_cell(inputPage['cell'])
 
                 sp = int(inputPage['spacegroup'])
-                msg = "Initializing database..."
+                msg = "Applying settings to database..."
                 App.get_running_app().root.ids.status.text = msg
                 kwargs = dict(
                     basis=basis, cellpar=cellpar, cell=cell,
@@ -441,8 +417,11 @@ class SettingsPage(Screen):
                 initializer.type = 'CECrystal'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()
+                msg = "Settings initialized."
+                App.get_running_app().root.ids.status.text = msg
+            return True
 
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
-            return
+            return False

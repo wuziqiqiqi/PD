@@ -1,0 +1,56 @@
+<ActionBar>:
+
+    ActionView:
+        use_separator: True
+        ActionPrevious:
+            title: 'CLEASE'
+            with_previous: False
+            app_icon: 'clease_logo.png'
+
+
+        ActionGroup:
+            id: View_AG
+            mode: 'spinner'
+            text: 'View'
+            ActionButton:
+                text: 'Clusters'
+
+        ActionGroup:
+            id: Reconfig_AG
+            mode: 'spinner'
+            text: 'Reconfigure'
+
+            ActionButton:
+                text: 'Settings'
+                on_release: app.root.reconfig('settings')
+            ActionButton:
+                text: 'DB'
+                on_release: app.root.reconfig('db')
+            ActionButton:
+                text: 'Settings & DB'
+                on_release: app.root.reconfig('settings_db')
+
+        ActionGroup:
+            id: File_AG
+            mode: 'spinner'
+            text: 'File'
+
+            ActionButton:
+                id: saveButton
+                text: 'Save'
+                on_press: app.root.save_session_to_current_file()
+
+            ActionButton:
+                id: saveAsButton
+                text: 'Save As...'
+                on_press: app.root.show_save_dialog()
+
+            ActionButton:
+                id: loadButton
+                text: 'Load'
+                on_press: app.root.show_load_session_dialog()
+
+            ActionButton:
+                id: closeButton
+                text: 'Close'
+                on_press: app.get_running_app().stop()

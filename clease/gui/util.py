@@ -1,7 +1,5 @@
 def parse_max_cluster_dia(string):
-    """
-    Parse max cluster dia
-    """
+    """Parse max cluster dia."""
     try:
         diameter = float(string)
         return diameter
@@ -37,9 +35,7 @@ def parse_grouped_basis_elements(string):
 
 
 def parse_size(string):
-    """
-    Parse size argument
-    """
+    """Parse size argument."""
     # List of 3 numbers
     try:
         size = [int(x) for x in string.split(',')]
@@ -106,9 +102,7 @@ def parse_elements(string):
 
 
 def parse_cellpar(string):
-    """
-    Parse the cell parameter string
-    """
+    """Parse the cell parameter string."""
     try:
         cellpar = [float(x) for x in string.split(',')]
         if len(cellpar) != 6:
@@ -124,9 +118,7 @@ def parse_cellpar(string):
 
 
 def parse_cell(string):
-    """
-    Parse the cell string
-    """
+    """Parse the cell string."""
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
     filtered = [[x.replace(')', '').strip() for x in sub.split(',')]

@@ -89,6 +89,8 @@ class CorrFunction(object):
             print the progress of reconfiguration if set to *True*
         """
         db = connect(self.setting.db_name)
+        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+        db.delete_external_table(tab_name)
         select = []
         if select_cond is not None:
             for cond in select_cond:
@@ -101,21 +103,8 @@ class CorrFunction(object):
         num_reconf = len(row_ids)
         if verbose:
             print('{} entries will be reconfigured'.format(num_reconf))
-
-        import sqlite3
         for count, row_id in enumerate(row_ids):
             # TODO: Should this be part of DB API?
-            tab_name = "{}_cf".format(self.setting.bf_scheme.name)
-            con = sqlite3.connect(self.setting.db_name, timeout=600)
-            cur = con.cursor()
-            try:
-                cur.execute("DELETE FROM {} WHERE ID=?".format(tab_name),
-                            (row_id,))
-                con.commit()
-            except sqlite3.OperationalError as exc:
-                print(str(exc) + ". did not delete anything.")
-            con.close()
-
             # get new CF based on setting
             if verbose:
                 print("updating {} of {} entries".format(count+1, num_reconf),

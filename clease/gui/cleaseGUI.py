@@ -1,16 +1,18 @@
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.stacklayout import StackLayout
+from kivy.resources import resource_add_path
+from kivy.uix.popup import Popup
 
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
 from clease.gui.fitPage import FitPage
-from kivy.resources import resource_add_path
-
+from clease.gui.reconfigDB import ReconfigDB
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
-from kivy.uix.popup import Popup
+
 import json
+from threading import Thread
 
 import os.path as op
 
@@ -24,6 +26,8 @@ Builder.load_file("cleaseGUILayout.kv")
 class WindowFrame(StackLayout):
     _pop_up = None
     current_session_file = None
+    settings = None
+    reconfig_in_progress = False
 
     def dismiss_popup(self):
         if self._pop_up is None:
@@ -58,7 +62,7 @@ class WindowFrame(StackLayout):
             # variables for "Settings" screen
             settings_page = self.ids.sm.get_screen('Settings')
             settings_page.from_dict(data.get('settings', {}))
-            settings_page.apply_update_settings()
+            settings_page.apply_settings()
 
             newstruct_page = self.ids.sm.get_screen('NewStruct')
             newstruct_page.from_dict(data.get('new_struct', {}))
@@ -135,6 +139,31 @@ class WindowFrame(StackLayout):
             direction = 'right'
         self.ids.sm.transition.direction = direction
         self.ids.sm.current = new_screen
+
+    def reconfig(self, target=None):
+        """Reconfigure target.
+
+        Parameters:
+
+        target: str
+            one of "settings", "db" and "settings_db"
+        """
+        if self.reconfig_in_progress:
+            # Do no allow user to initialize many threads
+            return
+
+        self.reconfig_in_progress = True
+
+        reconfig = ReconfigDB()
+        reconfig.app = App.get_running_app()
+        reconfig.status = App.get_running_app().root.ids.status
+
+        if target == 'settings':
+            Thread(target=reconfig.reconfig_settings).start()
+        elif target == 'db':
+            Thread(target=reconfig.reconfig_db).start()
+        else:
+            Thread(target=reconfig.reconfig_settings_db).start()
 
 
 class CleaseGUI(App):

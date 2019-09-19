@@ -4,40 +4,6 @@
 
 <SettingsPage>:
     name: "Settings"
-    # StackLayout:
-
-    #     Button:
-    #         id: concEditor
-    #         text: 'Concentration'
-    #         size_hint: [0.25, height]
-    #         on_release:
-    #             root.manager.current = 'Concentration'
-    #             root.manager.transition.direction = 'right'
-
-    #     Button:
-    #         id: toSettings
-    #         size_hint: [0.25, height]
-    #         text: 'Settings'
-    #         on_release:
-    #             root.manager.current = 'Settings'
-
-    #     Button:
-    #         id: toNewStruct
-    #         text: 'New structures'
-    #         size_hint: [0.25, height]
-    #         on_release:
-    #             root.manager.current = 'NewStruct'
-    #             root.manager.transition.direction = 'left'
-
-    #     Button:
-    #         id: toFit
-    #         text: 'Fit'
-    #         size_hint: [0.25, height]
-    #         on_release:
-    #             root.manager.current = 'Fit'
-    #             root.manager.transition.direction = 'left'
-
-
     StackLayout:
         size_hint: [1, 1]
 
@@ -98,7 +64,7 @@
                     input_filter: 'int'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -106,7 +72,7 @@
                     text: '5.0'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
 
             StackLayout:
@@ -148,7 +114,7 @@
                     text: '3, 3, 3'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -157,7 +123,7 @@
                     input_filter: 'int'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -166,7 +132,7 @@
                     input_filter: 'int'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
             StackLayout:
                 size_hint: [1, button_height]
@@ -186,7 +152,7 @@
                     text: ''
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 Button:
                     size_hint: [0.2, 1]
@@ -247,7 +213,7 @@
                     input_filter: 'float'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -256,7 +222,7 @@
                     input_filter: 'float'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -265,7 +231,7 @@
                     input_filter: 'float'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
 
             StackLayout:
@@ -314,7 +280,7 @@
                     text: ''
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -322,7 +288,7 @@
                     text: ''
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -330,7 +296,7 @@
                     text: ''
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
                 TextInput:
                     size_hint: [0.25, 1]
@@ -338,7 +304,7 @@
                     text: '1'
                     write_tab: False
                     multiline: False
-                    on_text_validate: root.apply_update_settings()
+                    on_text_validate: root.apply_settings()
 
 
             StackLayout:
@@ -356,7 +322,7 @@
                     size_hint: [0.2, 1]
                     id: reconfigureButton
                     text: 'Apply settings'
-                    on_release: root.apply_update_settings()
+                    on_release: root.apply_settings()
 
                 Label:
                     size_hint: [0.4, 1]
