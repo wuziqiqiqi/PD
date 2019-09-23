@@ -585,7 +585,7 @@ class TemplateAtoms(object):
         num_templates: int
             Number of templates to generate
         """
-        fac = sorted(list(factorize(num_unit_cells)), reverse=True)
+        fac = sorted(list(factorize(num_prim_cells)), reverse=True)
 
         if len(fac) > 12:
             raise ValueError("Numbers that can be factorised into more than 12"
@@ -617,7 +617,7 @@ class TemplateAtoms(object):
             # Again place entries in diag_B such that the shortest
             # cell vector get the largest scaling factor
             for i in range(0, stop):
-                diag_B[srt_index[i]] = fac[3+i]
+                diag_B[srt_indx[i]] = fac[3+i]
         return self.get_templates_given_volume(diag_A=diag_A, diag_B=diag_B,
                                                num_templates=num_templates)
 
