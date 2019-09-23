@@ -458,3 +458,12 @@ def indices2tags(supercell, clusters):
 
 def list2str(array):
     return "-".join(str(x) for x in array)
+
+
+def factorize(n):
+    while n > 1:
+        for i in range(2, n + 1):
+            if n % i == 0:
+                n /= i
+                yield i
+                break
