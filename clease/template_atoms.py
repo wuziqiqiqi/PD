@@ -606,11 +606,16 @@ class TemplateAtoms(object):
         diag_B = [1, 1, 1]
 
         stop = min([len(fac), len(diag_A)])
+
+        # Place the numbers such that the shortest cell vectors
+        # get the largest scaling factor
         for i in range(0, stop):
             diag_A[srt_indx[i]] = fac[i]
 
         if len(fac) > 3:
             stop = min([len(fac[3:]), 3])
+            # Again place entries in diag_B such that the shortest
+            # cell vector get the largest scaling factor
             for i in range(0, stop):
                 diag_B[srt_index[i]] = fac[3+i]
         return self.get_templates_given_volume(diag_A=diag_A, diag_B=diag_B,
