@@ -27,7 +27,8 @@ def attach_calculator(setting=None, atoms=None, eci={},
         Load cluster info if possible (the file with a name specified using
         the fname_prefix is present).
     """
-    init_cf = CorrFunction(setting).get_cf(setting.atoms)
+    cf_names = list(eci.keys())
+    init_cf = CorrFunction(setting).get_cf_by_names(setting.atoms, cf_names)
 
     template_uid = setting.template_atoms.get_uid_matching_atoms(
         atoms=atoms, generate_template=True)
