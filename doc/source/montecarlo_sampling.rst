@@ -24,7 +24,7 @@ and the clusters
 Next, we need to specify a set if ECIs. These can for instance be loaded 
 from a file, but here we hard code them for simplicity
 
->>> eci = {'c0': -1.0, 'c2_d0000_0_00': -0.2}
+>>> eci = {'c0': -1.0, 'c1_0': 0.1, 'c2_d0000_0_00': -0.2}
 
 For efficient initialisation of large cells, CLEASE comes with a 
 convenient helper function called *attach_calculator*. We create our
@@ -152,4 +152,46 @@ To use this observer in our calculation
 There are a few other methods that can be useful to implement. First, 
 the `reset` method. This method can be invoked if the `reset` method
 of the mc calculation is called.
-       
+
+
+Implementing Your Own Constraints
+==================================
+If you want to have custom constraints on MC moves, CLEASE 
+lets you implement your own. The idea is to create a class 
+that inherits from the base *MCConstraint* class and has a 
+function *__call__** that returns `True` if a move is valid
+and `False` if a move is not valid. To illustrate this, let's
+say that we want the atoms on sites less that 25 to remain 
+fixed. The reason for doing so, can be that you have a set of
+indices that you know constitutes a surface and you want to keep
+them fixed.
+
+>>> from clease.montecarlo.constraints import MCConstraint
+>>> class FixedIndices(MCConstraint):
+...    def __call__(self, system_changes):
+...        for change in system_changes:
+...            if change[0] <= 25:
+...                return False
+...        return True
+
+To use this constrain in our calculation
+
+>>> cnst = FixedIndices()
+>>> mc.add_constraint(cnst)
+>>> mc.run(steps=1000)
+
+Sampling the SGC Ensemble
+==========================
+CLEASE also gives the possibility to perform MC sampling
+in the semi grand canonical ensemble. Everything that has
+to do with observers and constraints mentioned above can also
+be used together with this class. To run a calcualtion in 
+the SGC ensemble
+
+>>> from clease.montecarlo import SGCMonteCarlo
+>>> sgc_mc = SGCMonteCarlo(atoms, T, symbols=['Au', 'Cu'])
+>>> sgc_mc.run(steps=1000, chem_pot={'c1_0': -0.15})
+
+The `chem_pot` parameter sets the chemical potentials. It is possible
+to set one chemical potential for each singlet correlation function 
+(i.e. ECIs that starts with *c1*).
