@@ -11,14 +11,14 @@ and the clusters
 
 >>> from clease import Concentration
 >>> from clease import CEBulk
- >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+>>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 >>> setting = CEBulk(crystalstructure='fcc',
 ...                  a=3.8,
 ...                  supercell_factor=27,
 ...                  concentration=conc,
 ...                  db_name="aucu.db",
-...                  max_cluster_size=4,
-...                  max_cluster_dia=[6.0, 5.0, 5.0],
+...                  max_cluster_size=3,
+...                  max_cluster_dia=[6.0, 5.0],
 ...                  basis_function='polynomial')
 
 Next, we need to specify a set if ECIs. These can for instance be loaded 
@@ -35,8 +35,10 @@ MC cell by repeating the *atoms* object of the settings.
 >>> atoms = attach_calculator(setting, atoms=atoms, eci=eci)
 
 Let's insert a few *Cu* atoms
->>> for i in range(0, 10):
-...     atoms[i].symbol = 'Cu'
+
+>>> atoms[0].symbol = 'Cu'
+>>> atoms[1].symbol = 'Cu'
+>>> atoms[2].symbol = 'Cu'
 
 We are now ready to run a MC calculation
 
@@ -45,8 +47,7 @@ We are now ready to run a MC calculation
 >>> mc = Montecarlo(atoms, T)
 >>> mc.run(steps=1000)
 
-After a MC run, you can retrieve a bunch of thermodynamic quantities
-by calling
+After a MC run, you can retrieve internal energy, heat capacity etc. by calling
 
 >>> thermo = mc.get_thermodynamic_quantities()
 
@@ -107,22 +108,24 @@ the tag of each atom represents the corresponding layer.
 >>> from clease.montecarlo.observers import MCObserver
 >>> from ase.geometry import get_layers
 >>> class LayerMonitor(MCObserver):
-...     def __init__(self, atoms):
-...         self.layers, _ = get_layers(atoms, [1, 0, 0])
-...         self.layer_average = [0 for _ in set(self.layers)]
-...         self.num_calls = 1
-...         # Initialise the structure
-...         for atom in atoms:
-...             if atom.symbol == 'Cu':
-...                 self.layer_average[self.layers[atom.index]] += 1
-...     def __call__(self, system_changes):
-...         self.num_calls += 1
-...         for change in system_changes:
-...             layer = self.layers[change[0]]
-...             if change[2] == 'Cu':
-...                 self.layer_average[layer] += 1
-...             if change[1] == 'Cu':
-...                 self.layer_average[layer] -= 1
+...    def __init__(self, atoms):
+...        self.layers, _ = get_layers(atoms, [1, 0, 0])
+...        self.layer_average = [0 for _ in set(self.layers)]
+...        self.num_calls = 1
+...        # Initialise the structure
+...        for atom in atoms:
+...            if atom.symbol == 'Cu':
+...                self.layer_average[self.layers[atom.index]] += 1
+...
+...    def __call__(self, system_changes):
+...        self.num_calls += 1
+...        for change in system_changes:
+...            layer = self.layers[change[0]]
+...            if change[2] == 'Cu':
+...                self.layer_average[layer] += 1
+...            if change[1] == 'Cu':
+...                self.layer_average[layer] -= 1
+...
 ...    def get_averages(self):
 ...        return {'layer{}'.format(i): x/self.num_calls for i, x in enumerate(self.layer_average)}
 
@@ -142,6 +145,7 @@ the result will automatically be added to the result of `get_thermodynamic_quant
 To use this observer in our calculation
 
 >>> monitor = LayerMonitor(atoms)
+>>> mc = Montecarlo(atoms, T)
 >>> mc.attach(monitor, interval=1)
 >>> mc.run(steps=1000)
 
