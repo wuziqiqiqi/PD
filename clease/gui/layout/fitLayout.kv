@@ -112,16 +112,6 @@
                 multiline: False
                 on_text_validate: root.fit_eci()
 
-            CheckBox:
-                size_hint: [0.2, button_height]
-                id: separateThread
-                value: False
-                on_active: root.thread_check_box_active(self.active)
-
-            Label:
-                size_hint: [0.8, button_height]
-                text: 'Optimize on main thread'
-
             Spinner:
                 size_hint: [1, button_height]
                 id: fitAlgSpinner

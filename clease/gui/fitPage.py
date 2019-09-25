@@ -80,7 +80,6 @@ class FitPage(Screen):
     fit_result = {}
     _pop_up = None
     fitting_in_progress = False
-    fit_on_separate_thread = True
     e_dft = None
     e_ce = None
 
@@ -345,14 +344,10 @@ class FitPage(Screen):
             # GA behaves a bit different from the other schems
             # therefore we have a separate runner and return
             # after the runner is finished...
-            if self.fit_on_separate_thread:
-                msg = 'Selecting clusters with GA..'
-                App.get_running_app().root.ids.status.text = msg
-                Thread(target=ga_runner.run).start()
-                return
-            else:
-                ga_runner.run()
-                return
+            msg = 'Selecting clusters with GA..'
+            App.get_running_app().root.ids.status.text = msg
+            Thread(target=ga_runner.run).start()
+            return
 
         if k_fold == -1:
             scoring_scheme = 'loocv'
@@ -372,12 +367,7 @@ class FitPage(Screen):
             eci_optimiser.evaluator = evaluator
             self.fitting_in_progress = True
 
-            if self.fit_on_separate_thread:
-                Thread(target=eci_optimiser.optimise).start()
-            else:
-                eci_optimiser.optimise()
-                self.update_energy_plot(self.e_dft, self.e_ce)
-                self.update_eci_plot(self.eci)
+            Thread(target=eci_optimiser.optimise).start()
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 
@@ -456,12 +446,6 @@ class FitPage(Screen):
         self.eci_graph.ymax = float(ymax)
         self.eci_graph.x_ticks_major = float(xmax)/10.0
         self.eci_graph.y_ticks_major = float(ymax - ymin)/10.0
-        # ax.set_xticklabels([])
-        # ax.set_xlim(-1, prev)
-        # graph.figure.canvas.draw()
-
-    def thread_check_box_active(self, active):
-        self.fit_on_separate_thread = not active
 
     def update_plots(self):
         if self.fitting_in_progress:
