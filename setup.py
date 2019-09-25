@@ -101,5 +101,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
-    install_requires=['ase', 'matplotlib', 'spglib', 'kivy']
+    install_requires=['ase', 'matplotlib', 'spglib', 'kivy', 'https://github.com/kivy-garden/graph/archive/master.zip']
 )
