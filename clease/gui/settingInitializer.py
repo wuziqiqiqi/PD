@@ -15,7 +15,7 @@ class SettingsInitializer(object):
                 self.app.root.settings = CEBulk(**self.kwargs)
             elif self.type == 'CECrystal':
                 self.app.root.settings = CECrystal(**self.kwargs)
-
+            self.status.text = 'Finished initializing'
         except AssertionError as exc:
             msg = "AssertError during initialization " + str(exc)
             self.status.text = msg
