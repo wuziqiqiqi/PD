@@ -103,8 +103,8 @@ class FitPage(Screen):
                 xlog=False,
                 ylog=False,
                 xmin=0.0,
-                ymin=0.0)
-
+                ymin=0.0,
+                precision='%.2f')
             self.energy_plot = ScatterPlot(color=FOREGROUND_TEXT_COLOR,
                                            point_size=5)
             self.zero_line_energy = LinePlot(line_width=2,
@@ -125,7 +125,8 @@ class FitPage(Screen):
                 xlog=False,
                 ylog=False,
                 xmin=-1.0,
-                ymin=0.0
+                ymin=0.0,
+                precision='%.2f'
             )
 
             cluster_size = App.get_running_app().root.settings.max_cluster_size
