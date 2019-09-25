@@ -5,11 +5,13 @@ import numpy as np
 class EnergyEvolution(MCObserver):
     """Trace the evolution of energy."""
 
-    def __init__(self, calc):
-        self.calc = calc
+    def __init__(self, mc, ignore_reset=False):
+        self.mc = mc
         self.energies = []
+        self.mean_energies = []
         MCObserver.__init__(self)
         self.name = "EnergyEvolution"
+        self.ignore_reset = ignore_reset
 
     def __call__(self, system_changes):
         """Append the current energy to the MC object.
@@ -20,10 +22,14 @@ class EnergyEvolution(MCObserver):
             System changes. See doc-string of
             `clease.montecarlo.observers.MCObserver`
         """
-        self.energies.append(self.calc.get_potential_energy())
+        self.energies.append(self.mc.current_energy + self.mc.energy_bias)
+        self.mean_energies.append(self.mc.mean_energy.mean +
+                                  self.mc.energy_bias)
 
     def reset(self):
         """Reset the history."""
+        if self.ignore_reset:
+            return
         self.energies = []
 
     def save(self, fname="energy_evolution"):

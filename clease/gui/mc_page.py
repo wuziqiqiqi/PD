@@ -4,16 +4,19 @@ from kivy.uix.popup import Popup
 from clease.gui.help_message_popup import HelpMessagePopup
 from kivy.app import App
 from clease.gui.util import parse_concentration_list, parse_temperature_list
-from clease.gui.constants import FOREGROUND_TEXT_COLOR
+from clease.gui.constants import MC_MEAN_CURVE_COLOR
 from clease.gui.mc_runner import MCRunner
+from kivy.utils import get_color_from_hex
 from threading import Thread
 import json
 import os
+import traceback
 
 
 class MCPage(Screen):
     energy_graph = None
     energy_plot = None
+    mean_energy_plot = None
     _pop_up = None
     mc_is_running = False
 
@@ -21,7 +24,7 @@ class MCPage(Screen):
         if self.energy_graph is None:
             self.energy_graph = Graph(
                 xlabel='MC sweep',
-                ylabel="E - E[0]",
+                ylabel="Mean energy (<E> - <E>[0])",
                 x_ticks_minor=0,
                 x_ticks_major=10,
                 y_ticks_major=10,
@@ -34,10 +37,10 @@ class MCPage(Screen):
                 ymin=0.0,
                 precision='%.2f')
 
-            self.energy_plot = LinePlot(line_width=2,
-                                        color=FOREGROUND_TEXT_COLOR)
+            color = get_color_from_hex(MC_MEAN_CURVE_COLOR)
+            self.mean_energy_plot = LinePlot(line_width=2, color=color)
 
-            self.energy_graph.add_plot(self.energy_plot)
+            self.energy_graph.add_plot(self.mean_energy_plot)
             self.ids.energyPlot.add_widget(self.energy_graph)
 
     def dismiss_popup(self):
@@ -128,4 +131,5 @@ class MCPage(Screen):
 
             Thread(target=runner.run).start()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)

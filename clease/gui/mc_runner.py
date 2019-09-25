@@ -3,6 +3,7 @@ from clease.montecarlo import Montecarlo
 from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import EnergyPlotUpdater
+import traceback
 
 
 class MCRunner(object):
@@ -22,7 +23,8 @@ class MCRunner(object):
 
     def _attach_calc(self):
         self.status.text = 'Attaching calculator...'
-        self.atoms = attach_calculator(setting=self.settings, atoms=self.atoms)
+        self.atoms = attach_calculator(setting=self.settings, atoms=self.atoms,
+                                       eci=self.eci)
 
     def _init_conc(self):
         ibb = self.settings.index_by_basis
@@ -45,13 +47,14 @@ class MCRunner(object):
             self._init_conc()
 
             mc = Montecarlo(self.atoms, 200)
-            energy_evol = EnergyEvolution(self.atoms.get_calculator())
-            energy_update_rate = 1000
+            energy_evol = EnergyEvolution(mc, ignore_reset=True)
+
+            energy_update_rate = 2*len(self.atoms)
             mc.attach(energy_evol, interval=energy_update_rate)
 
             energy_plot = EnergyPlotUpdater(
                 energy_obs=energy_evol, graph=self.mc_page.energy_graph,
-                plot=self.mc_page.energy_plot)
+                mean_plot=self.mc_page.mean_energy_plot)
             mc.attach(energy_plot, interval=energy_update_rate)
 
             cnst = ConstrainSwapByBasis(
@@ -62,8 +65,9 @@ class MCRunner(object):
                 mc.T = T
                 self.status.text = 'Current temperature {}K'.format(T)
                 mc.run(steps=self.sweeps*len(self.atoms))
-
+            self.status.text = 'MC calculation finished'
         except Exception as exc:
+            traceback.print_exc()
             self.status.text = str(exc)
 
         self.mc_page.mc_is_running = False

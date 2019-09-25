@@ -84,15 +84,18 @@ class Montecarlo(object):
                                         max_time=20*len(self.atoms),
                                         n_subfilters=10)
 
-    def _probe_energy_bias(self, num_steps=1000):
+    def _probe_energy_bias(self, num_sweeps=2):
         """
         Run MC steps to probe the energy bias. The bias
         will be subtracted off the zeroth ECI and then
         added to the total energy during post processing.
         """
+        num_steps = num_sweeps*len(self.atoms)
         self.log("Probing energy bias using {} MC steps...".format(num_steps))
         for _ in range(num_steps):
-            self._mc_step()
+            E, _ = self._mc_step()
+            self.mean_energy += E
+            self.energy_squared += E**2
 
         self.log("Energy after probing: {}".format(self.current_energy))
         self.energy_bias = self.current_energy
@@ -128,6 +131,9 @@ class Montecarlo(object):
         eci = self.atoms.get_calculator().eci
         eci['c0'] += self.energy_bias/len(self.atoms)
         self.atoms.get_calculator().update_eci(eci)
+        calc = self.atoms.get_calculator()
+        self.current_energy = calc.calculate(None, None, None)
+        self.energy_bias = 0.0
         self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
@@ -371,7 +377,7 @@ class Montecarlo(object):
         self.log(
             "Reached maximum number of steps ({} mc steps)".format(steps))
 
-        # NOTE: Does not reset the energy bias to 0
+        # NOTE: Also update current_energy and sets energy_bias to 0.0
         self._undo_energy_bias_from_eci()
 
     @property
