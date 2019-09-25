@@ -7,6 +7,7 @@ from kivy.uix.popup import Popup
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
+from clease.gui.mc_page import MCPage
 from clease.gui.fitPage import FitPage
 from clease.gui.reconfigDB import ReconfigDB
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog

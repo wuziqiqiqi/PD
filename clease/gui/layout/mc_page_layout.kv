@@ -1,0 +1,66 @@
+<MCPage>:
+    name: 'MC'
+    StackLayout:
+        BoxLayout:
+            size_hint: [0.05, 1]
+
+        BoxLayout:
+            size_hint: [0.45, 1]
+            orientation: 'vertical'
+            BoxLayout:
+                id: energyPlot
+                size_hint: [1, 0.5]
+            
+        StackLayout:
+            size_hint: [0.40, 1]
+        
+            Label:
+                size_hint: [1, 0.05]
+                text: 'Temperatures'
+            TextInput:
+                size_hint: [0.95, 0.05]
+                text: ''
+                placeholder: 'Comma sep. list of temps'
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, 0.05]
+                text: '?'
+                on_release: root.show_temp_help_message()
+            
+            Label:
+                size_hint: [0.5, 0.05]
+                text: 'Sweeps per temp'
+
+            TextInput:
+                size_hint: [0.5, 0.05]
+                text: '100'
+                multiline: False
+                input_filter: 'int'
+                write_tab: False
+            
+            Label:
+                size_hint: [1, 0.05]
+                text: 'Concentrations'
+            
+            TextInput:
+                size_hint: [0.95, 0.05]
+                text: ''
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, 0.05]
+                text: '?'
+                on_release: root.show_conc_help_message()
+
+            Button:
+                size_hint: [1, 0.05]
+                text: 'Run'
+                on_release: root.runMC()
+
+        BoxLayout:
+            size_hint: [0.05, 1]
+
+    
