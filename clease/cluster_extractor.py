@@ -115,6 +115,7 @@ class ClusterExtractor(object):
         dists = []
         for indx in figure:
             d = self.atoms.get_distances(indx, figure)
+            d = d.round(decimals=6)
             dists.append(sorted(d.tolist(), reverse=True))
         return dists
 
