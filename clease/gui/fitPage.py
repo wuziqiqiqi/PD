@@ -36,6 +36,7 @@ class ECIOptimiser(object):
             self.fit_page.set_mae(mae)
             App.get_running_app().root.ids.status.text = 'Idle'
             self.fit_page.fitting_in_progress = False
+            self.fit_page.update_plots()
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
