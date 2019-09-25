@@ -2,6 +2,9 @@
 class Averager(object):
     def __init__(self, ref_value=1.0):
         self._ref_value = float(ref_value)
+
+        if abs(self._ref_value) < 1E-6:
+            self._ref_value = 1.0
         self._n_samples = 0.0
         self._mean = 0.0
 
