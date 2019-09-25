@@ -46,10 +46,17 @@ def build_ext(ext_module):
 
     return cythonize(ext_module)
 
+def install_kivy_garden_from_github():
+    try:
+        from kivy_garden import Graph
+    except ImportError:
+        pipmain(['install', 'https://github.com/kivy-garden/graph/archive/master.zip'])
+
 
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
 cython_folder = get_cython_folder()
+install_kivy_garden_from_github()
 
 src_files = ['cf_history_tracker.cpp',
              'additional_tools.cpp', 'cluster.cpp',
@@ -101,5 +108,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
-    install_requires=['ase', 'matplotlib', 'spglib', 'kivy', 'https://github.com/kivy-garden/graph/archive/master.zip']
+    install_requires=['ase', 'matplotlib', 'spglib', 'kivy']
 )
