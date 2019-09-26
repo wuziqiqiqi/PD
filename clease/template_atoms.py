@@ -469,7 +469,8 @@ class TemplateAtoms(object):
         B = np.diag(diag_B)  # Lower triangular matrix
 
         # Generate random off diagonal elements
-        off_diag = np.random.randint(-off_diag_range, off_diag_range,
+        rng = np.max([np.max(A), np.max(B)])*off_diag_range
+        off_diag = np.random.randint(-rng, rng,
                                      size=6)
 
         A[0, 1] = off_diag[0]
@@ -483,7 +484,7 @@ class TemplateAtoms(object):
         return C
 
     def get_template_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
-                                  off_diag_range=2):
+                                  off_diag_range=1):
         """
         Generate a single template with a given volume. See doc string
         of `clease.template_atoms._transformation_matrix_with_given_volume`
