@@ -13,6 +13,27 @@
             
         StackLayout:
             size_hint: [0.40, 1]
+
+            Label:
+                size_hint: [0.3, 0.05]
+                text: 'MC DB'
+            
+            TextInput:
+                size_hint: [0.6, 0.05]
+                text: ''
+                id: mc_db_input
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, 0.05]
+                text: '?'
+                on_release: root.show_db_help_message()
+
+            Button:
+                size_hint: [0.05, 0.05]
+                text: 'O'
+                on_release: root.open_load_dialog()
         
             Label:
                 size_hint: [1, 0.05]
@@ -66,6 +87,7 @@
                 size_hint: [0.45, 0.05]
                 id: sizeInput
                 text: '1'
+                on_text_validate: root.set_cell_info()
                 multiline: False
                 write_tab: False
                 input_filter: 'int'
@@ -74,6 +96,30 @@
                 size_hint: [0.05, 0.05]
                 text: '?'
                 on_release: root.show_size_help_message()
+
+            Label:
+                size_hint: [1, 0.05]
+                text: 'MC cell info:'
+
+            Label:
+                size_hint: [1, 0.05]
+                id: mc_cell_lengths
+                text: 'a: b: c: '
+            
+            Label:
+                size_hint:  [1, 0.05]
+                id: mc_cell_angles
+                text: 'alpha: beta: gamma'
+
+            Label:
+                size_hint: [1, 0.05]
+                id: mc_num_atoms
+                text: 'Num atoms.'
+            
+            Button:
+                size_hint: [1, 0.05]
+                text: 'View MC cell'
+                on_release: root.view_mc_cell()
 
             Button:
                 size_hint: [1, 0.05]

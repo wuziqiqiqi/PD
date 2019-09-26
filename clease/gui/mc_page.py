@@ -161,6 +161,16 @@ class MCPage(Screen):
         self.ids.mc_db_input.text = fname
         self.dismiss_popup()
 
+    def show_db_help_message(self):
+        msg = 'ASE database used to store thermodynamic data from MC runs\n'
+        msg += 'The data are stored in an external table called thermo_data.\n'
+        msg += 'The data can thus be accessed from an AtomsRow object by\n'
+        msg += "row['thermo_data']"
+        content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
+        self._pop_up = Popup(title="MC DB", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
+                             size_hint=(0.9, 0.9))
+        self._pop_up.open()
 
     def runMC(self):
         if self.mc_is_running:
