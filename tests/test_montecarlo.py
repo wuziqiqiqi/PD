@@ -123,9 +123,8 @@ class TestMonteCarlo(unittest.TestCase):
         atoms[0].symbol = 'Cu'
         atoms[1].symbol = 'Cu'
 
-        obs = EnergyEvolution(atoms.get_calculator())
-
         mc = Montecarlo(atoms, 600)
+        obs = EnergyEvolution(mc)
         mc.attach(obs, interval=50)
         mc.run(steps=1000)
 
@@ -167,9 +166,9 @@ class TestMonteCarlo(unittest.TestCase):
         atoms[2].symbol = 'Cu'
 
         low_en = LowestEnergyStructure(atoms)
-        energy_evol = EnergyEvolution(atoms.get_calculator())
 
         mc = Montecarlo(atoms, 700)
+        energy_evol = EnergyEvolution(mc)
         mc.attach(low_en, interval=1)
         mc.attach(energy_evol, interval=1)
 
