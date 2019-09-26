@@ -7,11 +7,12 @@ Welcome to CLEASE's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    clease
    ce_aucu
+   montecarlo_sampling
 
 
 

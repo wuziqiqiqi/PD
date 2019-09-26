@@ -78,6 +78,33 @@ class TestTemplates(unittest.TestCase):
             self.assertEqual(len(template), 2)
             self.assertAlmostEqual(2*vol, template.get_volume())
 
+    def test_fixed_volume_interface(self):
+        db_name = 'templates_fixed_volume_interface.db'
+        prim_cell = bulk("Al")
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=5, size=None,
+                                       db_name=db_name)
+
+        # 8 can be factorized three times (2x2x2)
+        # 16 can be factorized four times (2x2x2x2)
+        for num_prim in [8, 16]:
+            templates = template_atoms.get_fixed_volume_templates(
+                num_prim_cells=num_prim, num_templates=10)
+            vol = prim_cell.get_volume()
+            self.assertEqual(len(templates), 10)
+            for template in templates:
+                self.assertEqual(len(template), num_prim)
+                self.assertAlmostEqual(num_prim*vol, template.get_volume())
+
+        # Make sure a value error is raised if too many indices are passed
+        with self.assertRaises(ValueError):
+            template_atoms.get_fixed_volume_templates(
+                num_prim_cells=2**13, num_templates=10)
+        os.remove(db_name)
+
+
     def test_valid_concentration_filter(self):
         prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings = SettingsPlaceHolder()
