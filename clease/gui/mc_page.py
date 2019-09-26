@@ -70,10 +70,13 @@ class MCPage(Screen):
         msg += '(0.5, 0.3, 0.2), (0.9, 0.1)\n'
         msg += 'It is important the the concentration sums to one in each '
         msg += 'basis\n\n'
-        msg += 'Another option is to give a comma separated list of integers.\n'
-        msg += 'These integers are then interpreted as IDs in the MC database\n'
+        msg += 'Another option is to give a comma separated list of ids.\n'
+        msg += 'These numbers are then interpreted as IDs in the MC database\n'
         msg += 'To run a sequence of MC calculations, you can therefore \n'
-        msg += 'Prepare a set of structures and store in the DB, then launch'
+        msg += 'Prepare a set of structures and store in the DB.\n'
+        msg += 'It is important that the structures match the MC cell.\n'
+        msg += 'The easiest way is to click on View MC cell and store it as \n'
+        msg += 'xyz file and use that as a template for your concentrations\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
         self._pop_up = Popup(title="Concentration input", content=content,
                              pos_hint={'right': 0.95, 'top': 0.95},
