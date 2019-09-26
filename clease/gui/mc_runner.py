@@ -4,11 +4,13 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import EnergyPlotUpdater
 import traceback
+from ase.db import connect
 
 
 class MCRunner(object):
     def __init__(self, atoms=None, eci=None, mc_page=None, conc=None,
-                 temps=None, settings=None, sweeps=None, status=None):
+                 temps=None, settings=None, sweeps=None, status=None,
+                 db_name=None):
         self.atoms = atoms
         self.settings = settings
         self.eci = eci
@@ -21,6 +23,7 @@ class MCRunner(object):
         self.sweeps = sweeps
         self.status = status
         self.orig_template = self.settings.atoms.copy()
+        self.db_name = db_name
 
     def _attach_calc(self):
         self.status.text = 'Attaching calculator...'
@@ -40,6 +43,23 @@ class MCRunner(object):
         formula = self.atoms.get_chemical_formula()
         msg = 'Running MC at fixed conc for {}'.format(formula)
         self.status.text = msg
+
+    def write_thermodynamic_data_to_db(self, thermo):
+        if self.db_name is None:
+            return
+
+        if self.db_name == '':
+            return
+
+        float_thermo = {}
+        for k, v in thermo.items():
+            try:
+                float_v = float(v)
+                float_thermo[k] = float_v
+            except:
+                pass
+        db = connect(self.db_name)
+        db.write(self.atoms, external_tables={'thermo_data': float_thermo})
 
     def run(self):
         try:
@@ -66,6 +86,8 @@ class MCRunner(object):
                 mc.T = T
                 self.status.text = 'Current temperature {}K'.format(T)
                 mc.run(steps=self.sweeps*len(self.atoms))
+                thermo = mc.get_thermodynamic_quantities()
+                self.write_thermodynamic_data_to_db(thermo)
 
             # Reset the old template
             self.settings.set_active_template(atoms=self.orig_template)

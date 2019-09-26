@@ -8,6 +8,7 @@ from clease.gui.constants import MC_MEAN_CURVE_COLOR
 from clease.gui.mc_runner import MCRunner
 from kivy.utils import get_color_from_hex
 from threading import Thread
+from clease.gui.load_save_dialog import LoadDialog
 import json
 import os
 import traceback
@@ -89,7 +90,8 @@ class MCPage(Screen):
             'temps': self.ids.tempInput.text,
             'concs': self.ids.concInput.text,
             'size': self.ids.sizeInput.text,
-            'sweeps': self.ids.sweepInput.text
+            'sweeps': self.ids.sweepInput.text,
+            'mc_db': self.ids.mc_db_input.text
         }
 
     def from_dict(self, dct):
@@ -97,6 +99,7 @@ class MCPage(Screen):
         self.ids.concInput.text = dct.get('concs', '')
         self.ids.sizeInput.text = dct.get('size', '1')
         self.ids.sweepInput.text = dct.get('sweeps', '100')
+        self.ids.mc_db_input.text = dct.get('mc_db', '')
 
     def view_mc_cell(self):
         app = App.get_running_app()
@@ -140,6 +143,25 @@ class MCPage(Screen):
         self.ids.mc_cell_angles.text = angle_str
         self.ids.mc_num_atoms.text = 'Num atoms: {}'.format(len(atoms))
 
+    def open_load_dialog(self):
+        content = LoadDialog(load=self.load_mc_db_file,
+                             cancel=self.dismiss_popup)
+
+        self._pop_up = Popup(title="Load MC DB file", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
+                             size_hint=(0.9, 0.9))
+        self._pop_up.open()
+
+    def load_mc_db_file(self, path, filename):
+        if len(filename) == 0:
+            fname = path
+        else:
+            fname = filename[0]
+
+        self.ids.mc_db_input.text = fname
+        self.dismiss_popup()
+
+
     def runMC(self):
         if self.mc_is_running:
             return
@@ -167,10 +189,11 @@ class MCPage(Screen):
 
             atoms = settings.atoms*(size, size, size)
             sweeps = int(self.ids.sweepInput.text)
+            db_name = self.ids.mc_db_input.text
 
             runner = MCRunner(atoms=atoms, eci=eci, mc_page=self, conc=concs,
                               temps=temps, settings=settings, sweeps=sweeps,
-                              status=app.root.ids.status)
+                              status=app.root.ids.status, db_name=db_name)
 
             Thread(target=runner.run).start()
         except Exception as exc:
