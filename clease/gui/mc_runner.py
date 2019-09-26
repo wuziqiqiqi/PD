@@ -20,6 +20,7 @@ class MCRunner(object):
         self.basis_elements = settings.concentration.basis_elements
         self.sweeps = sweeps
         self.status = status
+        self.orig_template = self.settings.atoms.copy()
 
     def _attach_calc(self):
         self.status.text = 'Attaching calculator...'
@@ -65,6 +66,9 @@ class MCRunner(object):
                 mc.T = T
                 self.status.text = 'Current temperature {}K'.format(T)
                 mc.run(steps=self.sweeps*len(self.atoms))
+            
+            # Reset the old template
+            self.settings.set_active_template(atoms=self.orig_template)
             self.status.text = 'MC calculation finished'
         except Exception as exc:
             traceback.print_exc()
