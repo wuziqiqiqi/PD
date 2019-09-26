@@ -103,6 +103,11 @@ class MCRunner(object):
         atoms = db.get(id=self.db_id).toatoms()
         atoms = wrap_and_sort_by_position(atoms)
 
+        if len(atoms) != len(self.atoms):
+            msg = 'The atoms in the database has to match exactly the '
+            msg += ''
+            raise ValueError("Currently , ")
+
         for atom in atoms:
             self.atoms[atom.index].symbol = atom.symbol
 
