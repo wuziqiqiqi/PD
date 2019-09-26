@@ -128,7 +128,7 @@ class MCRunner(object):
         db = connect(self.db_name)
 
         if self.conc_mode == SYSTEMS_FROM_DB:
-            db.update(id=self.db_id,
+            db.update(self.db_id,
                       external_tables={'thermo_data': float_thermo})
         else:
             db.write(self.atoms, external_tables={'thermo_data': float_thermo})
