@@ -1,4 +1,4 @@
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
 from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
@@ -7,11 +7,12 @@ from kivy.app import App
 import json
 from clease.gui.util import parse_max_cluster_dia
 from clease.gui.constants import BACKGROUND_COLOR, FOREGROUND_TEXT_COLOR
+from clease.gui.constants import ECI_GRAPH_COLORS
 from threading import Thread
 from kivy.uix.screenmanager import Screen
-from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
-import matplotlib
-matplotlib.use("module://kivy.garden.matplotlib.backend_kivyagg")
+from kivy.utils import get_color_from_hex
+from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
+import numpy as np
 
 
 class ECIOptimiser(object):
@@ -35,6 +36,7 @@ class ECIOptimiser(object):
             self.fit_page.set_mae(mae)
             App.get_running_app().root.ids.status.text = 'Idle'
             self.fit_page.fitting_in_progress = False
+            self.fit_page.update_plots()
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
@@ -78,45 +80,63 @@ class FitPage(Screen):
     fit_result = {}
     _pop_up = None
     fitting_in_progress = False
-    fit_on_separate_thread = True
     e_dft = None
     e_ce = None
 
+    energy_plot = None
+    eci_plots = []
+    energy_graph = None
+    eci_graph = None
+    zero_line_energy = None
+
     def on_enter(self):
         if not self.graphs_added:
-            matplotlib.rcParams.update({'font.size': 20})
+            self.energy_graph = Graph(
+                xlabel='DFT energy (eV/atom)',
+                ylabel="E_CE - E_DFT (meV/atom)",
+                x_ticks_minor=0,
+                x_ticks_major=10,
+                y_ticks_major=10,
+                y_grid_label=True,
+                x_grid_label=True,
+                padding=5,
+                xlog=False,
+                ylog=False,
+                xmin=0.0,
+                ymin=0.0,
+                precision='%.2f')
+            self.energy_plot = ScatterPlot(color=FOREGROUND_TEXT_COLOR,
+                                           point_size=3)
+            self.zero_line_energy = LinePlot(line_width=2,
+                                             color=FOREGROUND_TEXT_COLOR)
+            self.energy_graph.add_plot(self.energy_plot)
+            self.energy_graph.add_plot(self.zero_line_energy)
+            self.ids.energyPlot.add_widget(self.energy_graph)
 
-            fig = plt.figure()
-            fig.patch.set_facecolor(BACKGROUND_COLOR)
-            ax = fig.add_subplot(1, 1, 1)
-            ax.spines['bottom'].set_color(FOREGROUND_TEXT_COLOR)
-            ax.spines['left'].set_color(FOREGROUND_TEXT_COLOR)
-            ax.xaxis.label.set_color(FOREGROUND_TEXT_COLOR)
-            ax.yaxis.label.set_color(FOREGROUND_TEXT_COLOR)
-            ax.tick_params(axis='x', colors=FOREGROUND_TEXT_COLOR)
-            ax.tick_params(axis='y', colors=FOREGROUND_TEXT_COLOR)
-            ax.set_xlabel("DFT energy (eV/atom)")
-            ax.set_ylabel(r"$E_{CE} - E_{DFT}$ (meV/atom)")
-            ax.set_facecolor(BACKGROUND_COLOR)
-            fig.tight_layout()
-            self.ids.energyPlot.add_widget(FigureCanvasKivyAgg(fig))
+            self.eci_graph = Graph(
+                ylabel='ECI (eV/atom)',
+                xlabel='Clusters',
+                x_ticks_minor=0,
+                x_ticks_major=10,
+                y_ticks_major=10,
+                y_grid_label=True,
+                x_grid_label=True,
+                padding=5,
+                xlog=False,
+                ylog=False,
+                xmin=-1.0,
+                ymin=0.0,
+                precision='%.2f'
+            )
 
-            eci_fig = plt.figure()
-            eci_fig.patch.set_facecolor(BACKGROUND_COLOR)
-            ax = eci_fig.add_subplot(1, 1, 1)
-            ax.spines['bottom'].set_color(FOREGROUND_TEXT_COLOR)
-            ax.spines['left'].set_color(FOREGROUND_TEXT_COLOR)
-            ax.xaxis.label.set_color(FOREGROUND_TEXT_COLOR)
-            ax.yaxis.label.set_color(FOREGROUND_TEXT_COLOR)
-            ax.tick_params(axis='x', colors=FOREGROUND_TEXT_COLOR)
-            ax.tick_params(axis='y', colors=FOREGROUND_TEXT_COLOR)
-            ax.set_ylabel("ECI (eV/atom)")
-            ax.set_xlabel("Clusters")
-            ax.set_facecolor(BACKGROUND_COLOR)
-            eci_fig.tight_layout()
+            for i in range(8):
+                color = ECI_GRAPH_COLORS[i % len(ECI_GRAPH_COLORS)]
+                color = get_color_from_hex(color)
+                plot = BarPlot(color=color, bar_width=4, bar_spacing=1)
+                self.eci_plots.append(plot)
+                self.eci_graph.add_plot(plot)
 
-            self.ids.eciPlot.add_widget(FigureCanvasKivyAgg(eci_fig))
-
+            self.ids.eciPlot.add_widget(self.eci_graph)
             self.graphs_added = True
 
     def dismiss_popup(self):
@@ -246,7 +266,7 @@ class FitPage(Screen):
             return
 
         from clease import Evaluate
-        settings = App.get_running_app().settings
+        settings = App.get_running_app().root.settings
 
         if settings is None:
             msg = 'Settings not set. Call Update settings first.'
@@ -324,14 +344,10 @@ class FitPage(Screen):
             # GA behaves a bit different from the other schems
             # therefore we have a separate runner and return
             # after the runner is finished...
-            if self.fit_on_separate_thread:
-                msg = 'Selecting clusters with GA..'
-                App.get_running_app().root.ids.status.text = msg
-                Thread(target=ga_runner.run).start()
-                return
-            else:
-                ga_runner.run()
-                return
+            msg = 'Selecting clusters with GA..'
+            App.get_running_app().root.ids.status.text = msg
+            Thread(target=ga_runner.run).start()
+            return
 
         if k_fold == -1:
             scoring_scheme = 'loocv'
@@ -351,12 +367,7 @@ class FitPage(Screen):
             eci_optimiser.evaluator = evaluator
             self.fitting_in_progress = True
 
-            if self.fit_on_separate_thread:
-                Thread(target=eci_optimiser.optimise).start()
-            else:
-                eci_optimiser.optimise()
-                self.update_energy_plot(self.e_dft, self.e_ce)
-                self.update_eci_plot(self.eci)
+            Thread(target=eci_optimiser.optimise).start()
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 
@@ -377,23 +388,33 @@ class FitPage(Screen):
             msg = 'ECIs has not been fitted yet'
             App.get_running_app().root.ids.status.text = msg
             return
-        graph = self.ids.energyPlot.children[0]
-        ax = graph.figure.axes[0]
-        ax.clear()
-        ax.set_xlabel("DFT energy (eV/atom)")
-        ax.set_ylabel(r"$E_{CE} - E_{DFT}$ (meV/atom)")
-        diff = [(x - y)*1000.0 for x, y in zip(e_ce, e_dft)]
-        ax.axhline(0.0, ls='--')
-        ax.plot(e_dft, diff, 'o', mfc='none')
-        graph.figure.canvas.draw()
+
+        xmin = np.min(e_dft)
+        xmax = np.max(e_dft)
+        ymin = np.min(e_ce - e_dft)*1000.0
+        ymax = np.max(e_ce - e_dft)*1000.0
+
+        x_rng = xmax - xmin
+        xmin -= 0.05*x_rng
+        xmax += 0.05*x_rng
+
+        y_rng = ymax - ymin
+        ymin -= 0.05*y_rng
+        ymax += 0.05*y_rng
+
+        self.energy_graph.xmin = float(xmin)
+        self.energy_graph.xmax = float(xmax)
+        self.energy_graph.ymin = float(ymin)
+        self.energy_graph.ymax = float(ymax)
+        self.energy_graph.x_ticks_major = float(xmax - xmin)/10.0
+        self.energy_graph.y_ticks_major = float(ymax - ymin)/10.0
+        self.energy_graph.y_grid_label = True
+        self.energy_graph.x_grid_label = True
+        self.energy_plot.points = [(y, (x - y)*1000.0)
+                                   for x, y in zip(e_ce, e_dft)]
+        self.zero_line_energy.points = [(xmin, 0.0), (xmax, 0.0)]
 
     def update_eci_plot(self, eci):
-        graph = self.ids.eciPlot.children[0]
-        ax = graph.figure.axes[0]
-        ax.clear()
-        ax.set_ylabel("ECI (eV/atom)")
-        ax.set_xlabel("Clusters")
-        ax.axhline(y=0.0, ls='--')
         eci_by_size = {}
 
         for k, v in eci.items():
@@ -406,17 +427,25 @@ class FitPage(Screen):
 
         sorted_keys = sorted(list(eci_by_size.keys()))
         prev = 0
-        for k in sorted_keys:
+
+        xmax = len(list(eci.keys())) + len(sorted_keys)
+        ymin = min([v for _, v in eci.items()])
+        ymax = max([v for _, v in eci.items()])
+        for i, k in enumerate(sorted_keys):
             values = eci_by_size[k]
             indx = range(prev, prev + len(values))
-            ax.bar(indx, values)
+            self.eci_plots[i].points = list(zip(indx, values))
             prev = indx[-1]+2
-        ax.set_xticklabels([])
-        ax.set_xlim(-1, prev)
-        graph.figure.canvas.draw()
 
-    def thread_check_box_active(self, active):
-        self.fit_on_separate_thread = not active
+        y_rng = ymax - ymin
+        ymin -= 0.05*y_rng
+        ymax += 0.05*y_rng
+
+        self.eci_graph.xmax = int(xmax)
+        self.eci_graph.ymin = float(ymin)
+        self.eci_graph.ymax = float(ymax)
+        self.eci_graph.x_ticks_major = float(xmax)/10.0
+        self.eci_graph.y_ticks_major = float(ymax - ymin)/10.0
 
     def update_plots(self):
         if self.fitting_in_progress:
