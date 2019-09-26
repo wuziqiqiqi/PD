@@ -1,0 +1,16 @@
+<HelpMessagePopup>:
+    StackLayout:
+        id: mainLayout
+
+        Label:
+            size_hint: [1, 0.8]
+            id: message
+            text: ''
+
+        Label:
+            size_hint: [0.8, 0.05]
+        
+        Button:
+            size_hint: [0.2, 0.05]
+            text: 'Close'
+            on_release: root.close()

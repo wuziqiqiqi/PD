@@ -7,6 +7,7 @@ from kivy.uix.popup import Popup
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
+from clease.gui.mc_page import MCPage
 from clease.gui.fitPage import FitPage
 from clease.gui.reconfigDB import ReconfigDB
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
@@ -69,6 +70,9 @@ class WindowFrame(StackLayout):
 
             fit_page = self.ids.sm.get_screen('Fit')
             fit_page.from_dict(data.get('fit_page', {}))
+
+            mc_page = self.ids.sm.get_screen('MC')
+            mc_page.from_dict(data.get('mc_page', {}))
             self.current_session_file = filename[0]
 
             msg = "Loaded session from {}".format(self.current_session_file)
@@ -104,6 +108,7 @@ class WindowFrame(StackLayout):
         data['conc'] = self.ids.sm.get_screen('Concentration').to_dict()
         data['new_struct'] = self.ids.sm.get_screen('NewStruct').to_dict()
         data['fit_page'] = self.ids.sm.get_screen('Fit').to_dict()
+        data['mc_page'] = self.ids.sm.get_screen('MC').to_dict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)

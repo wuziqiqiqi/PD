@@ -61,7 +61,7 @@ classes called *MCObservers* for this task. As an example we can store a value
 for the energy every 100 iteration by
 
 >>> from clease.montecarlo.observers import EnergyEvolution
->>> obs = EnergyEvolution(atoms.get_calculator())
+>>> obs = EnergyEvolution(mc)
 >>> mc.attach(obs, interval=100)
 >>> mc.run(steps=1000)
 >>> energies = obs.energies
