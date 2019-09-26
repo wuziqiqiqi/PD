@@ -335,6 +335,27 @@ class TestCECalculator(unittest.TestCase):
         for k, v in final_cf.items():
             self.assertAlmostEqual(v, calc_cf[k])
 
+    def test_4body_attach(self):
+        conc = Concentration(basis_elements=[['Au', 'Cu']])
+        setting = CEBulk(crystalstructure='fcc',
+                         a=4.0,
+                         size=[2, 2, 2],
+                         concentration=conc,
+                         db_name="test_aucu.db",
+                         max_cluster_size=4,
+                         max_cluster_dia=[6.0, 5.0, 5.0],
+                         basis_function='polynomial')
+
+        cf = CorrFunction(setting).get_cf(setting.atoms)
+        eci = {k: 0.0 for k in cf.keys()}
+        eci['c0'] = 1.0
+        atoms = setting.atoms.copy()*(3, 3, 3)
+
+        # Simpy confirm that no exception is raised.
+        # In the past, this failed.
+        _ = attach_calculator(setting, atoms=atoms, eci=eci)
+        os.remove('test_aucu.db')
+
     def test_given_change_and_restore(self):
         db_name = 'test_given_change.db'
         setting, atoms = get_binary(db_name)
