@@ -106,7 +106,7 @@ class FitPage(Screen):
                 ymin=0.0,
                 precision='%.2f')
             self.energy_plot = ScatterPlot(color=FOREGROUND_TEXT_COLOR,
-                                           point_size=5)
+                                           point_size=3)
             self.zero_line_energy = LinePlot(line_width=2,
                                              color=FOREGROUND_TEXT_COLOR)
             self.energy_graph.add_plot(self.energy_plot)
@@ -129,13 +129,7 @@ class FitPage(Screen):
                 precision='%.2f'
             )
 
-            settings = App.get_running_app().root.settings
-
-            if settings is None:
-                return
-
-            cluster_size = settings.max_cluster_size
-            for i in range(cluster_size-1):
+            for i in range(8):
                 color = ECI_GRAPH_COLORS[i % len(ECI_GRAPH_COLORS)]
                 color = get_color_from_hex(color)
                 plot = BarPlot(color=color, bar_width=4, bar_spacing=1)
