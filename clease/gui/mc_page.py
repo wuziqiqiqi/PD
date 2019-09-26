@@ -4,7 +4,9 @@ from kivy.uix.popup import Popup
 from clease.gui.help_message_popup import HelpMessagePopup
 from kivy.app import App
 from clease.gui.util import parse_concentration_list, parse_temperature_list
+from clease.gui.util import parse_comma_sep_list_of_int
 from clease.gui.constants import MC_MEAN_CURVE_COLOR
+from clease.gui.constants import CONC_PER_BASIS, SYSTEMS_FROM_DB
 from clease.gui.mc_runner import MCRunner
 from kivy.utils import get_color_from_hex
 from threading import Thread
@@ -67,7 +69,11 @@ class MCPage(Screen):
         msg += 'We can specify concentrations by\n'
         msg += '(0.5, 0.3, 0.2), (0.9, 0.1)\n'
         msg += 'It is important the the concentration sums to one in each '
-        msg += 'basis\n'
+        msg += 'basis\n\n'
+        msg += 'Another option is to give a comma separated list of integers.\n'
+        msg += 'These integers are then interpreted as IDs in the MC database\n'
+        msg += 'To run a sequence of MC calculations, you can therefore \n'
+        msg += 'Prepare a set of structures and store in the DB, then launch'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
         self._pop_up = Popup(title="Concentration input", content=content,
                              pos_hint={'right': 0.95, 'top': 0.95},
@@ -178,7 +184,28 @@ class MCPage(Screen):
 
         try:
             temps = parse_temperature_list(self.ids.tempInput.text)
-            concs = parse_concentration_list(self.ids.concInput.text)
+            conc_mode = None
+
+            # First try to parse as list
+            conc_string = self.ids.concInput.text
+            try:
+                concs = parse_comma_sep_list_of_int(conc_string)
+                conc_mode = SYSTEMS_FROM_DB
+            except:
+                pass
+
+            if conc_mode is None:
+                try:
+                    concs = parse_concentration_list(conc_string)
+                    conc_mode = CONC_PER_BASIS
+                except:
+                    pass
+
+            if conc_mode is None:
+                msg = 'Cannot parse concentration'
+                App.get_running_app().root.ids.status.text = msg
+                return
+
             size = int(self.ids.sizeInput.text)
 
             app = App.get_running_app()
@@ -201,9 +228,22 @@ class MCPage(Screen):
             sweeps = int(self.ids.sweepInput.text)
             db_name = self.ids.mc_db_input.text
 
-            runner = MCRunner(atoms=atoms, eci=eci, mc_page=self, conc=concs,
-                              temps=temps, settings=settings, sweeps=sweeps,
-                              status=app.root.ids.status, db_name=db_name)
+            runner_args = dict(atoms=atoms, eci=eci, mc_page=self, conc=concs,
+                               temps=temps, settings=settings, sweeps=sweeps,
+                               status=app.root.ids.status, db_name=db_name,
+                               conc_mode=conc_mode)
+            if conc_mode == CONC_PER_BASIS:
+                runner = MCRunner(**runner_args)
+            else:
+                # Create a chain of MCRunners
+                runner_args['conc'] = None
+                runner_args['db_id'] = concs[0]
+                runner = MCRunner(**runner_args)
+                current_runner = runner
+                for i in range(1, len(concs)):
+                    runner_args['db_id'] = concs[1]
+                    current_runner.next_mc_obj = MCRunner(**runner_args)
+                    current_runner = current_runner.next_mc_obj
 
             Thread(target=runner.run).start()
         except Exception as exc:

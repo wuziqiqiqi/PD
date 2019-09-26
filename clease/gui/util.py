@@ -176,6 +176,16 @@ def parse_temperature_list(string):
     raise ValueError(msg)
 
 
+def parse_comma_sep_list_of_int(string):
+    try:
+        values = [int(x) for x in string.split(',')]
+        return values
+    except Exception:
+        pass
+    msg = 'Could not parse list'
+    raise ValueError(msg)
+
+
 def parse_concentration_list(string):
     try:
         per_basis = [x.replace('(', '').replace(')', '')
