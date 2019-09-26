@@ -50,7 +50,7 @@ class MCRunner(object):
             mc = Montecarlo(self.atoms, 200)
             energy_evol = EnergyEvolution(mc, ignore_reset=True)
 
-            energy_update_rate = 2*len(self.atoms)
+            energy_update_rate = 5*len(self.atoms)
             mc.attach(energy_evol, interval=energy_update_rate)
 
             energy_plot = EnergyPlotUpdater(
@@ -66,7 +66,7 @@ class MCRunner(object):
                 mc.T = T
                 self.status.text = 'Current temperature {}K'.format(T)
                 mc.run(steps=self.sweeps*len(self.atoms))
-            
+
             # Reset the old template
             self.settings.set_active_template(atoms=self.orig_template)
             self.status.text = 'MC calculation finished'
