@@ -133,7 +133,7 @@ class Montecarlo(object):
         self.atoms.get_calculator().update_eci(eci)
         calc = self.atoms.get_calculator()
         self.current_energy = calc.calculate(None, None, None)
-        self.energy_bias = 0.0
+        #self.energy_bias = 0.0
         self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
@@ -377,7 +377,7 @@ class Montecarlo(object):
         self.log(
             "Reached maximum number of steps ({} mc steps)".format(steps))
 
-        # NOTE: Also update current_energy and sets energy_bias to 0.0
+        # NOTE: Also update current_energy
         self._undo_energy_bias_from_eci()
 
     @property

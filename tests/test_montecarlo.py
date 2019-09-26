@@ -175,7 +175,7 @@ class TestMonteCarlo(unittest.TestCase):
         mc.run(steps=1000)
         os.remove(db_name)
         self.assertAlmostEqual(np.min(energy_evol.energies),
-                               low_en.lowest_energy)
+                               low_en.lowest_energy + mc.energy_bias)
 
     def test_diffraction_obs(self):
         db_name = 'test_diffraction_observer.db'
