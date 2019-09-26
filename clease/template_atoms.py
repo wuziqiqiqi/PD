@@ -11,6 +11,7 @@ from clease.tools import str2nested_list
 from clease import _logger
 from clease import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import CellFilter, AtomsFilter
+from clease.tools import factorize
 
 
 class TemplateAtoms(object):
@@ -571,6 +572,58 @@ class TemplateAtoms(object):
         for mat in int_matrices:
             templates.append(make_supercell(self.prim_cell, mat))
         return templates
+
+    def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
+        """
+        Simpler interface to the `get_templates_given_volume`
+
+        Parameters:
+
+        num_prim_cells: int
+            The generated templates will have unit cells matching the volume
+            of the given number of primitive cells
+        num_templates: int
+            Number of templates to generate
+        """
+        fac = sorted(list(factorize(num_prim_cells)), reverse=True)
+
+        if len(fac) > 12:
+            raise ValueError("Numbers that can be factorised into more than 12"
+                             "prime numbers are not supported. Construct the "
+                             "LU diagonals manually and pass it to the "
+                             "get_templates_given_volume")
+
+        if len(fac) > 6:
+            fac_modified = [x for x in fac[:6]]
+            for i in range(0, len(fac[6:])):
+                fac_modified[6-i] *= fac[6+i]
+            fac = fac_modified
+
+        # Calculate the length of the unit cell vectors
+        lengths = self.prim_cell.get_cell_lengths_and_angles()[:3]
+        srt_indx = list(np.argsort(lengths)[::-1])
+        diag_A = [1, 1, 1]
+        diag_B = [1, 1, 1]
+
+        stop = min([len(fac), len(diag_A)])
+
+        # Place the numbers such that the shortest cell vectors
+        # get the largest scaling factor
+        for i in range(0, stop):
+            diag_A[srt_indx[i]] = fac[i]
+
+        if len(fac) > 3:
+            stop = min([len(fac[3:]), 3])
+            # Again place entries in diag_B such that the shortest
+            # cell vector get the largest scaling factor
+            for i in range(0, stop):
+                diag_B[srt_indx[i]] = fac[3+i]
+        return self.get_templates_given_volume(diag_A=diag_A, diag_B=diag_B,
+                                               num_templates=num_templates)
+
+
+
+
 
 
 def is_3x3_matrix(array):
