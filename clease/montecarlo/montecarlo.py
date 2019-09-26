@@ -90,6 +90,7 @@ class Montecarlo(object):
         will be subtracted off the zeroth ECI and then
         added to the total energy during post processing.
         """
+        self.energy_bias = 0.0
         num_steps = num_sweeps*len(self.atoms)
         self.log("Probing energy bias using {} MC steps...".format(num_steps))
         for _ in range(num_steps):

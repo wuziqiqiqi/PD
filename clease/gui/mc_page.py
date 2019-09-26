@@ -21,6 +21,7 @@ class MCPage(Screen):
     mc_is_running = False
 
     def on_enter(self):
+        self.set_cell_info()
         if self.energy_graph is None:
             self.energy_graph = Graph(
                 xlabel='MC sweep',
@@ -96,6 +97,48 @@ class MCPage(Screen):
         self.ids.concInput.text = dct.get('concs', '')
         self.ids.sizeInput.text = dct.get('size', '1')
         self.ids.sweepInput.text = dct.get('sweeps', '100')
+
+    def view_mc_cell(self):
+        app = App.get_running_app()
+        try:
+            from ase.visualize import view
+            atoms = self._get_mc_cell()
+            Thread(target=view, args=(atoms,)).start()
+        except Exception as exc:
+            app.root.ids.status.text = str(exc)
+
+    def _get_mc_cell(self):
+        app = App.get_running_app()
+        try:
+            settings = app.root.settings
+            size = int(self.ids.sizeInput.text)
+
+            if settings is None:
+                app.root.ids.status.text = 'Apply settings prior to running MC'
+                return
+
+            atoms = settings.atoms*(size, size, size)
+            return atoms
+        except Exception as exc:
+            app.root.ids.status.text = str(exc)
+        return None
+
+    def set_cell_info(self):
+        atoms = self._get_mc_cell()
+
+        if atoms is None:
+            return
+
+        info = atoms.get_cell_lengths_and_angles()
+
+        length_str = 'a: {}Å b: {}Å c: {}Å'.format(
+            int(info[0]), int(info[1]), int(info[2]))
+        self.ids.mc_cell_lengths.text = length_str
+
+        angle_str = '{}deg {}deg {}deg'.format(int(info[3]), int(info[4]),
+                                               int(info[5]))
+        self.ids.mc_cell_angles.text = angle_str
+        self.ids.mc_num_atoms.text = 'Num atoms: {}'.format(len(atoms))
 
     def runMC(self):
         if self.mc_is_running:
