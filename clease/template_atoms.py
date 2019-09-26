@@ -10,7 +10,9 @@ from ase.build import make_supercell
 from clease.tools import str2nested_list
 from clease import _logger
 from clease import SkewnessFilter, EquivalentCellsFilter
+from clease import DistanceBetweenFacetsFilter, VolumeToSurfaceRatioFilter
 from clease.template_filters import CellFilter, AtomsFilter
+from clease.template_filters import AngleFilter
 from clease.tools import factorize
 
 
@@ -29,6 +31,9 @@ class TemplateAtoms(object):
         self.atoms_filters = []
 
         self.add_cell_filter(SkewnessFilter(skew_threshold))
+        #self.add_cell_filter(DistanceBetweenFacetsFilter(skew_threshold))
+        #self.add_cell_filter(VolumeToSurfaceRatioFilter(4))
+        self.add_cell_filter(AngleFilter(30, 150))
         self.all_cells = []
         self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
 
@@ -470,7 +475,7 @@ class TemplateAtoms(object):
 
         # Generate random off diagonal elements
         rng = np.max([np.max(A), np.max(B)])*off_diag_range
-        off_diag = np.random.randint(-rng, rng,
+        off_diag = np.random.randint(-off_diag_range, off_diag_range,
                                      size=6)
 
         A[0, 1] = off_diag[0]
@@ -523,7 +528,8 @@ class TemplateAtoms(object):
         return make_supercell(self.prim_cell, matrix)
 
     def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
-                                   off_diag_range=2, num_templates=10):
+                                   off_diag_range=2, num_templates=10,
+                                   reorder_diags=False):
         """
         Generate a given number of random templates with a fixed volume
         See also `clease.template_atoms.get_template_given_volume`.
@@ -545,7 +551,7 @@ class TemplateAtoms(object):
         num_templates: int
             Number of templates to generate
         """
-        max_attempts = 1000
+        max_attempts = 10000
         matrices = []
         int_matrices = []
 
@@ -572,6 +578,14 @@ class TemplateAtoms(object):
         templates = []
         for mat in int_matrices:
             templates.append(make_supercell(self.prim_cell, mat))
+
+        if reorder_diags:
+            array = np.zeros(6)
+            array[:3] = diag_A
+            array[3:] = diag_B
+            np.random.shuffle(array)
+            diag_A = array[:3]
+            diag_B = array[3:]
         return templates
 
     def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
@@ -620,7 +634,8 @@ class TemplateAtoms(object):
             for i in range(0, stop):
                 diag_B[srt_indx[i]] = fac[3+i]
         return self.get_templates_given_volume(diag_A=diag_A, diag_B=diag_B,
-                                               num_templates=num_templates)
+                                               num_templates=num_templates,
+                                               reorder_diags=True)
 
 
 

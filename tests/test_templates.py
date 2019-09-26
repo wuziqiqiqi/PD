@@ -4,6 +4,7 @@ from clease.template_atoms import TemplateAtoms
 from ase.build import bulk
 from ase.db import connect
 from clease import Concentration, ValidConcentrationFilter
+from clease import DistanceBetweenFacetsFilter
 import numpy as np
 import unittest
 
@@ -104,7 +105,6 @@ class TestTemplates(unittest.TestCase):
                 num_prim_cells=2**13, num_templates=10)
         os.remove(db_name)
 
-
     def test_valid_concentration_filter(self):
         prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings = SettingsPlaceHolder()
@@ -142,6 +142,15 @@ class TestTemplates(unittest.TestCase):
             num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
             self.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
 
+    def test_dist_filter(self):
+        f = DistanceBetweenFacetsFilter(4.0)
+        cell = [[0.1, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0]]
+        cell = np.array(cell)
+        self.assertFalse(f(cell))
+        cell[0, 0] = 0.3
+        self.assertTrue(f(cell))
 
 if __name__ == '__main__':
     unittest.main()

@@ -196,6 +196,62 @@ class NewStructures(object):
     def corr_func_table_name(self):
         return "{}_cf".format(self.setting.bf_scheme.name)
 
+    def generate_gs_structure_multiple_templates(
+            self, num_templates=20, num_prim_cells=2, init_temp=2000,
+            final_temp=1, num_temp=10, num_steps_per_temp=1000,
+            eci=None):
+        """
+        Search for ground states in many templates.
+
+        Parameters:
+
+        num_templates: int
+            Number of templates to search in
+
+        num_prim_cells: int
+            Number of primitive cells
+
+        See doc-string of `generate_gs_structure` for the rest of the
+        argument.
+        """
+
+        templates = self.setting.template_atoms.get_fixed_volume_templates(
+            num_templates=num_templates, num_prim_cells=num_prim_cells)
+
+        if len(templates) == 0:
+            raise RuntimeError("Could not find any templates with matching the "
+                               "constraints")
+
+        self.setting.set_active_template(
+            atoms=templates[0], generate_template=True)
+
+        nib = [len(x) for x in self.setting.index_by_basis]
+        x = self.setting.concentration.get_random_concentration(nib=nib)
+        num_insert = self.setting.concentration.conc_in_int(nib, x)
+
+        energies = []
+        gs_structs = []
+        for i, atoms in enumerate(templates):
+            _logger('Searching for GS in template {} of {}'
+                    ''.format(i, len(templates)))
+            self.setting.set_active_template(
+                atoms=atoms, generate_template=True)
+
+            struct = self._random_struct_at_conc(num_insert)
+            es = GSStructure(self.setting, struct, self.struct_per_gen,
+                             init_temp, final_temp, num_temp,
+                             num_steps_per_temp, eci)
+            gs_struct, _ = es.generate()
+            gs_structs.append(gs_struct)
+            energies.append(gs_struct.get_potential_energy())
+
+        # Find the position of the minimum energy structure
+        min_energy_indx = np.argmin(energies)
+        from ase.visualize import view
+        view(gs_structs)
+        print(energies)
+        self.insert_structure(init_struct=gs_struct)
+
     def generate_gs_structure(self, atoms=None, init_temp=2000,
                               final_temp=1, num_temp=10,
                               num_steps_per_temp=1000, eci=None,

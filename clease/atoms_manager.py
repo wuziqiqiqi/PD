@@ -4,6 +4,7 @@ from scipy.spatial import cKDTree as KDTree
 from ase.geometry import wrap_positions
 from ase.build import make_supercell
 from clease.tools import wrap_and_sort_by_position
+from ase.io import write
 
 
 class AtomsManager(object):
@@ -237,14 +238,27 @@ class AtomsManager(object):
         scale = 1.0/inv_cell[np.abs(inv_cell)*a > zero_cutoff]
         scale = np.round(scale).astype(np.int32)
         min_gcd = min([gcd(scale[0], scale[i]) for i in range(len(scale))])
+
+        if min_gcd == 0:
+            min_gcd = 1
         scale = np.true_divide(scale, min_gcd)
         scale = min_gcd*np.max(scale)
         integer_matrix = np.round(inv_cell*scale).astype(np.int32)
 
-        while self._singlar_cell(integer_matrix):
-            row = np.random.randint(0, 3)
-            col = np.random.randint(0, 3)
+        counter = 0
+        print(integer_matrix)
+        while self._singlar_cell(integer_matrix) and counter < 5:
+            row = np.random.randint(low=0, high=3)
+            col = np.random.randint(low=0, high=3)
             integer_matrix[row, col] += 1
+            counter += 1
+
+        if counter >= 5:
+            fname = 'failed_active_template.xyz'
+            write(fname, self.atoms)
+            raise ValueError("Could not generate a cubic template!"
+                             "The activate template is stored in {}"
+                             "".format(fname))
 
         if np.linalg.det(integer_matrix) < 0:
             integer_matrix *= -1
