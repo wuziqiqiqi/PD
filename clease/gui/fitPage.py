@@ -129,7 +129,12 @@ class FitPage(Screen):
                 precision='%.2f'
             )
 
-            cluster_size = App.get_running_app().root.settings.max_cluster_size
+            settings = App.get_running_app().root.settings
+
+            if settings is None:
+                return
+
+            cluster_size = settings.max_cluster_size
             for i in range(cluster_size-1):
                 color = ECI_GRAPH_COLORS[i % len(ECI_GRAPH_COLORS)]
                 color = get_color_from_hex(color)
