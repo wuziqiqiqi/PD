@@ -216,6 +216,11 @@ class AtomsManager(object):
             supercell_indices.append(candidates[temp_indx])
         return supercell_indices
 
+    def _singlar_cell(self, integer_matrix):
+        new_cell = integer_matrix @ self.atoms.cell
+        cond = np.linalg.cond(new_cell)
+        return cond > 1E10
+
     def close_to_cubic_supercell(self, zero_cutoff=0.1):
         """
         Create a close to cubic supercell.
@@ -235,6 +240,11 @@ class AtomsManager(object):
         scale = np.true_divide(scale, min_gcd)
         scale = min_gcd*np.max(scale)
         integer_matrix = np.round(inv_cell*scale).astype(np.int32)
+
+        while self._singlar_cell(integer_matrix):
+            row = np.random.randint(0, 3)
+            col = np.random.randint(0, 3)
+            integer_matrix[row, col] += 1
 
         if np.linalg.det(integer_matrix) < 0:
             integer_matrix *= -1
