@@ -59,52 +59,6 @@ class TestTemplates(unittest.TestCase):
 
         os.remove(db_name)
 
-    def test_fixed_volume(self):
-        db_name = 'templates_fixed_volume.db'
-        prim_cell = bulk("Al")
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
-
-        template_atoms = TemplateAtoms(supercell_factor=5, size=None,
-                                       db_name=db_name)
-
-        # Create 20 templates with 2 atoms
-        diag_A = [2, 1, 1]
-        templates = template_atoms.get_templates_given_volume(
-            diag_A=diag_A, off_diag_range=1, num_templates=20)
-
-        vol = prim_cell.get_volume()
-        os.remove(db_name)
-        for template in templates:
-            self.assertEqual(len(template), 2)
-            self.assertAlmostEqual(2*vol, template.get_volume())
-
-    def test_fixed_volume_interface(self):
-        db_name = 'templates_fixed_volume_interface.db'
-        prim_cell = bulk("Al")
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
-
-        template_atoms = TemplateAtoms(supercell_factor=5, size=None,
-                                       db_name=db_name)
-
-        # 8 can be factorized three times (2x2x2)
-        # 16 can be factorized four times (2x2x2x2)
-        for num_prim in [8, 16]:
-            templates = template_atoms.get_fixed_volume_templates(
-                num_prim_cells=num_prim, num_templates=10)
-            vol = prim_cell.get_volume()
-            self.assertEqual(len(templates), 10)
-            for template in templates:
-                self.assertEqual(len(template), num_prim)
-                self.assertAlmostEqual(num_prim*vol, template.get_volume())
-
-        # Make sure a value error is raised if too many indices are passed
-        with self.assertRaises(ValueError):
-            template_atoms.get_fixed_volume_templates(
-                num_prim_cells=2**13, num_templates=10)
-        os.remove(db_name)
-
     def test_valid_concentration_filter(self):
         prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings = SettingsPlaceHolder()
@@ -152,5 +106,17 @@ class TestTemplates(unittest.TestCase):
         cell[0, 0] = 0.3
         self.assertTrue(f(cell))
 
+    def test_fixed_vol(self):
+        db_name = 'templates_fcc_fixed_vol.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
+                                       skew_threshold=4,
+                                       db_name=db_name)
+        templates = template_atoms.get_fixed_volume_templates(
+            num_prim_cells=8, num_templates=100)
+        os.remove(db_name)
 if __name__ == '__main__':
     unittest.main()
