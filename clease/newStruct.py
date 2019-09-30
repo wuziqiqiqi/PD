@@ -247,9 +247,6 @@ class NewStructures(object):
 
         # Find the position of the minimum energy structure
         min_energy_indx = np.argmin(energies)
-        from ase.visualize import view
-        view(gs_structs)
-        print(energies)
         self.insert_structure(init_struct=gs_struct)
 
     def generate_gs_structure(self, atoms=None, init_temp=2000,
