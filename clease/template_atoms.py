@@ -31,9 +31,6 @@ class TemplateAtoms(object):
         self.atoms_filters = []
 
         self.add_cell_filter(SkewnessFilter(skew_threshold))
-        #self.add_cell_filter(DistanceBetweenFacetsFilter(skew_threshold))
-        #self.add_cell_filter(VolumeToSurfaceRatioFilter(4))
-        #self.add_cell_filter(AngleFilter(30, 150))
         self.all_cells = []
         self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
 
