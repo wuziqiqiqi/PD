@@ -10,9 +10,7 @@ from ase.build import make_supercell
 from clease.tools import str2nested_list
 from clease import _logger
 from clease import SkewnessFilter, EquivalentCellsFilter
-from clease import DistanceBetweenFacetsFilter, VolumeToSurfaceRatioFilter
 from clease.template_filters import CellFilter, AtomsFilter
-from clease.template_filters import AngleFilter
 from clease.tools import factorize, all_integer_transform_matrices
 
 
