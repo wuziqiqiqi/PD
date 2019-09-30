@@ -246,7 +246,6 @@ class AtomsManager(object):
         integer_matrix = np.round(inv_cell*scale).astype(np.int32)
 
         counter = 0
-        print(integer_matrix)
         while self._singlar_cell(integer_matrix) and counter < 5:
             row = np.random.randint(low=0, high=3)
             col = np.random.randint(low=0, high=3)
