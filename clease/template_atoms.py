@@ -13,7 +13,7 @@ from clease import SkewnessFilter, EquivalentCellsFilter
 from clease import DistanceBetweenFacetsFilter, VolumeToSurfaceRatioFilter
 from clease.template_filters import CellFilter, AtomsFilter
 from clease.template_filters import AngleFilter
-from clease.tools import factorize
+from clease.tools import factorize, all_integer_transform_matrices
 
 
 class TemplateAtoms(object):
@@ -33,7 +33,7 @@ class TemplateAtoms(object):
         self.add_cell_filter(SkewnessFilter(skew_threshold))
         #self.add_cell_filter(DistanceBetweenFacetsFilter(skew_threshold))
         #self.add_cell_filter(VolumeToSurfaceRatioFilter(4))
-        self.add_cell_filter(AngleFilter(30, 150))
+        #self.add_cell_filter(AngleFilter(30, 150))
         self.all_cells = []
         self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
 
@@ -438,208 +438,39 @@ class TemplateAtoms(object):
         for _, v in self.templates.items():
             assert len(v) == num_entries
 
-    def _transformation_matrix_with_given_volume(self, diag_A, diag_B,
-                                                 off_diag_range):
-        """Create integer matrices with a given determinant.
+    def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
+        # Set up a filter that listens to the templates with fixed volume
+        from ase.build.tools import niggli_reduce_cell
+        from random import sample
+        cells = []
+        transform_matrices = []
+        prim_vol = self.prim_cell.get_volume()
+        for atoms in self.templates['atoms']:
+            if abs(atoms.get_volume() - num_prim_cells*prim_vol) < 1E-6:
+                cells.append(atoms.get_cell())
+                transform_matrices.append(self._get_conversion_matrix(atoms))
 
-        It utilizes that determinant of the dot product between an upper
-        triangular matrix and a lower triangular matrix is equal to the
-        product of the diagonal elements in the two matrices.
+        equiv_filter = EquivalentCellsFilter(cells)
+        self.add_cell_filter(equiv_filter)
 
-        Example:
-
-        C = A.dot(B)
-
-            [a11, a, b]        [b11, 0, 0]
-        A = [0, a22, c],  B =  [d, b22, 0]
-            [0, 0, a33]        [e, f, b33]
-
-        the determinant of C is then equal to
-        det(C) = a11*a22*a33*b11*b22*b33.
-
-        Parameters:
-
-        diag_A: list of length 3
-            3 integers representing the diagonal in the A matrix
-
-        diag_B: list of length 3
-            3 integers representing the diagonal in the B matrix
-
-        off_diag_range: int
-            The off diagonal elements are randomly chosen integers in the
-            range [-off_diag_range, off_diag_range]
-        """
-
-        A = np.diag(diag_A)  # Upper triangular matrix
-        B = np.diag(diag_B)  # Lower triangular matrix
-
-        # Generate random off diagonal elements
-        rng = np.max([np.max(A), np.max(B)])*off_diag_range
-        off_diag = np.random.randint(-off_diag_range, off_diag_range,
-                                     size=6)
-
-        A[0, 1] = off_diag[0]
-        A[0, 2] = off_diag[1]
-        A[1, 2] = off_diag[2]
-        B[1, 0] = off_diag[3]
-        B[2, 0] = off_diag[4]
-        B[2, 1] = off_diag[5]
-
-        C = A.dot(B)
-        return C
-
-    def get_template_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
-                                  off_diag_range=1):
-        """
-        Generate a single template with a given volume. See doc string
-        of `clease.template_atoms._transformation_matrix_with_given_volume`
-        for details of the algorithm. The selected determinant is given by
-        np.prod(diag_A)*np.prod(diag_B).
-
-        Example:
-
-        If a template with a volume equal to 2 times the unit cell, the
-        following combinations of diag_A and diag_B would to the job
-        diag_A = [2, 1, 1] and diag_B = [1, 1, 1]
-        diag_A = [1, 2, 1] and diag_B = [1, 1, 1]
-        diag_A = [1, 1, 2] and diag_B = [1, 1, 1]
-        and all cases where diag_A and diag_B in the above list is swapped.
-
-        If a template with a volume equal to 4 times the volume of the unit
-        cell one can either have diag_A = [2, 2, 1] and diag_A = [4, 1, 1]
-        works (diag_B = [1, 1, 1]).
-
-        Parameters:
-
-        diag_A: list int
-            List of 3 integers representing the diagonal of the upper
-            triangular matrix
-
-        diag_B: list int
-            List of 3 integers representing the diagonal of the lower
-            triangular matrix
-
-        off_diag_range: int
-            The off diagonal elements are randomly chosen in the range
-            [-off_diag_range, off_diag_range]
-        """
-        matrix = self._transformation_matrix_with_given_volume(
-            diag_A, diag_B, off_diag_range)
-        return make_supercell(self.prim_cell, matrix)
-
-    def get_templates_given_volume(self, diag_A=[1, 1, 1], diag_B=[1, 1, 1],
-                                   off_diag_range=2, num_templates=10,
-                                   reorder_diags=False):
-        """
-        Generate a given number of random templates with a fixed volume
-        See also `clease.template_atoms.get_template_given_volume`.
-
-        Parameters:
-
-        diag_A: list of int
-            List of 3 integers representing the diagonal of the upper
-            triangular matrix
-
-        diag_B: list of int
-            List of 3 integers repreenting the diagonal in the lower
-            triangular matrix
-
-        off_diag_range: int
-            The off diagonal elements are randomly chosen in the range
-            [-off_diag_range, off_diag_range]
-
-        num_templates: int
-            Number of templates to generate
-        """
-        max_attempts = 10000
-        matrices = []
-        int_matrices = []
-
-        # Use the equivalent cell filter to trace already selected templates
-        equiv_filter = EquivalentCellsFilter(matrices)
-
-        counter = 0
         ucell = self.prim_cell.get_cell()
-        while len(int_matrices) < num_templates and counter < max_attempts:
-            counter += 1
-            matrix = self._transformation_matrix_with_given_volume(
-                diag_A, diag_B, off_diag_range)
+        for mat in all_integer_transform_matrices(num_prim_cells):
+            sc = mat.dot(ucell)
+            sc, _ = niggli_reduce_cell(sc)
+            if self.is_valid(cell=sc):
+                cells.append(sc)
+                transform_matrices.append(mat)
 
-            sc = matrix.dot(ucell)
-
-            # Check if this matrix can be obtained with a unitary
-            # transformation of any of the other
-            valid = self.is_valid(cell=sc)
-
-            if valid and equiv_filter(sc):
-                int_matrices.append(matrix)
-                matrices.append(sc)
+        if len(transform_matrices) <= num_templates:
+            all_trans_mat = transform_matrices
+        else:
+            all_trans_mat = sample(transform_matrices, num_templates)
 
         templates = []
-        for mat in int_matrices:
-            templates.append(make_supercell(self.prim_cell, mat))
-
-        if reorder_diags:
-            array = np.zeros(6)
-            array[:3] = diag_A
-            array[3:] = diag_B
-            np.random.shuffle(array)
-            diag_A = array[:3]
-            diag_B = array[3:]
+        for P in all_trans_mat:
+            atoms = make_supercell(self.prim_cell, P)
+            templates.append(atoms)
         return templates
-
-    def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
-        """
-        Simpler interface to the `get_templates_given_volume`
-
-        Parameters:
-
-        num_prim_cells: int
-            The generated templates will have unit cells matching the volume
-            of the given number of primitive cells
-        num_templates: int
-            Number of templates to generate
-        """
-        fac = sorted(list(factorize(num_prim_cells)), reverse=True)
-
-        if len(fac) > 12:
-            raise ValueError("Numbers that can be factorised into more than 12"
-                             "prime numbers are not supported. Construct the "
-                             "LU diagonals manually and pass it to the "
-                             "get_templates_given_volume")
-
-        if len(fac) > 6:
-            fac_modified = [x for x in fac[:6]]
-            for i in range(0, len(fac[6:])):
-                fac_modified[6-i] *= fac[6+i]
-            fac = fac_modified
-
-        # Calculate the length of the unit cell vectors
-        lengths = self.prim_cell.get_cell_lengths_and_angles()[:3]
-        srt_indx = list(np.argsort(lengths)[::-1])
-        diag_A = [1, 1, 1]
-        diag_B = [1, 1, 1]
-
-        stop = min([len(fac), len(diag_A)])
-
-        # Place the numbers such that the shortest cell vectors
-        # get the largest scaling factor
-        for i in range(0, stop):
-            diag_A[srt_indx[i]] = fac[i]
-
-        if len(fac) > 3:
-            stop = min([len(fac[3:]), 3])
-            # Again place entries in diag_B such that the shortest
-            # cell vector get the largest scaling factor
-            for i in range(0, stop):
-                diag_B[srt_indx[i]] = fac[3+i]
-        return self.get_templates_given_volume(diag_A=diag_A, diag_B=diag_B,
-                                               num_templates=num_templates,
-                                               reorder_diags=True)
-
-
-
-
 
 
 def is_3x3_matrix(array):
