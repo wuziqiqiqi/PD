@@ -475,5 +475,5 @@ def count_atoms(atoms):
     """
     count = {}
     for s in atoms.symbols:
-        count = count.get(s, 0) + 1
+        count[s] = count.get(s, 0) + 1
     return count
