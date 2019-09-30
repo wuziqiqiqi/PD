@@ -467,3 +467,13 @@ def factorize(n):
                 n = int(n/i)
                 yield i
                 break
+
+
+def count_atoms(atoms):
+    """
+    Return dictionary with the number of items of each species
+    """
+    count = {}
+    for s in atoms.symbols:
+        count = count.get(s, 0) + 1
+    return count

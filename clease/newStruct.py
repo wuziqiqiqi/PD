@@ -504,6 +504,43 @@ class NewStructures(object):
 
         return atoms
 
+    def insert_structures(self, traj_init=None, traj_final=None):
+        """
+        Insert a sequence of initial and final structures from trajectory.
+
+        Parameters:
+
+        traj_init: str
+            Filename of a trajectory file with initial structures
+
+        traj_final: str
+            Filename of a trajectory file with the final structures
+        """
+        from ase.io.trajectory import TrajectoryReader
+        from clease.tools import count_atoms
+        traj_in = TrajectoryReader(traj_init)
+        traj_final = TrajectoryReader(traj_final)
+
+        if len(traj_in) != len(traj_final):
+            raise ValueError("Different number of structures in "
+                             "initial trajectory file and final.")
+
+        for init, final in zip(traj_in, traj_final):
+            # Check that composition (except vacancies matches)
+            count_init = count_atoms(init)
+            count_final = count_atoms(final)
+            for k in count_final.keys():
+                if k not in count_init.keys():
+                    raise ValueError("Final and initial structure contains "
+                                     "different elements")
+
+                if count_init[k] != count_final[k]:
+                    raise ValueError("Final and initial structure has "
+                                     "different number of each species")
+
+            self.insert_structure(init_struct=init, final_struct=final,
+                                  generate_template=True)
+
     def insert_structure(self, init_struct=None, final_struct=None, name=None,
                          generate_template=False):
         """Insert a user-supplied structure to the database.
