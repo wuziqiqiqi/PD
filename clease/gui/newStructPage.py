@@ -84,12 +84,17 @@ class NewStructPage(Screen):
         active = get_color_from_hex(FOREGROUND_TEXT_COLOR)
 
         if text == 'Random structure':
+            self.ids.templateAtomsLabel.color = active
             self.ids.tempMaxLabel.color = inactive
             self.ids.tempMinLabel.color = inactive
             self.ids.numTempLabel.color = inactive
             self.ids.numSweepsLabel.color = inactive
             self.ids.eciFileLabel.color = inactive
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
             self.ids.tempMaxInput.disabled = True
             self.ids.tempMinInput.disabled = True
             self.ids.numTempInput.disabled = True
@@ -97,26 +102,38 @@ class NewStructPage(Screen):
             self.ids.eciFileInput.disabled = True
             self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = True
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
         elif text == 'Probe structure':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
             self.ids.numSweepsLabel.color = active
+            self.ids.templateAtomsLabel.color = active
             self.ids.eciFileLabel.color = inactive
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
             self.ids.tempMaxInput.disabled = False
             self.ids.tempMinInput.disabled = False
             self.ids.numTempInput.disabled = False
             self.ids.numSweepsInput.disabled = False
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
             self.ids.eciFileInput.disabled = True
             self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = True
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
         elif text == 'Ground-state structure':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
             self.ids.numSweepsLabel.color = active
             self.ids.eciFileLabel.color = active
+            self.ids.templateAtomsLabel.color = active
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
             self.ids.tempMaxInput.disabled = False
             self.ids.tempMinInput.disabled = False
@@ -125,6 +142,31 @@ class NewStructPage(Screen):
             self.ids.eciFileInput.disabled = False
             self.ids.randomizeCompositionSpinner.disabled = False
             self.ids.loadECIFile.disabled = False
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
+        elif text == 'Exhaustive Ground-state search':
+            self.ids.tempMaxLabel.color = active
+            self.ids.tempMinLabel.color = active
+            self.ids.numTempLabel.color = active
+            self.ids.numSweepsLabel.color = active
+            self.ids.eciFileLabel.color = active
+            self.ids.numTemplateLabel.color = active
+            self.ids.numPrimCells.color = active
+            self.ids.templateAtomsLabel.color = inactive
+
+            self.ids.tempMaxInput.disabled = False
+            self.ids.tempMinInput.disabled = False
+            self.ids.numTempInput.disabled = True
+            self.ids.numSweepsInput.disabled = False
+            self.ids.eciFileInput.disabled = False
+            self.ids.randomizeCompositionSpinner.disabled = False
+            self.ids.loadECIFile.disabled = False
+            self.ids.numTemplateInput.disabled = False
+            self.ids.numPrimCellsInput.disabled = False
+            self.ids.loadTemplateAtoms.disabled = True
+            self.ids.templateAtomsInput.disabled = True
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
