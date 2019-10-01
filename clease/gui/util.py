@@ -149,6 +149,9 @@ def parse_cell(string):
 
 
 def parse_coordinate_basis(string):
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
+
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
     filtered = [[x.replace(')', '').strip() for x in sub.split(',')]

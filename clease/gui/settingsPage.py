@@ -190,6 +190,15 @@ class SettingsPage(Screen):
             return False
         return True
 
+    def coordinate_basis_ok(self):
+        crdBasis = self.ids.crdBasisInput.text
+        try:
+            _ = parse_coordinate_basis(crdBasis)
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+            return False
+        return True
+
     def _check_cecrystal_input(self):
         cellPar = self.ids.cellParInput.text
         sufficient_cell_info_given = False
@@ -209,10 +218,7 @@ class SettingsPage(Screen):
             App.get_running_app().root.ids.status.text = msg
             return 1
 
-        try:
-            _ = parse_coordinate_basis(self.ids.crdBasisInput.text)
-        except Exception as exc:
-            App.get_running_app().root.ids.status.text = str(exc)
+        if not self.coordinate_basis_ok():
             return 1
 
         try:

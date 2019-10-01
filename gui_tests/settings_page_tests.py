@@ -120,6 +120,31 @@ class SettingsPageTests(unittest.TestCase):
         cell_inp.text = '[[[ [3.0, 2.0, 1.0], (4.0, 5, 6.0), (7.0, 8, 9.0) ]]] '
         self.assertTrue(screen.cell_ok())
 
+    def run_check_coordinate_basis_input(self, app):
+        screen = app.root.ids.sm.get_screen('Settings')
+        crd_inp = screen.ids.crdBasisInput
+
+        crd_inp.text = '(1.0, 4.0, 4.0), (2.0, 1.0, 6.0)'
+        self.assertTrue(screen.coordinate_basis_ok())
+
+        crd_inp.text = '(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0, 1.0)'
+        self.assertFalse(screen.coordinate_basis_ok())
+
+        crd_inp.text = '[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]'
+        self.assertTrue(screen.coordinate_basis_ok())
+
+        crd_inp.text = '([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0])'
+        self.assertTrue(screen.coordinate_basis_ok())
+
+        crd_inp.text = '[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]'
+        self.assertTrue(screen.coordinate_basis_ok())
+
+        crd_inp.text = '[ [1.0, 2.0, 3.0], (4.0), (7.0, 8, 9.0) ] '
+        self.assertFalse(screen.coordinate_basis_ok())
+
+        crd_inp.text = '[[[ [3.0, 2.0, 1.0] ]]] '
+        self.assertTrue(screen.coordinate_basis_ok())
+
     def run_with_app(self, app):
         self.run_test_naviation(app)
         self.run_max_cluster_dia_input(app)
@@ -127,3 +152,4 @@ class SettingsPageTests(unittest.TestCase):
         self.run_load_dialog(app)
         self.run_check_cellpar(app)
         self.run_check_cell_input(app)
+        self.run_check_coordinate_basis_input(app)
