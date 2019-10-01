@@ -121,6 +121,9 @@ def parse_cellpar(string):
 
 def parse_cell(string):
     """Parse the cell string."""
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
+
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
     filtered = [[x.replace(')', '').strip() for x in sub.split(',')]
