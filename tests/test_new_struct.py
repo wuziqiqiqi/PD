@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock
 from clease import NewStructures
 from clease import CEBulk
 from ase.io.trajectory import TrajectoryWriter
@@ -9,9 +9,6 @@ from ase.db import connect
 from random import choice
 from clease.cluster_list import ClusterList
 import os
-
-
-settings_mock = MagicMock(spec=CEBulk)
 
 
 class CorrFuncPlaceholder(object):
@@ -25,6 +22,7 @@ class BfSchemePlaceholder(object):
 
 class TestNewStruct(unittest.TestCase):
     def test_insert_structures(self):
+        settings_mock = MagicMock(spec=CEBulk)
         settings_mock.db_name = 'test_insert_structures.db'
         settings_mock.bf_scheme = BfSchemePlaceholder()
 
