@@ -54,11 +54,7 @@ class SGCMonteCarlo(Montecarlo):
             self.attach(self.averager)
 
     def _get_trial_move(self):
-        """Generate a trial move by flipping the symbol of one atom.
-
-        :return: Proposed move
-        :rtype: List of tuples
-        """
+        """Generate a trial move by flipping the symbol of one atom."""
         self.current_singlets = self.atoms.get_calculator().get_singlets()
         indx = np.random.randint(low=0, high=len(self.atoms))
         old_symb = self.atoms[indx].symbol
@@ -81,7 +77,10 @@ class SGCMonteCarlo(Montecarlo):
 
         The atom tracker is irrelevant in the semi grand canonical ensemble
 
-        :param list system_changes: Accepted system changes
+        Parameter:
+
+        system_changes: list
+            Accepted system changes
         """
         pass
 
@@ -118,11 +117,13 @@ class SGCMonteCarlo(Montecarlo):
         """
         Including the chemical potentials in the ECIs
 
-        :param dict chem_pot: Chemical potentials
-        :param dict eci: Original ECIs
+        Parameters:
 
-        :return: ECIs with chemical potential included
-        :rtype: dict
+
+        chem_pot: dict
+            Chemical potentials
+        eci: dict
+            Original ECIs
         """
         self.chem_pots = []
         self.chem_pot_names = []
@@ -163,10 +164,11 @@ class SGCMonteCarlo(Montecarlo):
         Run Monte Carlo simulation.
         See :py:meth:`cemc.mcmc.Montecarlo.runMC`
 
-        :param dict chem_pot: Chemical potentials.
-            The keys should correspond to one of the singlet terms.
-            A typical form of this is
-            {"c1_0":-1.0,c1_1_1.0}
+        Parameters:
+
+        chem_pot: dict
+            Chemical potentials. The keys should correspond to one of the
+            singlet terms. A typical form of this is {"c1_0":-1.0,c1_1_1.0}
         """
 
         if chem_pot is None and self.chemical_potential is None:

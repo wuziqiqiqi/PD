@@ -470,6 +470,16 @@ def factorize(n):
                 break
 
 
+def count_atoms(atoms):
+    """
+    Return dictionary with the number of items of each species
+    """
+    count = {}
+    for s in atoms.symbols:
+        count[s] = count.get(s, 0) + 1
+    return count
+
+
 def all_integer_transform_matrices_given_diag(diag):
     rng1 = range(0, diag[0])
     rng2 = rng1

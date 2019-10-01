@@ -25,19 +25,19 @@ class TestSettingsPage(unittest.TestCase):
         Clock.schedule_interval(self.pause, self.interval)
 
         input_page_tests = SettingsPageTests()
-        input_page_tests.run(app)
+        input_page_tests.run_with_app(app)
 
         conc_page_test = ConcentrationPageTest()
-        conc_page_test.run(app)
+        conc_page_test.run_with_app(app)
 
         new_struct_test = NewStructPageTest()
-        new_struct_test.run(app)
+        new_struct_test.run_with_app(app)
 
         fit_page_test = FitPageTests()
-        fit_page_test.run(app)
+        fit_page_test.run_with_app(app)
 
         actionbar_test = ActionBarTests()
-        actionbar_test.run(app)
+        actionbar_test.run_with_app(app)
 
         app.stop()
 

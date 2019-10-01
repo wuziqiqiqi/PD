@@ -7,6 +7,12 @@ import os.path as op
 import clease.gui
 import json
 import os
+from unittest.mock import patch, MagicMock, PropertyMock
+from clease.gui.newStructPage import NewStructPage
+from clease import CEBulk
+from ase.build import bulk
+from ase.io.trajectory import TrajectoryWriter
+from ase.io import write
 
 
 class NewStructPageTest(unittest.TestCase):
@@ -74,8 +80,52 @@ class NewStructPageTest(unittest.TestCase):
         method = new_struct_mock().generate_gs_structure_multiple_templates
         os.remove(eci_file)
         self.assertEqual(method.call_count, 1)
+ 
+    @patch('clease.gui.newStructPage.App')
+    @patch('clease.NewStructures')
+    def test_import_structures(self, new_struct_mock, kivy_mock):
+        init_file = 'initial_structure.traj'
+        final_file = 'final_structure.traj'
+        traj_init = TrajectoryWriter(init_file)
+        traj_final = TrajectoryWriter(final_file)
 
-    def run(self, app):
+        for _ in range(2):
+            atoms = bulk('Au')
+            traj_init.write(atoms)
+            traj_final.write(atoms)
+
+        page = NewStructPage()
+        page.ids.initStructInput = MagicMock(text=init_file)
+        page.ids.finalStructInput = MagicMock(text=final_file)
+        page.import_structures()
+
+        # Make sure the method is called exactly once
+        method = new_struct_mock().insert_structures
+        self.assertEqual(method.call_count, 1)
+
+        # Make sure that insert_structures was called with the right arguments
+        method.assert_called_with(traj_init=init_file, traj_final=final_file)
+        del traj_init
+        del traj_final
+        os.remove(init_file)
+        os.remove(final_file)
+
+        # Try to read xyz files
+        init_file = 'initial_structure.xyz'
+        final_file = 'final_structure.xyz'
+        atoms = bulk('Au')
+        write(init_file, atoms)
+        write(final_file, atoms)
+        page.ids.initStructInput = MagicMock(text=init_file)
+        page.ids.finalStructInput = MagicMock(text=final_file)
+        page.import_structures()
+
+        method = new_struct_mock().insert_structure
+        self.assertEqual(method.call_count, 1)
+        os.remove(init_file)
+        os.remove(final_file)
+
+    def run_with_app(self, app):
         self.load_pop_ups(app)
 
 if __name__ == '__main__':

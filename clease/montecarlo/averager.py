@@ -1,5 +1,13 @@
 
 class Averager(object):
+    """
+    Class for robust averaging.
+
+    Parameter:
+
+    ref_value: float
+        Reference value used to normalise data internally.
+    """
     def __init__(self, ref_value=1.0):
         self._ref_value = float(ref_value)
 
@@ -12,10 +20,10 @@ class Averager(object):
         """
         += Operator
 
-        :param float value: Value to be added
+        Parameter:
 
-        :return: Self
-        :rtype: Averager
+        value: float
+            Value to be added
         """
         if isinstance(value, Averager):
             self._mean += value._mean*(value._ref_value/self._ref_value)
@@ -29,10 +37,10 @@ class Averager(object):
     def __add__(self, other):
         """Add to Averager objects.
 
-        :param Averager other: Object to be added
+        Parameter:
 
-        :return: New Averager instance
-        :rtype: Averager
+        other: Averager
+            Another Averager object to be added
         """
         ratio = (other._ref_value/self._ref_value)
         new_obj = Averager(ref_value=self._ref_value)
@@ -46,10 +54,10 @@ class Averager(object):
     def __idiv__(self, number):
         """Divide by number.
 
-        :param float number: Number to divide by
+        Parameter:
 
-        :return: self
-        :rtype: Averager
+        number: float
+            Number to divide by
         """
         self._mean /= float(number)
         self._n_samples /= float(number)

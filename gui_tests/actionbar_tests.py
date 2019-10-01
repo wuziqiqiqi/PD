@@ -32,6 +32,6 @@ class ActionBarTests(unittest.TestCase):
         self.assertTrue(app.root._pop_up.title, "Load CLEASE session")
         app.root.dismiss_popup()
 
-    def run(self, app):
+    def run_with_app(self, app):
         self.run_save_as_button(app)
         self.run_load_session_button(app)
