@@ -59,14 +59,23 @@ class SettingsPageTests(unittest.TestCase):
         screen.ids.sizeInput.text = '3, 3, 4'
         self.assertTrue(screen.cell_size_ok())
 
-        screen.ids.sizeInput.text = '[[0, 1, 0], [1, 0, 1], [-1, 2, 0]]'
+        screen.ids.sizeInput.text = '[3, 3, 4]'
+        self.assertTrue(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '[3, 3]'
         self.assertFalse(screen.cell_size_ok())
 
+        screen.ids.sizeInput.text = '[[0, 1, 0], [1, 0, 1], [-1, 2, 0]]'
+        self.assertTrue(screen.cell_size_ok())
+
         screen.ids.sizeInput.text = '[(0, 1, 0), (1, 0, 1), (-1, 2, 0)]'
-        self.assertFalse(screen.cell_size_ok())
+        self.assertTrue(screen.cell_size_ok())
 
         screen.ids.sizeInput.text = '((0, 1, 0), (1, 0, 1), (-1, 2, 0))'
         self.assertTrue(screen.cell_size_ok())
+
+        screen.ids.sizeInput.text = '((0, 1, 0), (1, 0, 1), (-1, 2, 0, 1))'
+        self.assertFalse(screen.cell_size_ok())
 
         screen.ids.sizeInput.text = '(0, 1, 0), (1, 0, 1), (-1, 2, 0)'
         self.assertTrue(screen.cell_size_ok())

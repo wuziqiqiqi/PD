@@ -47,6 +47,8 @@ def parse_size(string):
         pass
 
     # Try 3x3 matrix
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     filtered = string.replace('(', '')
     splitted = filtered.split('),')
     splitted = [x.replace(')', '') for x in splitted]
@@ -58,8 +60,12 @@ def parse_size(string):
                 raise ValueError()
             matrix.append(row)
 
+        if len(matrix) == 1:
+            matrix = matrix[0]
+
         if len(matrix) != 3:
             raise ValueError()
+
         return matrix
 
     except Exception as exc:
