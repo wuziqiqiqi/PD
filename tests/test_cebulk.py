@@ -204,6 +204,11 @@ class TestCEBulk(unittest.TestCase):
 
         atoms[0].symbol = 'Cu'
         newstruct.insert_structure(init_struct=atoms, generate_template=True)
+
+        # Test that the generate with many templates works
+        newstruct.generate_gs_structure_multiple_templates(
+            num_prim_cells=16, num_steps_per_temp=100,
+            eci={'c0': 1.0, 'c3_d0000_0_000': -0.1}, num_templates=2)
         os.remove(db_name)
 
     def test_initial_pool(self):

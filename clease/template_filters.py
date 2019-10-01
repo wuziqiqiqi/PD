@@ -1,4 +1,4 @@
-from itertools import product, permutations
+from itertools import product, permutations, combinations
 import numpy as np
 
 
@@ -121,3 +121,64 @@ class ValidConcentrationFilter(AtomsFilter):
         except Exception:
             valid = False
         return valid
+
+
+class DistanceBetweenFacetsFilter(CellFilter):
+    def __init__(self, ratio):
+        self.ratio = ratio
+
+    def _distance_between_facets(self, cell, span):
+        v1 = cell[span[0], :]
+        v2 = cell[span[1], :]
+        normal = np.cross(v1, v2)
+        normal /= np.sqrt(normal.dot(normal))
+
+        third_vec = set([0, 1, 2]) - set(span)
+        third_vec = list(third_vec)[0]
+        d = normal.dot(cell[third_vec, :])
+        return abs(d)
+
+    def __call__(self, cell):
+        dists = []
+        for span in combinations([0, 1, 2], 2):
+            dists.append(self._distance_between_facets(cell, span))
+
+        d_min = min(dists)
+        d_max = max(dists)
+        return d_max/d_min < self.ratio
+
+
+class VolumeToSurfaceRatioFilter(CellFilter):
+    def __init__(self, ratio):
+        self.ratio = ratio
+
+    def __call__(self, cell):
+        vol = np.linalg.det(cell)
+        surf = 0.0
+        for span in combinations([0, 1, 2], r=2):
+            v1 = cell[span[0], :]
+            v2 = cell[span[1], :]
+            normal = np.cross(v1, v2)
+            area = np.abs(normal.dot(normal))
+            surf += 2*area
+
+        factor = area/(6.0*vol**(2.0/3.0))
+        return factor < self.ratio
+
+
+class AngleFilter(CellFilter):
+    def __init__(self, min_angle, max_angle):
+        self.min_angle = min_angle
+        self.max_angle = max_angle
+
+    def __call__(self, cell):
+        cos_max = np.cos(self.max_angle*np.pi/180.0)
+        cos_min = np.cos(self.min_angle*np.pi/180.0)
+
+        cos_a = []
+        for vec in combinations([0, 1, 2], r=2):
+            cos_a.append(cell[vec[0], :].dot(cell[vec[1], :]))
+
+        max_ok = all(x > cos_max for x in cos_a)
+        min_ok = all(x < cos_min for x in cos_a)
+        return max_ok and min_ok

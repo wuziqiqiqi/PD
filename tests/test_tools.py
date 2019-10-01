@@ -1,6 +1,7 @@
 import unittest
 from ase.build import bulk
 from clease.tools import min_distance_from_facet, factorize
+from clease.tools import all_integer_transform_matrices
 
 
 class TestTools(unittest.TestCase):
@@ -21,6 +22,9 @@ class TestTools(unittest.TestCase):
 
         fact = sorted(list(factorize(24)))
         self.assertEqual(fact, [2, 2, 2, 3])
+
+    def test_all_int_matrices(self):
+        _ = all_integer_transform_matrices(10)
 
 
 if __name__ == '__main__':
