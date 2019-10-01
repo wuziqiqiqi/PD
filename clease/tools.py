@@ -481,9 +481,9 @@ def count_atoms(atoms):
 
 
 def all_integer_transform_matrices_given_diag(diag):
-    rng1 = range(0, diag[0])
+    rng1 = range(0, diag[0]+1)
     rng2 = rng1
-    rng3 = range(0, diag[1])
+    rng3 = range(0, diag[1]+1)
     for off_diag in product(rng1, rng2, rng3):
         yield np.array(
             [[diag[0], off_diag[0], off_diag[1]],
