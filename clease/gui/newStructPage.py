@@ -372,7 +372,7 @@ class NewStructPage(Screen):
             else:
                 generator.insert_structure(init_struct=init_struct,
                                            final_struct=final_struct,
-                                           generate_template=False)
+                                           generate_template=True)
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 
