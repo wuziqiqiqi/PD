@@ -120,9 +120,6 @@ class TestTemplates(unittest.TestCase):
             num_prim_cells=4, num_templates=100)
         os.remove(db_name)
 
-        from ase.visualize import view
-        view(templates)
-
         # Conform that the conventional cell is present
         found_conventional = False
         conventional = [4.05, 4.05, 4.05, 90, 90, 90]
