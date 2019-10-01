@@ -290,7 +290,7 @@ class NewStructPage(Screen):
                 prb_generator.num_steps = num_steps
                 prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
-            elif struct_type == 'Ground-state structure':
+            elif struct_type == 'Ground-state structure (fixed template)':
                 eci_file = self.ids.eciFileInput.text
                 eci = self.load_eci(eci_file)
                 msg = 'Generating ground-state structures...'
@@ -311,7 +311,7 @@ class NewStructPage(Screen):
                 gs_generator.page = self
 
                 Thread(target=gs_generator.generate).start()
-            elif struct_type == 'Exhaustive Ground-state search':
+            elif struct_type == 'Ground-state structure (variable template)':
                 eci_file = self.ids.eciFileInput.text
                 eci = self.load_eci(eci_file)
                 msg = 'Generating ground-state structures...'
