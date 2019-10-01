@@ -93,7 +93,7 @@ class SettingsPageTests(unittest.TestCase):
         self.assertFalse(screen.cellpar_ok())
 
         screen.ids.cellParInput.text = '(6.0, 7.0, 3.0, 80, 20, 10)'
-        self.assertFalse(screen.cellpar_ok())
+        self.assertTrue(screen.cellpar_ok())
 
     def run_check_cell_input(self, app):
         screen = app.root.ids.sm.get_screen('Settings')
