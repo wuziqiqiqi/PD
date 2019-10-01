@@ -123,32 +123,32 @@
                 size_hint: [1, button_height]
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: tempMaxLabel
                     text: 'Max. temp.'
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: tempMinLabel
                     text: 'Min. temp.'
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numTempLabel
                     text: 'No. temps'
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numSweepsLabel
                     text: 'Sweeps per temp.'
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numTemplateLabel
                     text: 'Num templates'
 
                 Label:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numPrimCells
                     text: 'Num prim. cells'
 
@@ -157,7 +157,7 @@
                 size_hint: [1, button_height]
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: tempMaxInput
                     input_filter: 'float'
                     text: '10000'
@@ -166,7 +166,7 @@
                     on_text_validate: root.generate()
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: tempMinInput
                     input_filter: 'float'
                     text: '1'
@@ -175,7 +175,7 @@
                     on_text_validate: root.generate()
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numTempInput
                     input_filter: 'int'
                     text: '100'
@@ -184,7 +184,7 @@
                     on_text_validate: root.generate()
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numSweepsInput
                     input_filter: 'int'
                     text: '100'
@@ -193,7 +193,7 @@
                     on_text_validate: root.generate()
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numTemplateInput
                     input_filter: 'int'
                     text: '20'
@@ -201,7 +201,7 @@
                     multiline: False
 
                 TextInput:
-                    size_hint: [0.16, 1]
+                    size_hint: [1./6, 1]
                     id: numPrimCellsInput
                     input_filter: 'int'
                     text: '32'
