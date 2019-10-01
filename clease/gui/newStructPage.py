@@ -179,7 +179,7 @@ class NewStructPage(Screen):
 
             self.ids.tempMaxInput.disabled = False
             self.ids.tempMinInput.disabled = False
-            self.ids.numTempInput.disabled = True
+            self.ids.numTempInput.disabled = False
             self.ids.numSweepsInput.disabled = False
             self.ids.eciFileInput.disabled = False
             self.ids.randomizeCompositionSpinner.disabled = False
