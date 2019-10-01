@@ -109,15 +109,19 @@ class ConcentrationPageTest(unittest.TestCase):
         gr_basis = screen.ids.groupedBasisInput
         gr_basis.text = '1, 2'
         self.assertTrue(screen.grouped_basis_ok())
-
-        gr_basis.text = '(1, 2), 3'
+        gr_basis.text = '[1, 2]'
         self.assertTrue(screen.grouped_basis_ok())
-
-        gr_basis = '(1, 2), (3, 4)'
+        gr_basis.text = '[1, 2], 3'
+        self.assertTrue(screen.grouped_basis_ok())
+        gr_basis.text = '(1, 2), [3, 4]'
+        self.assertTrue(screen.grouped_basis_ok())
+        gr_basis.text = '(1, 2), (3, 4)'
+        self.assertTrue(screen.grouped_basis_ok())
+        gr_basis.text = '[(1, 2), (3, 4)]'
         self.assertTrue(screen.grouped_basis_ok())
 
     def run_with_app(self, app):
-        # self.check_add_constraint(app)
-        # self.check_matrices(app)
+        self.check_add_constraint(app)
+        self.check_matrices(app)
         self.run_check_element_input(app)
-        # self.run_check_grouped_basis(app)
+        self.run_check_grouped_basis(app)

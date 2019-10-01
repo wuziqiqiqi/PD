@@ -21,6 +21,8 @@ def parse_max_cluster_dia(string):
 
 def parse_grouped_basis_elements(string):
     """Parse grouped basis argument."""
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     string = string.replace('(', '')
     split = string.split('),')
     split = [x.replace(')', '') for x in split]
