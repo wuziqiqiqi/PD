@@ -3,6 +3,7 @@ import os
 from clease.template_atoms import TemplateAtoms
 from ase.build import bulk
 from ase.db import connect
+from ase.build import niggli_reduce
 from clease import Concentration, ValidConcentrationFilter
 from clease import DistanceBetweenFacetsFilter
 import numpy as np
@@ -116,7 +117,19 @@ class TestTemplates(unittest.TestCase):
                                        skew_threshold=4,
                                        db_name=db_name)
         templates = template_atoms.get_fixed_volume_templates(
-            num_prim_cells=8, num_templates=100)
+            num_prim_cells=4, num_templates=100)
         os.remove(db_name)
+
+        # Conform that the conventional cell is present
+        found_conventional = False
+        conventional = [4.05, 4.05, 4.05, 90, 90, 90]
+        for atoms in templates:
+            niggli_reduce(atoms)
+            lengths_ang = atoms.get_cell_lengths_and_angles()
+            if np.allclose(lengths_ang, conventional):
+                found_conventional = True
+                break
+        self.assertTrue(found_conventional)
+
 if __name__ == '__main__':
     unittest.main()
