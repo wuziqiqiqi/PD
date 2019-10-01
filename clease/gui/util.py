@@ -164,3 +164,38 @@ def parse_coordinate_basis(string):
     msg = 'Coordinate basis has to be list of coordinates (i.e (1.0, 4.0, 4.0)'
     msg += ', (2.0, 1.0, 6.0)'
     raise ValueError(msg)
+
+
+def parse_temperature_list(string):
+    try:
+        temps = [float(x) for x in string.split(',')]
+        return temps
+    except Exception:
+        pass
+    msg = 'The temperatures has to be a comma separted list of values'
+    raise ValueError(msg)
+
+
+def parse_comma_sep_list_of_int(string):
+    try:
+        values = [int(x) for x in string.split(',')]
+        return values
+    except Exception:
+        pass
+    msg = 'Could not parse list'
+    raise ValueError(msg)
+
+
+def parse_concentration_list(string):
+    try:
+        per_basis = [x.replace('(', '').replace(')', '')
+                     for x in string.split('),')]
+        conc_per_basis = []
+        for b in per_basis:
+            conc_per_basis.append([float(x) for x in b.split(',')])
+        return conc_per_basis
+    except:
+        pass
+
+    msg = 'Concentration list has to be given as one comma separated list per basis'
+    raise ValueError(msg)

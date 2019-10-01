@@ -7,6 +7,8 @@
 #:include l2EditorLayout.kv
 #:include bcsEditorLayout.kv
 #:include gaEditor.kv
+#:include mc_page_layout.kv
+#:include help_message_layout.kv
 #: set height 0.05
 
 <WindowFrame>:
@@ -34,6 +36,10 @@
             id: toFit
             text: 'Fit'
             on_release: app.root.change_screen('Fit')
+        Button:
+            id: toMC
+            text: 'MC'
+            on_release: app.root.change_screen('MC')
 
 
     ScreenManager:
@@ -43,6 +49,7 @@
         SettingsPage:
         NewStructPage:
         FitPage:
+        MCPage:
 
 
     FloatLayout:

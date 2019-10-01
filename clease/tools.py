@@ -7,6 +7,7 @@ from ase.db import connect
 import json
 from clease import _logger
 from scipy.spatial import cKDTree as KDTree
+from itertools import filterfalse, product, chain
 
 
 class ApproxEqualityList(object):
@@ -477,3 +478,61 @@ def count_atoms(atoms):
     for s in atoms.symbols:
         count[s] = count.get(s, 0) + 1
     return count
+
+
+def all_integer_transform_matrices_given_diag(diag):
+    rng1 = range(0, diag[0])
+    rng2 = rng1
+    rng3 = range(0, diag[1])
+    for off_diag in product(rng1, rng2, rng3):
+        yield np.array(
+            [[diag[0], off_diag[0], off_diag[1]],
+             [0, diag[1], off_diag[2]],
+             [0, 0, diag[2]]]
+        )
+
+
+def all_integer_transform_matrices_per_diag(n):
+    """
+    Yield all the integer transform matrices
+    """
+    diags = filterfalse(lambda x: x[0]*x[1]*x[2] != n,
+                        product(range(n+1), repeat=3))
+
+    for d in diags:
+        yield all_integer_transform_matrices_given_diag(d)
+
+
+def all_integer_transform_matrices(n):
+    return chain(*all_integer_transform_matrices_per_diag(n))
+
+
+def rotate_cells(cell, target_cell):
+    """
+    Rotate the cells such that one vector is parallel.
+    And the other vector lies in a given plane
+    """
+    dot_prod_cell = cell.dot(cell.T)
+    dot_prod_target_cell = target_cell.dot(target_cell.T)
+
+    # Calculate unit vector cells
+    uvec_cell = np.zeros_like(cell)
+    uvec_target_cell = np.zeros_like(target_cell)
+    for i in range(3):
+        uvec_cell[i, :] = cell[i, :]/np.sqrt(dot_prod_cell[i, i])
+        uvec_target_cell[i, :] = target_cell[i, :] / \
+            np.sqrt(dot_prod_target_cell[i, i])
+
+    # Rotate one vector to be parallel
+    v = np.cross(uvec_cell[0, :], uvec_target_cell[0, :])
+    c = uvec_cell[0, :].dot(uvec_target_cell[0, :])
+    v_cross = np.zeros((3, 3))
+    v[0, 1] = -v[2]
+    v[0, 2] = v[1]
+    v[1, 0] = v[2]
+    v[1, 2] = -v[0]
+    v[2, 0] = -v[1]
+    v[2, 1] = v[0]
+    R = np.eye(3) + v_cross + v_cross.dot(v_cross)/(1 + c)
+    target_cell = R.dot(target_cell)
+    return target_cell

@@ -11,6 +11,9 @@ def set_fd(fd):
 
 from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import ValidConcentrationFilter
+from clease.template_filters import DistanceBetweenFacetsFilter
+from clease.template_filters import VolumeToSurfaceRatioFilter
+from clease.template_filters import AngleFilter
 from clease.atoms_manager import AtomsManager
 from clease.cluster_extractor import ClusterExtractor
 from clease.settings_bulk import CEBulk, CECrystal
