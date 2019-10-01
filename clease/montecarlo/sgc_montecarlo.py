@@ -54,11 +54,7 @@ class SGCMonteCarlo(Montecarlo):
             self.attach(self.averager)
 
     def _get_trial_move(self):
-        """Generate a trial move by flipping the symbol of one atom.
-
-        :return: Proposed move
-        :rtype: List of tuples
-        """
+        """Generate a trial move by flipping the symbol of one atom."""
         self.current_singlets = self.atoms.get_calculator().get_singlets()
         indx = np.random.randint(low=0, high=len(self.atoms))
         old_symb = self.atoms[indx].symbol
