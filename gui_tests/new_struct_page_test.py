@@ -49,7 +49,7 @@ class NewStructPageTest(unittest.TestCase):
         page = NewStructPage()
 
         # Change to Exhaustive-search
-        page.ids.newStructTypeSpinner.text = 'Exhaustive Ground-state search'
+        page.ids.newStructTypeSpinner.text = 'Ground-state structure (variable template)'
 
         # Check active fields
         ids = page.ids
@@ -57,12 +57,12 @@ class NewStructPageTest(unittest.TestCase):
         self.assertFalse(ids.tempMinInput.disabled)
         self.assertFalse(ids.numSweepsInput.disabled)
         self.assertFalse(ids.eciFileInput.disabled)
-        self.assertFalse(ids.randomizeCompositionSpinner.disabled)
         self.assertFalse(ids.loadECIFile.disabled)
         self.assertFalse(ids.numTemplateInput.disabled)
         self.assertFalse(ids.numPrimCellsInput.disabled)
         self.assertTrue(ids.loadTemplateAtoms.disabled)
         self.assertTrue(ids.templateAtomsInput.disabled)
+        self.assertTrue(ids.randomizeCompositionSpinner.disabled)
 
         # Create an ECI file
         ecis = {'c0': 1.0}
