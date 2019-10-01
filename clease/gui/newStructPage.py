@@ -281,9 +281,14 @@ class NewStructPage(Screen):
                 App.get_running_app().root.ids.status.text = msg
                 return
             generator = NewStructures(settings)
-            generator.insert_structure(init_struct=init_struct,
-                                       final_struct=final_struct,
-                                       generate_template=False)
+
+            # The argument passed is a trajectory file
+            if final.endswith('.traj') and init.endswith('.traj'):
+                generator.insert_structures(traj_init=init, traj_final=final)
+            else:
+                generator.insert_structure(init_struct=init_struct,
+                                           final_struct=final_struct,
+                                           generate_template=False)
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 

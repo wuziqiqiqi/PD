@@ -105,8 +105,7 @@ class SettingsPageTests(unittest.TestCase):
         cell_inp.text = '(1.0, 2.0, 3.0), (4.0, 5.0, 6.0), (7.0, 8.0, 9.0)'
         self.assertTrue(screen.cell_ok())
 
-
-    def run(self, app):
+    def run_with_app(self, app):
         self.run_test_naviation(app)
         self.run_max_cluster_dia_input(app)
         self.run_cell_size_ok(app)

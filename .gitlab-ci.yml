@@ -23,6 +23,7 @@ gui_test:
     - python3 -m pip install .
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
+    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/new_struct_page_test.py
 
 doctest:
   image: python:3

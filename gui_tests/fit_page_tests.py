@@ -30,6 +30,6 @@ class FitPageTests(unittest.TestCase):
             screen.dismiss_popup()
             last_pop_title = new_title
 
-    def run(self, app):
+    def run_with_app(self, app):
         self.eci_popup(app)
         self.open_fit_alg_editors(app)

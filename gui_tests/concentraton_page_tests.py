@@ -113,7 +113,7 @@ class ConcentrationPageTest(unittest.TestCase):
         gr_basis = '(1, 2), (3, 4)'
         self.assertTrue(screen.grouped_basis_ok())
 
-    def run(self, app):
+    def run_with_app(self, app):
         self.check_add_constraint(app)
         self.check_matrices(app)
         self.run_check_element_input(app)
