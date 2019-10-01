@@ -103,6 +103,7 @@ def parse_elements(string):
 
 def parse_cellpar(string):
     """Parse the cell parameter string."""
+    string = string.strip('[()]')
     try:
         cellpar = [float(x) for x in string.split(',')]
         if len(cellpar) != 6:
