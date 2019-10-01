@@ -72,6 +72,27 @@ class GSStructGenerator(object):
         self.page.structure_generation_in_progress = False
 
 
+class ExaustiveGSStructGenerator(object):
+    Tmax = None
+    Tmin = None
+    num_temps = None
+    num_steps = None
+    eci = None
+    num_templates = None
+    num_prim_cells = None
+
+    def generate(self):
+        try:
+            self.generator.generate_gs_structure_multiple_templates(
+                num_templates=self.num_templates,
+                num_prim_cells=self.num_prim_cells, init_temp=self.Tmax,
+                final_temp=self.Tmin, num_temp=self.num_temps,
+                num_steps_per_temp=self.num_steps, eci=self.eci)
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
+
+
 class NewStructPage(Screen):
     _pop_up = None
     structure_generation_in_progress = False
@@ -84,12 +105,17 @@ class NewStructPage(Screen):
         active = get_color_from_hex(FOREGROUND_TEXT_COLOR)
 
         if text == 'Random structure':
+            self.ids.templateAtomsLabel.color = active
             self.ids.tempMaxLabel.color = inactive
             self.ids.tempMinLabel.color = inactive
             self.ids.numTempLabel.color = inactive
             self.ids.numSweepsLabel.color = inactive
             self.ids.eciFileLabel.color = inactive
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
             self.ids.tempMaxInput.disabled = True
             self.ids.tempMinInput.disabled = True
             self.ids.numTempInput.disabled = True
@@ -97,26 +123,38 @@ class NewStructPage(Screen):
             self.ids.eciFileInput.disabled = True
             self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = True
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
         elif text == 'Probe structure':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
             self.ids.numSweepsLabel.color = active
+            self.ids.templateAtomsLabel.color = active
             self.ids.eciFileLabel.color = inactive
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
             self.ids.tempMaxInput.disabled = False
             self.ids.tempMinInput.disabled = False
             self.ids.numTempInput.disabled = False
             self.ids.numSweepsInput.disabled = False
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
             self.ids.eciFileInput.disabled = True
             self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = True
-        elif text == 'Ground-state structure':
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
+        elif text == 'Ground-state structure (fixed template)':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
             self.ids.numSweepsLabel.color = active
             self.ids.eciFileLabel.color = active
+            self.ids.templateAtomsLabel.color = active
+            self.ids.numTemplateLabel.color = inactive
+            self.ids.numPrimCells.color = inactive
 
             self.ids.tempMaxInput.disabled = False
             self.ids.tempMinInput.disabled = False
@@ -125,6 +163,31 @@ class NewStructPage(Screen):
             self.ids.eciFileInput.disabled = False
             self.ids.randomizeCompositionSpinner.disabled = False
             self.ids.loadECIFile.disabled = False
+            self.ids.loadTemplateAtoms.disabled = False
+            self.ids.templateAtomsInput.disabled = False
+            self.ids.numTemplateInput.disabled = True
+            self.ids.numPrimCellsInput.disabled = True
+        elif text == 'Ground-state structure (variable template)':
+            self.ids.tempMaxLabel.color = active
+            self.ids.tempMinLabel.color = active
+            self.ids.numTempLabel.color = active
+            self.ids.numSweepsLabel.color = active
+            self.ids.eciFileLabel.color = active
+            self.ids.numTemplateLabel.color = active
+            self.ids.numPrimCells.color = active
+            self.ids.templateAtomsLabel.color = inactive
+
+            self.ids.tempMaxInput.disabled = False
+            self.ids.tempMinInput.disabled = False
+            self.ids.numTempInput.disabled = False
+            self.ids.numSweepsInput.disabled = False
+            self.ids.eciFileInput.disabled = False
+            self.ids.randomizeCompositionSpinner.disabled = True
+            self.ids.loadECIFile.disabled = False
+            self.ids.numTemplateInput.disabled = False
+            self.ids.numPrimCellsInput.disabled = False
+            self.ids.loadTemplateAtoms.disabled = True
+            self.ids.templateAtomsInput.disabled = True
 
     def dismiss_popup(self):
         self._pop_up.dismiss()
@@ -202,6 +265,8 @@ class NewStructPage(Screen):
             Tmax = float(self.ids.tempMaxInput.text)
             num_temps = int(self.ids.numTempInput.text)
             num_steps = int(self.ids.numSweepsInput.text)*len(atoms)
+            num_templates = int(self.ids.numTemplateInput.text)
+            num_prim_cells = int(self.ids.numPrimCellsInput.text)
 
             if struct_type == 'Random structure':
                 msg = "Generating random structures..."
@@ -225,7 +290,7 @@ class NewStructPage(Screen):
                 prb_generator.num_steps = num_steps
                 prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
-            elif struct_type == 'Ground-state structure':
+            elif struct_type == 'Ground-state structure (fixed template)':
                 eci_file = self.ids.eciFileInput.text
                 eci = self.load_eci(eci_file)
                 msg = 'Generating ground-state structures...'
@@ -243,6 +308,25 @@ class NewStructPage(Screen):
                 gs_generator.num_steps = num_steps
                 gs_generator.eci = eci
                 gs_generator.randomize = randomize
+                gs_generator.page = self
+
+                Thread(target=gs_generator.generate).start()
+            elif struct_type == 'Ground-state structure (variable template)':
+                eci_file = self.ids.eciFileInput.text
+                eci = self.load_eci(eci_file)
+                msg = 'Generating ground-state structures...'
+                App.get_running_app().root.ids.status.text = msg
+
+                gs_generator = ExaustiveGSStructGenerator()
+                gs_generator.generator = generator
+                gs_generator.status = App.get_running_app().root.ids.status
+                gs_generator.Tmax = Tmax
+                gs_generator.Tmin = Tmin
+                gs_generator.num_temps = num_temps
+                gs_generator.num_steps = num_steps
+                gs_generator.eci = eci
+                gs_generator.num_templates = num_templates
+                gs_generator.num_prim_cells = num_prim_cells
                 gs_generator.page = self
 
                 Thread(target=gs_generator.generate).start()
@@ -288,7 +372,7 @@ class NewStructPage(Screen):
             else:
                 generator.insert_structure(init_struct=init_struct,
                                            final_struct=final_struct,
-                                           generate_template=False)
+                                           generate_template=True)
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 
