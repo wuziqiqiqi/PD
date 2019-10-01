@@ -11,7 +11,10 @@ class BiasPotential(object):
     def __call__(self, system_changes):
         """Calculate the bias potential.
 
-        :param list system_changes: List of tuples describing the changes
+        Parameter
+
+        system_changes: list
+            List of tuples describing the changes
             see :py:method:`cemc.mcmc.mc_observers.MCObserver`
         """
         raise NotImplementedError("Has to be implemented in child classes!")
@@ -26,14 +29,20 @@ class BiasPotential(object):
     def calculate_from_scratch(self, atoms):
         """Calculate the bias potential from scratch.
 
-        :param Atoms atoms: Structure to evaluate the bias poential for
+        Parameter:
+
+        atoms: Atoms
+            Structure to evaluate the bias poential for
         """
         raise NotImplementedError("Class has not implemented a calculate_from_scratch method!")
 
     def save(self, fname="pseudo_binary_free_energy.pkl"):
         """Save the computed bias potential to a file.
 
-        :param str fname: Filename where a serialized version of this object
+        Parameter:
+
+        fname: str
+            Filename where a serialized version of this object
             will be stored.
         """
         import dill
@@ -49,7 +58,10 @@ class BiasPotential(object):
         Assume that this file has been stored with the save method
         of this class
 
-        :param str fname: Filename of a serialized version of this object
+        Parameter:
+
+        fname: str
+            Filename of a serialized version of this object
         """
         import dill
         with open(fname, 'rb') as infile:
@@ -61,10 +73,13 @@ class SampledBiasPotential(BiasPotential):
     """
     Class for bias potentials that are sampled.
 
-    :param reac_crd: Array with reaction coordinates
-    :type reac_crd: list or numpy array
-    :param free_eng: Array with energies
-    :type free_eng: list or numpy array
+    Parameters:
+
+    reac_crd: list or numpy array
+        Array with reaction coordinates
+
+    free_eng: list or numpy array
+        Array with energies
     """
 
     def __init__(self, reac_crd=[], free_eng=[]):
@@ -77,9 +92,13 @@ class SampledBiasPotential(BiasPotential):
     def fit_smoothed_curve(self, smooth_length=11, show=False):
         """Fit a smoothed curve to the data.
 
-        :param int smooth_length: Window length of the Savitzky-Golay filter.
-            Has to be odd.
-        :param bool show: If True, a plot of the resulting curve will be shown.
+        Parameters:
+
+        smooth_length: int
+            Window length of the Savitzky-Golay filter. Has to be odd.
+
+        show: bool
+            If True, a plot of the resulting curve will be shown.
         """
         if smooth_length % 2 == 0:
             raise ValueError("smooth_length has to be an odd number!")
@@ -95,11 +114,7 @@ class SampledBiasPotential(BiasPotential):
             self.show()
 
     def show(self):
-        """Create a plot of the bias potential.abs
-
-        :return: Figure instance
-        :rtype: Figure
-        """
+        """Create a plot of the bias potential."""
         from matplotlib import pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
@@ -112,10 +127,10 @@ class SampledBiasPotential(BiasPotential):
     def __iadd__(self, other):
         """Add two bias potentials.
 
-        :param BiasPotential other: The other potential
+        Parameter:
 
-        :return: self
-        :rtype: BiasPotential
+        other: BiasPotential
+            The other potential
         """
         from scipy.interpolate import interp1d
         self.free_eng += other.get(self.reac_crd)
@@ -138,17 +153,19 @@ class PseudoBinaryFreeEnergyBias(SampledBiasPotential):
     NOTE: In the future this can in principle be extended to handle the
     case of arbitrary reaction paths
 
-    :param pseudo_bin_conc_init: Instance of PseudoBinaryConcInitializer,
-                                 can be None if __call__ is not called
-                                 (i.e.) for fitting a smoothed curve etc.
-    :type pseudo_bin_conc_init: PseudoBinaryConcInitializer or None
-    :param reac_crd: Value of the reaction coordinate
-    :type reac_crd: list or numpy array
-    :param free_eng: Value of the free energy corresponding to the reac_crd
-                     array
-    :type free_eng: list or numpy array
-    """
+    Parameters:
 
+
+    pseudo_bin_conc_init: PseudoBinaryConcInitializer or None
+        Can be None if __call__ is not called (i.e.) for fitting a smoothed
+        curve etc.
+    reac_crd: list or numpy array
+        Value of the reaction coordinate
+
+    free_eng: list or numpy array
+        Value of the free energy corresponding to the reac_crd
+        array
+    """
     def __init__(self, pseudo_bin_conc_init=None, reac_crd=[], free_eng=[]):
         self._conc_init = pseudo_bin_conc_init
         super(PseudoBinaryFreeEnergyBias, self).__init__(reac_crd, free_eng)
@@ -193,7 +210,10 @@ class PseudoBinaryFreeEnergyBias(SampledBiasPotential):
     def get(self, reac_crd):
         """Get the bias potential as a function of reaction coordinate.
 
-        :param float reac_crd: Reaction coordinate
+        Parameter:
+
+        reac_crd: float
+            Reaction coordinate
         """
         return self.bias_interp(reac_crd)
 
@@ -203,13 +223,17 @@ class CovarianceBiasPotential(SampledBiasPotential):
     Bias potential to be used together with
     :py:class:`cemc.mcmc.cov_reac_crd.CovarianceRangeConstraint`
 
-    :param cov_range: Range constraints, mainly used to calculating the
+    Parameters:
+
+    cov_range: CovarianceRangeConstraint or None
+        Range constraints, mainly used to calculating the
         value of the reaction coordinate.
-    :type cov_range: CovarianceRangeConstraint or None
-    :param reac_crd: Reaction coordinates
-    :type reac_crd: list or numpy array
-    :param free_eng: Free energy at each reaction coordinate
-    :type free_eng: list or numpy array
+
+    reac_crd: list or numpy array
+        Reaction coordinates
+
+    free_eng: list or numpy array
+        Free energy at each reaction coordinate
     """
 
     def __init__(self, cov_range=None, reac_crd=[], free_eng=[]):
@@ -231,10 +255,10 @@ class CovarianceBiasPotential(SampledBiasPotential):
     def __call__(self, system_changes):
         """Get the value for the bias potential.
 
-        :param list system_changes: Proposed atom moves
+        Parameter:
 
-        :return: Value of the bias potential after the move
-        :rtype: float
+        system_changes: list
+            Proposed atom moves
         """
         reac_crd = self.cov_range.get_new_value(system_changes)
         return self.bias_interp(reac_crd)
@@ -247,6 +271,9 @@ class CovarianceBiasPotential(SampledBiasPotential):
     def get(self, reac_crd):
         """Get the bias as a function reaction coordinate.abs
 
-        :param float reac_crd: Reaction coordinate
+        Parameters:
+
+        reac_crd: float
+            Reaction coordinate
         """
         return self.bias_interp(reac_crd)
