@@ -206,10 +206,15 @@ class NewStructures(object):
         Parameters:
 
         num_templates: int
-            Number of templates to search in
+            Number of templates to search in. Simmulated annealing is done in
+            each cell and the one with the lowest energy is taken as the ground
+            state.
 
         num_prim_cells: int
-            Number of primitive cells
+            Number of primitive cells to use when constructing templates. The
+            volume of all the templates used will be
+            num_prim_cells*vol_primitive, where vol_primitive is the volume of
+            the primitive cell.
 
         See doc-string of `generate_gs_structure` for the rest of the
         argument.
