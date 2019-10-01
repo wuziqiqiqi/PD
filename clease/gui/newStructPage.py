@@ -146,7 +146,7 @@ class NewStructPage(Screen):
             self.ids.loadECIFile.disabled = True
             self.ids.numTemplateInput.disabled = True
             self.ids.numPrimCellsInput.disabled = True
-        elif text == 'Ground-state structure':
+        elif text == 'Ground-state structure (fixed template)':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
@@ -167,7 +167,7 @@ class NewStructPage(Screen):
             self.ids.templateAtomsInput.disabled = False
             self.ids.numTemplateInput.disabled = True
             self.ids.numPrimCellsInput.disabled = True
-        elif text == 'Exhaustive Ground-state search':
+        elif text == 'Ground-state structure (variable template)':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
             self.ids.numTempLabel.color = active
