@@ -1,5 +1,6 @@
 def parse_max_cluster_dia(string):
     """Parse max cluster dia."""
+    string = string.strip('[()]')
     try:
         diameter = float(string)
         return diameter
