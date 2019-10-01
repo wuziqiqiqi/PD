@@ -79,6 +79,8 @@ def parse_size(string):
 def parse_elements(string):
     """Parse elements given by user."""
     from ase.data import chemical_symbols
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     try:
         if string.count(')') == 0:
             # Single basis
