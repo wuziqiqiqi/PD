@@ -72,6 +72,27 @@ class GSStructGenerator(object):
         self.page.structure_generation_in_progress = False
 
 
+class ExaustiveGSStructGenerator(object):
+    Tmax = None
+    Tmin = None
+    num_temps = None
+    num_steps = None
+    eci = None
+    num_templates = None
+    num_prim_cells = None
+
+    def generate(self):
+        try:
+            self.generator.generate_gs_structure_multiple_templates(
+                num_templates=self.num_templates,
+                num_prim_cells=self.num_prim_cells, init_temp=self.Tmax,
+                final_temp=self.Tmin, num_temp=self.num_temps,
+                num_steps_per_temp=self.num_steps, eci=self.eci)
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
+
+
 class NewStructPage(Screen):
     _pop_up = None
     structure_generation_in_progress = False
@@ -244,6 +265,8 @@ class NewStructPage(Screen):
             Tmax = float(self.ids.tempMaxInput.text)
             num_temps = int(self.ids.numTempInput.text)
             num_steps = int(self.ids.numSweepsInput.text)*len(atoms)
+            num_templates = int(self.ids.numTemplateInput.text)
+            num_prim_cells = int(self.ids.numPrimCellsInput.text)
 
             if struct_type == 'Random structure':
                 msg = "Generating random structures..."
@@ -285,6 +308,25 @@ class NewStructPage(Screen):
                 gs_generator.num_steps = num_steps
                 gs_generator.eci = eci
                 gs_generator.randomize = randomize
+                gs_generator.page = self
+
+                Thread(target=gs_generator.generate).start()
+            elif struct_type == 'Exhaustive Ground-state search':
+                eci_file = self.ids.eciFileInput.text
+                eci = self.load_eci(eci_file)
+                msg = 'Generating ground-state structures...'
+                App.get_running_app().root.ids.status.text = msg
+
+                gs_generator = ExaustiveGSStructGenerator()
+                gs_generator.generator = generator
+                gs_generator.status = App.get_running_app().root.ids.status
+                gs_generator.Tmax = Tmax
+                gs_generator.Tmin = Tmin
+                gs_generator.num_temps = num_temps
+                gs_generator.num_steps = num_steps
+                gs_generator.eci = eci
+                gs_generator.num_templates = num_templates
+                gs_generator.num_prim_cells = num_prim_cells
                 gs_generator.page = self
 
                 Thread(target=gs_generator.generate).start()
