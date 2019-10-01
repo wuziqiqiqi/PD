@@ -182,7 +182,7 @@ class NewStructPage(Screen):
             self.ids.numTempInput.disabled = False
             self.ids.numSweepsInput.disabled = False
             self.ids.eciFileInput.disabled = False
-            self.ids.randomizeCompositionSpinner.disabled = False
+            self.ids.randomizeCompositionSpinner.disabled = True
             self.ids.loadECIFile.disabled = False
             self.ids.numTemplateInput.disabled = False
             self.ids.numPrimCellsInput.disabled = False
