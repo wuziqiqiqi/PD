@@ -443,7 +443,7 @@ class NewStructPage(Screen):
 
     def from_dict(self, data):
         self.ids.genNumberInput.text = data.get('gen_number', '')
-        self.ids.structPerGenInput.text = data.get('struct_per_gen', '')
+        self.ids.structPerGenInput.text = data.get('struct_per_gen', '5')
         self.ids.initStructInput.text = data.get('init_struct', '')
         self.ids.finalStructInput.text = data.get('final_struct', '')
         self.ids.tempMinInput.text = data.get('min_temp', '1')
