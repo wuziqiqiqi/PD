@@ -243,12 +243,20 @@ class NewStructPage(Screen):
             App.get_running_app().root.ids.status.text = msg
             return
 
+        if self.ids.genNumberInput.text == '':
+            generation_number = None
+        else:
+            generation_number = int(self.ids.genNumberInput.text)
+        struct_per_gen = int(self.ids.structPerGenInput.text)
+
         try:
-            generator = NewStructures(settings)
+            generator = NewStructures(settings,
+                                      generation_number=generation_number,
+                                      struct_per_gen=struct_per_gen)
 
             fname = self.ids.templateAtomsInput.text
             if fname == '':
-                msg = 'No atoms template given. Using active template.'
+                msg = 'No Atoms template given. Using active template.'
                 App.get_running_app().root.ids.status.text = msg
                 atoms = settings.atoms.copy()
             else:
@@ -364,7 +372,16 @@ class NewStructPage(Screen):
                 msg += 'Make sure Apply settings button was clicked.'
                 App.get_running_app().root.ids.status.text = msg
                 return
-            generator = NewStructures(settings)
+
+            if self.ids.genNumberInput.text == '':
+                generation_number = None
+            else:
+                generation_number = int(self.ids.genNumberInput.text)
+            struct_per_gen = int(self.ids.structPerGenInput.text)
+
+            generator = NewStructures(settings,
+                                      generation_number=generation_number,
+                                      struct_per_gen=struct_per_gen)
 
             # The argument passed is a trajectory file
             if final.endswith('.traj') and init.endswith('.traj'):
@@ -412,6 +429,8 @@ class NewStructPage(Screen):
 
     def to_dict(self):
         return {
+            'gen_number': self.ids.genNumberInput.text,
+            'struct_per_gen': self.ids.structPerGenInput.text,
             'init_struct': self.ids.initStructInput.text,
             'final_struct': self.ids.finalStructInput.text,
             'min_temp': self.ids.tempMinInput.text,
@@ -423,6 +442,8 @@ class NewStructPage(Screen):
         }
 
     def from_dict(self, data):
+        self.ids.genNumberInput.text = data.get('gen_number', '')
+        self.ids.structPerGenInput.text = data.get('struct_per_gen', '5')
         self.ids.initStructInput.text = data.get('init_struct', '')
         self.ids.finalStructInput.text = data.get('final_struct', '')
         self.ids.tempMinInput.text = data.get('min_temp', '1')

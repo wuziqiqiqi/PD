@@ -14,6 +14,47 @@
             size_hint: [0.90, 1]
 
             StackLayout:
+                size_hint: [1, 0.5*button_height]
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.1, 1]
+                    text: ''
+                Label:
+                    size_hint: [0.2, 1]
+                    text: 'generation number'
+
+                TextInput:
+                    size_hint: [0.1, 1]
+                    id: genNumberInput
+                    text: ''
+                    write_tab: False
+                    multiline: False
+
+                Label:
+                    size_hint: [0.2, 1]
+                    text: ''
+
+                Label:
+                    size_hint: [0.2, 1]
+                    text: 'No. struct. per gen.'
+
+                TextInput:
+                    size_hint: [0.1, 1]
+                    id: structPerGenInput
+                    text: '5'
+                    write_tab: False
+                    multiline: False
+                Label:
+                    size_hint: [0.1, 1]
+                    text: ''
+
+            StackLayout:
+                size_hint: [1, 0.7*button_height]
+
+            StackLayout:
                 size_hint: [1, 1.5*button_height]
 
                 Label:
@@ -25,11 +66,11 @@
                 size_hint: [1, button_height]
 
                 Label:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.15, 1]
                     text: 'Initial structure'
 
                 TextInput:
-                    size_hint: [0.6, 1]
+                    size_hint: [0.25, 1]
                     id: initStructInput
                     text: ''
                     write_tab: False
@@ -37,21 +78,17 @@
                     on_text_validate: root.import_structures()
 
                 Button:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.1, 1]
                     id: loadInitStruct
                     text: 'Load'
                     on_release: root.show_load_init_struct_dialog()
 
-
-            StackLayout:
-                size_hint: [1, button_height]
-
                 Label:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.15, 1]
                     text: 'Final structure'
 
                 TextInput:
-                    size_hint: [0.6, 1]
+                    size_hint: [0.25, 1]
                     id: finalStructInput
                     text: ''
                     write_tab: False
@@ -59,10 +96,11 @@
                     on_text_validate: root.import_structures()
 
                 Button:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.1, 1]
                     id: loadFinalStruct
                     text: 'Load'
                     on_release: root.show_load_final_struct_dialog()
+
 
 
             StackLayout:
@@ -217,12 +255,12 @@
                 size_hint: [1, button_height]
 
                 Label:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.15, 1]
                     id: templateAtomsLabel
                     text: 'Template'
 
                 TextInput:
-                    size_hint: [0.6, 1]
+                    size_hint: [0.25, 1]
                     id: templateAtomsInput
                     text: ''
                     write_tab: False
@@ -230,23 +268,18 @@
                     on_text_validate: root.generate()
 
                 Button:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.1, 1]
                     id: loadTemplateAtoms
                     text: 'Load'
                     on_release: root.show_load_template_dialog()
 
-
-
-            StackLayout:
-                size_hint: [1, button_height]
-
                 Label:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.15, 1]
                     id: eciFileLabel
                     text: 'ECI file'
 
                 TextInput:
-                    size_hint: [0.6, 1]
+                    size_hint: [0.25, 1]
                     id: eciFileInput
                     text: ''
                     write_tab: False
@@ -254,28 +287,33 @@
                     on_text_validate: root.generate()
 
                 Button:
-                    size_hint: [0.2, 1]
+                    size_hint: [0.1, 1]
                     id: loadECIFile
                     text: 'Load'
                     on_release: root.show_load_eci_dialog()
 
+            StackLayout:
+                size_hint: [1, 0.1*button_height]
 
             StackLayout:
                 size_hint: [1, button_height]
 
                 Label:
                     size_hint: [0.25, 1]
+                    text: ''
+                Label:
+                    size_hint: [0.25, 1]
                     text: 'Composition Scheme'
 
-                Label:
-                    size_hint: [0.15, 1]
-                    text: ''
-
                 Spinner:
-                    size_hint: [0.6, 1]
+                    size_hint: [0.25, 1]
                     id: randomizeCompositionSpinner
                     text: 'Random composition'
                     values: 'Random composition', 'Composition in template'
+
+                Label:
+                    size_hint: [0.25, 1]
+                    text: ''
 
 
 
@@ -304,19 +342,3 @@
         BoxLayout:
             size_hint: [0.05, 1]
 
-
-
-    # FloatLayout:
-    #     size_hint: [1, status_height]
-    #     pos_hint: {"x": 0.0, 'bottom':0.0}
-
-    #     Label:
-    #         size_hint: [0.2, 1]
-    #         pos_hint: {"x": 0.0, 'bottom':0.0}
-    #         text: 'Status:'
-
-    #     Label:
-    #         id: status
-    #         size_hint: [0.8, 1]
-    #         pos_hint: {"x": 0.2, 'bottom':0.0}
-    #         text: 'Idle'
