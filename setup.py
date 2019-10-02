@@ -90,7 +90,7 @@ setup(
     long_description='CLuster Expansion in Atomistic Simulation Environment',
     url='https://gitlab.com/computationalmaterials/clease',
     scripts=['bin/clease'],
-    version='0.9.4',
+    version='0.9.5',
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
     download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.5/clease-v0.9.5.zip',
