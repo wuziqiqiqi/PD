@@ -136,6 +136,7 @@ class NewStructPage(Screen):
             self.ids.loadECIFile.disabled = True
             self.ids.numTemplateInput.disabled = True
             self.ids.numPrimCellsInput.disabled = True
+
         elif text == 'Probe structure':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
@@ -157,6 +158,7 @@ class NewStructPage(Screen):
             self.ids.loadECIFile.disabled = True
             self.ids.numTemplateInput.disabled = True
             self.ids.numPrimCellsInput.disabled = True
+
         elif text == 'Ground-state structure (fixed template)':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
@@ -178,6 +180,7 @@ class NewStructPage(Screen):
             self.ids.templateAtomsInput.disabled = False
             self.ids.numTemplateInput.disabled = True
             self.ids.numPrimCellsInput.disabled = True
+
         elif text == 'Ground-state structure (variable template)':
             self.ids.tempMaxLabel.color = active
             self.ids.tempMinLabel.color = active
@@ -287,7 +290,16 @@ class NewStructPage(Screen):
             num_templates = int(self.ids.numTemplateInput.text)
             num_prim_cells = int(self.ids.numPrimCellsInput.text)
 
-            if struct_type == 'Random structure':
+            if struct_type == 'Initial pool':
+                msg = "Generating initial pool of structures..."
+                App.get_running_app().root.ids.status.text = msg
+                init_generator = InitialPoolGenerator()
+                init_generator.generator = generator
+                init_generator.atoms = atoms
+                init_generator.status = App.get_running_app().root.ids.status
+                init_generator.page = self
+                Thread(target=init_generator.generate).start()
+            elif struct_type == 'Random structure':
                 msg = "Generating random structures..."
                 App.get_running_app().root.ids.status.text = msg
                 rnd_generator = RandomStructureGenerator()
