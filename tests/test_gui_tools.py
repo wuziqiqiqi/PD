@@ -1,6 +1,7 @@
 import unittest
 from clease.gui.util import parse_temperature_list
 from clease.gui.util import parse_concentration_list
+from clease.gui.util import parse_cellpar
 import numpy as np
 
 
@@ -21,6 +22,25 @@ class TestGUIUtil(unittest.TestCase):
         concs = parse_concentration_list('0.5, 0.3, 0.2')
         expect = [[0.5, 0.3, 0.2]]
         self.assertTrue(np.allclose(expect[0], concs[0]))
+
+    def test_cell_par_two_numbers(self):
+        with self.assertRaises(ValueError):
+            parse_cellpar('(3.0, 4.0)')
+
+    def test_cell_lengths_and_angles(self):
+        values = parse_cellpar('6.0, 7.0, 3.0, 80, 20, 10')
+        expected = [6.0, 7.0, 3.0, 80, 20, 10]
+        self.assertTrue(np.allclose(values, expected))
+
+    def test_cell_par_missing_angle(self):
+        with self.assertRaises(ValueError):
+            parse_cellpar('6.0, 7.0, 3.0, 80, 20')
+
+    def test_cell_par_with_parenthesis(self):
+        values = parse_cellpar('(6.0, 7.0, 3.0, 80, 20, 10)')
+        expected = [6.0, 7.0, 3.0, 80, 20, 10]
+        self.assertTrue(np.allclose(values, expected))
+
 
 if __name__ == '__main__':
     unittest.main()
