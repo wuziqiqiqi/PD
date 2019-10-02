@@ -1,3 +1,11 @@
+class BasisGroupHasOnlyOneBasisError(ValueError):
+    pass
+
+
+class BasisSpecifiedInManyGroupsError(ValueError):
+    pass
+
+
 def parse_max_cluster_dia(string):
     """Parse max cluster dia."""
     string = string.strip('[()]')
@@ -26,15 +34,32 @@ def parse_grouped_basis_elements(string):
     string = string.replace('(', '')
     split = string.split('),')
     split = [x.replace(')', '') for x in split]
+    exc_type = ValueError
+    msg = 'Grouped basis has to be a list (0, 1, 2, 3) or (0, 1), (2, 3)'
     try:
         grouped = []
         for item in split:
             grouped.append([int(x) for x in item.split(',')])
+
+        # Check that we have only unique sites
+        index_set = set()
+        index_list = list()
+        for grp in grouped:
+            if len(grp) == 1:
+                exc_type = BasisGroupHasOnlyOneBasisError
+                msg = 'One of the groups has only one entry!'
+                raise exc_type(msg)
+            index_set = index_set.union(grp)
+            index_list += grp
+
+        if len(index_set) != len(index_list):
+            exc_type = BasisSpecifiedInManyGroupsError
+            msg = 'Basis specified in multiple groups!'
+            raise exc_type(msg)
         return grouped
 
     except Exception as exc:
-        msg = 'Grouped basis has to be a list (0, 1, 2, 3) or (0, 1), (2, 3)'
-        raise ValueError(msg)
+        raise exc_type(msg)
 
 
 def parse_size(string):
