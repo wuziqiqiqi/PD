@@ -1,5 +1,5 @@
-global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv
+global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv *.png
 
 setup.py:
 
-'': ['data/*', '*.pyx', '*.pxd', '*.cpp', '*.hpp', '*.tpp', '*.kv']
+'': ['data/*', '*.pyx', '*.pxd', '*.cpp', '*.hpp', '*.tpp', '*.kv', '*.png']
