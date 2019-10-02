@@ -5,7 +5,6 @@ from clease.gui.util import parse_cellpar, parse_cell
 from clease.gui.util import parse_coordinate_basis
 from clease.gui.util import parse_grouped_basis_elements
 from clease.gui.util import BasisSpecifiedInManyGroupsError
-from clease.gui.util import BasisGroupHasOnlyOneBasisError
 import numpy as np
 
 
@@ -130,11 +129,6 @@ class TestGUIUtil(unittest.TestCase):
         grouped = parse_grouped_basis_elements(text)
         expect = [[0, 1], [2, 3]]
         self.assertEqual(grouped, expect)
-
-    def test_parse_single_basis(self):
-        text = '(0, 1), 2'
-        with self.assertRaises(BasisGroupHasOnlyOneBasisError):
-            _ = parse_grouped_basis_elements(text)
 
     def test_parse_basis_multiple_groups(self):
         text = '(0, 1), (2, 1, 4)'

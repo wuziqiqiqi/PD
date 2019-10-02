@@ -1,7 +1,3 @@
-class BasisGroupHasOnlyOneBasisError(ValueError):
-    pass
-
-
 class BasisSpecifiedInManyGroupsError(ValueError):
     pass
 
@@ -45,10 +41,6 @@ def parse_grouped_basis_elements(string):
         index_set = set()
         index_list = list()
         for grp in grouped:
-            if len(grp) == 1:
-                exc_type = BasisGroupHasOnlyOneBasisError
-                msg = 'One of the groups has only one entry!'
-                raise exc_type(msg)
             index_set = index_set.union(grp)
             index_list += grp
 
