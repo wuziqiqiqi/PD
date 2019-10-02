@@ -170,6 +170,42 @@ class WindowFrame(StackLayout):
         else:
             Thread(target=reconfig.reconfig_settings_db).start()
 
+    def view_clusters(self):
+        """View clusters."""
+        images = self._get_clusters()
+
+        try:
+            # from ase.gui.gui import GUI
+            # # gui = GUI(images, expr='')
+            # # gui.show_name = True
+            # # gui.run()
+            # kwargs = {'images': images, 'expr': ''}
+            # Thread(target=GUI, kwargs=kwargs).start()
+
+            from ase.visualize import view
+            Thread(target=view, args=(images,)).start()
+
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+
+
+    def _get_clusters(self):
+        if self.settings is None:
+            self.ids.sm.get_screen('Settings').apply_settings()
+
+        try:
+            from ase.gui.images import Images
+            self.settings._activate_lagest_template()
+            atoms = self.settings.atoms
+            figures = self.settings.cluster_list.get_figures(atoms)
+            images = Images()
+            images.initialize(figures)
+            return images
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+
+
+
 
 class CleaseGUI(App):
     def __init__(self):
