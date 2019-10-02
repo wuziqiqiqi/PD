@@ -3,6 +3,9 @@ from clease.gui.util import parse_temperature_list
 from clease.gui.util import parse_concentration_list
 from clease.gui.util import parse_cellpar, parse_cell
 from clease.gui.util import parse_coordinate_basis
+from clease.gui.util import parse_grouped_basis_elements
+from clease.gui.util import BasisSpecifiedInManyGroupsError
+from clease.gui.util import BasisGroupHasOnlyOneBasisError
 import numpy as np
 
 
@@ -110,6 +113,33 @@ class TestGUIUtil(unittest.TestCase):
         expected = [[3.0, 2.0, 1.0]]
         self.assertTrue(np.allclose(values, expected))
 
+    def test_parse_grp_comma_separated(self):
+        text = '0, 2, 3'
+        grouped = parse_grouped_basis_elements(text)
+        expect = [[0, 2, 3]]
+        self.assertEqual(grouped, expect)
+
+    def test_parse_grp_two_lists(self):
+        text = '(0, 1), (2, 3)'
+        grouped = parse_grouped_basis_elements(text)
+        expect = [[0, 1], [2, 3]]
+        self.assertEqual(grouped, expect)
+
+    def test_parse_grp_list_comma_sep_int(self):
+        text = '(0, 1), 2, 3'
+        grouped = parse_grouped_basis_elements(text)
+        expect = [[0, 1], [2, 3]]
+        self.assertEqual(grouped, expect)
+
+    def test_parse_single_basis(self):
+        text = '(0, 1), 2'
+        with self.assertRaises(BasisGroupHasOnlyOneBasisError):
+            _ = parse_grouped_basis_elements(text)
+
+    def test_parse_basis_multiple_groups(self):
+        text = '(0, 1), (2, 1, 4)'
+        with self.assertRaises(BasisSpecifiedInManyGroupsError):
+            _ = parse_grouped_basis_elements(text)
 
 if __name__ == '__main__':
     unittest.main()
