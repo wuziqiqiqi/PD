@@ -22,6 +22,17 @@ class BaseGenerator(object):
             App.get_running_app().root.ids.status.text = msg
 
 
+class InitialPoolGenerator(BaseGenerator):
+    def generate(self):
+        try:
+            self.generator.generate_initial_pool(atoms=self.atoms)
+            msg = 'Initial pool of structures generated.'
+            App.get_running_app().root.ids.status.text = msg
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+        self.page.structure_generation_in_progress = False
+
+
 class RandomStructureGenerator(BaseGenerator):
     def generate(self):
         try:
@@ -104,7 +115,7 @@ class NewStructPage(Screen):
         inactive = get_color_from_hex(INACTIVE_TEXT_COLOR)
         active = get_color_from_hex(FOREGROUND_TEXT_COLOR)
 
-        if text == 'Random structure':
+        if text in ['Initial pool', 'Random structure']:
             self.ids.templateAtomsLabel.color = active
             self.ids.tempMaxLabel.color = inactive
             self.ids.tempMinLabel.color = inactive
