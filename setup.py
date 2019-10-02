@@ -48,7 +48,12 @@ def build_ext(ext_module):
 
 def install_kivy_garden_from_github():
     try:
-        from kivy_garden import Graph
+        import kivy
+    except ImportError:
+        pipmain(['install', 'kivy'])
+
+    try:
+        from kivy_garden.graph import Graph
     except ImportError:
         pipmain(['install', 'https://github.com/kivy-garden/graph/archive/master.zip'])
 
@@ -68,13 +73,6 @@ src_files = [cxx_src_folder + x for x in src_files]
 src_files.append(cython_folder + 'clease_cxx.pyx')
 extra_comp_args = ['-std=c++11']
 
-
-def find_layout_files():
-    folder = 'clease/gui/layout/'
-    files = os.listdir(folder)
-    return [folder + x for x in files if x.endswith('.kv')]
-
-
 clease_cxx = Extension("clease_cxx", sources=src_files,
                        include_dirs=[cxx_inc_folder, get_npy_include_folder(),
                                      cxx_src_folder, get_python_inc(),
@@ -92,12 +90,12 @@ setup(
     long_description='CLuster Expansion in Atomistic Simulation Environment',
     url='https://gitlab.com/computationalmaterials/clease',
     scripts=['bin/clease'],
-    version='0.9.3',
+    version='0.9.4',
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
-    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.3/clease-v0.9.3.zip',
+    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.4/clease-v0.9.4.zip',
     include_package_data=True,
-    package_data={'clease.gui': ['layout/*.kv']},
+    package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
     classifiers=[
@@ -108,5 +106,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
-    install_requires=['ase', 'matplotlib', 'spglib', 'kivy']
+    install_requires=['ase', 'matplotlib', 'spglib']
 )
