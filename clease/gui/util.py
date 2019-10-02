@@ -1,5 +1,10 @@
+class BasisSpecifiedInManyGroupsError(ValueError):
+    pass
+
+
 def parse_max_cluster_dia(string):
     """Parse max cluster dia."""
+    string = string.strip('[()]')
     try:
         diameter = float(string)
         return diameter
@@ -20,18 +25,33 @@ def parse_max_cluster_dia(string):
 
 def parse_grouped_basis_elements(string):
     """Parse grouped basis argument."""
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     string = string.replace('(', '')
     split = string.split('),')
     split = [x.replace(')', '') for x in split]
+    exc_type = ValueError
+    msg = 'Grouped basis has to be a list (0, 1, 2, 3) or (0, 1), (2, 3)'
     try:
         grouped = []
         for item in split:
             grouped.append([int(x) for x in item.split(',')])
+
+        # Check that we have only unique sites
+        index_set = set()
+        index_list = list()
+        for grp in grouped:
+            index_set = index_set.union(grp)
+            index_list += grp
+
+        if len(index_set) != len(index_list):
+            exc_type = BasisSpecifiedInManyGroupsError
+            msg = 'Basis specified in multiple groups!'
+            raise exc_type(msg)
         return grouped
 
     except Exception as exc:
-        msg = 'Grouped basis has to be a list (0, 1, 2, 3) or (0, 1), (2, 3)'
-        raise ValueError(msg)
+        raise exc_type(msg)
 
 
 def parse_size(string):
@@ -46,6 +66,8 @@ def parse_size(string):
         pass
 
     # Try 3x3 matrix
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     filtered = string.replace('(', '')
     splitted = filtered.split('),')
     splitted = [x.replace(')', '') for x in splitted]
@@ -57,8 +79,12 @@ def parse_size(string):
                 raise ValueError()
             matrix.append(row)
 
+        if len(matrix) == 1:
+            matrix = matrix[0]
+
         if len(matrix) != 3:
             raise ValueError()
+
         return matrix
 
     except Exception as exc:
@@ -72,6 +98,8 @@ def parse_size(string):
 def parse_elements(string):
     """Parse elements given by user."""
     from ase.data import chemical_symbols
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
     try:
         if string.count(')') == 0:
             # Single basis
@@ -103,6 +131,7 @@ def parse_elements(string):
 
 def parse_cellpar(string):
     """Parse the cell parameter string."""
+    string = string.strip('[()]')
     try:
         cellpar = [float(x) for x in string.split(',')]
         if len(cellpar) != 6:
@@ -119,6 +148,9 @@ def parse_cellpar(string):
 
 def parse_cell(string):
     """Parse the cell string."""
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
+
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
     filtered = [[x.replace(')', '').strip() for x in sub.split(',')]
@@ -144,6 +176,9 @@ def parse_cell(string):
 
 
 def parse_coordinate_basis(string):
+    string = string.replace('[', '(')
+    string = string.replace(']', ')')
+
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
     filtered = [[x.replace(')', '').strip() for x in sub.split(',')]
