@@ -1,7 +1,7 @@
 import unittest
 from clease.gui.util import parse_temperature_list
 from clease.gui.util import parse_concentration_list
-from clease.gui.util import parse_cellpar
+from clease.gui.util import parse_cellpar, parse_cell
 import numpy as np
 
 
@@ -45,6 +45,31 @@ class TestGUIUtil(unittest.TestCase):
         values = parse_cellpar('[6.0, 7.0, 3.0, 80, 20, 10]')
         expected = [6.0, 7.0, 3.0, 80, 20, 10]
         self.assertTrue(np.allclose(values, expected))
+
+    def test_cell_list(self):
+        values = parse_cell('[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]')
+        expected = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+        self.assertTrue(np.allclose(expected, values))
+    
+    def test_cell_tuple_of_lists(self):
+        values = parse_cell('([1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0])')
+        expected = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+        self.assertTrue(np.allclose(expected, values))
+
+    def test_cell_list_of_lists(self):
+        values = parse_cell('[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]')
+        expected = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+        self.assertTrue(np.allclose(expected, values))
+
+    def test_cell_list_of_mixed_lists_and_tuples(self):
+        values = parse_cell('[ [1.0, 2.0, 3.0], (4.0, 5, 6.0), (7.0, 8, 9.0) ] ')
+        expected = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+        self.assertTrue(np.allclose(expected, values))
+
+    def test_cell_nested_list_mix_tuples(self):
+        values = parse_cell('[[[ [3.0, 2.0, 1.0], (4.0, 5, 6.0), (7.0, 8, 9.0) ]]] ')
+        expected = [[3.0, 2.0, 1.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
+        self.assertTrue(np.allclose(expected, values))
 
 
 if __name__ == '__main__':
