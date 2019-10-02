@@ -41,6 +41,11 @@ class TestGUIUtil(unittest.TestCase):
         expected = [6.0, 7.0, 3.0, 80, 20, 10]
         self.assertTrue(np.allclose(values, expected))
 
+    def test_cell_par_with_square_brackets(self):
+        values = parse_cellpar('[6.0, 7.0, 3.0, 80, 20, 10]')
+        expected = [6.0, 7.0, 3.0, 80, 20, 10]
+        self.assertTrue(np.allclose(values, expected))
+
 
 if __name__ == '__main__':
     unittest.main()
