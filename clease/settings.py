@@ -533,7 +533,6 @@ class ClusterExpansionSetting(object):
         from ase.gui.images import Images
         self._activate_lagest_template()
         figures = self.cluster_list.get_figures(self.atoms)
-        print(type(figures[0]))
         images = Images()
         images.initialize(figures)
         gui = GUI(images, expr='')
