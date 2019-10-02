@@ -97,7 +97,7 @@ setup(
     packages=find_packages(),
     download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.3/clease-v0.9.3.zip',
     include_package_data=True,
-    package_data={'clease.gui': ['layout/*.kv']},
+    package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
     classifiers=[
