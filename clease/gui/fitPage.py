@@ -3,6 +3,7 @@ from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
 from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
 from clease.gui.load_save_dialog import LoadDialog
+from clease import GAFit, LinearRegression, Evaluate
 from kivy.app import App
 import json
 from clease.gui.util import parse_max_cluster_dia
@@ -25,7 +26,6 @@ class ECIOptimiser(object):
             self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
-
             self.fit_page.e_ce = e_ce
             self.fit_page.e_dft = self.evaluator.e_dft
             self.fit_page.e_pred_leave_out = self.evaluator.e_pred_loo
@@ -52,8 +52,6 @@ class GAClusterSelector(object):
     _pop_up = None
 
     def run(self):
-        from clease import GAFit, LinearRegression, Evaluate
-
         try:
             ga = GAFit(self.settings, **self.kwargs)
             _ = ga.run()
