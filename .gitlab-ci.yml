@@ -20,11 +20,8 @@ gui_test:
     - apt-get install -qy xvfb
     - python3 --version
     - python3 -m pip install -r requirements.txt
-    - python3 -m pip install kivy
-    - python3 -m pip install kivy-garden
-    - python3 -m pip install coverage
-    - garden install matplotlib
     - python3 -m pip install mock
+    - python3 -m pip install coverage
     - python3 -m pip install .
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py

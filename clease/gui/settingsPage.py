@@ -349,9 +349,7 @@ class SettingsPage(Screen):
             skewness_factor = int(settingPage['skewness_factor'])
             size = None
 
-            if settingPage['cell_size'] == '':
-                size = None
-            else:
+            if self.ids.sizeSpinner.text == 'Fixed':
                 size = parse_size(settingPage['cell_size'])
 
             if settingPage['max_cluster_dia'] == '':
