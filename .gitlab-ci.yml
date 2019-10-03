@@ -22,6 +22,7 @@ gui_test:
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install kivy
     - python3 -m pip install kivy-garden
+    - python3 -m pip install coverage
     - garden install matplotlib
     - python3 -m pip install mock
     - python3 -m pip install .
