@@ -143,6 +143,7 @@
             input_filter: 'int'
             write_tab: False
             multiline: False
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
