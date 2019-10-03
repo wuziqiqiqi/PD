@@ -70,7 +70,7 @@ class GAClusterSelector(object):
                 fitting_scheme=LinearRegression())
             optimiser.optimise()
         except Exception as exc:
-            App.get_running_app().root.ids.status.text.text = str(exc)
+            App.get_running_app().root.ids.status.text = str(exc)
 
 
 class FitPage(Screen):
