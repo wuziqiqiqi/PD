@@ -1,6 +1,6 @@
 python3_test:
   image: python:3
-  coverage: 'TOTAL\s*\d+\s*\d+\s*\d+%/'
+  coverage: 'TOTAL\s+.*\d+%/'
   script:
     - apt-get update -qy
     - apt-get install -qy python3-dev python3-pip
