@@ -8,6 +8,7 @@ from clease.gui.load_save_dialog import LoadDialog
 import os
 import json
 from threading import Thread
+import traceback
 
 
 class BaseGenerator(object):
@@ -29,6 +30,7 @@ class RandomStructureGenerator(BaseGenerator):
             msg = 'Random structures generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
@@ -47,6 +49,7 @@ class ProbeStructureGenerator(BaseGenerator):
             msg = 'Probe strcutres generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
@@ -68,6 +71,7 @@ class GSStructGenerator(object):
             msg = 'Ground-state structures generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
@@ -89,6 +93,7 @@ class ExaustiveGSStructGenerator(object):
                 final_temp=self.Tmin, num_temp=self.num_temps,
                 num_steps_per_temp=self.num_steps, eci=self.eci)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
 
@@ -339,6 +344,7 @@ class NewStructPage(Screen):
 
                 Thread(target=gs_generator.generate).start()
         except RuntimeError as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def import_structures(self):
@@ -391,6 +397,7 @@ class NewStructPage(Screen):
                                            final_struct=final_struct,
                                            generate_template=True)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def load_structures(self, path, filename, is_init):

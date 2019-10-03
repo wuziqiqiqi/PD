@@ -9,6 +9,7 @@ from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
 from clease.gui.settingInitializer import SettingsInitializer
 from threading import Thread
+import traceback
 
 
 class SettingsPage(Screen):
@@ -177,6 +178,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_cellpar(cellPar)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -186,6 +188,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_cell(cell)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -195,6 +198,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_coordinate_basis(crdBasis)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -239,6 +243,7 @@ class SettingsPage(Screen):
                     App.get_running_app().root.ids.status.text = msg
                     return False
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -248,6 +253,7 @@ class SettingsPage(Screen):
         try:
             _ = parse_size(self.ids.sizeInput.text)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -432,5 +438,6 @@ class SettingsPage(Screen):
             return True
 
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False

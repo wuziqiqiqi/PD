@@ -13,6 +13,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
+import traceback
 
 
 class ECIOptimiser(object):
@@ -38,6 +39,7 @@ class ECIOptimiser(object):
             self.fit_page.fitting_in_progress = False
             self.fit_page.update_plots()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
             return
@@ -70,6 +72,7 @@ class GAClusterSelector(object):
                 fitting_scheme=LinearRegression())
             optimiser.optimise()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
 
@@ -258,6 +261,7 @@ class FitPage(Screen):
             msg = 'ECIs saved to {}'.format(fname)
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def fit_eci(self):
@@ -280,6 +284,7 @@ class FitPage(Screen):
                 max_cluster_dia_cut = \
                     parse_max_cluster_dia(self.ids.maxClusterDiaCut.text)
             except Exception as exc:
+                traceback.print_exc()
                 App.get_running_app().root.ids.status.text = str(exc)
                 return
 
@@ -369,6 +374,7 @@ class FitPage(Screen):
 
             Thread(target=eci_optimiser.optimise).start()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def set_cv(self, cv):

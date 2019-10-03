@@ -257,6 +257,7 @@ class ConcentrationPage(Screen):
         try:
             _ = parse_elements(elems)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
@@ -266,6 +267,7 @@ class ConcentrationPage(Screen):
         try:
             _ = parse_grouped_basis_elements(gr_basis)
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             return False
         return True
