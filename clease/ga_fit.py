@@ -532,7 +532,7 @@ class GAFit(object):
         ax.set_ylabel("CV score (meV/atom)")
         plt.show()
 
-    def run(self, gen_without_change=1000, min_change=0.01, save_interval=100):
+    def run(self, gen_without_change=100, min_change=0.01, save_interval=100):
         """Run the genetic algorithm.
 
         Return a list consisting of the names of selected clusters at the end
