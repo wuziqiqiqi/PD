@@ -1,4 +1,5 @@
 from clease import LinearRegression
+from clease import Evaluate
 from clease import _logger
 import numpy as np
 import multiprocessing as mp
@@ -107,7 +108,6 @@ class GAFit(object):
                  max_num_in_init_pool=None, parallel=False, num_core=None,
                  select_cond=None, cost_func="bic", sparsity_slope=1.0,
                  min_weight=1.0, include_subclusters=True):
-        from clease import Evaluate
         evaluator = Evaluate(setting, max_cluster_dia=max_cluster_dia,
                              max_cluster_size=max_cluster_size,
                              select_cond=select_cond, min_weight=min_weight)
