@@ -136,8 +136,12 @@ class GAFit(object):
         self.cf_names = evaluator.cf_names
         self.e_dft = evaluator.e_dft
         self.fname = fname
-        self.fname_cf_names = \
-            fname.rpartition(".")[0] + "_cf_names.txt"
+        if fname is not None:
+            self.fname_cf_names = \
+                fname.rpartition(".")[0] + "_cf_names.txt"
+        else:
+            self.fname_cf_names = None
+
         if num_individuals == "auto":
             self.pop_size = 10*self.cf_matrix.shape[1]
         else:
@@ -163,7 +167,7 @@ class GAFit(object):
     def _initialize_individuals(self, max_num):
         """Initialize a random population."""
         individuals = []
-        if os.path.exists(self.fname):
+        if os.path.exists(str(self.fname)):
             individuals = self._init_from_file()
         else:
             max_num = max_num or self.num_genes
@@ -506,6 +510,8 @@ class GAFit(object):
     def save_population(self):
         # Save population
         self.check_valid()
+        if self.fname is None:
+            return
         with open(self.fname, 'w') as out:
             for i in range(len(self.individuals)):
                 out.write(",".join(str(x) for x in
@@ -515,6 +521,9 @@ class GAFit(object):
 
     def save_cf_names(self):
         """Store cluster names of best population to file."""
+        if self.fname_cf_names is None:
+            return
+
         with open(self.fname_cf_names, 'w') as out:
             for name in self.selected_cf_names:
                 out.write(name+"\n")
