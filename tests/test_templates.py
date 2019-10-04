@@ -7,8 +7,10 @@ from ase.build import niggli_reduce
 from clease import Concentration, ValidConcentrationFilter
 from clease.template_filters import AtomsFilter, CellFilter
 from clease import DistanceBetweenFacetsFilter
+from clease import Concentration, CEBulk
 import numpy as np
 import unittest
+from unittest.mock import patch
 
 
 class SettingsPlaceHolder(object):
@@ -144,6 +146,35 @@ class TestTemplates(unittest.TestCase):
                 found_conventional = True
                 break
         self.assertTrue(found_conventional)
+
+    @patch('test_templates.CEBulk._read_data')
+    @patch('test_templates.CEBulk._store_data')
+    @patch('test_templates.CEBulk.create_cluster_list_and_trans_matrix')
+    def test_fixed_vol_with_conc_constraint(self, *args):
+        A_eq = [[3, -2]]
+        b_eq = [0]
+        conc = Concentration(basis_elements=[['Au', 'Cu']],
+                             A_eq=A_eq, b_eq=b_eq)
+
+        db_name = 'test_fixed_vol_conc_constraint.db'
+        setting = CEBulk(crystalstructure='fcc', a=3.8, size=[1, 1, 5],
+                         db_name=db_name, max_cluster_size=2,
+                         max_cluster_dia=3.0, concentration=conc)
+
+        tmp = setting.template_atoms
+        v_conc = ValidConcentrationFilter(setting)
+        tmp.add_atoms_filter(v_conc)
+
+        sizes = [4, 5, 7, 10]
+        valid_size = [5, 10]
+        for s in sizes:
+            templates = tmp.get_fixed_volume_templates(num_prim_cells=s)
+
+            if s in valid_size:
+                self.assertGreater(len(templates), 0)
+            else:
+                self.assertEqual(len(templates), 0)
+        os.remove(db_name)
 
     def test_apply_filter(self):
         db_name = 'templates_fcc_apply_filter.db'
