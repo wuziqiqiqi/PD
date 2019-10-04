@@ -131,6 +131,7 @@
                 id: fitAlgSpinner
                 text: 'LASSO'
                 values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
+                on_text: root.load_fit_alg_settings(text)
             
             StackLayout:
                 size_hint: [1, 0.25*button_height]
