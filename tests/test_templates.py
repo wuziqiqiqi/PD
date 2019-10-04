@@ -5,7 +5,7 @@ from ase.build import bulk
 from ase.db import connect
 from ase.build import niggli_reduce
 from clease import Concentration, ValidConcentrationFilter
-from clease.template_filters import AtomsFilter
+from clease.template_filters import AtomsFilter, CellFilter
 from clease import DistanceBetweenFacetsFilter
 import numpy as np
 import unittest
@@ -18,7 +18,7 @@ class SettingsPlaceHolder(object):
     """
     atoms = None
     index_by_basis = []
-    conc = None
+    Concentration = None
 
 
 class NumAtomsFilter(AtomsFilter):
@@ -27,6 +27,11 @@ class NumAtomsFilter(AtomsFilter):
 
     def __call__(self, atoms):
         return len(atoms) > self.min_num_atoms
+
+
+class DummyCellFilter(CellFilter):
+    def __call__(self, cell):
+        return True
 
 
 class TestTemplates(unittest.TestCase):
@@ -83,7 +88,7 @@ class TestTemplates(unittest.TestCase):
         # concentration
         A_eq = [[0, 1, -2.0]]
         b_eq = [0.0]
-        settings.conc = Concentration(
+        settings.concentration = Concentration(
             basis_elements=[['Na'], ['Cl', 'X']], A_eq=A_eq, b_eq=b_eq)
 
         template_generator = TemplateAtoms(
@@ -163,6 +168,41 @@ class TestTemplates(unittest.TestCase):
         template_atoms.apply_filter(NumAtomsFilter(num_atoms))
         for atoms in template_atoms.templates['atoms']:
             self.assertGreaterEqual(len(atoms), num_atoms)
+        os.remove(db_name)
+
+    def test_remove_atoms_filter(self):
+        db_name = 'templates_remove_atoms_filter.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=3, size=None,
+                                       skew_threshold=4,
+                                       db_name=db_name)
+
+        f = NumAtomsFilter(16)
+        template_atoms.add_atoms_filter(f)
+        self.assertEqual(len(template_atoms.atoms_filters), 1)
+        template_atoms.remove_filter(f)
+        self.assertEqual(len(template_atoms.atoms_filters), 0)
+        os.remove(db_name)
+
+    def test_remove_cell_filter(self):
+        db_name = 'templates_remove_atoms_filter.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=3, size=None,
+                                       skew_threshold=4,
+                                       db_name=db_name)
+
+        num_cell_filters = len(template_atoms.cell_filters)
+        f = DummyCellFilter()
+        template_atoms.add_cell_filter(f)
+        self.assertEqual(len(template_atoms.cell_filters), num_cell_filters+1)
+        template_atoms.remove_filter(f)
+        self.assertEqual(len(template_atoms.cell_filters), num_cell_filters)
         os.remove(db_name)
 
 
