@@ -1,4 +1,6 @@
 # CLEASE
+![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=python3_test)
+![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=gui_test)
 
 CLuster Expansion in Atomic Simulation Environment
 
