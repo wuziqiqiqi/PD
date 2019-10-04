@@ -16,6 +16,7 @@ from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
+import os
 
 
 class ECIOptimiser(object):
@@ -483,10 +484,10 @@ class FitPage(Screen):
 
     def load_fit_alg_settings(self, text):
         fnames = {
-            'LASSO': LassoEditor.backup
-            'L2': L2Editor.backup
-            'BCS': BCSEditor.backup
-            'Genetic Algorithm': GAEditor.backup
+            'LASSO': LassoEditor.backup_file,
+            'L2': L2Editor.backup_file,
+            'BCS': BCSEditor.backup_file,
+            'Genetic Algorithm': GAEditor.backup_file
         }
 
         closing_methods = {
@@ -505,8 +506,22 @@ class FitPage(Screen):
             app.root.ids.status.text = 'Unkown fitting scheme'
             return
 
+        full_name = '.cleaseGUI/' + fname
+
+        if not os.path.exists(full_name):
+            return
+
         args = []
-        with open(fname, 'r') as infile:
+        with open(full_name, 'r') as infile:
             for line in infile:
                 args.append(line.strip())
-        close(*args)
+        args = args[::-1]
+        try:
+            close(*args)
+            msg = 'Fit settings set the ones used '
+            msg += 'last time'
+            app.root.ids.status.text = msg
+        except:
+            msg = 'Failed load previous fitting setting. '
+            msg += 'Please set your settings again in the editor.'
+            app.root.ids.status.text = msg
