@@ -117,7 +117,7 @@ class ValidConcentrationFilter(AtomsFilter):
             x = conc.get_random_concentration(nib=nib)
             x_int = conc.conc_in_int(nib, x)
             x_from_int = conc.to_float_conc(nib, x_int)
-            if not np.allclose(x, x_from_int):
+            if not conc.is_valid_conc(x_from_int):
                 return False
         except Exception:
             valid = False
