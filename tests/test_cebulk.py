@@ -55,7 +55,7 @@ class TestCEBulk(unittest.TestCase):
 
         # Try to read back the old atoms
         setting.set_active_template(atoms=orig_atoms)
-        #os.remove(db_name)
+        os.remove(db_name)
 
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
@@ -385,7 +385,7 @@ class TestCEBulk(unittest.TestCase):
         basis_elem = [['Li', 'X'], ['O', 'F']]
         A_eq = [[0, 0, 3, -2]]
         b_eq = [0]
-        conc = Concentration(basis_elements=basis_elements,
+        conc = Concentration(basis_elements=basis_elem,
                              A_eq=A_eq, b_eq=b_eq)
         setting = CEBulk(crystalstructure='rocksalt', a=3.8,
                          supercell_factor=27, max_cluster_dia=5.0,
