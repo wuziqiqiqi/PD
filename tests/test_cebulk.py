@@ -368,7 +368,7 @@ class TestCEBulk(unittest.TestCase):
         setting = CEBulk(crystalstructure='fcc', a=3.8, supercell_factor=27,
                          max_cluster_dia=5.0, max_cluster_size=3,
                          concentration=conc,
-                         db_name='test_fcc_binary_fixed_conc.db')
+                         db_name=db_name)
 
         # Loop through templates and check that all satisfy constraints
         for atoms in setting.template_atoms.templates['atoms']:
@@ -380,9 +380,24 @@ class TestCEBulk(unittest.TestCase):
     @patch('test_cebulk.CEBulk._read_data')
     @patch('test_cebulk.CEBulk._store_data')
     @patch('test_cebulk.CEBulk.create_cluster_list_and_trans_matrix')
-    def test_rocksalt_conc(self, *args):
-        pass
+    def test_rocksalt_conc_fixed_one_basis(self, *args):
+        db_name = 'test_rocksalt_fixed_one_basis.db'
+        basis_elem = [['Li', 'X'], ['O', 'F']]
+        A_eq = [[0, 0, 3, -2]]
+        b_eq = [0]
+        conc = Concentration(basis_elements=basis_elements,
+                             A_eq=A_eq, b_eq=b_eq)
+        setting = CEBulk(crystalstructure='rocksalt', a=3.8,
+                         supercell_factor=27, max_cluster_dia=5.0,
+                         max_cluster_size=3, concentration=conc,
+                         db_name=db_name)
 
+        # Loop through and check that num_O sites is divisible by 5
+        for atoms in setting.template_atoms.templates['atoms']:
+            num_O = sum(1 for atom in atoms if atom.symbol == 'O')
+            ratio = num_O/5.0
+            self.assertAlmostEqual(ratio, int(ratio))
+        os.remove(db_name)
 
     def tearDown(self):
         if update_reference_file:
@@ -395,5 +410,3 @@ class TestCEBulk(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
