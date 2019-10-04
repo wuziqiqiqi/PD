@@ -54,7 +54,7 @@ class GAClusterSelector(object):
     def run(self):
         try:
             ga = GAFit(self.settings, **self.kwargs)
-            _ = ga.run()
+            cf_names = ga.run()
 
             optimizer = ECIOptimizer()
             optimizer.fit_page = self.fit_page
@@ -67,7 +67,7 @@ class GAClusterSelector(object):
                 self.settings, max_cluster_dia=max_cluster_dia,
                 max_cluster_size=max_cluster_size,
                 select_cond=select_cond, min_weight=min_weight,
-                fitting_scheme=LinearRegression())
+                fitting_scheme=LinearRegression(), cf_names=cf_names)
             optimizer.optimize()
         except Exception as exc:
             traceback.print_exc()
