@@ -3,6 +3,7 @@ from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
 from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
 from clease.gui.load_save_dialog import LoadDialog
+from clease import GAFit, LinearRegression, Evaluate
 from kivy.app import App
 import json
 from clease.gui.util import parse_max_cluster_dia
@@ -13,18 +14,18 @@ from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
+import traceback
 
 
-class ECIOptimiser(object):
+class ECIOptimizer(object):
     fit_page = None
     evaluator = None
 
-    def optimise(self):
+    def optimize(self):
         try:
             self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
-
             self.fit_page.e_ce = e_ce
             self.fit_page.e_dft = self.evaluator.e_dft
             self.fit_page.e_pred_leave_out = self.evaluator.e_pred_loo
@@ -38,6 +39,7 @@ class ECIOptimiser(object):
             self.fit_page.fitting_in_progress = False
             self.fit_page.update_plots()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
             return
@@ -50,27 +52,26 @@ class GAClusterSelector(object):
     _pop_up = None
 
     def run(self):
-        from clease import GAFit, LinearRegression, Evaluate
-
         try:
             ga = GAFit(self.settings, **self.kwargs)
-            _ = ga.run()
+            cf_names = ga.run()
 
-            optimiser = ECIOptimiser()
-            optimiser.fit_page = self.fit_page
+            optimizer = ECIOptimizer()
+            optimizer.fit_page = self.fit_page
 
             max_cluster_dia = self.kwargs['max_cluster_dia']
             max_cluster_size = self.kwargs['max_cluster_size']
             select_cond = self.kwargs['select_cond']
             min_weight = self.kwargs['min_weight']
-            optimiser.evaluator = Evaluate(
+            optimizer.evaluator = Evaluate(
                 self.settings, max_cluster_dia=max_cluster_dia,
                 max_cluster_size=max_cluster_size,
                 select_cond=select_cond, min_weight=min_weight,
-                fitting_scheme=LinearRegression())
-            optimiser.optimise()
+                fitting_scheme=LinearRegression(), cf_names=cf_names)
+            optimizer.optimize()
         except Exception as exc:
-            App.get_running_app().root.ids.status.text.text = str(exc)
+            traceback.print_exc()
+            App.get_running_app().root.ids.status.text = str(exc)
 
 
 class FitPage(Screen):
@@ -258,6 +259,7 @@ class FitPage(Screen):
             msg = 'ECIs saved to {}'.format(fname)
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def fit_eci(self):
@@ -280,6 +282,7 @@ class FitPage(Screen):
                 max_cluster_dia_cut = \
                     parse_max_cluster_dia(self.ids.maxClusterDiaCut.text)
             except Exception as exc:
+                traceback.print_exc()
                 App.get_running_app().root.ids.status.text = str(exc)
                 return
 
@@ -333,6 +336,7 @@ class FitPage(Screen):
                 'min_weight': 1.0,
                 'mutation_prob': self.fitting_params['mut_prob'],
                 'elitism': self.fitting_params['elitism'],
+                'fname': None,
                 'num_individuals': self.fitting_params['num_individuals'],
                 'max_num_in_init_pool': self.fitting_params['max_active'],
                 'cost_func': self.fitting_params['cost_func'].lower(),
@@ -341,9 +345,8 @@ class FitPage(Screen):
             }
             ga_runner.settings = settings
 
-            # GA behaves a bit different from the other schems
-            # therefore we have a separate runner and return
-            # after the runner is finished...
+            # As GA behaves a bit different from the other schemes, we have
+            # a separate runner and return after the runner is finished.
             msg = 'Selecting clusters with GA..'
             App.get_running_app().root.ids.status.text = msg
             Thread(target=ga_runner.run).start()
@@ -362,13 +365,14 @@ class FitPage(Screen):
                 num_repetitions=num_rep, scoring_scheme=scoring_scheme)
 
             App.get_running_app().root.ids.status.text = 'Optimizing ECIs...'
-            eci_optimiser = ECIOptimiser()
-            eci_optimiser.fit_page = self
-            eci_optimiser.evaluator = evaluator
+            eci_optimizer = ECIOptimizer()
+            eci_optimizer.fit_page = self
+            eci_optimizer.evaluator = evaluator
             self.fitting_in_progress = True
 
-            Thread(target=eci_optimiser.optimise).start()
+            Thread(target=eci_optimizer.optimize).start()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def set_cv(self, cv):

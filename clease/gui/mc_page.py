@@ -118,6 +118,7 @@ class MCPage(Screen):
             atoms = self._get_mc_cell()
             Thread(target=view, args=(atoms,)).start()
         except Exception as exc:
+            traceback.print_exc()
             app.root.ids.status.text = str(exc)
 
     def _get_mc_cell(self):
@@ -133,6 +134,7 @@ class MCPage(Screen):
             atoms = settings.atoms*(size, size, size)
             return atoms
         except Exception as exc:
+            traceback.print_exc()
             app.root.ids.status.text = str(exc)
         return None
 

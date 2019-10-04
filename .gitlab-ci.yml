@@ -27,7 +27,7 @@ gui_test:
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" coverage run --include='*/clease/gui/*' -m unittest discover gui_tests/
     - coverage report
-    
+
 doctest:
   image: python:3
   script:

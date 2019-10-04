@@ -1,4 +1,5 @@
 from kivy.app import App
+import traceback
 
 
 class SettingsInitializer(object):
@@ -17,8 +18,10 @@ class SettingsInitializer(object):
                 self.app.root.settings = CECrystal(**self.kwargs)
             self.status.text = 'Finished initializing'
         except AssertionError as exc:
+            traceback.print_exc()
             msg = "AssertError during initialization " + str(exc)
             self.status.text = msg
 
         except Exception as exc:
+            traceback.print_exc()
             self.status.text = str(exc)
