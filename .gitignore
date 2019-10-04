@@ -20,3 +20,4 @@ build/*
 cxx/cython/clease_cxx.cpp
 *editor.txt
 *.log
+*.coverage
