@@ -80,10 +80,12 @@ class MCRunner(object):
 
         # Temporarily disable info update during initalisation
         self.mc_page.info_update_disabled = True
+        self.mc_page.view_mc_cell_disabled = True
         self.atoms = attach_calculator(setting=self.settings, atoms=self.atoms,
                                        eci=self.eci)
         self.mc_page.active_template_is_mc_cell = True
         self.mc_page.info_update_disabled = False
+        self.mc_page.view_mc_cell_disabled = False
 
     def _init_conc(self):
         if self.conc_mode == SYSTEMS_FROM_DB:
