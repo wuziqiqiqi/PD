@@ -8,6 +8,9 @@ import json
 from clease.gui.util import parse_max_cluster_dia
 from clease.gui.constants import BACKGROUND_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.constants import ECI_GRAPH_COLORS
+from clease.gui.fittingAlgorithmEditors import (
+    LassoEditor, L2Editor, BCSEditor, GAEditor
+)
 from threading import Thread
 from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
@@ -140,6 +143,8 @@ class FitPage(Screen):
             self.graphs_added = True
 
     def dismiss_popup(self):
+        if self._pop_up is None:
+            return
 
         if isinstance(self._pop_up.content, FitAlgEditor):
             self._pop_up.content.backup()
@@ -475,3 +480,33 @@ class FitPage(Screen):
         self.ids.kFoldInput.text = data.get('k_fold', '10')
         self.ids.numRepititionsInput.text = data.get('num_repetitions', '1')
         self.ids.fitAlgSpinner.text = data.get('fit_alg', 'LASSO')
+
+    def load_fit_alg_settings(self, text):
+        fnames = {
+            'LASSO': LassoEditor.backup
+            'L2': L2Editor.backup
+            'BCS': BCSEditor.backup
+            'Genetic Algorithm': GAEditor.backup
+        }
+
+        closing_methods = {
+            'LASSO': self.close_lasso_editor,
+            'L2': self.close_l2_editor,
+            'BCS': self.close_bcs_editor,
+            'Genetic Algorithm': self.close_ga_editor
+        }
+
+        fname = fnames.get(text, None)
+        close = closing_methods[text]
+
+        app = App.get_running_app()
+
+        if fname is None:
+            app.root.ids.status.text = 'Unkown fitting scheme'
+            return
+
+        args = []
+        with open(fname, 'r') as infile:
+            for line in infile:
+                args.append(line.strip())
+        close(*args)
