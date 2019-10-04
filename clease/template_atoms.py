@@ -87,10 +87,10 @@ class TemplateAtoms(object):
             'size': [],
             'atoms': []
         }
-        for size, atom in zip(self.templates['size'], self.templates['atoms']):
-            if template_filter(atoms):
+        for size, at in zip(self.templates['size'], self.templates['atoms']):
+            if template_filter(at):
                 filtered_templates['size'].append(size)
-                filtered_templates['atoms'].append(atoms)
+                filtered_templates['atoms'].append(at)
         self.templates = filtered_templates
 
     def is_valid(self, atoms=None, cell=None):
