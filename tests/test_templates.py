@@ -163,6 +163,7 @@ class TestTemplates(unittest.TestCase):
         template_atoms.apply_filter(NumAtomsFilter(num_atoms))
         for atoms in template_atoms.templates['atoms']:
             self.assertGreaterEqual(len(atoms), num_atoms)
+        os.remove(db_name)
 
 
 if __name__ == '__main__':
