@@ -74,6 +74,25 @@ class TemplateAtoms(object):
         self.cell_filters = []
         self.atoms_filters = []
 
+    def apply_filter(self, template_filter):
+        """
+        Apply a filter to already generated templates
+
+        Paramaters
+
+        template_filter: AtomsFilter or CellFilter
+            Filter to run through the templates
+        """
+        filtered_templates = {
+            'size': [],
+            'atoms': []
+        }
+        for size, atom in zip(self.templates['size'], self.templates['atoms']):
+            if template_filter(atoms):
+                filtered_templates['size'].append(size)
+                filtered_templates['atoms'].append(atoms)
+        self.templates = filtered_templates
+
     def is_valid(self, atoms=None, cell=None):
         """
         Check the validity of the template.
