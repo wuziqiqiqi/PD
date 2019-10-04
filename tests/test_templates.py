@@ -5,6 +5,7 @@ from ase.build import bulk
 from ase.db import connect
 from ase.build import niggli_reduce
 from clease import Concentration, ValidConcentrationFilter
+from clease.template_filters import AtomsFilter
 from clease import DistanceBetweenFacetsFilter
 import numpy as np
 import unittest
@@ -18,6 +19,14 @@ class SettingsPlaceHolder(object):
     atoms = None
     index_by_basis = []
     conc = None
+
+
+class NumAtomsFilter(AtomsFilter):
+    def __init__(self, min_num_atoms):
+        self.min_num_atoms = min_num_atoms
+
+    def __call__(self, atoms):
+        return len(atoms) > self.min_num_atoms
 
 
 class TestTemplates(unittest.TestCase):
@@ -130,6 +139,31 @@ class TestTemplates(unittest.TestCase):
                 found_conventional = True
                 break
         self.assertTrue(found_conventional)
+
+    def test_apply_filter(self):
+        db_name = 'templates_fcc_apply_filter.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
+                                       skew_threshold=4,
+                                       db_name=db_name)
+
+        num_atoms = 16
+        # First confirm that we have cells with less than 16 atoms
+        has_less_than = False
+        for atoms in template_atoms.templates['atoms']:
+            if len(atoms) < num_atoms:
+                has_less_than = True
+                break
+        self.assertTrue(has_less_than)
+
+        # Filter all atoms with less than 16 atoms
+        template_atoms.apply_filter(NumAtomsFilter(num_atoms))
+        for atoms in template_atoms.templates['atoms']:
+            self.assertGreaterEqual(len(atoms), num_atoms)
+
 
 if __name__ == '__main__':
     unittest.main()
