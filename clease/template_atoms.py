@@ -85,17 +85,14 @@ class TemplateAtoms(object):
                             'can be removed')
 
     def remove_filters(self, filters):
-        """
-        Remove a list of filters.
-        """
+        """Remove a list of filters."""
         for f in filters:
             self.remove_filter(f)
 
     def apply_filter(self, template_filter):
-        """
-        Apply a filter to already generated templates
+        """Apply a filter to already generated templates.
 
-        Paramaters
+        Paramaters:
 
         template_filter: AtomsFilter or CellFilter
             Filter to run through the templates
