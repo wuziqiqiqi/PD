@@ -138,7 +138,6 @@ class MCPage(Screen):
                 return
 
             atoms = None
-            print("ACTIVE_TEMPLATE", self.active_template_is_mc_cell)
             if self.active_template_is_mc_cell:
                 atoms = settings.atoms.copy()
             else:
