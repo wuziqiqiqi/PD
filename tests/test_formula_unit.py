@@ -17,28 +17,28 @@ class TestFormulaUnit(unittest.TestCase):
                              b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
         setting = CEBulk(crystalstructure="rocksalt",
                          a=4.0,
-                         size=[2, 2, 2],
+                         size=[2, 2, 3],
                          concentration=conc,
                          db_name=db_name,
                          max_cluster_size=3,
                          max_cluster_dia=4.)
         newstruct = NewStructures(setting=setting)
 
-        test = bulk(name='LiO', crystalstructure='rocksalt', a=4.0) * (2, 2, 2)
+        test = bulk(name='LiO', crystalstructure='rocksalt', a=4.0) * (2, 2, 3)
         atoms = wrap_and_sort_by_position(test.copy())
         atoms[0].symbol = 'Ru'
         atoms[1].symbol = 'X'
-        atoms[14].symbol = 'X'
+        atoms[4].symbol = 'X'
         fu = newstruct._get_formula_unit(atoms)
-        self.assertEqual(fu, "Li6Ru1X1_O7X1")
+        self.assertEqual(fu, "Li10Ru1X1_O11X1")
 
         atoms = wrap_and_sort_by_position(test.copy())
         fu = newstruct._get_formula_unit(atoms)
         self.assertEqual(fu, "Li1_O1")
 
         atoms = wrap_and_sort_by_position(test.copy())
-        replace_cat = [0, 1, 2, 5]
-        replace_an = [4, 7, 9, 12]
+        replace_cat = [0, 1, 2, 5, 6, 14]
+        replace_an = [4, 7, 9, 13, 15, 20]
         for cat in replace_cat:
             atoms[cat].symbol = 'X'
         for an in replace_an:
