@@ -434,8 +434,15 @@ class FitPage(Screen):
                                    for x, y in zip(e_ce, e_dft)]
         self.zero_line_energy.points = [(xmin, 0.0), (xmax, 0.0)]
 
+    def _clear_eci_plots(self):
+        for plot in self.eci_plots:
+            plot.points = []
+
     def update_eci_plot(self, eci):
         eci_by_size = {}
+
+        if len(eci) == 0:
+            return
 
         for k, v in eci.items():
             size = int((k[1]))
@@ -451,6 +458,7 @@ class FitPage(Screen):
         xmax = len(list(eci.keys())) + len(sorted_keys)
         ymin = min([v for _, v in eci.items()])
         ymax = max([v for _, v in eci.items()])
+        self._clear_eci_plots()
         for i, k in enumerate(sorted_keys):
             values = eci_by_size[k]
             indx = range(prev, prev + len(values))
