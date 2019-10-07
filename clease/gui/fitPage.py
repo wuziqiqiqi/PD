@@ -425,6 +425,9 @@ class FitPage(Screen):
     def update_eci_plot(self, eci):
         eci_by_size = {}
 
+        if len(eci) == 0:
+            return
+
         for k, v in eci.items():
             size = int((k[1]))
             if size < 2:
