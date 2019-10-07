@@ -57,13 +57,14 @@ class GAClusterSelector(object):
             gen_without_change = self.kwargs.pop('gen_without_change')
             load_file = self.kwargs.pop('load_file')
             if not load_file:
-                fname1 = 'ga_fit.csv'
-                fname2 = 'ga_fit.csv_cf_names.txt'
+                fname1 = '.cleaseGUI/ga_fit.csv'
+                fname2 = '.cleaseGUI/ga_fit_cf_names.txt'
                 if os.path.exists(fname1):
                     os.remove(fname1)
                 if os.path.exists(fname2):
                     os.remove(fname2)
 
+            self.kwargs['fname'] = '.cleaseGUI/ga_fit.csv'
             ga = GAFit(self.settings, **self.kwargs)
             cf_names = ga.run(gen_without_change=gen_without_change)
 
