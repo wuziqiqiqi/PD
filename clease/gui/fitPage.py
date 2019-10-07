@@ -18,11 +18,11 @@ import traceback
 import os
 
 
-class ECIOptimiser(object):
+class ECIOptimizer(object):
     fit_page = None
     evaluator = None
 
-    def optimise(self):
+    def optimize(self):
         try:
             self.fit_page.eci = self.evaluator.get_eci_dict()
 
@@ -65,21 +65,21 @@ class GAClusterSelector(object):
                     os.remove(fname2)
 
             ga = GAFit(self.settings, **self.kwargs)
-            _ = ga.run(gen_without_change=gen_without_change)
+            cf_names = ga.run(gen_without_change=gen_without_change)
 
-            optimiser = ECIOptimiser()
-            optimiser.fit_page = self.fit_page
+            optimizer = ECIOptimizer()
+            optimizer.fit_page = self.fit_page
 
             max_cluster_dia = self.kwargs['max_cluster_dia']
             max_cluster_size = self.kwargs['max_cluster_size']
             select_cond = self.kwargs['select_cond']
             min_weight = self.kwargs['min_weight']
-            optimiser.evaluator = Evaluate(
+            optimizer.evaluator = Evaluate(
                 self.settings, max_cluster_dia=max_cluster_dia,
                 max_cluster_size=max_cluster_size,
                 select_cond=select_cond, min_weight=min_weight,
-                fitting_scheme=LinearRegression())
-            optimiser.optimise()
+                fitting_scheme=LinearRegression(), cf_names=cf_names)
+            optimizer.optimize()
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
@@ -349,6 +349,7 @@ class FitPage(Screen):
                 'min_weight': 1.0,
                 'mutation_prob': self.fitting_params['mut_prob'],
                 'elitism': self.fitting_params['elitism'],
+                'fname': None,
                 'num_individuals': self.fitting_params['num_individuals'],
                 'max_num_in_init_pool': self.fitting_params['max_active'],
                 'cost_func': self.fitting_params['cost_func'].lower(),
@@ -359,9 +360,8 @@ class FitPage(Screen):
             }
             ga_runner.settings = settings
 
-            # GA behaves a bit different from the other schems
-            # therefore we have a separate runner and return
-            # after the runner is finished...
+            # As GA behaves a bit different from the other schemes, we have
+            # a separate runner and return after the runner is finished.
             msg = 'Selecting clusters with GA..'
             App.get_running_app().root.ids.status.text = msg
             Thread(target=ga_runner.run).start()
@@ -380,12 +380,12 @@ class FitPage(Screen):
                 num_repetitions=num_rep, scoring_scheme=scoring_scheme)
 
             App.get_running_app().root.ids.status.text = 'Optimizing ECIs...'
-            eci_optimiser = ECIOptimiser()
-            eci_optimiser.fit_page = self
-            eci_optimiser.evaluator = evaluator
+            eci_optimizer = ECIOptimizer()
+            eci_optimizer.fit_page = self
+            eci_optimizer.evaluator = evaluator
             self.fitting_in_progress = True
 
-            Thread(target=eci_optimiser.optimise).start()
+            Thread(target=eci_optimizer.optimize).start()
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)

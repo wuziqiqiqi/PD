@@ -1,31 +1,32 @@
 python3_test:
   image: python:3
+  coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - apt-get update -qy
     - apt-get install -qy python3-dev python3-pip
+    - python3 -m pip install coverage
     - python3 --version
     - python3 -m pip install -r requirements.txt
     - python3 -m pip install .
-    - python3 -m unittest discover tests/
+    - coverage run --omit='*numpy*','*scipy*','*/ase*','*spglib*','*test*.py' -m unittest discover tests/
+    - coverage report
 
 gui_test:
   image: python:3
+  coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - apt-get update -qy
     - apt-get install -qy python3-dev python3-pip
     - apt-get install -qy xvfb
     - python3 --version
     - python3 -m pip install -r requirements.txt
-    - python3 -m pip install kivy
-    - python3 -m pip install kivy-garden
-    - garden install matplotlib
     - python3 -m pip install mock
+    - python3 -m pip install coverage
     - python3 -m pip install .
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
-    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/new_struct_page_test.py
-    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/fit_page_tests.py
-    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 -m unittest discover gui_tests/
+    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" coverage run --include='*/clease/gui/*' -m unittest discover gui_tests/
+    - coverage report
 
 doctest:
   image: python:3
