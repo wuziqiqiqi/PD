@@ -22,6 +22,9 @@ class MCPage(Screen):
     mean_energy_plot = None
     _pop_up = None
     mc_is_running = False
+    active_template_is_mc_cell = False
+    info_update_disabled = False
+    view_mc_cell_disabled = False
 
     def on_enter(self):
         self.set_cell_info()
@@ -113,6 +116,10 @@ class MCPage(Screen):
 
     def view_mc_cell(self):
         app = App.get_running_app()
+        if self.view_mc_cell_disabled:
+            msg = 'Cannot view MC cell while attaching calculator'
+            app.root.ids.status.text = msg
+            return
         try:
             from ase.visualize import view
             atoms = self._get_mc_cell()
@@ -131,7 +138,11 @@ class MCPage(Screen):
                 app.root.ids.status.text = 'Apply settings prior to running MC'
                 return
 
-            atoms = settings.atoms*(size, size, size)
+            atoms = None
+            if self.active_template_is_mc_cell:
+                atoms = settings.atoms.copy()
+            else:
+                atoms = settings.atoms*(size, size, size)
             return atoms
         except Exception as exc:
             traceback.print_exc()
@@ -139,6 +150,8 @@ class MCPage(Screen):
         return None
 
     def set_cell_info(self):
+        if self.info_update_disabled:
+            return
         atoms = self._get_mc_cell()
 
         if atoms is None:
