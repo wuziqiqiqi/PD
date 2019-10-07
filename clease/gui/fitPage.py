@@ -15,6 +15,7 @@ from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
 import traceback
+import os
 
 
 class ECIOptimizer(object):
@@ -53,8 +54,19 @@ class GAClusterSelector(object):
 
     def run(self):
         try:
+            gen_without_change = self.kwargs.pop('gen_without_change')
+            load_file = self.kwargs.pop('load_file')
+            if not load_file:
+                fname1 = '.cleaseGUI/ga_fit.csv'
+                fname2 = '.cleaseGUI/ga_fit_cf_names.txt'
+                if os.path.exists(fname1):
+                    os.remove(fname1)
+                if os.path.exists(fname2):
+                    os.remove(fname2)
+
+            self.kwargs['fname'] = '.cleaseGUI/ga_fit.csv'
             ga = GAFit(self.settings, **self.kwargs)
-            cf_names = ga.run()
+            cf_names = ga.run(gen_without_change=gen_without_change)
 
             optimizer = ECIOptimizer()
             optimizer.fit_page = self.fit_page
@@ -205,7 +217,7 @@ class FitPage(Screen):
         self.dismiss_popup()
 
     def close_ga_editor(self, elitism, mut_prob, num_individuals, max_active,
-                        cost_func, sparsity, sub_clust):
+                        cost_func, sparsity, sub_clust, load_file, max_without_imp):
         self.fitting_params = {
             'algorithm': 'GA',
             'elitism': int(elitism),
@@ -214,7 +226,9 @@ class FitPage(Screen):
             'max_active': int(max_active),
             'cost_func': cost_func,
             'sparsity': float(sparsity),
-            'sub_clust': sub_clust == 'Yes'
+            'sub_clust': sub_clust == 'Yes',
+            'load_file': load_file,
+            'gen_without_change': int(max_without_imp)
         }
         self.dismiss_popup()
 
@@ -341,7 +355,9 @@ class FitPage(Screen):
                 'max_num_in_init_pool': self.fitting_params['max_active'],
                 'cost_func': self.fitting_params['cost_func'].lower(),
                 'sparsity_slope': self.fitting_params['sparsity'],
-                'include_subclusters': self.fitting_params['sub_clust']
+                'include_subclusters': self.fitting_params['sub_clust'],
+                'gen_without_change': self.fitting_params['gen_without_change'],
+                'load_file': self.fitting_params['load_file']
             }
             ga_runner.settings = settings
 
