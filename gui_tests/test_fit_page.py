@@ -9,6 +9,7 @@ import os.path as op
 import numpy as np
 import time
 
+
 class FitPageTests(unittest.TestCase):
     def eci_popup(self, app):
         screen = app.root.ids.sm.get_screen('Fit')
