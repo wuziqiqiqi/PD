@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from clease.gui.fittingAlgorithmEditors import GAEditor
 from clease.gui.fitPage import FitPage
 import clease.gui
@@ -49,7 +49,8 @@ class TestGAEditor(unittest.TestCase):
         ga_edit.ids.forceSubHelp.dispatch('on_release')
         close(ga_edit)
 
-    def test_closing(self):
+    @patch('clease.gui.fitPage.App')
+    def test_closing(self, app_mock):
         clear_cached_values()
         page = FitPage()
 
