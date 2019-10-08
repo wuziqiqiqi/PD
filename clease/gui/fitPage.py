@@ -1,4 +1,3 @@
-#from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
 from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
