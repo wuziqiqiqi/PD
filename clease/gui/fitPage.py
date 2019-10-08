@@ -221,7 +221,10 @@ class FitPage(Screen):
         self.dismiss_popup()
 
     def close_ga_editor(self, elitism, mut_prob, num_individuals, max_active,
-                        cost_func, sparsity, sub_clust, load_file, max_without_imp):
+                        cost_func, sparsity, sub_clust, load_file,
+                        max_without_imp):
+        if isinstance(load_file, str):
+            load_file = load_file == 'True'
         self.fitting_params = {
             'algorithm': 'GA',
             'elitism': int(elitism),
@@ -523,19 +526,24 @@ class FitPage(Screen):
             'Genetic Algorithm': self.close_ga_editor
         }
 
+        editors = {
+            'LASSO': LassoEditor(),
+            'L2': L2Editor(),
+            'BCS': BCSEditor(),
+            'Genetic Algorithm': GAEditor()
+        }
         fname = fnames.get(text, None)
         close = closing_methods[text]
 
         app = App.get_running_app()
-
         if fname is None:
             app.root.ids.status.text = 'Unkown fitting scheme'
             return
 
         full_name = '.cleaseGUI/' + fname
-
         if not os.path.exists(full_name):
-            return
+            # Create the file
+            editors[text].backup()
 
         args = []
         with open(full_name, 'r') as infile:
