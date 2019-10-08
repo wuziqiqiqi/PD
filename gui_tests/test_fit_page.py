@@ -8,6 +8,15 @@ from kivy.resources import resource_add_path
 import os.path as op
 import numpy as np
 import time
+import os
+import glob
+
+
+def clear_cache():
+    if os.path.exists('.cleaseGUI/'):
+        for f in glob.glob('cleaseGUI/*'):
+            os.remove(f)
+
 
 class FitPageTests(unittest.TestCase):
     def eci_popup(self, app):
@@ -95,6 +104,50 @@ class FitPageTests(unittest.TestCase):
         self.assertEqual(len(page.eci_plots[0].points), 1)
         self.assertAlmostEqual(page.eci_plots[0].points[0][1], 2.0)
 
+    @patch('clease.gui.fitPage.App')
+    def test_auto_load_fit_settings(self, app_mock):
+        clear_cache()
+        page = FitPage()
+        expected = {
+            'LASSO': {'alpha': 0.0001, 'algorithm': 'LASSO'},
+            'L2': {'alpha': 0.0001, 'algorithm': 'L2'},
+            'BCS': {
+                'algorithm': 'BCS',
+                'shape_var': 0.5,
+                'rate_var': 0.5,
+                'shape_lamb': 0.5,
+                'var_opt_start': 100,
+                'init_lamb': 0.0,
+                'lamb_opt_start': 200,
+                'max_iter': 10000,
+                'noise': 0.1
+            },
+            'Genetic Algorithm': {
+                'algorithm': 'GA',
+                'elitism': 1,
+                'mut_prob': 0.1,
+                'num_individuals': 100,
+                'max_active': 150,
+                'cost_func': 'AIC',
+                'sparsity': 1.0,
+                'sub_clust': False,
+                'load_file': False,
+                'gen_without_change': 100
+            }
+        }
+
+        for k, v in expected.items():
+            page.load_fit_alg_settings(k)
+
+            # Small waiting
+            time.sleep(0.01)
+            for param, value in v.items():
+                page_param = page.fitting_params.get(param, None)
+                if isinstance(page_param, str):
+                    self.assertEqual(page_param, value)
+                else:
+                    self.assertAlmostEqual(page_param, value)
+
     def run_with_app(self, app):
         self.eci_popup(app)
         self.open_fit_alg_editors(app)
@@ -106,4 +159,7 @@ if __name__ == '__main__':
     resource_add_path(main_path + '/layout')
     Builder.load_file("fitLayout.kv")
     Builder.load_file("gaEditor.kv")
+    Builder.load_file("lassoEditorLayout.kv")
+    Builder.load_file("l2EditorLayout.kv")
+    Builder.load_file("bcsEditorLayout.kv")
     unittest.main()

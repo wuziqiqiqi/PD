@@ -2,6 +2,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+from kivy.uix.checkbox import CheckBox
 from clease.gui.help_message_popup import HelpMessagePopup
 import os
 from kivy.uix.popup import Popup
@@ -29,6 +30,8 @@ class FitAlgEditor(FloatLayout):
             if isinstance(child, (TextInput, Spinner)):
                 txt = child.text
                 values.append(txt)
+            elif isinstance(child, CheckBox):
+                values.append(child.active)
 
         with open(self.backup_filename, 'w') as out:
             for v in values:
@@ -44,6 +47,9 @@ class FitAlgEditor(FloatLayout):
             for child in self.ids.mainLayout.children:
                 if isinstance(child, (TextInput, Spinner)):
                     child.text = lines[counter]
+                    counter += 1
+                elif isinstance(child, CheckBox):
+                    child.active = lines[counter] == 'True'
                     counter += 1
         except Exception:
             pass
