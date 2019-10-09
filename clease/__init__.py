@@ -32,3 +32,5 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
            'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
            'SkewnessFilter', 'ClusterExtractor']
+
+__version__ = '0.9.5'

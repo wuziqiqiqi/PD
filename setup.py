@@ -57,6 +57,9 @@ def install_kivy_garden_from_github():
     except ImportError:
         pipmain(['install', 'https://github.com/kivy-garden/graph/archive/master.zip'])
 
+# Get version number
+from clease import __version__
+
 
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
@@ -90,7 +93,7 @@ setup(
     long_description='CLuster Expansion in Atomistic Simulation Environment',
     url='https://gitlab.com/computationalmaterials/clease',
     scripts=['bin/clease'],
-    version='0.9.5',
+    version=__version__,
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
     download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.5/clease-v0.9.5.zip',
