@@ -1,7 +1,10 @@
 from clease.cluster_generator import ClusterGenerator
+from clease import CEBulk, Concentration
+from clease.tools import wrap_and_sort_by_position
 import unittest
 from ase.build import bulk
 import numpy as np
+import os
 
 
 class TestClusterGenerator(unittest.TestCase):
@@ -41,6 +44,45 @@ class TestClusterGenerator(unittest.TestCase):
         clusters, fps = generator.generate(2, 5.0, ref_lattice=0)
         self.assertEqual(len(clusters), 3)
         self.assertEqual(len(fps), 3)
+
+    def test_to_atom_index_fcc(self):
+        atoms = bulk('Al', a=4.05)
+        generator = ClusterGenerator(atoms)
+        clusters, fps = generator.generate(3, 6.0, ref_lattice=0)
+
+        # Create a conventional unit cess
+        atoms = bulk('Al', a=4.05, cubic=True)*(5, 5, 5)
+        atoms = wrap_and_sort_by_position(atoms)
+        int_clusters = generator.to_atom_index(clusters, atoms)
+
+        # Test that cluster matches alternative algorithm
+        db_name = "test_triplets_map.db"
+        basis_elements = [['Al', 'Cu']]
+        concentration = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
+                         concentration=concentration, db_name=db_name,
+                         max_cluster_dia=[5.0, 5.0],
+                         max_cluster_size=3)
+
+        setting.set_active_template(atoms=atoms, generate_template=True)
+
+        clist = setting.cluster_list
+        triplets = clist.get_by_size(3)
+        # Loop through clusters and compare all the clusters that has a
+        # matching finger print. NOTE: definition of diameter is slightly
+        # different, hence all cluster will not be present
+        # Here, we confirm that both algorithm extracts the exact same indices
+        # for all clusters
+        for c in clist:
+            try:
+                i = fps.index(c.fp)
+                c.indices = [sorted(x) for x in c.indices]
+                for f in int_clusters[i]:
+                    self.assertTrue(sorted(f) in c.indices)
+            except ValueError:
+                pass
+        os.remove(db_name)
+
 
 
 if __name__ == '__main__':

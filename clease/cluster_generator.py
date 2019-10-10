@@ -2,6 +2,8 @@ from itertools import filterfalse, product
 from itertools import combinations
 import numpy as np
 from clease.cluster_fingerprint import ClusterFingerprint
+from scipy.spatial import cKDTree as KDTree
+from ase.geometry import wrap_positions
 
 
 class ClusterGenerator(object):
@@ -95,6 +97,9 @@ class ClusterGenerator(object):
             X = [x0] + [self.cartesian(v) for v in comb]
             fp = self.get_fp(X)
 
+            if np.max(np.sqrt(fp.fp[:3])) > cutoff/2.0:
+                continue
+
             # Find the group
             new_item = [v0] + [list(x) for x in comb]
             try:
@@ -129,3 +134,34 @@ class ClusterGenerator(object):
         dists = self._get_internal_distances(figure)
         zipped = sorted(list(zip(dists, figure)), reverse=True)
         return [x[1] for x in zipped]
+
+    def to_atom_index(self, clusters, template):
+        """
+        Convert the integer vector representation to an atomic index
+
+        Parameters:
+        clusters: list
+            List of clusters (in integer vector representation)
+
+        template: Atoms
+            Template atoms to use
+        """
+        cell = template.get_cell()
+        pos = template.get_positions()
+        tree = KDTree(pos)
+        int_clusters = []
+
+        for cluster in clusters:
+            int_cluster = []
+            for fig in cluster:
+                int_fig = []
+                for ivec in fig:
+                    x = self.cartesian(ivec)
+                    x_mat = np.zeros((1, 3))
+                    x_mat[0, :] = x
+                    x = wrap_positions(x_mat, cell)
+                    d, i = tree.query(x)
+                    int_fig.append(i[0])
+                int_cluster.append(int_fig)
+            int_clusters.append(int_cluster)
+        return int_clusters
