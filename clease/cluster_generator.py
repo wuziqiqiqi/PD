@@ -1,5 +1,7 @@
 from itertools import filterfalse, product
+from itertools import combinations
 import numpy as np
+from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class ClusterGenerator(object):
@@ -65,7 +67,42 @@ class ClusterGenerator(object):
                     range(self.num_sub_lattices)))
         return sites
 
-    def generate(self, size, cutoff):
+    def get_fp(self, X):
+        """
+        Generate finger print given a position matrix
+        """
+        X = np.array(X)
+        com = np.mean(X, axis=0)
+        X -= com
+        X = X.dot(X.T)
+        diag = np.diagonal(X)
+        off_diag = []
+        for i in range(1, X.shape[0]):
+            off_diag += np.diagonal(X, offset=i).tolist()
+        N = X.shape[0]
+        assert len(off_diag) == N*(N-1)/2
+        inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
+        fp = ClusterFingerprint(list(inner))
+        return fp
+
+    def generate(self, size, cutoff, ref_lattice=0):
         clusters = []
-        fp = []
+        all_fps = []
+        sites = self.sites_within_cutoff(cutoff, ref_lattice=ref_lattice)
+        x0 = np.array(self.cartesian([0, 0, 0, ref_lattice]))
+        for comb in combinations(sites, r=size-1):
+            X = [self.cartesian(v) for v in comb]
+            X.append(x0)
+            fp = self.get_fp(X)
+
+            # Find the group
+            try:
+                group = all_fps.index(fp)
+                clusters[group].append(comb)
+            except ValueError:
+                # Does not exist, create a new group
+                clusters.append([comb])
+                all_fps.append(fp)
+        return clusters, all_fps
+
         

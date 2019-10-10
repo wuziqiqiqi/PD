@@ -35,5 +35,13 @@ class TestClusterGenerator(unittest.TestCase):
         indices = list(generator.sites_within_cutoff(snn+0.01, ref_lattice=0))
         self.assertEqual(len(indices), 14)
 
+    def test_generate_pairs_fcc(self):
+        atoms = bulk('Al', a=4.05)
+        generator = ClusterGenerator(atoms)
+        clusters, fps = generator.generate(2, 5.0, ref_lattice=0)
+        self.assertEqual(len(clusters), 3)
+        self.assertEqual(len(fps), 3)
+
+
 if __name__ == '__main__':
     unittest.main()
