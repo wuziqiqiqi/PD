@@ -83,6 +83,45 @@ class TestClusterGenerator(unittest.TestCase):
                 pass
         os.remove(db_name)
 
+    def test_to_atom_index_rocksalt(self):
+        db_name = 'test_cluster_generator_rocksalt.db'
+        basis_elements = [['Li', 'V'], ['X', 'O']]
+        concentration = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(crystalstructure="rocksalt",
+                         a=4.0,
+                         size=[2, 2, 1],
+                         concentration=concentration,
+                         db_name=db_name,
+                         max_cluster_size=3,
+                         max_cluster_dia=[4.01, 4.01])
+
+        atoms = bulk('LiX', crystalstructure='rocksalt', a=4.0)
+        generator = ClusterGenerator(atoms)
+        clusters1, fp1 = generator.generate(3, 6.0, ref_lattice=0)
+        clusters2, fp2 = generator.generate(3, 6.0, ref_lattice=1)
+
+        atoms = bulk('LiX', crystalstructure='rocksalt', a=4.0)*(4, 4, 4)
+        atoms = wrap_and_sort_by_position(atoms)
+        setting.set_active_template(atoms=atoms, generate_template=True)
+        int_cluster1 = generator.to_atom_index(clusters1, atoms)
+        int_cluster2 = generator.to_atom_index(clusters2, atoms)
+
+        c_list = setting.cluster_list.get_by_size(3)
+
+        int_clusters = [int_cluster1, int_cluster2]
+        fps = [fp1, fp2]
+        # for c in c_list:
+        #     c.indices = [sorted(x) for x in c.indices]
+        #     ref = c.ref_indx  # TODO: Fix such that ref is mapped to the correct int cluster
+        #     try:
+        #         i = fps[ref].index(c.fp)
+        #         for f in int_clusters[ref][i]:
+        #             self.assertTrue(sorted(f) in c.indices)
+        #     except ValueError:
+        #         pass
+
+
+
 
 
 if __name__ == '__main__':
