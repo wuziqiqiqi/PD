@@ -63,7 +63,6 @@ with open('clease/__init__.py') as fd:
     version = re.search("__version__ = '(.*)'", fd.read()).group(1)
 
 
-
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
 cython_folder = get_cython_folder()
@@ -99,7 +98,7 @@ setup(
     version=version,
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
-    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v0.9.5/clease-v0.9.5.zip',
+    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v{0}/clease-v{0}.zip'.format(version),
     include_package_data=True,
     package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
