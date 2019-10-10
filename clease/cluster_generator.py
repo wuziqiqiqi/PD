@@ -89,20 +89,43 @@ class ClusterGenerator(object):
         clusters = []
         all_fps = []
         sites = self.sites_within_cutoff(cutoff, ref_lattice=ref_lattice)
-        x0 = np.array(self.cartesian([0, 0, 0, ref_lattice]))
+        v0 = [0, 0, 0, ref_lattice]
+        x0 = np.array(self.cartesian(v0))
         for comb in combinations(sites, r=size-1):
-            X = [self.cartesian(v) for v in comb]
-            X.append(x0)
+            X = [x0] + [self.cartesian(v) for v in comb]
             fp = self.get_fp(X)
 
             # Find the group
+            new_item = [v0] + [list(x) for x in comb]
             try:
                 group = all_fps.index(fp)
-                clusters[group].append(comb)
+                clusters[group].append(new_item)
             except ValueError:
                 # Does not exist, create a new group
-                clusters.append([comb])
+                clusters.append([new_item])
                 all_fps.append(fp)
+
+        # Order the indices by internal indices
+        for cluster in clusters:
+            for i, f in enumerate(cluster):
+                ordered_f = self._order_by_internal_distances(f)
+                cluster[i] = ordered_f
         return clusters, all_fps
 
-        
+    def _get_internal_distances(self, figure):
+        """
+        Return all the internal distances of a figure
+        """
+        dists = []
+        for x0 in figure:
+            d = []
+            for x1 in figure:
+                d.append(self.eucledian_distance(x0, x1))
+            dists.append(sorted(d, reverse=True))
+        return dists
+
+    def _order_by_internal_distances(self, figure):
+        """Order the indices by internal distances."""
+        dists = self._get_internal_distances(figure)
+        zipped = sorted(list(zip(dists, figure)), reverse=True)
+        return [x[1] for x in zipped]
