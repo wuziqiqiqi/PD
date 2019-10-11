@@ -96,8 +96,7 @@ class ClusterGenerator(object):
         for comb in combinations(sites, r=size-1):
             X = [x0] + [self.cartesian(v) for v in comb]
             fp = self.get_fp(X)
-
-            if np.max(np.sqrt(fp.fp[:3])) > cutoff/2.0:
+            if np.max(np.sqrt(fp.fp[:size])) > cutoff/2.0:
                 continue
 
             # Find the group
@@ -167,3 +166,24 @@ class ClusterGenerator(object):
                 int_cluster.append(int_fig)
             int_clusters.append(int_cluster)
         return int_clusters
+
+    def equivalent_sites(self, figure):
+        """Find the equivalent sites of a figure."""
+        dists = self._get_internal_distances(figure)
+        equiv_sites = []
+        for i in range(len(dists)):
+            for j in range(i+1, len(dists)):
+                if np.allclose(dists[i], dists[j]):
+                    equiv_sites.append((i, j))
+
+        # Merge pairs into groups
+        merged = []
+        for equiv in equiv_sites:
+            found_group = False
+            for m in merged:
+                if any(x in m for x in equiv):
+                    m.update(equiv)
+                    found_group = True
+            if not found_group:
+                merged.append(set(equiv))
+        return [list(x) for x in merged]
