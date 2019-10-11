@@ -125,6 +125,22 @@ class TestClusterGenerator(unittest.TestCase):
             except ValueError:
                 pass
 
+    def test_equivalent_sites(self):
+        atoms = bulk('Au', a=3.8)
+        generator = ClusterGenerator(atoms)
+
+        # Test pairs
+        clusters, fps = generator.generate(2, 6.0)
+        for c in clusters:
+            equiv = generator.equivalent_sites(c[0])
+            self.assertEqual(equiv, [[0, 1]])
+
+        # Test a triplet
+        clusters, fps = generator.generate(3, 4.0)
+        
+        # For the smalles triplet all sites should be equivalent
+        equiv = generator.equivalent_sites(clusters[0][0])
+        self.assertEqual(equiv, [[0, 1, 2]])
 
 
 
