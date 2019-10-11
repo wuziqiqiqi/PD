@@ -127,7 +127,7 @@ class ClusterGenerator(object):
             for x1 in figure:
                 dist = self.eucledian_distance(x0, x1)
                 dist = dist.round(decimals=6)
-                d.append(dist)
+                d.append(dist.tolist())
             dists.append(sorted(d, reverse=True))
         return dists
 
