@@ -806,6 +806,11 @@ class Concentration(object):
             else:
                 int_array[start: end] = \
                     np.round(conc[start: end]*num).astype(np.int32)
+
+            # Make sure that we are not sensitive to round off by overriding
+            # the concentration of the last element to guarantee that the
+            # number of elements in each basis sum to the correct number
+            int_array[end-1] = num - np.sum(int_array[start:end-1])
             b_eq[i] *= num
             start += n
 
