@@ -802,14 +802,19 @@ class Concentration(object):
             n = len(self.basis_elements[i])
             end = start + n
             if end >= len(int_array):
-                int_array[start:] = int(conc[start:]*num)
+                int_array[start:] = np.round(conc[start:]*num).astype(np.int32)
             else:
-                int_array[start: end] = int(conc[start: end]*num)
+                int_array[start: end] = \
+                    np.round(conc[start: end]*num).astype(np.int32)
 
-            # Make sure that we are not sensitive to round off by overriding
-            # the concentration of the last element to guarantee that the
-            # number of elements in each basis sum to the correct number
-            int_array[end-1] = num - np.sum(int_array[start:end-1])
+            # Check that the sum is consistent
+            diff = num - np.sum(int_array[start:end])
+            if diff < 0:
+                min_indx = np.argmin(int_array[start:end])
+                int_array[start+min_indx] += abs(diff)
+            elif diff > 0:
+                max_indx = np.argmax(int_array[start:end])
+                int_array[start+max_indx] -= diff
 
             b_eq[i] *= num
             start += n
