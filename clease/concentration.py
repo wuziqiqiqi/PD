@@ -811,6 +811,11 @@ class Concentration(object):
             # the concentration of the last element to guarantee that the
             # number of elements in each basis sum to the correct number
             int_array[end-1] = num - np.sum(int_array[start:end-1])
+
+            # Make sure that we don't have a negative number
+            if int_array[end-1] < 0:
+                int_array[end-1] = 0
+
             b_eq[i] *= num
             start += n
 
