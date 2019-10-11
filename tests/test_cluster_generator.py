@@ -96,6 +96,7 @@ class TestClusterGenerator(unittest.TestCase):
                          max_cluster_dia=[4.01, 4.01])
 
         atoms = bulk('LiX', crystalstructure='rocksalt', a=4.0)
+        atoms.wrap()
         generator = ClusterGenerator(atoms)
         clusters1, fp1 = generator.generate(3, 6.0, ref_lattice=0)
         clusters2, fp2 = generator.generate(3, 6.0, ref_lattice=1)
@@ -110,15 +111,19 @@ class TestClusterGenerator(unittest.TestCase):
 
         int_clusters = [int_cluster1, int_cluster2]
         fps = [fp1, fp2]
-        # for c in c_list:
-        #     c.indices = [sorted(x) for x in c.indices]
-        #     ref = c.ref_indx  # TODO: Fix such that ref is mapped to the correct int cluster
-        #     try:
-        #         i = fps[ref].index(c.fp)
-        #         for f in int_clusters[ref][i]:
-        #             self.assertTrue(sorted(f) in c.indices)
-        #     except ValueError:
-        #         pass
+        for c in c_list:
+            c.indices = [sorted(x) for x in c.indices]
+            ref = c.ref_indx
+            if atoms[ref].symbol == 'Li':
+                lattice = 0
+            else:
+                lattice = 1
+            try:
+                i = fps[lattice].index(c.fp)
+                for f in int_clusters[lattice][i]:
+                    self.assertTrue(sorted(f) in c.indices)
+            except ValueError:
+                pass
 
 
 
