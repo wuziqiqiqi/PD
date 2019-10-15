@@ -175,13 +175,6 @@ class WindowFrame(StackLayout):
         images = self._get_clusters()
 
         try:
-            # from ase.gui.gui import GUI
-            # # gui = GUI(images, expr='')
-            # # gui.show_name = True
-            # # gui.run()
-            # kwargs = {'images': images, 'expr': ''}
-            # Thread(target=GUI, kwargs=kwargs).start()
-
             from ase.visualize import view
             Thread(target=view, args=(images,)).start()
 
