@@ -170,6 +170,35 @@ class WindowFrame(StackLayout):
         else:
             Thread(target=reconfig.reconfig_settings_db).start()
 
+    def view_clusters(self):
+        """View clusters."""
+        images = self._get_clusters()
+
+        if images is False:
+            msg = "Settings should be applied/loaded before viewing clusters."
+            App.get_running_app().root.ids.status.text = str(msg)
+            return
+
+        try:
+            from ase.visualize import view
+            Thread(target=view, args=(images,)).start()
+
+        except Exception as exc:
+            App.get_running_app().root.ids.status.text = str(exc)
+
+    def _get_clusters(self):
+        if self.settings is None:
+            self.ids.sm.get_screen('Settings').apply_settings()
+
+        try:
+            self.settings._activate_lagest_template()
+            atoms = self.settings.atoms
+            return self.settings.cluster_list.get_figures(atoms)
+        except Exception:
+            return False
+
+
+
 
 class CleaseGUI(App):
     def __init__(self):
