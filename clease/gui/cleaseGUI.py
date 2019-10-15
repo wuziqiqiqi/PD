@@ -191,13 +191,9 @@ class WindowFrame(StackLayout):
             self.ids.sm.get_screen('Settings').apply_settings()
 
         try:
-            from ase.gui.images import Images
             self.settings._activate_lagest_template()
             atoms = self.settings.atoms
-            figures = self.settings.cluster_list.get_figures(atoms)
-            images = Images()
-            images.initialize(figures)
-            return images
+            return self.settings.cluster_list.get_figures(atoms)
         except Exception:
             return False
 
