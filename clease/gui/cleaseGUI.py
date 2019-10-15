@@ -186,7 +186,6 @@ class WindowFrame(StackLayout):
         except Exception as exc:
             App.get_running_app().root.ids.status.text = str(exc)
 
-
     def _get_clusters(self):
         if self.settings is None:
             self.ids.sm.get_screen('Settings').apply_settings()
