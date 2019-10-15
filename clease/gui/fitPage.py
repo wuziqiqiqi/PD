@@ -1,30 +1,34 @@
-#from matplotlib import pyplot as plt
 from kivy.uix.popup import Popup
 from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
 from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
 from clease.gui.load_save_dialog import LoadDialog
+from clease import GAFit, LinearRegression, Evaluate
 from kivy.app import App
 import json
 from clease.gui.util import parse_max_cluster_dia
 from clease.gui.constants import BACKGROUND_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.constants import ECI_GRAPH_COLORS
+from clease.gui.fittingAlgorithmEditors import (
+    LassoEditor, L2Editor, BCSEditor, GAEditor
+)
 from threading import Thread
 from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
+import traceback
+import os
 
 
-class ECIOptimiser(object):
+class ECIOptimizer(object):
     fit_page = None
     evaluator = None
 
-    def optimise(self):
+    def optimize(self):
         try:
             self.fit_page.eci = self.evaluator.get_eci_dict()
 
             e_ce = self.evaluator.cf_matrix.dot(self.evaluator.eci)
-
             self.fit_page.e_ce = e_ce
             self.fit_page.e_dft = self.evaluator.e_dft
             self.fit_page.e_pred_leave_out = self.evaluator.e_pred_loo
@@ -38,6 +42,7 @@ class ECIOptimiser(object):
             self.fit_page.fitting_in_progress = False
             self.fit_page.update_plots()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
             self.fit_page.fitting_in_progress = False
             return
@@ -50,27 +55,37 @@ class GAClusterSelector(object):
     _pop_up = None
 
     def run(self):
-        from clease import GAFit, LinearRegression, Evaluate
-
         try:
-            ga = GAFit(self.settings, **self.kwargs)
-            _ = ga.run()
+            gen_without_change = self.kwargs.pop('gen_without_change')
+            load_file = self.kwargs.pop('load_file')
+            if not load_file:
+                fname1 = '.cleaseGUI/ga_fit.csv'
+                fname2 = '.cleaseGUI/ga_fit_cf_names.txt'
+                if os.path.exists(fname1):
+                    os.remove(fname1)
+                if os.path.exists(fname2):
+                    os.remove(fname2)
 
-            optimiser = ECIOptimiser()
-            optimiser.fit_page = self.fit_page
+            self.kwargs['fname'] = '.cleaseGUI/ga_fit.csv'
+            ga = GAFit(self.settings, **self.kwargs)
+            cf_names = ga.run(gen_without_change=gen_without_change)
+
+            optimizer = ECIOptimizer()
+            optimizer.fit_page = self.fit_page
 
             max_cluster_dia = self.kwargs['max_cluster_dia']
             max_cluster_size = self.kwargs['max_cluster_size']
             select_cond = self.kwargs['select_cond']
             min_weight = self.kwargs['min_weight']
-            optimiser.evaluator = Evaluate(
+            optimizer.evaluator = Evaluate(
                 self.settings, max_cluster_dia=max_cluster_dia,
                 max_cluster_size=max_cluster_size,
                 select_cond=select_cond, min_weight=min_weight,
-                fitting_scheme=LinearRegression())
-            optimiser.optimise()
+                fitting_scheme=LinearRegression(), cf_names=cf_names)
+            optimizer.optimize()
         except Exception as exc:
-            App.get_running_app().root.ids.status.text.text = str(exc)
+            traceback.print_exc()
+            App.get_running_app().root.ids.status.text = str(exc)
 
 
 class FitPage(Screen):
@@ -140,6 +155,8 @@ class FitPage(Screen):
             self.graphs_added = True
 
     def dismiss_popup(self):
+        if self._pop_up is None:
+            return
 
         if isinstance(self._pop_up.content, FitAlgEditor):
             self._pop_up.content.backup()
@@ -204,7 +221,10 @@ class FitPage(Screen):
         self.dismiss_popup()
 
     def close_ga_editor(self, elitism, mut_prob, num_individuals, max_active,
-                        cost_func, sparsity, sub_clust):
+                        cost_func, sparsity, sub_clust, load_file,
+                        max_without_imp):
+        if isinstance(load_file, str):
+            load_file = load_file == 'True'
         self.fitting_params = {
             'algorithm': 'GA',
             'elitism': int(elitism),
@@ -213,7 +233,9 @@ class FitPage(Screen):
             'max_active': int(max_active),
             'cost_func': cost_func,
             'sparsity': float(sparsity),
-            'sub_clust': sub_clust == 'Yes'
+            'sub_clust': sub_clust == 'Yes',
+            'load_file': load_file,
+            'gen_without_change': int(max_without_imp)
         }
         self.dismiss_popup()
 
@@ -258,6 +280,7 @@ class FitPage(Screen):
             msg = 'ECIs saved to {}'.format(fname)
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def fit_eci(self):
@@ -280,6 +303,7 @@ class FitPage(Screen):
                 max_cluster_dia_cut = \
                     parse_max_cluster_dia(self.ids.maxClusterDiaCut.text)
             except Exception as exc:
+                traceback.print_exc()
                 App.get_running_app().root.ids.status.text = str(exc)
                 return
 
@@ -333,17 +357,19 @@ class FitPage(Screen):
                 'min_weight': 1.0,
                 'mutation_prob': self.fitting_params['mut_prob'],
                 'elitism': self.fitting_params['elitism'],
+                'fname': None,
                 'num_individuals': self.fitting_params['num_individuals'],
                 'max_num_in_init_pool': self.fitting_params['max_active'],
                 'cost_func': self.fitting_params['cost_func'].lower(),
                 'sparsity_slope': self.fitting_params['sparsity'],
-                'include_subclusters': self.fitting_params['sub_clust']
+                'include_subclusters': self.fitting_params['sub_clust'],
+                'gen_without_change': self.fitting_params['gen_without_change'],
+                'load_file': self.fitting_params['load_file']
             }
             ga_runner.settings = settings
 
-            # GA behaves a bit different from the other schems
-            # therefore we have a separate runner and return
-            # after the runner is finished...
+            # As GA behaves a bit different from the other schemes, we have
+            # a separate runner and return after the runner is finished.
             msg = 'Selecting clusters with GA..'
             App.get_running_app().root.ids.status.text = msg
             Thread(target=ga_runner.run).start()
@@ -362,13 +388,14 @@ class FitPage(Screen):
                 num_repetitions=num_rep, scoring_scheme=scoring_scheme)
 
             App.get_running_app().root.ids.status.text = 'Optimizing ECIs...'
-            eci_optimiser = ECIOptimiser()
-            eci_optimiser.fit_page = self
-            eci_optimiser.evaluator = evaluator
+            eci_optimizer = ECIOptimizer()
+            eci_optimizer.fit_page = self
+            eci_optimizer.evaluator = evaluator
             self.fitting_in_progress = True
 
-            Thread(target=eci_optimiser.optimise).start()
+            Thread(target=eci_optimizer.optimize).start()
         except Exception as exc:
+            traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 
     def set_cv(self, cv):
@@ -414,8 +441,15 @@ class FitPage(Screen):
                                    for x, y in zip(e_ce, e_dft)]
         self.zero_line_energy.points = [(xmin, 0.0), (xmax, 0.0)]
 
+    def _clear_eci_plots(self):
+        for plot in self.eci_plots:
+            plot.points = []
+
     def update_eci_plot(self, eci):
         eci_by_size = {}
+
+        if len(eci) == 0:
+            return
 
         for k, v in eci.items():
             size = int((k[1]))
@@ -431,6 +465,7 @@ class FitPage(Screen):
         xmax = len(list(eci.keys())) + len(sorted_keys)
         ymin = min([v for _, v in eci.items()])
         ymax = max([v for _, v in eci.items()])
+        self._clear_eci_plots()
         for i, k in enumerate(sorted_keys):
             values = eci_by_size[k]
             indx = range(prev, prev + len(values))
@@ -475,3 +510,52 @@ class FitPage(Screen):
         self.ids.kFoldInput.text = data.get('k_fold', '10')
         self.ids.numRepititionsInput.text = data.get('num_repetitions', '1')
         self.ids.fitAlgSpinner.text = data.get('fit_alg', 'LASSO')
+
+    def load_fit_alg_settings(self, text):
+        fnames = {
+            'LASSO': LassoEditor.backup_file,
+            'L2': L2Editor.backup_file,
+            'BCS': BCSEditor.backup_file,
+            'Genetic Algorithm': GAEditor.backup_file
+        }
+
+        closing_methods = {
+            'LASSO': self.close_lasso_editor,
+            'L2': self.close_l2_editor,
+            'BCS': self.close_bcs_editor,
+            'Genetic Algorithm': self.close_ga_editor
+        }
+
+        editors = {
+            'LASSO': LassoEditor(),
+            'L2': L2Editor(),
+            'BCS': BCSEditor(),
+            'Genetic Algorithm': GAEditor()
+        }
+        fname = fnames.get(text, None)
+        close = closing_methods[text]
+
+        app = App.get_running_app()
+        if fname is None:
+            app.root.ids.status.text = 'Unkown fitting scheme'
+            return
+
+        full_name = '.cleaseGUI/' + fname
+        if not os.path.exists(full_name):
+            # Create the file
+            editors[text].backup()
+
+        args = []
+        with open(full_name, 'r') as infile:
+            for line in infile:
+                args.append(line.strip())
+        args = args[::-1]
+        try:
+            close(*args)
+            msg = 'Fit settings set the ones used '
+            msg += 'last time'
+            app.root.ids.status.text = msg
+        except:
+            msg = 'Failed load previous fitting setting. '
+            msg += 'Please set your settings again in the editor.'
+            app.root.ids.status.text = msg

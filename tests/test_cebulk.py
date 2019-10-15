@@ -18,6 +18,7 @@ from reference_corr_funcs_bulk import all_cf
 from ase.build import make_supercell
 import numpy as np
 import unittest
+from unittest.mock import patch
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -54,7 +55,7 @@ class TestCEBulk(unittest.TestCase):
 
         # Try to read back the old atoms
         setting.set_active_template(atoms=orig_atoms)
-        #os.remove(db_name)
+        os.remove(db_name)
 
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
@@ -354,6 +355,50 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
+    @patch('test_cebulk.CEBulk._read_data')
+    @patch('test_cebulk.CEBulk._store_data')
+    @patch('test_cebulk.CEBulk.create_cluster_list_and_trans_matrix')
+    def test_fcc_binary_fixed_conc(self, *args):
+        # c_Au = 1/3 and c_Cu = 2/3
+        A_eq = [[2, -1]]
+        b_eq = [0]
+        db_name = 'test_fcc_binary_fixed_conc.db'
+        conc = Concentration(basis_elements=[['Au', 'Cu']],
+                             A_eq=A_eq, b_eq=b_eq)
+        setting = CEBulk(crystalstructure='fcc', a=3.8, supercell_factor=27,
+                         max_cluster_dia=5.0, max_cluster_size=3,
+                         concentration=conc,
+                         db_name=db_name)
+
+        # Loop through templates and check that all satisfy constraints
+        for atoms in setting.template_atoms.templates['atoms']:
+            num = len(atoms)
+            ratio = num/3.0
+            self.assertAlmostEqual(ratio, int(ratio))
+        os.remove(db_name)
+
+    @patch('test_cebulk.CEBulk._read_data')
+    @patch('test_cebulk.CEBulk._store_data')
+    @patch('test_cebulk.CEBulk.create_cluster_list_and_trans_matrix')
+    def test_rocksalt_conc_fixed_one_basis(self, *args):
+        db_name = 'test_rocksalt_fixed_one_basis.db'
+        basis_elem = [['Li', 'X'], ['O', 'F']]
+        A_eq = [[0, 0, 3, -2]]
+        b_eq = [0]
+        conc = Concentration(basis_elements=basis_elem,
+                             A_eq=A_eq, b_eq=b_eq)
+        setting = CEBulk(crystalstructure='rocksalt', a=3.8,
+                         supercell_factor=27, max_cluster_dia=5.0,
+                         max_cluster_size=3, concentration=conc,
+                         db_name=db_name)
+
+        # Loop through and check that num_O sites is divisible by 5
+        for atoms in setting.template_atoms.templates['atoms']:
+            num_O = sum(1 for atom in atoms if atom.symbol == 'O')
+            ratio = num_O/5.0
+            self.assertAlmostEqual(ratio, int(ratio))
+        os.remove(db_name)
+
     def tearDown(self):
         if update_reference_file:
             print("Updating the reference correlation function file")
@@ -365,5 +410,3 @@ class TestCEBulk(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

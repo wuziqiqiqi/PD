@@ -806,6 +806,16 @@ class Concentration(object):
             else:
                 int_array[start: end] = \
                     np.round(conc[start: end]*num).astype(np.int32)
+
+            # Check that the sum is consistent
+            diff = num - np.sum(int_array[start:end])
+            if diff > 0:
+                min_indx = np.argmin(int_array[start:end])
+                int_array[start+min_indx] += diff
+            elif diff < 0:
+                max_indx = np.argmax(int_array[start:end])
+                int_array[start+max_indx] -= abs(diff)
+
             b_eq[i] *= num
             start += n
 

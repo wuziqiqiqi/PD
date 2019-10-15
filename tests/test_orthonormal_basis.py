@@ -127,13 +127,13 @@ class TestOrthonormal(unittest.TestCase):
     def test_5(self):
         db_name = 'test5.db'
         for bf in bfs:
-            test_4(bf, db_name)
+            test_5(bf, db_name)
         os.remove(db_name)
 
     def test_6(self):
         db_name = 'test6.db'
         for bf in bfs:
-            test_4(bf, db_name)
+            test_6(bf, db_name)
         os.remove(db_name)
 
 

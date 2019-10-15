@@ -1,4 +1,5 @@
 from clease import LinearRegression
+from clease import Evaluate
 from clease import _logger
 import numpy as np
 import multiprocessing as mp
@@ -107,7 +108,6 @@ class GAFit(object):
                  max_num_in_init_pool=None, parallel=False, num_core=None,
                  select_cond=None, cost_func="bic", sparsity_slope=1.0,
                  min_weight=1.0, include_subclusters=True):
-        from clease import Evaluate
         evaluator = Evaluate(setting, max_cluster_dia=max_cluster_dia,
                              max_cluster_size=max_cluster_size,
                              select_cond=select_cond, min_weight=min_weight)
@@ -136,8 +136,12 @@ class GAFit(object):
         self.cf_names = evaluator.cf_names
         self.e_dft = evaluator.e_dft
         self.fname = fname
-        self.fname_cf_names = \
-            fname.rpartition(".")[0] + "_cf_names.txt"
+        if fname is not None:
+            self.fname_cf_names = \
+                fname.rpartition(".")[0] + "_cf_names.txt"
+        else:
+            self.fname_cf_names = None
+
         if num_individuals == "auto":
             self.pop_size = 10*self.cf_matrix.shape[1]
         else:
@@ -163,7 +167,7 @@ class GAFit(object):
     def _initialize_individuals(self, max_num):
         """Initialize a random population."""
         individuals = []
-        if os.path.exists(self.fname):
+        if os.path.exists(str(self.fname)):
             individuals = self._init_from_file()
         else:
             max_num = max_num or self.num_genes
@@ -506,6 +510,8 @@ class GAFit(object):
     def save_population(self):
         # Save population
         self.check_valid()
+        if self.fname is None:
+            return
         with open(self.fname, 'w') as out:
             for i in range(len(self.individuals)):
                 out.write(",".join(str(x) for x in
@@ -515,6 +521,9 @@ class GAFit(object):
 
     def save_cf_names(self):
         """Store cluster names of best population to file."""
+        if self.fname_cf_names is None:
+            return
+
         with open(self.fname_cf_names, 'w') as out:
             for name in self.selected_cf_names:
                 out.write(name+"\n")
@@ -532,7 +541,7 @@ class GAFit(object):
         ax.set_ylabel("CV score (meV/atom)")
         plt.show()
 
-    def run(self, gen_without_change=1000, min_change=0.01, save_interval=100):
+    def run(self, gen_without_change=100, min_change=0.01, save_interval=100):
         """Run the genetic algorithm.
 
         Return a list consisting of the names of selected clusters at the end

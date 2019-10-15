@@ -22,6 +22,7 @@ from clease.name_clusters import name_clusters
 from clease.cluster_fingerprint import ClusterFingerprint
 from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
+from clease.template_filters import ValidConcentrationFilter
 
 
 class ClusterExpansionSetting(object):
@@ -77,6 +78,18 @@ class ClusterExpansionSetting(object):
         self.index_by_trans_symm = []
         self.ref_index_trans_symm = []
         self.template_atoms_uid = 0
+
+        # Set an active template (this ensures that index_by_basis etc is set)
+        self._set_active_template_by_uid(0)
+
+        # Run through the templates and filter out the ones that does not have
+        # a valid compostion
+        self.template_atoms.apply_filter(ValidConcentrationFilter(self))
+
+        if self.template_atoms.num_templates == 0:
+            raise RuntimeError('There are no templates the satisfies the '
+                               'constraints')
+
         for uid in range(self.template_atoms.num_templates):
             self._set_active_template_by_uid(uid)
         # Set the initial template atoms to 0, which is the smallest cell

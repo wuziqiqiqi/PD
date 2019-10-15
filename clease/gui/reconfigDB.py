@@ -1,4 +1,5 @@
 from kivy.app import App
+import traceback
 
 
 class ReconfigDB(object):
@@ -30,6 +31,7 @@ class ReconfigDB(object):
                 self.status.text = msg
 
             except Exception as exc:
+                traceback.print_exc()
                 self.status.text = str(exc)
 
         self.app.root.reconfig_in_progress = False
@@ -43,6 +45,7 @@ class ReconfigDB(object):
                 self.status.text = msg
 
             except Exception as exc:
+                traceback.print_exc()
                 self.status.text = str(exc)
 
         self.app.root.reconfig_in_progress = False
@@ -56,6 +59,7 @@ class ReconfigDB(object):
                 self.status.text = msg
 
             except Exception as exc:
+                traceback.print_exc()
                 self.status.text = str(exc)
 
         self.app.root.reconfig_in_progress = False

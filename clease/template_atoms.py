@@ -74,6 +74,39 @@ class TemplateAtoms(object):
         self.cell_filters = []
         self.atoms_filters = []
 
+    def remove_filter(self, f):
+        """Remove one filter"""
+        if isinstance(f, AtomsFilter):
+            self.atoms_filters.remove(f)
+        elif isinstance(f, CellFilter):
+            self.cell_filters.remove(f)
+        else:
+            raise TypeError('Only AtomsFilters and CellFilters '
+                            'can be removed')
+
+    def remove_filters(self, filters):
+        """Remove a list of filters."""
+        for f in filters:
+            self.remove_filter(f)
+
+    def apply_filter(self, template_filter):
+        """Apply a filter to already generated templates.
+
+        Paramaters:
+
+        template_filter: AtomsFilter or CellFilter
+            Filter to run through the templates
+        """
+        filtered_templates = {
+            'size': [],
+            'atoms': []
+        }
+        for size, at in zip(self.templates['size'], self.templates['atoms']):
+            if template_filter(at):
+                filtered_templates['size'].append(size)
+                filtered_templates['atoms'].append(at)
+        self.templates = filtered_templates
+
     def is_valid(self, atoms=None, cell=None):
         """
         Check the validity of the template.
@@ -433,6 +466,9 @@ class TemplateAtoms(object):
         for _, v in self.templates.items():
             assert len(v) == num_entries
 
+    def has_atoms_filters(self):
+        return len(self.atoms_filters) > 0
+
     def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
         # Set up a filter that listens to the templates with fixed volume
         from ase.build.tools import niggli_reduce_cell
@@ -453,8 +489,14 @@ class TemplateAtoms(object):
             sc = mat.dot(ucell)
             sc, _ = niggli_reduce_cell(sc)
             if self.is_valid(cell=sc):
-                cells.append(sc)
-                transform_matrices.append(mat)
+                # If Atoms filters are present we check if it is valid
+                at_valid = True
+                if self.has_atoms_filters():
+                    atoms = make_supercell(self.prim_cell, mat)
+                    at_valid = self.is_valid(atoms=atoms)
+                if at_valid:
+                    cells.append(sc)
+                    transform_matrices.append(mat)
 
         if len(transform_matrices) <= num_templates:
             all_trans_mat = transform_matrices
@@ -465,6 +507,9 @@ class TemplateAtoms(object):
         for P in all_trans_mat:
             atoms = make_supercell(self.prim_cell, P)
             templates.append(atoms)
+
+        # Remove the filter that was artificially added
+        self.cell_filters.remove(equiv_filter)
         return templates
 
 
