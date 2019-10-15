@@ -174,6 +174,11 @@ class WindowFrame(StackLayout):
         """View clusters."""
         images = self._get_clusters()
 
+        if images is False:
+            msg = "Settings should be applied/loaded before viewing clusters."
+            App.get_running_app().root.ids.status.text = str(msg)
+            return
+
         try:
             from ase.visualize import view
             Thread(target=view, args=(images,)).start()
@@ -194,8 +199,8 @@ class WindowFrame(StackLayout):
             images = Images()
             images.initialize(figures)
             return images
-        except Exception as exc:
-            App.get_running_app().root.ids.status.text = str(exc)
+        except Exception:
+            return False
 
 
 
