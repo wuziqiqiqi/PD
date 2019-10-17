@@ -75,9 +75,9 @@ class TestMonteCarlo(unittest.TestCase):
         for k, v in cf_scratch.items():
             self.assertAlmostEqual(v, cf_calc[k])
 
-        # Make sure that the energies are decreasing
-        for i in range(1, len(E)):
-            self.assertGreaterEqual(E[i-1], E[i])
+        # Make sure that the energies are decreasing by comparing
+        # the first and last
+        self.assertGreaterEqual(E[0], E[-1])
 
     def test_corr_func_observer(self):
         db_name = 'test_corr_func_observer.db'
