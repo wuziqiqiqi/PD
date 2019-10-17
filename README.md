@@ -21,15 +21,13 @@ in the root folder of the project. If you are a developer you might want to inst
 ```
 pip install -e .
 ```
-CLEASE requires a C++11 compliant compiler available on the system.
 
 # Graphical User Interface
 CLEASE comes with a handy graphical user interface (GUI) that can be used to setup Cluster Expansion models.
 In order to use the GUI you need to install some additional packages
 ```
 pip install kivy
-pip install kivy-garden
-garden install matplotlib
+pip install 'https://github.com/kivy-garden/graph/archive/master.zip'
 ```
 
 To launch a GUI simply type
