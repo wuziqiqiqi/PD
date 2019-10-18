@@ -3,18 +3,20 @@ from clease.montecarlo.constraints import MCConstraint
 
 class CollectiveVariableConstraint(MCConstraint):
     """
-    Constraint that ensures that the collective variable
-    defined by the getter stays within certain bounds
+    Constraint that ensures that the collective variable defined by the getter
+    stays within certain bounds
 
     Parameters:
 
     xmin: float
         Minimum value for the collective variable
+
     xmax: float
         Maximum value for the collective variable
+
     getter: MCObserver
-        MCObsrever that support peak keyword that returns
-        the collective variable after the proposed move
+        MCObsrever that support peak keyword that returns the collective
+        variable after the proposed move
     """
     def __init__(self, xmin=0.0, xmax=1.0, getter=None):
         self.xmin = xmin
