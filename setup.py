@@ -3,7 +3,11 @@ from distutils.errors import CompileError
 from distutils import ccompiler
 from textwrap import dedent
 from distutils.sysconfig import get_python_inc
-from pip._internal import main as pipmain
+import pip
+if pip.__version__ < '19.3':
+    from pip._internal import main as pipmain
+else:
+    from pip._internal.main import main as pipmain
 import os
 import re
 
