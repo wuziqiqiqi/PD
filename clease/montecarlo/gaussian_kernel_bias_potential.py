@@ -4,7 +4,7 @@ import numpy as np
 
 class GaussianKernelBiasPotential(BiasPotential):
     """
-    Bias potential represented by a sum of Gaussian kernels
+    Bias potential represented by a sum of Gaussian kernels.
 
     Parameters:
 
@@ -21,9 +21,9 @@ class GaussianKernelBiasPotential(BiasPotential):
         Width of the kernel (=exp(-(x/width)**2)
 
     getter: MCObserver
-        Observer that can return the coordinate value after a
-        given MC step. There are two requirements for the observer
-        in addition to being a subclass of MCObsers
+        Observer that can return the coordinate value after a given MC step.
+        There are two requirements for the observer in addition to being a
+        subclass of MCObsers.
         1. It needs to support None as an argument for the system changes.
            In that case, the code expects that the current value of the
            coordinate is returned
@@ -80,8 +80,6 @@ class GaussianKernelBiasPotential(BiasPotential):
 
     def evaluate(self, x):
         low, high = self.inside_range(x)
-        centers = self.centers
-        coeff = self.coeff
         w = self._gaussian(x, self.centers[low:high+1])
         return np.sum(self.coeff[low:high+1]*w)
 
@@ -90,9 +88,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         return self.evaluate(x)
 
     def local_update(self, x, dE):
-        """
-        Increase the local energy at x by an amount dE
-        """
+        """Increase the local energy at x by an amount dE."""
         low, high = self.inside_range(x)
         w = self._gaussian(x, self.centers[low:high+1])
 
@@ -102,9 +98,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         self.coeff[low:high+1] += dE*w/np.sum(w**2)
 
     def slope(self, x):
-        """
-        Evaluate slope
-        """
+        """Evaluate slope."""
         low, high = self.inside_range(x)
         centers = self.centers
         coeff = self.coeff
@@ -113,9 +107,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         return np.sum(self.coeff[low:high+1]*w)
 
     def ensure_zero_slope(self, x):
-        """
-        Change the coefficients such that the slope is zero at x
-        """
+        """Change the coefficients such that the slope is zero at x."""
         low, high = self.inside_range(x)
         centers = self.centers
         coeff = self.coeff
