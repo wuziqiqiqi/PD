@@ -4,17 +4,19 @@ import numpy as np
 
 class BinnedBiasPotential(BiasPotential):
     """
-    Binned bias potential is a bias potential that is sampled on a
-    grid.
+    Binned bias potential is a bias potential that is sampled on a grid.
 
     Parameters:
 
     xmin: float
         Minimum value for the collective variable
+
     xmax: float
         Maximum value for the collective variable
+
     nbins: int
         Number of bins
+
     getter: MCObserver
         Callable object for getting the collective variable.
         It needs to support the peak key word.
@@ -28,9 +30,7 @@ class BinnedBiasPotential(BiasPotential):
         self.getter = getter
 
     def get_index(self, x):
-        """
-        Return the index corresponding to an x value
-        """
+        """Return the index corresponding to an x value."""
         i = int((x - self.xmin)/self.dx)
         if i >= self.nbins:
             i = self.nbins - 1
@@ -39,15 +39,11 @@ class BinnedBiasPotential(BiasPotential):
         return i
 
     def get_x(self, index):
-        """
-        Return x value corresponding to an index
-        """
+        """Return x value corresponding to an index."""
         return self.xmin + index*self.dx
 
     def evaluate(self, x):
-        """
-        Evaluate the bias potential at x
-        """
+        """Evaluate the bias potential at x."""
         i = self.get_index(x)
         if i == 0:
             y_left = self.values[0]
@@ -75,16 +71,12 @@ class BinnedBiasPotential(BiasPotential):
         return y
 
     def __call__(self, system_changes):
-        """
-        Get the bias potential value after the system_change
-        """
+        """Get the bias potential value after the system_change."""
         x = self.getter(system_changes, peak=True)
         return self.evaluate(x)
 
     def todict(self):
-        """
-        Return dictionary representation. (Does not include the getter)
-        """
+        """Return dictionary representation. (Does not include the getter)"""
         return {
             'xmin': self.xmin,
             'xmax': self.xmax,
@@ -94,9 +86,7 @@ class BinnedBiasPotential(BiasPotential):
         }
 
     def from_dict(self, data):
-        """
-        Initialise from a dictionary (Does not include the getter)
-        """
+        """Initialize from a dictionary (Does not include the getter)."""
         self.xmin = data['xmin']
         self.xmax = data['xmax']
         self.values = np.array(data['values'])
@@ -104,27 +94,19 @@ class BinnedBiasPotential(BiasPotential):
         self.dx = data['dx']
 
     def calculate_from_scratch(self, atoms):
-        """
-        Calculate the value from scratch
-        """
+        """Calculate the value from scratch."""
         x = self.getter.calculate_from_scratch(atoms)
         return self.evaluate(x)
 
     def local_update(self, x, dE):
-        """
-        Perform a local update
-        """
+        """Perform a local update."""
         i = self.get_index(x)
         self.values[i] += dE
 
     def zero(self):
-        """
-        Set all values to zero
-        """
+        """Set all values to zero."""
         self.values[:] = 0
 
     def get_coeff(self):
-        """
-        Return all values
-        """
+        """Return all values."""
         return self.values
