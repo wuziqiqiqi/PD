@@ -7,8 +7,10 @@ class ConcentrationObserver(MCObserver):
     particular element.
 
     Parameters:
-    atoms: Atoms
+
+    atoms: Atoms object
         Atoms object used for MC
+
     element: str
         The element that should be tracked
     """
@@ -22,9 +24,7 @@ class ConcentrationObserver(MCObserver):
         self.num_calls = 1
 
     def new_concentration(self, system_change):
-        """
-        Calculate the new consentration after the changes
-        """
+        """Calculate the new consentration after the changes."""
         new_conc = self.current_conc
         for change in system_change:
             if change[2] == self.element:
@@ -49,9 +49,7 @@ class ConcentrationObserver(MCObserver):
         return self.current_conc
 
     def reset(self):
-        """
-        Reset the averages
-        """
+        """Reset the averages."""
         self.avg_conc = self.current_conc
         self.avg_conc_sq = self.current_conc**2
         self.num_calls = 1
