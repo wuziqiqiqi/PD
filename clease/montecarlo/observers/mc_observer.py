@@ -27,3 +27,10 @@ class MCObserver(object):
     def get_averages(self):
         """Return averages in the form of a dictionary."""
         return {}
+
+    def calculate_from_scratch(self, atoms):
+        """
+        Method for calculating the tracked value from scratch
+        (i.e. without using fast update methods)
+        """
+        pass
