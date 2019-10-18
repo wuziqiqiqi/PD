@@ -100,8 +100,6 @@ class GaussianKernelBiasPotential(BiasPotential):
     def slope(self, x):
         """Evaluate slope."""
         low, high = self.inside_range(x)
-        centers = self.centers
-        coeff = self.coeff
         w = self._gaussian(x, self.centers[low:high+1])
         w *= -(x - self.centers[low:high+1])/self.width**2
         return np.sum(self.coeff[low:high+1]*w)
@@ -109,12 +107,10 @@ class GaussianKernelBiasPotential(BiasPotential):
     def ensure_zero_slope(self, x):
         """Change the coefficients such that the slope is zero at x."""
         low, high = self.inside_range(x)
-        centers = self.centers
-        coeff = self.coeff
         c = self.centers[low:high+1]
         w = self._gaussian(x, self.centers[low:high+1])
-        denum = (w*(x - c)/self.width**2)**2
-        lamb = self.slope(x)/np.sum(denum)
+        denom = (w*(x - c)/self.width**2)**2
+        lamb = self.slope(x)/np.sum(denom)
         self.coeff[low:high+1] += lamb*(x - c)*w/self.width**2
 
     def todict(self):

@@ -23,16 +23,20 @@ class MetaDynamicsSampler(object):
 
     mc: Montecarlo
         A Monte Carlo sampler
+
     bias: BiasPotential
-        A bias potential that should be altered in order to
-        recover the free energy
+        A bias potential that should be altered in order to recover the free
+        energy
+
     flat_limit: float
         The histogram of visits is considered flat, when the minimum value
-        is larger than flat_limit*np.mean(hist).
+        is larger than flat_limit*np.mean(hist)
+
     mod_factor: float
-        Modification factor in units of kB*T.
+        Modification factor in units of kB*T
+
     fname: str
-        Filename used to store the simulation state when finished.
+        Filename used to store the simulation state when finished
     """
     def __init__(self, mc=None, bias=None, flat_limit=0.8,
                  mod_factor=0.1, fname='metadyn.json'):
@@ -53,9 +57,7 @@ class MetaDynamicsSampler(object):
         self.progress_info = {'mean': 0.0, 'minimum': 0.0}
 
     def _getter_accepts_none(self):
-        """
-        Return True if the geter accepts None
-        """
+        """Return True if the getter accepts None."""
         try:
             x = self.bias.getter(None)
             x = float(x)
@@ -64,9 +66,7 @@ class MetaDynamicsSampler(object):
         return True
 
     def _getter_accepts_peak(self):
-        """
-        Return True if the getter supports the peak keyword
-        """
+        """Return True if the getter supports the peak keyword."""
         try:
             x = self.bias.getter([], peak=True)
             x = float(x)
@@ -75,9 +75,7 @@ class MetaDynamicsSampler(object):
         return True
 
     def visit_is_flat(self):
-        """
-        Return True if the histogram of visits is flat
-        """
+        """Return True if the histogram of visits is flat."""
         i_min = self.visit_hist.get_index(self.visit_hist.xmin)
         i_max = self.visit_hist.get_index(self.visit_hist.xmax)
         avg = np.mean(self.visit_hist.get_coeff()[i_min:i_max])
@@ -89,9 +87,7 @@ class MetaDynamicsSampler(object):
         return minval > self.flat_limit*avg
 
     def update(self):
-        """
-        Update bias potential and visit histogram
-        """
+        """Update bias potential and visit histogram."""
         x = self.bias.getter(None)
         cur_value = self.bias.evaluate(x)
         self.bias.local_update(x, self.mod_factor)
@@ -104,7 +100,7 @@ class MetaDynamicsSampler(object):
         """
         Run the calculation.
 
-        Paramteers:
+        Parameters:
 
         max_sweeps: int or None
             If given, the simulation terminates when this number of sweeps
@@ -164,9 +160,7 @@ class MetaDynamicsSampler(object):
         self.save()
 
     def save(self):
-        """
-        Save the free energy result to a file
-        """
+        """Save the free energy result to a file."""
         pot = self.bias.todict()
         xmin = self.bias.xmin
         xmax = self.bias.xmax
