@@ -13,6 +13,7 @@ Welcome to CLEASE's documentation!
    clease
    ce_aucu
    montecarlo_sampling
+   metadynamics_sampling
 
 
 
