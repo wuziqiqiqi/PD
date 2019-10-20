@@ -1,13 +1,15 @@
 """A collection of miscellaneous functions used for Cluster Expansion."""
-from itertools import permutations, combinations, product
+from itertools import (
+    permutations, combinations, product,
+    filterfalse, chain
+)
 import numpy as np
-import collections
+from collections.abc import Iterable
 from random import sample
 from ase.db import connect
 import json
 from clease import _logger
 from scipy.spatial import cKDTree as KDTree
-from itertools import filterfalse, product, chain
 
 
 class ApproxEqualityList(object):
@@ -123,7 +125,7 @@ def equivalent_deco(deco, equiv_sites):
 
 def flatten(x):
     """Flatten list."""
-    if isinstance(x, collections.Iterable):
+    if isinstance(x, Iterable):
         return [a for i in x for a in flatten(i)]
     else:
         return [x]
