@@ -161,6 +161,7 @@ class MCRunner(object):
             cnst = ConstrainSwapByBasis(
                 self.atoms, self.settings.index_by_basis)
             mc.add_constraint(cnst)
+            self.mc_page.bind_mc(mc)
 
             for T in self.temps:
                 mc.T = T
@@ -172,6 +173,7 @@ class MCRunner(object):
             # Reset the old template
             self.settings.set_active_template(atoms=self.orig_template)
             self.mc_page.active_template_is_mc_cell = False
+            self.mc_page.detach_mc()
             self.status.text = 'MC calculation finished'
 
             if self.next_mc_obj is not None:
