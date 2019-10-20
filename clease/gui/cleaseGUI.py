@@ -10,6 +10,7 @@ from clease.gui.newStructPage import NewStructPage
 from clease.gui.mc_page import MCPage
 from clease.gui.fitPage import FitPage
 from clease.gui.reconfigDB import ReconfigDB
+from kivy.core.window import Window
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 
 import json
@@ -198,8 +199,6 @@ class WindowFrame(StackLayout):
             return False
 
 
-
-
 class CleaseGUI(App):
     def __init__(self):
         App.__init__(self)
@@ -207,7 +206,12 @@ class CleaseGUI(App):
 
     def build(self):
         self.icon = 'clease_logo.png'
+        Window.bind(on_keyboard=self.on_keyboard)
         return WindowFrame()
+
+    def on_keyboard(self, window, key, scancode, codepoint, modifier):
+        if modifier == ['ctrl'] and codepoint == 's':
+            self.root.save_session_to_current_file()
 
 
 if __name__ == "__main__":
