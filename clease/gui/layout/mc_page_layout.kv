@@ -145,24 +145,26 @@
             StackLayout:
                 size_hint: [1, 0.5*button_height]
 
-            StackLayout:
-                size_hint: [0.05, button_height]
-
             Button:
-                size_hint: [0.4, button_height]
+                size_hint: [0.3, button_height]
                 text: 'View MC cell'
                 on_release: root.view_mc_cell()
             
             StackLayout:
-                size_hint: [0.1, button_height]
+                size_hint: [0.05, button_height]
 
             Button:
-                size_hint: [0.4, button_height]
+                size_hint: [0.3, button_height]
                 text: 'Run'
                 on_release: root.runMC()
             
             StackLayout:
                 size_hint: [0.05, button_height]
+
+            Button:
+                size_hint: [0.3, button_height]
+                text: 'Abort'
+                on_release: root.abort_mc()
 
         BoxLayout:
             size_hint: [0.05, 1]

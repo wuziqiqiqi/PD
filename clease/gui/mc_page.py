@@ -25,6 +25,7 @@ class MCPage(Screen):
     active_template_is_mc_cell = False
     info_update_disabled = False
     view_mc_cell_disabled = False
+    _mc = None
 
     def on_enter(self):
         self.set_cell_info()
@@ -49,6 +50,16 @@ class MCPage(Screen):
 
             self.energy_graph.add_plot(self.mean_energy_plot)
             self.ids.energyPlot.add_widget(self.energy_graph)
+
+    def bind_mc(self, mc):
+        self._mc = mc
+
+    def detach_mc(self):
+        self._mc = None
+
+    def abort_mc(self):
+        if self._mc is not None:
+            self._mc.quit = True
 
     def dismiss_popup(self):
         self._pop_up.dismiss()

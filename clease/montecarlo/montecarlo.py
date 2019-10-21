@@ -79,6 +79,7 @@ class Montecarlo(object):
         self.rand_b = 0
         self.selected_a = 0
         self.selected_b = 0
+        self.quit = False
 
         self.filter = ExponentialFilter(min_time=0.2*len(self.atoms),
                                         max_time=20*len(self.atoms),
@@ -374,6 +375,9 @@ class Montecarlo(object):
                     (self.current_step, steps, ms_per_step, accept_rate))
                 prev = self.current_step
                 start = time.time()
+
+            if self.quit:
+                break
 
         self.log(
             "Reached maximum number of steps ({} mc steps)".format(steps))
