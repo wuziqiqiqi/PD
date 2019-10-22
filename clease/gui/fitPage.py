@@ -1,15 +1,14 @@
 from kivy.uix.popup import Popup
-from clease.gui.fittingAlgorithmEditors import LassoEditor, L2Editor, BCSEditor
-from clease.gui.fittingAlgorithmEditors import GAEditor, FitAlgEditor
 from clease.gui.load_save_dialog import LoadDialog
 from clease import GAFit, LinearRegression, Evaluate
 from kivy.app import App
 import json
 from clease.gui.util import parse_max_cluster_dia
-from clease.gui.constants import BACKGROUND_COLOR, FOREGROUND_TEXT_COLOR
+from clease.gui.constants import FOREGROUND_TEXT_COLOR
 from clease.gui.constants import ECI_GRAPH_COLORS
 from clease.gui.fittingAlgorithmEditors import (
-    LassoEditor, L2Editor, BCSEditor, GAEditor
+    FitAlgEditor, LassoEditor, L2Editor, BCSEditor,
+    GAEditor
 )
 from threading import Thread
 from kivy.uix.screenmanager import Screen
@@ -18,6 +17,7 @@ from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
 import traceback
 import os
+from clease.gui.legend import Legend
 
 
 class ECIOptimizer(object):
@@ -104,7 +104,11 @@ class FitPage(Screen):
     eci_graph = None
     zero_line_energy = None
 
+    legend = None
+
     def on_enter(self):
+        if self.legend is None:
+            self.legend = Legend(self.ids.legend)
         if not self.graphs_added:
             self.energy_graph = Graph(
                 xlabel='DFT energy (eV/atom)',
@@ -350,6 +354,7 @@ class FitPage(Screen):
         elif scheme == 'ga':
             ga_runner = GAClusterSelector()
             ga_runner.fit_page = self
+            gen_without_change = self.fitting_params['gen_without_change']
             ga_runner.kwargs = {
                 'max_cluster_size': max_cluster_size_cut,
                 'max_cluster_dia': max_cluster_dia_cut,
@@ -363,7 +368,7 @@ class FitPage(Screen):
                 'cost_func': self.fitting_params['cost_func'].lower(),
                 'sparsity_slope': self.fitting_params['sparsity'],
                 'include_subclusters': self.fitting_params['sub_clust'],
-                'gen_without_change': self.fitting_params['gen_without_change'],
+                'gen_without_change': gen_without_change,
                 'load_file': self.fitting_params['load_file']
             }
             ga_runner.settings = settings
@@ -451,6 +456,7 @@ class FitPage(Screen):
         if len(eci) == 0:
             return
 
+        max_size = 0
         for k, v in eci.items():
             size = int((k[1]))
             if size < 2:
@@ -458,6 +464,9 @@ class FitPage(Screen):
             if size not in eci_by_size.keys():
                 eci_by_size[size] = []
             eci_by_size[size].append(v)
+
+            if size > max_size:
+                max_size = size
 
         sorted_keys = sorted(list(eci_by_size.keys()))
         prev = 0
@@ -481,6 +490,21 @@ class FitPage(Screen):
         self.eci_graph.ymax = float(ymax)
         self.eci_graph.x_ticks_major = float(xmax)/10.0
         self.eci_graph.y_ticks_major = float(ymax - ymin)/10.0
+
+        num_rows = (max_size - 2) // 3 + 1
+        num_cols = min([max_size-1, 3])
+        print(num_rows, num_cols)
+
+        legend_items = []
+        for k in sorted_keys:
+            color = get_color_from_hex(ECI_GRAPH_COLORS[int(k)-2])[:3]
+            legend_items.append(
+                {
+                    'text': '{}-body'.format(k),
+                    'color': color,
+                }
+            )
+        self.legend.setup(legend_items, num_rows=num_rows, num_cols=num_cols)
 
     def update_plots(self):
         if self.fitting_in_progress:
@@ -555,7 +579,7 @@ class FitPage(Screen):
             msg = 'Fit settings set the ones used '
             msg += 'last time'
             app.root.ids.status.text = msg
-        except:
+        except Exception:
             msg = 'Failed load previous fitting setting. '
             msg += 'Please set your settings again in the editor.'
             app.root.ids.status.text = msg

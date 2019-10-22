@@ -1,0 +1,11 @@
+<LegendItem>:
+    canvas:
+        Color:
+            rgb: root.icon_color
+        Rectangle:
+            pos: root.pos[0], root.pos[1] + root.icon_size[1]
+            size: root.icon_size
+
+    Label:
+        pos: root.pos[0] + root.icon_size[0], root.pos[1] - 20
+        text: root.text

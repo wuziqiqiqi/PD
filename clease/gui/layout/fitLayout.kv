@@ -1,6 +1,7 @@
 #: set height 0.05
 #: set main_field 0.80
 #: set button_height height/main_field
+#:include legendItemLayout.kv
 
 <FitPage>:
     name: 'Fit'
@@ -25,6 +26,12 @@
             
             StackLayout:
                 size_hint: [1, 0.5*button_height]
+                
+            GridLayout:
+                rows: 1
+                cols: 3
+                id: legend
+                size_hint: [1, button_height]
 
         BoxLayout:
             size_hint: [0.05, 1]
