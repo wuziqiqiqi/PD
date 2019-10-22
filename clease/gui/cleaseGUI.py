@@ -11,6 +11,7 @@ from clease.gui.mc_page import MCPage
 from clease.gui.fitPage import FitPage
 from clease.gui.reconfigDB import ReconfigDB
 from kivy.core.window import Window
+from clease.gui.job_exec import JobExec
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 
 import json

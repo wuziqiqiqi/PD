@@ -1,0 +1,127 @@
+#: set height 0.05
+#: set main_field 0.80
+#: set button_height height/main_field
+
+#:set job_exec_spacing 0.1
+<JobExec>:
+    name: 'JobExec'
+    StackLayout:
+        size_hint: [1, 1]
+        id: mainLayout
+
+        BoxLayout:
+            size_hint: [0.05, 1]
+
+        StackLayout:
+            size_hint: [0.90, 1]
+
+            StackLayout:
+                size_hint: [1, 0.5*button_height]
+
+            
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.1, 1]
+                    text: 'Command'
+                
+                Label:
+                    size_hint: [0.05, 1]
+                    text: ''
+
+                TextInput:
+                    size_hint: [0.15, 1]
+                    id: cmdInput
+                    text: 'python'
+                    multiline: False
+                    write_tab: False
+                
+                Label:
+                    size_hint: [0.1, 1]
+                    text: ''
+                
+                Label:
+                    size_hint: [0.1, 1]
+                    text: 'Script'
+
+                Label:
+                    size_hint: [0.05, 1]
+                    text: ''
+                
+                TextInput:
+                    size_hint: [0.3, 1]
+                    id: scriptInput
+                    text: 'myscript.py'
+                    multiline: False
+                    write_tab: False
+                
+                StackLayout:
+                    size_hint: [0.05, 1]
+                
+                Button:
+                    size_hint: [0.1, 1]
+                    id: loadButton
+                    text: 'Load'
+                    on_release: root.open_file_dialog()
+        
+            StackLayout:
+                size_hint: [1, button_height]
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.4, 1]
+                    text: 'Database IDs'
+
+                TextInput:
+                    id: dbIdsInput
+                    size_hint: [0.6, 1]
+                    multiline: False
+                    write_tab: False
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+            StackLayout:
+                size_hint: [1, button_height]
+
+                Label:
+                    size_hint: [0.4, 1]
+                    text: 'Additional args. (optional)'
+
+                TextInput:
+                    id: cmdArgsInput
+                    size_hint: [0.55, 1]
+                    multiline: False
+                    write_tab: False
+
+                Button:
+                    id: helpArgsButton
+                    size_hint: [0.05, 1]
+                    text: '?'
+                    on_release: root.show_args_help()
+            
+            StackLayout:
+                size_hint: [1, button_height]
+
+            StackLayout:
+                size_hint: [1, button_height]
+        
+                StackLayout:
+                    size_hint: [0.6, 1]
+                Button:
+                    id: helpButton
+                    size_hint: [0.2, 1]
+                    text: 'Help'
+                    on_release: root.show_help_msg()
+
+                Button:
+                    id: runButton
+                    size_hint: [0.2, 1]
+                    text: 'Run'
+                    on_release: root.run()
+
+        BoxLayout:
+            size_hint: [0.05, 1]

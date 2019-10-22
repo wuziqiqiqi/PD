@@ -8,3 +8,9 @@ MC_MEAN_CURVE_COLOR = '#8da0cb'
 # Modes for concentration in MC
 SYSTEMS_FROM_DB = 0
 CONC_PER_BASIS = 1
+
+# Messages for job exec page
+JOB_EXEC_MSG = {
+    'db_id_error': 'Could not convert the passed DB ids to int',
+    'jobs_finished': 'All jobs are successfully finished'
+}
