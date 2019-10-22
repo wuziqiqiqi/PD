@@ -1,3 +1,5 @@
+import os
+import re
 from setuptools import setup, find_packages, Extension
 from distutils.errors import CompileError
 from distutils import ccompiler
@@ -8,8 +10,7 @@ if pip.__version__ < '19.3':
     from pip._internal import main as pipmain
 else:
     from pip._internal.main import main as pipmain
-import os
-import re
+
 
 def src_folder():
     candidates = ['cxx/src/', 'clease/', './']
@@ -18,6 +19,7 @@ def src_folder():
             return c
     raise RuntimeError("Cannot find source folder.")
 
+
 def get_cython_folder():
     candidates = ['cxx/cython/', 'cython/', './']
     for c in candidates:
@@ -25,12 +27,14 @@ def get_cython_folder():
             return c
     raise RuntimeError("Cannot find cython folder")
 
+
 def include_folder():
     candidates = ['cxx/include/', 'clease/', './']
     for c in candidates:
         if os.path.exists(c + 'cluster.hpp'):
             return c
     raise RuntimeError("Cannot find include folder")
+
 
 def get_npy_include_folder():
     try:
@@ -40,6 +44,7 @@ def get_npy_include_folder():
 
     import numpy as np
     return np.get_include()
+
 
 def build_ext(ext_module):
     try:
@@ -51,6 +56,7 @@ def build_ext(ext_module):
 
     return cythonize(ext_module)
 
+
 def install_kivy_garden_from_github():
     try:
         import kivy
@@ -61,6 +67,7 @@ def install_kivy_garden_from_github():
         from kivy_garden.graph import Graph
     except ImportError:
         pipmain(['install', 'https://github.com/kivy-garden/graph/archive/master.zip'])
+
 
 # Get version number
 with open('clease/__init__.py') as fd:
@@ -115,5 +122,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
     ],
-    install_requires=['ase>=3.18', 'matplotlib', 'spglib']
+    install_requires=['ase>=3.18', 'matplotlib', 'spglib', 'scikit-learn']
 )

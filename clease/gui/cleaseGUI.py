@@ -210,7 +210,7 @@ class CleaseGUI(App):
         return WindowFrame()
 
     def on_keyboard(self, window, key, scancode, codepoint, modifier):
-        if modifier == ['ctrl'] and codepoint == 's':
+        if modifier in[['ctrl'], ['meta']] and codepoint == 's':
             self.root.save_session_to_current_file()
 
 
