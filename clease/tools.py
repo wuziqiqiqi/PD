@@ -538,3 +538,44 @@ def rotate_cells(cell, target_cell):
     R = np.eye(3) + v_cross + v_cross.dot(v_cross)/(1 + c)
     target_cell = R.dot(target_cell)
     return target_cell
+
+
+def species_chempot2eci(bf_list, species_chempot):
+    """
+    Convert chemical potentials given for species to their corresponding
+    singlet ECI values.
+
+    Parameters:
+
+    bf_list: list
+        List of basis function values for each species
+
+    species_chempot: dict
+        Dictionary containing the chemical potential for each species. Note
+        that the chemical potential for one species can be set to 0.0 without
+        any loss of generality. Hence, the species_chempot should contain
+        chemical potentials for all elements except one.
+    """
+    if len(species_chempot) != len(bf_list):
+        msg = 'Inconsistent number of chemical potentials. Basis functions\n'
+        msg += '{}. Passed chemical potentials {}'.format(bf_list,
+                                                          species_chempot)
+        raise ValueError(msg)
+
+    n = len(species_chempot)
+    mat = np.zeros((n, n))
+    rhs = np.zeros(n)
+    row = 0
+    for sp, mu in species_chempot.items():
+        for col, bf in enumerate(bf_list):
+            mat[row, col] = bf[sp]
+        rhs[row] = mu
+        row += 1
+    try:
+        eci_chem_pot = np.linalg.solve(mat, rhs)
+    except np.linalg.LinAlgError:
+        inv_mat = np.linalg.pinv(mat)
+        eci_chem_pot = inv_mat.dot(rhs)
+    eci_chem_pot = eci_chem_pot.tolist()
+    eci_dct = {'c1_{}'.format(i): v for i, v in enumerate(eci_chem_pot)}
+    return eci_dct
