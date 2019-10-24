@@ -13,11 +13,23 @@ from clease.gui.reconfigDB import ReconfigDB
 from kivy.core.window import Window
 from clease.gui.job_exec import JobExec
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
+from clease.gui.db_browser import DbBrowser
+from ase.db import connect
+import subprocess
+import signal
+
+try:
+    import ase.db.app as ase_db_webapp
+    from flask import request
+    has_flask = True
+except ImportError:
+    has_flask = False
 
 import json
 from threading import Thread
 
 import os.path as op
+import os
 
 main_path = op.abspath(__file__)
 main_path = main_path.rpartition("/")[0]
@@ -31,6 +43,7 @@ class WindowFrame(StackLayout):
     current_session_file = None
     settings = None
     reconfig_in_progress = False
+    subprocesses = {}
 
     def dismiss_popup(self):
         if self._pop_up is None:
@@ -190,7 +203,7 @@ class WindowFrame(StackLayout):
 
     def _get_clusters(self):
         if self.settings is None:
-            self.ids.sm.get_screen('Settings').apply_settings()
+            self._apply_settings()
 
         try:
             self.settings._activate_lagest_template()
@@ -198,6 +211,28 @@ class WindowFrame(StackLayout):
             return self.settings.cluster_list.get_figures(atoms)
         except Exception:
             return False
+
+    def _apply_settings(self):
+        self.ids.sm.get_screen('Settings').apply_settings()
+
+    def view_training_db(self):
+        if self.settings is None:
+            self._apply_settings()
+        
+        app = App.get_running_app()
+        if self.settings is None:
+            msg = 'Could not apply settings. Check your input.'
+            app.root.ids.status.text = msg
+            return
+        
+        screen = self.ids.sm.get_screen('Settings')
+        db_name = screen.ids.dbNameInput.text
+        
+        content = DbBrowser(close=self.dismiss_popup, db_name=db_name)
+        self._pop_up = Popup(title="DB Browser", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
+                             size_hint=(0.9, 0.9))
+        self._pop_up.open()
 
 
 class CleaseGUI(App):
@@ -213,6 +248,11 @@ class CleaseGUI(App):
     def on_keyboard(self, window, key, scancode, codepoint, modifier):
         if modifier in[['ctrl'], ['meta']] and codepoint == 's':
             self.root.save_session_to_current_file()
+
+    def on_stop(self):
+        for k, v in self.root.subprocesses.items():
+            os.kill(v, signal.SIGTERM)
+        self.root.subprocesses = {}
 
 
 if __name__ == "__main__":

@@ -1,0 +1,37 @@
+<DBBrowser>:
+    StackLayout:
+        size_hint: [1, 0.95]
+        pos: root.pos
+        Label:
+            size_hint: [0.2, button_height]
+            text: 'Select conditions'
+        TextInput:
+            id: queryInput
+            size_hint: [0.6, button_height]
+            on_text_validate: root.on_select(self.text)
+            multiline: False
+            write_tab: False
+        Button:
+            size_hint: [0.2, button_height]
+            text: 'Close'
+            on_release: root.close()
+
+        StackLayout:
+            size_hint: [1, 0.05]
+
+        ScrollView:
+            do_scroll_x: True
+            do_scroll_y: True
+            size_hint: [1, 0.9]
+            Label:
+                stip: True
+                font_name: 'RobotoMono-Regular'
+                id: text_field
+                size_hint_x: None
+                size_hint_y: None
+                height: self.texture_size[1]
+                width: self.texture_size[0]
+                text: root.text
+
+        
+
