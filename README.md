@@ -30,6 +30,11 @@ pip install kivy
 pip install 'https://github.com/kivy-garden/graph/archive/master.zip'
 ```
 
+There is also a convenience command for doing these two steps
+```
+clease gui-setup
+```
+
 To launch a GUI simply type
 ```
 clease gui

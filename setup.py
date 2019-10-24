@@ -1,15 +1,7 @@
 import os
 import re
 from setuptools import setup, find_packages, Extension
-from distutils.errors import CompileError
-from distutils import ccompiler
-from textwrap import dedent
 from distutils.sysconfig import get_python_inc
-import pip
-if pip.__version__ < '19.3':
-    from pip._internal import main as pipmain
-else:
-    from pip._internal.main import main as pipmain
 
 
 def src_folder():
@@ -37,37 +29,13 @@ def include_folder():
 
 
 def get_npy_include_folder():
-    try:
-        import numpy
-    except ImportError:
-        pipmain(['install', 'numpy'])
-
     import numpy as np
     return np.get_include()
 
 
 def build_ext(ext_module):
-    try:
-        import Cython
-    except ImportError:
-        pipmain(['install', 'cython'])
-
     from Cython.Build import cythonize
-
     return cythonize(ext_module)
-
-
-def install_kivy_garden_from_github():
-    try:
-        import kivy
-    except ImportError:
-        pipmain(['install', 'kivy'])
-
-    try:
-        from kivy_garden.graph import Graph
-    except ImportError:
-        pipmain(['install', 'https://github.com/kivy-garden/graph/archive/master.zip'])
-
 
 # Get version number
 with open('clease/__init__.py') as fd:
@@ -77,7 +45,6 @@ with open('clease/__init__.py') as fd:
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
 cython_folder = get_cython_folder()
-install_kivy_garden_from_github()
 
 src_files = ['cf_history_tracker.cpp',
              'additional_tools.cpp', 'cluster.cpp',

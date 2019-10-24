@@ -9,7 +9,7 @@ def set_verbosity(verbosity):
 def set_fd(fd):
     _logger.fd = fd
 
-__version__ = '0.9.7'
+__version__ = '0.9.8'
 
 from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import ValidConcentrationFilter

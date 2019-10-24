@@ -6,7 +6,6 @@ python3_test:
     - apt-get install -qy python3-dev python3-pip
     - python3 -m pip install coverage
     - python3 --version
-    - python3 -m pip install -r requirements.txt
     - python3 -m pip install .
     - coverage run --omit='*numpy*','*scipy*','*/ase*','*spglib*','*test*.py' -m unittest discover tests/
     - coverage report
@@ -19,10 +18,10 @@ gui_test:
     - apt-get install -qy python3-dev python3-pip
     - apt-get install -qy xvfb
     - python3 --version
-    - python3 -m pip install -r requirements.txt
     - python3 -m pip install mock
     - python3 -m pip install coverage
     - python3 -m pip install .
+    - clease gui-setup
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" coverage run --include='*/clease/gui/*' -m unittest discover gui_tests/
@@ -35,7 +34,6 @@ doctest:
     - apt-get install -qy python3-dev python3-pip
     - apt-get install -qy xvfb
     - python3 --version
-    - python3 -m pip install -r requirements.txt
     - python3 -m pip install sphinx
     - python3 -m pip install sphinx_rtd_theme
     - python3 -m pip install .
