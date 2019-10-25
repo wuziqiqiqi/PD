@@ -1,4 +1,4 @@
-global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv *.png
+global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv *.png pyproject.toml
 
 setup.py:
 
