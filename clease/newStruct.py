@@ -143,8 +143,8 @@ class NewStructures(object):
             if not os.path.isfile('probe_structure-sigma_mu.npz'):
                 self._generate_sigma_mu(num_samples_var)
 
-        _logger("Generate {} probe structures (struct_per_gen={}, {} present)."
-                .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
+        _logger("Generate {} probe structures (generation: {}, struct_per_gen={}, {} present)."
+                .format(self.num_to_gen, self.gen, self.struct_per_gen, self.num_in_gen))
         num_attempt = 0
         while True:
             if atoms is not None:
@@ -369,8 +369,8 @@ class NewStructures(object):
         if not self._check_num_to_generate():
             return
         _logger("Generating {} random structures "
-                "(struct_per_gen={}, {} present)"
-                .format(self.num_to_gen, self.struct_per_gen, self.num_in_gen))
+                "(generation: {}, struct_per_gen={}, {} present)"
+                .format(self.num_to_gen, self.gen, self.struct_per_gen, self.num_in_gen))
 
         fail_counter = 0
         i = 0
