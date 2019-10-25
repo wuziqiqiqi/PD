@@ -17,6 +17,7 @@ from clease.gui.db_browser import DbBrowser
 from ase.db import connect
 import subprocess
 import signal
+from pathlib import Path
 
 try:
     import ase.db.app as ase_db_webapp
@@ -31,9 +32,8 @@ from threading import Thread
 import os.path as op
 import os
 
-main_path = op.abspath(__file__)
-main_path = main_path.rpartition("/")[0]
-resource_add_path(main_path + '/layout')
+main_path = Path(__file__)
+resource_add_path(main_path.parent / 'layout')
 
 Builder.load_file("cleaseGUILayout.kv")
 
@@ -114,7 +114,7 @@ class WindowFrame(StackLayout):
             return
 
         if len(selection) == 0:
-            fname = path + '/' + user_filename
+            fname = str(Path(path) / user_filename)
         else:
             fname = selection[0]
 
@@ -218,16 +218,16 @@ class WindowFrame(StackLayout):
     def view_training_db(self):
         if self.settings is None:
             self._apply_settings()
-        
+
         app = App.get_running_app()
         if self.settings is None:
             msg = 'Could not apply settings. Check your input.'
             app.root.ids.status.text = msg
             return
-        
+
         screen = self.ids.sm.get_screen('Settings')
         db_name = screen.ids.dbNameInput.text
-        
+
         content = DbBrowser(close=self.dismiss_popup, db_name=db_name)
         self._pop_up = Popup(title="DB Browser", content=content,
                              pos_hint={'right': 0.95, 'top': 0.95},

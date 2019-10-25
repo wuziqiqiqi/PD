@@ -81,6 +81,7 @@ setup(
     package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
+    entry_points={'console_scripts': ['clease=clease.cli.clease:main']},
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
