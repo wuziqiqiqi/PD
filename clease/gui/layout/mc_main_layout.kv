@@ -1,0 +1,62 @@
+#: set mc_main_page_height 0.675
+#: set mc_main_page_btn_height 0.05/mc_main_page_height
+<MCMainPage>:
+    name: 'MCMainPage'
+    StackLayout:
+        Label:
+            size_hint: [0.2, mc_main_page_btn_height]
+            text: 'ECI file'
+        TextInput:
+            id: eciFileInput
+            text: root.eci_file
+            size_hint: [0.3, mc_main_page_btn_height]
+            multiline: False
+            write_tab: False
+        Button:
+            id: loadButton
+            size_hint: [0.1, mc_main_page_btn_height]
+            text: 'Load'
+            on_release: root.show_load_dialog()
+
+        Label:
+            size_hint: [0.05, mc_main_page_btn_height]
+            text: ''
+
+        Label:
+            size_hint: [0.15, mc_main_page_btn_height]
+            text: 'Size'
+
+        TextInput:
+            size_hint: [0.17, mc_main_page_btn_height]
+            id: sizeInput
+            text: root.mc_cell_size
+            on_text_validate: root.set_cell_info()
+            multiline: False
+            write_tab: False
+            input_filter: 'int'
+
+        Button:
+            size_hint: [0.03, mc_main_page_btn_height]
+            text: '?'
+            on_release: root.show_size_help_message()
+
+        StackLayout:
+            size_hint: [1, mc_main_page_btn_height]
+        Label:
+            size_hint: [0.25, mc_main_page_btn_height]
+            text: 'MC cell info:'
+
+        Label:
+            size_hint: [0.25, mc_main_page_btn_height]
+            id: mc_cell_lengths
+            text: root.mc_cell_lengths
+
+        Label:
+            size_hint:  [0.25, mc_main_page_btn_height]
+            id: mc_cell_angles
+            text: root.angle_info
+
+        Label:
+            size_hint: [0.25, mc_main_page_btn_height]
+            id: mc_num_atoms
+            text: root.num_atoms

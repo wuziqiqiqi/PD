@@ -1,0 +1,113 @@
+#: set height 0.05
+#: set main_field 0.675
+#: set can_mc_button_height height/main_field
+
+<CanonicalMCPage>:
+    name: 'MC'
+    StackLayout:
+        size_hint: [1, 1]
+
+        BoxLayout:
+            size_hint: [0.5, 1]
+            id: energyPlot
+
+        BoxLayout:
+            size_hint: [0.05, 1]
+
+        StackLayout:
+            size_hint: [0.45, 1]
+
+            StackLayout:
+                size_hint: [1, can_mc_button_height]
+
+            Label:
+                size_hint: [0.2, can_mc_button_height]
+                text: 'MC DB'
+
+            TextInput:
+                size_hint: [0.55, can_mc_button_height]
+                text: ''
+                id: mc_db_input
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, can_mc_button_height]
+                text: '?'
+                on_release: root.show_db_help_message()
+
+            Button:
+                size_hint: [0.2, can_mc_button_height]
+                text: 'Load'
+                on_release: root.open_load_dialog()
+
+            StackLayout:
+                size_hint: [1, 0.5*can_mc_button_height]
+
+            Label:
+                size_hint: [1, can_mc_button_height]
+                text: 'Temperatures'
+            TextInput:
+                size_hint: [0.95, can_mc_button_height]
+                id: tempInput
+                text: ''
+                placeholder: 'Comma sep. list of temps'
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, can_mc_button_height]
+                text: '?'
+                on_release: root.show_temp_help_message()
+
+            Label:
+                size_hint: [0.5, can_mc_button_height]
+                text: 'Sweeps per temp'
+
+            TextInput:
+                size_hint: [0.5, can_mc_button_height]
+                id: sweepInput
+                text: '100'
+                multiline: False
+                input_filter: 'int'
+                write_tab: False
+
+            StackLayout:
+                size_hint: [1, 0.5*can_mc_button_height]
+
+            Label:
+                size_hint: [1, can_mc_button_height]
+                text: 'Concentrations/systems'
+
+            TextInput:
+                size_hint: [0.95, can_mc_button_height]
+                id: concInput
+                text: ''
+                multiline: False
+                write_tab: False
+
+            Button:
+                size_hint: [0.05, can_mc_button_height]
+                text: '?'
+                on_release: root.show_conc_help_message()
+
+            StackLayout:
+                size_hint: [1, 0.5*can_mc_button_height]
+
+            StackLayout:
+                size_hint: [0.1, can_mc_button_height]
+
+            Button:
+                size_hint: [0.4, can_mc_button_height]
+                text: 'Run'
+                on_release: root.runMC()
+
+            StackLayout:
+                size_hint: [0.1, can_mc_button_height]
+
+            Button:
+                size_hint: [0.4, can_mc_button_height]
+                text: 'Abort'
+                on_release: root.abort_mc()
+
+

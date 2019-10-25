@@ -16,19 +16,15 @@ import os
 import traceback
 
 
-class MCPage(Screen):
+class CanonicalMCPage(Screen):
     energy_graph = None
     energy_plot = None
     mean_energy_plot = None
     _pop_up = None
     mc_is_running = False
-    active_template_is_mc_cell = False
-    info_update_disabled = False
-    view_mc_cell_disabled = False
     _mc = None
 
     def on_enter(self):
-        self.set_cell_info()
         if self.energy_graph is None:
             self.energy_graph = Graph(
                 xlabel='MC sweep',
@@ -113,7 +109,6 @@ class MCPage(Screen):
         return {
             'temps': self.ids.tempInput.text,
             'concs': self.ids.concInput.text,
-            'size': self.ids.sizeInput.text,
             'sweeps': self.ids.sweepInput.text,
             'mc_db': self.ids.mc_db_input.text
         }
@@ -121,63 +116,8 @@ class MCPage(Screen):
     def from_dict(self, dct):
         self.ids.tempInput.text = dct.get('temps', '')
         self.ids.concInput.text = dct.get('concs', '')
-        self.ids.sizeInput.text = dct.get('size', '1')
         self.ids.sweepInput.text = dct.get('sweeps', '100')
         self.ids.mc_db_input.text = dct.get('mc_db', '')
-
-    def view_mc_cell(self):
-        app = App.get_running_app()
-        if self.view_mc_cell_disabled:
-            msg = 'Cannot view MC cell while attaching calculator'
-            app.root.ids.status.text = msg
-            return
-        try:
-            from ase.visualize import view
-            atoms = self._get_mc_cell()
-            Thread(target=view, args=(atoms,)).start()
-        except Exception as exc:
-            traceback.print_exc()
-            app.root.ids.status.text = str(exc)
-
-    def _get_mc_cell(self):
-        app = App.get_running_app()
-        try:
-            settings = app.root.settings
-            size = int(self.ids.sizeInput.text)
-
-            if settings is None:
-                app.root.ids.status.text = 'Apply settings prior to running MC'
-                return
-
-            atoms = None
-            if self.active_template_is_mc_cell:
-                atoms = settings.atoms.copy()
-            else:
-                atoms = settings.atoms*(size, size, size)
-            return atoms
-        except Exception as exc:
-            traceback.print_exc()
-            app.root.ids.status.text = str(exc)
-        return None
-
-    def set_cell_info(self):
-        if self.info_update_disabled:
-            return
-        atoms = self._get_mc_cell()
-
-        if atoms is None:
-            return
-
-        info = atoms.get_cell_lengths_and_angles()
-
-        length_str = 'a: {}Å b: {}Å c: {}Å'.format(
-            int(info[0]), int(info[1]), int(info[2]))
-        self.ids.mc_cell_lengths.text = length_str
-
-        angle_str = '{}deg {}deg {}deg'.format(int(info[3]), int(info[4]),
-                                               int(info[5]))
-        self.ids.mc_cell_angles.text = angle_str
-        self.ids.mc_num_atoms.text = 'Num atoms: {}'.format(len(atoms))
 
     def open_load_dialog(self):
         content = LoadDialog(load=self.load_mc_db_file,
@@ -236,8 +176,6 @@ class MCPage(Screen):
                 App.get_running_app().root.ids.status.text = msg
                 return
 
-            size = int(self.ids.sizeInput.text)
-
             app = App.get_running_app()
             settings = app.root.settings
 
@@ -245,7 +183,10 @@ class MCPage(Screen):
                 app.root.ids.status.text = 'Apply settings prior to running MC'
                 return
 
-            eci_file = app.root.ids.sm.get_screen('Fit').ids.eciFileInput.text
+            mc_header = app.root.ids.sm.get_screen('MCHeader')
+            mc_main_page = mc_header.ids.sm.get_screen('MCMainPage')
+            eci_file = mc_main_page.ids.eciFileInput.text
+            size = int(mc_main_page.ids.sizeInput.text)
             if not os.path.exists(eci_file):
                 msg = 'Cannot load ECI from {}. No such file.'.format(eci_file)
                 app.root.ids.status.text = msg
@@ -261,7 +202,7 @@ class MCPage(Screen):
             runner_args = dict(atoms=atoms, eci=eci, mc_page=self, conc=concs,
                                temps=temps, settings=settings, sweeps=sweeps,
                                status=app.root.ids.status, db_name=db_name,
-                               conc_mode=conc_mode)
+                               conc_mode=conc_mode, app_root=app.root)
             if conc_mode == CONC_PER_BASIS:
                 runner = MCRunner(**runner_args)
             else:

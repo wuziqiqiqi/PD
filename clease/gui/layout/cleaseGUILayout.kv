@@ -7,10 +7,12 @@
 #:include l2EditorLayout.kv
 #:include bcsEditorLayout.kv
 #:include gaEditor.kv
-#:include mc_page_layout.kv
+#:include canonical_page_layout.kv
 #:include help_message_layout.kv
 #:include job_exec_layout.kv
 #:include db_browser_layout.kv
+#:include mc_main_layout.kv
+#:include mc_header_layout.kv
 #: set height 0.05
 
 <WindowFrame>:
@@ -45,7 +47,7 @@
         Button:
             id: toMC
             text: 'MC'
-            on_release: app.root.change_screen('MC')
+            on_release: app.root.change_screen('MCHeader')
 
 
     ScreenManager:
@@ -56,7 +58,7 @@
         NewStructPage:
         JobExec:
         FitPage:
-        MCPage:
+        MCHeader:
 
 
     FloatLayout:

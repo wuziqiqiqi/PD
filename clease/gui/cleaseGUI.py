@@ -7,17 +7,18 @@ from kivy.uix.popup import Popup
 from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
-from clease.gui.mc_page import MCPage
 from clease.gui.fitPage import FitPage
 from clease.gui.reconfigDB import ReconfigDB
 from kivy.core.window import Window
 from clease.gui.job_exec import JobExec
+from clease.gui.mc_header import MCHeader
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 from clease.gui.db_browser import DbBrowser
 from ase.db import connect
 import subprocess
 import signal
 from pathlib import Path
+import traceback
 
 try:
     import ase.db.app as ase_db_webapp
@@ -44,6 +45,9 @@ class WindowFrame(StackLayout):
     settings = None
     reconfig_in_progress = False
     subprocesses = {}
+    active_template_is_mc_cell = False
+    info_update_disabled = False
+    view_mc_cell_disabled = False
 
     def dismiss_popup(self):
         if self._pop_up is None:
@@ -86,8 +90,12 @@ class WindowFrame(StackLayout):
             fit_page = self.ids.sm.get_screen('Fit')
             fit_page.from_dict(data.get('fit_page', {}))
 
-            mc_page = self.ids.sm.get_screen('MC')
-            mc_page.from_dict(data.get('mc_page', {}))
+            mc_header = self.ids.sm.get_screen('MCHeader')
+            mc_main_page = mc_header.ids.sm.get_screen('MCMainPage')
+            mc_main_page.from_dict(data.get('mc_main', {}))
+            canonical_page = mc_header.ids.sm.get_screen('MC')
+            canonical_page.from_dict(data.get('canonical_mc', {}))
+
             self.current_session_file = filename[0]
 
             msg = "Loaded session from {}".format(self.current_session_file)
@@ -123,7 +131,9 @@ class WindowFrame(StackLayout):
         data['conc'] = self.ids.sm.get_screen('Concentration').to_dict()
         data['new_struct'] = self.ids.sm.get_screen('NewStruct').to_dict()
         data['fit_page'] = self.ids.sm.get_screen('Fit').to_dict()
-        data['mc_page'] = self.ids.sm.get_screen('MC').to_dict()
+        mc_header = self.ids.sm.get_screen('MCHeader')
+        data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
+        data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').to_dict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
@@ -233,6 +243,47 @@ class WindowFrame(StackLayout):
                              pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
+
+    def get_mc_cell(self):
+        app = App.get_running_app()
+        try:
+            settings = app.root.settings
+
+            mc_header = self.ids.sm.get_screen('MCHeader')
+
+            mc_main_page = mc_header.ids.sm.get_screen('MCMainPage') 
+
+            size = int(mc_main_page.ids.sizeInput.text)
+
+            if settings is None:
+                app.root.ids.status.text = 'Apply settings prior to running MC'
+                return
+
+            atoms = None
+            if self.active_template_is_mc_cell:
+                atoms = settings.atoms.copy()
+            else:
+                atoms = settings.atoms*(size, size, size)
+            return atoms
+        except Exception as exc:
+            traceback.print_exc()
+            app.root.ids.status.text = str(exc)
+        return None
+
+    def view_mc_cell(self):
+        app = App.get_running_app()
+        if self.view_mc_cell_disabled:
+            msg = 'Cannot view MC cell while attaching calculator'
+            app.root.ids.status.text = msg
+            return
+        try:
+            from ase.visualize import view
+            atoms = self.get_mc_cell()
+            Thread(target=view, args=(atoms,)).start()
+        except Exception as exc:
+            traceback.print_exc()
+            app.root.ids.status.text = str(exc)
+
 
 
 class CleaseGUI(App):

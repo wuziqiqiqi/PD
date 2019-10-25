@@ -57,7 +57,8 @@ class MCRunner(object):
     """
     def __init__(self, atoms=None, eci=None, mc_page=None, conc=None,
                  temps=None, settings=None, sweeps=None, status=None,
-                 db_name=None, conc_mode=None, next_mc_obj=None, db_id=None):
+                 db_name=None, conc_mode=None, next_mc_obj=None, db_id=None,
+                 app_root=None):
         self.atoms = wrap_and_sort_by_position(atoms)
         self.settings = settings
         self.eci = eci
@@ -74,18 +75,19 @@ class MCRunner(object):
         self.conc_mode = conc_mode
         self.db_id = db_id
         self.next_mc_obj = next_mc_obj
+        self.app_root = app_root
 
     def _attach_calc(self):
         self.status.text = 'Attaching calculator...'
 
         # Temporarily disable info update during initalisation
-        self.mc_page.info_update_disabled = True
-        self.mc_page.view_mc_cell_disabled = True
+        self.app_root.info_update_disabled = True
+        self.app_root.view_mc_cell_disabled = True
         self.atoms = attach_calculator(setting=self.settings, atoms=self.atoms,
                                        eci=self.eci)
-        self.mc_page.active_template_is_mc_cell = True
-        self.mc_page.info_update_disabled = False
-        self.mc_page.view_mc_cell_disabled = False
+        self.app_root.active_template_is_mc_cell = True
+        self.app_root.info_update_disabled = False
+        self.app_root.view_mc_cell_disabled = False
 
     def _init_conc(self):
         if self.conc_mode == SYSTEMS_FROM_DB:
@@ -172,7 +174,7 @@ class MCRunner(object):
 
             # Reset the old template
             self.settings.set_active_template(atoms=self.orig_template)
-            self.mc_page.active_template_is_mc_cell = False
+            self.app_root.active_template_is_mc_cell = False
             self.mc_page.detach_mc()
             self.status.text = 'MC calculation finished'
 
