@@ -5,7 +5,7 @@ from kivy.clock import Clock
 from functools import partial
 from settings_page_tests import SettingsPageTests
 from concentraton_page_tests import ConcentrationPageTest
-from new_struct_page_test import NewStructPageTest
+from test_new_struct_page import NewStructPageTest
 from test_fit_page import FitPageTests
 from actionbar_tests import ActionBarTests
 

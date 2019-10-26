@@ -244,6 +244,13 @@ class NewStructPage(Screen):
             eci = json.load(infile)
         return eci
 
+    def get_eci_file(self):
+        eci_file = self.ids.eciFileInput.text
+
+        if eci_file == '':
+            raise ValueError('No ECI file given')
+        return eci_file
+
     def generate(self):
         from clease import NewStructures
         from ase.io import read
@@ -327,7 +334,7 @@ class NewStructPage(Screen):
                 prb_generator.page = self
                 Thread(target=prb_generator.generate).start()
             elif struct_type == 'Ground-state structure (fixed template)':
-                eci_file = self.ids.eciFileInput.text
+                eci_file = self.get_eci_file()
                 eci = self.load_eci(eci_file)
                 msg = 'Generating ground-state structures...'
                 App.get_running_app().root.ids.status.text = msg
@@ -348,7 +355,7 @@ class NewStructPage(Screen):
 
                 Thread(target=gs_generator.generate).start()
             elif struct_type == 'Ground-state structure (variable template)':
-                eci_file = self.ids.eciFileInput.text
+                eci_file = self.get_eci_file()
                 eci = self.load_eci(eci_file)
                 msg = 'Generating ground-state structures...'
                 App.get_running_app().root.ids.status.text = msg
@@ -366,7 +373,7 @@ class NewStructPage(Screen):
                 gs_generator.page = self
 
                 Thread(target=gs_generator.generate).start()
-        except RuntimeError as exc:
+        except (RuntimeError, ValueError) as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
 

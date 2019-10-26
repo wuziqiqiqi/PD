@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import patch
 from clease.gui.newStructPage import NewStructPage
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
@@ -7,9 +6,7 @@ import os.path as op
 import clease.gui
 import json
 import os
-from unittest.mock import patch, MagicMock, PropertyMock
-from clease.gui.newStructPage import NewStructPage
-from clease import CEBulk
+from unittest.mock import patch, MagicMock
 from ase.build import bulk
 from ase.io.trajectory import TrajectoryWriter
 from ase.io import write
@@ -45,11 +42,12 @@ class NewStructPageTest(unittest.TestCase):
 
     @patch('clease.NewStructures')
     @patch('clease.gui.newStructPage.App')
-    def test_exhautive_gui(self, app_mock, new_struct_mock):
+    def test_exhaustive_gui(self, app_mock, new_struct_mock):
         page = NewStructPage()
 
         # Change to Exhaustive-search
-        page.ids.newStructTypeSpinner.text = 'Ground-state structure (variable template)'
+        gen_type = 'Ground-state structure (variable template)'
+        page.ids.newStructTypeSpinner.text = gen_type
 
         # Check active fields
         ids = page.ids
@@ -80,7 +78,7 @@ class NewStructPageTest(unittest.TestCase):
         method = new_struct_mock().generate_gs_structure_multiple_templates
         os.remove(eci_file)
         self.assertEqual(method.call_count, 1)
- 
+
     @patch('clease.gui.newStructPage.App')
     @patch('clease.NewStructures')
     def test_import_structures(self, new_struct_mock, kivy_mock):
@@ -127,6 +125,24 @@ class NewStructPageTest(unittest.TestCase):
 
     def run_with_app(self, app):
         self.load_pop_ups(app)
+
+    @patch('clease.gui.newStructPage.App')
+    @patch('clease.NewStructures')
+    def test_missing_eci_file(self, ns_mock, app_mock):
+        # Set up the Mock such that we can check the error message
+        status = MagicMock(text='')
+        ids = MagicMock(status=status)
+        root = MagicMock(ids=ids)
+        app_mock.get_running_app = MagicMock(return_value=MagicMock(root=root))
+
+        page = NewStructPage()
+        struct_type = 'Ground-state structure (fixed template)'
+        page.ids.newStructTypeSpinner.text = struct_type
+
+        # Try to generate a structure (when ECI file is not given)
+        page.ids.generateButton.dispatch('on_release')
+        self.assertEqual(status.text, 'No ECI file given')
+
 
 if __name__ == '__main__':
     # Load the layout for the new struct page
