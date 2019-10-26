@@ -66,10 +66,11 @@ class DbBrowser(FloatLayout):
         for row in self.db.select():
             for k, v in spacing.items():
                 value = row.get(k, 'none')
+
                 if isinstance(value, float):
                     value = '{:.3f}'.format(value)
                 if len(str(value)) > v:
-                    spacing[k] = len(value)
+                    spacing[k] = len(str(value))
         return spacing
 
     def parse_select_cond(self, txt):
