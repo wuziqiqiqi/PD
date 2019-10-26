@@ -87,6 +87,9 @@ class WindowFrame(StackLayout):
             newstruct_page = self.ids.sm.get_screen('NewStruct')
             newstruct_page.from_dict(data.get('new_struct', {}))
 
+            job_exec = self.ids.sm.get_screen('JobExec')
+            job_exec.from_dict(data.get('job_exec', {}))
+
             fit_page = self.ids.sm.get_screen('Fit')
             fit_page.from_dict(data.get('fit_page', {}))
 
@@ -130,6 +133,7 @@ class WindowFrame(StackLayout):
         data['settings'] = self.ids.sm.get_screen('Settings').to_dict()
         data['conc'] = self.ids.sm.get_screen('Concentration').to_dict()
         data['new_struct'] = self.ids.sm.get_screen('NewStruct').to_dict()
+        data['job_exec'] = self.ids.sm.get_screen('JobExec').to_dict()
         data['fit_page'] = self.ids.sm.get_screen('Fit').to_dict()
         mc_header = self.ids.sm.get_screen('MCHeader')
         data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
