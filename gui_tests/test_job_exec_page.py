@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import clease.gui
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
@@ -10,17 +10,18 @@ from textwrap import dedent
 import os
 import time
 
+
 class TestJobExecPage(unittest.TestCase):
     @patch('clease.gui.job_exec.App')
     def test_to_from_dict(self, app):
         page = JobExec()
-        
+
         num_text_items = 0
         for item in page.walk():
-            if  isinstance(item, TextInput):
+            if isinstance(item, TextInput):
                 num_text_items += 1
                 item.text = 'Some_text'
-        
+
         dct = page.to_dict()
         self.assertEqual(len(dct.keys()), num_text_items)
 
@@ -71,7 +72,7 @@ class TestJobExecPage(unittest.TestCase):
         script_name = 'some_script.py'
         with open(script_name, 'w') as f:
             f.write(dedent(script))
-        
+
         page.ids.scriptInput.text = script_name
         page.ids.cmdArgsInput.text = 'additional_arg'
         page.ids.dbIdsInput.text = '1'
@@ -86,6 +87,36 @@ class TestJobExecPage(unittest.TestCase):
         # before we delete the script. 0.5s should be more than enough
         time.sleep(0.5)
         os.remove(script_name)
+
+    def test_ids_extraction(self):
+        page = JobExec()
+
+        tests = [
+            {
+                'input': '1',
+                'expect': [1]
+            },
+            {
+                'input': '1, 2',
+                'expect': [1, 2]
+            },
+            {
+                'input': '1,2,3',
+                'expect': [1, 2, 3]
+            },
+            {
+                'input': '1-6,8,10-12',
+                'expect': [1, 2, 3, 4, 5, 6, 8, 10, 11, 12]
+            }
+        ]
+
+        for i, test in enumerate(tests):
+            res = page._resolve_id_ranges(test['input'].split(','))
+            msg = 'Test #{} failed'.format(i)
+            msg += 'Setup: {}'.format(test)
+            msg += 'Got: {}'.format(res)
+            self.assertEqual(res, test['expect'], msg=msg)
+
 
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)

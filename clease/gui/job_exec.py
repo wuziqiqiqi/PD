@@ -55,7 +55,9 @@ class JobExec(Screen):
         msg += 'the page. dbID is an integer and <arg1>, <arg2> etc.\n'
         msg += 'are optional arguments given as a comma separated list\n'
         msg += 'If you give a comma separated list of IDs, the command \n'
-        msg += 'will be launched for each ID.\n'
+        msg += 'will be launched for each ID. Furthermore, you can also\n'
+        msg += 'specify a range of IDs like this 4-7 which is expanded to\n'
+        msg += '4, 5, 6, 7.'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
         self._pop_up = Popup(title="Calculation help", content=content,
                              pos_hint={'right': 0.95, 'top': 0.95},
@@ -88,15 +90,29 @@ class JobExec(Screen):
             subprocess.check_call([cmd, script, str(uid)] + args)
         app.root.ids.status.text = JOB_EXEC_MSG['jobs_finished']
 
+    def _resolve_id_ranges(self, dbIds):
+        """Resolve ranges IDs."""
+        ids = []
+        for item in dbIds:
+            if '-' in item:
+                splitted = item.split('-')
+                min_id = int(splitted[0])
+                max_id = int(splitted[1])
+                ids += list(range(min_id, max_id+1))
+            else:
+                ids.append(int(item))
+        return ids
+
     def run(self):
         args = self.ids.cmdArgsInput.text.split(',')
         app = App.get_running_app()
         try:
-            dbIds = list(map(int, self.ids.dbIdsInput.text.split(',')))
+            dbIds = self.ids.dbIdsInput.text.split(',')
+            dbIds = self._resolve_id_ranges(dbIds)
         except Exception:
             app.root.ids.status.text = JOB_EXEC_MSG['db_id_error']
             return
-        
+
         cmd = self.ids.cmdInput.text
         script = self.ids.scriptInput.text
         Thread(target=self.run_on_separate_thread, args=(cmd, script, dbIds, args)).start()
