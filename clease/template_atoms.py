@@ -273,8 +273,11 @@ class TemplateAtoms(object):
             return
         for row in self.db.select(name='template'):
             found = False
+            size_str = row.get('size', None)
+            if size_str is None:
+                continue
             for i, _ in enumerate(self.templates['atoms']):
-                size = str2nested_list(row.size)
+                size = str2nested_list(size_str)
                 assert is_3x3_matrix(size)
                 if (self.templates['size'][i] == size):
                     found = True

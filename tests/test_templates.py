@@ -236,6 +236,17 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(len(template_atoms.cell_filters), num_cell_filters)
         os.remove(db_name)
 
+    def test_user_runs_dft_on_templates(self):
+        db_name = 'test_user_runs_dft_on_templates.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+        db.write(prim_cell, name='primitive_cell')
+
+        # Add an entry that is called template, but does not have size
+        db.write(prim_cell, name='template')
+        TemplateAtoms(supercell_factor=3, db_name=db_name)
+        os.remove(db_name)
 
 if __name__ == '__main__':
     unittest.main()
