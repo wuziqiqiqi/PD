@@ -103,6 +103,8 @@ class ExaustiveGSStructGenerator(object):
                 num_prim_cells=self.num_prim_cells, init_temp=self.Tmax,
                 final_temp=self.Tmin, num_temp=self.num_temps,
                 num_steps_per_temp=self.num_steps, eci=self.eci)
+            msg = 'Ground-state structures generated.'
+            App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
@@ -267,6 +269,7 @@ class NewStructPage(Screen):
             msg = "Settings is not set. "
             msg += "Make sure Apply settings button was clicked.'"
             App.get_running_app().root.ids.status.text = msg
+            self.structure_generation_in_progress = False
             return
 
         if self.ids.genNumberInput.text == '':
@@ -289,6 +292,7 @@ class NewStructPage(Screen):
                 if not os.path.exists(fname):
                     msg = "Cannot find file {}".format(fname)
                     App.get_running_app().root.ids.status.text = msg
+                    self.structure_generation_in_progress = False
                     return
 
                 atoms = read(fname)
@@ -376,6 +380,7 @@ class NewStructPage(Screen):
         except (RuntimeError, ValueError) as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
+            self.structure_generation_in_progress = False
 
     def import_structures(self):
         from ase.io import read
