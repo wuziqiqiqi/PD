@@ -1,11 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from clease.montecarlo import GaussianKernelBiasPotential
+from clease.montecarlo import BinnedBiasPotential
 from clease.montecarlo import MetaDynamicsSampler
 from clease.montecarlo import SGCMonteCarlo
-from clease.calculator import Clease
 from ase.build import bulk
-from clease.montecarlo.observers import MCObserver
 import json
 import os
 import numpy as np
@@ -14,7 +12,7 @@ from clease.montecarlo.observers import ConcentrationObserver
 
 def fake_get_energy_method(self, system_change):
     """
-    MC code assumes that the get_energy method updates the 
+    MC code assumes that the get_energy method updates the
     atoms object
     """
     for change in system_change:
@@ -23,19 +21,19 @@ def fake_get_energy_method(self, system_change):
 
 
 class TestMetaDynamicsSampler(unittest.TestCase):
-    @patch('test_meta_dynamics_sampler.Clease')
-    def test_ideal_mixture(self, fake_calc):
+    def test_ideal_mixture(self):
         show_plot = False
         atoms = bulk('Au')*(3, 3, 3)
+        fake_calc = MagicMock()
         fake_calc.get_energy_given_change = MagicMock(
             side_effect=lambda x: fake_get_energy_method(fake_calc, x))
-        fake_calc.calculate.return_value = 0.0
+        fake_calc.calculate = MagicMock(return_value=0.0)
         fake_calc.atoms = atoms
         atoms.set_calculator(fake_calc)
 
         mc = SGCMonteCarlo(atoms, 600, symbols=['Au', 'Cu'])
-        pot = GaussianKernelBiasPotential(
-            xmin=0.0, xmax=1.0, num_kernels=20, width=0.1,
+        pot = BinnedBiasPotential(
+            xmin=0.0, xmax=1.0, nbins=20,
             getter=ConcentrationObserver(atoms, element='Au'))
 
         fname = 'meta_ideal.json'
@@ -44,7 +42,6 @@ class TestMetaDynamicsSampler(unittest.TestCase):
         meta.log_freq = 0.1
         # NOTE: Mocks use a lot of memory when called many times
         meta.run(max_sweeps=5)
-
         with open(fname, 'r') as infile:
             data = json.load(infile)
         y = np.array(data['betaG']['y'])

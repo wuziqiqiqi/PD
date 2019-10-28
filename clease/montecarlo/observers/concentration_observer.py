@@ -64,4 +64,4 @@ class ConcentrationObserver(MCObserver):
 
     def calculate_from_scratch(self, atoms):
         num_atoms = sum(1 for a in atoms if a.symbol == self.element)
-        return len(atoms)/num_atoms
+        return num_atoms/len(atoms)

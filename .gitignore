@@ -22,3 +22,7 @@ cxx/cython/clease_cxx.cpp
 *.log
 *.coverage
 *.db
+concObsBack*.json
+.cleaseGUI/*
+gui_tests/.cleaseGUI/*
+metadyn.json

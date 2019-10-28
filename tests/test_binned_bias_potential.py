@@ -16,7 +16,7 @@ class TestBinnedBiasPotential(unittest.TestCase):
     def test_get_x(self):
         bias = self.bias_12_11bins()
         x = bias.get_x(5)
-        self.assertAlmostEqual(1.5, x)
+        self.assertAlmostEqual(1.55, x)
 
     def test_evaluate(self):
         bias = BinnedBiasPotential(xmin=0.0, xmax=2.0, nbins=10000)
@@ -65,8 +65,8 @@ class TestBinnedBiasPotential(unittest.TestCase):
 
     def test_local_update(self):
         bias = self.bias_12_11bins()
-        bias.local_update(1.5, 0.6)
-        y = bias.evaluate(1.5)
+        bias.local_update(1.55, 0.6)
+        y = bias.evaluate(1.55)
         self.assertAlmostEqual(y, 0.6)
 
 

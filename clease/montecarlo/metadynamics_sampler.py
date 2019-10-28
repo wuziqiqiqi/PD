@@ -55,13 +55,15 @@ class MetaDynamicsSampler(object):
         self.log_freq = 30
         self.fname = fname
         self.progress_info = {'mean': 0.0, 'minimum': 0.0}
+        self.observers = []
+        self.quit = False
 
     def _getter_accepts_none(self):
         """Return True if the getter accepts None."""
         try:
             x = self.bias.getter(None)
             x = float(x)
-        except:
+        except Exception:
             return False
         return True
 
@@ -70,16 +72,33 @@ class MetaDynamicsSampler(object):
         try:
             x = self.bias.getter([], peak=True)
             x = float(x)
-        except:
+        except Exception:
             return False
         return True
+
+    def add_observer(self, obs, interval=1):
+        """Add observer.
+
+        Parameters:
+
+        obs: callable object
+            A callable object that takes no arguments
+
+        interval: int
+            Will be called at even intervals given by this number
+        """
+        self.observers.append((obs, interval))
 
     def visit_is_flat(self):
         """Return True if the histogram of visits is flat."""
         i_min = self.visit_hist.get_index(self.visit_hist.xmin)
         i_max = self.visit_hist.get_index(self.visit_hist.xmax)
-        avg = np.mean(self.visit_hist.get_coeff()[i_min:i_max])
-        minval = np.min(self.visit_hist.get_coeff()[i_min:i_max])
+        coeff = self.visit_hist.get_coeff()[i_min:i_max]
+        avg = np.mean(coeff)
+
+        # Use min and not np.min. It looks like np.min behaves weird
+        # when it is running on a worker thread
+        minval = min(coeff.tolist())
         self.progress_info['mean'] = avg
         self.progress_info['minval'] = minval/avg
         if np.max(avg) == 0:
@@ -148,12 +167,19 @@ class MetaDynamicsSampler(object):
             if self.visit_is_flat():
                 conv = True
 
-            sweep_no = counter/len(self.mc.atoms)
+            sweep_no = int(counter/len(self.mc.atoms))
 
             if max_sweeps is not None:
                 if sweep_no > max_sweeps:
                     _logger('Reached max number of sweeps...')
                     conv = True
+
+            for obs, interval in self.observers:
+                if counter % (interval*len(self.mc.atoms)) == 0:
+                    obs()
+
+            if self.quit:
+                break
 
         _logger('Results from metadynamics sampling written to '
                 '{}'.format(self.fname))

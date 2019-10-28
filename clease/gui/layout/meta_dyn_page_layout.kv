@@ -1,0 +1,215 @@
+#: set height 0.05
+#: set main_field 0.675
+#: set meta_mc_button_height height/main_field
+
+<MetaDynPage>:
+    name: 'MetaDynPage'
+    StackLayout:
+        size_hint: [1, 1]
+
+
+        BoxLayout:
+            size_hint: [0.5, 1]
+            orientation: 'vertical'
+
+            StackLayout:
+                id: freeEnergyPlot
+                size_hint: [1, 0.5]
+
+            StackLayout:
+                id: visitHistogram
+                size_hint: [1, 0.5]
+            
+        StackLayout:
+            id: column2
+            size_hint: [0.5, 1]
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+                text: 'Backup'
+
+            TextInput:
+                id: backupInput
+                text: 'metadyn'
+                size_hint: [0.4, meta_mc_button_height]
+                write_tab: False
+                multiline: False
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+                text: '.json'
+
+            Button:
+                id: clearButton
+                size_hint: [0.2, meta_mc_button_height]
+                text: 'Clear'
+                on_release: root.clear_backup()
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+                text: 'Ensemble'
+
+            Spinner:
+                size_hint: [0.8, meta_mc_button_height]
+                id: ensembleSpinner
+                text: 'Semi-grand canonical'
+                values: ['Semi-grand canonical']
+                on_text: root.launch_ensemble_editor(self.text)
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+
+            Button:
+                size_hint: [0.8, meta_mc_button_height]
+                id: launchEnsembleEditor
+                text: 'Launch ensemble editor'
+                on_release: root.launch_ensemble_editor()
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+                text: 'Temp.'
+            
+            TextInput:
+                id: tempInput
+                text: '500'
+                size_hint: [0.75, meta_mc_button_height]
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_temperature_help()
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+                text: 'Var.'
+
+            Spinner:
+                id: varSpinner
+                size_hint: [0.75, meta_mc_button_height]
+                text: 'Concentration'
+                values: ['Concentration']
+                on_text: root.launch_observer_editor(self.text)
+            
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_var_help()
+
+            Label:
+                size_hint: [0.2, meta_mc_button_height]
+            Button:
+                id: launchObsEditorButton
+                size_hint: [0.8, meta_mc_button_height]
+                text: 'Launch variable editor'
+                on_release: root.launch_observer_editor()
+
+            Label:
+                size_hint: [0.4, meta_mc_button_height]
+                text: 'Var. range:'
+            TextInput:
+                id: varMinInput
+                size_hint: [0.2, meta_mc_button_height]
+                text: '0.0'
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+            Label:
+                size_hint: [0.15, meta_mc_button_height]
+                text: '-'
+            TextInput:
+                id: varMaxInput
+                size_hint: [0.2, meta_mc_button_height]
+                text: '1.0'
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_range_help()
+            Label:
+                size_hint: [0.7, meta_mc_button_height]
+                text: 'Flatness criteria'
+            TextInput:
+                id: flatInput
+                size_hint: [0.25, meta_mc_button_height]
+                text: '0.8'
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_flatness_help()
+
+            Label:
+                size_hint: [0.7, meta_mc_button_height]
+                text: 'Modification factor'
+            TextInput:
+                id: modInput
+                size_hint: [0.25, meta_mc_button_height]
+                text: '0.1'
+                input_filter: 'float'
+                write_tab: False
+                multiline: False
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_modfactor_help()
+
+            Label:
+                text: 'Num bins.'
+                size_hint: [0.4, meta_mc_button_height]
+            TextInput:
+                id: nbinsInput
+                size_hint: [0.55, meta_mc_button_height]
+                text: '50'
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_nbins_help()
+
+            Label:
+                size_hint: [0.7, meta_mc_button_height]
+                text: 'Max. sweeps'
+            TextInput:
+                id: maxSweepsInput
+                size_hint: [0.25, meta_mc_button_height]
+                text: '10000'
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+            Button:
+                text: '?'
+                size_hint: [0.05, meta_mc_button_height]
+                on_release: root.show_max_sweep_help()
+
+            Label:
+                size_hint: [0.7, meta_mc_button_height]
+                text: 'Plot update interv.'
+            TextInput:
+                id: plotIntInput
+                size_hint: [0.3, meta_mc_button_height]
+                text: '10'
+                input_filter: 'int'
+                write_tab: False
+                multiline: False
+
+            Button:
+                id: runButton
+                size_hint: [0.5, meta_mc_button_height]
+                text: 'Run'
+                on_release: root.run()
+            
+            Button: 
+                id: abortButton
+                size_hint: [0.5, meta_mc_button_height]
+                text: 'Abort'
+                on_release: root.abort_mc()
+
+            

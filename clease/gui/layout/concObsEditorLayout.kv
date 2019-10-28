@@ -1,0 +1,19 @@
+<ConcObsEditor>:
+    StackLayout:
+        Label:
+            size_hint: [0.5, 0.1]
+            text: 'Element'
+
+        TextInput:
+            size_hint: [0.25, 0.1]
+            id: elementInput
+            text: 'X'
+            write_tab: False
+            multiline: False
+            on_text_validate: root.close(root.ids.elementInput.text)
+
+        Button:
+            size_hint: [0.25, 0.1]
+            id: closeButton
+            text: 'Close'
+            on_release: root.close(root.ids.elementInput.text)

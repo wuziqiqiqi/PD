@@ -40,7 +40,7 @@ class BinnedBiasPotential(BiasPotential):
 
     def get_x(self, index):
         """Return x value corresponding to an index."""
-        return self.xmin + index*self.dx
+        return self.xmin + index*self.dx + 0.5*self.dx
 
     def evaluate(self, x):
         """Evaluate the bias potential at x."""

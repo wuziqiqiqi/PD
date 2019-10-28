@@ -5,8 +5,10 @@ from clease.gui.help_message_popup import HelpMessagePopup
 from kivy.app import App
 from clease.gui.util import parse_concentration_list, parse_temperature_list
 from clease.gui.util import parse_comma_sep_list_of_int
-from clease.gui.constants import MC_MEAN_CURVE_COLOR
-from clease.gui.constants import CONC_PER_BASIS, SYSTEMS_FROM_DB
+from clease.gui.constants import (
+    MC_MEAN_CURVE_COLOR, CONC_PER_BASIS, SYSTEMS_FROM_DB,
+    MC_TYPE_TO_PAGE
+)
 from clease.gui.mc_runner import MCRunner
 from kivy.utils import get_color_from_hex
 from threading import Thread
@@ -147,6 +149,11 @@ class CanonicalMCPage(Screen):
                              pos_hint={'right': 0.95, 'top': 0.95},
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
+
+    def set_mc_type(self, text):
+        current = App.get_running_app().root.ids.sm.current
+        if current != MC_TYPE_TO_PAGE[text]:
+            App.get_running_app().root.ids.sm.current = MC_TYPE_TO_PAGE[text]
 
     def runMC(self):
         if self.mc_is_running:

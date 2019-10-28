@@ -8,6 +8,7 @@ from clease.gui.settingsPage import SettingsPage
 from clease.gui.concentrationPage import ConcentrationPage
 from clease.gui.newStructPage import NewStructPage
 from clease.gui.fitPage import FitPage
+from clease.gui.meta_dyn_page import MetaDynPage
 from clease.gui.reconfigDB import ReconfigDB
 from kivy.core.window import Window
 from clease.gui.job_exec import JobExec
@@ -99,6 +100,9 @@ class WindowFrame(StackLayout):
             canonical_page = mc_header.ids.sm.get_screen('MC')
             canonical_page.from_dict(data.get('canonical_mc', {}))
 
+            meta_dyn_page = mc_header.ids.sm.get_screen('MetaDynPage')
+            meta_dyn_page.from_dict(data.get('meta_dyn_page', {}))
+
             self.current_session_file = filename[0]
 
             msg = "Loaded session from {}".format(self.current_session_file)
@@ -138,6 +142,7 @@ class WindowFrame(StackLayout):
         mc_header = self.ids.sm.get_screen('MCHeader')
         data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
         data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').to_dict()
+        data['meta_dyn_page'] = mc_header.ids.sm.get_screen('MetaDynPage').to_dict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
@@ -172,6 +177,10 @@ class WindowFrame(StackLayout):
         if index_current > index_new:
             direction = 'right'
         self.ids.sm.transition.direction = direction
+
+        # Take special care of MC screens as
+        if new_screen == 'MC':
+            new_screen = self.mc_type_screen
         self.ids.sm.current = new_screen
 
     def reconfig(self, target=None):

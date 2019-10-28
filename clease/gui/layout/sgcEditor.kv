@@ -1,0 +1,35 @@
+<SGCEditor>:
+    StackLayout:
+        Label:
+            size_hint: [0.5, 0.1]
+            text: 'Symbols'
+
+        TextInput:
+            id: symbolInput
+            size_hint: [0.3, 0.1]
+            text: 'Au, Cu, X'
+            multiline: False
+            writetab: False
+
+        Label:
+            size_hint: [0.5, 0.1]
+            text: 'Chem. pot.'
+        
+        TextInput:
+            id: chemPotInput
+            size_hint: [0.3, 0.1]
+            multiline: False
+            writetab: False
+            text: 'c1_0: -0.1, c1_1: 0.2'
+
+        Label:
+            size_hint:
+                [0.7, 0.1]
+
+        Button:
+            id: closeButton
+            size_hint: [0.3, 0.1]
+            text: 'Close'
+            on_release: root.close(root.parse_symbols(), root.parse_chem_pot())
+
+        
