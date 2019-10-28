@@ -221,6 +221,41 @@ class NewStructures(object):
         See doc-string of `generate_gs_structure` for the rest of the
         argument.
         """
+
+        for i in range(self.struct_per_gen):
+            _logger('Generating ground-state structures: {} of {}'
+                    ''.format(i, self.struct_per_gen))
+
+            self._generate_one_gs_structure_multiple_templates(
+                num_templates=num_templates, num_prim_cells=num_prim_cells,
+                init_temp=init_temp, final_temp=final_temp,
+                num_temp=num_temp, num_steps_per_temp=num_steps_per_temp,
+                eci=eci
+            )
+
+    def _generate_one_gs_structure_multiple_templates(
+            self, num_templates=20, num_prim_cells=2, init_temp=2000,
+            final_temp=1, num_temp=10, num_steps_per_temp=1000,
+            eci=None):
+        """
+        Search for ground states in many templates.
+
+        Parameters:
+
+        num_templates: int
+            Number of templates to search in. Simmulated annealing is done in
+            each cell and the one with the lowest energy is taken as the ground
+            state.
+
+        num_prim_cells: int
+            Number of primitive cells to use when constructing templates. The
+            volume of all the templates used will be
+            num_prim_cells*vol_primitive, where vol_primitive is the volume of
+            the primitive cell.
+
+        See doc-string of `generate_gs_structure` for the rest of the
+        argument.
+        """
         f = ValidConcentrationFilter(self.setting)
         self.setting.template_atoms.add_atoms_filter(f)
         templates = self.setting.template_atoms.get_fixed_volume_templates(
@@ -256,7 +291,7 @@ class NewStructures(object):
 
         # Find the position of the minimum energy structure
         min_energy_indx = np.argmin(energies)
-        self.insert_structure(init_struct=gs_struct)
+        self.insert_structure(init_struct=gs_structs[min_energy_indx])
 
     def generate_gs_structure(self, atoms=None, init_temp=2000,
                               final_temp=1, num_temp=10,
