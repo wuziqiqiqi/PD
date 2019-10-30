@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from itertools import product
-from random import choice
+from random import choice, shuffle
 from ase.db import connect
 from ase.build import cut
 from itertools import combinations
@@ -11,7 +11,7 @@ from clease.tools import str2nested_list
 from clease import _logger
 from clease import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import CellFilter, AtomsFilter
-from clease.tools import factorize, all_integer_transform_matrices
+from clease.tools import all_integer_transform_matrices
 
 
 class TemplateAtoms(object):
@@ -475,7 +475,6 @@ class TemplateAtoms(object):
     def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
         # Set up a filter that listens to the templates with fixed volume
         from ase.build.tools import niggli_reduce_cell
-        from random import sample
         cells = []
         transform_matrices = []
         prim_vol = self.prim_cell.get_volume()
@@ -488,7 +487,9 @@ class TemplateAtoms(object):
         self.add_cell_filter(equiv_filter)
 
         ucell = self.prim_cell.get_cell()
-        for mat in all_integer_transform_matrices(num_prim_cells):
+        matrices = list(all_integer_transform_matrices(num_prim_cells))
+        shuffle(matrices)
+        for mat in matrices:
             sc = mat.dot(ucell)
             sc, _ = niggli_reduce_cell(sc)
             if self.is_valid(cell=sc):
@@ -501,13 +502,16 @@ class TemplateAtoms(object):
                     cells.append(sc)
                     transform_matrices.append(mat)
 
-        if len(transform_matrices) <= num_templates:
-            all_trans_mat = transform_matrices
-        else:
-            all_trans_mat = sample(transform_matrices, num_templates)
+            if len(transform_matrices) >= num_templates:
+                break
 
         templates = []
-        for P in all_trans_mat:
+
+        if len(transform_matrices) > num_templates:
+            shuffle(transform_matrices)
+            transform_matrices = transform_matrices[:num_templates]
+
+        for P in transform_matrices:
             atoms = make_supercell(self.prim_cell, P)
             templates.append(atoms)
 
