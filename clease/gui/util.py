@@ -234,3 +234,30 @@ def parse_concentration_list(string):
 
     msg = 'Concentration list has to be given as one comma separated list per basis'
     raise ValueError(msg)
+
+
+def parse_select_cond(txt):
+    """
+    Parse a select condition given as a string.
+
+    Parameter
+
+    txt: str
+        Select condition on the form gen=3,struct_type=initial
+    """
+    select_cond = []
+    known_op = ['>=', '<=', '<', '>', '=']
+    for cond in txt.split(','):
+        for op in known_op:
+            if op in cond:
+                split = cond.split(op)
+                value = split[1]
+                try:
+                    float_val = float(value)
+                    value = float_val
+                except Exception:
+                    pass
+
+                select_cond.append((split[0], op, value))
+                break
+    return select_cond

@@ -1,10 +1,10 @@
 import unittest
-from clease.gui.util import parse_temperature_list
-from clease.gui.util import parse_concentration_list
-from clease.gui.util import parse_cellpar, parse_cell
-from clease.gui.util import parse_coordinate_basis
-from clease.gui.util import parse_grouped_basis_elements
-from clease.gui.util import BasisSpecifiedInManyGroupsError
+from clease.gui.util import (
+    parse_temperature_list, parse_concentration_list,
+    parse_cellpar, parse_cell, parse_coordinate_basis,
+    parse_grouped_basis_elements, BasisSpecifiedInManyGroupsError,
+    parse_select_cond
+)
 import numpy as np
 
 
@@ -134,6 +134,47 @@ class TestGUIUtil(unittest.TestCase):
         text = '(0, 1), (2, 1, 4)'
         with self.assertRaises(BasisSpecifiedInManyGroupsError):
             _ = parse_grouped_basis_elements(text)
+
+    def test_query_parser(self):
+        tests = [
+            {
+                'query': 'name=myname',
+                'expect': [('name', '=', 'myname')]
+            },
+            {
+                'query': 'gen=0',
+                'expect': [('gen', '=', 0)]
+            },
+            {
+                'query': 'energy=1.3',
+                'expect': [('energy', '=', 1.3)]
+            },
+            {
+                'query': 'energy>4.3',
+                'expect': [('energy', '>', 4.3)]
+            },
+            {
+                'query': 'energy<4.3',
+                'expect': [('energy', '<', 4.3)]
+            },
+            {
+                'query': 'energy<=4.3',
+                'expect': [('energy', '<=', 4.3)]
+            },
+            {
+                'query': 'energy>=4.3',
+                'expect': [('energy', '>=', 4.3)]
+            },
+            {
+                'query': 'energy>=4.3,gen=2',
+                'expect': [('energy', '>=', 4.3), ('gen', '=', 2)]
+            }
+        ]
+
+        for i, test in enumerate(tests):
+            got = parse_select_cond(test['query'])
+            msg = 'Test #{} failed. Test: {} Got: {}'.format(i, test, got)
+            self.assertEqual(test['expect'], got, msg=msg)
 
 if __name__ == '__main__':
     unittest.main()

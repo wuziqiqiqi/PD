@@ -11,49 +11,6 @@ from ase.calculators.emt import EMT
 
 
 class TestDBBrowser(unittest.TestCase):
-    def test_query_parser(self):
-        db_name = 'somedb.db'
-        browser = DbBrowser(db_name=db_name)
-        tests = [
-            {
-                'query': 'name=myname',
-                'expect': [('name', '=', 'myname')]
-            },
-            {
-                'query': 'gen=0',
-                'expect': [('gen', '=', 0)]
-            },
-            {
-                'query': 'energy=1.3',
-                'expect': [('energy', '=', 1.3)]
-            },
-            {
-                'query': 'energy>4.3',
-                'expect': [('energy', '>', 4.3)]
-            },
-            {
-                'query': 'energy<4.3',
-                'expect': [('energy', '<', 4.3)]
-            },
-            {
-                'query': 'energy<=4.3',
-                'expect': [('energy', '<=', 4.3)]
-            },
-            {
-                'query': 'energy>=4.3',
-                'expect': [('energy', '>=', 4.3)]
-            },
-            {
-                'query': 'energy>=4.3,gen=2',
-                'expect': [('energy', '>=', 4.3), ('gen', '=', 2)]
-            }
-        ]
-
-        for i, test in enumerate(tests):
-            got = browser.parse_select_cond(test['query'])
-            msg = 'Test #{} failed. Test: {} Got: {}'.format(i, test, got)
-            self.assertEqual(test['expect'], got, msg=msg)
-
     def test_db_updates(self):
         db_name = 'test_db_updates.db'
 

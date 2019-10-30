@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, ANY
 
 from clease.gui.fitPage import FitPage
 import clease.gui
@@ -65,7 +65,6 @@ class FitPageTests(unittest.TestCase):
         app_mock.get_running_app = MagicMock(root=MagicMock(
             ids=MagicMock(text='')))
 
-        #exit()
         # Set fitting algorithm to GA
         page = FitPage()
 
@@ -103,6 +102,34 @@ class FitPageTests(unittest.TestCase):
         # Check that the ECI plot has been updated
         self.assertEqual(len(page.eci_plots[0].points), 1)
         self.assertAlmostEqual(page.eci_plots[0].points[0][1], 2.0)
+
+    @patch('clease.gui.fitPage.Evaluate')
+    @patch('clease.gui.fitPage.App')
+    def test_fit_db_select_cond(self, app_mock, eval_mock):
+        root = MagicMock()
+        root.ids.status.text = 'Nothing'
+        app_mock.get_running_app = lambda: MagicMock(root=root)
+
+        eval_mock.return_value.get_cv_score = lambda: 0.0
+        eval_mock.return_value.rmse = lambda: 0.0
+        eval_mock.return_value.mae = lambda: 0.0
+        eval_mock.return_value.cf_matrix = np.array([[0.0, 0.0], [1.0, 1.0]])
+        eval_mock.return_value.e_dft = [0.0, 1.0]
+        eval_mock.return_value.eci = [0.0, 0.0]
+
+        page = FitPage()
+        page.on_enter()
+        page.ids.fitAlgSpinner.text = 'L2'
+        page.ids.fitEditorButton.dispatch('on_release')
+        page._pop_up.content.ids.closeButton.dispatch('on_release')
+
+        # Check that select condition is passed
+        page.ids.dbSelectCondInput.text = 'gen=2'
+        page.ids.fitButton.dispatch('on_release')
+        eval_mock.assert_called_with(
+            ANY, alpha=ANY, fitting_scheme=ANY, max_cluster_dia=ANY,
+            max_cluster_size=ANY, nsplits=ANY, num_repetitions=ANY,
+            scoring_scheme=ANY, select_cond=[('gen', '=', 2.0)])
 
     @patch('clease.gui.fitPage.App')
     def test_auto_load_fit_settings(self, app_mock):

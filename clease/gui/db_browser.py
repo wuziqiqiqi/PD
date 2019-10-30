@@ -1,5 +1,6 @@
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty, StringProperty
+from clease.gui.util import parse_select_cond
 from ase.db import connect
 from copy import deepcopy
 
@@ -73,26 +74,8 @@ class DbBrowser(FloatLayout):
                     spacing[k] = len(str(value))
         return spacing
 
-    def parse_select_cond(self, txt):
-        select_cond = []
-        known_op = ['>=', '<=', '<', '>', '=']
-        for cond in txt.split(','):
-            for op in known_op:
-                if op in cond:
-                    split = cond.split(op)
-                    value = split[1]
-                    try:
-                        float_val = float(value)
-                        value = float_val
-                    except Exception:
-                        pass
-
-                    select_cond.append((split[0], op, value))
-                    break
-        return select_cond
-
     def on_select(self, txt):
-        select_cond = self.parse_select_cond(txt)
+        select_cond = parse_select_cond(txt)
         self.set_rows(select_cond)
 
     def set_rows(self, select_cond):

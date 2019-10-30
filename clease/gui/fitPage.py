@@ -3,7 +3,9 @@ from clease.gui.load_save_dialog import LoadDialog
 from clease import GAFit, LinearRegression, Evaluate
 from kivy.app import App
 import json
-from clease.gui.util import parse_max_cluster_dia
+from clease.gui.util import (
+    parse_max_cluster_dia, parse_select_cond
+)
 from clease.gui.constants import FOREGROUND_TEXT_COLOR
 from clease.gui.constants import ECI_GRAPH_COLORS
 from clease.gui.fittingAlgorithmEditors import (
@@ -38,6 +40,7 @@ class ECIOptimizer(object):
             self.fit_page.set_cv(cv)
             self.fit_page.set_rmse(rmse)
             self.fit_page.set_mae(mae)
+
             App.get_running_app().root.ids.status.text = 'Idle'
             self.fit_page.fitting_in_progress = False
             self.fit_page.update_plots()
@@ -292,7 +295,6 @@ class FitPage(Screen):
             # We already optimising ECIs
             return
 
-        from clease import Evaluate
         settings = App.get_running_app().root.settings
 
         if settings is None:
@@ -335,6 +337,12 @@ class FitPage(Screen):
             App.get_running_app().root.ids.status.text = msg
             return
 
+        select_cond = self.ids.dbSelectCondInput.text
+        if select_cond == '':
+            select_cond = None
+        else:
+            select_cond = parse_select_cond(select_cond)
+
         scheme = scheme.lower()
         alpha = 0.0
         if scheme in ['lasso', 'l2']:
@@ -358,7 +366,7 @@ class FitPage(Screen):
             ga_runner.kwargs = {
                 'max_cluster_size': max_cluster_size_cut,
                 'max_cluster_dia': max_cluster_dia_cut,
-                'select_cond': None,
+                'select_cond': select_cond,
                 'min_weight': 1.0,
                 'mutation_prob': self.fitting_params['mut_prob'],
                 'elitism': self.fitting_params['elitism'],
@@ -390,7 +398,8 @@ class FitPage(Screen):
                 settings, fitting_scheme=scheme, alpha=alpha,
                 max_cluster_size=max_cluster_size_cut,
                 max_cluster_dia=max_cluster_dia_cut, nsplits=k_fold,
-                num_repetitions=num_rep, scoring_scheme=scoring_scheme)
+                num_repetitions=num_rep, scoring_scheme=scoring_scheme,
+                select_cond=select_cond)
 
             App.get_running_app().root.ids.status.text = 'Optimizing ECIs...'
             eci_optimizer = ECIOptimizer()
@@ -493,7 +502,6 @@ class FitPage(Screen):
 
         num_rows = (max_size - 2) // 3 + 1
         num_cols = min([max_size-1, 3])
-        print(num_rows, num_cols)
 
         legend_items = []
         for k in sorted_keys:
