@@ -161,7 +161,7 @@ class NewStructures(object):
 
             struct = self._get_struct_at_conc(conc_type='random')
 
-            _logger('Generating {} out of {} structures.'
+            _logger('Generating structure {} out of {}.'
                     .format(num_struct + 1, self.struct_per_gen))
             ps = ProbeStructure(self.setting, struct, self.struct_per_gen,
                                 init_temp, final_temp, num_temp,
@@ -359,7 +359,7 @@ class NewStructures(object):
             struct = structs[current_count].copy()
             self.setting.set_active_template(atoms=struct,
                                              generate_template=False)
-            _logger("Generating {} out of {} structures."
+            _logger("Generating structure {} out of {}."
                     .format(current_count + 1, len(structs)))
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
@@ -382,7 +382,7 @@ class NewStructures(object):
             else:
                 num_attempt = 0
 
-            msg = 'Structure with E = {:.3f} generated.'.format(es.min_energy)
+            msg = 'Structure with E = {:.3f} generated.\n'.format(es.min_energy)
             _logger(msg)
             kvp = self._get_kvp(gs_struct, formula_unit)
             tab_name = self.corr_func_table_name
@@ -476,8 +476,10 @@ class NewStructures(object):
                 structs.append(struct)
             else:
                 _logger("Generate {} ground-state structures "
-                        "(struct_per_gen={}, {} present)"
-                        .format(self.num_to_gen, self.struct_per_gen,
+                        "(generation: {}, struct_per_gen={}, {} present)"
+                        .format(self.num_to_gen,
+                                self.gen,
+                                self.struct_per_gen,
                                 self.num_in_gen))
                 self.setting.set_active_template(atoms=struct,
                                                  generate_template=True)

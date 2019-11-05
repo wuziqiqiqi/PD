@@ -78,7 +78,15 @@ class StructureGenerator(object):
                             self.num_temp)
         now = time.time()
         change_element = self._has_more_than_one_conc()
-        for temp in temps:
+
+        N = len(temps)
+        # Number of integers for max counters
+        len_num_steps = len(str(self.num_steps_per_temp))
+        len_max_temp = len(str(N))
+        _logger('Generating log statements every {} s'.format(
+            self.output_every))
+
+        for Ti, temp in enumerate(temps):
             self.temp = temp
             num_accepted = 0
             count = 0
@@ -87,9 +95,16 @@ class StructureGenerator(object):
 
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted)/count
-                    _logger("Temp: {}. {} of {}. Acc. rate: {}"
-                            "".format(temp, count, self.num_steps_per_temp,
-                                      acc_rate))
+                    _logger(("T Step: {0:>{1}} of {2}, "
+                             # Print same len as max required
+                             "Temp: {3:>10.3f}, "
+                             # Print same len as max required
+                             "MC Step: {4:>{5}d} of {6}, "
+                             "Accept. rate: {7:.2f} %").format(
+                                 Ti+1, len_max_temp, N,
+                                 temp, count, len_num_steps,
+                                 self.num_steps_per_temp,
+                                 acc_rate*100))
                     now = time.time()
 
                 if bool(getrandbits(1)) and self.alter_composition:
