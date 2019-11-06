@@ -131,8 +131,8 @@ def get_spacegroup(db_name):
     return setting, wrap_and_sort_by_position(atoms)
 
 
-def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
-                                      fixed=[]):
+def do_test_update_correlation_functions(setting, atoms, n_trial_configs=20,
+                                         fixed=()):
     """Perform swaps and check that the correlation functions match.
 
     The comparison is done by check that each CF in the Clease
@@ -173,7 +173,7 @@ def test_update_correlation_functions(setting, atoms, n_trial_configs=20,
     print(np.mean(timings))
 
 
-def test_insert_element(setting, atoms, n_trial_configs=20):
+def do_test_insert_element(setting, atoms, n_trial_configs=20):
     from random import choice
     cf = CorrFunction(setting)
     eci = generate_ex_eci(setting)
@@ -181,7 +181,7 @@ def test_insert_element(setting, atoms, n_trial_configs=20):
     atoms.set_calculator(calc)
     elements = setting.unique_elements
     for _ in range(n_trial_configs):
-        indx1 = randint(0, len(atoms)-1)
+        indx1 = randint(0, len(atoms) - 1)
         symb1 = atoms[indx1].symbol
         symb2 = symb1
 
@@ -212,7 +212,6 @@ class TestCECalculator(unittest.TestCase):
             norm_factors = cluster.info['normalization_factor']
             self.assertTrue(np.allclose(norm_factors, 1.0))
 
-
     def test_indices_of_changed_symbols(self):
         db_name = 'indices_changes_symbol.db'
         setting, atoms = get_binary(db_name)
@@ -235,33 +234,32 @@ class TestCECalculator(unittest.TestCase):
         db_name = 'cecalc_corr_func_binary.db'
         print('binary')
         bin_setting, bin_atoms = get_binary(db_name)
-        test_update_correlation_functions(bin_setting, bin_atoms,
-                                          n_trial_configs=5)
+        do_test_update_correlation_functions(bin_setting, bin_atoms,
+                                             n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_ternary(self):
         db_name = 'cecalc_corr_func_ternary.db'
         print('ternary')
         tern_setting, tern_atoms = get_ternary(db_name)
-        test_update_correlation_functions(tern_setting, tern_atoms,
-                                          n_trial_configs=5)
+        do_test_update_correlation_functions(tern_setting, tern_atoms,
+                                             n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_rocksalt(self):
         db_name = 'cecalc_corr_func_rocksalt.db'
         print('rocksalt')
         rs_setting, rs_atoms = get_rocksalt(db_name)
-        test_update_correlation_functions(rs_setting, rs_atoms,
-                                          n_trial_configs=5, fixed=['O'])
+        do_test_update_correlation_functions(rs_setting, rs_atoms,
+                                             n_trial_configs=5, fixed=['O'])
         os.remove(db_name)
-
 
     def test_insert_element_rocksalt_1x1x1(self):
         print('rocksalt with self interaction 1x1x1')
         db_name = 'cecalc_rs_1x1x1.db'
         rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1],
                                                               db_name)
-        test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
+        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x2(self):
@@ -269,33 +267,31 @@ class TestCECalculator(unittest.TestCase):
         print('rocksalt with self interaction 1x1x2')
         rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2],
                                                               db_name)
-        test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
+        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
         os.remove(db_name)
-
 
     def test_insert_element_rocksalt_1x1x3(self):
         db_name = 'cecalc_rs_1x1x3.db'
         print('rocksalt with self interaction 1x1x3')
         rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3],
                                                               db_name)
-        test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
-
 
     def test_insert_element_rocksalt_1x2x3(self):
         print('rocksalt with self interaction 1x2x3')
         db_name = 'cecalc_rs_1x2x3.db'
         rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3],
                                                               db_name)
-        test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
     def test_update_corr_func_spacegroup(self):
         print('spacegroup')
         db_name = 'cecalc_corrfunc_spacegroup.db'
         sp_setting, sp_atoms = get_spacegroup(db_name)
-        test_update_correlation_functions(sp_setting, sp_atoms,
-                                          n_trial_configs=5, fixed=['Ta'])
+        do_test_update_correlation_functions(sp_setting, sp_atoms,
+                                             n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
 
     def test_init_large_cell(self):
@@ -304,7 +300,7 @@ class TestCECalculator(unittest.TestCase):
         rs_setting, _ = rocksalt_with_self_interaction([1, 2, 3], db_name)
 
         atoms = bulk('LiO', crystalstructure='rocksalt', a=4.05, cubic=True)
-        atoms = atoms*(2, 2, 2)
+        atoms = atoms * (2, 2, 2)
         eci = generate_ex_eci(rs_setting)
 
         # Use quick way of initialisation object
@@ -349,7 +345,7 @@ class TestCECalculator(unittest.TestCase):
         cf = CorrFunction(setting).get_cf(setting.atoms)
         eci = {k: 0.0 for k in cf.keys()}
         eci['c0'] = 1.0
-        atoms = setting.atoms.copy()*(3, 3, 3)
+        atoms = setting.atoms.copy() * (3, 3, 3)
 
         # Simpy confirm that no exception is raised.
         # In the past, this failed.
