@@ -505,7 +505,8 @@ class ClusterExpansionSetting(object):
                 verbose=LogVerbosity.INFO)
 
         db = connect(self.db_name)
-        data = {'cluster_list': self.cluster_list,
+        data = {'cluster_list': list(map(lambda x: x.todict(),
+                                         self.cluster_list.tolist())),
                 'trans_matrix': self.trans_matrix}
         try:
             row = db.get(name="template", size=self._size2string())
