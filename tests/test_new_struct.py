@@ -1,14 +1,15 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from clease import NewStructures
-from clease import CEBulk
+from clease import CEBulk, Concentration
 from ase.io.trajectory import TrajectoryWriter
 from ase.build import bulk
 from ase.calculators.emt import EMT
 from ase.db import connect
 from random import choice
-from clease.cluster_list import ClusterList
 import os
+from ase import Atoms
+from ase.calculators.singlepoint import SinglePointCalculator
 
 
 class CorrFuncPlaceholder(object):
@@ -71,6 +72,162 @@ class TestNewStruct(unittest.TestCase):
             self.assertTrue(energy is not None)
 
         os.remove(settings_mock.db_name)
+
+    def test_determine_generation_number(self):
+        db_name = 'test_gen_number.db'
+        settings = MagicMock(spec=CEBulk, db_name=db_name)
+        settings.db_name = db_name
+        N = 5
+        new_struct = NewStructures(
+            settings, generation_number=None, struct_per_gen=N)
+
+        def insert_in_db(n, gen):
+            with connect(db_name) as db:
+                for _ in range(n):
+                    db.write(Atoms(), gen=gen)
+
+        db_sequence = [
+            {
+                'num_insert': 0,
+                'insert_gen': 0,
+                'expect': 0
+            },
+            {
+                'num_insert': 2,
+                'insert_gen': 0,
+                'expect': 0
+            },
+            {
+                'num_insert': 3,
+                'insert_gen': 0,
+                'expect': 1
+            },
+            {
+                'num_insert': 5,
+                'insert_gen': 1,
+                'expect': 2
+            }
+        ]
+
+        for i, action in enumerate(db_sequence):
+            insert_in_db(action['num_insert'], action['insert_gen'])
+            gen = new_struct._determine_gen_number()
+
+            msg = 'Test: #{} failed'.format(i)
+            msg += 'Action: {}'.format(action)
+            msg += 'returned generation: {}'.format(gen)
+            self.assertEqual(gen, action['expect'], msg=msg)
+        os.remove(db_name)
+
+    @patch('clease.newStruct.GSStructure')
+    def test_num_generated_structures(self, gs_mock):
+
+        conc = Concentration(basis_elements=[['Au', 'Cu']])
+        db_name = 'test_struct_gen_number.db'
+        atoms = bulk('Au')*(10, 10, 10)
+        index_by_basis = [list(range(len(atoms)))]
+
+        template_atoms = MagicMock()
+        num_templates = 3
+        template_atoms.get_fixed_volume_templates = MagicMock(
+            return_value=[bulk('Al')*(2, 2, i) for i in range(num_templates)])
+
+        settings = MagicMock(
+            spec=CEBulk, db_name=db_name, concentration=conc,
+            atoms=atoms, index_by_basis=index_by_basis, size='1x1x1',
+            template_atoms=template_atoms
+            )
+        settings.db_name = db_name
+
+        def get_random_structure():
+            atoms = bulk('Au')*(5, 5, 5)
+            for a in atoms:
+                a.symbol = choice(['Au', 'Cu'])
+            atoms.set_calculator(SinglePointCalculator(atoms, energy=0.0))
+            return atoms, {'c1_0': 0.0}
+
+        gs_mock.return_value.generate = get_random_structure
+        gs_mock.return_value.min_energy = 0.0
+
+        func = [
+            {
+                'func': NewStructures.generate_random_structures,
+                'kwargs': {}
+            },
+            {
+                'func': NewStructures.generate_gs_structure_multiple_templates,
+                'kwargs': dict(num_templates=num_templates, num_prim_cells=10,
+                               init_temp=2000, final_temp=1, num_temp=1,
+                               num_steps_per_temp=1, eci=None)
+            },
+            {
+                'func': NewStructures.generate_initial_pool,
+                'kwargs': {'atoms': atoms}
+            },
+            {
+                'func': NewStructures.generate_gs_structure,
+                'kwargs': dict(atoms=atoms, init_temp=2000,
+                               final_temp=1, num_temp=2,
+                               num_steps_per_temp=1, eci=None,
+                               random_composition=True)
+            }
+        ]
+
+        tests = [
+            {
+                'gen': 0,
+                'struct_per_gen': 5,
+                'expect_num_to_gen': 5
+            },
+            {
+                'gen': 0,
+                'struct_per_gen': 8,
+                'expect_num_to_gen': 3
+            },
+            {
+                'gen': 1,
+                'struct_per_gen': 2,
+                'expect_num_to_gen': 2
+            }
+        ]
+
+        db = connect(db_name)
+
+        # Patch the insert method such that we don't need to calculate the
+        # correlation functions etc.
+        def insert_struct_patch(self, init_struct=None, final_struct=None,
+                                name=None, generate_template=False):
+            atoms = bulk('Au')
+            kvp = self._get_kvp(atoms, 'Au')
+            db.write(atoms, kvp)
+
+        NewStructures.insert_structure = insert_struct_patch
+        NewStructures._get_formula_unit = lambda self, atoms: 'Au'
+
+        for i, f in enumerate(func):
+            for j, test in enumerate(tests):
+                msg = 'Test #{} failed for func #{}'.format(j, i)
+
+                new_struct = NewStructures(
+                    settings, generation_number=test['gen'],
+                    struct_per_gen=test['struct_per_gen'])
+
+                num_to_gen = new_struct.num_to_gen()
+
+                special_msg = 'Expect num in gen {}. Got: {}'.format(
+                    test['expect_num_to_gen'], num_to_gen)
+
+                self.assertEqual(test['expect_num_to_gen'],
+                                 num_to_gen, msg=msg + special_msg)
+
+                # Call the current generation method
+                f['func'](new_struct, **f['kwargs'])
+
+                num_in_gen = new_struct.num_in_gen()
+                self.assertEqual(num_in_gen, test['struct_per_gen'], msg=msg)
+
+            os.remove(db_name)
+
 
 if __name__ == '__main__':
     unittest.main()

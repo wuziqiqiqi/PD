@@ -55,31 +55,17 @@ class NewStructures(object):
         self.db = connect(setting.db_name)
         self.corrfunc = CorrFunction(self.setting)
         self.struct_per_gen = struct_per_gen
-        self.num_in_gen = None
-        self.num_to_gen = None
 
         if generation_number is None:
             self.gen = self._determine_gen_number()
         else:
             self.gen = generation_number
 
-    def _check_num_to_generate(self):
-        """Check how many structures are left to generate.
+    def num_in_gen(self):
+        return len([row.id for row in self.db.select(gen=self.gen)])
 
-        Set values in self.num_in_gen and self.num_to_gen. If there are no
-        more structures to generate in current generation, return False.
-        """
-        self.num_in_gen = len([row.id for row in
-                               self.db.select(gen=self.gen)])
-        self.num_to_gen = max(self.struct_per_gen - self.num_in_gen, 0)
-        if self.num_in_gen >= self.struct_per_gen:
-            _logger("There are {} structures in generation {} in DB and "
-                    "struct_per_gen = {}. No more structures generated."
-                    .format(self.num_in_gen, self.gen, self.struct_per_gen))
-
-        if self.num_to_gen == 0:
-            return False
-        return True
+    def num_to_gen(self):
+        return max(self.struct_per_gen - self.num_in_gen(), 0)
 
     def generate_probe_structure(self, atoms=None, size=None,
                                  init_temp=None,
@@ -135,8 +121,6 @@ class NewStructures(object):
         Note: init_temp and final_temp are automatically generated if either
               one of the two is not specified.
         """
-        if not self._check_num_to_generate():
-            return
 
         if not approx_mean_var:
             # check to see if there are files containing mu and sigma values
@@ -144,9 +128,13 @@ class NewStructures(object):
                 self._generate_sigma_mu(num_samples_var)
 
         _logger("Generate {} probe structures (generation: {}, struct_per_gen={}, {} present)."
-                .format(self.num_to_gen, self.gen, self.struct_per_gen, self.num_in_gen))
+                .format(self.num_to_gen(), self.gen, self.struct_per_gen, self.num_in_gen()))
+
+        current_count = 0
         num_attempt = 0
-        while True:
+        num_to_generate = self.num_to_gen()
+
+        while current_count < num_to_generate:
             if atoms is not None:
                 self.setting.set_active_template(atoms=atoms,
                                                  generate_template=True)
@@ -154,16 +142,15 @@ class NewStructures(object):
                 self.setting.set_active_template(size=size,
                                                  generate_template=True)
             # Break out of the loop if reached struct_per_gen
-            num_struct = len([row.id for row in
-                              self.db.select(gen=self.gen)])
+            num_struct = self.num_in_gen()
             if num_struct >= self.struct_per_gen:
                 break
 
             struct = self._get_struct_at_conc(conc_type='random')
 
             _logger('Generating structure {} out of {}.'
-                    .format(num_struct + 1, self.struct_per_gen))
-            ps = ProbeStructure(self.setting, struct, self.struct_per_gen,
+                    .format(current_count + 1, num_to_generate))
+            ps = ProbeStructure(self.setting, struct, num_to_generate,
                                 init_temp, final_temp, num_temp,
                                 num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
@@ -179,20 +166,15 @@ class NewStructures(object):
                 _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
-                    raise MaxAttemptReachedError(
-                        "Could not generate ground-state structure in "
-                        "{} attempts.".format(max_attempt))
+                    raise MaxAttemptReachedError("Could not generate probe "
+                                                 "structure in {} attempts."
+                                                 .format(max_attempt))
             else:
                 num_attempt = 0
-
-            kvp = self._get_kvp(probe_struct, formula_unit)
-            tab_name = self.corr_func_table_name
-            self.db.write(probe_struct, kvp, external_tables={tab_name: cf})
-
-            if num_attempt >= max_attempt:
-                raise MaxAttemptReachedError("Could not generate probe "
-                                             "structure in {} attempts."
-                                             .format(max_attempt))
+            
+            _logger('Probe structure generated.\n')
+            self.insert_structure(init_struct=probe_struct)
+            current_count += 1
 
     @property
     def corr_func_table_name(self):
@@ -222,7 +204,7 @@ class NewStructures(object):
         argument.
         """
 
-        for i in range(self.struct_per_gen):
+        for i in range(self.num_to_gen()):
             _logger('Generating ground-state structures: {} of {}'
                     ''.format(i, self.struct_per_gen))
 
@@ -285,12 +267,15 @@ class NewStructures(object):
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
+
             gs_struct, _ = es.generate()
             gs_structs.append(gs_struct)
             energies.append(gs_struct.get_potential_energy())
 
         # Find the position of the minimum energy structure
         min_energy_indx = np.argmin(energies)
+        gs = gs_structs[min_energy_indx]
+        self.setting.set_active_template(atoms=gs)
         self.insert_structure(init_struct=gs_structs[min_energy_indx])
 
     def generate_gs_structure(self, atoms=None, init_temp=2000,
@@ -350,17 +335,16 @@ class NewStructures(object):
                 Note 3: No check is performed to ensure that all new GS
                         structures have unique composition
         """
-        if not self._check_num_to_generate():
-            return
         structs = self._set_initial_structures(atoms, random_composition)
         current_count = 0
         num_attempt = 0
-        while current_count < len(structs):
+        num_to_generate = min([self.num_to_gen(), len(structs)])
+        while current_count < num_to_generate:
             struct = structs[current_count].copy()
             self.setting.set_active_template(atoms=struct,
                                              generate_template=False)
             _logger("Generating structure {} out of {}."
-                    .format(current_count + 1, len(structs)))
+                    .format(current_count + 1, num_to_generate))
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
@@ -384,10 +368,7 @@ class NewStructures(object):
 
             msg = 'Structure with E = {:.3f} generated.\n'.format(es.min_energy)
             _logger(msg)
-            kvp = self._get_kvp(gs_struct, formula_unit)
-            tab_name = self.corr_func_table_name
-            self.db.write(gs_struct, kvp, external_tables={tab_name: cf})
-
+            self.insert_structure(init_struct=gs_struct)
             current_count += 1
 
     def generate_random_structures(self, atoms=None):
@@ -401,16 +382,16 @@ class NewStructures(object):
             If None, a random template will be chosen
             (different for each structure)
         """
-        if not self._check_num_to_generate():
-            return
         _logger("Generating {} random structures "
                 "(generation: {}, struct_per_gen={}, {} present)"
-                .format(self.num_to_gen, self.gen, self.struct_per_gen, self.num_in_gen))
+                .format(self.num_to_gen(), self.gen, self.struct_per_gen,
+                        self.num_in_gen()))
 
         fail_counter = 0
         i = 0
 
-        while i < self.num_to_gen and fail_counter < max_fail:
+        num_structs = self.num_to_gen()
+        while i < num_structs and fail_counter < max_fail:
             if self.generate_one_random_structure(atoms=atoms, verbose=False):
                 _logger("Generated {} random structures".format(i + 1))
                 i += 1
@@ -471,23 +452,24 @@ class NewStructures(object):
         if isinstance(atoms, Atoms):
             struct = wrap_and_sort_by_position(atoms)
             if random_composition is False:
-                self.num_to_gen = 1
+                num_to_gen = 1
                 _logger("Generate 1 ground-state structure.")
                 structs.append(struct)
             else:
                 _logger("Generate {} ground-state structures "
                         "(generation: {}, struct_per_gen={}, {} present)"
-                        .format(self.num_to_gen,
+                        .format(self.num_to_gen(),
                                 self.gen,
                                 self.struct_per_gen,
-                                self.num_in_gen))
+                                self.num_in_gen()))
                 self.setting.set_active_template(atoms=struct,
                                                  generate_template=True)
+                num_to_gen = self.num_to_gen()
                 concs = []
                 # Get unique concentrations
                 num_attempt = 0
                 nib = [len(x) for x in self.setting.index_by_basis]
-                while len(concs) < self.num_to_gen:
+                while len(concs) < num_to_gen:
                     x = self.setting.concentration.get_random_concentration(
                         nib=nib)
                     if True in [np.allclose(x, i) for i in concs]:
@@ -567,13 +549,7 @@ class NewStructures(object):
         for indx in product(*indx_in_each_basis):
             atoms = self._get_struct_at_conc(conc_type="max", index=indx)
             atoms = wrap_and_sort_by_position(atoms)
-            formula_unit = self._get_formula_unit(atoms)
-
-            if not self._exists_in_db(atoms, formula_unit):
-                cf = self.corrfunc.get_cf(atoms)
-                kvp = self._get_kvp(atoms, formula_unit)
-                tab_name = self.corr_func_table_name
-                self.db.write(atoms, kvp, external_tables={tab_name: cf})
+            self.insert_structure(init_struct=atoms)
 
     def _get_struct_at_conc(self, conc_type='random', index=0):
         """Generate a structure at a concentration specified.
@@ -679,7 +655,9 @@ class NewStructures(object):
 
         formula_unit = self._get_formula_unit(init)
         if self._exists_in_db(init, formula_unit):
-            raise RuntimeError('Supplied structure already exists in DB')
+            _logger('Supplied structure already exists in DB.'
+                    'The structure will not be inserted.')
+            return
 
         cf = self.corrfunc.get_cf(init)
         kvp = self._get_kvp(init, formula_unit)
@@ -721,9 +699,9 @@ class NewStructures(object):
         formula_unit: str
             reduced formula unit of the passed Atoms object
         """
-        cond = []
+        cond = [('name', '!=', 'template'), ('name', '!=', 'primitive_cell')]
         if formula_unit is not None:
-            cond = [("formula_unit", "=", formula_unit)]
+            cond.append(("formula_unit", "=", formula_unit))
 
         to_prim = True
         try:
