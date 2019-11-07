@@ -113,7 +113,7 @@ class Concentration(object):
 
     def _remove_redundant_entries(self, A, b):
         for row_num in range(A.shape[0]-1, -1, -1):
-            for prev_row in range(row_num-1):
+            for prev_row in range(row_num):
                 cond1 = np.allclose(A[row_num, :], A[prev_row, :])
                 cond2 = abs(b[row_num] - b[prev_row]) < 1E-9
                 if cond1 and cond2:
@@ -179,15 +179,14 @@ class Concentration(object):
 
         if A_eq.shape[1] != self.num_concs:
             raise InvalidConstraintError(
-                "The number of columns in A_eq has to "
-                "match the number of concentration "
-                "variables. Hence, A_eq needs to have "
+                "The number of columns in A_eq has to match the number of "
+                "concentration variables. A_eq needs to have "
                 "{} columns".format(self.num_concs))
 
         if A_eq.shape[0] != len(b_eq):
             raise InvalidConstraintError(
-                "The length of b_eq has to be "
-                "the same as the number of rows in A_eq.")
+                "The length of b_eq has to be the same as the number of rows "
+                "in A_eq.")
 
         self.A_eq = np.vstack((self.A_eq, A_eq))
         self.b_eq = np.append(self.b_eq, b_eq)

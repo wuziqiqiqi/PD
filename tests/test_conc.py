@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.testing
 from clease.concentration import Concentration
 from collections import OrderedDict
 from clease.concentration import InvalidConstraintError
@@ -94,7 +95,7 @@ class TestConc(unittest.TestCase):
         conc = Concentration(basis_elements=basis_elements, A_eq=A_eq,
                              b_eq=b_eq)
         rand = conc.get_random_concentration()
-        self.assertTrue(np.allclose(rand, np.array([2./3, 1./3, 0.5, 0.5])))
+        self.assertTrue(np.allclose(rand, np.array([2. / 3, 1. / 3, 0.5, 0.5])))
 
     def test_fix_Ru_composition(self):
         basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
@@ -113,15 +114,15 @@ class TestConc(unittest.TestCase):
     def test_conc_range(self):
         basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
         conc = Concentration(basis_elements=basis_elements)
-        ranges = [[(0, 1), (1./3, 1./3), (0, 1)], [(2./3, 1), (0, 1)]]
+        ranges = [[(0, 1), (1. / 3, 1. / 3), (0, 1)], [(2. / 3, 1), (0, 1)]]
         conc.set_conc_ranges(ranges)
         rand = conc.get_random_concentration()
         sum1 = np.sum(rand[:3])
         self.assertAlmostEqual(sum1, 1)
         sum2 = np.sum(rand[3:])
         self.assertAlmostEqual(sum2, 1)
-        self.assertAlmostEqual(rand[1], 1./3)
-        self.assertGreater(rand[3], 2./3)
+        self.assertAlmostEqual(rand[1], 1. / 3)
+        self.assertGreater(rand[3], 2. / 3)
 
     def test_formula_unit1(self):
         basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
@@ -275,6 +276,19 @@ class TestConc(unittest.TestCase):
                              A_eq=A_eq, b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
         linked = conc._linked_basis
         self.assertEqual(sum(1 for i, num in enumerate(linked) if num == i), 2)
+
+    def test_concentration_dict_round_trip(self):
+        """
+        Test that when a concentration object is converted to a dictionary and then used
+        to instantiate a new concentration that these two are the same i.e. the round trip
+        conc1 -> dict -> conc2: conc1 == conc2
+        """
+        conc1 = Concentration(basis_elements=[['Au', 'Cu']])
+        conc2 = Concentration.from_dict(conc1.to_dict())
+        numpy.testing.assert_array_equal(conc1.A_eq, conc2.A_eq)
+        numpy.testing.assert_array_equal(conc1.A_lb, conc2.A_lb)
+        numpy.testing.assert_array_equal(conc1.b_eq, conc2.b_eq)
+        numpy.testing.assert_array_equal(conc1.b_lb, conc2.b_lb)
 
 
 if __name__ == '__main__':
