@@ -1,24 +1,33 @@
 .. module:: ase.clease
    :synopsis: Cluster Expansion in ASE
 
-=================
-Cluster Expansion
-=================
+============================================================
+Cluster Expansion in Atomic Simulation Environment (CLEASE)
+============================================================
 
 Cluster expansion (CE) has been widely used for studying thermondynamic
-properties of disordered materials such as alloys and oxides.
-CE is typically coupled with a Monte Carlo sampler where one can explore a
-large configurational space in a relatively large simulation cell once the
-CE model is trained.
+properties of disordered materials. CE is typically coupled with a Monte Carlo
+sampler where one can explore a large configurational space in a relatively
+large simulation cell once the CE model is trained.
 
-The CE in ASE does not require any additional external packages.
-However, installing `Numba`_ package is strongly encouraged for faster speed,
-which is desirable when working with complex systems (e.g., beyond simple
-binary alloys).
+A latest stable version of CLEASE can be installed using the following command
 
-.. _Numba: http://numba.pydata.org/
+.. code-block:: bash
 
-The method and implementation details are described in the following
+    pip install clease
+
+Most of the standard CE routines can be performed using the graphical user
+interface (GUI). All of the necessary dependencies for GUI can be installed
+by running
+
+.. code-block:: bash
+
+    clease gui-setup
+
+Alternatively, you can install the latest development version of CLEASE by
+following the instructions in the `README <https://gitlab.com/computationalmaterials/clease/blob/master/README.md>`_ page.
+
+The method and implementation details of CLEASE are described in the following
 publication:
 
    | J. Chang, D. Kleiven, M. Melander, J. Akola, J. M. Garcia-Lastra and T. Vegge
@@ -28,10 +37,10 @@ publication:
    __ https://doi.org/10.1088/1361-648X/ab1bbc
 
 
-The use of CE in ASE is best learned through tutorials:
+The use of CLEASE is best learned through tutorials:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
 A simple tutorial explaining how to set up a database and perform a set of
 calculations for Cu-Au alloy can be found here: :ref:`ce_aucu_tutorial`
