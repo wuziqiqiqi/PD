@@ -5,7 +5,7 @@ from clease.cluster_fingerprint import ClusterFingerprint
 
 
 class Cluster(object):
-    def __init__(self, name='c0', size=0, diameter=0.0, fingerprint=[],
+    def __init__(self, name='c0', size=0, diameter=0.0, fingerprint=None,
                  ref_indx=0, indices=[], equiv_sites=[], trans_symm_group=0):
         self.name = name
         self.size = size
@@ -46,7 +46,7 @@ class Cluster(object):
                 'symm': self.group,
                 'diameter': self.diameter,
                 'name': self.name,
-                'fingerprint': self.fp,
+                'fingerprint': self.fp.todict(),
                 'ref_indx': self.ref_indx,
                 'equiv_sites': self.equiv_sites,
                 'info': self.info}
@@ -57,7 +57,15 @@ class Cluster(object):
         self.group = data['symm']
         self.diameter = data['diameter']
         self.name = data['name']
-        self.fp = data['fingerprint']
+
+        if isinstance(data['fingerprint'], ClusterFingerprint):
+            self.fp = data['fingerprint']
+        elif isinstance(data['fingerprint'], dict):
+            self.fp = ClusterFingerprint.load(data['fingerprint'])
+        else:
+            raise ValueError('Fingerprint has to be either instance of '
+                             'ClusterFingerprint or a dictionary')
+
         self.ref_indx = data['ref_indx']
         self.equiv_sites = data['equiv_sites']
         self.info = data['info']

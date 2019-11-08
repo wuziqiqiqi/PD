@@ -493,7 +493,8 @@ class ClusterExpansionSetting(object):
         if counter >= max_attempts:
             raise RuntimeError("Could not find a cutoff such that all "
                                "unique_indices are included")
-        self.trans_matrix = [{k: row[k] for k in
+
+        self.trans_matrix = [{k: int(row[k]) for k in
                               self.cluster_list.unique_indices} for row in tm]
 
     def _store_data(self):
@@ -505,9 +506,10 @@ class ClusterExpansionSetting(object):
                 verbose=LogVerbosity.INFO)
 
         db = connect(self.db_name)
-        data = {'cluster_list': list(map(lambda x: x.todict(),
-                                         self.cluster_list.tolist())),
+        data = {'cluster_list': [x.todict()
+                                 for x in self.cluster_list.tolist()],
                 'trans_matrix': self.trans_matrix}
+
         try:
             row = db.get(name="template", size=self._size2string())
             db.update(row.id, data=data)

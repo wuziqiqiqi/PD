@@ -230,7 +230,7 @@ class TestClusterList(unittest.TestCase):
         cluster_list.append(c1)
         cluster_list.append(c2)
         cluster_list.append(c3)
-        
+
         # 0 is the reference index of symm group 0
         # 1 is the reference index of symm group 1
         di = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
@@ -241,6 +241,28 @@ class TestClusterList(unittest.TestCase):
         num_fig_occ = cluster_list.num_occ_figure(fig_key, 'c4_d0000_0',
                                                   symm_groups, tm)
         self.assertEqual(num_fig_occ, 4)
+
+    def test_read_fp(self):
+        fp = ClusterFingerprint([1.0, 2.0, 3.0])
+        c1 = Cluster(size=4, ref_indx=0, name='c4_d0000_0',
+                     indices=[[0, 2, 5, 1], [0, 4, 6, 7]], trans_symm_group=0,
+                     fingerprint=fp)
+
+        dict_rep = c1.todict()
+        c2 = Cluster()
+
+        # Test that we can read from pure dictionary representaion
+        c2.from_dict(dict_rep)
+        self.assertEqual(c1, c2)
+
+        dict_rep['fingerprint'] = fp
+
+        # Test that we can read when fingerprint is already set
+        c2.from_dict(dict_rep)
+        self.assertEqual(c1, c2)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
