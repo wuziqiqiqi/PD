@@ -3,10 +3,8 @@
 | ------ | --- | ------- |
 | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=python3_test) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=gui_test) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg) |
 
+CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that automates the cumbersome setup and construction procedure of cluster expansion (CE). It provides a comprehensive list of tools for specifying parameters for CE, generating training structures, fitting effective cluster interaction (ECI) values and running Monte Carlo simulations. A detailed description of the package can be found in the [user guide](https://computationalmaterials.gitlab.io/clease/) and our [paper](https://doi.org/10.1088/1361-648X/ab1bbc).
 
-
-
-CLuster Expansion in Atomic Simulation Environment
 
 # Installation
 After cloning CLEASE, install the [dependencies](requirements.txt) by executing
