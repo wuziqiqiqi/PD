@@ -114,7 +114,7 @@ class CorrFunction(object):
             db.update(row_id, external_tables={tab_name: cf})
 
         if verbose:
-            print("reconfiguration completed")
+            print("\nreconfiguration completed")
 
     def reconfigure_inconsistent_cf_table_entries(self):
         """Find and correct inconsistent correlation functions in table."""
@@ -128,7 +128,7 @@ class CorrFunction(object):
                   "".format(count+1, len(inconsistent_ids)), end="\r")
             self.reconfigure_db_entries(select_cond=[('id', '=', id)],
                                         verbose=False)
-        print("reconfiguration completed")
+        print("\nreconfiguration completed")
 
     def check_consistency_of_cf_table_entries(self):
         """Get IDs of the structures with inconsistent correlation functions.
