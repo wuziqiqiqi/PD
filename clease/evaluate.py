@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
+from clease import _logger
 from ase.utils import basestring
 from clease import CEBulk, CECrystal
 from clease.mp_logger import MultiprocessHandler
@@ -932,6 +933,30 @@ class Evaluate(object):
         if count == 0:
             return 0.0
         return np.sqrt(mse / count) * 1000.0
+
+    def export_dataset(self, fname):
+        """
+        Export the dataset used to fit a model y = Xc where y is typically the
+        DFT energy per atom and c is the unknown ECIs. This function exports
+        the data to a csv file with the following format
+
+        # ECIname_1, ECIname_2, ..., ECIname_n, E_DFT
+        0.1, 0.4, ..., -0.6, -2.0
+        0.3, 0.2, ..., -0.9, -2.3
+
+        thus each row in the file contains the correlation function values and
+        the corresponding DFT energy value.
+
+        Parameter:
+
+        fname: str
+            Filename to write to. Typically this should end with .csv
+        """
+        header = ','.join(self.cf_names) + ',E_DFT (eV/atom)'
+        data = np.hstack((self.cf_matrix,
+                          np.reshape(self.e_dft, (len(self.e_dft), -1))))
+        np.savetxt(fname, data, delimiter=",", header=header)
+        _logger("Dataset exported to {}".format(fname))
 
     def get_cv_score(self):
         """

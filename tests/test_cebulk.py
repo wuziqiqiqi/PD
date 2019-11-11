@@ -156,7 +156,7 @@ class TestCEBulk(unittest.TestCase):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
-        Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
         for cluster in bc_setting.cluster_list.get_by_size(2):
@@ -196,6 +196,14 @@ class TestCEBulk(unittest.TestCase):
         newstruct.generate_gs_structure_multiple_templates(
             num_prim_cells=16, num_steps_per_temp=100,
             eci={'c0': 1.0, 'c3_d0000_0_000': -0.1}, num_templates=2)
+
+        # Try to export the ECI file
+        fname = 'cf_func.csv'
+        evaluator.export_dataset(fname)
+        data = np.loadtxt(fname, delimiter=',')
+        self.assertTrue(np.allclose(data[:, :-1], evaluator.cf_matrix))
+        self.assertTrue(np.allclose(data[:, -1], evaluator.e_dft))
+        os.remove(fname)
         os.remove(db_name)
 
     def test_initial_pool(self):
