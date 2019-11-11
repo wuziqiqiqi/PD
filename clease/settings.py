@@ -28,10 +28,10 @@ from clease.template_filters import ValidConcentrationFilter
 class ClusterExpansionSetting(object):
     """Base class for all Cluster Expansion settings."""
 
-    def __init__(self, size=None, supercell_factor=None, concentration=None,
-                 db_name=None, max_cluster_size=4, max_cluster_dia=None,
-                 basis_function='polynomial', skew_threshold=4,
-                 ignore_background_atoms=False):
+    def __init__(self, concentration, size=None, supercell_factor=27,
+                 db_name='clease.db', max_cluster_size=4,
+                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
+                 skew_threshold=4, ignore_background_atoms=False):
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
                        'db_name': db_name,

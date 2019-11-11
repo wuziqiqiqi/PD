@@ -44,9 +44,9 @@ class TestCEBulk(unittest.TestCase):
     def test_load_from_db(self):
         db_name = 'test_load_from_db.db'
         basis_elements = [['Au', 'Cu']]
-        concentration = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[1, 1, 1],
-                         concentration=concentration, db_name=db_name,
+        conc = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(concentration=conc, crystalstructure='fcc',
+                         a=4.05, size=[1, 1, 1], db_name=db_name,
                          max_cluster_dia=[4.3, 4.3, 4.3],
                          max_cluster_size=4)
         orig_atoms = setting.atoms.copy()
@@ -60,11 +60,10 @@ class TestCEBulk(unittest.TestCase):
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]
-        concentration = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                         concentration=concentration, db_name=db_name,
-                         max_cluster_dia=[4.3, 4.3, 4.3],
-                         max_cluster_size=4)
+        conc = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(concentration=conc, crystalstructure='fcc',
+                         a=4.05, size=[3, 3, 3], db_name=db_name,
+                         max_cluster_dia=[4.3, 4.3, 4.3], max_cluster_size=4)
         atoms = setting.atoms.copy()
         atoms[0].symbol = 'Cu'
         atoms[3].symbol = 'Cu'
@@ -78,14 +77,10 @@ class TestCEBulk(unittest.TestCase):
         os.remove(db_name)
 
         basis_elements = [['Li', 'V'], ['X', 'O']]
-        concentration = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(crystalstructure="rocksalt",
-                         a=4.0,
-                         size=[2, 2, 1],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.01, 4.01])
+        conc = Concentration(basis_elements=basis_elements)
+        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                         a=4.0, size=[2, 2, 1], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         Li_ind = [atom.index for atom in atoms if atom.symbol == 'Li']
         X_ind = [atom.index for atom in atoms if atom.symbol == 'X']
@@ -99,15 +94,11 @@ class TestCEBulk(unittest.TestCase):
         os.remove(db_name)
 
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0, 1]])
-        setting = CEBulk(crystalstructure="rocksalt",
-                         a=4.0,
-                         size=[2, 2, 1],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.01, 4.01])
+        conc = Concentration(basis_elements=basis_elements,
+                            grouped_basis=[[0, 1]])
+        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                         a=4.0, size=[2, 2, 1], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         atoms[1].symbol = 'Cl'
         atoms[7].symbol = 'Cl'
@@ -119,15 +110,11 @@ class TestCEBulk(unittest.TestCase):
         os.remove(db_name)
 
         basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(crystalstructure="fluorite",
-                         a=4.0,
-                         size=[2, 2, 2],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.01, 4.01],
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=[[0], [1, 2]])
+        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
+                         a=4.0, size=[2, 2, 2], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01],
                          ignore_background_atoms=True)
         atoms = setting.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
@@ -150,10 +137,9 @@ class TestCEBulk(unittest.TestCase):
         """
         db_name = "test_bulk_binary_system.db"
         basis_elements = [['Au', 'Cu']]
-        concentration = Concentration(basis_elements=basis_elements)
-        bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                            concentration=concentration,
-                            db_name=db_name)
+        conc = Concentration(basis_elements=basis_elements)
+        bc_setting = CEBulk(concentration=conc, crystalstructure='fcc',
+                            a=4.05, size=[3, 3, 3], db_name=db_name)
 
         newstruct = NewStructures(bc_setting, struct_per_gen=3)
         newstruct.generate_initial_pool()
@@ -215,15 +201,11 @@ class TestCEBulk(unittest.TestCase):
     def test_initial_pool(self):
         db_name = "test_bulk_initial_pool.db"
         basis_elements = [['Li', 'V'], ['X', 'O']]
-        concentration = Concentration(basis_elements=basis_elements)
+        conc = Concentration(basis_elements=basis_elements)
 
-        setting = CEBulk(crystalstructure="rocksalt",
-                         a=4.0,
-                         size=[2, 2, 1],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0])
+        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                         a=4.0, size=[2, 2, 1], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
         ns = NewStructures(setting=setting, struct_per_gen=2)
         ns.generate_initial_pool()
 
@@ -246,15 +228,11 @@ class TestCEBulk(unittest.TestCase):
         # ------------------------------- #
         db_name = "test_bulk_1grouped_probe.db"
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0, 1]])
-        setting = CEBulk(crystalstructure="rocksalt",
-                         a=4.0,
-                         size=[2, 2, 1],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.0, 4.0])
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=[[0, 1]])
+        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                         a=4.0, size=[2, 2, 1], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
 
         self.assertEqual(setting.num_basis, 1)
         self.assertEqual(len(setting.index_by_basis), 1)
@@ -282,15 +260,12 @@ class TestCEBulk(unittest.TestCase):
         # ------------------------------- #
         db_name = "test_bulk_2grouped_probe.db"
         basis_elements = [['Zr', 'Ce'], ['O'], ['O']]
-        concentration = Concentration(basis_elements=basis_elements,
+        conc = Concentration(basis_elements=basis_elements,
                                       grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(crystalstructure="fluorite",
-                         a=4.0,
-                         size=[2, 2, 3],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=2,
-                         max_cluster_dia=[4.01])
+        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
+                         a=4.0, size=[2, 2, 3], db_name=db_name,
+                         max_cluster_size=2, max_cluster_dia=[4.01],
+                         ignore_background_atoms=False)
         fam_figures = get_figures_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_figures[0]), 6)
         self.assertEqual(len(fam_figures[1]), 6)
@@ -327,15 +302,11 @@ class TestCEBulk(unittest.TestCase):
         # ---------------------------------- #
         db_name = "test_bulk_2grouped_bck_probe.db"
         basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(crystalstructure="fluorite",
-                         a=4.0,
-                         size=[2, 2, 2],
-                         concentration=concentration,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=[4.01, 4.01],
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=[[0], [1, 2]])
+        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
+                         a=4.0, size=[2, 2, 2], db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01],
                          ignore_background_atoms=True)
         self.assertEqual(setting.num_basis, 2)
         self.assertEqual(len(setting.index_by_basis), 2)
@@ -365,15 +336,14 @@ class TestCEBulk(unittest.TestCase):
         db_name = 'test_fcc_binary_fixed_conc.db'
         conc = Concentration(basis_elements=[['Au', 'Cu']],
                              A_eq=A_eq, b_eq=b_eq)
-        setting = CEBulk(crystalstructure='fcc', a=3.8, supercell_factor=27,
-                         max_cluster_dia=5.0, max_cluster_size=3,
-                         concentration=conc,
-                         db_name=db_name)
+        setting = CEBulk(concentration=conc, crystalstructure='fcc', a=3.8,
+                         supercell_factor=27, max_cluster_dia=5.0,
+                         max_cluster_size=3, db_name=db_name)
 
         # Loop through templates and check that all satisfy constraints
         for atoms in setting.template_atoms.templates['atoms']:
             num = len(atoms)
-            ratio = num/3.0
+            ratio = num / 3.0
             self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
 
@@ -387,9 +357,9 @@ class TestCEBulk(unittest.TestCase):
         b_eq = [0]
         conc = Concentration(basis_elements=basis_elem,
                              A_eq=A_eq, b_eq=b_eq)
-        setting = CEBulk(crystalstructure='rocksalt', a=3.8,
-                         supercell_factor=27, max_cluster_dia=5.0,
-                         max_cluster_size=3, concentration=conc,
+        setting = CEBulk(concentration=conc, crystalstructure='rocksalt',
+                         a=3.8, supercell_factor=27, max_cluster_dia=5.0,
+                         max_cluster_size=3,
                          db_name=db_name)
 
         # Loop through and check that num_O sites is divisible by 5

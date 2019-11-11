@@ -17,6 +17,10 @@ class CEBulk(ClusterExpansionSetting):
 
     Parameters:
 
+    concentration: Concentration object or dict
+        Concentration object or dictionary specifying the basis elements and
+        concentration range of constituting species
+
     crystalstructure: str
         Must be one of sc, fcc, bcc, hcp, diamond, zincblende, rocksalt,
         cesiumchloride, fluorite or wurtzite.
@@ -35,14 +39,13 @@ class CEBulk(ClusterExpansionSetting):
 
     size: list
         Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
+        `supercell_factor` is ignored if both `size` and `supercell_factor`
+        are specified.
 
     supercell_factor: int
         Maximum multipilicity factor for limiting the size of supercell
-        created from the primitive cell.
-
-    concentration: Concentration object
-        Concentration object specifying the concentration range of
-        constituting species
+        created from the primitive cell. `supercell_factor` is ignored if
+        both `size` and `supercell_factor` are specified.
 
     db_name: str
         Name of the database file
@@ -67,12 +70,10 @@ class CEBulk(ClusterExpansionSetting):
         ignored when creating clusters.
     """
 
-    def __init__(self, crystalstructure=None,
-                 a=None, c=None, covera=None, u=None,
-                 size=None, supercell_factor=None,
-                 concentration=None, db_name=None, max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
-                 skew_threshold=4, ignore_background_atoms=False):
+    def __init__(self, concentration, crystalstructure='sc', a=None, c=None,
+                 covera=None, u=None, size=None, supercell_factor=27,
+                 db_name='clease.db', max_cluster_size=4,
+                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial', skew_threshold=4, ignore_background_atoms=True):
 
         # Initialization
         self.structures = {'sc': 1, 'fcc': 1, 'bcc': 1, 'hcp': 1, 'diamond': 1,
@@ -84,8 +85,8 @@ class CEBulk(ClusterExpansionSetting):
         self.covera = covera
         self.u = u
 
-        ClusterExpansionSetting.__init__(self, size, supercell_factor,
-                                         concentration, db_name,
+        ClusterExpansionSetting.__init__(self, concentration, size,
+                                         supercell_factor, db_name,
                                          max_cluster_size, max_cluster_dia,
                                          basis_function, skew_threshold,
                                          ignore_background_atoms)
@@ -154,13 +155,17 @@ class CECrystal(ClusterExpansionSetting):
 
     Parameters:
 
-    basis: list of scaled coordinates
-        Positions of the unique sites corresponding to symbols given
-        either as scaled positions or through an atoms instance.
+    concentration: Concentration object or dict
+        Concentration object or dictionary specifying the basis elements and
+        concentration range of constituting species
 
     spacegroup: int | string | Spacegroup instance
         Space group given either as its number in International Tables
         or as its Hermann-Mauguin symbol.
+
+    basis: list of scaled coordinates
+        Positions of the unique sites corresponding to symbols given
+        either as scaled positions or through an atoms instance.
 
     cell: 3x3 matrix
         Unit cell vectors.
@@ -176,14 +181,13 @@ class CECrystal(ClusterExpansionSetting):
 
     size: list
         Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
+        `supercell_factor` is ignored if both `size` and `supercell_factor`
+        are specified.
 
     supercell_factor: int
         Maximum multipilicity factor for limiting the size of supercell
-        created from the primitive cell.
-
-    concentration: Concentration object
-        Concentration object specifying the concentration range of
-        constituting species
+        created from the primitive cell. `supercell_factor` is ignored if
+        both `size` and `supercell_factor` are specified.
 
     db_name: str
         name of the database file
@@ -208,16 +212,16 @@ class CECrystal(ClusterExpansionSetting):
         ignored when creating clusters.
     """
 
-    def __init__(self, basis=None, spacegroup=1,
+    def __init__(self, concentration, spacegroup=1, basis=None,
                  cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
-                 supercell_factor=None, concentration=None, db_name=None,
-                 max_cluster_size=4, max_cluster_dia=[5.0, 5.0, 5.0],
+                 supercell_factor=27, db_name='clease.db', max_cluster_size=4,
+                 max_cluster_dia=[5.0, 5.0, 5.0],
                  basis_function='polynomial', skew_threshold=4,
-                 ignore_background_atoms=False):
+                 ignore_background_atoms=True):
 
         # Initialization
-        self.basis = basis
         self.spacegroup = spacegroup
+        self.basis = basis
         self.cell = cell
         self.cellpar = cellpar
         self.ab_normal = ab_normal
@@ -226,8 +230,8 @@ class CECrystal(ClusterExpansionSetting):
         for x in range(num_basis):
             self.symbols.append(concentration.orig_basis_elements[x][0])
 
-        ClusterExpansionSetting.__init__(self, size, supercell_factor,
-                                         concentration, db_name,
+        ClusterExpansionSetting.__init__(self, concentration, size,
+                                         supercell_factor, db_name,
                                          max_cluster_size, max_cluster_dia,
                                          basis_function, skew_threshold,
                                          ignore_background_atoms)

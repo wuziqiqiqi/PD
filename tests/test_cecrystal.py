@@ -44,15 +44,11 @@ class TestCECrystal(unittest.TestCase):
                           ["Al", "Mg"]]
 
         # Test with grouped basis
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0, 1, 2, 3]])
-        bsg = CECrystal(basis=basis,
-                        spacegroup=217,
-                        cellpar=cellpar,
-                        concentration=concentration,
-                        max_cluster_size=3,
-                        db_name=db_name,
-                        size=[1, 1, 1],
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=[[0, 1, 2, 3]])
+        bsg = CECrystal(concentration=conc, spacegroup=217,
+                        basis=basis, cellpar=cellpar, max_cluster_size=3,
+                        db_name=db_name, size=[1, 1, 1],
                         max_cluster_dia=[3.5, 3.5])
 
         # The correlation functions are actually calculated for the
@@ -85,21 +81,16 @@ class TestCECrystal(unittest.TestCase):
         basis_elements = [['Li', 'X', 'V'], ['Li', 'X', 'V'],
                           ['O', 'F']]
         grouped_basis = [[0, 1], [2]]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=grouped_basis)
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=grouped_basis)
 
         cellpar = [5.123, 5.123, 13.005, 90., 90., 120.]
         basis = [(0.00, 0.00, 0.00),
                  (1. / 3, 2. / 3, 0.00),
                  (1. / 3, 0.00, 0.25)]
-        bsg = CECrystal(basis=basis,
-                        spacegroup=167,
-                        cellpar=cellpar,
-                        concentration=concentration,
-                        size=[1, 1, 1],
-                        db_name=db_name,
-                        max_cluster_size=3,
-                        max_cluster_dia=[2.5, 2.5])
+        bsg = CECrystal(concentration=conc, spacegroup=167, basis=basis,
+                        cellpar=cellpar, size=[1, 1, 1], db_name=db_name,
+                        max_cluster_size=3, max_cluster_dia=[2.5, 2.5])
         self.assertTrue(bsg.unique_elements == ['F', 'Li', 'O', 'V', 'X'])
         self.assertTrue(bsg.spin_dict == {'F': 2.0, 'Li': -2.0,
                                           'O': 1.0, 'V': -1.0, 'X': 0})
@@ -136,20 +127,18 @@ class TestCECrystal(unittest.TestCase):
         basis_elements = [['O', 'X'], ['O', 'X'],
                           ['O', 'X'], ['Ta']]
         grouped_basis = [[0, 1, 2], [3]]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=grouped_basis)
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=grouped_basis)
 
-        bsg = CECrystal(basis=[(0., 0., 0.),
+        bsg = CECrystal(concentration=conc, spacegroup=55,
+                        basis=[(0., 0., 0.),
                                (0.3894, 0.1405, 0.),
                                (0.201, 0.3461, 0.5),
                                (0.2244, 0.3821, 0.)],
-                        spacegroup=55,
                         cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                        size=[1, 2, 2],
-                        concentration=concentration,
-                        db_name=db_name,
-                        max_cluster_size=3,
-                        max_cluster_dia=[3.0, 3.0])
+                        size=[1, 2, 2], db_name=db_name,
+                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0],
+                        ignore_background_atoms=False)
 
         self.assertTrue(bsg.unique_elements == ['O', 'Ta', 'X'])
         self.assertTrue(bsg.spin_dict == {'O': 1.0, 'Ta': -1.0, 'X': 0.0})
@@ -198,20 +187,17 @@ class TestCECrystal(unittest.TestCase):
         db_name = "test_grouped_probe_back_probe.db"
         basis_elements = [['O', 'X'], ['Ta'], ['O', 'X'], ['O', 'X']]
         grouped_basis = [[1], [0, 2, 3]]
-        concentration = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=grouped_basis)
+        conc = Concentration(basis_elements=basis_elements,
+                             grouped_basis=grouped_basis)
 
-        bsg = CECrystal(basis=[(0., 0., 0.),
+        bsg = CECrystal(concentration=conc, spacegroup=55,
+                        basis=[(0., 0., 0.),
                                (0.2244, 0.3821, 0.),
                                (0.3894, 0.1405, 0.),
                                (0.201, 0.3461, 0.5)],
-                        spacegroup=55,
                         cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                        size=[2, 2, 3],
-                        concentration=concentration,
-                        db_name=db_name,
-                        max_cluster_size=3,
-                        max_cluster_dia=[3.0, 3.0],
+                        size=[2, 2, 3], db_name=db_name,
+                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0],
                         ignore_background_atoms=True)
 
         self.assertTrue(bsg.unique_elements == ['O', 'Ta', 'X'])
@@ -261,15 +247,12 @@ class TestCECrystal(unittest.TestCase):
         """
         db_name = "test_grouped_narrow_angle.db"
         basis_elements = [['Mg', 'Si']]
-        concentration = Concentration(basis_elements=basis_elements)
-        bsg = CECrystal(basis=[(0.0, 0.0, 0.0)],
-                        spacegroup=225,
+        conc = Concentration(basis_elements=basis_elements)
+        bsg = CECrystal(concentration=conc, spacegroup=225,
+                        basis=[(0.0, 0.0, 0.0)],
                         cellpar=[4.0, 4.0, 4.0, 50.0, 40.0, 15.0],
-                        concentration=concentration,
-                        db_name=db_name,
-                        size=[2, 2, 1],
-                        max_cluster_size=3,
-                        max_cluster_dia=[1.05, 1.05])
+                        db_name=db_name, size=[2, 2, 1],
+                        max_cluster_size=3, max_cluster_dia=[1.05, 1.05])
 
         assert len(bsg.index_by_trans_symm) == 1
 
