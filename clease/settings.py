@@ -517,6 +517,15 @@ class ClusterExpansionSetting(object):
             db.write(self.atoms, name='template', data=data,
                      size=self._size2string())
 
+    def _keys2int(self, tm):
+        """
+        Convert the keys in the translation matrix to integers
+        """
+        tm_int = []
+        for row in tm:
+            tm_int.append({int(k): v for k, v in row.items()})
+        return tm_int
+
     def _read_data(self):
         db = connect(self.db_name)
         try:
@@ -528,7 +537,7 @@ class ClusterExpansionSetting(object):
             for item in info_str:
                 cluster = Cluster.load(item)
                 self.cluster_list.append(cluster)
-            self.trans_matrix = row.data.trans_matrix
+            self.trans_matrix = self._keys2int(row.data.trans_matrix)
         except KeyError:
             self.create_cluster_list_and_trans_matrix()
             self._store_data()
