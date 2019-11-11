@@ -14,6 +14,7 @@ Welcome to CLEASE's documentation!
    ce_aucu
    montecarlo_sampling
    metadynamics_sampling
+   ce_aucu_gui_tutorial
 
 
 

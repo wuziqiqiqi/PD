@@ -1,3 +1,5 @@
+.. _metadynSampling:
+
 ======================
 Metadynamics sampling
 ======================
