@@ -10,11 +10,11 @@ from ase.db import connect
 from clease import CEBulk, CECrystal, CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
-from ase.units import kB
 from clease import _logger
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.constraints import ConstrainSwapByBasis
+from clease.montecarlo.montecarlo import TooFewElementsError
 
 
 class StructureGenerator(object):
@@ -453,16 +453,23 @@ class GSStructure(StructureGenerator):
         temps = np.logspace(math.log10(self.init_temp),
                             math.log10(self.final_temp),
                             self.num_temp)
-        for T in temps.tolist():
-            _logger("Current temperature: {}K".format(T))
-            mc = Montecarlo(self.atoms, T)
-            mc.attach(low_en_obs)
-            mc.add_constraint(cnst)
-            mc.run(steps=self.num_steps_per_temp)
-        emin_atoms = low_en_obs.emin_atoms
+        try:
+            for T in temps.tolist():
+                _logger("Current temperature: {}K".format(T))
+                mc = Montecarlo(self.atoms, T)
+                mc.attach(low_en_obs)
+                mc.add_constraint(cnst)
+                mc.run(steps=self.num_steps_per_temp)
+            emin_atoms = low_en_obs.emin_atoms
+        except TooFewElementsError:
+            # In case there are two few elements, the ground state is equal to
+            # the initial configuration
+            emin_atoms = self.atoms
+
         cf = self.corrFunc.get_cf(emin_atoms)
         calc = Clease(self.setting, eci=self.eci)
         emin_atoms.set_calculator(calc)
+
         return emin_atoms, cf
 
 
