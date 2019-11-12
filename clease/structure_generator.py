@@ -12,6 +12,9 @@ from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from ase.units import kB
 from clease import _logger
+from clease.montecarlo import Montecarlo
+from clease.montecarlo.observers import LowestEnergyStructure
+from clease.montecarlo.constraints import ConstrainSwapByBasis
 
 
 class StructureGenerator(object):
@@ -442,35 +445,25 @@ class GSStructure(StructureGenerator):
         self.eci = eci
         calc = Clease(self.setting, eci=eci)
         self.atoms.set_calculator(calc)
-        self.old_energy = None
-        self.min_energy = None
 
-    def _accept(self):
-        """Accept the last change."""
-        new_energy = self.atoms.get_potential_energy()
+    def generate(self):
+        low_en_obs = LowestEnergyStructure(self.atoms, verbose=False)
+        cnst = ConstrainSwapByBasis(self.atoms, self.setting.index_by_basis)
 
-        # Always accept the first move
-        if self.generated_structure is None:
-            self.old_energy = new_energy
-            self.min_energy = new_energy
-            self._set_generated_structure()
-            return True
-
-        if new_energy < self.min_energy:
-            self.min_energy = new_energy
-            self._set_generated_structure()
-
-        if new_energy < self.old_energy:
-            self.old_energy = new_energy
-            return True
-
-        diff = new_energy - self.old_energy
-        kT = kB*self.temp
-        accept_move = np.random.uniform() < np.exp(-diff/kT)
-
-        if accept_move:
-            self.old_energy = new_energy
-        return accept_move
+        temps = np.logspace(math.log10(self.init_temp),
+                            math.log10(self.final_temp),
+                            self.num_temp)
+        for T in temps.tolist():
+            _logger("Current temperature: {}K".format(T))
+            mc = Montecarlo(self.atoms, T)
+            mc.attach(low_en_obs)
+            mc.add_constraint(cnst)
+            mc.run(steps=self.num_steps_per_temp)
+        emin_atoms = low_en_obs.emin_atoms
+        cf = self.corrFunc.get_cf(emin_atoms)
+        calc = Clease(self.setting, eci=self.eci)
+        emin_atoms.set_calculator(calc)
+        return emin_atoms, cf
 
 
 def mean_variance_full(cfm):
