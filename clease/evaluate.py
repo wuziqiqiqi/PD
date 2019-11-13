@@ -296,8 +296,10 @@ class Evaluate(object):
             self.get_eci()
         e_pred = self.cf_matrix.dot(self.eci)
 
-        rmin = min(np.append(self.e_dft, e_pred)) - 0.005
-        rmax = max(np.append(self.e_dft, e_pred)) + 0.005
+        e_range = max(np.append(self.e_dft, e_pred)) - \
+                  min(np.append(self.e_dft, e_pred))
+        rmin = min(np.append(self.e_dft, e_pred)) - 0.05 * e_range
+        rmax = max(np.append(self.e_dft, e_pred)) + 0.05 * e_range
 
         prefix = ""
         if fname is not None:
