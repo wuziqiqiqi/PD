@@ -144,6 +144,19 @@ class ClusterExpansionSetting(object):
         else:
             bg_sym = set(x[0] for x in self.basis_elements if len(x) == 1)
 
+            # Remove bg_syms that are also present in basis with more than one
+            # element
+            for elems in self.basis_elements:
+                if len(elems) == 1:
+                    continue
+                to_be_removed = set()
+                for s in bg_sym:
+                    if s in elems:
+                        to_be_removed.add(s)
+
+                bg_sym -= to_be_removed
+
+
         unique_elem = set()
         for x in self.basis_elements:
             unique_elem.update(x)

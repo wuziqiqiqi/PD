@@ -267,6 +267,27 @@ class TestCECrystal(unittest.TestCase):
             print(str(exc))
         os.remove(db_name)
 
+    def test_bkg_symb_in_additional_basis(self):
+        db_name = 'bg_sym_check.db'
+        conc = Concentration(basis_elements=[['Mg', 'Sn', 'X'], ['Sn']])
+        setting = CECrystal(basis_function='polynomial',
+                            cellpar=[6.75, 6.75, 6.75, 90, 90, 90],
+                            basis=[(0.25, 0.25, 0.25), (0, 0, 0)],
+                            concentration=conc,
+                            spacegroup=225,
+                            size=[(-1, 1, 1), (1, -1, 1), (1, 1, -1)],
+                            supercell_factor=1,
+                            db_name=db_name,
+                            max_cluster_size=2,
+                            max_cluster_dia=5.0)
+        bfs = setting.basis_functions
+        self.assertEqual(len(bfs), 2)
+
+        for bf in bfs:
+            keys = sorted(list(bf.keys()))
+            self.assertEqual(['Mg', 'Sn', 'X'], keys)
+        os.remove(db_name)
+
     def tearDown(self):
         if update_reference_file:
             print("Updating the reference correlation function file")
