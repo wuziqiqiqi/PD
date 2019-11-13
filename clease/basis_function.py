@@ -206,7 +206,7 @@ class BinaryLinear(BasisFunction):
         else:
             self.redundant_element = reduntant_element
         BasisFunction.__init__(self, unique_elements)
-        self.name = "binary-linear"
+        self.name = "binary_linear"
 
     def get_spin_dict(self):
         """Define pseudospins for all consistuting elements."""

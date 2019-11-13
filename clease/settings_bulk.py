@@ -58,7 +58,7 @@ class CEBulk(ClusterExpansionSetting):
         (in Å)
 
     basis_function: str
-        One of "polynomial", "trigonometric" or "binary-linear"
+        One of "polynomial", "trigonometric" or "binary_linear"
 
     skew_threshold: int
         The maximum acceptable skew level (ratio of max and min diagonals of
@@ -200,7 +200,7 @@ class CECrystal(ClusterExpansionSetting):
         (in Å)
 
     basis_function: str
-        One of "polynomial", "triogonometric" or "binary-linear"
+        One of "polynomial", "triogonometric" or "binary_linear"
 
     skew_threshold: int
         The maximum acceptable skew level (ratio of max and min diagonals of
