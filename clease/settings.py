@@ -110,7 +110,7 @@ class ClusterExpansionSetting(object):
             elif basis_function.lower() == 'trigonometric':
                 from clease.basis_function import Trigonometric
                 self.bf_scheme = Trigonometric(unique_element_no_bkg)
-            elif basis_function.lower() == "binary-linear":
+            elif basis_function.lower() == "binary_linear":
                 from clease.basis_function import BinaryLinear
                 self.bf_scheme = BinaryLinear(unique_element_no_bkg)
             else:

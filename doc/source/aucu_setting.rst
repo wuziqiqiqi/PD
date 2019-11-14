@@ -49,7 +49,7 @@ from two-body clusters are specified in ``max_cluster_dia`` in ascending order.
 There are several flavors of cluter expansion formalism in specifying the basis
 function for setting the site variable. Three types of basis functions are
 currently supported in ASE. The type of basis function can be selected by
-passing one of "polynomial", "trigonometric" and "binary-linear" to
+passing one of "polynomial", "trigonometric" and "binary_linear" to
 ``basis_function`` argument. More information on each basis function can be
 found in the following articles.
 
@@ -69,7 +69,7 @@ found in the following articles.
 
     __ https://doi.org/10.1016/j.calphad.2008.12.005
 
-"binary-linear":
+"binary_linear":
 
     | Zhang, X. and Sluiter M. (2016)
     | `Cluster expansions for thermodynamics and kinetics of multicomponent alloys.`__

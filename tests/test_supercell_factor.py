@@ -47,7 +47,7 @@ class TestSupercelLFactor(unittest.TestCase):
                             supercell_factor=10,
                             concentration=concentration,
                             db_name=db_name,
-                            basis_function='binary-linear',
+                            basis_function='binary_linear',
                             max_cluster_size=3,
                             max_cluster_dia=3.0)
 
