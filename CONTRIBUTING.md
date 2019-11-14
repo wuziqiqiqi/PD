@@ -1,7 +1,7 @@
 Contribution Guidelines
 ========================
 
-CLEASE team strongly welcomes all kinds of feedback, questions and contributions. Do not hesistate to open an issue on the GitLab page if you have questions or ideas for improvement.
+CLEASE team strongly welcomes all kinds of feedback, questions and contributions. Do not hesitate to open an issue on the GitLab page if you have questions or ideas for improvement.
 When you open a merge request, we try to keep the history clean and concise with meaningful commit messages. We use the following prefixes for commits and merge request titles
 
 * BUG: Fixed a runtime error, crash or wrong result
