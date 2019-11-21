@@ -235,7 +235,7 @@ class TestClusterList(unittest.TestCase):
         # 1 is the reference index of symm group 1
         di = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
         tm = [di, di, di, di, di, di, di, di]
-        
+
         fig_key = '0-2-5-1'
         symm_groups = [0, 1, 0, 0, 1, 0, 1, 0, 1]
         num_fig_occ = cluster_list.num_occ_figure(fig_key, 'c4_d0000_0',
@@ -262,7 +262,27 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(c1, c2)
 
 
+    def test_make_names_sequential(self):
+        names = ['c2_d0001_0', 'c2_d0005_1', 'c2_d0011_0',
+                 'c2_d0111_0', 'c2_d1111_2', 'c3_d0000_0',
+                 'c3_d0001_0', 'c3_d0010_0']
+        cluster_list = ClusterList()
+        for n in names:
+            s = int(n[1])
+            cluster_list.append(Cluster(size=s, name=n))
 
+        cluster_list.make_names_sequential()
+
+        expect_names2 = ['c2_d0000_0', 'c2_d0001_0', 'c2_d0002_0',
+                         'c2_d0003_0', 'c2_d0004_0']
+        n = list(set([c.name for c in cluster_list.get_by_size(2)]))
+        n.sort()
+        self.assertEqual(expect_names2, n)
+
+        expect_names3 = ['c3_d0000_0', 'c3_d0001_0', 'c3_d0002_0']
+        n = list(set([c.name for c in cluster_list.get_by_size(3)]))
+        n.sort()
+        self.assertEqual(expect_names3, n)
 
 if __name__ == '__main__':
     unittest.main()

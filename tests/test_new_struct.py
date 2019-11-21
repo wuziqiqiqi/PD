@@ -56,6 +56,8 @@ class TestNewStruct(unittest.TestCase):
             traj_final_obj.write(final)
 
         new_struct.insert_structures(traj_init=traj_in, traj_final=traj_final)
+        traj_in_obj.close()
+        traj_final_obj.close()
         os.remove(traj_in)
         os.remove(traj_final)
 

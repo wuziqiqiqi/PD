@@ -73,11 +73,11 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   symbols_with_id = new Symbols(symbols, unique_symbols);
 
   // Build read the translational sites
-  PyObject* py_trans_symm_group = get_attr(setting, "index_by_trans_symm");
+  PyObject* py_trans_symm_group = get_attr(setting, "index_by_sublattice");
 
   if (py_trans_symm_group == nullptr)
   {
-    throw invalid_argument("index_by_trans_symm is nullptr!");
+    throw invalid_argument("index_by_sublattice is nullptr!");
   }
 
   #ifdef CE_DEBUG

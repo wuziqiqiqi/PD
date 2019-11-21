@@ -1,6 +1,7 @@
 from clease.tools import dec_string, list2str
 from itertools import product
 from clease.tools import flatten
+from copy import deepcopy
 
 
 class ClusterList(object):
@@ -32,6 +33,9 @@ class ClusterList(object):
     def get_by_size(self, size):
         # Return all clusters with a given size
         return [c for c in self.clusters if c.size == size]
+
+    def max_size(self):
+        return max([c.size for c in self.clusters])
 
     def get_by_group(self, group):
         """Return all clusters in a given symmetry group."""
@@ -88,6 +92,9 @@ class ClusterList(object):
 
     def __getitem__(self, index):
         return self.clusters[index]
+
+    def __delitem__(self, i):
+        del self.clusters[i]
 
     def __array__(self):
         return self.clusters
@@ -203,3 +210,42 @@ class ClusterList(object):
             corr_fig_key = list2str(corr_figure)
             tot_num += occ_count[cluster.group][corr_fig_key]
         return tot_num
+
+    def make_names_sequential(self):
+        """
+        Confirm that cluster names are sequential. If clusters are
+        removed from the list, that might not be the case.
+        """
+        for s in range(2, self.max_size()+1):
+            names = list(set([c.name for c in self.get_by_size(s)]))
+            names.sort()
+            prefixes = list(set([n.rpartition('_')[0] for n in names]))
+            prefixes.sort()
+            name_map = {}
+
+            for n in names:
+                # Fix distance string
+                new_name = deepcopy(n)
+                prefix = n.rpartition('_')[0]
+                new_dist = '{:04d}'.format(prefixes.index(prefix))
+                new_name = ''.join([new_name[:4], new_dist, new_name[8:]])
+                name_map[n] = new_name
+
+            prefix_map = {}
+            # Fix additional ID
+            for k in name_map.keys():
+                pref = k.rpartition('_')[0]
+                prefix_map[pref] = prefix_map.get(pref, []) + [k]
+
+            for k, v in prefix_map.items():
+                v.sort()
+                uid_map = {}
+                for i, x in enumerate(v):
+                    new_name = ''.join([x.rpartition('_')[0], '_', str(i)])
+                    uid_map[x] = new_name
+
+                for k, v in uid_map.items():
+                    name_map[k] = ''.join([name_map[k].rpartition('_')[0], '_',
+                                           v.rpartition('_')[2]])
+            for c in self.get_by_size(s):
+                c.name = name_map[c.name]

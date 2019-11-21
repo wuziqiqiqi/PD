@@ -48,12 +48,12 @@ class TestClusterGenerator(unittest.TestCase):
     def test_to_atom_index_fcc(self):
         atoms = bulk('Al', a=4.05)
         generator = ClusterGenerator(atoms)
-        clusters, fps = generator.generate(3, 6.0, ref_lattice=0)
+        clusters, fps = generator.generate(3, 4.1, ref_lattice=0)
 
         # Create a conventional unit cess
         atoms = bulk('Al', a=4.05, cubic=True)*(5, 5, 5)
         atoms = wrap_and_sort_by_position(atoms)
-        int_clusters = generator.to_atom_index(clusters, atoms)
+        int_clusters = [generator.to_atom_index(c, atoms) for c in clusters]
 
         # Test that cluster matches alternative algorithm
         db_name = "test_triplets_map.db"
@@ -104,8 +104,8 @@ class TestClusterGenerator(unittest.TestCase):
         atoms = bulk('LiX', crystalstructure='rocksalt', a=4.0)*(4, 4, 4)
         atoms = wrap_and_sort_by_position(atoms)
         setting.set_active_template(atoms=atoms, generate_template=True)
-        int_cluster1 = generator.to_atom_index(clusters1, atoms)
-        int_cluster2 = generator.to_atom_index(clusters2, atoms)
+        int_cluster1 = [generator.to_atom_index(c, atoms) for c in clusters1]
+        int_cluster2 = [generator.to_atom_index(c, atoms) for c in clusters2]
 
         c_list = setting.cluster_list.get_by_size(3)
 
@@ -136,7 +136,7 @@ class TestClusterGenerator(unittest.TestCase):
             self.assertEqual(equiv, [[0, 1]])
 
         # Test a triplet
-        clusters, fps = generator.generate(3, 4.0)
+        clusters, fps = generator.generate(3, 3.0)
         
         # For the smalles triplet all sites should be equivalent
         equiv = generator.equivalent_sites(clusters[0][0])

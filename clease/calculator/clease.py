@@ -91,7 +91,7 @@ class Clease(Calculator):
         self-interactions.
         """
         symm_group = np.zeros(len(self.setting.atoms), dtype=np.uint8)
-        for num, group in enumerate(self.setting.index_by_trans_symm):
+        for num, group in enumerate(self.setting.index_by_sublattice):
             symm_group[group] = num
 
         cluster_list = self.setting.cluster_list
@@ -133,7 +133,7 @@ class Clease(Calculator):
             raise ValueError(msg)
 
         self.symmetry_group = np.zeros(len(atoms), dtype=int)
-        for symm, indices in enumerate(self.setting.index_by_trans_symm):
+        for symm, indices in enumerate(self.setting.index_by_sublattice):
             self.symmetry_group[indices] = symm
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
         self.is_backround_index[self.setting.background_indices] = 1

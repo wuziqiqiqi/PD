@@ -3,7 +3,6 @@ import numpy as np
 
 def name_clusters(fingerprints):
     """Name clusters based on its size and diameter."""
-    s = size(fingerprints[0])
     distance_list = [2*np.sqrt(fp[0]) for fp in fingerprints]
 
     distance_list = np.round(distance_list, decimals=6)
@@ -13,6 +12,7 @@ def name_clusters(fingerprints):
     prefix_dict = {}
     for i, fp in enumerate(fingerprints):
         match = get_first_match(fp, fingerprints[:i])
+        s = size(fp)
         if match != -1:
             prefix = prefixes[match]
         else:
@@ -52,7 +52,7 @@ def get_first_match(fingerprint, fingerprints):
     list of the fingerprints.
     """
     for i, fp in enumerate(fingerprints):
-        if np.allclose(fp, fingerprint):
+        if fp == fingerprint:
             return i
     return -1
 
@@ -68,4 +68,3 @@ def size(fingerprint):
     s = num - 0.5
     assert abs(int(s) - s) < 1E-9
     return int(s)
-

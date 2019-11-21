@@ -112,8 +112,8 @@ class TestCECrystal(unittest.TestCase):
         cf = corr.get_cf(atoms)
         if update_reference_file:
             all_cf["Li_X_V_O_F"] = cf
-        for key in cf.keys():
-            self.assertAlmostEqual(cf[key], all_cf["Li_X_V_O_F"][key])
+        for key, v in cf.items():
+            self.assertAlmostEqual(v, all_cf["Li_X_V_O_F"][key])
 
         os.remove(db_name)
 
@@ -254,7 +254,7 @@ class TestCECrystal(unittest.TestCase):
                         db_name=db_name, size=[2, 2, 1],
                         max_cluster_size=3, max_cluster_dia=[1.05, 1.05])
 
-        assert len(bsg.index_by_trans_symm) == 1
+        assert len(bsg.index_by_sublattice) == 1
 
         try:
             ns = NewStructures(setting=bsg, struct_per_gen=2)
@@ -299,5 +299,3 @@ class TestCECrystal(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-

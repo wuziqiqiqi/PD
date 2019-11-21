@@ -14,6 +14,7 @@ class ClusterGenerator(object):
     def __init__(self, prim_cell):
         self.prim = prim_cell
         self.shifts = self.prim.get_positions()
+        self.prim_cell_invT = np.linalg.inv(self.prim.get_cell().T)
 
     def eucledian_distance_vec(self, x1, x2):
         """
@@ -26,13 +27,22 @@ class ClusterGenerator(object):
             Second vector
         """
         cellT = self.prim.get_cell().T
-        euc1 = cellT.dot(x1[:3]) + self.shifts[x1[3]]
-        euc2 = cellT.dot(x2[:3]) + self.shifts[x2[3]]
+        euc1 = cellT.dot(x1[:3]) + self.shifts[x1[3], :]
+        euc2 = cellT.dot(x2[:3]) + self.shifts[x2[3], :]
         return euc2 - euc1
 
     def cartesian(self, x):
         cellT = self.prim.get_cell().T
         return cellT.dot(x[:3]) + self.shifts[x[3]]
+
+    def get_four_vector(self, pos, lattice):
+        """Return the four vector of an atom."""
+        pos -= self.shifts[lattice]
+        int_pos = self.prim_cell_invT.dot(pos)
+        four_vec = np.zeros(4, dtype=int)
+        four_vec[:3] = np.round(int_pos).astype(int)
+        four_vec[3] = lattice
+        return four_vec
 
     def eucledian_distance(self, x1, x2):
         d = self.eucledian_distance_vec(x1, x2)
@@ -60,9 +70,13 @@ class ClusterGenerator(object):
         min_diag = self.shortest_diag
         max_int = int(cutoff/min_diag) + 1
         x0 = [0, 0, 0, ref_lattice]
+
+        def filter_func(x):
+            d = self.eucledian_distance(x0, x)
+            return d > cutoff or d < 1E-5
+
         sites = filterfalse(
-            lambda x: (self.eucledian_distance(x0, x) > cutoff
-                       or sum(abs(y) for y in x) == 0),
+            filter_func,
             product(range(-max_int, max_int+1),
                     range(-max_int, max_int+1),
                     range(-max_int, max_int+1),
@@ -93,14 +107,18 @@ class ClusterGenerator(object):
         sites = self.sites_within_cutoff(cutoff, ref_lattice=ref_lattice)
         v0 = [0, 0, 0, ref_lattice]
         x0 = np.array(self.cartesian(v0))
+
         for comb in combinations(sites, r=size-1):
             X = [x0] + [self.cartesian(v) for v in comb]
             fp = self.get_fp(X)
-            if np.max(np.sqrt(fp.fp[:size])) > cutoff/2.0:
+            new_item = [v0] + [list(x) for x in comb]
+            d = self.get_max_distance(new_item)
+            if d > cutoff:
                 continue
+            # if np.max(np.sqrt(fp.fp[:size])) > cutoff/2.0:
+            #     continue
 
             # Find the group
-            new_item = [v0] + [list(x) for x in comb]
             try:
                 group = all_fps.index(fp)
                 clusters[group].append(new_item)
@@ -136,7 +154,7 @@ class ClusterGenerator(object):
         zipped = sorted(list(zip(dists, figure)), reverse=True)
         return [x[1] for x in zipped]
 
-    def to_atom_index(self, clusters, template):
+    def to_atom_index(self, cluster, template, kdtree=None):
         """
         Convert the integer vector representation to an atomic index
 
@@ -146,26 +164,28 @@ class ClusterGenerator(object):
 
         template: Atoms
             Template atoms to use
+
+        kdtree: KDTree
+            KDTree of the atomic position. If not given it is generated.
         """
         cell = template.get_cell()
-        pos = template.get_positions()
-        tree = KDTree(pos)
-        int_clusters = []
 
-        for cluster in clusters:
-            int_cluster = []
-            for fig in cluster:
-                int_fig = []
-                for ivec in fig:
-                    x = self.cartesian(ivec)
-                    x_mat = np.zeros((1, 3))
-                    x_mat[0, :] = x
-                    x = wrap_positions(x_mat, cell)
-                    d, i = tree.query(x)
-                    int_fig.append(i[0])
-                int_cluster.append(int_fig)
-            int_clusters.append(int_cluster)
-        return int_clusters
+        if kdtree is None:
+            pos = template.get_positions()
+            kdtree = KDTree(pos)
+
+        int_cluster = []
+        for fig in cluster:
+            int_fig = []
+            for ivec in fig:
+                x = self.cartesian(ivec)
+                x_mat = np.zeros((1, 3))
+                x_mat[0, :] = x
+                x = wrap_positions(x_mat, cell)
+                d, i = kdtree.query(x)
+                int_fig.append(i[0])
+            int_cluster.append(int_fig)
+        return int_cluster
 
     def equivalent_sites(self, figure):
         """Find the equivalent sites of a figure."""
@@ -187,3 +207,9 @@ class ClusterGenerator(object):
             if not found_group:
                 merged.append(set(equiv))
         return [list(x) for x in merged]
+
+    def get_max_distance(self, figure):
+        """Return the maximum distance of a figure."""
+        internal_dists = self._get_internal_distances(figure)
+        max_dists = [x[0] for x in internal_dists]
+        return max(max_dists)

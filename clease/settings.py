@@ -9,20 +9,21 @@ from copy import deepcopy
 import numpy as np
 from ase.db import connect
 
-from clease import _logger, LogVerbosity, ClusterExtractor
+from clease import _logger, LogVerbosity
 from clease.tools import (wrap_and_sort_by_position, indices2tags,
                           get_all_internal_distances, nested_list2str,
                           trans_matrix_index2tags)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
-from clease.trans_matrix_constructor import TransMatrixConstructor
 from clease import AtomsManager
 from clease.name_clusters import name_clusters
 from clease.cluster_fingerprint import ClusterFingerprint
 from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
 from clease.template_filters import ValidConcentrationFilter
+from clease.cluster_manager import ClusterManager
+from clease.tools import flatten
 
 
 class ClusterExpansionSetting(object):
@@ -58,6 +59,8 @@ class ClusterExpansionSetting(object):
         self._tag_prim_cell()
         self._store_prim_cell()
 
+        self.cluster_manager = ClusterManager(self.prim_cell)
+
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
                                             skew_threshold=skew_threshold,
@@ -66,6 +69,10 @@ class ClusterExpansionSetting(object):
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
+        self.cluster_manager.build(
+            max_size=self.max_cluster_size,
+            max_cluster_dia=self.max_cluster_dia
+        )
         self.all_elements = sorted([item for row in self.basis_elements for
                                     item in row])
         self.ignore_background_atoms = ignore_background_atoms
@@ -75,7 +82,7 @@ class ClusterExpansionSetting(object):
         self.num_unique_elements = len(self.unique_elements)
         self.index_by_basis = None
 
-        self.index_by_trans_symm = []
+        self.index_by_sublattice = []
         self.ref_index_trans_symm = []
         self.template_atoms_uid = 0
 
@@ -176,13 +183,9 @@ class ClusterExpansionSetting(object):
         self.index_by_basis = self._group_index_by_basis()
 
         self.background_indices = self._get_background_indices()
-        self.index_by_trans_symm = \
-            self.atoms_mng.group_indices_by_trans_symmetry(self.prim_cell)
-        if self.ignore_background_atoms:
-            self.index_by_trans_symm = [x for x in self.index_by_trans_symm
-                                        if x[0] not in self.background_indices]
-        self.num_trans_symm = len(self.index_by_trans_symm)
-        self.ref_index_trans_symm = [i[0] for i in self.index_by_trans_symm]
+        self.index_by_sublattice = self.atoms_mng.index_by_tag()
+        self.num_trans_symm = len(self.index_by_sublattice)
+        self.ref_index_trans_symm = [i[0] for i in self.index_by_sublattice]
 
     def _set_active_template_by_uid(self, uid):
         """Set a fixed template atoms object as the active."""
@@ -252,27 +255,6 @@ class ClusterExpansionSetting(object):
             raise ValueError("max_cluster_dia must be float, int or list.")
         return max_cluster_dia.round(decimals=3)
 
-    def _get_max_cluster_dia(self, cell, ret_weights=False):
-        lengths = []
-        weights = []
-        for w in product([-1, 0, 1], repeat=3):
-            vec = cell.dot(w)
-            if w == (0, 0, 0):
-                continue
-            lengths.append(np.sqrt(vec.dot(vec)))
-            weights.append(w)
-
-        # Introduce tolerance to make max distance strictly smaller than half
-        # of the shortest cell dimension
-        tol = 2 * 10**(-3)
-        min_length = min(lengths) / 2.0
-        min_length = min_length.round(decimals=3) - tol
-
-        if ret_weights:
-            min_indx = np.argmin(lengths)
-            return min_length, weights[min_indx]
-        return min_length
-
     def _get_background_indices(self):
         """Get indices of the background atoms."""
         # check if any basis consists of only one element type
@@ -288,130 +270,10 @@ class ClusterExpansionSetting(object):
         atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
 
-    def _check_max_cluster_dia(self, internal_distances):
-        """
-        Check that the maximum cluster diameter does not exactly correspond
-        to an internal distance as this can lead to round off errors
-        """
-        for dia in self.max_cluster_dia:
-            if np.min(np.abs(internal_distances - dia) < 1E-6):
-                raise ValueError(
-                    "One of the maximum cluster diameters correspond"
-                    "to an internal distance. Try to increase the max"
-                    "cluster diameter a tiny bit (for instance 4.0 -> 4.01"
-                )
-
-    def _get_supercell(self):
-        # for atom in atoms:
-        #     atom.tag = atom.index
-        supercell = self.atoms_mng.close_to_cubic_supercell()
-        max_cluster_dia_in_sc = \
-            self._get_max_cluster_dia(supercell.get_cell().T)
-
-        # Make large enough supercell (4 times max_cluster_dia can go inside)
-        scale = int(4*np.max(self.max_cluster_dia)/max_cluster_dia_in_sc)
-        if scale < 1:
-            scale = 1
-        supercell = supercell*(scale, scale, scale)
-        supercell = wrap_and_sort_by_position(supercell)
-        ref_indices = \
-            self.atoms_mng.corresponding_indices(self.ref_index_trans_symm,
-                                                 supercell)
-
-        # Calculate the center of atomic positions in a supercell
-        pos = supercell.get_positions()
-        com = np.mean(pos, axis=0)
-
-        # Calculate the center all the reference indices
-        com_ref = np.mean(pos[ref_indices, :], axis=0)
-
-        # Translate center of reference indices
-        supercell.translate(com - com_ref)
-        supercell.wrap()
-        return supercell, ref_indices
-
-    def _create_cluster_list(self):
-        """Generate information for clusters."""
-        self.cluster_list.clear()
-        supercell, ref_indices = self._get_supercell()
-        supercell.info['distances'] = \
-            get_all_internal_distances(supercell, max(self.max_cluster_dia),
-                                       ref_indices)
-        self._check_max_cluster_dia(supercell.info['distances'])
-
-        bkg_sc_indices = []
-        if self.ignore_background_atoms:
-            sc_manager = AtomsManager(supercell)
-            bkg_sc_indices = \
-                sc_manager.single_element_sites(self.basis_elements)
-
-        extractor = ClusterExtractor(supercell)
-        for size in range(2, self.max_cluster_size+1):
-            all_clusters = []
-            all_equiv_sites = []
-            fingerprints = []
-            for ref_indx in ref_indices:
-                clusters = extractor.extract(ref_indx=ref_indx, size=size,
-                                             cutoff=self.max_cluster_dia[size],
-                                             ignored_indices=bkg_sc_indices)
-                equiv_sites = \
-                    [extractor.equivalent_sites(c[0]) for c in clusters]
-                all_equiv_sites.append(equiv_sites)
-                clusters = indices2tags(supercell, clusters)
-                fingerprints += extractor.inner_prod
-                all_clusters.append(clusters)
-            names = name_clusters(fingerprints)
-            self._update_cluster_list(names, all_clusters, all_equiv_sites,
-                                      fingerprints, size)
-
-        # Update with empty info
-        for cluster in self.empty_clusters:
-            self.cluster_list.append(cluster)
-
-        # Update with singlet info
-        for cluster in self.point_clusters:
-            self.cluster_list.append(cluster)
-
-    def _update_cluster_list(self, names, clusters, equiv_sites, fingerprints,
-                             size):
-        counter = 0
-        for trans_symm in range(len(clusters)):
-            for cluster, equiv in zip(clusters[trans_symm],
-                                      equiv_sites[trans_symm]):
-                clst = Cluster(names[counter], size,
-                               2*np.sqrt(fingerprints[counter][0]),
-                               fingerprints[counter],
-                               self.ref_index_trans_symm[trans_symm],
-                               cluster, equiv, trans_symm)
-                self.cluster_list.append(clst)
-                counter += 1
-
-    @property
-    def empty_clusters(self):
-        empty = []
-        num_trans_symm = len(self.ref_index_trans_symm)
-        for symm in range(num_trans_symm):
-            empty.append(
-                Cluster('c0', 0, 0.0, ClusterFingerprint([0.0]),
-                        self.ref_index_trans_symm[symm], [], [], symm)
-            )
-        return empty
-
-    @property
-    def point_clusters(self):
-        point = []
-        num_trans_symm = len(self.ref_index_trans_symm)
-        for symm in range(num_trans_symm):
-            point.append(
-                Cluster('c1', 1, 0.0, ClusterFingerprint([1.0]),
-                        self.ref_index_trans_symm[symm], [], [], symm)
-            )
-        return point
-
     @property
     def multiplicity_factor(self):
         """Return the multiplicity factor of each cluster."""
-        num_sites_in_group = [len(x) for x in self.index_by_trans_symm]
+        num_sites_in_group = [len(x) for x in self.index_by_sublattice]
         return self.cluster_list.multiplicity_factors(num_sites_in_group)
 
     @property
@@ -424,91 +286,18 @@ class ClusterExpansionSetting(object):
         """Return the number of correlation functions."""
         return len(self.all_cf_names)
 
-    def _get_symm_groups(self):
-        symm_groups = -np.ones(len(self.atoms), dtype=int)
-
-        for group, indices in enumerate(self.index_by_trans_symm):
-            symm_groups[indices] = group
-        return symm_groups.tolist()
-
-    def _cutoff_for_tm_construction(self):
-        """ Get cutoff radius for translation matrix construction."""
-        indices = self.cluster_list.unique_indices
-        # start with some small positive number
-        max_dist = 0.1
-
-        for ref in indices:
-            # MIC distance is a lower bound for the distance used in the
-            # cluster
-            mic_distances = self.atoms.get_distances(ref, indices, mic=True)
-            dist = np.max(mic_distances)
-            if dist > max_dist:
-                max_dist = dist
-
-        # 0.5 * max_dist is the radius, but give a bit of buffer (0.1)
-        max_dist *= 0.51
-        return max_dist
-
     def create_cluster_list_and_trans_matrix(self):
-        self._create_cluster_list()
+        self.cluster_list = self.cluster_manager.info_for_template(self.atoms)
 
-        symm_group = self._get_symm_groups()
-        tm_cutoff = self._cutoff_for_tm_construction()
+        if self.ignore_background_atoms:
+            bkg_set = set(self.background_indices)
+            for i in range(len(self.cluster_list)-1, -1, -1):
+                index_set = set(flatten(self.cluster_list[i].indices))
+                if len(bkg_set.intersection(index_set)) > 0:
+                    del self.cluster_list[i]
+            self.cluster_list.make_names_sequential()
 
-        # For smaller cell we currently have no method to decide how large
-        # cutoff we need in order to ensure that all indices in unique_indices
-        # are included. We therefore just probe the cutoff and increase it by
-        # a 1 angstrom until we achieve the what we want
-        all_included = False
-        counter = 0
-        max_attempts = 1000
-        supercell, ref_indices = self._get_supercell()
-
-        # We need to get the symmetry groups of the supercell. We utilise that
-        # the supercell is tagged
-        symm_group_sc = [-1 for _ in range(len(supercell))]
-        for atom in supercell:
-            symm_group_sc[atom.index] = symm_group[atom.tag]
-
-        # Make as efficient as possible by evaluating only a subset of
-        # the indices
-        indices = [-1 for _ in range(len(self.atoms))]
-        for atom in supercell:
-            if indices[atom.tag] == -1:
-                indices[atom.tag] = atom.index
-
-        unique_index_symm = self.cluster_list.unique_indices_per_group
-        unique_index_symm = [set(x) for x in unique_index_symm]
-        all_unique_indices = set(self.cluster_list.unique_indices)
-        while not all_included and counter < max_attempts:
-            try:
-                tmc = TransMatrixConstructor(supercell, tm_cutoff)
-                tm_sc = tmc.construct(ref_indices, symm_group_sc,
-                                      indices=indices)
-
-                # Map supercell indices to normal indices
-                tm = trans_matrix_index2tags(tm_sc, supercell, indices=indices)
-                for i, row in enumerate(tm):
-                    _ = [row[k] for k in unique_index_symm[symm_group[i]]]
-
-                # For a simpler data structure in calculator store some
-                # additional data
-                for i, row in enumerate(tm):
-                    gr = symm_group[i]
-                    diff = all_unique_indices - unique_index_symm[gr]
-                    for i in diff:
-                        row[i] = -1  # Put -1 as this should never be accessed
-                all_included = True
-            except (KeyError, IndexError):
-                tm_cutoff += 3.0
-            counter += 1
-
-        if counter >= max_attempts:
-            raise RuntimeError("Could not find a cutoff such that all "
-                               "unique_indices are included")
-
-        self.trans_matrix = [{k: int(row[k]) for k in
-                              self.cluster_list.unique_indices} for row in tm]
+        self.trans_matrix = self.cluster_manager.translation_matrix(self.atoms)
 
     def _store_data(self):
         size_str = nested_list2str(self.size)
