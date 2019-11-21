@@ -43,3 +43,17 @@ clease gui
 ```
 on the command line.
 
+# Troubleshooting
+
+1. If you are running on Mac and get the error 
+
+```
+fatal error: 'ios' file not found
+```
+
+try this before installing
+
+```
+export MACOSX_DEPLOYMENT_TARGET=10.14
+```
+
