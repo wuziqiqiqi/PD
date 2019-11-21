@@ -1,24 +1,26 @@
 .. _aucu_tutorial_concentration:
 .. module:: clease.concentration
 
-
 Specify the concentration ranges of species
 ===========================================
 
 The first step in setting up CE in ASE is to specify the types of elements
 occupying each basis and their concentration ranges using
 :class:`Concentration` class. For AuCu alloys, we consider the entire
-composition range of Au\ :sub:`x`\ Cu\ :sub:`1-x` where :math:`0 \leq x \leq 1`.
-The :class:`Concentration` object can be created simply as
+composition range of Au\ :sub:`x`\ Cu\ :sub:`1-x` where
+:math:`0 \leq x \leq 1`. The :class:`Concentration` object can be created
+simply as
 
-  >>> from clease import Concentration
-  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+.. code-block:: python
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
 
 because there is no restriction imposed on the concentration range. Note that
 a nested list is passed for the ``basis_elements`` argument because
 the consituting elements are specified per basis and FCC (crystal structure of
-Au\ :sub:`x`\ Cu\ _sub:`1_-_x` for all :math:`0 \leq x \leq 1`) has only one basis.
-The initialization automatically creates a linear algebra representation
+Au\ :sub:`x`\ Cu\ _sub:`1_-_x` for all :math:`0 \leq x \leq 1`) has only one
+basis. The initialization automatically creates a linear algebra representation
 of the default concentration range constraints. The equality condition of
 
 .. math:: A_\mathrm{eq} = \begin{bmatrix}
@@ -81,26 +83,32 @@ The first method is to specify the extra constraint using ``A_eq``, ``b_eq``,
 ``A_lb`` and ``b_lb``. For this particular case, the extra constraint is
 specified using ``A_lb`` and ``b_lb`` arguments as
 
-  >>> from clease import Concentration
-  >>> conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
+.. code-block:: python
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
 
 The second method is to specify the concentration range using formula unit
 strings. The :class:`Concentration` class contains
 :meth:`~Concentration.set_conc_formula_unit()` method which accepts formula
 strings and variable range, which can be invoked as
 
-  >>> from clease import Concentration
-  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
-  >>> conc.set_conc_formula_unit(formulas=["Au<x>Cu<1-x>"], variable_range={"x": (0, 0.5)})
+.. code-block:: python
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
+  conc.set_conc_formula_unit(formulas=["Au<x>Cu<1-x>"], variable_range={"x": (0, 0.5)})
 
 The last method is to specify the concentration range each constituting species
 using :meth:`~Concentration.set_conc_ranges()` method in :class:`Concentration`
 class. The lower and upper bound of species are specified in a nested list in
 the same order as the ``basis_elements`` as
 
-  >>> from clease import Concentration
-  >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
-  >>> conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
+.. code-block:: python
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
+  conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
 
 The above three methods yields the same results where :math:`x` is
 constrained to :math:`0 \leq x \leq 0.5`.

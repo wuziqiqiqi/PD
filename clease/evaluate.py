@@ -464,8 +464,8 @@ class Evaluate(object):
             number of alpha values to be used in the plot.
 
         scale: str
-            -'log'(default): alpha values are evenly spaced on a log scale.
-            -'linear': alpha values are evenly spaced on a linear scale.
+            - 'log'(default): alpha values are evenly spaced on a log scale.
+            - 'linear': alpha values are evenly spaced on a linear scale.
 
         logfile: file object, str or None.
             - None: logging is disabled
@@ -567,10 +567,10 @@ class Evaluate(object):
             number of alpha values to be used in the plot.
 
         scale: str
-            -'log'(default): alpha values are evenly spaced on a log scale.
-            -'linear': alpha values are evenly spaced on a linear scale.
+            - 'log'(default): alpha values are evenly spaced on a log scale.
+            - 'linear': alpha values are evenly spaced on a linear scale.
 
-        logfile: file object, str or None.
+        logfile: file object, str or None
             - None: logging is disabled
             - str: a file with that name will be opened. If '-', stdout used.
             - file object: use the file object for logging
@@ -746,7 +746,7 @@ class Evaluate(object):
             if name == "c0" or name.startswith("c1"):
                 dists.append(0)
                 continue
-            dist_str = name.split("_")[1][:-2]
+            dist_str = name.split("_")[1][1:]
             dists.append(int(dist_str))
         return dists
 

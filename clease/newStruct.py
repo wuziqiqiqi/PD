@@ -38,7 +38,7 @@ class NewStructures(object):
 
     Parameters:
 
-    setting: CEBulk or BulkSapcegroup object
+    setting: CEBulk or CESpacegroup object
 
     generation_number: int
         a generation number to be assigned to the newly generated structure.
@@ -171,7 +171,7 @@ class NewStructures(object):
                                                  .format(max_attempt))
             else:
                 num_attempt = 0
-            
+
             _logger('Probe structure generated.\n')
             self.insert_structure(init_struct=probe_struct)
             current_count += 1
@@ -366,7 +366,8 @@ class NewStructures(object):
             else:
                 num_attempt = 0
 
-            msg = 'Structure with E = {:.3f} generated.\n'.format(es.min_energy)
+            min_energy = gs_struct.get_potential_energy()
+            msg = 'Structure with E = {:.3f} generated.\n'.format(min_energy)
             _logger(msg)
             self.insert_structure(init_struct=gs_struct)
             current_count += 1
