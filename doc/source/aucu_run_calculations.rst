@@ -1,4 +1,4 @@
-.. _aucu_tutorial_run_calculations:
+.. _aucu_run_calculations:
 .. module:: clease.tools
 
 Running calculations on generated structures
@@ -10,21 +10,22 @@ CLEAES and update database with the calculation results for further evaluation
 of the CE model. Here is a simple example script that runs the calculations
 for all structures that are not yet converged
 
-.. code-block:: python
+.. doctest::
+  :options: +SKIP
 
-  from ase.calculators.emt import EMT
-  from ase.db import connect
-  from clease.tools import update_db
-  calc = EMT()
-  db_name = "aucu.db"
-  db = connect(db_name)
-
-  # Run calculations for all structures that are not converged.
-  for row in db.select(converged=False):
-      atoms = row.toatoms()
-      atoms.set_calculator(calc)
-      atoms.get_potential_energy()
-      update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
+  >>> from ase.calculators.emt import EMT
+  >>> from ase.db import connect
+  >>> from clease.tools import update_db
+  >>> calc = EMT()
+  >>> db_name = "aucu.db"
+  >>> db = connect(db_name)
+  >>>
+  >>> # Run calculations for all structures that are not converged.
+  >>> for row in db.select(converged=False):
+  ...   atoms = row.toatoms()
+  ...   atoms.set_calculator(calc)
+  ...   atoms.get_potential_energy()
+  ...   update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
 
 CLEASE has :func:`update_db` function to update the database entry with the
 calculation results. It automatically updates the intial structure entry and

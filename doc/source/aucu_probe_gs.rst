@@ -21,11 +21,12 @@ You can generate probe structures using the following script. Note that it
 internally uses simulated annealing algorithm which uses fictitious temperature
 values to maximize the difference in correlation function of the new structure.
 
-.. code-block:: python
+.. doctest::
+  :options: +SKIP
 
-  from clease import NewStructures
-  ns = NewStructures(setting, generation_number=1, struct_per_gen=10)
-  ns.generate_probe_structure()
+  >>> from clease import NewStructures
+  >>> ns = NewStructures(setting, generation_number=1, struct_per_gen=10)
+  >>> ns.generate_probe_structure()
 
 Once 10 additional structures are generated, you can re-run the script in
 "Running calculations on generated structures" section to calculate their
@@ -41,24 +42,25 @@ plot of formation energy. The script below generates ground-state
 structures with a cell size of :math:`4 \times 4 \times 4` at random
 compositions based on current CE model.
 
-.. code-block:: python
+.. doctest::
+  :options: +SKIP
 
-  from ase.db import connect
-  import json
-
-  # get template with the cell size = 4x4x4
-  template = connect('aucu.db').get(id=17).toatoms()
-
-  # import dictionary containing cluster names and their ECIs
-  with open('eci_l1.json') as f:
-      eci = json.load(f)
-
-  ns = NewStructures(setting, generation_number=2, struct_per_gen=10)
-
-  ns.generate_gs_structure(atoms=template, init_temp=2000,
-                           final_temp=1, num_temp=10,
-                           num_steps_per_temp=5000,
-                           eci=eci, random_composition=True)
+  >>> from ase.db import connect
+  >>> import json
+  >>>
+  >>> # get template with the cell size = 4x4x4
+  >>> template = connect('aucu.db').get(id=17).toatoms()
+  >>>
+  >>> # import dictionary containing cluster names and their ECIs
+  >>> with open('eci_l1.json') as f:
+  ...     eci = json.load(f)
+  >>>
+  >>> ns = NewStructures(setting, generation_number=2, struct_per_gen=10)
+  >>>
+  >>> ns.generate_gs_structure(atoms=template, init_temp=2000,
+  ...                          final_temp=1, num_temp=10,
+  ...                          num_steps_per_temp=5000,
+  ...                          eci=eci, random_composition=True)
 
 
 You should re-run the scripts in "Running calculations on generated structures"

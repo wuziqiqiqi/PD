@@ -1,4 +1,18 @@
-.. _aucu_tutorial_initial_pool:
+.. testsetup::
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
+  from clease import CEBulk
+  setting = CEBulk(crystalstructure='fcc',
+                   a=3.8,
+                   supercell_factor=64,
+                   concentration=conc,
+                   db_name="aucu.db",
+                   max_cluster_size=4,
+                   max_cluster_dia=[6.0, 4.5, 4.5],
+                   basis_function='polynomial')
+
+.. _aucu_initial_pool:
 .. module:: clease.newStruct
 
 
@@ -15,11 +29,9 @@ CE model are generated using :class:`NewStructures` class, which contains
 several methods for generating structures. The initial pool of structures is
 generated using :meth:`generate_initial_pool` method as
 
-.. code-block:: python
-
-  from clease import NewStructures
-  ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
-  ns.generate_initial_pool()
+>>> from clease import NewStructures
+>>> ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
+>>> ns.generate_initial_pool()
 
 The :meth:`generate_initial_pool` method generates one structure per
 concentration where the number of each constituing element is at
@@ -65,11 +77,10 @@ As we have generated only two structures for training, we can generate more
 random structures using :meth:`generate_random_structures` method by altering
 the above script with
 
-.. code-block:: python
-
-  ns = NewStructures(setting, generation_number=0,
-                     struct_per_gen=10)
-  ns.generate_random_structures()
+>>> from clease import NewStructures
+>>> ns = NewStructures(setting, generation_number=0,
+...                    struct_per_gen=10)
+>>> ns.generate_random_structures()
 
 The script generates 8 additional random structures such that there are 10
 structures in generation 0. By default, :meth:`generate_random_structures`
@@ -78,16 +89,19 @@ you prefer to generate random structures with a specific cell size, you
 can pass template atoms with desired size. For example, you can force the
 new structures to be :math:`3 \times 3 \times 3` supercell by using
 
-.. code-block:: python
+>>> from ase.db import connect
+>>> ns = NewStructures(setting, generation_number=0,
+...                    struct_per_gen=10)
+>>>
+>>> # get template with the cell size = 3x3x3
+>>> atoms = connect('aucu.db').get(id=10).toatoms()
+>>>
+>>> ns.generate_random_structures(atoms)
 
-  from ase.db import connect
-  ns = NewStructures(setting, generation_number=0,
-                     struct_per_gen=10)
+.. testcleanup::
 
-  # get template with the cell size = 3x3x3
-  atoms = connect('aucu.db').get(id=10).toatoms()
-
-  ns.generate_random_structures(atoms)
+  import os
+  os.remove("aucu.db")
 
 
 .. autoclass:: NewStructures

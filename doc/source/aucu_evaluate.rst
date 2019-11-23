@@ -1,4 +1,35 @@
-.. _aucu_tutorial_evaluate:
+.. testsetup::
+  :skipif: havedisplay is False
+
+  from clease import Concentration, CEBulk
+  from clease import NewStructures
+  from ase.calculators.emt import EMT
+  from ase.db import connect
+  from clease.tools import update_db
+
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
+  setting = CEBulk(crystalstructure='fcc',
+                   a=3.8,
+                   supercell_factor=64,
+                   concentration=conc,
+                   db_name="aucu.db",
+                   max_cluster_size=4,
+                   max_cluster_dia=[6.0, 4.5, 4.5],
+                   basis_function='polynomial')
+
+  ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
+  ns.generate_initial_pool()
+
+  calc = EMT()
+  db = connect("aucu.db")
+
+  for row in db.select(converged=False):
+    atoms = row.toatoms()
+    atoms.set_calculator(calc)
+    atoms.get_potential_energy()
+    update_db(uid_initial=row.id, final_struct=atoms, db_name="aucu.db")
+
+.. _aucu_evaluate:
 .. module:: clease.evaluate
 
 Evaluating the CE model
@@ -20,26 +51,33 @@ CLEASE and update database with the calculation results for further evaluation
 of the CE model. Here is a simple example script that runs the calculations
 for all structures that are not yet converged
 
-.. code-block:: python
+.. doctest::
+  :skipif: havedisplay is False
 
-   from clease import Evaluate
+  >>> from clease import Evaluate
+  >>>
+  >>> eva = Evaluate(setting=setting, scoring_scheme='k-fold', nsplits=10)
+  >>> # scan different values of alpha and return the value of alpha that yields
+  >>> # the lowest CV score
+  >>> eva.set_fitting_scheme(fitting_scheme='l1')
+  >>> alpha = eva.plot_CV(alpha_min=1E-7, alpha_max=1.0, num_alpha=50)
+  >>>
+  >>> # set the alpha value with the one found above, and fit data using it.
+  >>> eva.set_fitting_scheme(fitting_scheme='l1', alpha=alpha)
+  >>> eva.plot_fit()
+  >>>
+  >>> # plot ECI values
+  >>> eva.plot_ECI()
+  >>>
+  >>> # save a dictionary containing cluster names and their ECIs
+  >>> eva.save_eci(fname='eci_l1')
 
-   eva = Evaluate(setting=setting, scoring_scheme='k-fold', nsplits=10)
-   # scan different values of alpha and return the value of alpha that yields
-   # the lowest CV score
-   eva.set_fitting_scheme(fitting_scheme='l1')
-   alpha = eva.plot_CV(alpha_min=1E-7, alpha_max=1.0, num_alpha=50)
+.. testcleanup::
+  :skipif: havedisplay is False
 
-   # set the alpha value with the one found above, and fit data using it.
-   eva.set_fitting_scheme(fitting_scheme='l1', alpha=alpha)
-   eva.plot_fit()
-
-   # plot ECI values
-   eva.plot_ECI()
-
-   # save a dictionary containing cluster names and their ECIs
-   eva.save_eci(fname='eci_l1')
-
+  import os
+  os.remove("aucu.db")
+  os.remove("eci_l1.json")
 
 .. autoclass:: Evaluate
    :members: set_fitting_scheme, plot_CV, plot_fit, plot_ECI, save_eci

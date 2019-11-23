@@ -1,4 +1,9 @@
-.. _aucu_tutorial_setting:
+.. testsetup::
+
+  from clease import Concentration
+  conc = Concentration(basis_elements=[['Au', 'Cu']])
+
+.. _aucu_setting:
 .. module:: clease.settings_bulk
 
 Specify CE settings
@@ -14,17 +19,20 @@ Here is how to specify the settings for performing CE on
 Au\ :sub:`x`\ Cu\ :sub:`1-x` for all :math:`0 \leq x \leq 1` on FCC lattice
 with a lattice constant of 3.8 Å
 
-.. code-block:: python
+>>> from clease import CEBulk
+>>> setting = CEBulk(crystalstructure='fcc',
+...                  a=3.8,
+...                  supercell_factor=64,
+...                  concentration=conc,
+...                  db_name="aucu.db",
+...                  max_cluster_size=4,
+...                  max_cluster_dia=[6.0, 4.5, 4.5],
+...                  basis_function='polynomial')
 
-  from clease import CEBulk
-  setting = CEBulk(crystalstructure='fcc',
-                   a=3.8,
-                   supercell_factor=64,
-                   concentration=conc,
-                   db_name="aucu.db",
-                   max_cluster_size=4,
-                   max_cluster_dia=[6.0, 4.5, 4.5],
-                   basis_function='polynomial')
+.. testcleanup::
+
+  import os
+  os.remove("aucu.db")
 
 :class:`CEBulk` internally calls :func:`ase.build.bulk` function to generate a
 unit cell. Arguments ``crystalstructure``, ``a``, ``c``, ``covera``, ``u``,

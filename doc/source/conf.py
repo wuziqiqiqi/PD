@@ -49,6 +49,11 @@ extensions = [
     'sphinx.ext.viewcode'
 ]
 
+doctest_global_setup = '''
+import os
+havedisplay = "DISPLAY" in os.environ
+'''
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
