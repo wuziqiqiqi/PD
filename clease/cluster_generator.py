@@ -13,7 +13,10 @@ class ClusterGenerator(object):
     """
     def __init__(self, prim_cell):
         self.prim = prim_cell
-        self.shifts = self.prim.get_positions()
+        self.shifts = np.zeros((len(prim_cell), 3))
+        pos = self.prim.get_positions()
+        for i, atom in enumerate(prim_cell):
+            self.shifts[atom.tag, :] = pos[i, :]
         self.prim_cell_invT = np.linalg.inv(self.prim.get_cell().T)
 
     def eucledian_distance_vec(self, x1, x2):

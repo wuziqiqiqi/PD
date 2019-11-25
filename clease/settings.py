@@ -51,6 +51,7 @@ class ClusterExpansionSetting(object):
         self.kwargs["concentration"] = self.concentration.to_dict()
         self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
+        self.ignore_background_atoms = ignore_background_atoms
         self.num_basis = len(self.basis_elements)
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
@@ -59,7 +60,10 @@ class ClusterExpansionSetting(object):
         self._tag_prim_cell()
         self._store_prim_cell()
 
-        self.cluster_manager = ClusterManager(self.prim_cell)
+        if self.ignore_background_atoms:
+            self.cluster_manager = ClusterManager(self.prim_no_bkg())
+        else:
+            self.cluster_manager = ClusterManager(self.prim_cell)
 
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
@@ -75,7 +79,6 @@ class ClusterExpansionSetting(object):
         )
         self.all_elements = sorted([item for row in self.basis_elements for
                                     item in row])
-        self.ignore_background_atoms = ignore_background_atoms
         self.background_indices = None
         self.num_elements = len(self.all_elements)
         self.unique_elements = sorted(list(set(deepcopy(self.all_elements))))
@@ -144,12 +147,35 @@ class ClusterExpansionSetting(object):
     def atoms(self):
         return self.atoms_mng.atoms
 
+    def prim_no_bkg(self):
+        """
+        Return an instance of the primitive cell where the background indices
+        has been removed
+        """
+        prim = self.prim_cell.copy()
+        bg_syms = self.get_bg_syms()
+        delete = []
+        for atom in prim:
+            if atom.symbol in bg_syms:
+                delete.append(atom.index)
+
+        delete.sort(reverse=True)
+        for i in delete:
+            del prim[i]
+        return prim
+
+    def get_bg_syms(self):
+        """
+        Return the symbols in the basis where there is only one element
+        """
+        return set(x[0] for x in self.basis_elements if len(x) == 1)
+
     def unique_element_without_background(self):
         """Remove backgound elements."""
         if not self.ignore_background_atoms:
             bg_sym = set()
         else:
-            bg_sym = set(x[0] for x in self.basis_elements if len(x) == 1)
+            bg_sym = self.get_bg_syms()
 
             # Remove bg_syms that are also present in basis with more than one
             # element
@@ -162,7 +188,6 @@ class ClusterExpansionSetting(object):
                         to_be_removed.add(s)
 
                 bg_sym -= to_be_removed
-
 
         unique_elem = set()
         for x in self.basis_elements:
@@ -212,9 +237,30 @@ class ClusterExpansionSetting(object):
         self._set_active_template_by_uid(uid)
 
     def _tag_prim_cell(self):
-        """Add a tag to all the atoms in the unit cell to track the index."""
+        """
+        Add a tag to all the atoms in the unit cell to track the sublattice.
+        Tags are added such that that the lowest tags corresponds to "active"
+        sites, while the highest tags corresponds to background sites. An
+        example is a system having three sublattices that can be occupied by
+        more than one species, and two sublattices that can be occupied by
+        only one species. The tags 0, 1, 2 will then be assigned to the three
+        sublattices that can be occupied by more than one species, and the two
+        remaining lattices will get the tag 3, 4.
+        """
+        bg_sym = self.get_bg_syms()
+        tag = 0
+
+        # Tag non-background elements first
         for atom in self.prim_cell:
-            atom.tag = atom.index
+            if atom.symbol not in bg_sym:
+                atom.tag = tag
+                tag += 1
+
+        # Tag background elements
+        for atom in self.prim_cell:
+            if atom.symbol in bg_sym:
+                atom.tag = tag
+                tag += 1
 
     def _store_prim_cell(self):
         """Store unit cell to the database."""

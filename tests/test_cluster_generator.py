@@ -95,8 +95,14 @@ class TestClusterGenerator(unittest.TestCase):
                          max_cluster_size=3,
                          max_cluster_dia=[4.01, 4.01])
 
+        lattices = {}
+        for at in setting.prim_cell:
+            lattices[at.symbol] = at.tag
+
         atoms = bulk('LiX', crystalstructure='rocksalt', a=4.0)
         atoms.wrap()
+        for atom in atoms:
+            atom.tag = lattices[atom.symbol]
         generator = ClusterGenerator(atoms)
         clusters1, fp1 = generator.generate(3, 6.0, ref_lattice=0)
         clusters2, fp2 = generator.generate(3, 6.0, ref_lattice=1)
@@ -114,10 +120,7 @@ class TestClusterGenerator(unittest.TestCase):
         for c in c_list:
             c.indices = [sorted(x) for x in c.indices]
             ref = c.ref_indx
-            if atoms[ref].symbol == 'Li':
-                lattice = 0
-            else:
-                lattice = 1
+            lattice = lattices[atoms[ref].symbol]
             try:
                 i = fps[lattice].index(c.fp)
                 for f in int_clusters[lattice][i]:

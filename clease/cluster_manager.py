@@ -195,6 +195,10 @@ class ClusterManager(object):
 
         vec2 = np.zeros(4, dtype=int)
         for atom in template:
+            if atom.tag >= self.generator.num_sub_lattices:
+                trans_mat.append({})
+                continue
+
             vec = self.generator.get_four_vector(atom.position, atom.tag)
             for i, u in enumerate(unique):
                 vec2[:3] = vec[:3] + u[:3]

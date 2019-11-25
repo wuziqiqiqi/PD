@@ -156,7 +156,8 @@ class Cluster(object):
             if translated_figure == target_figure:
                 return self._order_equiv_sites(figure)
 
-        raise RuntimeError("There are no matching figure!")
+        raise RuntimeError("There are no matching figure for ref_indx: {} and "
+                           "figure: {}!".format(ref_indx, target_figure))
 
     def get_all_figure_keys(self):
         return [self.get_figure_key(fig) for fig in self.indices]
