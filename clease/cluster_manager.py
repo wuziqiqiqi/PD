@@ -6,7 +6,6 @@ from clease.name_clusters import name_clusters, size
 from scipy.spatial import KDTree
 from copy import deepcopy
 import numpy as np
-from clease.tools import flatten
 from ase.geometry import wrap_positions
 from clease.cluster_fingerprint import ClusterFingerprint
 
@@ -169,6 +168,25 @@ class ClusterManager(object):
             unique.update(indices)
         return unique
 
+    def create_four_vector_lut(self, template):
+        """
+        Construct a lookup table (LUT) for the index in template given the wrapped
+        vector
+
+        Parameter:
+
+        template: Atoms
+            Atoms object to use when creating the lookup table (LUT)
+        """
+        lut = {}
+        pos = template.get_positions().copy()
+        for i in range(pos.shape[0]):
+            if template[i].tag >= self.generator.num_sub_lattices:
+                continue
+            vec = self.generator.get_four_vector(pos[i, :], template[i].tag)
+            lut[tuple(vec)] = i
+        return lut
+
     def translation_matrix(self, template):
         """
         Construct the translation matrix
@@ -179,7 +197,6 @@ class ClusterManager(object):
             Atoms object representing the simulation cell
         """
         trans_mat = []
-        kdtree = KDTree(template.get_positions())
         unique = self.unique_four_vectors()
 
         unique_indx = {}
@@ -190,10 +207,17 @@ class ClusterManager(object):
             pos[i, :] = cart_u
 
         pos = wrap_positions(pos, cell)
-        _, i = kdtree.query(pos)
-        unique_indx = dict(zip(unique, i.tolist()))
+        unique_indices = []
+        for i in range(pos.shape[0]):
+            diff_sq = np.sum((pos[i, :] - template.get_positions())**2, axis=1)
+            unique_indices.append(np.argmin(diff_sq))
+        unique_indx = dict(zip(unique, unique_indices))
 
         vec2 = np.zeros(4, dtype=int)
+        lut = self.create_four_vector_lut(template)
+        indices = [0 for _ in range(len(unique))]
+        cartesian = np.zeros((len(unique), 3))
+
         for atom in template:
             if atom.tag >= self.generator.num_sub_lattices:
                 trans_mat.append({})
@@ -203,10 +227,16 @@ class ClusterManager(object):
             for i, u in enumerate(unique):
                 vec2[:3] = vec[:3] + u[:3]
                 vec2[3] = u[3]
-                cartesian = self.generator.cartesian(vec2)
-                pos[i, :] = cartesian
-            pos = wrap_positions(pos, cell)
-            _, j = kdtree.query(pos)
+
+                cartesian[i, :] = self.generator.cartesian(vec2)
+
+            cartesian = wrap_positions(cartesian, cell)
+
+            for i, u in enumerate(unique):
+                vec2_four = self.generator.get_four_vector(
+                    cartesian[i, :], u[3])
+                indices[i] = lut[tuple(vec2_four)]
+
             trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique],
-                                      j.astype(int).tolist())))
+                                      indices)))
         return trans_mat

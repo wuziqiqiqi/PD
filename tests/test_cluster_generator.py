@@ -140,12 +140,44 @@ class TestClusterGenerator(unittest.TestCase):
 
         # Test a triplet
         clusters, fps = generator.generate(3, 3.0)
-        
+
         # For the smalles triplet all sites should be equivalent
         equiv = generator.equivalent_sites(clusters[0][0])
         self.assertEqual(equiv, [[0, 1, 2]])
 
+    def test_get_lattice(self):
+        tests = [
+            {
+                'prim': bulk('Al'),
+                'atoms': bulk('Al')*(2, 2, 2),
+                'site': 4,
+                'lattice': 0
+            },
+            {
+                'prim': bulk('LiX', 'rocksalt', 4.0),
+                'atoms': bulk('LiX', 'rocksalt', 4.0)*(1, 2, 3),
+                'site': 4,
+                'lattice': 0,
+            },
+            {
+                'prim': bulk('LiX', 'rocksalt', 4.0),
+                'atoms': bulk('LiX', 'rocksalt', 4.0)*(1, 2, 3),
+                'site': 5,
+                'lattice': 1,
+            }
+        ]
 
+        for i, test in enumerate(tests):
+            test['atoms'].wrap()
+            test['prim'].wrap()
+            for at in test['prim']:
+                at.tag = at.index
+            pos = test['atoms'][test['site']].position
+            gen = ClusterGenerator(test['prim'])
+            lattice = gen.get_lattice(pos)
+            msg = 'Test #{} falied. Expected: {} Got {}'.format(
+                i, test['lattice'], lattice)
+            self.assertEqual(lattice, test['lattice'], msg=msg)
 
 
 if __name__ == '__main__':

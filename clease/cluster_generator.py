@@ -40,12 +40,28 @@ class ClusterGenerator(object):
 
     def get_four_vector(self, pos, lattice):
         """Return the four vector of an atom."""
+        if lattice is None:
+            lattice = self.get_lattice(pos)
+
         pos -= self.shifts[lattice]
         int_pos = self.prim_cell_invT.dot(pos)
         four_vec = np.zeros(4, dtype=int)
         four_vec[:3] = np.round(int_pos).astype(int)
         four_vec[3] = lattice
         return four_vec
+
+    def get_lattice(self, pos):
+        """
+        Return the corresponding sublattice of a cartesian position
+
+        Parameters:
+        pos: array of length 3
+            Cartesian position
+        """
+        reshaped = np.reshape(pos, (1, 3))
+        wrapped = wrap_positions(reshaped, self.prim.get_cell())
+        diff_sq = np.sum((wrapped[0, :] - self.shifts)**2, axis=1)
+        return np.argmin(diff_sq)
 
     def eucledian_distance(self, x1, x2):
         d = self.eucledian_distance_vec(x1, x2)
