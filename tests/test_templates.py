@@ -2,12 +2,14 @@
 import os
 from clease.template_atoms import TemplateAtoms
 from ase.build import bulk
+from ase.spacegroup import crystal
 from ase.db import connect
 from ase.build import niggli_reduce
 from clease import Concentration, ValidConcentrationFilter
 from clease.template_filters import AtomsFilter, CellFilter
 from clease import DistanceBetweenFacetsFilter
-from clease import Concentration, CEBulk
+from clease import CEBulk
+from clease.tools import wrap_and_sort_by_position
 import numpy as np
 import unittest
 from unittest.mock import patch
@@ -77,41 +79,40 @@ class TestTemplates(unittest.TestCase):
         os.remove(db_name)
 
     def test_valid_concentration_filter(self):
-        prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
-        settings = SettingsPlaceHolder()
-        settings.atoms = prim_cell
-        settings.index_by_basis = [[0], [1]]
-
         db_name = 'test_valid_concentration.db'
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
-        # Force vacancy concentration to be exactly 2/3 of the Cl
-        # concentration
-        A_eq = [[0, 1, -2.0]]
-        b_eq = [0.0]
-        settings.concentration = Concentration(
-            basis_elements=[['Na'], ['Cl', 'X']], A_eq=A_eq, b_eq=b_eq)
+        tests = [
+            {
+                'system': 'NaCl',
+                'func': check_NaCl_conc
+            },
+            {
+                'system': 'LiNiMnCoO',
+                'func': lambda templ, test_suite:
+                    test_suite.assertGreaterEqual(len(templ['atoms']), 1)
+            }
+        ]
 
-        template_generator = TemplateAtoms(
-            db_name=db_name, supercell_factor=20,
-            skew_threshold=1000000000)
+        for test in tests:
+            settings = get_settings_placeholder_valid_conc_filter(
+                test['system'], db_name)
 
-        os.remove(db_name)
-        conc_filter = ValidConcentrationFilter(settings)
-        # Check that you cannot attach an AtomsFilter as a cell
-        # filter
-        with self.assertRaises(TypeError):
-            template_generator.add_cell_filter(conc_filter)
+            template_generator = TemplateAtoms(
+                db_name=db_name, supercell_factor=20,
+                skew_threshold=1000000000)
 
-        template_generator.clear_filters()
-        template_generator.add_atoms_filter(conc_filter)
+            os.remove(db_name)
+            conc_filter = ValidConcentrationFilter(settings)
+            # Check that you cannot attach an AtomsFilter as a cell
+            # filter
+            with self.assertRaises(TypeError):
+                template_generator.add_cell_filter(conc_filter)
 
-        templates = template_generator._generate_template_atoms()
+            template_generator.clear_filters()
+            template_generator.add_atoms_filter(conc_filter)
 
-        for atoms in templates['atoms']:
-            num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
-            self.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
+            templates = template_generator._generate_template_atoms()
+            test['func'](templates, self)
 
     def test_dist_filter(self):
         f = DistanceBetweenFacetsFilter(4.0)
@@ -247,6 +248,68 @@ class TestTemplates(unittest.TestCase):
         db.write(prim_cell, name='template')
         TemplateAtoms(supercell_factor=3, db_name=db_name)
         os.remove(db_name)
+
+
+def get_settings_placeholder_valid_conc_filter(system, db_name):
+    """
+    Helper functions that initialises various dummy settings classes to be
+    used together with the test_valid_conc_filter_class
+    """
+    settings = SettingsPlaceHolder()
+    if system == 'NaCl':
+        prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
+        settings.atoms = prim_cell
+        settings.index_by_basis = [[0], [1]]
+
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        # Force vacancy concentration to be exactly 2/3 of the Cl
+        # concentration
+        A_eq = [[0, 1, -2.0]]
+        b_eq = [0.0]
+        settings.concentration = Concentration(
+            basis_elements=[['Na'], ['Cl', 'X']], A_eq=A_eq, b_eq=b_eq)
+
+    elif system == 'LiNiMnCoO':
+        a = 2.825
+        b = 2.825
+        c = 13.840
+        alpha = 90
+        beta = 90
+        gamma = 120
+        spacegroup = 166
+        basis_elements = [['Li'],
+                          ['Ni', 'Mn', 'Co'],
+                          ['O']]
+        basis = [(0., 0., 0.),
+                 (0., 0., 0.5),
+                 (0., 0., 0.259)]
+
+        A_eq = None
+        b_eq = None
+
+        conc = Concentration(basis_elements=basis_elements,
+                             A_eq=A_eq, b_eq=b_eq)
+        prim_cell = crystal(symbols=['Li', 'Ni', 'O'], basis=basis,
+                            spacegroup=spacegroup,
+                            cellpar=[a, b, c, alpha, beta, gamma],
+                            size=[1, 1, 1], primitive_cell=True)
+        prim_cell = wrap_and_sort_by_position(prim_cell)
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+        settings.concentration = conc
+
+        settings.index_by_basis = [[0], [2], [1, 3]]
+        settings.atoms = prim_cell
+    return settings
+
+
+def check_NaCl_conc(templates, test_suite):
+    for atoms in templates['atoms']:
+        num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
+        test_suite.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
+
 
 if __name__ == '__main__':
     unittest.main()

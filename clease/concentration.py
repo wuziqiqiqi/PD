@@ -591,6 +591,7 @@ class Concentration(object):
         self.orig_num_equality = self.A_eq.shape[0]
         for i, basis in enumerate(self.basis_elements):
             if self._is_linked_to_other_basis(i):
+                start += len(basis)
                 continue
             iteration = 0
             rng = 0.5*min_range
@@ -600,6 +601,7 @@ class Concentration(object):
                 rng = ranges[indx][1] - ranges[indx][0]
             if iteration >= maxiter:
                 self.fixed_element_constraint_added = False
+                start += len(basis)
                 continue
             indices.append(indx)
             basis_of_index.append(i)
@@ -646,9 +648,11 @@ class Concentration(object):
         # Setup the constraints
         constraints = self._get_constraints()
         x0 = np.random.rand(self.num_concs)
+        pinv = np.linalg.pinv(self.A_eq)
+        x_init = pinv.dot(self.b_eq)
 
         # Find the closest vector to x0 that satisfies all constraints
-        opt_res = minimize(objective_random, x0, args=(x0,),
+        opt_res = minimize(objective_random, x_init, args=(x0,),
                            method="SLSQP", jac=obj_jac_random,
                            constraints=constraints,
                            bounds=self.trivial_bounds)
