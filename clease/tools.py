@@ -310,30 +310,6 @@ def exclude_ids(ids):
     return [("id", "!=", x) for x in ids]
 
 
-def load_settings(fname):
-    """Load Cluster Expansion settings from a JSON file.
-
-    Parameters:
-
-    fname: str
-        JSON file with the settings information
-    """
-    with open(fname, 'r') as infile:
-        info = json.load(infile)
-
-    if info['classtype'] == 'CEBulk':
-        from clease import CEBulk
-        return CEBulk.load(fname)
-    elif info['classtype'] == 'CECrystal':
-        from clease import CECrystal
-        return CECrystal.load(fname)
-
-    allowed_class_types = ['CEBulk', 'CECrystal']
-    raise ValueError("Could not find matching ClusterExpansionSetting type. "
-                     "Ensure that the classtype field in the JSON file is one "
-                     "of {}".format(allowed_class_types))
-
-
 def symbols2integer(basis_functions):
     """Convert each symbol in the basis function
        to a unique integer.

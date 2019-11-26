@@ -1,7 +1,7 @@
 """Test to initiatialize CE using a CECrystal."""
 import os
 import json
-from clease import CECrystal, NewStructures, CorrFunction
+from clease import CECrystal, NewStructures, CorrFunction, settingFromJSON
 from clease.newStruct import MaxAttemptReachedError
 from clease.concentration import Concentration
 from clease.tools import wrap_and_sort_by_position
@@ -71,6 +71,10 @@ class TestCECrystal(unittest.TestCase):
         for key in cf.keys():
             self.assertAlmostEqual(cf[key], all_cf["sp_217_grouped"][key])
 
+        os.remove(db_name)
+
+        bsg.save('demo_save.json')
+        bsg = settingFromJSON('demo_save.json')
         os.remove(db_name)
 
     def test_two_grouped_basis(self):

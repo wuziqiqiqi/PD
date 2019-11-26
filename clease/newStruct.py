@@ -10,7 +10,7 @@ from ase.db import connect
 from ase.atoms import Atoms
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
-from clease import CEBulk, CECrystal, CorrFunction
+from clease import ClusterExpansionSetting, CorrFunction
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import ProbeStructure, GSStructure
 from clease import _logger
@@ -48,8 +48,8 @@ class NewStructures(object):
     """
 
     def __init__(self, setting, generation_number=None, struct_per_gen=5):
-        if not isinstance(setting, (CEBulk, CECrystal)):
-            msg = "setting must be CEBulk or CECrystal object"
+        if not isinstance(setting, ClusterExpansionSetting):
+            msg = "setting must be ClusterExpansionSetting object"
             raise TypeError(msg)
         self.setting = setting
         self.db = connect(setting.db_name)

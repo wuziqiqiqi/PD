@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from clease import NewStructures
-from clease import CEBulk, Concentration
+from clease import Concentration, ClusterExpansionSetting
 from ase.io.trajectory import TrajectoryWriter
 from ase.build import bulk
 from ase.calculators.emt import EMT
@@ -23,7 +23,7 @@ class BfSchemePlaceholder(object):
 
 class TestNewStruct(unittest.TestCase):
     def test_insert_structures(self):
-        settings_mock = MagicMock(spec=CEBulk)
+        settings_mock = MagicMock(spec=ClusterExpansionSetting)
         settings_mock.db_name = 'test_insert_structures.db'
         settings_mock.bf_scheme = BfSchemePlaceholder()
 
@@ -77,7 +77,7 @@ class TestNewStruct(unittest.TestCase):
 
     def test_determine_generation_number(self):
         db_name = 'test_gen_number.db'
-        settings = MagicMock(spec=CEBulk, db_name=db_name)
+        settings = MagicMock(spec=ClusterExpansionSetting, db_name=db_name)
         settings.db_name = db_name
         N = 5
         new_struct = NewStructures(
@@ -135,7 +135,7 @@ class TestNewStruct(unittest.TestCase):
             return_value=[bulk('Al')*(2, 2, i) for i in range(num_templates)])
 
         settings = MagicMock(
-            spec=CEBulk, db_name=db_name, concentration=conc,
+            spec=ClusterExpansionSetting, db_name=db_name, concentration=conc,
             atoms=atoms, index_by_basis=index_by_basis, size='1x1x1',
             template_atoms=template_atoms
             )

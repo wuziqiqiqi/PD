@@ -17,12 +17,13 @@ from clease.template_filters import DistanceBetweenFacetsFilter
 from clease.template_filters import VolumeToSurfaceRatioFilter
 from clease.template_filters import AngleFilter
 from clease.atoms_manager import AtomsManager
-from clease.settings_bulk import CEBulk, CECrystal
+from clease.settings import ClusterExpansionSetting
+from clease.concentration import Concentration
+from clease.settings_bulk import CEBulk, CECrystal, settingFromJSON
 from clease.evaluate import Evaluate
 from clease.corrFunc import CorrFunction
 from clease.newStruct import NewStructures
 from clease.convexhull import ConvexHull
-from clease.concentration import Concentration
 from clease.regression import LinearRegression, Tikhonov, Lasso
 from clease.ga_fit import GAFit
 from clease.bayesian_compressive_sensing import BayesianCompressiveSensing

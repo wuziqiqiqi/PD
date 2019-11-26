@@ -6,7 +6,7 @@ import multiprocessing as mp
 import logging as lg
 from clease import _logger
 from ase.utils import basestring
-from clease import CEBulk, CECrystal
+from clease import ClusterExpansionSetting
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 
@@ -74,8 +74,8 @@ class Evaluate(object):
                  scoring_scheme='loocv', min_weight=1.0, nsplits=10,
                  num_repetitions=1):
         """Initialize the Evaluate class."""
-        if not isinstance(setting, (CEBulk, CECrystal)):
-            msg = "setting must be CEBulk or CECrystal object"
+        if not isinstance(setting, ClusterExpansionSetting):
+            msg = "setting must be ClusterExpansionSetting object"
             raise TypeError(msg)
 
         self.setting = setting

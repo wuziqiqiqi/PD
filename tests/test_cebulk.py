@@ -8,7 +8,7 @@
 
 import os
 import json
-from clease import CEBulk, CorrFunction, NewStructures, Evaluate, Concentration
+from clease import CEBulk, CorrFunction, NewStructures, Evaluate, Concentration, settingFromJSON
 from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from ase.calculators.emt import EMT
@@ -26,6 +26,7 @@ from unittest.mock import patch
 update_reference_file = False
 tol = 1E-9
 
+
 def get_figures_of_family(setting, cname):
     """Return the figures of a given cluster family."""
     figures = []
@@ -33,6 +34,7 @@ def get_figures_of_family(setting, cname):
     for cluster in clusters:
         figures.append(cluster.indices)
     return figures
+
 
 def calculate_cf(setting, atoms):
     cf = CorrFunction(setting)
@@ -206,6 +208,12 @@ class TestCEBulk(unittest.TestCase):
         os.remove(fname)
         os.remove(db_name)
 
+        # Test load save
+        bc_setting.save("demo_save.json")
+        bc_setting = settingFromJSON("demo_save.json")
+        os.remove("demo_save.json")
+        os.remove(db_name)
+
     def test_initial_pool(self):
         db_name = "test_bulk_initial_pool.db"
         basis_elements = [['Li', 'V'], ['X', 'O']]
@@ -334,9 +342,9 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
-    @patch('test_cebulk.CEBulk._read_data')
-    @patch('test_cebulk.CEBulk._store_data')
-    @patch('test_cebulk.CEBulk.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_fcc_binary_fixed_conc(self, *args):
         # c_Au = 1/3 and c_Cu = 2/3
         A_eq = [[2, -1]]
@@ -355,9 +363,9 @@ class TestCEBulk(unittest.TestCase):
             self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
 
-    @patch('test_cebulk.CEBulk._read_data')
-    @patch('test_cebulk.CEBulk._store_data')
-    @patch('test_cebulk.CEBulk.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_rocksalt_conc_fixed_one_basis(self, *args):
         db_name = 'test_rocksalt_fixed_one_basis.db'
         basis_elem = [['Li', 'X'], ['O', 'F']]

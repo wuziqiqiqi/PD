@@ -7,10 +7,16 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
 from clease.settings import ClusterExpansionSetting
+from clease import Concentration
 from copy import deepcopy
+import json
 
 
-class CEBulk(ClusterExpansionSetting):
+def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
+           covera=None, u=None, size=None, supercell_factor=27,
+           db_name='clease.db', max_cluster_size=4,
+           max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
+           skew_threshold=4, ignore_background_atoms=True):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -69,88 +75,41 @@ class CEBulk(ClusterExpansionSetting):
         if ``True``, a basis consisting of only one element type will be
         ignored when creating clusters.
     """
+    structures = {'sc': 1, 'fcc': 1, 'bcc': 1, 'hcp': 1, 'diamond': 1,
+                  'zincblende': 2, 'rocksalt': 2, 'cesiumchloride': 2,
+                  'fluorite': 3, 'wurtzite': 2}
 
-    def __init__(self, concentration, crystalstructure='sc', a=None, c=None,
-                 covera=None, u=None, size=None, supercell_factor=27,
-                 db_name='clease.db', max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial', skew_threshold=4, ignore_background_atoms=True):
+    num_basis = len(concentration.orig_basis_elements)
+    if num_basis != structures[crystalstructure]:
+        msg = "{} has {} basis. ".format(
+            crystalstructure, structures[crystalstructure])
+        msg += "The number of basis specified by basis_elements is "
+        msg += "{}".format(num_basis)
+        raise ValueError(msg)
 
-        # Initialization
-        self.structures = {'sc': 1, 'fcc': 1, 'bcc': 1, 'hcp': 1, 'diamond': 1,
-                           'zincblende': 2, 'rocksalt': 2, 'cesiumchloride': 2,
-                           'fluorite': 3, 'wurtzite': 2}
-        self.crystalstructure = crystalstructure
-        self.a = a
-        self.c = c
-        self.covera = covera
-        self.u = u
+    basis_elements = concentration.orig_basis_elements
+    name = ''.join(x[0] for x in basis_elements)
+    prim = bulk(name=name, crystalstructure=crystalstructure, a=a,
+                c=c, covera=covera, u=u)
+    prim = wrap_and_sort_by_position(prim)
 
-        ClusterExpansionSetting.__init__(self, concentration, size,
-                                         supercell_factor, db_name,
-                                         max_cluster_size, max_cluster_dia,
-                                         basis_function, skew_threshold,
-                                         ignore_background_atoms)
+    setting = ClusterExpansionSetting(
+        prim, concentration, size, supercell_factor, db_name, max_cluster_size,
+        max_cluster_dia, basis_function, skew_threshold,
+        ignore_background_atoms)
 
-        # Save raw input arguments for save/load. The arguments gets altered
-        # during the initalization process to handle 'ignore_background_atoms'
-        # case
-        self.kwargs.update({'crystalstructure': crystalstructure,
-                            'a': a,
-                            'c': c,
-                            'covera': covera,
-                            'u': u})
-        num_basis = len(self.concentration.orig_basis_elements)
-        if num_basis != self.structures[self.crystalstructure]:
-            msg = "{} has {} basis. ".format(
-                self.crystalstructure, self.structures[self.crystalstructure])
-            msg += "The number of basis specified by basis_elements is "
-            msg += "{}".format(num_basis)
-            raise ValueError(msg)
-
-        self._check_first_elements()
-
-    def _get_prim_cell(self):
-        basis_elements = self.concentration.orig_basis_elements
-        num_basis = len(basis_elements)
-        if num_basis == 1:
-            atoms = bulk(name='{}'.format(basis_elements[0][0]),
-                         crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u)
-
-        elif num_basis == 2:
-            atoms = bulk(name='{}{}'.format(basis_elements[0][0],
-                                            basis_elements[1][0]),
-                         crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u)
-
-        else:
-            atoms = bulk(name='{}{}{}'.format(basis_elements[0][0],
-                                              basis_elements[1][0],
-                                              basis_elements[2][0]),
-                         crystalstructure=self.crystalstructure, a=self.a,
-                         c=self.c, covera=self.covera, u=self.u)
-        atoms = wrap_and_sort_by_position(atoms)
-        return atoms
-
-    @staticmethod
-    def load(filename):
-        """Load settings from a file in JSON format.
-
-        Parameters:
-
-        filename: str
-            Name of the file that has the settings.
-        """
-        import json
-        with open(filename, 'r') as infile:
-            kwargs = json.load(infile)
-        classtype = kwargs.pop("classtype")
-        if classtype != 'CEBulk':
-            raise TypeError('Loaded setting file is not for CEBulk class')
-        return CEBulk(**kwargs)
+    setting.kwargs.update(
+        {'crystalstructure': crystalstructure, 'a': a,
+         'c': c, 'covera': covera, 'u': u, 'factory': 'CEBulk'})
+    return setting
 
 
-class CECrystal(ClusterExpansionSetting):
+def CECrystal(concentration, spacegroup=1, basis=None,
+              cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
+              supercell_factor=27, db_name='clease.db', max_cluster_size=4,
+              max_cluster_dia=[5.0, 5.0, 5.0],
+              basis_function='polynomial', skew_threshold=4,
+              ignore_background_atoms=True):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
@@ -212,62 +171,45 @@ class CECrystal(ClusterExpansionSetting):
         ignored when creating clusters.
     """
 
-    def __init__(self, concentration, spacegroup=1, basis=None,
-                 cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
-                 supercell_factor=27, db_name='clease.db', max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0],
-                 basis_function='polynomial', skew_threshold=4,
-                 ignore_background_atoms=True):
+    symbols = []
+    num_basis = len(concentration.orig_basis_elements)
+    for x in range(num_basis):
+        symbols.append(concentration.orig_basis_elements[x][0])
 
-        # Initialization
-        self.spacegroup = spacegroup
-        self.basis = basis
-        self.cell = cell
-        self.cellpar = cellpar
-        self.ab_normal = ab_normal
-        self.symbols = []
-        num_basis = len(concentration.orig_basis_elements)
-        for x in range(num_basis):
-            self.symbols.append(concentration.orig_basis_elements[x][0])
+    prim = crystal(
+        symbols=symbols, basis=basis, spacegroup=spacegroup, cell=cell,
+        cellpar=cellpar, ab_normal=ab_normal, size=[1, 1, 1],
+        primitive_cell=True)
+    prim = wrap_and_sort_by_position(prim)
 
-        ClusterExpansionSetting.__init__(self, concentration, size,
-                                         supercell_factor, db_name,
-                                         max_cluster_size, max_cluster_dia,
-                                         basis_function, skew_threshold,
-                                         ignore_background_atoms)
+    setting = ClusterExpansionSetting(
+        prim, concentration, size, supercell_factor, db_name,
+        max_cluster_size, max_cluster_dia, basis_function, skew_threshold,
+        ignore_background_atoms)
+    setting.kwargs.update(
+        {'basis': deepcopy(basis), 'spacegroup': spacegroup, 'cell': cell,
+         'cellpar': cellpar, 'ab_normal': ab_normal,
+         'factory': 'CECrystal'})
+    return setting
 
-        # Save raw input arguments for save/load. The arguments gets altered
-        # during the initalization process to handle 'ignore_background_atoms'
-        # case
-        self.kwargs.update({'basis': deepcopy(basis),
-                            'spacegroup': spacegroup,
-                            'cell': cell,
-                            'cellpar': cellpar,
-                            'ab_normal': ab_normal})
 
-        self._check_first_elements()
+def settingFromJSON(fname):
+    """
+    Initialise setting from JSON file.
 
-    def _get_prim_cell(self):
-        atoms = crystal(symbols=self.symbols, basis=self.basis,
-                        spacegroup=self.spacegroup, cell=self.cell,
-                        cellpar=self.cellpar, ab_normal=self.ab_normal,
-                        size=[1, 1, 1], primitive_cell=True)
-        atoms = wrap_and_sort_by_position(atoms)
-        return atoms
+    Parameters:
 
-    @staticmethod
-    def load(filename):
-        """Load settings from a file in JSON format.
+    fname: str
+        JSON file where setting are stored
+    """
+    with open(fname, 'r') as infile:
+        data = json.load(infile)
 
-        Parameters:
-
-        filename: str
-            Name of the file that has the settings.
-        """
-        import json
-        with open(filename, 'r') as infile:
-            kwargs = json.load(infile)
-        classtype = kwargs.pop("classtype")
-        if classtype != 'CECrystal':
-            raise TypeError('Loaded setting file is not for CEBulk class')
-        return CEBulk(**kwargs)
+    factory = data.pop('factory')
+    conc = Concentration.from_dict(data['concentration'])
+    data['concentration'] = conc
+    if factory == 'CEBulk':
+        return CEBulk(**data)
+    elif factory == 'CECrystal':
+        return CECrystal(**data)
+    raise ValueError('Unknown factory {}'.format(factory))

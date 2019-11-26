@@ -10,15 +10,12 @@ import numpy as np
 from ase.db import connect
 
 from clease import _logger, LogVerbosity
-from clease.tools import (wrap_and_sort_by_position, indices2tags,
-                          get_all_internal_distances, nested_list2str,
-                          trans_matrix_index2tags)
+from clease.tools import (wrap_and_sort_by_position,
+                          nested_list2str)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease import AtomsManager
-from clease.name_clusters import name_clusters
-from clease.cluster_fingerprint import ClusterFingerprint
 from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
 from clease.template_filters import ValidConcentrationFilter
@@ -29,7 +26,7 @@ from clease.tools import flatten
 class ClusterExpansionSetting(object):
     """Base class for all Cluster Expansion settings."""
 
-    def __init__(self, concentration, size=None, supercell_factor=27,
+    def __init__(self, prim, concentration, size=None, supercell_factor=27,
                  db_name='clease.db', max_cluster_size=4,
                  max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
                  skew_threshold=4, ignore_background_atoms=False):
@@ -51,12 +48,13 @@ class ClusterExpansionSetting(object):
         self.kwargs["concentration"] = self.concentration.to_dict()
         self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
-        self.ignore_background_atoms = ignore_background_atoms
         self.num_basis = len(self.basis_elements)
+        self._check_first_elements()
+        self.ignore_background_atoms = ignore_background_atoms
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
 
-        self.prim_cell = self._get_prim_cell()
+        self.prim_cell = prim
         self._tag_prim_cell()
         self._store_prim_cell()
 
@@ -447,18 +445,8 @@ class ClusterExpansionSetting(object):
             Name of the file to store the necessary settings to initialize
             the Cluster Expansion calculations.
         """
-        class_types = ['CEBulk', 'CECrystal']
-        if type(self).__name__ not in class_types:
-            raise NotImplementedError('Class {} '
-                                      'is not supported.'
-                                      ''.format(type(self).__name__))
 
         import json
-        if type(self).__name__ == 'CEBulk':
-            self.kwargs['classtype'] = 'CEBulk'
-        else:
-            self.kwargs['classtype'] = 'CECrystal'
-        # Write keyword arguments necessary for initializing the class
         with open(filename, 'w') as outfile:
             json.dump(self.kwargs, outfile, indent=2)
 

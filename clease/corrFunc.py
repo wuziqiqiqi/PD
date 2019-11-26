@@ -1,7 +1,7 @@
 """Module for calculating correlation functions."""
 from __future__ import print_function
 from ase.atoms import Atoms
-from clease import CEBulk, CECrystal
+from clease import ClusterExpansionSetting
 from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from clease_cxx import PyCEUpdater
@@ -27,7 +27,7 @@ class CorrFunction(object):
     """
 
     def __init__(self, setting, parallel=False, num_core="all"):
-        if not isinstance(setting, (CEBulk, CECrystal)):
+        if not isinstance(setting, ClusterExpansionSetting):
             raise TypeError("setting must be CEBulk or CECrystal "
                             "object")
         self.setting = setting

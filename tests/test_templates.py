@@ -148,9 +148,9 @@ class TestTemplates(unittest.TestCase):
                 break
         self.assertTrue(found_conventional)
 
-    @patch('test_templates.CEBulk._read_data')
-    @patch('test_templates.CEBulk._store_data')
-    @patch('test_templates.CEBulk.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
+    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_fixed_vol_with_conc_constraint(self, *args):
         A_eq = [[3, -2]]
         b_eq = [0]
