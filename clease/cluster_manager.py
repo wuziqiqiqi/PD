@@ -168,6 +168,12 @@ class ClusterManager(object):
             unique.update(indices)
         return unique
 
+    def get_figures(self):
+        """
+        Return a list of atoms object representing the clusters
+        """
+        return self.clusters.get_figures(self.generator)
+
     def create_four_vector_lut(self, template):
         """
         Construct a lookup table (LUT) for the index in template given the wrapped

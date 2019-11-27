@@ -2,6 +2,7 @@ import numpy as np
 from copy import deepcopy
 from clease.tools import equivalent_deco, nested_array2list, list2str
 from clease.cluster_fingerprint import ClusterFingerprint
+from ase import Atoms
 
 
 class Cluster(object):
@@ -91,13 +92,17 @@ class Cluster(object):
         return any(set(s1).issubset(s2) for s1 in self.indices
                    for s2 in other.indices)
 
-    def get_figure(self, atoms):
-        figure = atoms[self.indices[0]]
-        figure_center = np.mean(figure.get_positions(), axis=0)
-        cell_center = np.mean(figure.get_cell(), axis=0)/2.0
-        figure.translate(cell_center - figure_center)
-        figure.wrap()
-        return figure
+    def get_figure(self, generator):
+        if len(self.indices[0][0]) != 4:
+            raise RuntimeError("This method requires that the cluster is "
+                               "described based on its 4-vector and not index "
+                               "in the ASE atoms")
+
+        positions = np.array([generator.cartesian(x) for x in self.indices[0]])
+        positions -= np.mean(positions, axis=0)
+        sublat_symb = {at.tag: at.symbol for at in generator.prim}
+        symbols = [sublat_symb[x[3]] for x in self.indices[0]]
+        return Atoms(symbols, positions=positions)
 
     def __str__(self):
         str_rep = 'Name: {}\n'.format(self.name)
