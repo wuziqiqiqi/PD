@@ -555,3 +555,118 @@ def species_chempot2eci(bf_list, species_chempot):
     eci_chem_pot = eci_chem_pot.tolist()
     eci_dct = {'c1_{}'.format(i): v for i, v in enumerate(eci_chem_pot)}
     return eci_dct
+
+
+def bf2matrix(bfs):
+    """
+    Convert a list of basis functions to a matrix. Each column represents
+    a species and each row represent a basis function.
+
+    Parameter:
+
+    bfs: list of dict
+        List of dictionaries containing the basis function values
+    """
+    nrows = len(bfs)
+    ncols = len(bfs[0])
+    mat = np.zeros((nrows, ncols))
+    keys = sorted(list(bfs[0].keys()))
+    for i, bf in enumerate(bfs):
+        for j, symb in enumerate(keys):
+            mat[i, j] = bf[symb]
+    return mat
+
+
+def rate_bf_subsets(elems, bfs):
+    """
+    Rate different combinations of basis function according to how
+    well it is able to distinguish the elements in the basis.
+
+    Example:
+    bfs = [{'Li': 1.0, 'X': 0.0, 'V': 0.0, 'F': 0.0},
+           {'Li': 0.0, 'X': 1.0, 'V': 0.0, 'F': 0.0},
+           {'Li': 0.0, 'X': 0.0, 'V': 1.0, 'F': 0.0}]
+
+    If one wants basis functions for the triplet [Li, X, F] we need two
+    basis functions. The following combinations are possible
+    (bfs[0], bfs[1]), (bfs[0], bfs[2]), (bfs[1], bfs[2])
+
+    The score is defined as the sum of the absolute value of the difference
+    between the basis function value for the selected symbols. The score for
+    the first combinations is thus
+
+    score1 = |bfs[0]['Li'] - bfs[0]['F']| + |bfs[0]['Li'] - bfs[0]['X']| +
+             |bfs[0]['F'] - bfs[0]['X']|  + |bfs[1]['Li'] - bfs[1]['F']| +
+             |bfs[1]['Li'] - bfs[1]['X']| + |bfs[1]['F']  - bfs[1]['X']|
+
+    Therefore,
+    score1 = 1.0 + 1.0 + 0.0 + 0.0 + 1.0 + 1.0 = 4.0
+
+    Parameter:
+
+    bfs: list of dict
+        List with dictionaries with the basis function values
+    """
+    score_and_comb = []
+    for comb in combinations(range(len(bfs)), r=len(elems)-1):
+        chosen = [{s: bfs[x][s] for s in elems} for x in comb]
+        mat = bf2matrix(chosen)
+        score = 0.0
+        for row in range(mat.shape[0]):
+            for i in product(range(mat.shape[1]), repeat=2):
+                score += abs(mat[row, i[0]] - mat[row, i[1]])
+
+        score_and_comb.append((score, list(comb)))
+    score_and_comb.sort(reverse=True)
+    return score_and_comb
+
+
+def select_bf_subsets(basis_elems, bfs):
+    """
+    Select a subset of basis functions that best describes the basis.
+    The best subset is the one that yields the highest sum of the scores for
+    each sublattice. For definition of score see docstring
+    of `rate_bf_subsets`
+
+    Parameters:
+
+    basis_elem: nested list of strings
+        Basis elements (e.g. [[Li, V], [O]])
+
+    bfs: list of dicts
+        List of dictionaries holding the basis function values
+        (e.g. [{'Li' : 1.0, 'V': 0.0, 'O': 0.0},
+               {'Li': 0.0, 'O': 1.0, 'V': 0.0}])
+    """
+    rates = []
+    for elems in basis_elems:
+        rates.append(rate_bf_subsets(elems, bfs))
+
+    # Find the combination of subset selections that gives the overall highest
+    # score given that a basis function can be present in only one basis
+    best_selection = []
+    best_score = None
+    for comb in product(*rates):
+        total_score = sum(rate[0] for rate in comb)
+        selection = [rate[1] for rate in comb]
+
+        # Check that no basis function is selected twice
+        selected_bfs = set()
+        duplicates = False
+        for s in selection:
+            for bf in s:
+                if bf in selected_bfs:
+                    duplicates = True
+                else:
+                    selected_bfs.add(bf)
+
+        # Add penalty to the ones that has duplicate CF functions. This way we
+        # select a combination that has the same basis function in multiple 
+        # atomic basis if it is possible
+        if duplicates:
+            total_score -= 1000.0
+
+        if best_score is None or total_score > best_score:
+            best_score = total_score
+            best_selection = selection
+    return best_selection
