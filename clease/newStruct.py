@@ -238,11 +238,8 @@ class NewStructures(object):
         See doc-string of `generate_gs_structure` for the rest of the
         argument.
         """
-        f = ValidConcentrationFilter(self.setting)
-        self.setting.template_atoms.add_atoms_filter(f)
         templates = self.setting.template_atoms.get_fixed_volume_templates(
             num_templates=num_templates, num_prim_cells=num_prim_cells)
-        self.setting.template_atoms.remove_filter(f)
 
         if len(templates) == 0:
             raise RuntimeError("Could not find any templates with matching the "

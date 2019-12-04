@@ -48,33 +48,13 @@ class TestTemplates(unittest.TestCase):
         template_atoms = TemplateAtoms(supercell_factor=27, size=None,
                                        skew_threshold=4,
                                        db_name=db_name)
-        dims = template_atoms.get_size()
+        templates = template_atoms.get_all_scaled_templates()
         ref = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 3], [2, 2, 4],
                [2, 2, 5], [2, 3, 3], [2, 3, 4], [3, 3, 3]]
 
         ref = [np.diag(x).tolist() for x in ref]
-        self.assertTrue(dims, ref)
-
-        os.remove(db_name)
-
-    def test_hcp(self):
-        db_name = 'templates_hcp.db'
-        prim_cell = bulk("Mg")
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
-        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
-                                       skew_threshold=5, db_name=db_name)
-        dims = template_atoms.get_size()
-        ref = [[1, 1, 1], [1, 1, 2], [1, 2, 1], [1, 2, 2], [1, 3, 1],
-               [1, 3, 2], [1, 4, 1], [2, 2, 1], [2, 2, 2], [2, 2, 3],
-               [2, 2, 4], [2, 2, 5], [2, 3, 1], [2, 3, 2], [2, 3, 3],
-               [2, 3, 4], [2, 4, 1], [2, 4, 2], [2, 4, 3], [2, 5, 1],
-               [2, 5, 2], [2, 6, 1], [2, 6, 2], [3, 3, 1], [3, 3, 2],
-               [3, 3, 3], [3, 4, 1], [3, 4, 2], [3, 5, 1], [3, 6, 1],
-               [4, 4, 1], [4, 5, 1]]
-
-        ref = [np.diag(x).tolist() for x in ref]
-        self.assertTrue(dims, ref)
+        sizes = [t.info['size'] for t in templates]
+        self.assertEqual(ref, sizes)
 
         os.remove(db_name)
 
@@ -89,7 +69,7 @@ class TestTemplates(unittest.TestCase):
             {
                 'system': 'LiNiMnCoO',
                 'func': lambda templ, test_suite:
-                    test_suite.assertGreaterEqual(len(templ['atoms']), 1)
+                    test_suite.assertGreaterEqual(len(templ), 1)
             }
         ]
 
@@ -102,7 +82,8 @@ class TestTemplates(unittest.TestCase):
                 skew_threshold=1000000000)
 
             os.remove(db_name)
-            conc_filter = ValidConcentrationFilter(settings)
+            conc_filter = ValidConcentrationFilter(settings.concentration,
+                                                   settings.index_by_basis)
             # Check that you cannot attach an AtomsFilter as a cell
             # filter
             with self.assertRaises(TypeError):
@@ -111,7 +92,7 @@ class TestTemplates(unittest.TestCase):
             template_generator.clear_filters()
             template_generator.add_atoms_filter(conc_filter)
 
-            templates = template_generator._generate_template_atoms()
+            templates = template_generator.get_all_scaled_templates()
             test['func'](templates, self)
 
     def test_dist_filter(self):
@@ -148,8 +129,6 @@ class TestTemplates(unittest.TestCase):
                 break
         self.assertTrue(found_conventional)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
-    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
     @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_fixed_vol_with_conc_constraint(self, *args):
         A_eq = [[3, -2]]
@@ -160,11 +139,12 @@ class TestTemplates(unittest.TestCase):
         db_name = 'test_fixed_vol_conc_constraint.db'
         setting = CEBulk(crystalstructure='fcc', a=3.8, size=[1, 1, 5],
                          db_name=db_name, max_cluster_size=2,
-                         max_cluster_dia=3.0, concentration=conc)
+                         max_cluster_dia=3.0, concentration=conc,
+                         skew_threshold=100, supercell_factor=40)
 
         tmp = setting.template_atoms
-        v_conc = ValidConcentrationFilter(setting)
-        tmp.add_atoms_filter(v_conc)
+        #v_conc = ValidConcentrationFilter(conc, setting.index_by_basis)
+        #tmp.add_atoms_filter(v_conc)
 
         sizes = [4, 5, 7, 10]
         valid_size = [5, 10]
@@ -175,31 +155,6 @@ class TestTemplates(unittest.TestCase):
                 self.assertGreater(len(templates), 0)
             else:
                 self.assertEqual(len(templates), 0)
-        os.remove(db_name)
-
-    def test_apply_filter(self):
-        db_name = 'templates_fcc_apply_filter.db'
-        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
-
-        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
-                                       skew_threshold=4,
-                                       db_name=db_name)
-
-        num_atoms = 16
-        # First confirm that we have cells with less than 16 atoms
-        has_less_than = False
-        for atoms in template_atoms.templates['atoms']:
-            if len(atoms) < num_atoms:
-                has_less_than = True
-                break
-        self.assertTrue(has_less_than)
-
-        # Filter all atoms with less than 16 atoms
-        template_atoms.apply_filter(NumAtomsFilter(num_atoms))
-        for atoms in template_atoms.templates['atoms']:
-            self.assertGreaterEqual(len(atoms), num_atoms)
         os.remove(db_name)
 
     def test_remove_atoms_filter(self):
@@ -306,7 +261,7 @@ def get_settings_placeholder_valid_conc_filter(system, db_name):
 
 
 def check_NaCl_conc(templates, test_suite):
-    for atoms in templates['atoms']:
+    for atoms in templates:
         num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
         test_suite.assertAlmostEqual(2.0*num_cl/3.0, np.round(2.0*num_cl/3.0))
 

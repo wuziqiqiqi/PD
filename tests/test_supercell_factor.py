@@ -15,18 +15,20 @@ class TestSupercelLFactor(unittest.TestCase):
                          basis_function='polynomial', skew_threshold=4,
                          ignore_background_atoms=False)
 
-        self.assertEqual(setting.template_atoms.num_templates, 3)
+        scaled = setting.template_atoms.get_all_scaled_templates()
+        self.assertEqual(len(scaled), 3)
 
         os.remove(db_name)
 
         setting = CEBulk(crystalstructure='fcc', a=4.01,
-                         supercell_factor=8, size=[2, 2, 2],
+                         supercell_factor=None, size=[2, 2, 2],
                          concentration=conc, db_name=db_name,
                          max_cluster_size=4, max_cluster_dia=4.0,
                          basis_function='polynomial', skew_threshold=4,
                          ignore_background_atoms=False)
 
-        self.assertEqual(setting.template_atoms.num_templates, 1)
+        scaled = setting.template_atoms.get_all_scaled_templates()
+        self.assertEqual(len(scaled), 1)
 
         os.remove(db_name)
 
@@ -45,13 +47,15 @@ class TestSupercelLFactor(unittest.TestCase):
                             spacegroup=55,
                             cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                             supercell_factor=10,
+                            skew_threshold=4,
                             concentration=concentration,
                             db_name=db_name,
                             basis_function='binary_linear',
                             max_cluster_size=3,
                             max_cluster_dia=3.0)
 
-        self.assertTrue(setting.template_atoms.num_templates, 20)
+        scaled = setting.template_atoms.get_all_scaled_templates()
+        self.assertEqual(len(scaled), 20)
         os.remove(db_name)
 
 

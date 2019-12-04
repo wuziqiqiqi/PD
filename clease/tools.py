@@ -234,7 +234,6 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
 
 def reconfigure(setting, select_cond=None):
     from clease import CorrFunction
-    setting.reconfigure_settings()
     CorrFunction(setting).reconfigure_db_entries(select_cond)
 
 

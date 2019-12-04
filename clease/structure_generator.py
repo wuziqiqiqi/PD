@@ -32,6 +32,7 @@ class StructureGenerator(object):
         self.corrFunc = CorrFunction(setting)
         self.cfm = self._get_full_cf_matrix()
         self.atoms = wrap_and_sort_by_position(atoms.copy())
+        self.setting.set_active_template(atoms=self.atoms)
         if self._is_valid(atoms):
             if len(atoms) != len(setting.atoms):
                 raise ValueError("Passed Atoms has a wrong size.")
@@ -139,6 +140,7 @@ class StructureGenerator(object):
 
         # Check thate correlation function matach the expected value
         self._check_consistency()
+        print(self.generated_structure.get_cell())
         cf = self.corrFunc.get_cf(self.generated_structure)
         return self.generated_structure, cf
 
@@ -273,6 +275,11 @@ class StructureGenerator(object):
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'
+
+                # Print a summary of all basis functions (useful for debuggin)
+                for k in final_cf:
+                    _logger('{}: {} {}'.format(
+                        k, final_cf[k], self.cf_generated_structure[k]))
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):

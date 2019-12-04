@@ -7,10 +7,15 @@ import numpy as np
 
 class TestClusterManager(unittest.TestCase):
     def trans_matrix_matches(self, tm, template):
+        ref_indices = {}
+        for row, atom in zip(tm, template):
+            if all(k == v for k, v in row.items()):
+                ref_indices[atom.tag] = atom.index
+
         for row, atom in zip(tm, template):
             for k, v in row.items():
                 d_orig = template.get_distance(
-                    0, int(k), mic=True, vector=True)
+                    ref_indices[atom.tag], int(k), mic=True, vector=True)
                 d = template.get_distance(atom.index, v, vector=True, mic=True)
                 if not np.allclose(d, d_orig):
                     return False
@@ -31,7 +36,7 @@ class TestClusterManager(unittest.TestCase):
         prim.wrap()
         for atom in prim:
             atom.tag = atom.index
-        template = prim*(3, 3, 3)
+        template = prim*(4, 4, 4)
         template.wrap()
         manager = ClusterManager(prim)
         manager.build(max_size=2, max_cluster_dia=4.0)

@@ -3,24 +3,19 @@
 This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
-import os
-from itertools import product
 from copy import deepcopy
 import numpy as np
 from ase.db import connect
 
-from clease import _logger, LogVerbosity
 from clease.tools import (wrap_and_sort_by_position,
                           nested_list2str)
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
 from clease import AtomsManager
-from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
 from clease.template_filters import ValidConcentrationFilter
 from clease.cluster_manager import ClusterManager
-from clease.tools import flatten
 
 
 class ClusterExpansionSetting(object):
@@ -29,7 +24,7 @@ class ClusterExpansionSetting(object):
     def __init__(self, prim, concentration, size=None, supercell_factor=27,
                  db_name='clease.db', max_cluster_size=4,
                  max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
-                 skew_threshold=4, ignore_background_atoms=False):
+                 skew_threshold=40, ignore_background_atoms=False):
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
                        'db_name': db_name,
@@ -63,10 +58,17 @@ class ClusterExpansionSetting(object):
         else:
             self.cluster_manager = ClusterManager(self.prim_cell)
 
+        prim_mng = AtomsManager(prim)
+        prim_ind_by_basis = prim_mng.index_by_symbol(
+            [x[0] for x in self.basis_elements])
+        conc_filter = ValidConcentrationFilter(concentration,
+                                               prim_ind_by_basis)
+
         self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
                                             size=self.size,
                                             skew_threshold=skew_threshold,
-                                            db_name=self.db_name)
+                                            db_name=self.db_name,
+                                            filters=[conc_filter])
         self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
@@ -87,22 +89,8 @@ class ClusterExpansionSetting(object):
         self.ref_index_trans_symm = []
         self.template_atoms_uid = 0
 
-        # Set an active template (this ensures that index_by_basis etc is set)
-        self._set_active_template_by_uid(0)
-
-        # Run through the templates and filter out the ones that does not have
-        # a valid compostion
-        self.template_atoms.apply_filter(ValidConcentrationFilter(self))
-
-        if self.template_atoms.num_templates == 0:
-            raise RuntimeError('There are no templates the satisfies the '
-                               'constraints')
-
-        for uid in range(self.template_atoms.num_templates):
-            self._set_active_template_by_uid(uid)
-        # Set the initial template atoms to 0, which is the smallest cell
-        self._set_active_template_by_uid(0)
-        self._check_cluster_list_consistency()
+        self.set_active_template(
+            atoms=self.template_atoms.weighted_random_template())
 
         unique_element_no_bkg = self.unique_element_without_background()
         if isinstance(basis_function, BasisFunction):
@@ -134,12 +122,6 @@ class ClusterExpansionSetting(object):
 
         if len(self.basis_elements) != self.num_basis:
             raise ValueError("list of elements is needed for each basis")
-
-        if not os.path.exists(db_name):
-            self.create_cluster_list_and_trans_matrix()
-            self._store_data()
-        else:
-            self._read_data()
 
     @property
     def atoms(self):
@@ -196,12 +178,11 @@ class ClusterExpansionSetting(object):
         """Convert the current size into a string."""
         return nested_list2str(self.size)
 
-    def prepare_new_active_template(self, uid):
+    def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
-        self.template_atoms_uid = uid
-        atoms, self.size = \
-            self.template_atoms.get_atoms(uid, return_size=True)
-        self.atoms_mng.atoms = wrap_and_sort_by_position(atoms)
+        self.template_atoms_uid = 0
+        self.size = template.info['size']
+        self.atoms_mng.atoms = wrap_and_sort_by_position(template)
 
         self.index_by_basis = self._group_index_by_basis()
 
@@ -210,29 +191,35 @@ class ClusterExpansionSetting(object):
         self.num_trans_symm = len(self.index_by_sublattice)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_sublattice]
 
-    def _set_active_template_by_uid(self, uid):
-        """Set a fixed template atoms object as the active."""
-        self.prepare_new_active_template(uid)
-
-        # Read information from database
-        # Note that if the data is not found, it will generate
-        # the nessecary data structures and store them in the database
-        self._read_data()
-
     def set_active_template(self, size=None, atoms=None,
                             generate_template=False):
         """Set a new template atoms object."""
         if size is not None and atoms is not None:
             raise ValueError("Specify either size or pass Atoms object.")
         if size is not None:
-            uid = self.template_atoms.get_uid_with_given_size(
-                size=size, generate_template=generate_template)
+            template = self.template_atoms.get_template_with_given_size(
+                size=size)
         elif atoms is not None:
-            uid = self.template_atoms.get_uid_matching_atoms(
-                atoms=atoms, generate_template=generate_template)
+            template = self.template_atoms.get_template_matching_atoms(
+                atoms=atoms)
         else:
-            uid = self.template_atoms.weighted_random_template()
-        self._set_active_template_by_uid(uid)
+            template = self.template_atoms.weighted_random_template()
+
+        template = wrap_and_sort_by_position(template)
+
+        if atoms is not None:
+            # Check that the positions of the generated template
+            # matches the ones in the passed object
+            atoms = wrap_and_sort_by_position(atoms)
+            if not np.allclose(template.get_positions(),
+                               atoms.get_positions()):
+                raise ValueError("Inconsistent positions. Passed object\n"
+                                 "{}\nGenerated template\n{}"
+                                 "".format(atoms.get_positions(),
+                                           template.get_positions()))
+
+        self.prepare_new_active_template(template)
+        self.create_cluster_list_and_trans_matrix()
 
     def _tag_prim_cell(self):
         """
@@ -331,37 +318,9 @@ class ClusterExpansionSetting(object):
         return len(self.all_cf_names)
 
     def create_cluster_list_and_trans_matrix(self):
-        self.cluster_list = self.cluster_manager.info_for_template(self.atoms)
-
-        if self.ignore_background_atoms:
-            bkg_set = set(self.background_indices)
-            for i in range(len(self.cluster_list)-1, -1, -1):
-                index_set = set(flatten(self.cluster_list[i].indices))
-                if len(bkg_set.intersection(index_set)) > 0:
-                    del self.cluster_list[i]
-            self.cluster_list.make_names_sequential()
-
-        self.trans_matrix = self.cluster_manager.translation_matrix(self.atoms)
-
-    def _store_data(self):
-        size_str = nested_list2str(self.size)
-        num = self.template_atoms_uid
-        num_templates = self.template_atoms.num_templates
-        _logger('Generating cluster data for template with size: {}. '
-                '({} of {})'.format(size_str, num+1, num_templates),
-                verbose=LogVerbosity.INFO)
-
-        db = connect(self.db_name)
-        data = {'cluster_list': [x.todict()
-                                 for x in self.cluster_list.tolist()],
-                'trans_matrix': self.trans_matrix}
-
-        try:
-            row = db.get(name="template", size=self._size2string())
-            db.update(row.id, data=data)
-        except KeyError:
-            db.write(self.atoms, name='template', data=data,
-                     size=self._size2string())
+        at_cpy = self.atoms
+        self.cluster_list = self.cluster_manager.info_for_template(at_cpy)
+        self.trans_matrix = self.cluster_manager.translation_matrix(at_cpy)
 
     def _keys2int(self, tm):
         """
@@ -372,31 +331,9 @@ class ClusterExpansionSetting(object):
             tm_int.append({int(k): v for k, v in row.items()})
         return tm_int
 
-    def _read_data(self):
-        db = connect(self.db_name)
-        try:
-            select_cond = [('name', '=', 'template'),
-                           ('size', '=', self._size2string())]
-            row = db.get(select_cond)
-            info_str = row.data.cluster_list
-            self.cluster_list.clear()
-            for item in info_str:
-                cluster = Cluster.load(item)
-                self.cluster_list.append(cluster)
-            self.trans_matrix = self._keys2int(row.data.trans_matrix)
-        except KeyError:
-            self.create_cluster_list_and_trans_matrix()
-            self._store_data()
-        except (AssertionError, AttributeError, RuntimeError):
-            self.reconfigure_settings()
-
     def _group_index_by_basis(self):
         first_symb_in_basis = [x[0] for x in self.basis_elements]
         return self.atoms_mng.index_by_symbol(first_symb_in_basis)
-
-    def _activate_lagest_template(self):
-        atoms = self.template_atoms.largest_template_by_diag
-        self.set_active_template(atoms)
 
     def view_clusters(self):
         """Display all clusters along with their names."""
@@ -408,21 +345,6 @@ class ClusterExpansionSetting(object):
         gui = GUI(images, expr='')
         gui.show_name = True
         gui.run()
-
-    def reconfigure_settings(self):
-        """Reconfigure templates stored in DB file."""
-        # Reconfigure the cluster information for each template based on
-        # current max_cluster_size and max_cluster_dia
-        for uid in range(self.template_atoms.num_templates):
-            self._set_active_template_by_uid(uid)
-            self.create_cluster_list_and_trans_matrix()
-            self._store_data()
-        self._set_active_template_by_uid(0)
-        _logger('Cluster data updated for all templates.\n'
-                'You should also reconfigure DB entries (in CorrFunction '
-                'class) to make the information on each structure to be '
-                'consistent.',
-                verbose=LogVerbosity.INFO)
 
     def _check_first_elements(self):
         basis_elements = self.basis_elements
@@ -448,23 +370,6 @@ class ClusterExpansionSetting(object):
         import json
         with open(filename, 'w') as outfile:
             json.dump(self.kwargs, outfile, indent=2)
-
-    def _check_cluster_list_consistency(self):
-        """Check that cluster names in all templates' info entries match."""
-        db = connect(self.db_name)
-        ref_clust_list = None
-        for row in db.select(name='template'):
-            cluster_list_str = row.data['cluster_list']
-            cluster_list = ClusterList()
-            for item in cluster_list_str:
-                cluster = Cluster.load(item)
-                cluster_list.append(cluster)
-            cluster_list.sort()
-
-            if ref_clust_list is None:
-                ref_clust_list = cluster_list
-
-            assert cluster_list == ref_clust_list
 
 
 def to_3x3_matrix(size):

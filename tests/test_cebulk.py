@@ -97,7 +97,7 @@ class TestCEBulk(unittest.TestCase):
 
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
         conc = Concentration(basis_elements=basis_elements,
-                            grouped_basis=[[0, 1]])
+                             grouped_basis=[[0, 1]])
         setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
                          a=4.0, size=[2, 2, 1], db_name=db_name,
                          max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
@@ -165,7 +165,6 @@ class TestCEBulk(unittest.TestCase):
             sub_cl = bc_setting.cluster_list.get_subclusters(cluster)
             sub_cl_name = set([c.name for c in sub_cl])
             self.assertTrue(sub_cl_name == set(["c0", "c1"]))
-
 
         # Test a few known clusters. Triplet nearest neighbour
         name = "c3_d0000_0"
@@ -342,8 +341,6 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
-    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
     @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_fcc_binary_fixed_conc(self, *args):
         # c_Au = 1/3 and c_Cu = 2/3
@@ -357,14 +354,12 @@ class TestCEBulk(unittest.TestCase):
                          max_cluster_size=3, db_name=db_name)
 
         # Loop through templates and check that all satisfy constraints
-        for atoms in setting.template_atoms.templates['atoms']:
-            num = len(atoms)
-            ratio = num / 3.0
-            self.assertAlmostEqual(ratio, int(ratio))
+        atoms = setting.atoms
+        num = len(atoms)
+        ratio = num / 3.0
+        self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting._read_data')
-    @patch('clease.settings_bulk.ClusterExpansionSetting._store_data')
     @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
     def test_rocksalt_conc_fixed_one_basis(self, *args):
         db_name = 'test_rocksalt_fixed_one_basis.db'
@@ -378,11 +373,10 @@ class TestCEBulk(unittest.TestCase):
                          max_cluster_size=3,
                          db_name=db_name)
 
-        # Loop through and check that num_O sites is divisible by 5
-        for atoms in setting.template_atoms.templates['atoms']:
-            num_O = sum(1 for atom in atoms if atom.symbol == 'O')
-            ratio = num_O/5.0
-            self.assertAlmostEqual(ratio, int(ratio))
+        atoms = setting.atoms
+        num_O = sum(1 for atom in atoms if atom.symbol == 'O')
+        ratio = num_O/5.0
+        self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
 
     def tearDown(self):

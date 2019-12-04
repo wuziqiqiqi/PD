@@ -100,19 +100,20 @@ class ValidConcentrationFilter(AtomsFilter):
         Instance of `ClusterExpansionSetting`
     """
 
-    def __init__(self, setting):
-        self.setting = setting
+    def __init__(self, concentration, index_by_basis):
+        self.concentration = concentration
+        self.index_by_basis = index_by_basis
 
     def __call__(self, atoms):
-        num_in_template = len(self.setting.atoms)
+        num_in_template = sum(len(x) for x in self.index_by_basis)
         num_in_atoms = len(atoms)
         ratio = num_in_atoms/num_in_template
-        nib = [len(x)*ratio for x in self.setting.index_by_basis]
+        nib = [len(x)*ratio for x in self.index_by_basis]
 
         if not np.allclose(nib, np.round(nib)):
             return False
         valid = True
-        conc = self.setting.concentration
+        conc = self.concentration
         try:
             x = conc.get_random_concentration(nib=nib)
             x_int = conc.conc_in_int(nib, x)

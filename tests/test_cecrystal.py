@@ -256,7 +256,8 @@ class TestCECrystal(unittest.TestCase):
                         basis=[(0.0, 0.0, 0.0)],
                         cellpar=[4.0, 4.0, 4.0, 50.0, 40.0, 15.0],
                         db_name=db_name, size=[2, 2, 1],
-                        max_cluster_size=3, max_cluster_dia=[1.05, 1.05])
+                        max_cluster_size=3, max_cluster_dia=[1.05, 1.05],
+                        skew_threshold=10000)
 
         assert len(bsg.index_by_sublattice) == 1
 

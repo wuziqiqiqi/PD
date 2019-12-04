@@ -16,7 +16,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
            covera=None, u=None, size=None, supercell_factor=27,
            db_name='clease.db', max_cluster_size=4,
            max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
-           skew_threshold=4, ignore_background_atoms=True):
+           skew_threshold=40, ignore_background_atoms=True):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -108,7 +108,7 @@ def CECrystal(concentration, spacegroup=1, basis=None,
               cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
               supercell_factor=27, db_name='clease.db', max_cluster_size=4,
               max_cluster_dia=[5.0, 5.0, 5.0],
-              basis_function='polynomial', skew_threshold=4,
+              basis_function='polynomial', skew_threshold=40,
               ignore_background_atoms=True):
     """Store CE settings on bulk materials defined based on space group.
 

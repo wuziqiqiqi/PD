@@ -224,12 +224,14 @@ class ClusterManager(object):
         indices = [0 for _ in range(len(unique))]
         cartesian = np.zeros((len(unique), 3))
 
+        # Make a copy of the positions to avoid atoms being translated
+        tmp_pos = template.get_positions().copy()
         for atom in template:
             if atom.tag >= self.generator.num_sub_lattices:
                 trans_mat.append({})
                 continue
 
-            vec = self.generator.get_four_vector(atom.position, atom.tag)
+            vec = self.generator.get_four_vector(tmp_pos[atom.index, :], atom.tag)
             for i, u in enumerate(unique):
                 vec2[:3] = vec[:3] + u[:3]
                 vec2[3] = u[3]
