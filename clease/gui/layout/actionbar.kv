@@ -59,6 +59,11 @@
                 on_press: app.root.show_load_session_dialog()
 
             ActionButton:
+                id: exportFitDataButton
+                text: 'Export Data'
+                on_press: app.root.show_export_fit_data_dialog()
+
+            ActionButton:
                 id: closeButton
                 text: 'Close'
                 on_press: app.get_running_app().stop()

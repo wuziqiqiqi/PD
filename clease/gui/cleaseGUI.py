@@ -16,6 +16,7 @@ from clease.gui.mc_header import MCHeader
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 from clease.gui.db_browser import DbBrowser
 from ase.db import connect
+from clease import Evaluate
 import subprocess
 import signal
 from pathlib import Path
@@ -297,6 +298,33 @@ class WindowFrame(StackLayout):
             traceback.print_exc()
             app.root.ids.status.text = str(exc)
 
+    def export_fit_data(self, path, selection, user_filename):
+        if len(selection) == 0:
+            fname = str(Path(path) / user_filename)
+        else:
+            fname = selection[0]
+
+        app = App.get_running_app()
+        app.root.ids.status.text = "Exporting dataset..."
+
+        def exportFunc():
+            try:
+                evaluate = Evaluate(self.settings)
+                evaluate.export_dataset(fname)
+            except Exception as exc:
+                app.root.ids.status.text = str(exc)
+            app.root.ids.status.text = "Finished exporting dataset"
+        Thread(target=exportFunc).start()
+        self.dismiss_popup()
+
+    def show_export_fit_data_dialog(self):
+        content = SaveDialog(
+            save=self.export_fit_data, cancel=self.dismiss_popup)
+
+        self._pop_up = Popup(title="Export Fit Data", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
+                             size_hint=(0.9, 0.9))
+        self._pop_up.open()
 
 
 class CleaseGUI(App):

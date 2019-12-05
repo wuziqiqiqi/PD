@@ -46,6 +46,27 @@ class TestActionBar(unittest.TestCase):
         wf.load_session('', [fname])
         os.remove(fname)
 
+    @patch('clease.gui.cleaseGUI.Evaluate')
+    @patch('clease.gui.cleaseGUI.App')
+    def test_export_dataset(self, app_mock, eval_mock):
+        wf = WindowFrame()
+        app_mock.get_running_app = MagicMock(return_value=MagicMock(root=wf))
+
+        wf.show_export_fit_data_dialog()
+
+        # Confirm that the correct pop-up opens
+        self.assertEqual(wf._pop_up.title, "Export Fit Data")
+
+        fname = "demoFileOut.csv"
+        content = wf._pop_up.content
+        content.ids.filechooser.path = "."
+        content.ids.userFilename.text = fname
+
+        # Close the dialog
+        content.ids.saveButton.dispatch('on_release')
+
+        self.assertIsNone(wf._pop_up)
+        eval_mock.return_value.export_dataset.assert_called_with(fname)
 
 
 if __name__ == '__main__':
