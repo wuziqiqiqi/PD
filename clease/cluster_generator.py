@@ -173,7 +173,7 @@ class ClusterGenerator(object):
         zipped = sorted(list(zip(dists, figure)), reverse=True)
         return [x[1] for x in zipped]
 
-    def to_atom_index(self, cluster, template, kdtree=None):
+    def to_atom_index(self, cluster, lut):
         """
         Convert the integer vector representation to an atomic index
 
@@ -184,27 +184,10 @@ class ClusterGenerator(object):
         template: Atoms
             Template atoms to use
 
-        kdtree: KDTree
-            KDTree of the atomic position. If not given it is generated.
+        lut: dict
+            Look up table for 4-vectors to indices
         """
-        cell = template.get_cell()
-
-        if kdtree is None:
-            pos = template.get_positions()
-            kdtree = KDTree(pos)
-
-        int_cluster = []
-        for fig in cluster:
-            int_fig = []
-            for ivec in fig:
-                x = self.cartesian(ivec)
-                x_mat = np.zeros((1, 3))
-                x_mat[0, :] = x
-                x = wrap_positions(x_mat, cell)
-                d, i = kdtree.query(x)
-                int_fig.append(i[0])
-            int_cluster.append(int_fig)
-        return int_cluster
+        return [[lut[tuple(ivec)] for ivec in fig] for fig in cluster]
 
     def equivalent_sites(self, figure):
         """Find the equivalent sites of a figure."""

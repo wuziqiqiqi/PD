@@ -134,9 +134,12 @@ class ClusterManager(object):
         template: ase.Atoms
             Atoms object representing the simulation cell
         """
-        kdtree = KDTree(template.get_positions())
+        unique = self.unique_four_vectors()
+        lut = self.fourvec_to_indx(template, unique)
+        ref_indices = [lut[(0, 0, 0, i)]
+                       for i in range(self.generator.num_sub_lattices)]
+
         cluster_int = deepcopy(self.clusters)
-        ref_indices = self._ref_indices(kdtree)
         for cluster in cluster_int:
             if cluster.size == 0:
                 cluster.ref_indx = int(ref_indices[cluster.group])
@@ -146,12 +149,8 @@ class ClusterManager(object):
                 cluster.indices = []
             else:
                 cluster.indices = self.generator.to_atom_index(
-                    cluster.indices, template, kdtree=kdtree)
+                    cluster.indices, lut)
                 cluster.ref_indx = int(ref_indices[cluster.group])
-
-                # Convert from numpy int to regular int
-                cluster.indices = [[int(x) for x in fig]
-                                   for fig in cluster.indices]
         return cluster_int
 
     def unique_four_vectors(self):
@@ -193,19 +192,7 @@ class ClusterManager(object):
             lut[tuple(vec)] = i
         return lut
 
-    def translation_matrix(self, template):
-        """
-        Construct the translation matrix
-
-        Parameter:
-
-        template: ase.Atoms
-            Atoms object representing the simulation cell
-        """
-        trans_mat = []
-        unique = self.unique_four_vectors()
-
-        unique_indx = {}
+    def fourvec_to_indx(self, template, unique):
         cell = template.get_cell()
         pos = np.zeros((len(unique), 3))
         for i, u in enumerate(unique):
@@ -217,7 +204,22 @@ class ClusterManager(object):
         for i in range(pos.shape[0]):
             diff_sq = np.sum((pos[i, :] - template.get_positions())**2, axis=1)
             unique_indices.append(np.argmin(diff_sq))
-        unique_indx = dict(zip(unique, unique_indices))
+        return dict(zip(unique, unique_indices))
+
+    def translation_matrix(self, template):
+        """
+        Construct the translation matrix
+
+        Parameter:
+
+        template: ase.Atoms
+            Atoms object representing the simulation cell
+        """
+        trans_mat = []
+        unique = self.unique_four_vectors()
+        cell = template.get_cell()
+
+        unique_indx = self.fourvec_to_indx(template, unique)
 
         vec2 = np.zeros(4, dtype=int)
         lut = self.create_four_vector_lut(template)
