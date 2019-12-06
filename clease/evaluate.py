@@ -139,7 +139,8 @@ class Evaluate(object):
 
     def set_fitting_scheme(self, fitting_scheme="ridge", alpha=1E-9):
         from clease.regression import LinearRegression
-        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2", "ols"]
+        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2",
+                                   "ols"]
         if isinstance(fitting_scheme, LinearRegression):
             self.scheme = fitting_scheme
         elif isinstance(fitting_scheme, str):
@@ -297,7 +298,7 @@ class Evaluate(object):
         e_pred = self.cf_matrix.dot(self.eci)
 
         e_range = max(np.append(self.e_dft, e_pred)) - \
-                  min(np.append(self.e_dft, e_pred))
+            min(np.append(self.e_dft, e_pred))
         rmin = min(np.append(self.e_dft, e_pred)) - 0.05 * e_range
         rmax = max(np.append(self.e_dft, e_pred)) + 0.05 * e_range
 

@@ -14,8 +14,6 @@ from clease import ClusterExpansionSetting, CorrFunction
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import ProbeStructure, GSStructure
 from clease import _logger
-from clease import ValidConcentrationFilter
-from itertools import filterfalse
 
 try:
     from math import gcd
@@ -127,8 +125,10 @@ class NewStructures(object):
             if not os.path.isfile('probe_structure-sigma_mu.npz'):
                 self._generate_sigma_mu(num_samples_var)
 
-        _logger("Generate {} probe structures (generation: {}, struct_per_gen={}, {} present)."
-                .format(self.num_to_gen(), self.gen, self.struct_per_gen, self.num_in_gen()))
+        _logger("Generate {} probe structures (generation: {}, "
+                "struct_per_gen={}, {} present)."
+                .format(self.num_to_gen(), self.gen, self.struct_per_gen,
+                        self.num_in_gen()))
 
         current_count = 0
         num_attempt = 0
@@ -242,8 +242,8 @@ class NewStructures(object):
             num_templates=num_templates, num_prim_cells=num_prim_cells)
 
         if len(templates) == 0:
-            raise RuntimeError("Could not find any templates with matching the "
-                               "constraints")
+            msg = "Could not find any templates with matching the constraints"
+            raise RuntimeError(msg)
 
         self.setting.set_active_template(
             atoms=templates[0], generate_template=True)

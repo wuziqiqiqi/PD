@@ -68,6 +68,11 @@ class Concentration(object):
         self.orig_basis_elements = basis_elements
         self.grouped_basis = grouped_basis
         self._check_grouped_basis_elements()
+
+        for basis in basis_elements:
+            if not isinstance(basis, (list, tuple)):
+                msg = "elements in each basis must be either a list or tuple."
+                raise TypeError(msg)
         self.basis_elements = self._get_grouped_basis_elements()
 
         num_implicit_eq = len(self.basis_elements)
