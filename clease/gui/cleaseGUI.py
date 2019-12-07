@@ -271,7 +271,7 @@ class WindowFrame(StackLayout):
             if self.active_template_is_mc_cell:
                 atoms = settings.atoms.copy()
             else:
-                atoms = settings.atoms*(size, size, size)
+                atoms = settings.prim_cell*(size, size, size)
             return atoms
         except Exception as exc:
             traceback.print_exc()
