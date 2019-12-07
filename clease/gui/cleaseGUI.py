@@ -105,10 +105,6 @@ class WindowFrame(StackLayout):
             meta_dyn_page.from_dict(data.get('meta_dyn_page', {}))
 
             self.current_session_file = filename[0]
-
-            msg = "Loaded session from {}".format(self.current_session_file)
-            App.get_running_app().root.ids.status.text = msg
-
         except Exception as e:
             msg = "An error occured during load: " + str(e)
             App.get_running_app().root.ids.status.text = msg
