@@ -230,9 +230,7 @@ class WindowFrame(StackLayout):
             self._apply_settings()
 
         try:
-            self.settings._activate_lagest_template()
-            atoms = self.settings.atoms
-            return self.settings.cluster_list.get_figures(atoms)
+            return self.settings.cluster_manager.get_figures()
         except Exception:
             return False
 
