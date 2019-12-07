@@ -42,7 +42,10 @@ class Evaluate(object):
 
     max_cluster_dia: float or int
         maximum diameter of the cluster (in angstrom) to include in the fit.
-        If ``None``, no restriction on the diameter.
+        If ``None``, no restriction on the diameter. Note that this diameter of
+        the circumscribed sphere, which is slightly different from the meaning
+        of max_cluster_dia in `ClusterExpansionSetting` where it refers to the
+        the maximum internal distance between any of the atoms in the cluster.
 
     scoring_scheme: str
         should be one of 'loocv', 'loocv_fast' or 'k-fold'
@@ -85,19 +88,12 @@ class Evaluate(object):
             self.cf_names = sorted(cf_names)
         self.num_elements = setting.num_elements
         self.scoring_scheme = scoring_scheme
-        if max_cluster_size is None:
-            self.max_cluster_size = self.setting.max_cluster_size
-        else:
-            self.max_cluster_size = max_cluster_size
-        if max_cluster_dia is None:
-            self.max_cluster_dia = self.setting.max_cluster_dia
-        else:
-            self.max_cluster_dia = self._get_max_cluster_dia(max_cluster_dia)
 
         self.scheme = None
         self.scheme_string = None
         self.nsplits = nsplits
         self.num_repetitions = num_repetitions
+
         # Define the selection conditions
         self.select_cond = []
         if select_cond is None:
@@ -110,7 +106,11 @@ class Evaluate(object):
 
         # Remove the cluster names that correspond to clusters larger than the
         # specified size and diameter.
-        self._filter_cluster_name()
+        if max_cluster_size is not None:
+            self.cf_names = self._filter_cname_on_size()
+        if max_cluster_dia is not None:
+            max_dia = self._get_max_cluster_dia(max_cluster_dia)
+            self.cf_names = self._filter_cname_circum_dia(max_dia)
 
         self.cf_matrix = self._make_cf_matrix()
         self.e_dft, self.names, self.concs = self._get_dft_energy_per_atom()
@@ -179,18 +179,18 @@ class Evaluate(object):
     def _get_max_cluster_dia(self, max_cluster_dia):
         """Make max_cluster_dia in a numpy array form."""
         if isinstance(max_cluster_dia, (list, np.ndarray)):
-            if len(max_cluster_dia) == self.max_cluster_size + 1:
+            if len(max_cluster_dia) == self.setting.max_cluster_size + 1:
                 for i in range(2):
                     max_cluster_dia[i] = 0.
                 max_cluster_dia = np.array(max_cluster_dia, dtype=float)
-            elif len(max_cluster_dia) == self.max_cluster_size - 1:
+            elif len(max_cluster_dia) == self.setting.max_cluster_size - 1:
                 max_cluster_dia = np.array(max_cluster_dia, dtype=float)
                 max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
             else:
                 raise ValueError("Invalid length for max_cluster_dia.")
         # max_cluster_dia is int or float
         elif isinstance(max_cluster_dia, (int, float)):
-            max_cluster_dia *= np.ones(self.max_cluster_size - 1,
+            max_cluster_dia *= np.ones(self.setting.max_cluster_size - 1,
                                        dtype=float)
             max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
 
@@ -846,24 +846,45 @@ class Evaluate(object):
         eci = self.scheme.fit(cfm, e_dft)
         return eci
 
-    def _filter_cluster_name(self):
-        """Filter the cluster names based on size and diameter."""
-        if self.max_cluster_size is None and self.max_cluster_dia is None:
-            return
+    def _filter_cname_on_size(self, max_size):
+        """
+        Filter the cluster names based on size
 
-        filtered_cnames = []
+        Parameters:
+
+        max_size: int
+            Maximum cluster size to include in fit
+        """
+        filtered_names = []
         for name in self.cf_names:
             size = int(name[1])
-            if size < 2:
-                dia = -1
-            else:
-                prefix = name.rpartition("_")[0]
-                cluster = self.setting.cluster_list.get_by_name(prefix)[0]
-                dia = cluster.diameter
-            if (size <= self.max_cluster_size
-                    and dia < self.max_cluster_dia[size]):
-                filtered_cnames.append(name)
-        self.cf_names = filtered_cnames
+            if size <= max_size:
+                filtered_names.append(name)
+        return filtered_names
+
+    def _filter_cname_circum_dia(self, max_dia):
+        """
+        Filter the cluster names based on the diameter of the circumscribed
+        sphere.
+
+        Paramaeter:
+
+        max_dia: list of float
+            Diameter of the cirscumscribed sphere for each size
+        """
+        filtered_names = []
+        for name in self.cf_names:
+            size = int(name[1])
+            if size >= len(max_dia):
+                raise ValueError("Inconsistent length of max_dia")
+
+            prefix = name.rpartition("_")[0]
+            cluster = self.setting.cluster_list.get_by_name(prefix)[0]
+            dia = cluster.diameter
+
+            if dia < max_dia[size]:
+                filtered_names.append(name)
+        return filtered_names
 
     def _make_cf_matrix(self):
         """Return a matrix containing the correlation functions.
