@@ -429,8 +429,7 @@ class NewStructPage(Screen):
                 generator.insert_structures(traj_init=init, traj_final=final)
             else:
                 generator.insert_structure(init_struct=init_struct,
-                                           final_struct=final_struct,
-                                           generate_template=True)
+                                           final_struct=final_struct)
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)

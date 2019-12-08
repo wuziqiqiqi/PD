@@ -163,7 +163,7 @@ class CorrFunction(object):
         atoms: Atoms object
             Unrelaxed structure
         """
-        self.setting.set_active_template(atoms=atoms, generate_template=True)
+        self.setting.set_active_template(atoms=atoms)
         return atoms
 
     def _cf_name_exists(self, cf_name):

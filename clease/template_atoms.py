@@ -155,10 +155,6 @@ class TemplateAtoms(object):
         Parameters:
 
         size: list of length 3
-
-        generate_template: bool (optional)
-            If *True*, generate a new template if a template with matching
-            size is not found.
         """
         if not is_3x3_matrix(size):
             raise ValueError("Expect the size to be a list of 3x3 matrix")

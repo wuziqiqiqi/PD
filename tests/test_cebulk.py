@@ -53,7 +53,7 @@ class TestCEBulk(unittest.TestCase):
                          max_cluster_size=4)
         orig_atoms = setting.atoms.copy()
         atoms = bulk('Au', crystalstructure='fcc', a=4.05, cubic=True)
-        setting.set_active_template(atoms=atoms, generate_template=True)
+        setting.set_active_template(atoms=atoms)
 
         # Try to read back the old atoms
         setting.set_active_template(atoms=orig_atoms)
@@ -191,7 +191,7 @@ class TestCEBulk(unittest.TestCase):
         atoms = make_supercell(bc_setting.prim_cell, P)
 
         atoms[0].symbol = 'Cu'
-        newstruct.insert_structure(init_struct=atoms, generate_template=True)
+        newstruct.insert_structure(init_struct=atoms)
 
         # Test that the generate with many templates works
         newstruct.generate_gs_structure_multiple_templates(
@@ -306,7 +306,7 @@ class TestCEBulk(unittest.TestCase):
         atoms = make_supercell(setting.prim_cell, size)
 
         # This will fail if coordinatation number is wrong
-        setting.set_active_template(atoms=atoms, generate_template=True)
+        setting.set_active_template(atoms=atoms)
         os.remove(db_name)
 
     def test_2grouped_basis_bckgrnd_probe(self):

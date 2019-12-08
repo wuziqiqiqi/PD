@@ -39,7 +39,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         atoms_small[4].symbol = 'Cu'
 
         # Generate the cubic from scratch
-        setting.set_active_template(atoms=atoms_small, generate_template=True)
+        setting.set_active_template(atoms=atoms_small)
 
         cf = CorrFunction(setting)
         cf1 = cf.get_cf(atoms_small)
@@ -100,7 +100,7 @@ class TestClusterInfoMapper(unittest.TestCase):
                 break
 
         # Generate the cubic from scratch
-        bsg.set_active_template(atoms=atoms_small, generate_template=True)
+        bsg.set_active_template(atoms=atoms_small)
 
         cf = CorrFunction(bsg)
         cf1 = cf.get_cf(atoms_small)

@@ -198,7 +198,7 @@ class TestNewStruct(unittest.TestCase):
         # Patch the insert method such that we don't need to calculate the
         # correlation functions etc.
         def insert_struct_patch(self, init_struct=None, final_struct=None,
-                                name=None, generate_template=False):
+                                name=None):
             atoms = bulk('Au')
             kvp = self._get_kvp(atoms, 'Au')
             db.write(atoms, kvp)

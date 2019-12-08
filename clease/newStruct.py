@@ -136,11 +136,9 @@ class NewStructures(object):
 
         while current_count < num_to_generate:
             if atoms is not None:
-                self.setting.set_active_template(atoms=atoms,
-                                                 generate_template=True)
+                self.setting.set_active_template(atoms=atoms)
             else:
-                self.setting.set_active_template(size=size,
-                                                 generate_template=True)
+                self.setting.set_active_template(size=size)
             # Break out of the loop if reached struct_per_gen
             num_struct = self.num_in_gen()
             if num_struct >= self.struct_per_gen:
@@ -245,8 +243,7 @@ class NewStructures(object):
             msg = "Could not find any templates with matching the constraints"
             raise RuntimeError(msg)
 
-        self.setting.set_active_template(
-            atoms=templates[0], generate_template=True)
+        self.setting.set_active_template(atoms=templates[0])
 
         nib = [len(x) for x in self.setting.index_by_basis]
         x = self.setting.concentration.get_random_concentration(nib=nib)
@@ -257,8 +254,7 @@ class NewStructures(object):
         for i, atoms in enumerate(templates):
             _logger('Searching for GS in template {} of {}'
                     ''.format(i, len(templates)))
-            self.setting.set_active_template(
-                atoms=atoms, generate_template=True)
+            self.setting.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
             es = GSStructure(self.setting, struct, self.struct_per_gen,
@@ -338,8 +334,7 @@ class NewStructures(object):
         num_to_generate = min([self.num_to_gen(), len(structs)])
         while current_count < num_to_generate:
             struct = structs[current_count].copy()
-            self.setting.set_active_template(atoms=struct,
-                                             generate_template=False)
+            self.setting.set_active_template(atoms=struct)
             _logger("Generating structure {} out of {}."
                     .format(current_count + 1, num_to_generate))
             es = GSStructure(self.setting, struct, self.struct_per_gen,
@@ -426,8 +421,7 @@ class NewStructures(object):
         unique_structure_found = False
 
         while not unique_structure_found and num_attempts < max_attempt:
-            self.setting.set_active_template(atoms=atoms,
-                                             generate_template=False)
+            self.setting.set_active_template(atoms=atoms)
             new_atoms = self._get_struct_at_conc(conc_type="random")
             fu = self._get_formula_unit(new_atoms)
             if not self._exists_in_db(new_atoms, fu):
@@ -460,8 +454,7 @@ class NewStructures(object):
                                 self.gen,
                                 self.struct_per_gen,
                                 self.num_in_gen()))
-                self.setting.set_active_template(atoms=struct,
-                                                 generate_template=True)
+                self.setting.set_active_template(atoms=struct)
                 num_to_gen = self.num_to_gen()
                 concs = []
                 # Get unique concentrations
@@ -497,8 +490,7 @@ class NewStructures(object):
                 concs = []
                 nib = [len(x) for x in self.setting.index_by_basis]
                 for struct in atoms:
-                    self.setting.set_active_template(atoms=struct,
-                                                     generate_template=True)
+                    self.setting.set_active_template(atoms=struct)
                     x = self.setting.concentration.get_random_concentration(
                         nib=nib)
                     num_atoms_in_basis = [len(indices) for indices
@@ -611,11 +603,9 @@ class NewStructures(object):
                     raise ValueError("Final and initial structure has "
                                      "different number of each species")
 
-            self.insert_structure(init_struct=init, final_struct=final,
-                                  generate_template=True)
+            self.insert_structure(init_struct=init, final_struct=final)
 
-    def insert_structure(self, init_struct=None, final_struct=None, name=None,
-                         generate_template=False):
+    def insert_structure(self, init_struct=None, final_struct=None, name=None):
         """Insert a user-supplied structure to the database.
 
         Parameters:
@@ -630,10 +620,6 @@ class NewStructures(object):
         name: str (optional)
             Name of the DB entry if a custom name is to be used.
             If ``None``, default naming convention will be used.
-
-        generate_template: bool (optional)
-            If set to ``True``, a template matching the size of the passed
-            ``init_struct`` is created in DB.
         """
         if init_struct is None:
             raise TypeError('init_struct must be provided')
@@ -648,8 +634,7 @@ class NewStructures(object):
         else:
             init = wrap_and_sort_by_position(read(init_struct))
 
-        self.setting.set_active_template(atoms=init_struct,
-                                         generate_template=generate_template)
+        self.setting.set_active_template(atoms=init_struct)
 
         formula_unit = self._get_formula_unit(init)
         if self._exists_in_db(init, formula_unit):

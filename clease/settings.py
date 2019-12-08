@@ -191,8 +191,7 @@ class ClusterExpansionSetting(object):
         self.num_trans_symm = len(self.index_by_sublattice)
         self.ref_index_trans_symm = [i[0] for i in self.index_by_sublattice]
 
-    def set_active_template(self, size=None, atoms=None,
-                            generate_template=False):
+    def set_active_template(self, size=None, atoms=None):
         """Set a new template atoms object."""
         if size is not None and atoms is not None:
             raise ValueError("Specify either size or pass Atoms object.")
