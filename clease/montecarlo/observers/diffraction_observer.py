@@ -6,6 +6,7 @@ class DiffractionUpdater(object):
     """
     Utility class for all objects that require tracing of Fourier reflection.
     See docstring of DiffractionObserver for explanation of the arguments.
+    This observer has to be executed on every MC step.
     """
 
     def __init__(self, atoms=None, k_vector=[], active_symbols=[],
@@ -115,3 +116,6 @@ class DiffractionObserver(MCObserver):
         self.updater.reset()
         self.avg = self.updater.value
         self.num_updates = 1
+
+    def interval_ok(self, interval):
+        return interval == 1

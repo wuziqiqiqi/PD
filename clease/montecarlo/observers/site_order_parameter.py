@@ -5,7 +5,8 @@ import numpy as np
 class SiteOrderParameter(MCObserver):
     """
     Detect phase transitions by monitoring the average number of sites that
-    are occupied by a different element from the initial structure.
+    are occupied by a different element from the initial structure. This
+    observer has to be executed on every MC step.
 
     Parameters:
 
@@ -76,3 +77,6 @@ class SiteOrderParameter(MCObserver):
         if var < 0.0:
             var = 0.0
         return {"site_order_average": average, "site_order_std": np.sqrt(var)}
+
+    def interval_ok(self, interval):
+        return interval == 1

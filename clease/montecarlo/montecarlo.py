@@ -328,10 +328,12 @@ class Montecarlo(object):
         interval: int
             How often the observer should be called
         """
-        if (callable(obs)):
-            self.observers.append((interval, obs))
-        else:
-            raise ValueError("The observer has to be a callable class!")
+        if not obs.interval_ok(interval):
+            name = type(obs).__name__
+            raise ValueError("Invalid interval for {}. Check docstring "
+                             "of the observer.".format(name))
+
+        self.observers.append((interval, obs))
 
     def run(self, steps=100):
         """Run Monte Carlo simulation.

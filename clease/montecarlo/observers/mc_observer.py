@@ -34,3 +34,15 @@ class MCObserver(object):
         (i.e. without using fast update methods)
         """
         pass
+
+    def interval_ok(self, interval):
+        """
+        Check if the interval specified on attach is ok. Default is that all
+        intervals are OK
+
+        Parameter:
+
+        interval: int
+            Interval controlling how often a MC observer will be called.
+        """
+        return True

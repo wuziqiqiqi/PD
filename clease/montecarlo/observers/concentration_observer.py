@@ -4,7 +4,7 @@ from clease.montecarlo.observers import MCObserver
 class ConcentrationObserver(MCObserver):
     """
     Observer that can be attached to a MC run, to track the concenctration of a
-    particular element.
+    particular element. This observer has to be executed on every MC step.
 
     Parameters:
 
@@ -65,3 +65,6 @@ class ConcentrationObserver(MCObserver):
     def calculate_from_scratch(self, atoms):
         num_atoms = sum(1 for a in atoms if a.symbol == self.element)
         return num_atoms/len(atoms)
+
+    def interval_ok(self, interval):
+        return interval == 1

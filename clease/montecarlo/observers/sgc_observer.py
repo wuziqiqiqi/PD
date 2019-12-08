@@ -6,7 +6,7 @@ from clease.montecarlo.averager import Averager
 class SGCObserver(MCObserver):
     """
     Observer mainly intended to track additional quantities needed when
-    running SGC Monte Carlo
+    running SGC Monte Carlo. This observer has to be executed on every MC step.
 
     Parameters:
 
@@ -77,3 +77,6 @@ class SGCObserver(MCObserver):
     @property
     def counter(self):
         return self.quantities["counter"]
+
+    def interval_ok(self, interval):
+        return interval == 1
