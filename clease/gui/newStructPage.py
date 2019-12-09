@@ -479,7 +479,9 @@ class NewStructPage(Screen):
             'num_temps': self.ids.numTempInput.text,
             'num_sweeps': self.ids.numSweepsInput.text,
             'eci_file': self.ids.eciFileInput.text,
-            'template_file': self.ids.templateAtomsInput.text
+            'template_file': self.ids.templateAtomsInput.text,
+            'generation_scheme': self.ids.newStructTypeSpinner.text,
+            'num_templates': self.ids.numTemplateInput.text
         }
 
     def from_dict(self, data):
@@ -493,3 +495,6 @@ class NewStructPage(Screen):
         self.ids.numSweepsInput.text = data.get('num_sweeps', '100')
         self.ids.eciFileInput.text = data.get('eci_file', '')
         self.ids.templateAtomsInput.text = data.get('template_file', '')
+        self.ids.newStructTypeSpinner.text = data.get('generation_scheme',
+                                                      'Random structure')
+        self.ids.numTemplateInput.text = data.get('num_templates', '1')

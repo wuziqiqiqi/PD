@@ -143,6 +143,49 @@ class NewStructPageTest(unittest.TestCase):
         page.ids.generateButton.dispatch('on_release')
         self.assertEqual(status.text, 'No ECI file given')
 
+    def test_to_from_dict(self):
+        page = NewStructPage()
+        page.ids.genNumberInput.text = '2'
+        page.ids.structPerGenInput.text = '23'
+        page.ids.initStructInput.text = 'none'
+        page.ids.finalStructInput.text = 'none'
+        page.ids.tempMinInput.text = '10'
+        page.ids.tempMaxInput.text = '100'
+        page.ids.numTempInput.text = '21'
+        page.ids.numTemplateInput.text = '20'
+        page.ids.numSweepsInput.text = '100'
+        page.ids.eciFileInput.text = 'myecis.json'
+        page.ids.templateAtomsInput.text = 'mytemplate.xyz'
+        page.ids.newStructTypeSpinner.text = 'Random structure'
+
+        dct_rep = page.to_dict()
+
+        expect = {
+            'gen_number': '2',
+            'struct_per_gen': '23',
+            'init_struct': 'none',
+            'final_struct': 'none',
+            'min_temp': '10',
+            'max_temp': '100',
+            'num_temps': '21',
+            'num_sweeps': '100',
+            'eci_file': 'myecis.json',
+            'template_file': 'mytemplate.xyz',
+            'generation_scheme': 'Random structure',
+            'num_templates': '20'
+        }
+        self.assertDictEqual(dct_rep, expect)
+
+        page2 = NewStructPage()
+        page2.from_dict(expect)
+
+        # Check that all text fields matches the first page
+        txt1 = [w.text for w in page.walk() if hasattr(w, 'text')]
+        txt2 = [w.text for w in page2.walk() if hasattr(w, 'text')]
+
+        self.assertGreater(len(txt1), 0)
+        self.assertEqual(txt1, txt2)
+
 
 if __name__ == '__main__':
     # Load the layout for the new struct page
