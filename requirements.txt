@@ -1,5 +1,0 @@
-ase
-matplotlib
-cython
-spglib
-scikit-learn

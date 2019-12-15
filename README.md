@@ -11,11 +11,7 @@ CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that au
 ![image3](doc/source/resources/image3.png)
 
 # Installation
-After cloning CLEASE, install the [dependencies](requirements.txt) by executing
-```
-pip install -r requirements.txt
-```
-Then install the CLEASE code by executing
+Install the CLEASE code by executing
 ```
 pip install .
 ```
@@ -45,7 +41,7 @@ on the command line.
 
 # Troubleshooting
 
-1. If you are running on Mac and get the error 
+1. If you are running on Mac and get the error
 
 ```
 fatal error: 'ios' file not found
