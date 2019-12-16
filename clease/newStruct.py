@@ -584,6 +584,12 @@ class NewStructures(object):
         from ase.io.trajectory import TrajectoryReader
         from clease.tools import count_atoms
         traj_in = TrajectoryReader(traj_init)
+
+        if traj_final is None:
+            for init in traj_in:
+                self.insert_structure(init_struct=init)
+            return
+
         traj_final = TrajectoryReader(traj_final)
 
         if len(traj_in) != len(traj_final):

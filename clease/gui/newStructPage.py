@@ -427,6 +427,8 @@ class NewStructPage(Screen):
             # The argument passed is a trajectory file
             if final.endswith('.traj') and init.endswith('.traj'):
                 generator.insert_structures(traj_init=init, traj_final=final)
+            elif init.endswith('.traj'):
+                generator.insert_structures(traj_init=init)
             else:
                 generator.insert_structure(init_struct=init_struct,
                                            final_struct=final_struct)
