@@ -64,11 +64,10 @@ class ClusterExpansionSetting(object):
         conc_filter = ValidConcentrationFilter(concentration,
                                                prim_ind_by_basis)
 
-        self.template_atoms = TemplateAtoms(supercell_factor=supercell_factor,
-                                            size=self.size,
-                                            skew_threshold=skew_threshold,
-                                            db_name=self.db_name,
-                                            filters=[conc_filter])
+        self.template_atoms = TemplateAtoms(
+            self.prim_cell, supercell_factor=supercell_factor,
+            size=self.size, skew_threshold=skew_threshold,
+            filters=[conc_filter])
         self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size

@@ -40,14 +40,11 @@ class DummyCellFilter(CellFilter):
 
 class TestTemplates(unittest.TestCase):
     def test_fcc(self):
-        db_name = 'templates_fcc.db'
         prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
-        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
-                                       skew_threshold=4,
-                                       db_name=db_name)
+        template_atoms = TemplateAtoms(
+            prim_cell, supercell_factor=27, size=None,
+            skew_threshold=4)
         templates = template_atoms.get_all_scaled_templates()
         ref = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 3], [2, 2, 4],
                [2, 2, 5], [2, 3, 3], [2, 3, 4], [3, 3, 3]]
@@ -56,10 +53,7 @@ class TestTemplates(unittest.TestCase):
         sizes = [t.info['size'] for t in templates]
         self.assertEqual(ref, sizes)
 
-        os.remove(db_name)
-
     def test_valid_concentration_filter(self):
-        db_name = 'test_valid_concentration.db'
 
         tests = [
             {
@@ -75,13 +69,12 @@ class TestTemplates(unittest.TestCase):
 
         for test in tests:
             settings = get_settings_placeholder_valid_conc_filter(
-                test['system'], db_name)
+                test['system'])
 
             template_generator = TemplateAtoms(
-                db_name=db_name, supercell_factor=20,
+                settings.atoms, supercell_factor=20,
                 skew_threshold=1000000000)
 
-            os.remove(db_name)
             conc_filter = ValidConcentrationFilter(settings.concentration,
                                                    settings.index_by_basis)
             # Check that you cannot attach an AtomsFilter as a cell
@@ -106,17 +99,14 @@ class TestTemplates(unittest.TestCase):
         self.assertTrue(f(cell))
 
     def test_fixed_vol(self):
-        db_name = 'templates_fcc_fixed_vol.db'
         prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
-        template_atoms = TemplateAtoms(supercell_factor=27, size=None,
-                                       skew_threshold=4,
-                                       db_name=db_name)
+        template_atoms = TemplateAtoms(
+            prim_cell, supercell_factor=27, size=None,
+            skew_threshold=4)
+
         templates = template_atoms.get_fixed_volume_templates(
             num_prim_cells=4, num_templates=100)
-        os.remove(db_name)
 
         # Conform that the conventional cell is present
         found_conventional = False
@@ -143,8 +133,6 @@ class TestTemplates(unittest.TestCase):
                          skew_threshold=100, supercell_factor=40)
 
         tmp = setting.template_atoms
-        #v_conc = ValidConcentrationFilter(conc, setting.index_by_basis)
-        #tmp.add_atoms_filter(v_conc)
 
         sizes = [4, 5, 7, 10]
         valid_size = [5, 10]
@@ -158,31 +146,24 @@ class TestTemplates(unittest.TestCase):
         os.remove(db_name)
 
     def test_remove_atoms_filter(self):
-        db_name = 'templates_remove_atoms_filter.db'
         prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
-        template_atoms = TemplateAtoms(supercell_factor=3, size=None,
-                                       skew_threshold=4,
-                                       db_name=db_name)
+        template_atoms = TemplateAtoms(
+            prim_cell, supercell_factor=3, size=None,
+            skew_threshold=4)
 
         f = NumAtomsFilter(16)
         template_atoms.add_atoms_filter(f)
         self.assertEqual(len(template_atoms.atoms_filters), 1)
         template_atoms.remove_filter(f)
         self.assertEqual(len(template_atoms.atoms_filters), 0)
-        os.remove(db_name)
 
     def test_remove_cell_filter(self):
-        db_name = 'templates_remove_atoms_filter.db'
         prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
-        template_atoms = TemplateAtoms(supercell_factor=3, size=None,
-                                       skew_threshold=4,
-                                       db_name=db_name)
+        template_atoms = TemplateAtoms(
+            prim_cell, supercell_factor=3, size=None,
+            skew_threshold=4)
 
         num_cell_filters = len(template_atoms.cell_filters)
         f = DummyCellFilter()
@@ -190,22 +171,9 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(len(template_atoms.cell_filters), num_cell_filters+1)
         template_atoms.remove_filter(f)
         self.assertEqual(len(template_atoms.cell_filters), num_cell_filters)
-        os.remove(db_name)
-
-    def test_user_runs_dft_on_templates(self):
-        db_name = 'test_user_runs_dft_on_templates.db'
-        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
-        db.write(prim_cell, name='primitive_cell')
-
-        # Add an entry that is called template, but does not have size
-        db.write(prim_cell, name='template')
-        TemplateAtoms(supercell_factor=3, db_name=db_name)
-        os.remove(db_name)
 
 
-def get_settings_placeholder_valid_conc_filter(system, db_name):
+def get_settings_placeholder_valid_conc_filter(system):
     """
     Helper functions that initialises various dummy settings classes to be
     used together with the test_valid_conc_filter_class
@@ -215,9 +183,6 @@ def get_settings_placeholder_valid_conc_filter(system, db_name):
         prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings.atoms = prim_cell
         settings.index_by_basis = [[0], [1]]
-
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
 
         # Force vacancy concentration to be exactly 2/3 of the Cl
         # concentration
@@ -251,8 +216,6 @@ def get_settings_placeholder_valid_conc_filter(system, db_name):
                             cellpar=[a, b, c, alpha, beta, gamma],
                             size=[1, 1, 1], primitive_cell=True)
         prim_cell = wrap_and_sort_by_position(prim_cell)
-        db = connect(db_name)
-        db.write(prim_cell, name='primitive_cell')
         settings.concentration = conc
 
         settings.index_by_basis = [[0], [2], [1, 3]]

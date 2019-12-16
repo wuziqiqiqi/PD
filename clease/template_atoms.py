@@ -2,7 +2,6 @@
 import numpy as np
 from itertools import product
 from random import shuffle
-from ase.db import connect
 from ase.build import make_supercell
 from clease import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import CellFilter, AtomsFilter
@@ -10,8 +9,8 @@ from clease.tools import all_integer_transform_matrices
 
 
 class TemplateAtoms(object):
-    def __init__(self, supercell_factor=None, size=None, skew_threshold=4,
-                 db_name=None, filters=[]):
+    def __init__(self, prim_cell, supercell_factor=None, size=None,
+                 skew_threshold=4, filters=[]):
         if size is None and supercell_factor is None:
             raise TypeError("Either size or supercell_factor needs to be "
                             "specified.\n size: list or numpy array.\n "
@@ -36,10 +35,7 @@ class TemplateAtoms(object):
         if self.size is not None:
             check_valid_conversion_matrix(self.size)
         self.skew_threshold = skew_threshold
-        self.db_name = db_name
-        self.db = connect(db_name)
-        self.prim_cell = \
-            list(self.db.select(name='primitive_cell'))[0].toatoms()
+        self.prim_cell = prim_cell
 
     def __str__(self):
         """Print a summary of the class."""
