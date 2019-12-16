@@ -68,6 +68,25 @@ class TestActionBar(unittest.TestCase):
         self.assertIsNone(wf._pop_up)
         eval_mock.return_value.export_dataset.assert_called_with(fname)
 
+    @patch('clease.gui.cleaseGUI.App')
+    def test_export_settings(self, app_mock):
+        wf = WindowFrame()
+        wf.settings = MagicMock()
+        app_mock.get_running_app = MagicMock(return_value=MagicMock(root=wf))
+
+        wf.show_export_settings_dialog()
+        self.assertEqual(wf._pop_up.title, "Export Settings")
+        fname = "settings.json"
+        content = wf._pop_up.content
+        content.ids.filechooser.path = "."
+        content.ids.userFilename.text = fname
+
+        # Close the dialog
+        content.ids.saveButton.dispatch('on_release')
+        self.assertIsNone(wf._pop_up)
+        wf.settings.save.assert_called_with(fname)
+
+
 
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)

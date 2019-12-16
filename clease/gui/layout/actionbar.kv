@@ -64,6 +64,11 @@
                 on_press: app.root.show_export_fit_data_dialog()
 
             ActionButton:
+                id: exportSettings
+                text: 'Exp. Settings'
+                on_press: app.root.show_export_settings_dialog()
+
+            ActionButton:
                 id: closeButton
                 text: 'Close'
                 on_press: app.get_running_app().stop()

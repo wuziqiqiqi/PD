@@ -320,6 +320,29 @@ class WindowFrame(StackLayout):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
+    def show_export_settings_dialog(self):
+        content = SaveDialog(
+            save=self.export_settings, cancel=self.dismiss_popup
+        )
+
+        self._pop_up = Popup(title="Export Settings", content=content,
+                             pos_hint={'right': 0.95, 'top': 0.95},
+                             size_hint=(0.9, 0.9))
+        self._pop_up.open()
+
+    def export_settings(self, path, selection, user_filename):
+        if len(selection) == 0:
+            fname = str(Path(path) / user_filename)
+        else:
+            fname = selection[0]
+
+        if self.settings is None:
+            return
+        self.settings.save(fname)
+        app = App.get_running_app()
+        app.root.ids.status.text = 'Settings written to {}'.format(fname)
+        self.dismiss_popup()
+
 
 class CleaseGUI(App):
     def __init__(self):
