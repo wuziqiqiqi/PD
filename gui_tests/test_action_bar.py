@@ -60,6 +60,7 @@ class TestActionBar(unittest.TestCase):
         fname = "demoFileOut.csv"
         content = wf._pop_up.content
         content.ids.filechooser.path = "."
+        self.assertEqual(content.ids.userFilename.text, "fitData.csv")
         content.ids.userFilename.text = fname
 
         # Close the dialog
@@ -79,6 +80,7 @@ class TestActionBar(unittest.TestCase):
         fname = "settings.json"
         content = wf._pop_up.content
         content.ids.filechooser.path = "."
+        self.assertEqual(content.ids.userFilename.text, 'cleaseSettings.json')
         content.ids.userFilename.text = fname
 
         # Close the dialog
