@@ -27,6 +27,7 @@ from clease.convexhull import ConvexHull
 from clease.regression import LinearRegression, Tikhonov, Lasso
 from clease.ga_fit import GAFit
 from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
+from clease.sequential_cluster_ridge import SequentialClusterRidge
 from clease.cluster_info_mapper import ClusterInfoMapper
 from clease.cluster_manager import ClusterManager
 
