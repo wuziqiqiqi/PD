@@ -8,3 +8,7 @@ from clease.montecarlo.observers.lowest_energy_observer import LowestEnergyStruc
 from clease.montecarlo.observers.diffraction_observer import DiffractionObserver
 from clease.montecarlo.observers.energy_plot_updater import EnergyPlotUpdater
 from clease.montecarlo.observers.concentration_observer import ConcentrationObserver
+
+__all__ = ["MCObserver", "SGCObserver", "CorrelationFunctionObserver",
+           "Snapshot", "EnergyEvolution", "LowestEnergyStructure",
+           "DiffractionObserver", "EnergyPlotUpdater", "ConcentrationObserver"]

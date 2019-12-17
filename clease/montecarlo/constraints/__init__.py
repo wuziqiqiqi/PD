@@ -3,3 +3,6 @@ from clease.montecarlo.constraints.constrain_swap_by_basis import ConstrainSwapB
 from clease.montecarlo.constraints.constrain_element_insert_by_basis import ConstrainElementInserts
 from clease.montecarlo.constraints.fixed_element import FixedElement
 from clease.montecarlo.constraints.collective_variable_constraint import CollectiveVariableConstraint
+
+__all__ = ["MCConstraint", "ConstrainSwapByBasis", "ConstrainElementInserts",
+            "FixedElement", "CollectiveVariableConstraint"]

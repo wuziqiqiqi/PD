@@ -69,7 +69,7 @@ class DiffractionObserver(MCObserver):
     name: str
         Name of the DiffractionObserver
         (users are given the freedom to set names because they can attach
-         multiple DiffractionObserver instances)
+        multiple DiffractionObserver instances)
 
 
     Example:
@@ -83,7 +83,7 @@ class DiffractionObserver(MCObserver):
     >>> from ase.build import bulk
     >>> import numpy as np
     >>> a = 4.05
-    >>> atoms = bulk('Al, crystalstructure='fcc', a=a)
+    >>> atoms = bulk('Al', crystalstructure='fcc', a=a)
     >>> k_vector = [0, 2.0*np.pi/(3*a), 0]
     >>> active_elements = ['Mg']
     >>> all_symbols = ['Al', 'Mg', 'Si']

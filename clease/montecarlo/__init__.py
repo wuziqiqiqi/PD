@@ -5,4 +5,4 @@ from clease.montecarlo.gaussian_kernel_bias_potential import GaussianKernelBiasP
 from clease.montecarlo.binned_bias_potential import BinnedBiasPotential
 from clease.montecarlo.metadynamics_sampler import MetaDynamicsSampler
 
-__all__ = ['Montecarlo']
+__all__ = ['Montecarlo', 'SGCMonteCarlo', 'MetaDynamicsSampler', 'BinnedBiasPotential', 'BiasPotential']

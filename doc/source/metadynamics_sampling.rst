@@ -171,6 +171,3 @@ to the metadynamics sampler
   import os
   os.remove("aucu_metadyn.json")
   os.remove("aucu_metadyn.db")
-
-.. autoclass:: clease.montecarlo.MetaDynamicsSampler
-.. autoclass:: clease.montecarlo.BinnedBiasPotential

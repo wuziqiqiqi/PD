@@ -100,7 +100,12 @@ class MetaDynamicsSampler(object):
         # when it is running on a worker thread
         minval = min(coeff.tolist())
         self.progress_info['mean'] = avg
-        self.progress_info['minval'] = minval/avg
+
+        if avg > 0.0:
+            self.progress_info['minval'] = minval/avg
+        else:
+            self.progress_info['minval'] = 0.0
+
         if np.max(avg) == 0:
             return False
         return minval > self.flat_limit*avg
