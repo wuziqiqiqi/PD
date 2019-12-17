@@ -344,6 +344,19 @@ class ClusterExpansionSetting(object):
         gui.show_name = True
         gui.run()
 
+    def get_all_templates(self):
+        """
+        Return a list with all template atoms
+        """
+        return self.template_atoms.get_all_templates()
+
+    def view_templates(self):
+        """
+        Display all templates in the ASE GUi
+        """
+        from ase.visualize import view
+        view(self.get_all_templates())
+
     def _check_first_elements(self):
         basis_elements = self.basis_elements
         num_basis = self.num_basis
