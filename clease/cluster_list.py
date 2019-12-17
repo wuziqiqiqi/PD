@@ -196,7 +196,7 @@ class ClusterList(object):
         symm_groups: list
             list containing the symmetry group number of the atomic indices
 
-        tran_matrix: list of dicts
+        trans_matrix: list of dicts
             translation matrix
         """
         figure = list(map(int, fig_key.split("-")))

@@ -1,7 +1,6 @@
 from scipy.spatial import cKDTree as KDTree
 from ase.geometry import wrap_positions
 from clease.cluster_list import ClusterList
-from clease.cluster import Cluster
 from copy import deepcopy
 import numpy as np
 
@@ -20,16 +19,16 @@ class ClusterInfoMapper(object):
     atoms: Atoms object
         Large atoms cell
 
-    tm_matrix: list of dict
+    trans_matrix: list of dict
         Translation matrix for the large cell
 
     cluster_list: ClusterList
         Cluster info the for the large cell
     """
 
-    def __init__(self, atoms, tm_matrix, cluster_list):
+    def __init__(self, atoms, trans_matrix, cluster_list):
         self.atoms = atoms
-        self.tm_matrix = tm_matrix
+        self.trans_matrix = trans_matrix
         self.cluster_list = cluster_list
         self.tree = KDTree(self.atoms.get_positions())
 
@@ -62,7 +61,7 @@ class ClusterInfoMapper(object):
             new_cluster = deepcopy(cluster)
             new_cluster.ref_indx = int(index_map[cluster.ref_indx])
             new_cluster.indices = [[int(index_map[x]) for x in sub] for sub
-                                    in cluster.indices]
+                                   in cluster.indices]
             new_cluster_list.append(new_cluster)
         return new_cluster_list
 
@@ -72,9 +71,9 @@ class ClusterInfoMapper(object):
         new_tm = []
 
         for row in unique:
-            row_in_large = np.where(index_map == row)[0][0]
+            row_large = np.where(index_map == row)[0][0]
             new_tm.append({int(index_map[k]): int(index_map[v])
-                           for k, v in self.tm_matrix[row_in_large].items()})
+                           for k, v in self.trans_matrix[row_large].items()})
         return new_tm
 
     def map_info(self, small_atoms):

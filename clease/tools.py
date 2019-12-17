@@ -7,7 +7,6 @@ import numpy as np
 from collections.abc import Iterable
 from random import sample
 from ase.db import connect
-import json
 from clease import _logger
 from scipy.spatial import cKDTree as KDTree
 
@@ -386,13 +385,13 @@ def min_distance_from_facet(x, cell):
     return min(dists)
 
 
-def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
+def trans_matrix_index2tags(trans_matrix, tagged_atoms, indices=None):
     """
     Convert from indices to tags
 
     Parameters:
 
-    tm: list of dict
+    trans_matrix: list of dict
         Original translation matrix
 
     tagged_atoms: Atoms
@@ -400,15 +399,15 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
         index
 
     indices: list of int
-        Atom indices corresponding to each row in tm. If None,
-        it is assumed that len(tm) == len(tagged_atoms) and each
-        row in tm corresponds to the atom with the same index in
-        tagged_atoms.
+        Atom indices corresponding to each row in trans_matrix.
+        If None, it is assumed that len(trans_matrix) == len(tagged_atoms)
+        and each row in trans_matrix corresponds to the atom with the same
+        index in tagged_atoms.
     """
     unique_tags = sorted(list(set(atom.tag for atom in tagged_atoms)))
 
     if indices is None:
-        indices = list(range(len(tm)))
+        indices = list(range(len(trans_matrix)))
 
     # Make sure we have a continuous series of tags
     assert len(unique_tags) == max(unique_tags) + 1
@@ -416,7 +415,7 @@ def trans_matrix_index2tags(tm, tagged_atoms, indices=None):
     new_tm = [{} for _ in range(len(unique_tags))]
     used_tags = [False for _ in range(len(unique_tags))]
 
-    for i, row in enumerate(tm):
+    for i, row in enumerate(trans_matrix):
         tag = tagged_atoms[indices[i]].tag
         if used_tags[tag]:
             continue

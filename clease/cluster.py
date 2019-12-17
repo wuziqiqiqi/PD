@@ -152,7 +152,7 @@ class Cluster(object):
             list of atomic indices that constitute the original figure before
             translating
 
-        tran_matrix: list of dicts
+        trans_matrix: list of dicts
             translation matrix
         """
         for figure in self.indices:
