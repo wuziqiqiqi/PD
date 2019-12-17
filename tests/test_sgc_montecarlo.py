@@ -4,6 +4,8 @@ from clease.calculator import attach_calculator
 from clease.montecarlo import SGCMonteCarlo
 from clease import Concentration, CEBulk, CorrFunction
 from clease.montecarlo.constraints import ConstrainElementInserts
+from clease.montecarlo.constraints import PairConstraint
+import numpy as np
 
 
 class TestSGCMonteCarlo(unittest.TestCase):
@@ -77,6 +79,41 @@ class TestSGCMonteCarlo(unittest.TestCase):
         for allowed, basis in zip(elem_basis, setting.index_by_basis):
             for index in basis:
                 self.assertTrue(atoms[index].symbol in allowed)
+
+    def test_pair_constraint(self):
+        db_name = 'test_constrain_pair.db'
+        a = 4.0
+        conc = Concentration(basis_elements=[['Si', 'X']])
+        setting = CEBulk(db_name=db_name, concentration=conc,
+                         crystalstructure='fcc', a=a,
+                         max_cluster_size=3, max_cluster_dia=[3.9, 3.0],
+                         size=[2, 2, 2])
+
+        atoms = setting.atoms.copy()*(3, 3, 3)
+        cf = CorrFunction(setting)
+        cf_scratch = cf.get_cf(setting.atoms)
+        eci = {k: 0.0 for k, v in cf_scratch.items()}
+        atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+        mc = SGCMonteCarlo(atoms, 100000000, symbols=['Si', 'X'])
+
+        cluster = setting.cluster_list.get_by_name("c2_d0000_0")[0]
+        cnst = PairConstraint(['X', 'X'], cluster, setting.trans_matrix, atoms)
+        mc.add_constraint(cnst)
+
+        nn_dist = a/np.sqrt(2.0)
+        for num in range(20):
+            mc.run(10, chem_pot={'c1_0': 0.0})
+
+            X_idx = [atom.index for atom in atoms if atom.symbol == 'X']
+
+            if len(X_idx) <= 1:
+                continue
+
+            # Check that there are no X that are nearest neighbours
+            dists = [atoms.get_distance(i1, i2) for i1 in X_idx
+                     for i2 in X_idx[i1+1:]]
+            self.assertTrue(all(d > 1.05*nn_dist for d in dists))
+        os.remove(db_name)
 
 
 if __name__ == '__main__':
