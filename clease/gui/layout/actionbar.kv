@@ -39,9 +39,24 @@
                 on_release: app.root.reconfig('settings_db')
 
         ActionGroup:
-            id: File_AG
+            id: Export_AG
             mode: 'spinner'
-            text: 'File'
+            text: 'Export'
+
+            ActionButton:
+                id: exportFitDataButton
+                text: 'Fit Data'
+                on_press: app.root.show_export_fit_data_dialog()
+
+            ActionButton:
+                id: exportSettings
+                text: 'Settings'
+                on_press: app.root.show_export_settings_dialog()
+
+        ActionGroup:
+            id: Session_AG
+            mode: 'spinner'
+            text: 'Session'
 
             ActionButton:
                 id: saveButton
@@ -57,16 +72,6 @@
                 id: loadButton
                 text: 'Load'
                 on_press: app.root.show_load_session_dialog()
-
-            ActionButton:
-                id: exportFitDataButton
-                text: 'Export Data'
-                on_press: app.root.show_export_fit_data_dialog()
-
-            ActionButton:
-                id: exportSettings
-                text: 'Exp. Settings'
-                on_press: app.root.show_export_settings_dialog()
 
             ActionButton:
                 id: closeButton
