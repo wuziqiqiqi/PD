@@ -9,6 +9,11 @@
             app_icon: 'clease_logo.png'
             on_release: webbrowser.open('https://computationalmaterials.gitlab.io/clease/')
 
+
+        ActionButton:
+            text: 'Reconfig. DB'
+            on_release: app.root.reconfig()
+
         ActionGroup:
             id: View_AG
             mode: 'spinner'
@@ -23,20 +28,6 @@
                 text: 'MC cell'
                 on_release: app.root.view_mc_cell()
 
-        ActionGroup:
-            id: Reconfig_AG
-            mode: 'spinner'
-            text: 'Reconfigure'
-
-            ActionButton:
-                text: 'Settings'
-                on_release: app.root.reconfig('settings')
-            ActionButton:
-                text: 'DB'
-                on_release: app.root.reconfig('db')
-            ActionButton:
-                text: 'Settings & DB'
-                on_release: app.root.reconfig('settings_db')
 
         ActionGroup:
             id: Export_AG

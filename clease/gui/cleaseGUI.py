@@ -180,14 +180,8 @@ class WindowFrame(StackLayout):
             new_screen = self.mc_type_screen
         self.ids.sm.current = new_screen
 
-    def reconfig(self, target=None):
-        """Reconfigure target.
-
-        Parameters:
-
-        target: str
-            one of "settings", "db" and "settings_db"
-        """
+    def reconfig(self):
+        """Reconfigure DB entries based on current settings."""
         if self.reconfig_in_progress:
             # Do no allow user to initialize many threads
             return
@@ -198,12 +192,7 @@ class WindowFrame(StackLayout):
         reconfig.app = App.get_running_app()
         reconfig.status = App.get_running_app().root.ids.status
 
-        if target == 'settings':
-            Thread(target=reconfig.reconfig_settings).start()
-        elif target == 'db':
-            Thread(target=reconfig.reconfig_db).start()
-        else:
-            Thread(target=reconfig.reconfig_settings_db).start()
+        Thread(target=reconfig.reconfig_db).start()
 
     def view_clusters(self):
         """View clusters."""
@@ -259,7 +248,7 @@ class WindowFrame(StackLayout):
 
             mc_header = self.ids.sm.get_screen('MCHeader')
 
-            mc_main_page = mc_header.ids.sm.get_screen('MCMainPage') 
+            mc_main_page = mc_header.ids.sm.get_screen('MCMainPage')
 
             size = int(mc_main_page.ids.sizeInput.text)
 

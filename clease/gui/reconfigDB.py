@@ -21,30 +21,13 @@ class ReconfigDB(object):
         self.status.text = "Reconfiguring..."
         return True
 
-    def reconfig_settings(self):
-        self.apply_settings()
-        self.app.root.reconfig_in_progress = False
-
     def reconfig_db(self):
         if self.apply_settings():
             try:
                 from clease import CorrFunction
                 CorrFunction(self.app.root.settings).reconfigure_db_entries()
-                msg = "All DB entries are reconfigured."
-                self.status.text = msg
-
-            except Exception as exc:
-                traceback.print_exc()
-                self.status.text = str(exc)
-
-        self.app.root.reconfig_in_progress = False
-
-    def reconfig_settings_db(self):
-        if self.apply_settings():
-            try:
-                from clease.tools import reconfigure
-                reconfigure(self.app.root.settings)
-                msg = "Settings andall DB entries are reconfigured."
+                msg = "All DB entries are reconfigured based on current "
+                msg += " settings."
                 self.status.text = msg
 
             except Exception as exc:
