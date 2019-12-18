@@ -1,5 +1,5 @@
 import unittest
-from clease.gui.newStructPage import NewStructPage
+from clease.gui.newStructPage import NewStructPage, InsertStructureCB
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
 import os.path as op
@@ -79,9 +79,10 @@ class NewStructPageTest(unittest.TestCase):
         os.remove(eci_file)
         self.assertEqual(method.call_count, 1)
 
+    @patch('clease.gui.newStructPage.InsertStructureCB')
     @patch('clease.gui.newStructPage.App')
     @patch('clease.NewStructures')
-    def test_import_structures(self, new_struct_mock, kivy_mock):
+    def test_import_structures(self, new_struct_mock, kivy_mock, cb_mock):
         init_file = 'initial_structure.traj'
         final_file = 'final_structure.traj'
         traj_init = TrajectoryWriter(init_file)
@@ -97,12 +98,29 @@ class NewStructPageTest(unittest.TestCase):
         page.ids.finalStructInput = MagicMock(text=final_file)
         page.import_structures()
 
+        # Check the argument passed to the cb_mock class
+        cb_mock.assert_called_once_with(
+            kivy_mock.get_running_app().root.ids.status)
+
         # Make sure the method is called exactly once
         method = new_struct_mock().insert_structures
-        self.assertEqual(method.call_count, 1)
 
         # Make sure that insert_structures was called with the right arguments
-        method.assert_called_with(traj_init=init_file, traj_final=final_file)
+        method.assert_called_once_with(
+            traj_init=init_file, traj_final=final_file, cb=cb_mock())
+
+        # Check that it is called correctly also when only the initial
+        # structures are passed
+        page.ids.finalStructInput.text = ''
+        cb_mock.reset_mock()
+        method.reset_mock()
+        page.import_structures()
+
+        cb_mock.assert_called_once_with(
+            kivy_mock.get_running_app().root.ids.status)
+        method.assert_called_once_with(traj_init=init_file, cb=cb_mock())
+
+
         del traj_init
         del traj_final
         os.remove(init_file)
@@ -122,6 +140,12 @@ class NewStructPageTest(unittest.TestCase):
         self.assertEqual(method.call_count, 1)
         os.remove(init_file)
         os.remove(final_file)
+
+    def test_insert_structure_cb(self):
+        status = MagicMock()
+        insCB = InsertStructureCB(status)
+        insCB(2, 10)
+        self.assertEqual(status.text, 'Inserted 2 of 10 structures')
 
     def run_with_app(self, app):
         self.load_pop_ups(app)

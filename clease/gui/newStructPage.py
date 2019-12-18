@@ -9,6 +9,7 @@ import os
 import json
 from threading import Thread
 import traceback
+import time
 
 
 class BaseGenerator(object):
@@ -85,6 +86,23 @@ class GSStructGenerator(object):
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
         self.page.structure_generation_in_progress = False
+
+
+class InsertStructureCB(object):
+    """
+    Callable class used to update the status field when inserting
+    structures
+
+    Parameters:
+
+    status: widget
+        Status field of the page
+    """
+    def __init__(self, status):
+        self.status = status
+
+    def __call__(self, num, tot):
+        self.status.text = 'Inserted {} of {} structures'.format(num, tot)
 
 
 class ExaustiveGSStructGenerator(object):
@@ -424,11 +442,25 @@ class NewStructPage(Screen):
                                       generation_number=generation_number,
                                       struct_per_gen=struct_per_gen)
 
+            status = App.get_running_app().root.ids.status
+            status.text = 'Inserting structures...'
+
             # The argument passed is a trajectory file
             if final.endswith('.traj') and init.endswith('.traj'):
-                generator.insert_structures(traj_init=init, traj_final=final)
+                kwargs = {
+                    'traj_init': init,
+                    'traj_final': final,
+                    'cb': InsertStructureCB(status)
+                }
+                Thread(target=generator.insert_structures,
+                       kwargs=kwargs).start()
             elif init.endswith('.traj'):
-                generator.insert_structures(traj_init=init)
+                kwargs = {
+                    'traj_init': init,
+                    'cb': InsertStructureCB(status)
+                }
+                Thread(target=generator.insert_structures,
+                       kwargs=kwargs).start()
             else:
                 generator.insert_structure(init_struct=init_struct,
                                            final_struct=final_struct)

@@ -569,7 +569,8 @@ class NewStructures(object):
 
         return atoms
 
-    def insert_structures(self, traj_init=None, traj_final=None):
+    def insert_structures(self, traj_init=None, traj_final=None,
+                          cb=lambda num, tot: None):
         """
         Insert a sequence of initial and final structures from trajectory.
 
@@ -580,14 +581,22 @@ class NewStructures(object):
 
         traj_final: str
             Filename of a trajectory file with the final structures
+
+        cb: function
+            Callback function that is called every time a structure is inserted
+            (or rejected because it exists before). The signature of the
+            function is cb(num, tot) where num is the number of inserted
+            structure and tot is the total number of structures that should
+            be inserted
         """
         from ase.io.trajectory import TrajectoryReader
         from clease.tools import count_atoms
         traj_in = TrajectoryReader(traj_init)
 
         if traj_final is None:
-            for init in traj_in:
+            for i, init in enumerate(traj_in):
                 self.insert_structure(init_struct=init)
+                cb(i+1, len(traj_in))
             return
 
         traj_final = TrajectoryReader(traj_final)
@@ -596,6 +605,7 @@ class NewStructures(object):
             raise ValueError("Different number of structures in "
                              "initial trajectory file and final.")
 
+        num_ins = 0
         for init, final in zip(traj_in, traj_final):
             # Check that composition (except vacancies matches)
             count_init = count_atoms(init)
@@ -610,6 +620,8 @@ class NewStructures(object):
                                      "different number of each species")
 
             self.insert_structure(init_struct=init, final_struct=final)
+            num_ins += 1
+            cb(num_ins, len(traj_in))
 
     def insert_structure(self, init_struct=None, final_struct=None, name=None):
         """Insert a user-supplied structure to the database.

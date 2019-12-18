@@ -34,8 +34,6 @@ class TestNewStruct(unittest.TestCase):
         new_struct.corrfunc = CorrFuncPlaceholder()
         new_struct._get_kvp = MagicMock(return_value={'name': 'name'})
 
-        init_atoms = []
-        final_atoms = []
         symbols = ['Au', 'Cu']
         traj_in = 'initial_structures.traj'
         traj_final = 'final_structures.traj'
@@ -55,16 +53,20 @@ class TestNewStruct(unittest.TestCase):
             traj_in_obj.write(init)
             traj_final_obj.write(final)
 
+        # Test when both initial and final is given
         new_struct.insert_structures(traj_init=traj_in, traj_final=traj_final)
+
+        # Test when only initial is given
+        new_struct.insert_structures(traj_init=traj_in)
         traj_in_obj.close()
         traj_final_obj.close()
         os.remove(traj_in)
         os.remove(traj_final)
 
         # Run some statistics
-        self.assertEqual(new_struct._exists_in_db.call_count, num_struct)
-        self.assertEqual(new_struct._get_formula_unit.call_count, num_struct)
-        self.assertEqual(new_struct._get_kvp.call_count, num_struct)
+        self.assertEqual(new_struct._exists_in_db.call_count, 2*num_struct)
+        self.assertEqual(new_struct._get_formula_unit.call_count, 2*num_struct)
+        self.assertEqual(new_struct._get_kvp.call_count, 2*num_struct)
 
         # Check that final structures has a calculator
         db = connect(settings_mock.db_name)
