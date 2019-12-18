@@ -1,7 +1,7 @@
 import numpy as np
 from copy import deepcopy
-from clease.tools import equivalent_deco, nested_array2list, list2str
 from clease.cluster_fingerprint import ClusterFingerprint
+from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
 from ase import Atoms
 
 
@@ -22,9 +22,9 @@ class Cluster(object):
         """Comparison operator."""
         fp_lt = self.fp < other.fp
         if fp_lt:
-            assert self.name < other.name
+            assert cname_lt(self.name, other.name) is True
         else:
-            assert self.name >= other.name
+            assert cname_lt(self.name, other.name) is False
         return fp_lt
 
     def __eq__(self, other):

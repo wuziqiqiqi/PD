@@ -660,7 +660,7 @@ def select_bf_subsets(basis_elems, bfs):
                     selected_bfs.add(bf)
 
         # Add penalty to the ones that has duplicate CF functions. This way we
-        # select a combination that has the same basis function in multiple 
+        # select a combination that has the same basis function in multiple
         # atomic basis if it is possible
         if duplicates:
             total_score -= 1000.0
@@ -669,3 +669,47 @@ def select_bf_subsets(basis_elems, bfs):
             best_score = total_score
             best_selection = selection
     return best_selection
+
+
+def cname_lt(cname1, cname2):
+    """
+    Compare two cluster names to check if the first cluster name is
+    smaller than (less than, or lt) the second cluster name. Since the cluster
+    names take a form 'c#_d####_#', the prefix ('c#_d####') is evaluated as a
+    string while the suffix ('#') is evaluated as an integer.
+
+    Return `True` if cname1 < cname2 and `False` otherwise.
+    """
+    if not isinstance(cname1, str) and isinstance(cname2, str):
+        raise TypeError('cnames should be strings.')
+
+    if cname1 in ('c0', 'c1'):
+        prefix1 = cname1
+    else:
+        prefix1 = cname1.rpartition("_")[0]
+
+    if cname2 in ('c0', 'c1'):
+        prefix2 = cname2
+    else:
+        prefix2 = cname2.rpartition("_")[0]
+
+    if prefix1 < prefix2:
+        return True
+    elif prefix1 > prefix2:
+        return False
+
+    # Case where prefixes are the same.
+    if cname1 in ('c0', 'c1'):
+        suffix1 = 0
+    else:
+        suffix1 = int(cname1.rpartition("_")[-1])
+
+    if cname2 in ('c0', 'c1'):
+        suffix2 = 0
+    else:
+        suffix2 = int(cname2.rpartition("_")[-1])
+
+    if suffix1 < suffix2:
+        return True
+    else:
+        return False

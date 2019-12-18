@@ -2,7 +2,8 @@ import unittest
 from ase.build import bulk
 from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
-    species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets
+    species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
+    cname_lt
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -147,6 +148,52 @@ class TestTools(unittest.TestCase):
                 for k, v in distinguished.items():
                     self.assertTrue(v, msg='{}'.format(distinguished))
 
+    def test_cname_lt(self):
+        tests = [
+            {
+                'name1': 'c0',
+                'name2': 'c1',
+                'expect': True
+            },
+            {
+                'name1': 'c1',
+                'name2': 'c1',
+                'expect': False
+            },
+            {
+                'name1': 'c2_d0000_0',
+                'name2': 'c1_0',
+                'expect': False
+            },
+            {
+                'name1': 'c0',
+                'name2': 'c0',
+                'expect': False
+            },
+            {
+                'name1': 'c1_0',
+                'name2': 'c1_1',
+                'expect': True
+            },
+            {
+                'name1': 'c4_d0000_10',
+                'name2': 'c3_d9999_9',
+                'expect': False
+            },
+            {
+                'name1': 'c4_d0000_10',
+                'name2': 'c4_d0000_9',
+                'expect': False
+            },
+            {
+                'name1': 'c2_d0200_9',
+                'name2': 'c2_d0200_29',
+                'expect': True
+            },
+            ]
+
+        for t in tests:
+            self.assertEqual(cname_lt(t['name1'], t['name2']), t['expect'])
 
 
 if __name__ == '__main__':
