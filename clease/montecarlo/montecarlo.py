@@ -120,7 +120,7 @@ class Montecarlo(object):
         calc.update_eci(eci)
 
         # Force re-calculation of the energy
-        self.current_energy = calc.calculate(None, None, None)
+        self.update_current_energy()
         self.last_energies[0] = self.current_energy
 
         if abs(self.current_energy) > 1E-6:
