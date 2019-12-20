@@ -12,9 +12,10 @@ from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from clease import _logger
 from clease.montecarlo import Montecarlo
-from clease.montecarlo.observers import LowestEnergyStructure
+from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
 from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.montecarlo import TooFewElementsError
+from ase.io.trajectory import TrajectoryReader
 
 
 class StructureGenerator(object):
@@ -478,6 +479,32 @@ class GSStructure(StructureGenerator):
         emin_atoms.set_calculator(calc)
 
         return emin_atoms, cf
+
+
+class MetropolisTrajectory(object):
+    def __init__(self, setting, atoms, num):
+        self.setting = setting
+        self.atoms = atoms
+        self.num = num
+
+    def generate(self):
+        cnst = ConstrainSwapByBasis(self.atoms, self.setting.index_by_basis)
+        eci = {'c0': 0.0}
+        calc = Clease(self.setting, eci=eci)
+        self.atoms.set_calculator(calc)
+
+        mc = Montecarlo(self.atoms, 10000000)
+        mc.add_constraint(cnst)
+        fname = 'metropolis_traj'
+        obs = Snapshot(fname=fname, atoms=self.atoms)
+        mc.attach(obs, interval=1)
+
+        mc.run(steps=self.num)
+
+        reader = TrajectoryReader(obs.fname)
+        all_atoms = [a for a in reader]
+        os.remove(obs.fname)
+        return all_atoms
 
 
 def mean_variance_full(cfm):

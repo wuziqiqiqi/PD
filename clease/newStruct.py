@@ -11,8 +11,11 @@ from ase.atoms import Atoms
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
 from clease import ClusterExpansionSetting, CorrFunction
+from clease.montecarlo.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
-from clease.structure_generator import ProbeStructure, GSStructure
+from clease.structure_generator import (
+    ProbeStructure, GSStructure, MetropolisTrajectory
+)
 from clease import _logger
 
 try:
@@ -540,6 +543,41 @@ class NewStructures(object):
             atoms = self._get_struct_at_conc(conc_type="max", index=indx)
             atoms = wrap_and_sort_by_position(atoms)
             self.insert_structure(init_struct=atoms)
+
+    def generate_metropolis_trajectory(self, atoms=None, random_comp=True):
+        """
+        Generate a set of structures that consists of single atom swaps
+
+        Parameters:
+
+        atoms: Atoms
+            Atoms object that will be used as a template for the trajectory
+
+        random_comp: bool
+            If True the passed atoms object will be initialised with a random
+            composition. Otherwise, the trajectory will start from the passed
+            Atoms object.
+        """
+        if atoms is None:
+            atoms = self.setting.atoms.copy()
+
+        if random_comp:
+            self.setting.set_active_template(atoms=atoms)
+            atoms = self._get_struct_at_conc(conc_type="random")
+
+        num = self.num_to_gen()
+        try:
+            generator = MetropolisTrajectory(self.setting, atoms, num)
+            all_atoms = generator.generate()
+            for a in all_atoms:
+                self.insert_structure(init_struct=a)
+
+        except TooFewElementsError as exc:
+            if random_comp:
+                self.generate_metropolis_trajectory(
+                    atoms=atoms, random_comp=True)
+            else:
+                raise exc
 
     def _get_struct_at_conc(self, conc_type='random', index=0):
         """Generate a structure at a concentration specified.

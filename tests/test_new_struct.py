@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from clease import NewStructures
+from clease import NewStructures, CEBulk
 from clease import Concentration, ClusterExpansionSetting
 from ase.io.trajectory import TrajectoryWriter
 from ase.build import bulk
@@ -128,23 +128,32 @@ class TestNewStruct(unittest.TestCase):
 
         conc = Concentration(basis_elements=[['Au', 'Cu']])
         db_name = 'test_struct_gen_number.db'
-        atoms = bulk('Au')*(10, 10, 10)
-        index_by_basis = [list(range(len(atoms)))]
+        # settings = CEBulk(conc, max_cluster_dia=3.0, a=2.9,
+        #                   max_cluster_size=2, crystalstructure='sc')
+        atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)
+        atoms[0].symbol = 'Cu'
+        atoms[10].symbol = 'Cu'
+        #settings.set_active_template(atoms=atoms)
+        #index_by_basis = [list(range(len(atoms)))]
 
-        template_atoms = MagicMock()
-        num_templates = 3
-        template_atoms.get_fixed_volume_templates = MagicMock(
-            return_value=[bulk('Al')*(2, 2, i) for i in range(num_templates)])
+        # template_atoms = MagicMock()
+        # num_templates = 3
+        #template_atoms.get_fixed_volume_templates = MagicMock(
+        #     return_value=[bulk('Al')*(2, 2, i) for i in range(num_templates)])
 
-        settings = MagicMock(
-            spec=ClusterExpansionSetting, db_name=db_name, concentration=conc,
-            atoms=atoms, index_by_basis=index_by_basis, size='1x1x1',
-            template_atoms=template_atoms
-            )
-        settings.db_name = db_name
+        # settings = MagicMock(
+        #     spec=ClusterExpansionSetting, db_name=db_name, concentration=conc,
+        #     atoms=atoms, index_by_basis=index_by_basis, size='1x1x1',
+        #     template_atoms=template_atoms, cluster_list=[],
+        #     ignore_background_atoms=True, unique_elements=['Au', 'Cu'],
+        #     index_by_sublattice=index_by_basis, background_indices=[],
+        #     num_unique_elements=2, basis_functions=[{'Au': 1.0, 'Cu': -1.0}],
+        #     trans_matrix=[{0: i} for i in range(len(atoms))]
+        #     )
+        # settings.db_name = db_name
 
         def get_random_structure():
-            atoms = bulk('Au')*(5, 5, 5)
+            atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)
             for a in atoms:
                 a.symbol = choice(['Au', 'Cu'])
             atoms.set_calculator(SinglePointCalculator(atoms, energy=0.0))
@@ -160,7 +169,7 @@ class TestNewStruct(unittest.TestCase):
             },
             {
                 'func': NewStructures.generate_gs_structure_multiple_templates,
-                'kwargs': dict(num_templates=num_templates, num_prim_cells=10,
+                'kwargs': dict(num_templates=3, num_prim_cells=10,
                                init_temp=2000, final_temp=1, num_temp=1,
                                num_steps_per_temp=1, eci=None)
             },
@@ -174,6 +183,18 @@ class TestNewStruct(unittest.TestCase):
                                final_temp=1, num_temp=2,
                                num_steps_per_temp=1, eci=None,
                                random_composition=True)
+            },
+            {
+                'func': NewStructures.generate_metropolis_trajectory,
+                'kwargs': dict(atoms=atoms, random_comp=False)
+            },
+            {
+                'func': NewStructures.generate_metropolis_trajectory,
+                'kwargs': dict(atoms=atoms, random_comp=True)
+            },
+            {
+                'func': NewStructures.generate_metropolis_trajectory,
+                'kwargs': dict(atoms=None, random_comp=True)
             }
         ]
 
@@ -195,20 +216,22 @@ class TestNewStruct(unittest.TestCase):
             }
         ]
 
-        db = connect(db_name)
-
-        # Patch the insert method such that we don't need to calculate the
-        # correlation functions etc.
+        # # Patch the insert method such that we don't need to calculate the
+        # # correlation functions etc.
         def insert_struct_patch(self, init_struct=None, final_struct=None,
                                 name=None):
             atoms = bulk('Au')
             kvp = self._get_kvp(atoms, 'Au')
+            db = connect(db_name)
             db.write(atoms, kvp)
 
         NewStructures.insert_structure = insert_struct_patch
         NewStructures._get_formula_unit = lambda self, atoms: 'Au'
 
         for i, f in enumerate(func):
+            settings = CEBulk(conc, max_cluster_dia=3.0, a=2.9,
+                              max_cluster_size=2, crystalstructure='sc',
+                              db_name=db_name)
             for j, test in enumerate(tests):
                 msg = 'Test #{} failed for func #{}'.format(j, i)
 
