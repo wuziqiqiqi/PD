@@ -3,7 +3,7 @@ from ase.build import bulk
 from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
-    cname_lt
+    cname_lt, singlets2conc
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -195,6 +195,29 @@ class TestTools(unittest.TestCase):
         for t in tests:
             self.assertEqual(cname_lt(t['name1'], t['name2']), t['expect'])
 
+    def test_singlet2conc(self):
+        tests = [
+            {
+                'bf': [{'Au': 1.0, 'Cu': -1.0}],
+                'cf': np.array([[1.0], [-1.0], [0.0]]),
+                'expect': [{'Au': 1.0, 'Cu': 0.0},
+                           {'Au': 0.0, 'Cu': 1.0},
+                           {'Au': 0.5, 'Cu': 0.5}]
+            },
+            {
+                'bf': [{'Li': 1.0, 'O': 0.0, 'X': -1.0},
+                       {'Li': 1.0, 'O': -1.0, 'X': 0.0}],
+                'cf': np.array([[1.0, 1.0], [-0.5, -0.5]]),
+                'expect': [{'Li': 1.0, 'O': 0.0, 'X': 0.0},
+                           {'Li': 0.0, 'O': 0.5, 'X': 0.5}]
+            }
+        ]
+
+        for t in tests:
+            conc = singlets2conc(t['bf'], t['cf'])
+            self.assertEqual(len(conc), len(t['expect']))
+            for item1, item2 in zip(conc, t['expect']):
+                self.assertDictEqual(item1, item2)
 
 if __name__ == '__main__':
     unittest.main()

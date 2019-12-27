@@ -575,6 +575,34 @@ def bf2matrix(bfs):
     return mat
 
 
+def singlets2conc(bf_list, singlets):
+    """
+    Convert singlets to concentrations.
+
+    Parameters:
+
+    bf_list: list
+        List with the basis functions (e.g [{'Au': 1, 'Cu': -1.0}])
+
+    singlets: np.ndarray
+        Array with singlets (NxM), M has to match the length of bf_list.
+        The columns are assumed to given in sorted order (i.e. c1_0, c1_1,
+        c1_2 etc.)
+    """
+    mat = bf2matrix(bf_list)
+
+    # Add row to force that concentrations sum to 1
+    mat = np.vstack((mat, np.ones(mat.shape[1])))
+    singlets = np.hstack((singlets, np.ones((singlets.shape[0], 1))))
+
+    res = np.linalg.solve(mat, singlets.T).T
+    symbs = sorted(list(bf_list[0].keys()))
+    concs = []
+    for i in range(res.shape[0]):
+        concs.append({symbs[j]: res[i, j] for j in range(res.shape[1])})
+    return concs
+
+
 def rate_bf_subsets(elems, bfs):
     """
     Rate different combinations of basis function according to how
