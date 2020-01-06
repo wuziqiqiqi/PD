@@ -9,6 +9,7 @@ from ase.utils import basestring
 from clease import ClusterExpansionSetting
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
+from clease.tools import singlets2conc
 
 
 # Initialize a module-wide logger
@@ -113,7 +114,7 @@ class Evaluate(object):
             self.cf_names = self._filter_cname_circum_dia(max_dia)
 
         self.cf_matrix = self._make_cf_matrix()
-        self.e_dft, self.names, self.concs = self._get_dft_energy_per_atom()
+        self.e_dft, self.names = self._get_dft_energy_per_atom()
 
         self.effective_num_data_pts = len(self.e_dft)
         self.weight_matrix = np.eye(len(self.e_dft))
@@ -131,6 +132,11 @@ class Evaluate(object):
                 self.num_core = int(num_core)
 
         self.set_fitting_scheme(fitting_scheme, alpha)
+
+    @property
+    def concentrations(self):
+        singlet_cols = [i for i, n in enumerate(self.cf_names) if n.startswith('c1')]
+        return singlets2conc(self.setting.basis_functions, self.cf_matrix[:, singlet_cols])
 
     @property
     def default_select_cond(self):
@@ -209,7 +215,7 @@ class Evaluate(object):
         hull = cnv_hull.get_convex_hull()
 
         cosine_sim = []
-        for conc, energy in zip(self.concs, self.e_dft):
+        for conc, energy in zip(self.concentrations, self.e_dft):
             sim = cnv_hull.cosine_similarity_convex_hull(conc, energy, hull)
             cosine_sim.append(sim)
         cosine_sim = np.array(cosine_sim)
@@ -430,11 +436,11 @@ class Evaluate(object):
             fig = cnv_hull.plot()
 
             concs = {k: [] for k in cnv_hull._unique_elem}
-            for c in self.concs:
+            for c in self.concentrations:
                 for k in concs.keys():
                     concs[k].append(c.get(k, 0.0))
             form_en = [cnv_hull.get_formation_energy(c, e)
-                       for c, e in zip(self.concs, e_pred.tolist())]
+                       for c, e in zip(self.concentrations, e_pred.tolist())]
             cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
             fig.suptitle("Convex hull DFT (o), CE (x)")
 
@@ -904,7 +910,6 @@ class Evaluate(object):
         """Retrieve DFT energy and convert it to eV/atom unit."""
         e_dft = []
         names = []
-        concentrations = []
         db = connect(self.setting.db_name)
         for row in db.select(self.select_cond):
             final_struct_id = row.get("final_struct_id", -1)
@@ -916,12 +921,7 @@ class Evaluate(object):
                 energy = row.energy
             e_dft.append(energy / row.natoms)
             names.append(row.name)
-
-            count = row.count_atoms()
-            for k in count.keys():
-                count[k] /= row.natoms
-            concentrations.append(count)
-        return np.array(e_dft), names, concentrations
+        return np.array(e_dft), names
 
     def _get_cf_from_atoms_row(self, row):
         """Obtain the correlation functions from an Atoms Row object."""
