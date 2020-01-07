@@ -1,15 +1,15 @@
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty
-from clease import __version__ as version
 import os
 import json
 from ase.data import chemical_symbols
+from clease import __version__ as version
+from clease.gui import backup_folder
 
 
 class SGCEditor(FloatLayout):
     close = ObjectProperty(None)
     data = {}
-    backup_folder = '.cleaseGUI/'
     backup_file = 'sgcEditorBck{}.json'.format(version)
 
     def __init__(self, **kwargs):
@@ -20,8 +20,8 @@ class SGCEditor(FloatLayout):
         self.ids.symbolInput.text = symbols
         self.ids.chemPotInput.text = chem_pot
 
-        if not os.path.exists(self.backup_folder):
-            os.mkdir(self.backup_folder)
+        if not backup_folder.exists():
+            backup_folder.mkdir()
         self.load_values()
 
     def backup(self):
@@ -40,7 +40,7 @@ class SGCEditor(FloatLayout):
 
     @property
     def fname(self):
-        return self.backup_folder + self.backup_file
+        return str(backup_folder / self.backup_file)
 
     def symbols_are_valid(self, symbs):
         for s in symbs:

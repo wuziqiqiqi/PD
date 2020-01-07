@@ -3,26 +3,25 @@ from kivy.properties import ObjectProperty
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 from kivy.uix.checkbox import CheckBox
-from clease.gui.help_message_popup import HelpMessagePopup
-import os
 from kivy.uix.popup import Popup
+from clease.gui.help_message_popup import HelpMessagePopup
+from clease.gui import backup_folder
 
 
 class FitAlgEditor(FloatLayout):
     close = ObjectProperty(None)
     backup_file = 'fit_alg_editor.txt'
-    backup_folder = '.cleaseGUI/'
     _pop_up = None
 
     def __init__(self, **kwargs):
         FloatLayout.__init__(self, **kwargs)
-        if not os.path.exists(self.backup_folder):
-            os.mkdir(self.backup_folder)
+        if not backup_folder.exists():
+            backup_folder.mkdir()
         self.load_values()
 
     @property
     def backup_filename(self):
-        return self.backup_folder + self.backup_file
+        return str(backup_folder / self.backup_file)
 
     def backup(self):
         values = []

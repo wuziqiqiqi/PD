@@ -23,10 +23,10 @@
             BoxLayout:
                 id: eciPlot
                 size_hint: [1, 0.5 - 0.5*button_height]
-            
+
             StackLayout:
                 size_hint: [1, 0.5*button_height]
-                
+
             GridLayout:
                 rows: 1
                 cols: 3
@@ -136,10 +136,10 @@
             Spinner:
                 size_hint: [0.6, button_height]
                 id: fitAlgSpinner
-                text: 'LASSO'
+                text: root.fitting_params['algorithm']
                 values: 'LASSO', 'L2', 'BCS', 'Genetic Algorithm'
                 on_text: root.load_fit_alg_settings(self.text)
-            
+
             StackLayout:
                 size_hint: [1, 0.25*button_height]
 
@@ -151,11 +151,11 @@
                 id: fitEditorButton
                 text: 'Launch Fitting Algorithm Editor'
                 on_release: root.launch_fit_alg_editor()
-            
+
             StackLayout:
                 size_hint: [0.1, button_height]
 
-            
+
 
             StackLayout:
                 size_hint: [1, button_height]
@@ -168,7 +168,7 @@
                 id: fitButton
                 text: 'Fit ECIs'
                 on_release: root.fit_eci()
-            
+
             StackLayout:
                 size_hint: [0.1, button_height]
 
@@ -177,7 +177,7 @@
                 id: saveECIButton
                 text: 'Save ECIs'
                 on_release: root.save_eci()
-            
+
             StackLayout:
                 size_hint: [0.05, button_height]
 
@@ -200,5 +200,3 @@
 
         BoxLayout:
             size_hint: [0.05, 1]
-
-

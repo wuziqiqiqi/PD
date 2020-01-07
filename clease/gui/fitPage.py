@@ -12,15 +12,15 @@ from clease.gui.fittingAlgorithmEditors import (
     FitAlgEditor, LassoEditor, L2Editor, BCSEditor,
     GAEditor
 )
+from clease.gui.legend import Legend
+from clease.gui import backup_folder
+
 from threading import Thread
 from kivy.uix.screenmanager import Screen
 from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
 import traceback
-import os
-from clease.gui.legend import Legend
-
 
 class ECIOptimizer(object):
     fit_page = None
@@ -62,14 +62,14 @@ class GAClusterSelector(object):
             gen_without_change = self.kwargs.pop('gen_without_change')
             load_file = self.kwargs.pop('load_file')
             if not load_file:
-                fname1 = '.cleaseGUI/ga_fit.csv'
-                fname2 = '.cleaseGUI/ga_fit_cf_names.txt'
-                if os.path.exists(fname1):
-                    os.remove(fname1)
-                if os.path.exists(fname2):
-                    os.remove(fname2)
+                fname1 = backup_folder / 'ga_fit.csv'
+                fname2 = backup_folder / 'ga_fit_cf_names.txt'
+                if fname1.exists():
+                    fname1.unlink()
+                if fname2.exists():
+                    fname2.unlink()
 
-            self.kwargs['fname'] = '.cleaseGUI/ga_fit.csv'
+            self.kwargs['fname'] = str(backup_folder / 'ga_fit.csv')
             ga = GAFit(self.settings, **self.kwargs)
             cf_names = ga.run(gen_without_change=gen_without_change)
 
@@ -93,7 +93,8 @@ class GAClusterSelector(object):
 
 class FitPage(Screen):
     graphs_added = False
-    fitting_params = {}
+    # Initialize standard fitting params
+    fitting_params = {'algorithm': 'LASSO', 'alpha': 0.001}
     eci = {}
     fit_result = {}
     _pop_up = None
@@ -110,6 +111,7 @@ class FitPage(Screen):
     legend = None
 
     def on_enter(self):
+        self.load_fit_alg_settings(self.fitting_params['algorithm'])
         if self.legend is None:
             self.legend = Legend(self.ids.legend)
         if not self.graphs_added:
@@ -572,14 +574,14 @@ class FitPage(Screen):
             app.root.ids.status.text = 'Unkown fitting scheme'
             return
 
-        full_name = '.cleaseGUI/' + fname
-        if not os.path.exists(full_name):
+        full_name = backup_folder / fname
+        if not full_name.exists():
             # Create the file
             editors[text].backup()
 
         args = []
-        with open(full_name, 'r') as infile:
-            for line in infile:
+        with full_name.open('r') as fd:
+            for line in fd:
                 args.append(line.strip())
         args = args[::-1]
         try:
