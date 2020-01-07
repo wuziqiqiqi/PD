@@ -59,6 +59,7 @@ The use of CLEASE is best learned through tutorials:
    metadynamics_sampling
    ce_aucu_gui_tutorial
    api_doc
+   publications
 
 
 
