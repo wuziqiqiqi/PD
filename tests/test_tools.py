@@ -3,7 +3,7 @@ from ase.build import bulk
 from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
-    cname_lt, singlets2conc
+    cname_lt, singlets2conc, aic, aicc, bic
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -218,6 +218,27 @@ class TestTools(unittest.TestCase):
             self.assertEqual(len(conc), len(t['expect']))
             for item1, item2 in zip(conc, t['expect']):
                 self.assertDictEqual(item1, item2)
+
+    def test_aic(self):
+        mse = 2.0
+        n_feat = 3
+        n_data = 5
+        expect = 6.0 + 5*np.log(mse)
+        self.assertAlmostEqual(expect, aic(mse, n_feat, n_data))
+
+    def test_aicc(self):
+        mse = 2.0
+        n_feat = 3
+        n_data = 5
+        expect = 6.0 + 5*np.log(mse) + 24.0
+        self.assertAlmostEqual(expect, aicc(mse, n_feat, n_data))
+
+    def test_bic(self):
+        mse = 2.0
+        n_feat = 3
+        n_data = 5
+        expect = 3.0*np.log(5) + 5*np.log(mse)
+        self.assertAlmostEqual(expect, bic(mse, n_feat, n_data))
 
 if __name__ == '__main__':
     unittest.main()

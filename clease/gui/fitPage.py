@@ -21,6 +21,8 @@ from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
 import traceback
+from clease.gui.legend import Legend
+
 
 class ECIOptimizer(object):
     fit_page = None
@@ -63,28 +65,19 @@ class GAClusterSelector(object):
             load_file = self.kwargs.pop('load_file')
             if not load_file:
                 fname1 = backup_folder / 'ga_fit.csv'
-                fname2 = backup_folder / 'ga_fit_cf_names.txt'
                 if fname1.exists():
                     fname1.unlink()
-                if fname2.exists():
-                    fname2.unlink()
 
             self.kwargs['fname'] = str(backup_folder / 'ga_fit.csv')
-            ga = GAFit(self.settings, **self.kwargs)
-            cf_names = ga.run(gen_without_change=gen_without_change)
+            evaluator = Evaluate(self.settings)
+            ga = GAFit(evaluator.cf_matrix, evaluator.e_dft, **self.kwargs)
+            best_indx = ga.run(gen_without_change=gen_without_change)
 
+            cf_names = [evaluator.cf_names[i] for i, flag in enumerate(best_indx) if flag]
             optimizer = ECIOptimizer()
             optimizer.fit_page = self.fit_page
-
-            max_cluster_dia = self.kwargs['max_cluster_dia']
-            max_cluster_size = self.kwargs['max_cluster_size']
-            select_cond = self.kwargs['select_cond']
-            min_weight = self.kwargs['min_weight']
             optimizer.evaluator = Evaluate(
-                self.settings, max_cluster_dia=max_cluster_dia,
-                max_cluster_size=max_cluster_size,
-                select_cond=select_cond, min_weight=min_weight,
-                fitting_scheme=LinearRegression(), cf_names=cf_names)
+                self.settings, fitting_scheme=LinearRegression(), cf_names=cf_names)
             optimizer.optimize()
         except Exception as exc:
             traceback.print_exc()
@@ -230,8 +223,7 @@ class FitPage(Screen):
         self.dismiss_popup()
 
     def close_ga_editor(self, elitism, mut_prob, num_individuals, max_active,
-                        cost_func, sparsity, sub_clust, load_file,
-                        max_without_imp):
+                        cost_func, load_file, max_without_imp):
         if isinstance(load_file, str):
             load_file = load_file == 'True'
         self.fitting_params = {
@@ -241,8 +233,6 @@ class FitPage(Screen):
             'num_individuals': int(num_individuals),
             'max_active': int(max_active),
             'cost_func': cost_func,
-            'sparsity': float(sparsity),
-            'sub_clust': sub_clust == 'Yes',
             'load_file': load_file,
             'gen_without_change': int(max_without_imp)
         }
@@ -366,18 +356,12 @@ class FitPage(Screen):
             ga_runner.fit_page = self
             gen_without_change = self.fitting_params['gen_without_change']
             ga_runner.kwargs = {
-                'max_cluster_size': max_cluster_size_cut,
-                'max_cluster_dia': max_cluster_dia_cut,
-                'select_cond': select_cond,
-                'min_weight': 1.0,
                 'mutation_prob': self.fitting_params['mut_prob'],
                 'elitism': self.fitting_params['elitism'],
                 'fname': None,
                 'num_individuals': self.fitting_params['num_individuals'],
                 'max_num_in_init_pool': self.fitting_params['max_active'],
                 'cost_func': self.fitting_params['cost_func'].lower(),
-                'sparsity_slope': self.fitting_params['sparsity'],
-                'include_subclusters': self.fitting_params['sub_clust'],
                 'gen_without_change': gen_without_change,
                 'load_file': self.fitting_params['load_file']
             }

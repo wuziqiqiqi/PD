@@ -41,14 +41,6 @@ class TestGAEditor(unittest.TestCase):
         ga_edit.ids.costFuncHelp.dispatch('on_release')
         close(ga_edit)
 
-        # Sparsity help
-        ga_edit.ids.sparsityHelp.dispatch('on_release')
-        close(ga_edit)
-
-        # Force subcluster help
-        ga_edit.ids.forceSubHelp.dispatch('on_release')
-        close(ga_edit)
-
     @patch('clease.gui.fitPage.App')
     def test_closing(self, app_mock):
         clear_cached_values()
@@ -70,11 +62,11 @@ class TestGAEditor(unittest.TestCase):
             if isinstance(field, TextInput):
                 field.dispatch('on_text_validate')
                 page.close_ga_editor.assert_called_with(
-                    '1', '0.1', '100', '150', 'AIC', '1.0', 'No', False, '100')
+                    '1', '0.1', '100', '150', 'AICC', False, '100')
                 num_calls += 1
                 page.close_ga_editor.reset_mock()
         page.dismiss_popup()
-        self.assertEqual(num_calls, 6)
+        self.assertEqual(num_calls, 5)
 
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)

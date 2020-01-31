@@ -13,7 +13,7 @@
             input_filter: 'int'
             write_tab: False
             multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Button:
             id: helpElitism
@@ -32,7 +32,7 @@
             size_hint: [0.3, ga_button_height]
             write_tab: False
             multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -45,7 +45,7 @@
             input_filter: 'int'
             write_tab: False
             multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Button:
             id: numIndHelp
@@ -64,7 +64,7 @@
             input_filter: 'int'
             write_tab: False
             multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Button:
             id: maxActiveHelp
@@ -79,49 +79,14 @@
         Spinner:
             id: costFuncSpinner
             size_hint: [0.25, ga_button_height]
-            text: 'AIC'
-            values: 'AIC', 'AICC', 'BIC', 'LOOCV', 'HQC'
+            text: 'AICC'
+            values: 'AICC', 'AIC', 'BIC'
 
         Button:
             id: costFuncHelp
             size_hint: [0.05, ga_button_height]
             text: '?'
             on_release: root.show_cost_func_help()
-
-        Label:
-            size_hint: [0.7, ga_button_height]
-            text: 'Sparsity slope (not used with LOOCV)'
-
-        TextInput:
-            id: sparistyInput
-            size_hint: [0.25, ga_button_height]
-            text: '1.0'
-            input_filter: 'float'
-            write_tab: False
-            multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
-
-        Button:
-            id: sparsityHelp
-            size_hint: [0.05, ga_button_height]
-            text: '?'
-            on_release: root.show_sparsity_help()
-
-        Label:
-            size_hint: [0.7, ga_button_height]
-            text: 'Force subclusters'
-
-        Spinner:
-            size_hint: [0.25, ga_button_height]
-            id: subclusterSpinner
-            text: 'No'
-            values: 'No', 'Yes'
-
-        Button:
-            id: forceSubHelp
-            size_hint: [0.05, ga_button_height]
-            text: '?'
-            on_release: root.show_subcluster_help()
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -143,7 +108,7 @@
             input_filter: 'int'
             write_tab: False
             multiline: False
-            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_text_validate: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
 
         Label:
             size_hint: [0.7, ga_button_height]
@@ -152,4 +117,4 @@
             id: closeButton
             size_hint: [0.3, ga_button_height]
             text: 'Close'
-            on_release: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.sparistyInput.text, root.ids.subclusterSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)
+            on_release: root.close(root.ids.elitismInput.text, root.ids.mutationProbInput.text, root.ids.numIndInput.text, root.ids.maxActiveClusters.text, root.ids.costFuncSpinner.text, root.ids.restartCheckBox.active, root.ids.maxGenWithNoImprovementInput.text)

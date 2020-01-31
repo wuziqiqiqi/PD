@@ -740,3 +740,57 @@ def cname_lt(cname1, cname2):
         return True
     else:
         return False
+
+def aic(mse, num_features, num_data_points):
+    """
+    Return Afaike's information criteria
+
+    Parameters:
+    mse: float
+        Mean square error
+    
+    num_features: int
+        Number of features in the model
+
+    num_data_points: int
+        Number of data points
+    """
+    return 2.0*num_features + num_data_points*np.log(mse)
+
+
+def aicc(mse, num_features, num_data_points):
+    """
+    Return the modified Afaike's information criterion
+
+    Parameters:
+    mse: float
+        Mean square error
+
+    num_features: int
+        Number of features in the model
+
+    num_data_points: int
+        Number of data points
+    """
+    if num_features >= num_data_points - 1:
+        denum = 1.0
+    else:
+        denum = num_data_points - num_features - 1
+    corr = (2*num_features**2 + 2*num_features)/denum
+    return aic(mse, num_features, num_data_points) + corr
+
+def bic(mse, num_features, num_data_points):
+    """
+    Return Bayes Information Criteria
+
+    Parameters:
+    mse: float
+        Mean square error
+    
+    num_features: int
+        Number of features
+
+    num_data_points: int
+        Number of data points
+    """
+    return np.log(num_data_points)*num_features + num_data_points*np.log(mse)

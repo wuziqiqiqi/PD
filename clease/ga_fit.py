@@ -1,11 +1,9 @@
 from clease import LinearRegression
-from clease import Evaluate
 from clease import _logger
+from clease.tools import (aic, aicc, bic)
 import numpy as np
-import multiprocessing as mp
 import os
 from random import shuffle, choice
-os.environ["OPENBLAS_MAIN_FREE"] = "1"
 
 workers = None
 
@@ -20,14 +18,12 @@ class GAFit(object):
 
     Parameters:
 
-    setting: ClusterExpansionSetting
-        Setting object used for the cluster expanion
+    cf_matrix: np.ndarray
+        Design matrix of the linear regression (nxm) where n is the number of data
+        points and m is the number of features
 
-    max_cluster_dia: float
-        Maximum diameter included in the population
-
-    max_cluster_size: int
-        Maximum number of atoms included in the largest cluster
+    e_dft: list
+        Array of length n with DFT energies
 
     elitism: int
         Number of best structures that will be passed unaltered on to the next
@@ -48,23 +44,6 @@ class GAFit(object):
         is given by this number. If max_num_in_init_pool=150, then
         solution with maximum 150 will be present in the initial pool.
 
-    parallel: bool
-        If ``True``, multiprocessing will be used to parallelize over the
-        individuals in the population.
-        NOTE: One of the most CPU intensive tasks involves matrix
-        manipulations using Numpy. If your Numpy installation uses
-        hyperthreading, it is possible that running with parallel=True
-        actually leads to lower performance.
-
-    num_core: int
-        Number of cores to use during parallelization.
-        If not given (and parallel=True) then mp.cpu_count()/2
-        will be used
-
-    select_cond: list
-        Select condition passed to Evaluate to select which
-        data points from the database the should be included
-
     cost_func: str
         Use the inverse as fitness measure.
         Possible cost functions:
@@ -72,75 +51,30 @@ class GAFit(object):
         aic - Afaike Information Criterion
         aicc - Modified Afaikes Information Criterion
         (tend to avoid overfitting better than aic)
-        loocv - Leave one out cross validation (average)
-        max_loocv - Leave one out cross valdition (maximum)
-        hqc - Hannan-Quinn information criterion
-
-    sparsity_slope: int
-        Ad hoc parameter that can be used to tune the sparsity
-        of the model GA selects. The higher it is, the
-        sparser models will be prefered. Has only impact
-        if cost_func is bic or aic. Default value is 1.
-
-    min_weight: float
-        Weight given to the point furthest away from the
-        convex hull.
-
-    include_subclusters: bool
-        If True all sub-clusters are forced to be part of the solution.
-        If a 3-body cluster is included, all the 2-body clusters that
-        are part of it will automatically be included.
-
-    Example::
-
-        from clease import Evaluate
-        from clease import GAFit
-
-        setting = None # Should be an ASE ClusterExpansionSetting object
-        ga_fit = GAFit(setting)
-        ga_fit.run()
     """
 
-    def __init__(self, setting=None, max_cluster_size=None,
-                 max_cluster_dia=None, mutation_prob=0.001,
+    def __init__(self, cf_matrix, e_dft, mutation_prob=0.001,
                  elitism=1, fname="ga_fit.csv", num_individuals="auto",
-                 local_decline=True,
-                 max_num_in_init_pool=None, parallel=False, num_core=None,
-                 select_cond=None, cost_func="bic", sparsity_slope=1.0,
-                 min_weight=1.0, include_subclusters=True):
-        evaluator = Evaluate(setting, max_cluster_dia=max_cluster_dia,
-                             max_cluster_size=max_cluster_size,
-                             select_cond=select_cond, min_weight=min_weight)
-        self.setting = setting
-        self.eff_num = evaluator.effective_num_data_pts
-        self.W = np.diag(evaluator.weight_matrix)
-        self.cf_names = evaluator.cf_names
-        self.include_subclusters = include_subclusters
-        self.sub_constraint = None
-        self.super_constraint = None
-        if self.include_subclusters:
-            self.sub_constraint = self._initialize_sub_cluster_constraint()
-            self.super_constraint = self._initialize_super_cluster_constraint()
-
-        allowed_cost_funcs = ["loocv", "bic", "aic", "max_loocv", "aicc",
-                              "hqc"]
+                 max_num_in_init_pool=None,
+                 cost_func="aicc"):
+        allowed_cost_funcs = ["bic", "aic", "aicc"]
 
         if cost_func not in allowed_cost_funcs:
             raise ValueError("Cost func has to be one of {}"
                              "".format(allowed_cost_funcs))
 
-        self.cost_func = cost_func
-        self.sparsity_slope = sparsity_slope
+        if cost_func == "aic":
+            self.cost_func = aic
+        elif cost_func == "aicc":
+            self.cost_func = aicc
+        elif cost_func == "bic":
+            self.cost_func = bic
+
         # Read required attributes from evaluate
-        self.cf_matrix = evaluator.cf_matrix
-        self.cf_names = evaluator.cf_names
-        self.e_dft = evaluator.e_dft
+        self.cf_matrix = cf_matrix
+        self.e_dft = e_dft
         self.fname = fname
-        if fname is not None:
-            self.fname_cf_names = \
-                fname.rpartition(".")[0] + "_cf_names.txt"
-        else:
-            self.fname_cf_names = None
+        self.fname_cf_names = fname.rpartition(".")[0] + "_cf_names.txt"
 
         if num_individuals == "auto":
             self.pop_size = 10*self.cf_matrix.shape[1]
@@ -156,12 +90,9 @@ class GAFit(object):
         self.regression = LinearRegression()
         self.elitism = elitism
         self.mutation_prob = mutation_prob
-        self.parallel = parallel
-        self.num_core = num_core
-        self.statistics = {"best_cv": [],
-                           "worst_cv": []}
+        self.statistics = {"best_score": [],
+                           "worst_score": []}
         self.evaluate_fitness()
-        self.local_decline = local_decline
         self.check_valid()
 
     def _initialize_individuals(self, max_num):
@@ -195,31 +126,6 @@ class GAFit(object):
                 individuals.append(individual)
         return individuals
 
-    def bic(self, mse, nsel):
-        """Return the Bayes Information Criteria."""
-        N = len(self.e_dft)
-        sparsity_cost = max((N, self.cf_matrix.shape[1]))
-        return N*np.log(mse) + nsel*np.log(sparsity_cost)*self.sparsity_slope
-
-    def aic(self, mse, num_features):
-        """Return Afaike information criterion."""
-        N = len(self.e_dft)
-        return N*np.log(mse) + 2*num_features*self.sparsity_slope
-
-    def hqc(self, mse, num_features):
-        """Return Hannan-Quinn information criterion."""
-        N = len(self.e_dft)
-        return N*np.log(mse) + \
-            2*num_features*self.sparsity_slope*np.log(np.log(N))
-
-    def aicc(self, mse, num_features):
-        """Modified Afaikes informatiion criterion."""
-        aic = self.aic(mse, num_features)
-        N = len(self.e_dft)
-        corr = 2*num_features**2 + 2*num_features
-        corr /= (N - num_features - 1)
-        return aic + self.sparsity_slope*corr
-
     def get_eci(self, individual):
         """Calculate the LOOCV for the current individual."""
         X = self.design_matrix(individual)
@@ -230,28 +136,6 @@ class GAFit(object):
         """Return the corresponding design matrix."""
         return self.cf_matrix[:, individual == 1]
 
-    def loo_dev(self, individual):
-        """Calculate the prediction error of each data point when left out."""
-        coeff = self.get_eci(individual)
-        X = self.design_matrix(individual)
-        e_pred = X.dot(coeff)
-        delta_e = self.e_dft - e_pred
-        prec = self.regression.precision_matrix(X)
-
-        denom = 1 - np.diag(X.dot(prec).dot(X.T))
-        mask = np.abs(denom) > 1E-7
-        denom[~mask] = 1.0
-        loo_dev = (self.W*delta_e / denom)**2
-        loo_dev[~mask] = 10*np.max(delta_e)
-        return loo_dev
-
-    def loocv(self, individual):
-        cv_sq = np.sum(self.loo_dev(individual))/self.eff_num
-
-        if cv_sq < 0.0:
-            return 0.0
-        return 1000.0*np.sqrt(cv_sq)
-
     def fit_individual(self, individual):
         coeff = self.get_eci(individual)
         X = self.design_matrix(individual)
@@ -260,44 +144,15 @@ class GAFit(object):
 
         info_measure = None
         n_selected = np.sum(individual)
-        mse = np.sum(self.W*delta_e**2)/self.eff_num
-
-        if self.cost_func == "bic":
-            info_measure = self.bic(mse, n_selected)
-        elif self.cost_func == "aic":
-            info_measure = self.aic(mse, n_selected)
-        elif self.cost_func == "aicc":
-            info_measure = self.aicc(mse, n_selected)
-        elif self.cost_func == "hqc":
-            info_measure = self.hqc(mse, n_selected)
-        elif "loocv" in self.cost_func:
-            cv = self.loocv(individual)
-
-            if self.cost_func == "loocv":
-                info_measure = cv
-            elif self.cost_func == "max_loocv":
-                info_measure = np.sqrt(np.max(self.loo_dev(individual)))*1000.0
-            else:
-                raise ValueError("Unknown LOOCV measure!")
-        else:
-            raise ValueError("Unknown cost function {}!"
-                             "".format(self.cost_func))
-        return coeff, info_measure
+        mse = np.sum(delta_e**2)/self.num_data
+        info_measure = self.cost_func(mse, n_selected, self.num_data)
+        return coeff, -info_measure
 
     def evaluate_fitness(self):
         """Evaluate fitness of all species."""
-        global workers
-
-        if self.parallel:
-            num_core = self.num_core or int(mp.cpu_count()/2)
-            args = [(self, indx) for indx in range(len(self.individuals))]
-            if workers is None:
-                workers = mp.Pool(num_core)
-            self.fitness[:] = workers.map(eval_fitness, args)
-        else:
-            for i, ind in enumerate(self.individuals):
-                _, fit = self.fit_individual(ind)
-                self.fitness[i] = -fit
+        for i, ind in enumerate(self.individuals):
+            _, fit = self.fit_individual(ind)
+            self.fitness[i] = fit
 
     def flip_one_mutation(self, individual):
         """Apply mutation where one bit flips."""
@@ -317,10 +172,6 @@ class GAFit(object):
         else:
             indx = choice(ns)
         individual[indx] = (individual[indx] + 1) % 2
-
-        if individual[indx] == 0 and self.include_subclusters:
-            name = self.cf_names[indx]
-            individual = self._remove_super_clusters(name, individual)
         return individual
 
     def make_valid(self, individual):
@@ -329,10 +180,6 @@ class GAFit(object):
             while np.sum(individual) < 2:
                 indx = np.random.randint(low=0, high=len(individual))
                 individual[indx] = 1
-
-        # Check if subclusters should be included
-        if self.include_subclusters:
-            individual = self._activate_all_subclusters(individual)
         return individual
 
     def create_new_generation(self):
@@ -461,7 +308,7 @@ class GAFit(object):
             if mutated:
                 self.individuals[i] = self.make_valid(ind)
                 _, fit = self.fit_individual(self.individuals[i])
-                self.fitness[i] = -fit
+                self.fitness[i] = fit
 
     def population_diversity(self):
         """Check the diversity of the population."""
@@ -479,23 +326,13 @@ class GAFit(object):
         return individual
 
     @property
-    def best_cv(self):
-        return 1.0/np.max(self.fitness)
+    def num_data(self):
+        return self.cf_matrix.shape[0]
 
     @property
     def best_individual_indx(self):
         best_indx = np.argmax(self.fitness)
         return best_indx
-
-    @staticmethod
-    def get_instance_array():
-        raise TypeError("Does not make sense to create an instance array GA.")
-
-    @property
-    def selected_cf_names(self):
-        from itertools import compress
-        individual = self.best_individual
-        return list(compress(self.cf_names, individual))
 
     def index_of_selected_clusters(self, individual):
         """Return the indices of the selected clusters
@@ -510,8 +347,6 @@ class GAFit(object):
     def save_population(self):
         # Save population
         self.check_valid()
-        if self.fname is None:
-            return
         with open(self.fname, 'w') as out:
             for i in range(len(self.individuals)):
                 out.write(",".join(str(x) for x in
@@ -519,26 +354,15 @@ class GAFit(object):
                 out.write("\n")
         _logger("\nPopulation written to {}".format(self.fname))
 
-    def save_cf_names(self):
-        """Store cluster names of best population to file."""
-        if self.fname_cf_names is None:
-            return
-
-        with open(self.fname_cf_names, 'w') as out:
-            for name in self.selected_cf_names:
-                out.write(name+"\n")
-        _logger("Selected cluster names saved to "
-                "{}".format(self.fname_cf_names))
-
     def plot_evolution(self):
         """Create a plot of the evolution."""
         from matplotlib import pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        ax.plot(self.statistics["best_cv"], label="best")
-        ax.plot(self.statistics["worst_cv"], label="worst")
+        ax.plot(self.statistics["best_score"], label="best")
+        ax.plot(self.statistics["worst_score"], label="worst")
         ax.set_xlabel("Generation")
-        ax.set_ylabel("CV score (meV/atom)")
+        ax.set_ylabel("Score")
         plt.show()
 
     def run(self, gen_without_change=100, min_change=0.01, save_interval=100):
@@ -570,19 +394,15 @@ class GAFit(object):
 
             num_eci = np.sum(self.individuals[best_indx])
             diversity = self.population_diversity()
-            self.statistics["best_cv"].append(np.max(self.fitness))
-            self.statistics["worst_cv"].append(np.min(self.fitness))
+            self.statistics["best_score"].append(np.max(self.fitness))
+            self.statistics["worst_score"].append(np.min(self.fitness))
 
             best3 = np.abs(np.sort(self.fitness)[::-1][:3])
             loocv_msg = ""
-            if "loocv" not in self.cost_func:
-                # Print the LOOCV
-                loocv_msg = "loocv: {:.2f}".format(
-                    self.loocv(self.best_individual))
 
-            self.log("Generation: {}. Top 3 {}: {:.2e} (-){:.2e} (-){:.2e} "
+            self.log("Generation: {}. Top 3 scores {:.2e} (-){:.2e} (-){:.2e} "
                      "Num ECI: {}. Pop. div: {:.2f} {}"
-                     "".format(gen, self.cost_func,
+                     "".format(gen,
                                best3[0], best3[0] - best3[1],
                                best3[0] - best3[2], num_eci, diversity,
                                loocv_msg))
@@ -596,7 +416,6 @@ class GAFit(object):
 
             if gen % save_interval == 0:
                 self.save_population()
-                self.save_cf_names()
 
             if num_gen_without_change >= gen_without_change:
                 self.log("\nReached {} generations without sufficient "
@@ -604,108 +423,8 @@ class GAFit(object):
                 break
             gen += 1
 
-        if self.local_decline:
-            # Perform a last local optimization
-            self._local_optimization()
         self.save_population()
-        self.save_cf_names()
-        return self.selected_cf_names
-
-    def _local_optimization(self, indx=None):
-        """Perform a local optimization strategy to the best individual."""
-        from copy import deepcopy
-        if indx is None:
-            individual = self.best_individual
-        else:
-            individual = self.individuals[indx]
-
-        num_steps = 100*len(individual)
-        self.log("Local optimization with {} trial updates.".format(num_steps))
-        cv_min = -np.max(self.fitness)
-        self.log("Initial {}: {:.2e}".format(self.cost_func, cv_min))
-        for _ in range(num_steps):
-            flip_indx = choice(range(len(individual)))
-            individual_cpy = deepcopy(individual)
-            individual_cpy[flip_indx] = (individual_cpy[flip_indx]+1) % 2
-            if individual_cpy[flip_indx] == 0 and self.include_subclusters:
-                name = self.cf_names[flip_indx]
-                individual_cpy = self._remove_super_clusters(name,
-                                                             individual_cpy)
-            individual_cpy = self.make_valid(individual_cpy)
-            _, cv = self.fit_individual(individual_cpy)
-
-            if cv < cv_min:
-                cv_min = cv
-                individual = individual_cpy
-
-        for i in range(len(self.individuals)):
-            if np.allclose(individual, self.individuals[i]):
-                # The individual already exists in the population so we don't
-                # insert it
-                return
-
-        self.individuals[self.best_individual_indx] = individual
-        self.fitness[self.best_individual_indx] = -cv_min
-        self.log("Final {}: {:.2e}".format(self.cost_func, cv_min))
-
-    def _initialize_sub_cluster_constraint(self):
-        """Initialize the sub-cluster constraint."""
-        must_be_active = []
-        for name in self.cf_names:
-            prefix = name.rpartition("_")[0]
-            if prefix == 'c0' or prefix == 'c1' or prefix == '':
-                must_be_active.append([])
-                continue
-            cluster = self.setting.cluster_list.get_by_name(prefix)[0]
-            sub = self.setting.cluster_list.get_subclusters(cluster)
-            sub_names = [c.name for c in sub]
-            indx = []
-            for sub_name in sub_names:
-                indices = [i for i, name in enumerate(self.cf_names)
-                           if name.startswith(sub_name)]
-                indx += indices
-            must_be_active.append(indx)
-        return must_be_active
-
-    def _initialize_super_cluster_constraint(self):
-        """Initialize the super-clusters."""
-        deactivate = {}
-        for name in self.cf_names:
-            prefix = name.rpartition("_")[0]
-            if prefix in deactivate.keys():
-                continue
-            indx = []
-            for i, name2 in enumerate(self.cf_names):
-                prefix2 = name2.rpartition("_")[0]
-
-                if prefix2 == 'c0' or prefix2 == 'c1' or prefix2 == '':
-                    continue
-                cluster = self.setting.cluster_list.get_by_name(prefix2)[0]
-                sub = self.setting.cluster_list.get_subclusters(cluster)
-                sub_names = [c.name for c in sub]
-                if prefix in sub_names:
-                    indx.append(i)
-            deactivate[prefix] = indx
-        return deactivate
-
-    def _activate_all_subclusters(self, individual):
-        """Activate all sub-clusters of the individual."""
-        selected_indx = np.nonzero(individual)[0].tolist()
-        active = set()
-        for indx in selected_indx:
-            active = active.union(self.sub_constraint[indx])
-
-        active = list(active)
-        if not active:
-            return individual
-        individual[active] = 1
-        return individual
-
-    def _remove_super_clusters(self, name, ind):
-        """Remove all the larger clusters."""
-        prefix_name = name.rpartition("_")[0]
-        ind[self.super_constraint[prefix_name]] = 0
-        return ind
+        return self.best_individual
 
     def check_valid(self):
         """Check that the current population is valid."""
@@ -713,10 +432,3 @@ class GAFit(object):
             valid = self.make_valid(ind.copy())
             if np.any(valid != ind):
                 raise ValueError("Individual violate constraints!")
-
-
-def eval_fitness(args):
-    ga = args[0]
-    indx = args[1]
-    _, cv = ga.fit_individual(ga.individuals[indx])
-    return -cv

@@ -1,7 +1,7 @@
 """Test case for tha GAFit"""
 from clease import GAFit
 from clease.ga_fit import SaturatedPopulationError
-from clease import CEBulk, NewStructures, Concentration
+from clease import CEBulk, NewStructures, Concentration, Evaluate
 from clease.tools import update_db
 from ase.calculators.emt import EMT
 from ase.db import connect
@@ -48,7 +48,8 @@ class TestGAFit(unittest.TestCase):
         db_name = 'test_ga_fit.db'
         setting = init_system(db_name)
         backup = "ga_test.csv"
-        selector = GAFit(setting=setting, fname=backup)
+        evaluator = Evaluate(setting)
+        selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
         try:
             selector.run(gen_without_change=3, save_interval=1)
         except SaturatedPopulationError:
@@ -56,12 +57,9 @@ class TestGAFit(unittest.TestCase):
         individuals = selector.individuals
 
         # Restart from file, this time data will be loaded
-        selector = GAFit(setting=setting, fname=backup)
+        selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
         self.assertTrue(np.allclose(individuals, selector.individuals))
         os.remove(backup)
-
-        if os.path.exists("ga_test_cf_names.txt"):
-            os.remove("ga_test_cf_names.txt")
 
     def tearDown(self):
         try:

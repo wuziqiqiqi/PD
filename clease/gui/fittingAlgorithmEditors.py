@@ -88,18 +88,6 @@ class GAEditor(FitAlgEditor):
         msg += 'inidviduals is transferred'
         self.show_help_message(msg, 'Elitism help')
 
-    def show_sparsity_help(self):
-        msg = 'For several cost function a penalisation term\n'
-        msg += 'which is a monotonic function of the number of\n'
-        msg += 'active clusters in the chosen string of clusters\n'
-        msg += 'and the number of datapoint is added. For BIC his\n'
-        msg += 'k*ln(N), where N is the number of datapoints and k\n'
-        msg += 'is the number of chosen features. We allow a modified\n'
-        msg += 'version of this. alpha*k*ln(N), where alphs is the\n'
-        msg += 'called sparsity slope. This is only effective for\n'
-        msg += 'BIC, AIC, AICC and HQC'
-        self.show_help_message(msg, 'Sparsity help')
-
     def show_individual_help(self):
         msg = 'An individual in the CE context is a binary\n'
         msg += 'representation of clusters. If the clusters\n'
@@ -125,13 +113,4 @@ class GAEditor(FitAlgEditor):
         msg += 'AIC   - Afaike Information Criterion (penalty 2*k)\n'
         msg += 'AICC  - Modified AIC (AICC = AIC + (2k^2 + 2k)/(n-k-1)\n'
         msg += 'BIC   - Bayes Information Criterion (penalty k*ln(n))\n'
-        msg += 'LOOCV - Leave-one-out-cross validation\n'
-        msg += 'HQS   - Hannan-Quin Criterion (penalty 2*k*ln(ln(n)))\n'
         self.show_help_message(msg, 'Cost function help')
-
-    def show_subcluster_help(self):
-        msg = 'If Yes all subclusters of all included clusters have\n'
-        msg += 'to be included. Hence, if a 3-body cluster is selected\n'
-        msg += 'all the 2-body clusters forming it, also have to be\n'
-        msg += 'included.'
-        self.show_help_message(msg, 'Force subcluster help')

@@ -155,9 +155,7 @@ class FitPageTests(unittest.TestCase):
                 'mut_prob': 0.1,
                 'num_individuals': 100,
                 'max_active': 150,
-                'cost_func': 'AIC',
-                'sparsity': 1.0,
-                'sub_clust': False,
+                'cost_func': 'AICC',
                 'load_file': False,
                 'gen_without_change': 100
             }
