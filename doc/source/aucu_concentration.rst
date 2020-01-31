@@ -84,6 +84,9 @@ specified using ``A_lb`` and ``b_lb`` arguments as
 >>> from clease import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
 
+A list of many examples on how linear systems equations can be used, is found 
+:doc:`here </linsys_examples>`.
+
 The second method is to specify the concentration range using formula unit
 strings. The :class:`Concentration` class contains
 :meth:`~Concentration.set_conc_formula_unit()` method which accepts formula
