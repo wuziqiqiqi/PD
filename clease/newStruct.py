@@ -666,10 +666,10 @@ class NewStructures(object):
 
         Parameters:
 
-        init_struct: .xyz, .cif or .traj file
+        init_struct: Atoms object, .xyz, .cif or .traj file
             Unrelaxed initial structure.
 
-        final_struct: .traj file (optional)
+        final_struct: Atoms object or .traj file (optional)
             Final structure that contains the energy.
             Needs to also supply init_struct in order to use the final_struct.
 
