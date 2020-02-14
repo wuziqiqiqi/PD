@@ -1,6 +1,7 @@
 """Collection of classess to perform regression."""
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import pinv
+from clease.dataNormalizer import DataNormalizer
 
 
 class LinearRegression(object):
@@ -93,12 +94,16 @@ class Tikhonov(LinearRegression):
         - 2D array: Full Tikhonov matrix supplied by a user.
                     The dimensions of the matrix should be M * M where M is the
                     number of features.
+
+    normalize: bool
+        If True each feature will be normalized to before fitting
     """
 
-    def __init__(self, alpha=1E-5, penalize_bias_term=False):
+    def __init__(self, alpha=1E-5, penalize_bias_term=False, normalize=True):
         LinearRegression.__init__(self)
         self.alpha = alpha
         self.penalize_bias_term = penalize_bias_term
+        self.normalize = normalize
 
     def _get_tikhonov_matrix(self, num_clusters):
         if isinstance(self.alpha, np.ndarray):
@@ -124,9 +129,26 @@ class Tikhonov(LinearRegression):
             W = np.ones(len(y))
         else:
             W = np.diag(self.weight_matrix)
-        precision = self.precision_matrix(X)
 
-        coeff = precision.dot(X.T.dot(W*y))
+        X_fit = X
+        y_fit = y
+        if self.normalize:
+            if np.any(np.abs(X[:, 0] - 1.0) > 1e-16):
+                msg = "Tikhonov: Expect that the first column in X corresponds"
+                msg += "to a bias term. Therefore, all entries should be 1."
+                msg += "Got:\n{}\n".format(X[:, 0])
+                raise ValueError(msg)
+            normalizer = DataNormalizer()
+            X_fit, y_fit = normalizer.normalize(X[:, 1:], y)
+
+        precision = self.precision_matrix(X_fit)
+        coeff = precision.dot(X_fit.T.dot(W*y_fit))
+
+        if self.normalize:
+            coeff_with_bias = np.zeros(len(coeff)+1)
+            coeff_with_bias[1:] = normalizer.convert(coeff)
+            coeff_with_bias[0] = normalizer.bias(coeff)
+            coeff = coeff_with_bias
         return coeff
 
     def precision_matrix(self, X):
@@ -141,7 +163,7 @@ class Tikhonov(LinearRegression):
         W = self.weight_matrix
         if W is None:
             W = np.eye(X.shape[0])
-        precision = inv(X.T.dot(W.dot(X)) + tikhonov.T.dot(tikhonov))
+        precision = pinv(X.T.dot(W.dot(X)) + tikhonov.T.dot(tikhonov))
         return precision
 
     @staticmethod
