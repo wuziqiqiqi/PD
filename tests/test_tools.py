@@ -3,7 +3,8 @@ from ase.build import bulk
 from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
-    cname_lt, singlets2conc, aic, aicc, bic
+    cname_lt, singlets2conc, aic, aicc, bic,
+    get_extension, add_file_extension
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -210,8 +211,7 @@ class TestTools(unittest.TestCase):
                 'cf': np.array([[1.0, 1.0], [-0.5, -0.5]]),
                 'expect': [{'Li': 1.0, 'O': 0.0, 'X': 0.0},
                            {'Li': 0.0, 'O': 0.5, 'X': 0.5}]
-            }
-        ]
+            }]
 
         for t in tests:
             conc = singlets2conc(t['bf'], t['cf'])
@@ -239,6 +239,47 @@ class TestTools(unittest.TestCase):
         n_data = 5
         expect = 3.0*np.log(5) + 5*np.log(mse)
         self.assertAlmostEqual(expect, bic(mse, n_feat, n_data))
+
+    def test_get_filename(self):
+        tests = [
+            {
+                'fname': 'data.csv',
+                'expect': 'csv'
+            },
+            {
+                'fname': 'file',
+                'expect': ''
+            },
+            {
+                'fname': 'double_ext.csv.json',
+                'expect': 'json'
+            }
+        ]
+        for t in tests:
+            ext = get_extension(t['fname'])
+            self.assertEqual(ext, t['expect'])
+
+    def test_add_proper_file_extension(self):
+        tests = [
+            {
+                'fname': 'data.csv',
+                'ext': 'csv',
+                'expect': 'data.csv',
+            },
+            {
+                'fname': 'data',
+                'ext': 'json',
+                'expect': 'data.json'
+            }
+        ]
+
+        for t in tests:
+            fname = add_file_extension(t['fname'], t['ext'])
+            self.assertEqual(fname, t['expect'])
+
+        with self.assertRaises(ValueError):
+            add_file_extension('data.json', 'csv')
+
 
 if __name__ == '__main__':
     unittest.main()

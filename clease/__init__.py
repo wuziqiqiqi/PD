@@ -31,9 +31,10 @@ from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
 from clease.sequential_cluster_ridge import SequentialClusterRidge
 from clease.cluster_info_mapper import ClusterInfoMapper
 from clease.cluster_manager import ClusterManager
+from clease.data_manager import DataManager, CorrFuncEnergyDataManager
 
 __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'NewStructures', 'NewStructures', 'Evaluate', 'AtomsManager',
            'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
            'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
-           'SkewnessFilter']
+           'SkewnessFilter', 'DataManager', 'CorrFuncEnergyDataManager']

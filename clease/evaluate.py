@@ -10,6 +10,7 @@ from clease import ClusterExpansionSetting
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 from clease.tools import singlets2conc
+from clease.data_manager import CorrFuncEnergyDataManager
 
 
 # Initialize a module-wide logger
@@ -113,8 +114,17 @@ class Evaluate(object):
             max_dia = self._get_max_cluster_dia(max_cluster_dia)
             self.cf_names = self._filter_cname_circum_dia(max_dia)
 
-        self.cf_matrix = self._make_cf_matrix()
-        self.e_dft, self.names = self._get_dft_energy_per_atom()
+        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+
+        # TODO: At a later stage we might want to pass the data manager as an
+        # argument since Evaluate does not depend on the details on how the
+        # data was optained
+        self.dm = CorrFuncEnergyDataManager(
+            setting.db_name, self.cf_names, tab_name)
+
+        self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
+        db = connect(setting.db_name)
+        self.names = [row.name for row in db.select(self.select_cond)]
 
         self.effective_num_data_pts = len(self.e_dft)
         self.weight_matrix = np.eye(len(self.e_dft))
@@ -892,41 +902,6 @@ class Evaluate(object):
                 filtered_names.append(name)
         return filtered_names
 
-    def _make_cf_matrix(self):
-        """Return a matrix containing the correlation functions.
-
-        Only selects all of the converged structures by default, but further
-        constraints can be imposed using *select_cond* argument in the
-        initialization step.
-        """
-        cfm = []
-        db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
-        for row in db.select(self.select_cond):
-            cfm.append([row[tab_name][x] for x in self.cf_names])
-        return np.array(cfm, dtype=float)
-
-    def _get_dft_energy_per_atom(self):
-        """Retrieve DFT energy and convert it to eV/atom unit."""
-        e_dft = []
-        names = []
-        db = connect(self.setting.db_name)
-        for row in db.select(self.select_cond):
-            final_struct_id = row.get("final_struct_id", -1)
-            if final_struct_id >= 0:
-                # New format where energy is stored in a separate DB entry
-                energy = db.get(id=final_struct_id).energy
-            else:
-                # Old format where the energy is stored in the init structure
-                energy = row.energy
-            e_dft.append(energy / row.natoms)
-            names.append(row.name)
-        return np.array(e_dft), names
-
-    def _get_cf_from_atoms_row(self, row):
-        """Obtain the correlation functions from an Atoms Row object."""
-        return [row[x] for x in self.cf_names]
-
     def generalization_error(self, validation_id):
         """
         Estimate the generalization error to new datapoints
@@ -976,11 +951,7 @@ class Evaluate(object):
         fname: str
             Filename to write to. Typically this should end with .csv
         """
-        header = ','.join(self.cf_names) + ',E_DFT (eV/atom)'
-        data = np.hstack((self.cf_matrix,
-                          np.reshape(self.e_dft, (len(self.e_dft), -1))))
-        np.savetxt(fname, data, delimiter=",", header=header)
-        _logger("Dataset exported to {}".format(fname))
+        self.dm.to_csv(fname)
 
     def get_cv_score(self):
         """

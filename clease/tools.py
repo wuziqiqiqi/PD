@@ -741,6 +741,7 @@ def cname_lt(cname1, cname2):
     else:
         return False
 
+
 def aic(mse, num_features, num_data_points):
     """
     Return Afaike's information criteria
@@ -748,7 +749,7 @@ def aic(mse, num_features, num_data_points):
     Parameters:
     mse: float
         Mean square error
-    
+
     num_features: int
         Number of features in the model
 
@@ -779,6 +780,7 @@ def aicc(mse, num_features, num_data_points):
     corr = (2*num_features**2 + 2*num_features)/denum
     return aic(mse, num_features, num_data_points) + corr
 
+
 def bic(mse, num_features, num_data_points):
     """
     Return Bayes Information Criteria
@@ -786,7 +788,7 @@ def bic(mse, num_features, num_data_points):
     Parameters:
     mse: float
         Mean square error
-    
+
     num_features: int
         Number of features
 
@@ -794,3 +796,41 @@ def bic(mse, num_features, num_data_points):
         Number of data points
     """
     return np.log(num_data_points)*num_features + num_data_points*np.log(mse)
+
+
+def get_extension(fname):
+    """
+    Return the file extension of a filename
+
+    Parameter:
+
+    fname: str
+        Filename
+    """
+    if fname.count('.') == 0:
+        return ''
+    return fname.rpartition('.')[-1]
+
+
+def add_file_extension(fname, ext):
+    """
+    Adds the wanted file extension to a filename. If a file extension
+    is already present and it matches the wanted file extension, nothing
+    is done. If it does not match, a ValueError is raised. Finally, if
+    no file extension exist the wanted extension is added
+
+    Parameters:
+
+    fname: str
+        Filename
+
+    ext: str
+        Extension (without .) example (csv, txt, json)
+    """
+    if fname.endswith(ext):
+        return fname
+
+    current_ext = get_extension(fname)
+    if current_ext == '':
+        return fname + '.' + ext
+    raise ValueError('Passed extenstion {} expected {}'.format(current_ext, ext))

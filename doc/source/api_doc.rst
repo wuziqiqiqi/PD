@@ -9,3 +9,4 @@ API Documentation
     ./api_montecarlo
     ./api_mc_observers
     ./api_mc_constraints
+    ./api_data_getters
