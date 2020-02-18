@@ -1,6 +1,7 @@
 """Module for setting up pseudospins and basis functions."""
 import numpy as np
 import math
+from clease.gramSchmidthMonomials import GramSchmidtMonimial
 
 
 class BasisFunction(object):
@@ -41,27 +42,11 @@ class Polynomial(BasisFunction):
     def __init__(self, unique_elements):
         BasisFunction.__init__(self, unique_elements)
         self.name = "polynomial"
-        if self.num_unique_elements > 6:
-            raise ValueError("Only systems consisting up to 6 types of "
-                             "elements are currently supported for the "
-                             "Polynomial basis function scheme.")
 
     def get_spin_dict(self):
         """Define pseudospins for all consistuting elements."""
-        # Find odd/even
-        spin_values = []
-        if self.num_unique_elements % 2 == 1:
-            highest = (self.num_unique_elements - 1) / 2
-        else:
-            highest = self.num_unique_elements / 2
-        # Assign spin value for each element
-        while highest > 0:
-            spin_values.append(highest)
-            spin_values.append(-highest)
-            highest -= 1
-        if self.num_unique_elements % 2 == 1:
-            spin_values.append(0)
-
+        gram_schmidt = GramSchmidtMonimial(self.num_unique_elements)
+        spin_values = gram_schmidt.values
         spin_dict = {}
         for x in range(self.num_unique_elements):
             spin_dict[self.unique_elements[x]] = spin_values[x]
@@ -69,69 +54,9 @@ class Polynomial(BasisFunction):
 
     def get_basis_functions(self):
         """Create basis functions to guarantee the orthonormality."""
-        # coeff_c = [c_0^1, c_1^1, c_0^2, c_1^2, c_2^2]^T
-        coeff_c = np.array([
-            [0.0, np.sqrt(2), -5. / 3, -1 * np.sqrt(10. / 7), -np.sqrt(2)],
-            [0.0,  -3 / np.sqrt(2), 2. / 3, np.sqrt(5. / 14),
-             3. / (7 * np.sqrt(2))],
-            [0.0, 0.0, 0.0, 3 * np.sqrt(2. / 7), 9 * np.sqrt(1.5) / 5],
-            [0.0, 0.0, 0.0, -155 / (12 * np.sqrt(14)),
-             -101 / (28 * np.sqrt(6))],
-            [0.0, 0.0, 0.0, 5 * np.sqrt(7. / 2) / 12, 7 / (20 * np.sqrt(6))]])
-
-        # coeff_d = [d_0^0, d_0^1, d_1^1, d_0^2, d_1^2, d_2^2]^T
-        coeff_d = np.array([
-            [1.0, np.sqrt(3. / 2), np.sqrt(2. / 5), 1. / np.sqrt(2),
-             -np.sqrt(3. / 14)],
-            [0.0, 0.0,  -17 / (3 * np.sqrt(10)), -17 / (6 * np.sqrt(2)),
-             -7. / 6],
-            [0.0, 0.0, np.sqrt(2.5) / 3, 5 / (6 * np.sqrt(2)), 1. / 6],
-            [0.0, 0.0, 0.0, 0.0, 131. / (15 * np.sqrt(14))],
-            [0.0, 0.0, 0.0, 0.0, -7 * np.sqrt(7. / 2) / 12],
-            [0.0, 0.0, 0.0, 0.0, np.sqrt(7. / 2) / 20]])
-
-        col = self.num_unique_elements - 2
-        if col > 5:
-            msg = "Polynomial basis function scheme only supports up "
-            msg += "to 6 elements. \nPlease change to another basis function "
-            msg += "scheme."
-            raise RuntimeError(msg)
-
-        bf_list = []
-        bf = {}
-        for key, value in self.spin_dict.items():
-            bf[key] = coeff_d[0][col] * value
-        bf_list.append(bf)
-
-        if self.num_unique_elements > 2:
-            bf = {}
-            for key, value in self.spin_dict.items():
-                bf[key] = (coeff_c[0][col] + (coeff_c[1][col] * value**2))
-            bf_list.append(bf)
-
-        if self.num_unique_elements > 3:
-            bf = {}
-            for key, value in self.spin_dict.items():
-                bf[key] = coeff_d[1][col] * value
-                bf[key] += coeff_d[2][col] * (value**3)
-            bf_list.append(bf)
-
-        if self.num_unique_elements > 4:
-            bf = {}
-            for key, value in self.spin_dict.items():
-                bf[key] = coeff_c[2][col] + (coeff_c[3][col] * (value**2))
-                bf[key] += coeff_c[4][col] * (value**4)
-            bf_list.append(bf)
-
-        if self.num_unique_elements > 5:
-            bf = {}
-            for key, value in self.spin_dict.items():
-                bf[key] = coeff_d[3][col] * value
-                bf[key] += coeff_d[4][col] * (value**3)
-                bf[key] += coeff_d[5][col] * (value**5)
-            bf_list.append(bf)
-
-        return bf_list
+        gram_schmidt = GramSchmidtMonimial(self.num_unique_elements)
+        gram_schmidt.build()
+        return gram_schmidt.basis_functions(self.unique_elements)
 
 
 class Trigonometric(BasisFunction):

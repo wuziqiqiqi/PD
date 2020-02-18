@@ -160,7 +160,7 @@ class TestCECrystal(unittest.TestCase):
         if update_reference_file:
             all_cf["Ta_O_X_grouped"] = cf
         for key in cf.keys():
-            self.assertAlmostEqual(cf[key], all_cf["Ta_O_X_grouped"][key])
+            self.assertAlmostEqual(cf[key], all_cf["Ta_O_X_grouped"][key], msg=key)
 
         try:
             ns = NewStructures(setting=bsg, struct_per_gen=2)
