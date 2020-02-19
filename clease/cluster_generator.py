@@ -40,14 +40,23 @@ class ClusterGenerator(object):
 
     def cartesian(self, x):
         cellT = self.prim.get_cell().T
+        if isinstance(x, np.ndarray) and len(x.shape) == 2:
+            return cellT.dot(x[:, :3].T).T + self.shifts[x[:, 3]]
         return cellT.dot(x[:3]) + self.shifts[x[3]]
 
     def get_four_vector(self, pos, lattice):
         """Return the four vector of an atom."""
+        pos -= self.shifts[lattice]
+
+        if isinstance(pos, np.ndarray) and len(pos.shape) == 2:
+            assert len(lattice) == pos.shape[0]
+            int_pos = self.prim_cell_invT.dot(pos.T)
+            int_pos = np.round(int_pos).astype(int)
+            return np.vstack((int_pos, lattice)).T
+
         if lattice is None:
             lattice = self.get_lattice(pos)
 
-        pos -= self.shifts[lattice]
         int_pos = self.prim_cell_invT.dot(pos)
         four_vec = np.zeros(4, dtype=int)
         four_vec[:3] = np.round(int_pos).astype(int)

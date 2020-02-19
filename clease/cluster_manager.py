@@ -224,31 +224,31 @@ class ClusterManager(object):
 
         unique_indx = self.fourvec_to_indx(template, unique)
 
-        vec2 = np.zeros(4, dtype=int)
         lut = self.create_four_vector_lut(template)
         indices = [0 for _ in range(len(unique))]
         cartesian = np.zeros((len(unique), 3))
 
         # Make a copy of the positions to avoid atoms being translated
         tmp_pos = template.get_positions().copy()
+        unique_npy = np.array(list(unique))
+        translated_unique = np.zeros_like(unique_npy)
         for atom in template:
             if atom.tag >= self.generator.num_sub_lattices:
                 trans_mat.append({})
                 continue
 
-            vec = self.generator.get_four_vector(tmp_pos[atom.index, :], atom.tag)
-            for i, u in enumerate(unique):
-                vec2[:3] = vec[:3] + u[:3]
-                vec2[3] = u[3]
+            vec = self.generator.get_four_vector(
+                tmp_pos[atom.index, :], atom.tag)
 
-                cartesian[i, :] = self.generator.cartesian(vec2)
-
+            translated_unique[:, :3] = unique_npy[:, :3] + vec[:3]
+            translated_unique[:, 3] = unique_npy[:, 3]
+            cartesian = self.generator.cartesian(translated_unique)
             cartesian = wrap_positions(cartesian, cell)
 
-            for i, u in enumerate(unique):
-                vec2_four = self.generator.get_four_vector(
-                    cartesian[i, :], u[3])
-                indices[i] = lut[tuple(vec2_four)]
+            four_vecs = self.generator.get_four_vector(
+                cartesian, translated_unique[:, 3])
+            N = four_vecs.shape[0]
+            indices = [lut[tuple(four_vecs[i, :])] for i in range(N)]
 
             trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique],
                                       indices)))

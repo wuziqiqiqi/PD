@@ -280,7 +280,7 @@ class ClusterExpansionSetting(object):
     def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
         self.size = template.info['size']
-        self.atoms_mng.atoms = wrap_and_sort_by_position(template)
+        self.atoms_mng.atoms = template
 
     def set_active_template(self, size=None, atoms=None):
         """Set a new template atoms object."""
