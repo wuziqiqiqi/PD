@@ -365,6 +365,8 @@ class SettingsPage(Screen):
                     parse_max_cluster_dia(settingPage['max_cluster_dia'])
 
             initializer = SettingsInitializer()
+            initializer.basis_func_type = settingPage['basis_function']
+            initializer.skew_threshold = skewness_factor
             initializer.app = App.get_running_app()
             initializer.status = App.get_running_app().root.ids.status
 
@@ -389,14 +391,14 @@ class SettingsPage(Screen):
                     db_name=settingPage['db_name'], concentration=conc,
                     max_cluster_dia=max_cluster_dia,
                     max_cluster_size=int(settingPage['cluster_size']),
-                    basis_function=settingPage['basis_function'],
                     size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor
                 )
                 msg = "Applying settings to database..."
                 App.get_running_app().root.ids.status.text = msg
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
+                initializer.basis_function = settingPage['basis_function']
+                initializer.skew_threshold = skewness_factor
                 Thread(target=initializer.initialize).start()
             else:
                 if settingPage['cellpar'] == '':

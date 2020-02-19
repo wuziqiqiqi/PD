@@ -26,3 +26,4 @@ concObsBack*.json
 .cleaseGUI/*
 gui_tests/.cleaseGUI/*
 metadyn.json
+demo_save.json

@@ -84,8 +84,7 @@ favorite example: AuCu!
 ...                  concentration=conc,
 ...                  db_name="aucu_metadyn.db",
 ...                  max_cluster_size=2,
-...                  max_cluster_dia=[4.0],
-...                  basis_function='polynomial')
+...                  max_cluster_dia=[4.0])
 
 The next thing we need to do is to load the ECIs and attach the calculator
 

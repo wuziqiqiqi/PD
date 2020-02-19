@@ -8,7 +8,8 @@
 
 import os
 import json
-from clease import CEBulk, CorrFunction, NewStructures, Evaluate, Concentration, settingFromJSON
+from clease import (CEBulk, CorrFunction, NewStructures, Evaluate,
+                    Concentration, settingFromJSON)
 from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from ase.calculators.emt import EMT
@@ -116,8 +117,7 @@ class TestCEBulk(unittest.TestCase):
                              grouped_basis=[[0], [1, 2]])
         setting = CEBulk(concentration=conc, crystalstructure="fluorite",
                          a=4.0, size=[2, 2, 2], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01],
-                         ignore_background_atoms=True)
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
         atoms = setting.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
         atoms[O_ind[0]].symbol = 'F'
@@ -177,13 +177,15 @@ class TestCEBulk(unittest.TestCase):
         triplet = bc_setting.cluster_list.get_by_name(name)[0]
         sub_cl = (bc_setting.cluster_list.get_subclusters(triplet))
         sub_cl_name = set([c.name for c in sub_cl])
-        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c2_d0001_0"]))
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0",
+                                            "c2_d0001_0"]))
 
         name = "c4_d0000_0"
         quad = bc_setting.cluster_list.get_by_name(name)[0]
         sub_cl = bc_setting.cluster_list.get_subclusters(quad)
         sub_cl_name = set([c.name for c in sub_cl])
-        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0", "c3_d0000_0"]))
+        self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0",
+                                            "c3_d0000_0"]))
 
         # Try to insert an atoms object with a strange
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
@@ -276,11 +278,11 @@ class TestCEBulk(unittest.TestCase):
         db_name = "test_bulk_2grouped_probe.db"
         basis_elements = [['Zr', 'Ce'], ['O'], ['O']]
         conc = Concentration(basis_elements=basis_elements,
-                                      grouped_basis=[[0], [1, 2]])
+                             grouped_basis=[[0], [1, 2]])
         setting = CEBulk(concentration=conc, crystalstructure="fluorite",
                          a=4.0, size=[2, 2, 3], db_name=db_name,
-                         max_cluster_size=2, max_cluster_dia=[4.01],
-                         ignore_background_atoms=False)
+                         max_cluster_size=2, max_cluster_dia=[4.01])
+        setting.include_background_atoms = True
         fam_figures = get_figures_of_family(setting, "c2_d0005_0")
         self.assertEqual(len(fam_figures[0]), 6)
         self.assertEqual(len(fam_figures[1]), 6)
@@ -321,8 +323,7 @@ class TestCEBulk(unittest.TestCase):
                              grouped_basis=[[0], [1, 2]])
         setting = CEBulk(concentration=conc, crystalstructure="fluorite",
                          a=4.0, size=[2, 2, 2], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01],
-                         ignore_background_atoms=True)
+                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
         self.assertEqual(setting.num_basis, 2)
         self.assertEqual(len(setting.index_by_basis), 2)
         self.assertTrue(setting.spin_dict == {'F': 1.0, 'O': -1.0})

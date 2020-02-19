@@ -209,7 +209,7 @@ class Clease(Calculator):
         changed = self.updater.get_changed_sites(self.atoms)
         for index in changed:
             if self.is_backround_index[index] and \
-                    self.setting.ignore_background_atoms:
+                    not self.setting.include_background_atoms:
                 msg = "Atom with index {} is a background atom.".format(index)
                 raise MovedIgnoredAtomError(msg)
 

@@ -1,14 +1,13 @@
 """Test suite for TemplateAtoms."""
 import os
-from clease.template_atoms import TemplateAtoms
+
 from ase.build import bulk
 from ase.spacegroup import crystal
-from ase.db import connect
 from ase.build import niggli_reduce
-from clease import Concentration, ValidConcentrationFilter
-from clease.template_filters import AtomsFilter, CellFilter
-from clease import DistanceBetweenFacetsFilter
-from clease import CEBulk
+from clease import Concentration, ValidConcentrationFilter, CEBulk
+from clease.template_atoms import TemplateAtoms
+from clease.template_filters import (AtomsFilter, CellFilter, SkewnessFilter,
+                                     DistanceBetweenFacetsFilter)
 from clease.tools import wrap_and_sort_by_position
 import numpy as np
 import unittest
@@ -130,7 +129,8 @@ class TestTemplates(unittest.TestCase):
         setting = CEBulk(crystalstructure='fcc', a=3.8, size=[1, 1, 5],
                          db_name=db_name, max_cluster_size=2,
                          max_cluster_dia=3.0, concentration=conc,
-                         skew_threshold=100, supercell_factor=40)
+                         supercell_factor=40)
+        setting.skew_threshold = 100
 
         tmp = setting.template_atoms
 
@@ -159,11 +159,8 @@ class TestTemplates(unittest.TestCase):
         self.assertEqual(len(template_atoms.atoms_filters), 0)
 
     def test_remove_cell_filter(self):
-        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc')
-
         template_atoms = TemplateAtoms(
-            prim_cell, supercell_factor=3, size=None,
-            skew_threshold=4)
+            bulk("Cu"), supercell_factor=3, size=None, skew_threshold=4)
 
         num_cell_filters = len(template_atoms.cell_filters)
         f = DummyCellFilter()
@@ -172,6 +169,16 @@ class TestTemplates(unittest.TestCase):
         template_atoms.remove_filter(f)
         self.assertEqual(len(template_atoms.cell_filters), num_cell_filters)
 
+    def test_set_skewness_threshold(self):
+        template_atoms = TemplateAtoms(bulk("Cu"), skew_threshold=4)
+
+        # Set the skewthreshold
+        template_atoms.skew_threshold = 100
+
+        # Check that the Skewness filter indeed has a value of 100
+        for f in template_atoms.cell_filters:
+            if isinstance(f, SkewnessFilter):
+                self.assertEqual(f.ratio, 100)
 
 def get_settings_placeholder_valid_conc_filter(system):
     """

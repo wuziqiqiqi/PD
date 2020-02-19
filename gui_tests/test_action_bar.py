@@ -27,7 +27,7 @@ class TestActionBar(unittest.TestCase):
         at = MagicMock()
         wf.settings = MagicMock(atoms=at)
         wf.view_clusters()
-        wf.settings.cluster_manager.get_figures.assert_called_with()
+        wf.settings.cluster_mng.get_figures.assert_called_with()
 
     @patch('clease.gui.concentrationPage.ConcentrationPage.check_user_input')
     @patch('clease.gui.settingsPage.SettingsPage.check_user_input')

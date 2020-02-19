@@ -6,6 +6,8 @@ class SettingsInitializer(object):
     """Perform settings initialization on a separate thread."""
     type = 'CEBulk'
     kwargs = None
+    basis_func_type = 'polynomial'
+    skew_threshold = 40
     app = None
     status = None
 
@@ -17,6 +19,8 @@ class SettingsInitializer(object):
             elif self.type == 'CECrystal':
                 self.app.root.settings = CECrystal(**self.kwargs)
             self.status.text = 'Finished initializing'
+            self.app.root.settings.basis_func_type = self.basis_func_type
+            self.app.root.settings.skew_threshold = self.skew_threshold
         except AssertionError as exc:
             traceback.print_exc()
             msg = "AssertError during initialization " + str(exc)

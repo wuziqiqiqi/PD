@@ -15,8 +15,7 @@ import json
 def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
            covera=None, u=None, size=None, supercell_factor=27,
            db_name='clease.db', max_cluster_size=4,
-           max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
-           skew_threshold=40, ignore_background_atoms=True):
+           max_cluster_dia=[5.0, 5.0, 5.0]):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -62,18 +61,6 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
     max_cluster_dia: list of int or float
         A list of int or float containing the maximum diameter of clusters
         (in Å)
-
-    basis_function: str
-        One of "polynomial", "trigonometric" or "binary_linear"
-
-    skew_threshold: int
-        The maximum acceptable skew level (ratio of max and min diagonals of
-        the cell) for supercells generated. A higher number allows highly
-        skewed cells (e.g., 1x1x12) cells to be generated.
-
-    ignore_background_atoms: bool
-        if ``True``, a basis consisting of only one element type will be
-        ignored when creating clusters.
     """
     structures = {'sc': 1, 'fcc': 1, 'bcc': 1, 'hcp': 1, 'diamond': 1,
                   'zincblende': 2, 'rocksalt': 2, 'cesiumchloride': 2,
@@ -95,8 +82,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
 
     setting = ClusterExpansionSetting(
         prim, concentration, size, supercell_factor, db_name, max_cluster_size,
-        max_cluster_dia, basis_function, skew_threshold,
-        ignore_background_atoms)
+        max_cluster_dia)
 
     setting.kwargs.update(
         {'crystalstructure': crystalstructure, 'a': a,
@@ -107,9 +93,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
 def CECrystal(concentration, spacegroup=1, basis=None,
               cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
               supercell_factor=27, db_name='clease.db', max_cluster_size=4,
-              max_cluster_dia=[5.0, 5.0, 5.0],
-              basis_function='polynomial', skew_threshold=40,
-              ignore_background_atoms=True):
+              max_cluster_dia=[5.0, 5.0, 5.0]):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
@@ -157,18 +141,6 @@ def CECrystal(concentration, spacegroup=1, basis=None,
     max_cluster_dia: list of int or float
         A list of int or float containing the maximum diameter of clusters
         (in Å)
-
-    basis_function: str
-        One of "polynomial", "triogonometric" or "binary_linear"
-
-    skew_threshold: int
-        The maximum acceptable skew level (ratio of max and min diagonals of
-        the cell) for supercells generated. A higher number allows highly
-        skewed cells (e.g., 1x1x12) cells to be generated.
-
-    ignore_background_atoms: bool
-        if ``True``, a basis consisting of only one element type will be
-        ignored when creating clusters.
     """
 
     symbols = []
@@ -184,8 +156,7 @@ def CECrystal(concentration, spacegroup=1, basis=None,
 
     setting = ClusterExpansionSetting(
         prim, concentration, size, supercell_factor, db_name,
-        max_cluster_size, max_cluster_dia, basis_function, skew_threshold,
-        ignore_background_atoms)
+        max_cluster_size, max_cluster_dia)
     setting.kwargs.update(
         {'basis': deepcopy(basis), 'spacegroup': spacegroup, 'cell': cell,
          'cellpar': cellpar, 'ab_normal': ab_normal,
@@ -205,11 +176,17 @@ def settingFromJSON(fname):
     with open(fname, 'r') as infile:
         data = json.load(infile)
 
-    factory = data.pop('factory')
-    conc = Concentration.from_dict(data['concentration'])
-    data['concentration'] = conc
+    factory = data['kwargs'].pop('factory')
+    kwargs = data['kwargs']
+    conc = Concentration.from_dict(kwargs['concentration'])
+    kwargs['concentration'] = conc
     if factory == 'CEBulk':
-        return CEBulk(**data)
+        setting = CEBulk(**kwargs)
     elif factory == 'CECrystal':
-        return CECrystal(**data)
-    raise ValueError('Unknown factory {}'.format(factory))
+        setting = CECrystal(**kwargs)
+    else:
+        raise ValueError('Unknown factory {}'.format(factory))
+    setting.include_background_atoms = data['include_background_atoms']
+    setting.skew_threshold = data['skew_threshold']
+    setting.basis_func_type = data['basis_func_type']
+    return setting

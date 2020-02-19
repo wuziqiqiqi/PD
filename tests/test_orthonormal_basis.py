@@ -17,8 +17,8 @@ def do_test_2(basis_function, db_name):
                      size=[3, 3, 3],
                      concentration=concentration,
                      max_cluster_size=2,
-                     db_name=db_name,
-                     basis_function=basis_function)
+                     db_name=db_name)
+    setting.basis_func_type = basis_function
     check_orthonormal(setting)
 
 
@@ -31,8 +31,8 @@ def do_test_3(basis_function, db_name):
                      size=[3, 3, 3],
                      concentration=concentration,
                      max_cluster_size=2,
-                     db_name=db_name,
-                     basis_function=basis_function)
+                     db_name=db_name)
+    setting.basis_func_type = basis_function
     check_orthonormal(setting)
 
 
@@ -45,8 +45,8 @@ def do_test_4(basis_function, db_name):
                      size=[3, 3, 3],
                      concentration=concentration,
                      max_cluster_size=2,
-                     db_name=db_name,
-                     basis_function=basis_function)
+                     db_name=db_name)
+    setting.basis_func_type = basis_function
     check_orthonormal(setting)
 
 
@@ -59,8 +59,8 @@ def do_test_5(basis_function, db_name):
                      size=[3, 3, 3],
                      concentration=concentration,
                      max_cluster_size=2,
-                     db_name=db_name,
-                     basis_function=basis_function)
+                     db_name=db_name)
+    setting.basis_func_type = basis_function
     check_orthonormal(setting)
 
 
@@ -73,8 +73,8 @@ def do_test_6(basis_function, db_name):
                      size=[3, 3, 3],
                      concentration=concentration,
                      max_cluster_size=2,
-                     db_name=db_name,
-                     basis_function=basis_function)
+                     db_name=db_name)
+    setting.basis_func_type = basis_function
     check_orthonormal(setting)
 
 

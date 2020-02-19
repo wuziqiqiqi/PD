@@ -7,8 +7,7 @@ from copy import deepcopy
 import numpy as np
 from ase.db import connect
 
-from clease.tools import (wrap_and_sort_by_position,
-                          nested_list2str)
+from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease.concentration import Concentration
@@ -16,6 +15,7 @@ from clease import AtomsManager
 from clease.cluster_list import ClusterList
 from clease.template_filters import ValidConcentrationFilter
 from clease.cluster_manager import ClusterManager
+from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
 
 
 class ClusterExpansionSetting(object):
@@ -23,29 +23,17 @@ class ClusterExpansionSetting(object):
 
     def __init__(self, prim, concentration, size=None, supercell_factor=27,
                  db_name='clease.db', max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0], basis_function='polynomial',
-                 skew_threshold=40, ignore_background_atoms=False):
+                 max_cluster_dia=[5.0, 5.0, 5.0]):
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
                        'db_name': db_name,
                        'max_cluster_size': max_cluster_size,
-                       'max_cluster_dia': deepcopy(max_cluster_dia),
-                       'ignore_background_atoms': ignore_background_atoms}
-
-        if isinstance(concentration, Concentration):
-            self.concentration = concentration
-        elif isinstance(concentration, dict):
-            self.concentration = Concentration.from_dict(concentration)
-        else:
-            raise TypeError("concentration has to be either dict or "
-                            "instance of Concentration")
-
-        self.kwargs["concentration"] = self.concentration.to_dict()
+                       'max_cluster_dia': deepcopy(max_cluster_dia)}
+        self._include_background_atoms = False
+        self.concentration = self._get_concentration(concentration)
         self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
-        self.num_basis = len(self.basis_elements)
         self._check_first_elements()
-        self.ignore_background_atoms = ignore_background_atoms
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
 
@@ -53,10 +41,7 @@ class ClusterExpansionSetting(object):
         self._tag_prim_cell()
         self._store_prim_cell()
 
-        if self.ignore_background_atoms:
-            self.cluster_manager = ClusterManager(self.prim_no_bkg())
-        else:
-            self.cluster_manager = ClusterManager(self.prim_cell)
+        self.cluster_mng = ClusterManager(self.prim_no_bkg())
 
         prim_mng = AtomsManager(prim)
         prim_ind_by_basis = prim_mng.index_by_symbol(
@@ -66,58 +51,22 @@ class ClusterExpansionSetting(object):
 
         self.template_atoms = TemplateAtoms(
             self.prim_cell, supercell_factor=supercell_factor,
-            size=self.size, skew_threshold=skew_threshold,
-            filters=[conc_filter])
+            size=self.size, skew_threshold=40, filters=[conc_filter])
+
         self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
-        self.cluster_manager.build(
+        self.cluster_mng.build(
             max_size=self.max_cluster_size,
             max_cluster_dia=self.max_cluster_dia
         )
-        self.all_elements = sorted([item for row in self.basis_elements for
-                                    item in row])
-        self.background_indices = None
-        self.num_elements = len(self.all_elements)
-        self.unique_elements = sorted(list(set(deepcopy(self.all_elements))))
-        self.num_unique_elements = len(self.unique_elements)
-        self.index_by_basis = None
-
-        self.index_by_sublattice = []
-        self.ref_index_trans_symm = []
-        self.template_atoms_uid = 0
 
         self.set_active_template(
             atoms=self.template_atoms.weighted_random_template())
 
         unique_element_no_bkg = self.unique_element_without_background()
-        if isinstance(basis_function, BasisFunction):
-            if basis_function.unique_elements != unique_element_no_bkg:
-                raise ValueError("Unique elements in BasiFunction instance "
-                                 "is different from the one in settings")
-            self.bf_scheme = basis_function
-
-        elif isinstance(basis_function, str):
-            if basis_function.lower() == 'polynomial':
-                from clease.basis_function import Polynomial
-                self.bf_scheme = Polynomial(unique_element_no_bkg)
-            elif basis_function.lower() == 'trigonometric':
-                from clease.basis_function import Trigonometric
-                self.bf_scheme = Trigonometric(unique_element_no_bkg)
-            elif basis_function.lower() == "binary_linear":
-                from clease.basis_function import BinaryLinear
-                self.bf_scheme = BinaryLinear(unique_element_no_bkg)
-            else:
-                msg = "basis function scheme {} ".format(basis_function)
-                msg += "is not supported."
-                raise ValueError(msg)
-        else:
-            raise ValueError("basis_function has to be instance of "
-                             "BasisFunction or a string")
-
-        self.spin_dict = self.bf_scheme.spin_dict
-        self.basis_functions = self.bf_scheme.basis_functions
+        self._basis_func_type = Polynomial(unique_element_no_bkg)
 
         if len(self.basis_elements) != self.num_basis:
             raise ValueError("list of elements is needed for each basis")
@@ -125,6 +74,161 @@ class ClusterExpansionSetting(object):
     @property
     def atoms(self):
         return self.atoms_mng.atoms
+
+    @property
+    def all_elements(self):
+        return sorted([item for row in self.basis_elements for item in row])
+
+    @property
+    def num_elements(self):
+        return len(self.all_elements)
+
+    @property
+    def unique_elements(self):
+        return sorted(list(set(deepcopy(self.all_elements))))
+
+    @property
+    def num_unique_elements(self):
+        return len(self.unique_elements)
+
+    @property
+    def ref_index_trans_symm(self):
+        return [i[0] for i in self.index_by_sublattice]
+
+    @property
+    def skew_threshold(self):
+        return self.template_atoms.skew_threshold
+
+    @skew_threshold.setter
+    def skew_threshold(self, threshold):
+        '''
+        Maximum acceptable skew level (ratio of max and min diagonal of the
+        Niggli reduced cell)
+        '''
+        self.template_atoms.skew_threshold = threshold
+
+    @property
+    def background_indices(self):
+        """Get indices of the background atoms."""
+        # check if any basis consists of only one element type
+        basis = [i for i, b in enumerate(self.basis_elements) if len(b) == 1]
+
+        bkg_indices = []
+        for b_indx in basis:
+            bkg_indices += self.index_by_basis[b_indx]
+        return bkg_indices
+
+    @property
+    def include_background_atoms(self):
+        return self._include_background_atoms
+
+    @include_background_atoms.setter
+    def include_background_atoms(self, value: bool):
+        if value == self._include_background_atoms:
+            return
+        self._include_background_atoms = value
+        if self._include_background_atoms:
+            self.cluster_mng = ClusterManager(self.prim_cell)
+        else:
+            self.cluster_mng = ClusterManager(self.prim_no_bkg())
+
+        self.cluster_mng.build(max_size=self.max_cluster_size,
+                               max_cluster_dia=self.max_cluster_dia)
+        self.create_cluster_list_and_trans_matrix()
+        self.basis_func_type.unique_elements = \
+            self.unique_element_without_background()
+
+    @property
+    def spin_dict(self):
+        return self.basis_func_type.spin_dict
+
+    @property
+    def basis_functions(self):
+        return self.basis_func_type.basis_functions
+
+    @property
+    def ignore_background_atoms(self):
+        return not self.include_background_atoms
+
+    @property
+    def multiplicity_factor(self):
+        """Return the multiplicity factor of each cluster."""
+        num_sites_in_group = [len(x) for x in self.index_by_sublattice]
+        return self.cluster_list.multiplicity_factors(num_sites_in_group)
+
+    @property
+    def all_cf_names(self):
+        num_bf = len(self.basis_functions)
+        return self.cluster_list.get_all_cf_names(num_bf)
+
+    @property
+    def num_cf(self):
+        """Return the number of correlation functions."""
+        return len(self.all_cf_names)
+
+    @property
+    def index_by_basis(self):
+        first_symb_in_basis = [x[0] for x in self.basis_elements]
+        return self.atoms_mng.index_by_symbol(first_symb_in_basis)
+
+    @property
+    def index_by_sublattice(self):
+        return self.atoms_mng.index_by_tag()
+
+    @property
+    def num_basis(self):
+        return len(self.basis_elements)
+
+    @property
+    def basis_func_type(self):
+        return self._basis_func_type
+
+    @basis_func_type.setter
+    def basis_func_type(self, bf_type):
+        """
+        Type of basis function to use.
+        It should be one of "polynomial", "trigonometric" or "binary_linear"
+        """
+        unique_element = self.unique_element_without_background()
+
+        if isinstance(bf_type, BasisFunction):
+            if bf_type.unique_elements != unique_element:
+                raise ValueError("Unique elements in BasisFunction instance "
+                                 "is different from the one in settings")
+            self._basis_func_type = bf_type
+        elif isinstance(bf_type, str):
+            if bf_type.lower() == 'polynomial':
+                self._basis_func_type = Polynomial(unique_element)
+            elif bf_type.lower() == 'trigonometric':
+                self._basis_func_type = Trigonometric(unique_element)
+            elif bf_type.lower() == "binary_linear":
+                self._basis_func_type = BinaryLinear(unique_element)
+            else:
+                msg = "basis function type {} ".format(bf_type)
+                msg += "is not supported."
+                raise ValueError(msg)
+        else:
+            raise ValueError("basis_function has to be an instance of "
+                             "BasisFunction or a string")
+
+    def to_dict(self):
+        return {
+            'kwargs': self.kwargs,
+            'include_background_atoms': self.include_background_atoms,
+            'skew_threshold': self.skew_threshold,
+            'basis_func_type': self.basis_func_type.name
+        }
+
+    def _get_concentration(self, concentration):
+        if isinstance(concentration, Concentration):
+            conc = concentration
+        elif isinstance(concentration, dict):
+            conc = Concentration.from_dict(concentration)
+        else:
+            raise TypeError("concentration has to be either dict or "
+                            "instance of Concentration")
+        self.kwargs["concentration"] = conc.to_dict()
+        return conc
 
     def prim_no_bkg(self):
         """
@@ -151,7 +255,7 @@ class ClusterExpansionSetting(object):
 
     def unique_element_without_background(self):
         """Remove backgound elements."""
-        if not self.ignore_background_atoms:
+        if self.include_background_atoms:
             bg_sym = set()
         else:
             bg_sym = self.get_bg_syms()
@@ -173,22 +277,10 @@ class ClusterExpansionSetting(object):
             unique_elem.update(x)
         return list(unique_elem - bg_sym)
 
-    def _size2string(self):
-        """Convert the current size into a string."""
-        return nested_list2str(self.size)
-
     def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
-        self.template_atoms_uid = 0
         self.size = template.info['size']
         self.atoms_mng.atoms = wrap_and_sort_by_position(template)
-
-        self.index_by_basis = self._group_index_by_basis()
-
-        self.background_indices = self._get_background_indices()
-        self.index_by_sublattice = self.atoms_mng.index_by_tag()
-        self.num_trans_symm = len(self.index_by_sublattice)
-        self.ref_index_trans_symm = [i[0] for i in self.index_by_sublattice]
 
     def set_active_template(self, size=None, atoms=None):
         """Set a new template atoms object."""
@@ -284,60 +376,21 @@ class ClusterExpansionSetting(object):
             raise ValueError("max_cluster_dia must be float, int or list.")
         return max_cluster_dia.round(decimals=3)
 
-    def _get_background_indices(self):
-        """Get indices of the background atoms."""
-        # check if any basis consists of only one element type
-        basis = [i for i, b in enumerate(self.basis_elements) if len(b) == 1]
-
-        bkg_indices = []
-        for b_indx in basis:
-            bkg_indices += self.index_by_basis[b_indx]
-        return bkg_indices
-
     def _get_atoms(self):
         """Create atoms with a user-specified size."""
         atoms = self.prim_cell.copy() * self.size
         return wrap_and_sort_by_position(atoms)
 
-    @property
-    def multiplicity_factor(self):
-        """Return the multiplicity factor of each cluster."""
-        num_sites_in_group = [len(x) for x in self.index_by_sublattice]
-        return self.cluster_list.multiplicity_factors(num_sites_in_group)
-
-    @property
-    def all_cf_names(self):
-        num_bf = len(self.basis_functions)
-        return self.cluster_list.get_all_cf_names(num_bf)
-
-    @property
-    def num_cf(self):
-        """Return the number of correlation functions."""
-        return len(self.all_cf_names)
-
     def create_cluster_list_and_trans_matrix(self):
         at_cpy = self.atoms
-        self.cluster_list = self.cluster_manager.info_for_template(at_cpy)
-        self.trans_matrix = self.cluster_manager.translation_matrix(at_cpy)
-
-    def _keys2int(self, tm):
-        """
-        Convert the keys in the translation matrix to integers
-        """
-        tm_int = []
-        for row in tm:
-            tm_int.append({int(k): v for k, v in row.items()})
-        return tm_int
-
-    def _group_index_by_basis(self):
-        first_symb_in_basis = [x[0] for x in self.basis_elements]
-        return self.atoms_mng.index_by_symbol(first_symb_in_basis)
+        self.cluster_list = self.cluster_mng.info_for_template(at_cpy)
+        self.trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
 
     def view_clusters(self):
         """Display all clusters along with their names."""
         from ase.gui.gui import GUI
         from ase.gui.images import Images
-        figures = self.cluster_manager.get_figures()
+        figures = self.cluster_mngr.get_figures()
         images = Images()
         images.initialize(figures)
         gui = GUI(images, expr='')
@@ -380,7 +433,7 @@ class ClusterExpansionSetting(object):
 
         import json
         with open(filename, 'w') as outfile:
-            json.dump(self.kwargs, outfile, indent=2)
+            json.dump(self.to_dict(), outfile, indent=2)
 
 
 def to_3x3_matrix(size):

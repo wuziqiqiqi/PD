@@ -141,7 +141,6 @@ class StructureGenerator(object):
 
         # Check thate correlation function matach the expected value
         self._check_consistency()
-        print(self.generated_structure.get_cell())
         cf = self.corrFunc.get_cf(self.generated_structure)
         return self.generated_structure, cf
 
@@ -287,7 +286,7 @@ class StructureGenerator(object):
         """Get correlation function of every entry in DB."""
         cfm = []
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
         for row in db.select(struct_type='initial'):
             cfm.append([row[tab_name][x] for x in self.cf_names])
         cfm = np.array(cfm, dtype=float)

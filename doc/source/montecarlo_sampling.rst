@@ -19,8 +19,7 @@ and the clusters
                    concentration=conc,
                    db_name="aucu.db",
                    max_cluster_size=3,
-                   max_cluster_dia=[6.0, 5.0],
-                   basis_function='polynomial')
+                   max_cluster_dia=[6.0, 5.0])
 
 Next, we need to specify a set if ECIs. These can for instance be loaded
 from a file, but here we hard code them for simplicity

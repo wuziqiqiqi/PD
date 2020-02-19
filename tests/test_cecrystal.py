@@ -9,6 +9,7 @@ from ase.db import connect
 from reference_corr_funcs_crystal import all_cf
 from ase.spacegroup import crystal
 import unittest
+import numpy as np
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -38,8 +39,8 @@ class TestCECrystal(unittest.TestCase):
         beta = 90
         gamma = 90
         cellpar = [a, b, c, alpha, beta, gamma]
-        basis = [(0, 0, 0), (0.324, 0.324, 0.324),
-                 (0.3582, 0.3582, 0.0393), (0.0954, 0.0954, 0.2725)]
+        basis = [[0, 0, 0], [0.324, 0.324, 0.324],
+                 [0.3582, 0.3582, 0.0393], [0.0954, 0.0954, 0.2725]]
         basis_elements = [["Al", "Mg"], ["Al", "Mg"], ["Al", "Mg"],
                           ["Al", "Mg"]]
 
@@ -50,6 +51,8 @@ class TestCECrystal(unittest.TestCase):
                         basis=basis, cellpar=cellpar, max_cluster_size=3,
                         db_name=db_name, size=[1, 1, 1],
                         max_cluster_dia=[3.5, 3.5])
+        bsg.include_background_atoms = True
+        bsg.skew_threshold = 80
 
         # The correlation functions are actually calculated for the
         # conventional cell
@@ -57,7 +60,6 @@ class TestCECrystal(unittest.TestCase):
                         spacegroup=217, primitive_cell=False,
                         basis=basis)
         atoms = wrap_and_sort_by_position(atoms)
-        self.assertEqual(bsg.num_trans_symm, 29)
         # atoms = bsg.atoms.copy()
         atoms[0].symbol = "Mg"
         atoms[10].symbol = "Mg"
@@ -73,8 +75,22 @@ class TestCECrystal(unittest.TestCase):
 
         os.remove(db_name)
 
+        bsg.basis_func_type = 'binary_linear'
         bsg.save('demo_save.json')
-        bsg = settingFromJSON('demo_save.json')
+        bsg_loaded = settingFromJSON('demo_save.json')
+        for k, v in bsg.__dict__.items():
+            if k in ['kwargs', 'size', 'atoms_mng', 'trans_matrix',
+                     'cluster_list']:
+                # Skip attributes not expected to be equal after load/save
+                continue
+            if isinstance(v, dict):
+                self.assertDictEqual(v, bsg_loaded.__dict__[k])
+            elif isinstance(v, np.ndarray):
+                self.assertTrue(np.allclose(v, bsg_loaded.__dict__[k]))
+            else:
+                self.assertEqual(v, bsg_loaded.__dict__[k],
+                                 msg="Key: {}".format(k))
+        self.assertEqual(bsg.skew_threshold, bsg_loaded.skew_threshold)
         os.remove(db_name)
 
     def test_two_grouped_basis(self):
@@ -141,8 +157,8 @@ class TestCECrystal(unittest.TestCase):
                                (0.2244, 0.3821, 0.)],
                         cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                         size=[1, 2, 2], db_name=db_name,
-                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0],
-                        ignore_background_atoms=False)
+                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0])
+        bsg.include_background_atoms = True
 
         self.assertTrue(bsg.unique_elements == ['O', 'Ta', 'X'])
         self.assertTrue(bsg.spin_dict == {'O': 1.0, 'Ta': -1.0, 'X': 0.0})
@@ -201,8 +217,7 @@ class TestCECrystal(unittest.TestCase):
                                (0.201, 0.3461, 0.5)],
                         cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                         size=[2, 2, 3], db_name=db_name,
-                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0],
-                        ignore_background_atoms=True)
+                        max_cluster_size=3, max_cluster_dia=[3.0, 3.0])
 
         self.assertTrue(bsg.unique_elements == ['O', 'Ta', 'X'])
         self.assertTrue(bsg.spin_dict == {'O': 1.0, 'X': -1.0})
@@ -256,8 +271,8 @@ class TestCECrystal(unittest.TestCase):
                         basis=[(0.0, 0.0, 0.0)],
                         cellpar=[4.0, 4.0, 4.0, 50.0, 40.0, 15.0],
                         db_name=db_name, size=[2, 2, 1],
-                        max_cluster_size=3, max_cluster_dia=[1.05, 1.05],
-                        skew_threshold=10000)
+                        max_cluster_size=3, max_cluster_dia=[1.05, 1.05])
+        bsg.skew_threshold = 10000
 
         assert len(bsg.index_by_sublattice) == 1
 
@@ -275,8 +290,7 @@ class TestCECrystal(unittest.TestCase):
     def test_bkg_symb_in_additional_basis(self):
         db_name = 'bg_sym_check.db'
         conc = Concentration(basis_elements=[['Mg', 'Sn', 'X'], ['Sn']])
-        setting = CECrystal(basis_function='polynomial',
-                            cellpar=[6.75, 6.75, 6.75, 90, 90, 90],
+        setting = CECrystal(cellpar=[6.75, 6.75, 6.75, 90, 90, 90],
                             basis=[(0.25, 0.25, 0.25), (0, 0, 0)],
                             concentration=conc,
                             spacegroup=225,

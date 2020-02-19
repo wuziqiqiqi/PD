@@ -179,7 +179,7 @@ class NewStructures(object):
 
     @property
     def corr_func_table_name(self):
-        return "{}_cf".format(self.setting.bf_scheme.name)
+        return "{}_cf".format(self.setting.basis_func_type.name)
 
     def generate_gs_structure_multiple_templates(
             self, num_templates=20, num_prim_cells=2, init_temp=2000,

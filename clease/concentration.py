@@ -116,6 +116,14 @@ class Concentration(object):
         if num_usr_lb > 0:
             self.add_usr_defined_ineq_constraints(A_lb, b_lb)
 
+    def __eq__(self, other):
+        return np.allclose(self.A_eq, other.A_eq) and \
+            np.allclose(self.b_eq, other.b_eq) and \
+            np.allclose(self.A_lb, other.A_lb) and \
+            np.allclose(self.b_lb, other.b_lb) and \
+            self.basis_elements == other.basis_elements and \
+            self.grouped_basis == other.grouped_basis
+
     def _remove_redundant_entries(self, A, b):
         for row_num in range(A.shape[0]-1, -1, -1):
             for prev_row in range(row_num):

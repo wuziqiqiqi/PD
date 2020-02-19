@@ -70,8 +70,7 @@ def get_rocksalt(db_name):
                      concentration=concentration,
                      db_name=db_name,
                      max_cluster_size=3,
-                     max_cluster_dia=[7.0, 7.0],
-                     ignore_background_atoms=True)
+                     max_cluster_dia=[7.0, 7.0])
 
     atoms = bulk("LiO", crystalstructure="rocksalt", a=4.05)
     atoms = atoms * (3, 3, 3)
@@ -93,8 +92,8 @@ def rocksalt_with_self_interaction(size, db_name):
                      concentration=concentration,
                      db_name=db_name,
                      max_cluster_size=3,
-                     basis_function='trigonometric',
                      max_cluster_dia=[7.0, 4.0])
+    setting.basis_func_type = 'trigonometric'
     atoms = setting.atoms.copy()
     return setting, atoms
 
@@ -120,8 +119,8 @@ def get_spacegroup(db_name):
                         concentration=concentration,
                         db_name=db_name,
                         max_cluster_size=3,
-                        max_cluster_dia=[5.0, 5.0],
-                        ignore_background_atoms=False)
+                        max_cluster_dia=[5.0, 5.0])
+    setting.include_background_atoms = True
 
     atoms = crystal(symbols=['O', 'X', 'O', 'Ta'], basis=basis,
                     spacegroup=spacegroup, cell=None,
@@ -339,8 +338,7 @@ class TestCECalculator(unittest.TestCase):
                          concentration=conc,
                          db_name="test_aucu.db",
                          max_cluster_size=4,
-                         max_cluster_dia=[6.0, 5.0, 5.0],
-                         basis_function='polynomial')
+                         max_cluster_dia=[6.0, 5.0, 5.0])
 
         cf = CorrFunction(setting).get_cf(setting.atoms)
         eci = {k: 0.0 for k in cf.keys()}

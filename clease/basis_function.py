@@ -9,12 +9,33 @@ class BasisFunction(object):
 
     def __init__(self, unique_elements):
         self.name = "generic"
-        self.unique_elements = sorted(unique_elements)
-        self.num_unique_elements = len(unique_elements)
+        self._unique_elements = sorted(unique_elements)
         if self.num_unique_elements < 2:
             raise ValueError("Systems must have more than 1 type of element.")
-        self.spin_dict = self.get_spin_dict()
-        self.basis_functions = self.get_basis_functions()
+
+    def __eq__(self, other):
+        return self.name == other.name and \
+            self.unique_elements == other.unique_elements
+
+    @property
+    def unique_elements(self):
+        return self._unique_elements
+
+    @unique_elements.setter
+    def unique_elements(self, elements):
+        self._unique_elements = sorted(elements)
+
+    @property
+    def num_unique_elements(self):
+        return len(self.unique_elements)
+
+    @property
+    def spin_dict(self):
+        return self.get_spin_dict()
+
+    @property
+    def basis_functions(self):
+        return self.get_basis_functions()
 
     def get_spin_dict(self):
         """Get spin dictionary."""

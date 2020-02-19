@@ -26,8 +26,7 @@ with a lattice constant of 3.8 Å
 ...                  concentration=conc,
 ...                  db_name="aucu.db",
 ...                  max_cluster_size=4,
-...                  max_cluster_dia=[6.0, 4.5, 4.5],
-...                  basis_function='polynomial')
+...                  max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. testcleanup::
 

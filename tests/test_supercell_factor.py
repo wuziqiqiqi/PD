@@ -11,9 +11,9 @@ class TestSupercelLFactor(unittest.TestCase):
         setting = CEBulk(crystalstructure='fcc', a=4.0,
                          supercell_factor=8,
                          concentration=conc, db_name=db_name,
-                         max_cluster_size=4, max_cluster_dia=4.01,
-                         basis_function='polynomial', skew_threshold=4,
-                         ignore_background_atoms=False)
+                         max_cluster_size=4, max_cluster_dia=4.01)
+        setting.skew_threshold = 4
+        setting.include_background_atoms = True
 
         scaled = setting.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 3)
@@ -23,9 +23,9 @@ class TestSupercelLFactor(unittest.TestCase):
         setting = CEBulk(crystalstructure='fcc', a=4.01,
                          supercell_factor=None, size=[2, 2, 2],
                          concentration=conc, db_name=db_name,
-                         max_cluster_size=4, max_cluster_dia=4.0,
-                         basis_function='polynomial', skew_threshold=4,
-                         ignore_background_atoms=False)
+                         max_cluster_size=4, max_cluster_dia=4.0)
+        setting.skew_threshold = 4
+        setting.include_background_atoms = True
 
         scaled = setting.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 1)
@@ -47,12 +47,12 @@ class TestSupercelLFactor(unittest.TestCase):
                             spacegroup=55,
                             cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                             supercell_factor=10,
-                            skew_threshold=4,
                             concentration=concentration,
                             db_name=db_name,
-                            basis_function='binary_linear',
                             max_cluster_size=3,
                             max_cluster_dia=3.0)
+        setting.basis_func_type = 'binary_linear'
+        setting.skew_threshold = 4
 
         scaled = setting.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 20)

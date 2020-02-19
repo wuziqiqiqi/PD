@@ -89,7 +89,7 @@ class CorrFunction(object):
             print the progress of reconfiguration if set to *True*
         """
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
         db.delete_external_table(tab_name)
         select = []
         if select_cond is not None:
@@ -137,7 +137,7 @@ class CorrFunction(object):
               names as stored in setting.cf_names.
         """
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
         cf_names = sorted(self.setting.all_cf_names)
         inconsistent_ids = []
         for row in db.select('struct_type=initial'):

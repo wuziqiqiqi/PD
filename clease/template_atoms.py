@@ -9,22 +9,21 @@ from clease.tools import all_integer_transform_matrices
 
 
 class TemplateAtoms(object):
-    def __init__(self, prim_cell, supercell_factor=None, size=None,
-                 skew_threshold=4, filters=[]):
+    def __init__(self, prim_cell, supercell_factor=27, size=None,
+                 skew_threshold=40, filters=[]):
         if size is None and supercell_factor is None:
             raise TypeError("Either size or supercell_factor needs to be "
                             "specified.\n size: list or numpy array.\n "
                             "supercell_factor: int")
 
         self.supercell_factor = supercell_factor
+        self._skew_threshold = skew_threshold
         self.size = size
 
         self.cell_filters = []
         self.atoms_filters = []
 
         self.add_cell_filter(SkewnessFilter(skew_threshold))
-        self.all_cells = []
-        self.add_cell_filter(EquivalentCellsFilter(self.all_cells))
 
         for f in filters:
             if isinstance(f, CellFilter):
@@ -33,18 +32,32 @@ class TemplateAtoms(object):
                 self.add_atoms_filter(f)
 
         if self.size is not None:
+            self.supercell_factor = None
             check_valid_conversion_matrix(self.size)
-        self.skew_threshold = skew_threshold
         self.prim_cell = prim_cell
+
+    def __eq__(self, other):
+        return self.supercell_factor == other.supercell_factor and \
+            self.skew_threshold == other.skew_threshold and \
+            self.size == other.size and self.prim_cell == other.prim_cell
+
+    @property
+    def skew_threshold(self):
+        return self._skew_threshold
+
+    @skew_threshold.setter
+    def skew_threshold(self, threshold):
+        self._skew_threshold = threshold
+        for f in self.cell_filters:
+            if isinstance(f, SkewnessFilter):
+                f.ratio = threshold
 
     def __str__(self):
         """Print a summary of the class."""
         msg = "=== TemplateAtoms ===\n"
         msg += "Supercell factor: {}\n".format(self.supercell_factor)
-        msg += "Skewed threshold: {}\n".format(self.skew_threshold)
-        msg += "Template sizes:\n"
-        for size in self.templates['size']:
-            msg += "{}\n".format(size)
+        msg += "Size: {}\n".format(self.size)
+        msg += "Skew threshold: {}\n".format(self.skew_threshold)
         return msg
 
     def add_cell_filter(self, cell_filter):
@@ -110,40 +123,6 @@ class TemplateAtoms(object):
             atoms_valid = all([f(atoms) for f in self.atoms_filters])
 
         return cell_valid and atoms_valid
-
-    @property
-    def largest_template_by_num_atom(self):
-        """Return the largest template based on number of atoms it has."""
-        max_num = 0
-        largest_template = None
-        for atoms in self.templates['atoms']:
-            if len(atoms) > max_num:
-                largest_template = atoms
-                max_num = len(atoms)
-        return largest_template
-
-    @property
-    def largest_template_by_diag(self):
-        """Return the largest template based on the shortest diagonal."""
-        length = 0.0
-        largest_template = None
-        for atoms in self.templates['atoms']:
-            diag_lengths = []
-            cell = atoms.get_cell().T
-            for w in product([-1, 0, 1], repeat=3):
-                if np.allclose(w, 0):
-                    continue
-                diag = cell.dot(w)
-                length = np.sqrt(diag.dot(diag))
-                diag_lengths.append(length)
-
-            min_length = np.min(diag_lengths)
-
-            if min_length > length:
-                largest_template = atoms
-                length = min_length
-
-        return largest_template
 
     def get_template_with_given_size(self, size):
         """Get the UID of the template with given size.
@@ -215,9 +194,7 @@ class TemplateAtoms(object):
                          "{}".format(size_factor))
 
     def get_all_templates(self):
-        """
-        Return a list with all templates
-        """
+        """Return a list with all templates."""
         if self.size is not None:
             return [self.get_template_with_given_size(self.size)]
 

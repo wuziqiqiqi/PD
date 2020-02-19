@@ -23,6 +23,9 @@ class ClusterManager(object):
         self.generator = ClusterGenerator(prim_cell)
         self.clusters = ClusterList()
 
+    def __eq__(self, other):
+        return self.clusters == other.clusters and self.generator == other.generator
+
     def build(self, max_size=4, max_cluster_dia=4.0):
         """
         Construct all clusters.

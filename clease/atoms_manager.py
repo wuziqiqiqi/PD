@@ -17,6 +17,9 @@ class AtomsManager(object):
     def __init__(self, atoms):
         self.atoms = atoms
 
+    def __eq__(self, other):
+        return self.atoms == other.atoms
+
     def index_by_tag(self):
         """Return atomic indices that are grouped by their tags.
 

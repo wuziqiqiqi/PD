@@ -77,7 +77,7 @@ class TestClusterList(unittest.TestCase):
         fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
         prefix = 'c3_d0001_0'
         cluster = Cluster(prefix, 3, 5.4, fp, 0,
-                          [[1, 0,], [3, 4]], [], 0)
+                          [[1, 0, ], [3, 4]], [], 0)
 
         cf_names = ClusterList.get_cf_names(cluster, 2)
         expected_suffix = ['_000', '_001', '_010', '_011', '_100', '_101',
@@ -89,7 +89,7 @@ class TestClusterList(unittest.TestCase):
         fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
         prefix = 'c3_d0001_0'
         cluster = Cluster(prefix, 3, 5.4, fp, 0,
-                          [[1, 0,], [3, 4]], [[0, 1]], 0)
+                          [[1, 0, ], [3, 4]], [[0, 1]], 0)
 
         cf_names = ClusterList.get_cf_names(cluster, 2)
         expected_suffix = ['_000', '_001', '_010', '_011', '_110', '_111']
@@ -101,12 +101,12 @@ class TestClusterList(unittest.TestCase):
         fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
         prefix1 = 'c3_d0001_0'
         cluster1 = Cluster(prefix1, 3, 5.4, fp, 0,
-                           [[1, 0,], [3, 4]], [[0, 1]], 0)
+                           [[1, 0, ], [3, 4]], [[0, 1]], 0)
 
         fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
         prefix2 = 'c3_d0002_0'
         cluster2 = Cluster(prefix2, 3, 5.4, fp, 0,
-                           [[1, 0,], [3, 4]], [], 0)
+                           [[1, 0, ], [3, 4]], [], 0)
 
         cluster_list.append(cluster1)
         cluster_list.append(cluster2)
@@ -115,7 +115,7 @@ class TestClusterList(unittest.TestCase):
         expected_suffix1 = ['_000', '_001', '_010', '_011', '_110', '_111']
         expected_cf_names1 = [prefix1 + s for s in expected_suffix1]
         expected_suffix2 = ['_000', '_001', '_010', '_011', '_100', '_101',
-                           '_110', '_111']
+                            '_110', '_111']
         expected_cf_names2 = [prefix2 + s for s in expected_suffix2]
 
         expected_cf_names = expected_cf_names1 + expected_cf_names2
@@ -152,8 +152,8 @@ class TestClusterList(unittest.TestCase):
     def test_subcluster(self):
         triplet = Cluster(size=3, indices=[[0, 3, 5], [1, 4, 6]],
                           trans_symm_group=2)
-        doublet = Cluster(size=2, indices= [[0, 3], [10, 12]], 
-                       trans_symm_group=2)
+        doublet = Cluster(size=2, indices=[[0, 3], [10, 12]],
+                          trans_symm_group=2)
         self.assertTrue(doublet.is_subcluster(triplet))
         self.assertFalse(triplet.is_subcluster(doublet))
 
@@ -178,7 +178,8 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(expected, subclusters)
 
     def test_get_key(self):
-        cluster = Cluster(size=3, indices=[[3, 0, 5], [1, 4, 6]], equiv_sites=[])
+        cluster = Cluster(size=3, indices=[[3, 0, 5], [1, 4, 6]],
+                          equiv_sites=[])
         key = cluster.get_figure_key([3, 0, 5])
         self.assertEqual(key, '3-0-5')
 
@@ -261,7 +262,6 @@ class TestClusterList(unittest.TestCase):
         c2.from_dict(dict_rep)
         self.assertEqual(c1, c2)
 
-
     def test_make_names_sequential(self):
         names = ['c2_d0001_0', 'c2_d0005_1', 'c2_d0011_0',
                  'c2_d0111_0', 'c2_d1111_2', 'c3_d0000_0',
@@ -283,6 +283,7 @@ class TestClusterList(unittest.TestCase):
         n = list(set([c.name for c in cluster_list.get_by_size(3)]))
         n.sort()
         self.assertEqual(expect_names3, n)
+
 
 if __name__ == '__main__':
     unittest.main()

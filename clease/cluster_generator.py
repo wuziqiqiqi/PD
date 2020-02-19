@@ -19,6 +19,10 @@ class ClusterGenerator(object):
             self.shifts[atom.tag, :] = pos[i, :]
         self.prim_cell_invT = np.linalg.inv(self.prim.get_cell().T)
 
+    def __eq__(self, other):
+        return np.allclose(self.shifts, other.shifts) and \
+            np.allclose(self.prim_cell_invT, other.prim_cell_invT)
+
     def eucledian_distance_vec(self, x1, x2):
         """
         Eucledian distance between to vectors

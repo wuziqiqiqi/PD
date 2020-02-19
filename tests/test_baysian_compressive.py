@@ -61,7 +61,6 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         expected = np.zeros(400)
         expected[0] = 20
         expected[23] = -3
-        print(np.argwhere(np.abs(eci) > 1E-8))
         self.assertTrue(np.allclose(eci, expected, atol=1E-2))
 
         prec = bayes.precision_matrix(X)

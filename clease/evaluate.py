@@ -114,7 +114,7 @@ class Evaluate(object):
             max_dia = self._get_max_cluster_dia(max_cluster_dia)
             self.cf_names = self._filter_cname_circum_dia(max_dia)
 
-        tab_name = "{}_cf".format(self.setting.bf_scheme.name)
+        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
 
         # TODO: At a later stage we might want to pass the data manager as an
         # argument since Evaluate does not depend on the details on how the

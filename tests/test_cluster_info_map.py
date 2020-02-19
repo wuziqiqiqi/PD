@@ -69,8 +69,7 @@ class TestClusterInfoMapper(unittest.TestCase):
                         concentration=concentration,
                         db_name=db_name,
                         max_cluster_size=3,
-                        max_cluster_dia=[3.0, 3.0],
-                        ignore_background_atoms=True)
+                        max_cluster_dia=[3.0, 3.0])
 
         # Create a small cell
         atoms_small = crystal(basis=[(0., 0., 0.),

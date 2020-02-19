@@ -14,8 +14,7 @@
                    concentration=conc,
                    db_name="aucu.db",
                    max_cluster_size=4,
-                   max_cluster_dia=[6.0, 4.5, 4.5],
-                   basis_function='polynomial')
+                   max_cluster_dia=[6.0, 4.5, 4.5])
 
   ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
   ns.generate_initial_pool()

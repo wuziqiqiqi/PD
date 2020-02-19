@@ -18,14 +18,14 @@ class CorrFuncPlaceholder(object):
 
 
 class BfSchemePlaceholder(object):
-    name = 'bf_scheme'
+    name = 'basis_func_type'
 
 
 class TestNewStruct(unittest.TestCase):
     def test_insert_structures(self):
         settings_mock = MagicMock(spec=ClusterExpansionSetting)
         settings_mock.db_name = 'test_insert_structures.db'
-        settings_mock.bf_scheme = BfSchemePlaceholder()
+        settings_mock.basis_func_type = BfSchemePlaceholder()
 
         # Mock several methods
         new_struct = NewStructures(settings_mock)
@@ -128,29 +128,9 @@ class TestNewStruct(unittest.TestCase):
 
         conc = Concentration(basis_elements=[['Au', 'Cu']])
         db_name = 'test_struct_gen_number.db'
-        # settings = CEBulk(conc, max_cluster_dia=3.0, a=2.9,
-        #                   max_cluster_size=2, crystalstructure='sc')
         atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)
         atoms[0].symbol = 'Cu'
         atoms[10].symbol = 'Cu'
-        #settings.set_active_template(atoms=atoms)
-        #index_by_basis = [list(range(len(atoms)))]
-
-        # template_atoms = MagicMock()
-        # num_templates = 3
-        #template_atoms.get_fixed_volume_templates = MagicMock(
-        #     return_value=[bulk('Al')*(2, 2, i) for i in range(num_templates)])
-
-        # settings = MagicMock(
-        #     spec=ClusterExpansionSetting, db_name=db_name, concentration=conc,
-        #     atoms=atoms, index_by_basis=index_by_basis, size='1x1x1',
-        #     template_atoms=template_atoms, cluster_list=[],
-        #     ignore_background_atoms=True, unique_elements=['Au', 'Cu'],
-        #     index_by_sublattice=index_by_basis, background_indices=[],
-        #     num_unique_elements=2, basis_functions=[{'Au': 1.0, 'Cu': -1.0}],
-        #     trans_matrix=[{0: i} for i in range(len(atoms))]
-        #     )
-        # settings.db_name = db_name
 
         def get_random_structure():
             atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)

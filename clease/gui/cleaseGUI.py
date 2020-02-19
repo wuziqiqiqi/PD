@@ -216,7 +216,7 @@ class WindowFrame(StackLayout):
             self._apply_settings()
 
         try:
-            return self.settings.cluster_manager.get_figures()
+            return self.settings.cluster_mng.get_figures()
         except Exception:
             return False
 
