@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include "cluster.hpp"
 #include "additional_tools.hpp"
 #include <Python.h>
@@ -5,7 +6,6 @@
 #include <sstream>
 #include <iostream>
 #include <set>
-//#define CLUSTER_DEBUG
 
 using namespace std;
 
@@ -40,8 +40,8 @@ void Cluster::deco2string(const vector<int> &deco, string &name)
 
 void Cluster::construct_equivalent_deco(int n_basis_funcs)
 {
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading equivalent deco...\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading equivalent deco...\n";
   #endif
   vector< vector<int> > bf_indx;
   all_deco(n_basis_funcs, bf_indx);
@@ -57,8 +57,8 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
       equiv_deco[deco_str] = one_vector;
     }
 
-    #ifdef CLUSTER_DEBUG
-      cerr << "Finished reading equiv deco (no equiv sites)\n";
+    #ifdef PRINT_DEBUG
+      cout << "Finished reading equiv deco (no equiv sites)\n";
     #endif
     return;
   }
@@ -133,8 +133,8 @@ void Cluster::construct_equivalent_deco(int n_basis_funcs)
   Py_DECREF(equiv_deco_func);
   Py_DECREF(py_eq_sites);
 
-  #ifdef CLUSTER_DEBUG
-      cerr << "Finished reading equiv deco\n";
+  #ifdef PRINT_DEBUG
+      cout << "Finished reading equiv deco\n";
   #endif
 }
 
@@ -195,24 +195,24 @@ const equiv_deco_t& Cluster::get_equiv_deco(const std::vector<int> &deco) const
 
 void Cluster::parse_info_dict(PyObject *info)
 {
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading ref_indx\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading ref_indx\n";
   #endif
   // Read reference index
   PyObject* py_ref_indx = get_attr(info, "ref_indx");
   ref_indx = py2int(py_ref_indx);
   Py_DECREF(py_ref_indx);
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading size\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading size\n";
   #endif
   // Read size
   PyObject* py_size = get_attr(info, "size");
   size = py2int(py_size);
   Py_DECREF(py_size);
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading max_cluster_dia\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading max_cluster_dia\n";
   #endif
   // Read max_cluster_dia
   PyObject* py_mx_dia = get_attr(info, "diameter");
@@ -226,8 +226,8 @@ void Cluster::parse_info_dict(PyObject *info)
   }
   Py_DECREF(py_mx_dia);
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Read symm_group\n";
+  #ifdef PRINT_DEBUG
+    cout << "Read symm_group\n";
   #endif
   // Read symmetry group
   PyObject* py_symm = get_attr(info, "group");
@@ -235,8 +235,8 @@ void Cluster::parse_info_dict(PyObject *info)
   Py_DECREF(py_symm);
 
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Read name\n";
+  #ifdef PRINT_DEBUG
+    cout << "Read name\n";
   #endif
   // Read the name
   PyObject* py_name = get_attr(info, "name");
@@ -244,8 +244,8 @@ void Cluster::parse_info_dict(PyObject *info)
   Py_DECREF(py_name);
 
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading indices...\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading indices...\n";
   #endif
   // Read indices
   PyObject* py_indx = get_attr(info, "indices");
@@ -257,8 +257,8 @@ void Cluster::parse_info_dict(PyObject *info)
   nested_list_to_cluster(py_equiv_sites, equiv_sites);
   Py_DECREF(py_equiv_sites);
 
-  #ifdef CLUSTER_DEBUG
-    cerr << "Reading normalization factors\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading normalization factors\n";
   #endif
 
   // Read normalization factors

@@ -11,7 +11,6 @@ CFHistoryTracker::CFHistoryTracker( const vector<string> &cf_names )
     cf_history[i] = new cf;
     changes[i] = new SymbolChange;
     cf_history[i]->set_order(cf_names);
-    //init_all_keys(*cf_history[i],cf_names);
   }
 }
 

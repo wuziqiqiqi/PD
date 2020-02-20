@@ -1,3 +1,4 @@
+#include "config.hpp"
 #include "ce_updater.hpp"
 #include <iostream>
 #include "additional_tools.hpp"
@@ -9,7 +10,6 @@
 #include <stdexcept>
 #include <iterator>
 
-//#define CE_DEBUG
 using namespace std;
 
 CEUpdater::CEUpdater(){};
@@ -29,8 +29,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     throw invalid_argument("CEBulk object is nullptr!");
   }
 
-  #ifdef CE_DEBUG
-    cerr << "Getting symbols from setting object\n";
+  #ifdef PRINT_DEBUG
+    cout << "Getting symbols from setting object\n";
   #endif
   PyObject* py_ignore_bck = get_attr(setting, "ignore_background_atoms");
   ignore_background_indices = PyObject_IsTrue(py_ignore_bck);
@@ -80,8 +80,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     throw invalid_argument("index_by_sublattice is nullptr!");
   }
 
-  #ifdef CE_DEBUG
-    cerr << "Reading background indices\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading background indices\n";
   #endif
   // Read the backgound indices from settings
   PyObject *bkg_indx = get_attr(setting, "background_indices");
@@ -91,15 +91,15 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   build_trans_symm_group(py_trans_symm_group);
   Py_DECREF(py_trans_symm_group);
 
-  #ifdef CE_DEBUG
-    cerr << "Getting cluster names from atoms object\n";
+  #ifdef PRINT_DEBUG
+    cout << "Getting cluster names from atoms object\n";
   #endif
 
   // Read cluster names
   create_cname_with_dec(corrFunc);
 
-  #ifdef CE_DEBUG
-    cerr << "Cluster names with decoration number created...\n";
+  #ifdef PRINT_DEBUG
+    cout << "Cluster names with decoration number created...\n";
   #endif
 
   PyObject *py_num_elements = get_attr(setting, "num_unique_elements");
@@ -119,8 +119,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
   //unsigned int num_trans_symm = list_size(cluster_info);
   unsigned int num_clusters = PySequence_Size(cluster_list);
 
-  #ifdef CE_DEBUG
-    cerr << "Parsing cluster list...\n";
+  #ifdef PRINT_DEBUG
+    cout << "Parsing cluster list...\n";
   #endif
 
   for (unsigned int i=0;i<num_clusters;i++){
@@ -144,12 +144,12 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
       normalisation_factor[cluster_name] += new_clst.get().size()*trans_symm_group_count[new_clst.symm_group];
     }
   }
-  #ifdef CE_DEBUG
+  #ifdef PRINT_DEBUG
     cout << "Finished reading cluster_info\n";
   #endif
 
-  #ifdef CE_DEBUG
-    cerr << "Reading basis functions from setting object\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading basis functions from setting object\n";
   #endif
 
   PyObject* bfs = get_attr(setting, "basis_functions");
@@ -178,8 +178,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
 
   basis_functions = new BasisFunction(basis_func_raw, *symbols_with_id);
 
-  #ifdef CE_DEBUG
-    cerr << "Reading translation matrix from setting\n";
+  #ifdef PRINT_DEBUG
+    cout << "Reading translation matrix from setting\n";
   #endif
   PyObject* trans_mat_orig = get_attr(setting,"trans_matrix");
   if (trans_mat_orig == NULL)
@@ -199,8 +199,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
     temp_eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
   }
   eci.init(temp_eci);
-  #ifdef CE_DEBUG
-    cerr << "Parsing correlation function\n";
+  #ifdef PRINT_DEBUG
+    cout << "Parsing correlation function\n";
   #endif
 
   vector<string> flattened_cnames;
@@ -220,7 +220,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, 
 
   status = Status_t::READY;
   clear_history();
-  #ifdef CE_DEBUG
+  #ifdef PRINT_DEBUG
     cout << "CEUpdater initialized sucessfully!\n";
   #endif
 
@@ -686,7 +686,7 @@ void CEUpdater::create_cname_with_dec(PyObject *cf)
   while(PyDict_Next(cf, &pos, &key, &value))
   {
     string new_key = py2string(key);
-    #ifdef CE_DEBUG
+    #ifdef PRINT_DEBUG
       cout << "Read CF: " << new_key << endl;
     #endif
     if ((new_key.substr(0,2) == "c1") || (new_key == "c0"))
@@ -796,7 +796,7 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
     trans_matrix.set_size(size, unique_indx_vec.size(), max_indx);
     trans_matrix.set_lookup_values(unique_indx_vec);
 
-    #ifdef CE_DEBUG
+    #ifdef PRINT_DEBUG
       cout << "Reading translation matrix from list of dictionaries\n";
     #endif
     unsigned int n_elements_insterted = 0;
@@ -823,7 +823,7 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
         n_elements_insterted++;
       }
     }
-    #ifdef CE_DEBUG
+    #ifdef PRINT_DEBUG
       cout << "Inserted " << n_elements_insterted << " into the translation matrix\n";
     #endif
   }
@@ -834,7 +834,10 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
     npy_intp *size = PyArray_DIMS(trans_mat);
     trans_matrix.set_size(size[0], unique_indx_vec.size(), max_indx);
     trans_matrix.set_lookup_values(unique_indx_vec);
-    cout << "Dimension of translation matrix stored: " << size[0] << " " << unique_indx_vec.size() << endl;
+
+    #ifdef PRINT_DEBUG
+      cout << "Dimension of translation matrix stored: " << size[0] << " " << unique_indx_vec.size() << endl;
+    #endif
 
     if (max_indx+1 > size[1])
     {
