@@ -653,7 +653,7 @@ class Concentration(object):
             ranges.append((xmin[i], xmax[i]))
         return ranges
 
-    def get_random_concentration(self, nib=None):
+    def get_random_concentration(self, nib=None) -> np.ndarray:
         """Generate a valid random concentration."""
         assert self.A_eq.shape[0] == len(self.b_eq)
 
@@ -789,7 +789,7 @@ class Concentration(object):
                 conc_index += 1
         return x
 
-    def conc_in_int(self, num_atoms_in_basis, conc):
+    def conc_in_int(self, num_atoms_in_basis, conc) -> np.ndarray:
         """
         Convert concentration value to an integer that corresponds to the
         number of corresponding elements.

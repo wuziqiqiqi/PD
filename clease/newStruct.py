@@ -4,10 +4,11 @@ import numpy as np
 from random import shuffle
 from copy import deepcopy
 from functools import reduce
+from typing import List, Dict, Optional, Union, Callable
 
+import ase
 from ase.io import read
 from ase.db import connect
-from ase.atoms import Atoms
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
 from clease import ClusterExpansionSetting, CorrFunction
@@ -35,23 +36,18 @@ class MaxAttemptReachedError(Exception):
 
 # class GenerateStructures(object):
 class NewStructures(object):
-    """Generate new structure in Atoms object format.
+    """
+    Generate new structure in ASE Atoms object format.
 
-    Parameters:
-
-    setting: CEBulk or CESpacegroup object
-
-    generation_number: int
-        a generation number to be assigned to the newly generated structure.
-
-    struct_per_gen: int
-        number of structures to generate per generation.
+    :param setting: Cluster expansion settings.
+    :param generation_number: Generation number to be assigned to the newly
+        generated structure
+    :param struct_per_gen: Number of structures to generate per generation
     """
 
-    def __init__(self, setting, generation_number=None, struct_per_gen=5):
-        if not isinstance(setting, ClusterExpansionSetting):
-            msg = "setting must be ClusterExpansionSetting object"
-            raise TypeError(msg)
+    def __init__(self, setting: ClusterExpansionSetting,
+                 generation_number: int = None,
+                 struct_per_gen: int = 5) -> None:
         self.setting = setting
         self.db = connect(setting.db_name)
         self.corrfunc = CorrFunction(self.setting)
@@ -62,62 +58,44 @@ class NewStructures(object):
         else:
             self.gen = generation_number
 
-    def num_in_gen(self):
+    def num_in_gen(self) -> int:
         return len([row.id for row in self.db.select(gen=self.gen)])
 
-    def num_to_gen(self):
+    def num_to_gen(self) -> int:
         return max(self.struct_per_gen - self.num_in_gen(), 0)
 
-    def generate_probe_structure(self, atoms=None, size=None,
-                                 init_temp=None,
-                                 final_temp=None, num_temp=5,
-                                 num_steps_per_temp=1000,
-                                 approx_mean_var=True,
-                                 num_samples_var=10000):
-        """Generate a probe structure according to PRB 80, 165122 (2009).
+    def generate_probe_structure(
+            self, atoms: Optional[ase.Atoms] = None,
+            init_temp: Optional[float] = None,
+            final_temp: Optional[float] = None,
+            num_temp: int = 5, num_steps_per_temp: int = 1000,
+            approx_mean_var: bool = True,
+            num_samples_var: int = 10000) -> None:
+        """
+        Generate a probe structure according to PRB 80, 165122 (2009).
 
-        Parameters:
-
-        atoms: Atoms object
-            Atoms object with the desired cell size and shape of the new
-            structure.
-
-        size: list of length 3
-            (ignored if atoms is given)
-            If specified, the structure with the provided size is generated.
-            If None, the size will be generated randomly with a bias towards
-                more cubic cells (i.e., cell with similar magnitudes of vectors
-                a, b and c)
-
-        init_temp: int or float
-            initial temperature (does not represent *physical* temperature)
-
-        final_temp: int or float
-            final temperature (does not represent *physical* temperature)
-
-        num_temp: int
-            number of temperatures to be used in simulated annealing
-
-        num_steps_per_temp: int
-            number of steps in simulated annealing
-
-        approx_mean_var: bool
-            whether or not to use a spherical and isotropical distribution
-            approximation scheme for determining the mean variance.
+        :param atoms: ASE Atoms object with the desired cell size and shape of
+            the new structure.
+        :param init_temp: initial temperature (does not represent *physical*
+            temperature)
+        :param final_temp: final temperature (does not represent *physical*
+            temperature)
+        :param num_temp: number of temperatures to be used in simulated
+            annealing
+        :param num_steps_per_temp: number of steps in simulated annealing
+        :param approx_mean_var: whether or not to use a spherical and
+            isotropical distribution approximation scheme for determining the
+            mean variance.
             -'True': Assume a spherical and isotropical distribution of
-                     structures in the configurational space.
-                     Corresponds to eq.4 in PRB 80, 165122 (2009)
+                structures in the configurational space. Corresponds to eq.4
+                in PRB 80, 165122 (2009)
             -'False': Use sigma and mu of eq.3 in PRB 80, 165122 (2009)
-                      to characterize the distribution of structures in
-                      population.
-                      Requires pre-sampling of random structures before
-                      generating probe structures.
-                      sigma and mu are generated and stored in
-                      'probe_structure-sigma_mu.npz' file.
-
-        num_samples_var: int
-            Number of samples to be used in determining signam and mu.
-            Only used when approx_mean_var is True.
+                to characterize the distribution of structures in population.
+                Requires pre-sampling of random structures before generating
+                probe structures. sigma and mu are generated and stored in
+                'probe_structure-sigma_mu.npz' file.
+        :param num_samples_var: number of samples to be used in determining
+            signam and mu. Only used when `approx_mean_var` is `True`.
 
         Note: init_temp and final_temp are automatically generated if either
               one of the two is not specified.
@@ -128,20 +106,16 @@ class NewStructures(object):
             if not os.path.isfile('probe_structure-sigma_mu.npz'):
                 self._generate_sigma_mu(num_samples_var)
 
-        _logger("Generate {} probe structures (generation: {}, "
-                "struct_per_gen={}, {} present)."
-                .format(self.num_to_gen(), self.gen, self.struct_per_gen,
-                        self.num_in_gen()))
+        _logger(f"Generate {self.num_to_gen()} probe structures (generation: "
+                f"{self.gen},  struct_per_gen={self.struct_per_gen}, "
+                f"{self.num_in_gen()} present).")
 
         current_count = 0
         num_attempt = 0
         num_to_generate = self.num_to_gen()
 
         while current_count < num_to_generate:
-            if atoms is not None:
-                self.setting.set_active_template(atoms=atoms)
-            else:
-                self.setting.set_active_template(size=size)
+            self.setting.set_active_template(atoms=atoms)
             # Break out of the loop if reached struct_per_gen
             num_struct = self.num_in_gen()
             if num_struct >= self.struct_per_gen:
@@ -149,8 +123,8 @@ class NewStructures(object):
 
             struct = self._get_struct_at_conc(conc_type='random')
 
-            _logger('Generating structure {} out of {}.'
-                    .format(current_count + 1, num_to_generate))
+            _logger(f"Generating structure {current_count + 1} out of "
+                    f"{num_to_generate}.")
             ps = ProbeStructure(self.setting, struct, num_to_generate,
                                 init_temp, final_temp, num_temp,
                                 num_steps_per_temp, approx_mean_var)
@@ -160,84 +134,76 @@ class NewStructures(object):
             probe_struct.get_calculator().results.pop('energy')
             formula_unit = self._get_formula_unit(probe_struct)
             if self._exists_in_db(probe_struct, formula_unit):
-                msg = 'generated structure is already in DB.\n'
-                msg += 'generating again... '
-                msg += '{} out of {} attempts'.format(num_attempt + 1,
-                                                      max_attempt)
+                msg = f"generated structure is already in DB.\n"
+                msg += f"generating again... "
+                msg += f"{num_attempt + 1} out of {max_attempt} attempts."
                 _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
-                    raise MaxAttemptReachedError("Could not generate probe "
-                                                 "structure in {} attempts."
-                                                 .format(max_attempt))
+                    msg = f"Could not generate probe structure in "
+                    msg += f"{max_attempt} attempts."
+                    raise MaxAttemptReachedError(msg)
             else:
                 num_attempt = 0
 
-            _logger('Probe structure generated.\n')
+            _logger("Probe structure generated.\n")
             self.insert_structure(init_struct=probe_struct)
             current_count += 1
 
     @property
-    def corr_func_table_name(self):
-        return "{}_cf".format(self.setting.basis_func_type.name)
+    def corr_func_table_name(self) -> str:
+        return f"{self.setting.basis_func_type.name}_cf"
 
     def generate_gs_structure_multiple_templates(
-            self, num_templates=20, num_prim_cells=2, init_temp=2000,
-            final_temp=1, num_temp=10, num_steps_per_temp=1000,
-            eci=None):
+            self, eci: Dict[str, float], num_templates: int = 20,
+            num_prim_cells: int = 2, init_temp: float = 2000.0,
+            final_temp: float = 1.0, num_temp: int = 10,
+            num_steps_per_temp: int = 1000) -> None:
         """
-        Search for ground states in many templates.
+        Generate ground-state structures using multiple templates
+        (rather than using fixed cell size and shape). Structures are generated
+        until the number of structures with the current `generation_number` in
+        database reaches `struct_per_gen`.
 
-        Parameters:
+        :param num_templates: Number of templates to search in. Simmulated
+            annealing is done in each cell and the one with the lowest energy
+            is taken as the ground state.
+        :param num_prim_cells: Number of primitive cells to use when
+            constructing templates. The volume of all the templates used will
+            be num_prim_cells*vol_primitive, where vol_primitive is the volume
+            of the primitive cell.
 
-        num_templates: int
-            Number of templates to search in. Simmulated annealing is done in
-            each cell and the one with the lowest energy is taken as the ground
-            state.
-
-        num_prim_cells: int
-            Number of primitive cells to use when constructing templates. The
-            volume of all the templates used will be
-            num_prim_cells*vol_primitive, where vol_primitive is the volume of
-            the primitive cell.
-
-        See doc-string of `generate_gs_structure` for the rest of the
-        argument.
+        See docstring of `generate_gs_structure` for the rest of the arguments.
         """
 
         for i in range(self.num_to_gen()):
-            _logger('Generating ground-state structures: {} of {}'
-                    ''.format(i, self.struct_per_gen))
+            _logger(f"Generating ground-state structures: {i} of "
+                    f"{self.struct_per_gen}")
 
             self._generate_one_gs_structure_multiple_templates(
-                num_templates=num_templates, num_prim_cells=num_prim_cells,
-                init_temp=init_temp, final_temp=final_temp,
-                num_temp=num_temp, num_steps_per_temp=num_steps_per_temp,
-                eci=eci
-            )
+                eci=eci, num_templates=num_templates,
+                num_prim_cells=num_prim_cells, init_temp=init_temp,
+                final_temp=final_temp, num_temp=num_temp,
+                num_steps_per_temp=num_steps_per_temp)
 
     def _generate_one_gs_structure_multiple_templates(
-            self, num_templates=20, num_prim_cells=2, init_temp=2000,
-            final_temp=1, num_temp=10, num_steps_per_temp=1000,
-            eci=None):
+            self, eci: Dict[str, float], num_templates: int = 20,
+            num_prim_cells: int = 2, init_temp: float = 2000.0,
+            final_temp: float = 1.0, num_temp: int = 10,
+            num_steps_per_temp=1000) -> None:
         """
-        Search for ground states in many templates.
+        Generate one ground-state structures using multiple templates
+        (rather than using fixed cell size and shape).
 
-        Parameters:
+        :param num_templates: Number of templates to search in. Simmulated
+            annealing is done in each cell and the one with the lowest energy
+            is taken as the ground state.
+        :param num_prim_cells: Number of primitive cells to use when
+            constructing templates. The volume of all the templates used will
+            be num_prim_cells*vol_primitive, where vol_primitive is the volume
+            of the primitive cell.
 
-        num_templates: int
-            Number of templates to search in. Simmulated annealing is done in
-            each cell and the one with the lowest energy is taken as the ground
-            state.
-
-        num_prim_cells: int
-            Number of primitive cells to use when constructing templates. The
-            volume of all the templates used will be
-            num_prim_cells*vol_primitive, where vol_primitive is the volume of
-            the primitive cell.
-
-        See doc-string of `generate_gs_structure` for the rest of the
-        argument.
+        See docstring of `generate_gs_structure` for the rest of the arguments.
         """
         templates = self.setting.template_atoms.get_fixed_volume_templates(
             num_templates=num_templates, num_prim_cells=num_prim_cells)
@@ -255,8 +221,7 @@ class NewStructures(object):
         energies = []
         gs_structs = []
         for i, atoms in enumerate(templates):
-            _logger('Searching for GS in template {} of {}'
-                    ''.format(i, len(templates)))
+            _logger(f"Searching for GS in template {i} of {len(templates)}")
             self.setting.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
@@ -274,36 +239,30 @@ class NewStructures(object):
         self.setting.set_active_template(atoms=gs)
         self.insert_structure(init_struct=gs_structs[min_energy_indx])
 
-    def generate_gs_structure(self, atoms=None, init_temp=2000,
-                              final_temp=1, num_temp=10,
-                              num_steps_per_temp=1000, eci=None,
-                              random_composition=False):
-        """Generate ground-state structure.
+    def generate_gs_structure(self, atoms: Union[ase.Atoms, List[ase.Atoms]],
+                              eci: Dict[str, float],
+                              init_temp: float = 2000.0,
+                              final_temp: float = 1.0,
+                              num_temp: int = 10,
+                              num_steps_per_temp: int = 1000,
+                              random_composition: bool = False) -> None:
+        """
+        Generate ground-state structures based on cell sizes and shapes of the
+        passed ASE Atoms.
 
-        Parameters:
-
-        atoms: Atoms object or a list of Atoms object
-            Atoms object with the desired size and composition of the new
-            structure. A list of Atoms with different size and/or compositions
-            can be passed. Compositions of the supplied Atoms object(s) are
-            ignored when random_composition=True.
-
-        init_temp: int or float
-            initial temperature (does not represent *physical* temperature)
-
-        final_temp: int or float
-            final temperature (does not represent *physical* temperature)
-
-        num_temp: int
-            number of temperatures to be used in simulated annealing
-
-        num_steps_per_temp: int
-            number of steps in simulated annealing
-
-        eci: dict
-            Dictionary containing cluster names and their ECI values
-
-        random_composition: bool
+        :param atoms: Atoms object with the desired size and composition of
+            the new structure. A list of Atoms with different size and/or
+            compositions can be passed. Compositions of the supplied Atoms
+            object(s) are ignored when random_composition=True.
+        :param eci: cluster names and their ECI values
+        :param init_temp: Initial temperature (does not represent *physical*
+            temperature)
+        :param final_temp: Final temperature (does not represent *physical*
+            temperature)
+        :param num_temp: Number of temperatures to use in simulated annealing
+        :param num_steps_per_temp: Number of steps in simulated annealing
+        :param random_composition: Whether or not to fix the composition of the
+            generated structure.
             -*False* and atoms = Atoms object: One ground-state structure with
                 matching size and composition of the supplied Atoms object is
                 generated
@@ -338,8 +297,8 @@ class NewStructures(object):
         while current_count < num_to_generate:
             struct = structs[current_count].copy()
             self.setting.set_active_template(atoms=struct)
-            _logger("Generating structure {} out of {}."
-                    .format(current_count + 1, num_to_generate))
+            _logger(f"Generating structure {current_count + 1} out of "
+                    f"{num_to_generate}.")
             es = GSStructure(self.setting, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
@@ -347,78 +306,70 @@ class NewStructures(object):
             formula_unit = self._get_formula_unit(gs_struct)
 
             if self._exists_in_db(gs_struct, formula_unit):
-                msg = 'generated structure is already in DB.\n'
-                msg += 'generating again... '
-                msg += '{} out of {} attempts'.format(num_attempt + 1,
-                                                      max_attempt)
+                msg = f"generated structure is already in DB.\n"
+                msg += f"generating again... "
+                msg += f"{num_attempt + 1} out of {max_attempt} attempts"
                 _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
                     raise MaxAttemptReachedError(
-                        "Could not generate ground-state structure in "
-                        "{} attempts.".format(max_attempt))
+                        f"Could not generate ground-state structure in "
+                        f"{max_attempt} attempts.")
                 continue
             else:
                 num_attempt = 0
 
             min_energy = gs_struct.get_potential_energy()
-            msg = 'Structure with E = {:.3f} generated.\n'.format(min_energy)
+            msg = f"Structure with E = {min_energy:.3f} generated.\n"
             _logger(msg)
             self.insert_structure(init_struct=gs_struct)
             current_count += 1
 
-    def generate_random_structures(self, atoms=None):
-        """Generate a given number of random structures.
+    def generate_random_structures(
+            self, atoms: Optional[ase.Atoms] = None) -> None:
+        """
+        Generate random structures until the number of structures with
+        `generation_number` equals `struct_per_gen`.
 
-        Parameters:
-
-        atoms: Atoms object or None.
-            If Atoms object is passed, the passed object will be used as a
-            template for all the random structures being generated.
-            If None, a random template will be chosen
+        :param atoms: If Atoms object is passed, the passed object will be
+            used as a template for all the random structures being generated.
+            If None, a random template will be chosen.
             (different for each structure)
         """
-        _logger("Generating {} random structures "
-                "(generation: {}, struct_per_gen={}, {} present)"
-                .format(self.num_to_gen(), self.gen, self.struct_per_gen,
-                        self.num_in_gen()))
+        _logger(f"Generating {self.num_to_gen()} random structures "
+                f"(generation: {self.gen}, "
+                f"struct_per_gen={self.struct_per_gen}, "
+                f"{self.num_in_gen()} present)")
 
         fail_counter = 0
         i = 0
 
         num_structs = self.num_to_gen()
         while i < num_structs and fail_counter < max_fail:
-            if self.generate_one_random_structure(atoms=atoms, verbose=False):
-                _logger("Generated {} random structures".format(i + 1))
+            if self.generate_one_random_structure(atoms=atoms):
+                _logger(f"Generated {i+1} random structures")
                 i += 1
                 fail_counter = 0
             else:
                 fail_counter += 1
 
         if fail_counter >= max_fail:
-            RuntimeError("Could not find a structure that does not exist in "
-                         "DB after {} attempts."
-                         "".format(int(max_attempt * max_fail)))
+            RuntimeError(f"Could not find a structure that does not exist in "
+                         f"DB after {int(max_attempt * max_fail)} attempts.")
 
-    def generate_one_random_structure(self, atoms=None, verbose=True):
-        """Generate a random structure.
-
-        Inserts a new structure to database if a unique structure is found.
+    def generate_one_random_structure(
+            self, atoms: Optional[ase.Atoms] = None) -> bool:
+        """
+        Generate and insert a random structure to database if a unique
+        structure is found.
 
         Returns ``True`` if unique structure is found and inserted in DB,
         ``False`` otherwise.
 
-        Parameters:
-
-        atoms: Atoms object or None.
-            If Atoms object is passed, the passed object will be used as a
-            template for all the random structures being generated.
-            If None, a random template will be chosen
+        :param atoms: If Atoms object is passed, the passed object will be
+            used as a template for all the random structures being generated.
+            If None, a random template will be chosen.
             (different for each structure)
-
-        verbose: bool
-            If ``True``, print error message when it reaches max. number of
-            attempts.
         """
         num_attempts = 0
         unique_structure_found = False
@@ -433,30 +384,29 @@ class NewStructures(object):
                 num_attempts += 1
 
         if not unique_structure_found:
-            if verbose:
-                _logger("Could not find a structure that does not already "
-                        "exist in the DB within {} attempts."
-                        "".format(max_attempt))
+            _logger(f"Could not find a structure that does not already exist "
+                    f"in the DB within {max_attempt} attempts.")
             return False
 
         self.insert_structure(init_struct=new_atoms)
         return True
 
-    def _set_initial_structures(self, atoms, random_composition=False):
+    def _set_initial_structures(
+            self, atoms: ase.Atoms or List[ase.Atoms],
+            random_composition: bool = False) -> List[ase.Atoms]:
         structs = []
-        if isinstance(atoms, Atoms):
+        if atoms is not list:
             struct = wrap_and_sort_by_position(atoms)
             if random_composition is False:
                 num_to_gen = 1
                 _logger("Generate 1 ground-state structure.")
                 structs.append(struct)
             else:
-                _logger("Generate {} ground-state structures "
-                        "(generation: {}, struct_per_gen={}, {} present)"
-                        .format(self.num_to_gen(),
-                                self.gen,
-                                self.struct_per_gen,
-                                self.num_in_gen()))
+                msg = f"Generate {self.num_to_gen()} ground-state structures"
+                msg += f"(generation: {self.gen}, "
+                msg += f"struct_per_gen={self.struct_per_gen}, "
+                msg += f"{self.num_in_gen()} present)"
+                _logger(msg)
                 self.setting.set_active_template(atoms=struct)
                 num_to_gen = self.num_to_gen()
                 concs = []
@@ -473,10 +423,9 @@ class NewStructures(object):
                         num_attempt = 0
 
                     if num_attempt > 100:
-                        raise RuntimeError("Could not find {} unique "
-                                           "compositions using the provided "
-                                           "Atoms object"
-                                           .format(self.num_to_gen))
+                        msg = f"Could not find {self.num_to_gen} unique "
+                        msg += f"compositions using the provided Atoms object."
+                        raise RuntimeError(msg)
                 num_atoms_in_basis = [len(indices) for indices
                                       in self.setting.index_by_basis]
                 for x in concs:
@@ -484,8 +433,8 @@ class NewStructures(object):
                         num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
 
-        elif all(isinstance(a, Atoms) for a in atoms):
-            _logger("Generate {} ground-state structures ".format(len(atoms)))
+        else:
+            _logger(f"Generate {len(atoms)} ground-state structures.")
             if random_composition is False:
                 for struct in atoms:
                     structs.append(wrap_and_sort_by_position(struct))
@@ -501,14 +450,11 @@ class NewStructures(object):
                     num_insert = self.setting.concentration.conc_in_int(
                         num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
-
-        else:
-            raise ValueError("atoms must be either an Atoms object or a list "
-                             "of Atoms objects")
         return structs
 
-    def generate_initial_pool(self, atoms=None):
-        """Generate initial pool of structures.
+    def generate_initial_pool(self, atoms: Optional[ase.Atoms] = None) -> None:
+        """
+        Generate initial pool of structures.
 
         Initial pool of structures are generated, in sequence, using
 
@@ -517,18 +463,19 @@ class NewStructures(object):
         2. generate_random_structures(): random structures are random
            concentration.
 
-        Parameters:
+        Structures are genereated until the number of structures reaches
+        `struct_per_gen`.
 
-        atoms: Atoms object | None.
-            If Atoms object is passed, the passed object will be used as a
-            template for all the random structures being generated.
-            If None, a random template will be chosen
-            (different for each structure)."""
+        :param atoms: If Atoms object is passed, the size and shape of its
+                      cell will be used for all the random structures.
+                      If None, a randome size and shape will be chosen for
+                      each structure.
+        """
 
         self.generate_conc_extrema()
         self.generate_random_structures(atoms=atoms)
 
-    def generate_conc_extrema(self):
+    def generate_conc_extrema(self) -> None:
         """Generate initial pool of structures with max/min concentration."""
         from itertools import product
         _logger("Generating one structure per concentration where the number "
@@ -544,19 +491,17 @@ class NewStructures(object):
             atoms = wrap_and_sort_by_position(atoms)
             self.insert_structure(init_struct=atoms)
 
-    def generate_metropolis_trajectory(self, atoms=None, random_comp=True):
+    def generate_metropolis_trajectory(
+            self, atoms: Optional[ase.Atoms] = None,
+            random_comp: bool = True) -> None:
         """
-        Generate a set of structures that consists of single atom swaps
+        Generate a set of structures consists of single atom swaps
 
-        Parameters:
-
-        atoms: Atoms
-            Atoms object that will be used as a template for the trajectory
-
-        random_comp: bool
-            If True the passed atoms object will be initialised with a random
-            composition. Otherwise, the trajectory will start from the passed
-            Atoms object.
+        :param atoms: ASE Atoms object that will be used as a template for the
+            trajectory
+        :param random_comp: If 'True' the passed atoms object will be
+            initialised with a random composition. Otherwise, the trajectory
+            will start from the passed Atoms object.
         """
         if atoms is None:
             atoms = self.setting.atoms.copy()
@@ -579,17 +524,13 @@ class NewStructures(object):
             else:
                 raise exc
 
-    def _get_struct_at_conc(self, conc_type='random', index=0):
+    def _get_struct_at_conc(
+            self, conc_type: str = 'random', index: int = 0) -> ase.Atoms:
         """Generate a structure at a concentration specified.
 
-        Parameters:
-
-        conc_type: str
-            One of 'min', 'max' and 'random'
-
-        index: int
-            index of the flattened basis_element array to specify which
-            element to be maximized/minimized
+        :param conc_type: One of 'min', 'max' and 'random'
+        :param index: Index of the flattened basis_element array to specify
+            which element to be maximized/minimized
         """
         conc = self.setting.concentration
         if conc_type == 'min':
@@ -602,28 +543,23 @@ class NewStructures(object):
 
         num_atoms_in_basis = [len(indices) for indices
                               in self.setting.index_by_basis]
-        num_atoms_to_insert = conc.conc_in_int(num_atoms_in_basis, x)
-        atoms = self._random_struct_at_conc(num_atoms_to_insert)
+        num_to_insert = conc.conc_in_int(num_atoms_in_basis, x)
+        atoms = self._random_struct_at_conc(num_to_insert)
 
         return atoms
 
-    def insert_structures(self, traj_init=None, traj_final=None,
-                          cb=lambda num, tot: None):
+    def insert_structures(
+            self, traj_init: str, traj_final: Optional[str] = None,
+            cb=lambda num, tot: None) -> None:
         """
-        Insert a sequence of initial and final structures from trajectory.
+        Insert a sequence of initial and final structures from their
+        trajectory files.
 
-        Parameters:
-
-        traj_init: str
-            Filename of a trajectory file with initial structures
-
-        traj_final: str
-            Filename of a trajectory file with the final structures
-
-        cb: function
-            Callback function that is called every time a structure is inserted
-            (or rejected because it exists before). The signature of the
-            function is cb(num, tot) where num is the number of inserted
+        :param traj_init: Name of a trajectory file with initial structures
+        :param traj_final: Name of a trajectory file with the final structures
+        :param cb: Callback function that is called every time a structure is
+            inserted (or rejected because it exists before). The signature of
+            the function is cb(num, tot) where num is the number of inserted
             structure and tot is the total number of structures that should
             be inserted
         """
@@ -661,31 +597,27 @@ class NewStructures(object):
             num_ins += 1
             cb(num_ins, len(traj_in))
 
-    def insert_structure(self, init_struct=None, final_struct=None, name=None):
-        """Insert a user-supplied structure to the database.
+    def insert_structure(
+            self, init_struct: Union[ase.Atoms, str],
+            final_struct: Optional[Union[ase.Atoms, str]] = None,
+            name: Optional[str] = None) -> None:
+        """Insert a structure to the database.
 
         Parameters:
 
-        init_struct: Atoms object, .xyz, .cif or .traj file
-            Unrelaxed initial structure.
-
-        final_struct: Atoms object or .traj file (optional)
-            Final structure that contains the energy.
-            Needs to also supply init_struct in order to use the final_struct.
-
-        name: str (optional)
-            Name of the DB entry if a custom name is to be used.
-            If ``None``, default naming convention will be used.
+        :param init_struct: Unrelaxed initial structure. If a string is passed,
+            it should be the file name with .xyz, .cif or .traj extension.
+        :param final_struct: (Optional) final structure that contains energy.
+            It can be either ASE Atoms object or file anme ending with .traj.
+        :param name: (Optional) name of the DB entry if a custom name is to be
+            used. If `None`, default naming convention will be used.
         """
-        if init_struct is None:
-            raise TypeError('init_struct must be provided')
-
         if name is not None:
             num = sum(1 for _ in self.db.select(['name', '=', name]))
             if num > 0:
-                raise ValueError("Name: {} already exists in DB!".format(name))
+                raise ValueError(f"Name: {name} already exists in DB!")
 
-        if isinstance(init_struct, Atoms):
+        if isinstance(init_struct, ase.Atoms):
             init = wrap_and_sort_by_position(init_struct)
         else:
             init = wrap_and_sort_by_position(read(init_struct))
@@ -694,8 +626,8 @@ class NewStructures(object):
 
         formula_unit = self._get_formula_unit(init)
         if self._exists_in_db(init, formula_unit):
-            _logger('Supplied structure already exists in DB.'
-                    'The structure will not be inserted.')
+            _logger("Supplied structure already exists in DB. "
+                    "The structure will not be inserted.")
             return
 
         cf = self.corrfunc.get_cf(init)
@@ -712,7 +644,7 @@ class NewStructures(object):
         uid_init = self.db.write(init, kvp, external_tables={tab_name: cf})
 
         if final_struct is not None:
-            if isinstance(final_struct, Atoms):
+            if isinstance(final_struct, ase.Atoms):
                 final = final_struct
             else:
                 final = read(final_struct)
@@ -721,8 +653,10 @@ class NewStructures(object):
             self.db.update(uid_init, converged=True, started='', queued='',
                            final_struct_id=uid)
 
-    def _exists_in_db(self, atoms, formula_unit=None):
-        """Check to see if the passed atoms already exists in DB.
+    def _exists_in_db(self, atoms: ase.Atom,
+                      formula_unit: Optional[str] = None) -> bool:
+        """
+        Check to see if the passed atoms already exists in DB.
 
         To reduce the number of assessments for symmetry equivalence,
         check is only performed with the entries with the same concentration
@@ -731,12 +665,9 @@ class NewStructures(object):
         Return *True* if there is a symmetry-equivalent structure in DB,
         return *False* otherwise.
 
-        Parameters:
-
-        atoms: Atoms object
-
-        formula_unit: str
-            reduced formula unit of the passed Atoms object
+        :param atoms: Structure to be compared against the rest of structures
+            in DB.
+        :formula_unit: Reduced formula unit of the passed Atoms object
         """
         cond = [('name', '!=', 'template'), ('name', '!=', 'primitive_cell')]
         if formula_unit is not None:
@@ -759,17 +690,14 @@ class NewStructures(object):
             atoms_in_db.append(row.toatoms())
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
-    def _get_kvp(self, atoms, formula_unit=None):
-        """Get key-value pairs of the passed Atoms object.
+    def _get_kvp(
+            self, atoms: ase.Atoms, formula_unit: str = None) -> Dict:
+        """
+        Create a dictionary of key-value pairs and return it.
 
-        Create key-value pairs and return it.
-
-        Parameters:
-
-        atoms: Atoms object
-
-        formula_unit: str
-            reduced formula unit of the passed Atoms object
+        :param atoms: ASE Atoms object for which the key-value pair
+            descriptions will be generated
+        :param formula_unit: reduced formula unit of the passed Atoms object
         """
         if formula_unit is None:
             raise ValueError("Formula unit not specified!")
@@ -782,13 +710,13 @@ class NewStructures(object):
         count = 0
         for _ in self.db.select(formula_unit=formula_unit):
             count += 1
-        kvp['name'] = formula_unit + "_{}".format(count)
+        kvp['name'] = formula_unit + f"_{count}"
         kvp['formula_unit'] = formula_unit
         kvp['struct_type'] = 'initial'
         kvp['size'] = nested_list2str(self.setting.size)
         return kvp
 
-    def _get_formula_unit(self, atoms):
+    def _get_formula_unit(self, atoms: ase.Atoms) -> str:
         """Generates a reduced formula unit for the structure."""
         atom_count = []
         all_nums = []
@@ -813,7 +741,8 @@ class NewStructures(object):
                 fu += "_"
         return fu
 
-    def _random_struct_at_conc(self, num_atoms_to_insert):
+    def _random_struct_at_conc(
+            self, num_atoms_to_insert: np.ndarray) -> ase.Atoms:
         """Generate a random structure."""
         rnd_indices = []
         for indices in self.setting.index_by_basis:
@@ -837,7 +766,7 @@ class NewStructures(object):
         assert num_atoms_inserted == len(atoms)
         return atoms
 
-    def _determine_gen_number(self):
+    def _determine_gen_number(self) -> int:
         """Determine generation number based on the values in DB."""
         try:
             gens = [row.get('gen') for row in self.db.select()]
@@ -850,7 +779,14 @@ class NewStructures(object):
             gen = 0
         return gen
 
-    def _generate_sigma_mu(self, num_samples_var):
+    def _generate_sigma_mu(self, num_samples_var: int) -> None:
+        """
+        Generate sigma and mu of eq.3 in PRB 80, 165122 (2009) and save them
+        in `probe_structure-sigma_mu.npz` file.
+
+        :param num_samples_var: number of samples to be used in determining
+                                signam and mu.
+        """
         _logger('===========================================================\n'
                 'Determining sigma and mu value for assessing mean variance.\n'
                 'May take a long time depending on the number of samples \n'

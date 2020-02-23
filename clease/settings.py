@@ -282,14 +282,9 @@ class ClusterExpansionSetting(object):
         self.size = template.info['size']
         self.atoms_mng.atoms = template
 
-    def set_active_template(self, size=None, atoms=None):
+    def set_active_template(self, atoms=None):
         """Set a new template atoms object."""
-        if size is not None and atoms is not None:
-            raise ValueError("Specify either size or pass Atoms object.")
-        if size is not None:
-            template = self.template_atoms.get_template_with_given_size(
-                size=size)
-        elif atoms is not None:
+        if atoms is not None:
             template = self.template_atoms.get_template_matching_atoms(
                 atoms=atoms)
         else:
