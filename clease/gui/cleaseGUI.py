@@ -143,7 +143,7 @@ class WindowFrame(StackLayout):
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
-        msg = 'Session saved to {}'.format(fname)
+        msg = f"Session saved to {fname}"
         App.get_running_app().root.ids.status.text = msg
         self.dismiss_popup()
         self.current_session_file = fname
@@ -332,7 +332,7 @@ class WindowFrame(StackLayout):
             return
         self.settings.save(fname)
         app = App.get_running_app()
-        app.root.ids.status.text = 'Settings written to {}'.format(fname)
+        app.root.ids.status.text = f"Settings written to {fname}"
         self.dismiss_popup()
 
 

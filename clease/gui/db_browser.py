@@ -13,16 +13,15 @@ class DbBrowser(FloatLayout):
         self.db = connect(kwargs.pop('db_name'))
         self.spacing = self._format_constraints()
         FloatLayout.__init__(self, **kwargs)
-        txt = '| {:{space}s} |'.format('id', space=self.spacing['id'])
-        txt += ' {:{space}s} |'.format('formula', space=self.spacing['formula'])
-        txt += ' {:{space}s} |'.format('calculator', space=self.spacing['calc'])
-        txt += ' {:{space}s} |'.format('energy', space=self.spacing['energy'])
-        txt += ' {:{space}s} |'.format('name', space=self.spacing['name'])
-        txt += ' {:{space}s} |'.format('size', space=self.spacing['size'])
-        txt += ' {:{space}s} |'.format('gen', space=self.spacing['gen'])
-        txt += ' {:{space}s} |'.format('struct_type',
-                                       space=self.spacing['struct_type'])
-        txt += ' {:9s} |'.format('converged')
+        txt = f"| {'id':{self.spacing['id']}} |"
+        txt += f" {'formula':{self.spacing['formula']}} |"
+        txt += f" {'calculator':{self.spacing['calc']}} |"
+        txt += f" {'energy':{self.spacing['energy']}} |"
+        txt += f" {'name':{self.spacing['name']}} |"
+        txt += f" {'size':{self.spacing['size']}} |"
+        txt += f" {'gen':{self.spacing['gen']}} |"
+        txt += f" {'struct_type':{self.spacing['struct_type']}} |"
+        txt += f" {'converged':9} |"
         self.header = txt
         self.set_rows(None)
 
@@ -35,21 +34,19 @@ class DbBrowser(FloatLayout):
         cnv = row.get('converged', '')
         size = row.get('size', '')
         if isinstance(energy, float):
-            energy = '{:.3f}'.format(energy)
+            energy = f"{energy:.3f}"
 
         if isinstance(cnv, bool):
             cnv = int(cnv)
-        txt = '| {:{space}s} |'.format(str(row.id), space=self.spacing['id'])
-        txt += ' {:{space}s} |'.format(row.formula,
-                                       space=self.spacing['formula'])
-        txt += ' {:{space}s} |'.format(calc, space=self.spacing['calc'])
-        txt += ' {:{space}s} |'.format(energy, space=self.spacing['energy'])
-        txt += ' {:{space}s} |'.format(name, space=self.spacing['name'])
-        txt += ' {:{space}s} |'.format(size, space=self.spacing['size'])
-        txt += ' {:{space}s} |'.format(str(gen), space=self.spacing['gen'])
-        txt += ' {:{space}s} |'.format(str_type,
-                                       space=self.spacing['struct_type'])
-        txt += ' {:9s} |'.format(str(cnv))
+        txt = f"| {str(row.id):{self.spacing['id']}} |"
+        txt += f" {row.formula:{self.spacing['formula']}} |"
+        txt += f" {calc:{self.spacing['calc']}} |"
+        txt += f" {energy:{self.spacing['energy']}} |"
+        txt += f" {name:{self.spacing['name']}} |"
+        txt += f" {size:{self.spacing['size']}} |"
+        txt += f" {str(gen):{self.spacing['gen']}} |"
+        txt += f" {str_type:{self.spacing['struct_type']}} |"
+        txt += f" {str(cnv):9} |"
         return txt + '\n'
 
     def _format_constraints(self):
@@ -69,7 +66,7 @@ class DbBrowser(FloatLayout):
                 value = row.get(k, 'none')
 
                 if isinstance(value, float):
-                    value = '{:.3f}'.format(value)
+                    value = f"{value:.3f}"
                 if len(str(value)) > v:
                     spacing[k] = len(str(value))
         return spacing

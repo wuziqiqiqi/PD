@@ -53,14 +53,13 @@ class MCMainPage(Screen):
 
         info = atoms.get_cell_lengths_and_angles()
 
-        length_str = 'a: {}Å b: {}Å c: {}Å'.format(
-            int(info[0]), int(info[1]), int(info[2]))
+        length_str = f"a: {int(info[0])} Å b: {int(info[1])} Å "
+        length_str += f"c: {int(info[1])} Å"
         self.mc_cell_lengths = length_str
 
-        angle_str = '{}deg {}deg {}deg'.format(int(info[3]), int(info[4]),
-                                               int(info[5]))
+        angle_str = f"{int(info[3])} deg {int(info[4])} deg {int(info[5])} deg"
         self.angle_info = angle_str
-        self.num_atoms = 'No. atoms {}'.format(len(atoms))
+        self.num_atoms = f"No. atoms {len(atoms)}"
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)

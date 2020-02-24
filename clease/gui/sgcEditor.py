@@ -10,7 +10,7 @@ from clease.gui import backup_folder
 class SGCEditor(FloatLayout):
     close = ObjectProperty(None)
     data = {}
-    backup_file = 'sgcEditorBck{}.json'.format(version)
+    backup_file = f"sgcEditorBck{version}.json"
 
     def __init__(self, **kwargs):
         symbols = kwargs.pop('symbols')

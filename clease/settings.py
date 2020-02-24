@@ -204,8 +204,7 @@ class ClusterExpansionSetting(object):
             elif bf_type.lower() == "binary_linear":
                 self._basis_func_type = BinaryLinear(unique_element)
             else:
-                msg = "basis function type {} ".format(bf_type)
-                msg += "is not supported."
+                msg = f"basis function type {bf_type} is not supported."
                 raise ValueError(msg)
         else:
             raise ValueError("basis_function has to be an instance of "
@@ -298,11 +297,9 @@ class ClusterExpansionSetting(object):
             atoms = wrap_and_sort_by_position(atoms)
             if not np.allclose(template.get_positions(),
                                atoms.get_positions()):
-                raise ValueError("Inconsistent positions. Passed object\n"
-                                 "{}\nGenerated template\n{}"
-                                 "".format(atoms.get_positions(),
-                                           template.get_positions()))
-
+                raise ValueError(f"Inconsistent positions. Passed object\n"
+                                 f"{atoms.get_positions()}\nGenerated template"
+                                 f"\n{template.get_positions()}")
         self.prepare_new_active_template(template)
         self.create_cluster_list_and_trans_matrix()
 
@@ -444,5 +441,4 @@ def to_3x3_matrix(size):
     if np.array(size).shape == (3,):
         return np.diag(size).tolist()
 
-    raise ValueError("Cannot convert passed array {} to 3x3 matrix"
-                     "".format(size))
+    raise ValueError(f"Cannot convert passed array {size} to 3x3 matrix")

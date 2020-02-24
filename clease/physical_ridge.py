@@ -128,10 +128,10 @@ class PhysicalRidge(LinearRegression):
             (e.g. equal to the number of rows in X)
         """
         if X.shape[1] != len(self.sizes) or X.shape[1] != len(self.diameters):
-            msg = 'Inconsistent number of columns in X. '
-            msg += 'Num. columns: {} '.format(X.shape[1])
-            msg += 'Num. sizes: {} '.format(len(self.sizes))
-            msg += 'Num. diameters: {}'.format(len(self.diameters))
+            msg = f"Inconsistent number of columns in X. "
+            msg += f"Num. columns: {X.shape[1]} "
+            msg += f"Num. sizes: {len(self.sizes)} "
+            msg += f"Num. diameters: {len(self.diameters)}"
             raise ValueError(msg)
 
         # Omit the bias term (first column since we are using normalized data)
@@ -173,7 +173,7 @@ def get_size_decay(decay):
             power = int(decay[-1])
             return lambda size: size**power
         else:
-            raise ValueError("Unknown decay type {}".format(decay))
+            raise ValueError(f"Unknown decay type {decay}")
     elif callable(decay):
         return decay
 
@@ -190,7 +190,7 @@ def get_dia_decay(decay):
             power = int(decay[-1])
             return lambda dia: dia**power
         else:
-            raise ValueError("Unknown decay type {}".format(decay))
+            raise ValueError(f"Unknown decay type {decay}")
     elif callable(decay):
         return decay
 
@@ -271,8 +271,8 @@ def random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=100):
             best_param = param_dict
 
         if time.time() - last_print > 30:
-            _logger("{} of {}. CV: {} meV/atom. MSE: {} meV/atom. Params: {}".format(
-                i, num_trials, best_cv*1000.0, best_mse*1000.0, best_param))
+            _logger(f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
+                    f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
             last_print = time.time()
 
     cv_params = sorted(cv_params)

@@ -96,8 +96,8 @@ class MCTrajectoryExtractor(object):
         ax.set_ylabel("Probability Density")
         mu = np.mean(dev)
         var = np.var(dev)
-        _logger('Mean dev. {} eV'.format(mu))
-        _logger("Standard deviation {} eV".format(np.sqrt(var)))
+        _logger(f"Mean dev. {mu} eV")
+        _logger(f"Standard deviation {np.sqrt(var)} eV")
 
         rng = bins[-1] - bins[0]
         x = np.linspace(bins[0] - 0.2*rng, bins[-1] + 0.2*rng, 100)

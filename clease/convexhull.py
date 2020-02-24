@@ -84,7 +84,7 @@ class ConvexHull(object):
         end_points = {k: {} for k in self._unique_elem}
         for k, v in end_points.items():
             for k2 in self._unique_elem:
-                v["{}_conc".format(k2)] = 0.0
+                v[f"{k2}_conc"] = 0.0
             v["energy"] = 0.0
 
         for row in self.db.select(self.select_cond):
@@ -102,7 +102,7 @@ class ConvexHull(object):
 
                 # Check if the current structure
                 # is an endpoint
-                if count[k] > v["{}_conc".format(k)]:
+                if count[k] > v[f"{k}_conc"]:
                     f_id = row.get("final_struct_id", -1)
                     if f_id >= 0:
                         # New format where energy is in a separate entry
@@ -111,7 +111,7 @@ class ConvexHull(object):
                         # Old format where the energy is stored in same entry
                         v["energy"] = row.energy/row.natoms
                     for k_count in count.keys():
-                        v["{}_conc".format(k_count)] = count[k_count]
+                        v[f"{k_count}_conc"] = count[k_count]
         return end_points
 
     def _weighting_coefficients(self, end_points):
@@ -135,7 +135,7 @@ class ConvexHull(object):
         row = 0
         for _, v in end_points.items():
             for j, symb in enumerate(self._unique_elem):
-                matrix[row, j] = v["{}_conc".format(symb)]
+                matrix[row, j] = v[f"{symb}_conc"]
             rhs[row] = v["energy"]
             row += 1
 
@@ -200,8 +200,8 @@ class ConvexHull(object):
         elif conc_var in self._unique_elem:
             x = np.array(self.concs[conc_var])
         else:
-            raise ValueError("conc_var has to be {} or None"
-                             "".format(self._unique_elem))
+            msg = f"conc_var has to be {self._unique_elem} or None"
+            raise ValueError(msg)
 
         points = np.vstack((x.T, self.energies.T)).T
         conv_hull = SciConvexHull(points)
@@ -264,7 +264,7 @@ class ConvexHull(object):
             else:
                 unit = "eV/atom"
             if i == 0:
-                ax.set_ylabel("Formation energy ({})".format(unit))
+                ax.set_ylabel(f"Formation energy ({unit})")
             else:
                 ax.set_yticklabels([])
 
@@ -276,7 +276,7 @@ class ConvexHull(object):
                         y_cnv = [self.energies[simpl[0]]*self.atoms_per_fu,
                                  self.energies[simpl[1]]*self.atoms_per_fu]
                         ax.plot(x_cnv, y_cnv, color="black")
-            ax.set_xlabel("{} conc".format(elems[i]))
+            ax.set_xlabel(f"{elems[i]} conc")
         return fig
 
     def show_structures_on_convex_hull(self):

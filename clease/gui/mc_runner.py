@@ -104,7 +104,7 @@ class MCRunner(object):
                     self.atoms[indices[i]].symbol = s
                 start += num
         formula = self.atoms.get_chemical_formula()
-        msg = 'Running MC at fixed conc for {}'.format(formula)
+        msg = f"Running MC at fixed conc for {formula}"
         self.status.text = msg
 
     def _init_conc_from_db(self):
@@ -167,7 +167,7 @@ class MCRunner(object):
 
             for T in self.temps:
                 mc.T = T
-                self.status.text = 'Current temperature {}K'.format(T)
+                self.status.text = f"Current temperature {T} K"
                 mc.run(steps=self.sweeps*len(self.atoms))
                 thermo = mc.get_thermodynamic_quantities()
                 self.write_thermodynamic_data_to_db(thermo)

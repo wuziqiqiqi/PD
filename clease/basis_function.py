@@ -195,5 +195,5 @@ class BinaryLinear(BasisFunction):
         new_dec = ""
         for decnum in dec:
             element = self._decoration2element(int(decnum))
-            new_dec += "{}".format(element)
+            new_dec += f"{element}"
         return name + "_" + new_dec

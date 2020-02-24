@@ -57,10 +57,8 @@ class ConcentrationObserver(MCObserver):
     def get_averages(self):
         mean_conc = self.avg_conc/self.num_calls
         var_conc = self.avg_conc_sq/self.num_calls - mean_conc**2
-        return {
-            'conc_{}'.format(self.element): mean_conc,
-            'conc_var_{}'.format(self.element): var_conc
-        }
+        return {f"conc_{self.element}": mean_conc,
+                f"conc_var_{self.element}": var_conc}
 
     def calculate_from_scratch(self, atoms):
         num_atoms = sum(1 for a in atoms if a.symbol == self.element)

@@ -14,9 +14,9 @@ class SwapMoveIndexTracker(object):
         return list(set(symbs))
 
     def __repr__(self):
-        str_repr = "SwapMoveIndexTracker at {}\n".format(hex(id(self)))
-        str_repr += "Symbols tracked: {}\n".format(self.symbols)
-        str_repr += "Tracker info: {}\n".format(self.tracker)
+        str_repr = f"SwapMoveIndexTracker at {hex(id(self))}\n"
+        str_repr += f"Symbols tracked: {self.symbols}\n"
+        str_repr += f"Tracker info: {self.tracker}\n"
         return str_repr
 
     def init_tracker(self, atoms):

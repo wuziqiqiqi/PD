@@ -87,11 +87,11 @@ class DataManager(object):
         if self._X is None:
             return
         fname = add_file_extension(fname, 'csv')
-        header = ','.join(self._feat_names) + ',{}'.format(self._target_name)
+        header = f",".join(self._feat_names) + f",{self._target_name}"
         data = np.hstack((self._X,
                           np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
-        _logger("Dataset exported to {}".format(fname))
+        _logger(f"Dataset exported to {fname}")
 
     def get_matching_names(self, pattern):
         """
@@ -192,7 +192,7 @@ class FinalStructEnergyGetter(object):
         final_struct_id = row.get("final_struct_id", None)
 
         if final_struct_id is None:
-            raise ValueError("The passed atoms row {} has no final_struct_id"
-                             "".format(row))
+            msg = f"The passed atoms row {row} has no final_struct_id"
+            raise ValueError(msg)
 
         return db.get(final_struct_id).energy/row.natoms

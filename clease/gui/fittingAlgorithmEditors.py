@@ -34,7 +34,7 @@ class FitAlgEditor(FloatLayout):
 
         with open(self.backup_filename, 'w') as out:
             for v in values:
-                out.write('{}\n'.format(v))
+                out.write(f"{v}\n")
 
     def load_values(self):
         try:

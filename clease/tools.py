@@ -181,8 +181,8 @@ def update_db(uid_initial=None, final_struct=None, db_name=None,
     select_cond = [('name', '=', name), ('struct_type', '=', 'final')]
     exist = sum(1 for row in db.select(select_cond))
     if exist >= 1:
-        _logger("A structure with 'name'={} and 'struct_type'=final "
-                "already exits in DB".format(name))
+        _logger(f"A structure with 'name'={name} and 'struct_type'=final "
+                f"already exits in DB")
         return
 
     # Write the final structure to database
@@ -531,9 +531,8 @@ def species_chempot2eci(bf_list, species_chempot):
         chemical potentials for all elements except one.
     """
     if len(species_chempot) != len(bf_list):
-        msg = 'Inconsistent number of chemical potentials. Basis functions\n'
-        msg += '{}. Passed chemical potentials {}'.format(bf_list,
-                                                          species_chempot)
+        msg = f"Inconsistent number of chemical potentials. Basis functions\n"
+        msg += f"{bf_list}. Passed chemical potentials {species_chempot}"
         raise ValueError(msg)
 
     n = len(species_chempot)
@@ -551,7 +550,7 @@ def species_chempot2eci(bf_list, species_chempot):
         inv_mat = np.linalg.pinv(mat)
         eci_chem_pot = inv_mat.dot(rhs)
     eci_chem_pot = eci_chem_pot.tolist()
-    eci_dct = {'c1_{}'.format(i): v for i, v in enumerate(eci_chem_pot)}
+    eci_dct = {f"c1_{i}": v for i, v in enumerate(eci_chem_pot)}
     return eci_dct
 
 
@@ -833,4 +832,4 @@ def add_file_extension(fname, ext):
     current_ext = get_extension(fname)
     if current_ext == '':
         return fname + '.' + ext
-    raise ValueError('Passed extenstion {} expected {}'.format(current_ext, ext))
+    raise ValueError(f"Passed extenstion {current_ext} expected {ext}")

@@ -34,7 +34,8 @@ class BiasPotential(object):
         atoms: Atoms
             Structure to evaluate the bias poential for
         """
-        raise NotImplementedError("Class has not implemented a calculate_from_scratch method!")
+        msg = "Class has not implemented a calculate_from_scratch method!"
+        raise NotImplementedError(msg)
 
     def save(self, fname="pseudo_binary_free_energy.pkl"):
         """Save the computed bias potential to a file.
@@ -48,8 +49,8 @@ class BiasPotential(object):
         import dill
         with open(fname, 'wb') as outfile:
             dill.dump(self, outfile)
-        print("Pseudo binary free energy bias potential written to "
-              "{}".format(fname))
+        print(f"Pseudo binary free energy bias potential written to "
+              f"{fname}")
 
     @staticmethod
     def load(fname="bias_potential.pkl"):

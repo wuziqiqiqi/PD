@@ -9,7 +9,6 @@ import os
 import json
 from threading import Thread
 import traceback
-import time
 
 
 class BaseGenerator(object):
@@ -102,7 +101,7 @@ class InsertStructureCB(object):
         self.status = status
 
     def __call__(self, num, tot):
-        self.status.text = 'Inserted {} of {} structures'.format(num, tot)
+        self.status.text = f"Inserted {num} of {tot} structures"
 
 
 class ExaustiveGSStructGenerator(object):
@@ -308,7 +307,7 @@ class NewStructPage(Screen):
                 atoms = settings.atoms.copy()
             else:
                 if not os.path.exists(fname):
-                    msg = "Cannot find file {}".format(fname)
+                    msg = f"Cannot find file {fname}"
                     App.get_running_app().root.ids.status.text = msg
                     self.structure_generation_in_progress = False
                     return
@@ -406,7 +405,7 @@ class NewStructPage(Screen):
         init = self.ids.initStructInput.text
 
         if init == '' or not os.path.exists(init):
-            msg = 'Cannot find initial structure {}'.format(init)
+            msg = f"Cannot find initial structure {init}"
             App.get_running_app().root.ids.status.text = msg
             return
 
@@ -419,7 +418,7 @@ class NewStructPage(Screen):
                 final_struct = None
             else:
                 if not os.path.exists(final):
-                    msg = 'Cannot find final structure {}'.format(final)
+                    msg = f"Cannot find final structure {final}"
                     App.get_running_app().root.ids.status.text = msg
                     return
                 final_struct = read(final)

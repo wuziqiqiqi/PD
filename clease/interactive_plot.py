@@ -34,9 +34,9 @@ class InteractivePlot(object):
         for i, line in enumerate(self.lines):
             x, y = line.get_data()
             if len(x) != len(self.annotations[i]):
-                msg = "Annotations for line {} ".format(i)
-                msg += "has length {} ".format(len(self.annotations[i]))
-                msg += "but there are {} data points!".format(len(x))
+                msg = f"Annotations for line {i} "
+                msg += f"has length {len(self.annotations[i])} "
+                msg += f"but there are {len(x)} data points!"
                 raise ValueError(msg)
 
         self.fig.canvas.mpl_connect("motion_notify_event", self.hover)

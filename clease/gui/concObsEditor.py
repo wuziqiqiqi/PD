@@ -8,7 +8,7 @@ from clease.gui import backup_folder
 
 class ConcObsEditor(FloatLayout):
     close = ObjectProperty(None)
-    backup_file = 'concObsBackup{}.json'.format(version)
+    backup_file = f"concObsBackup{version}.json"
     data = {}
     default_element = 'X'
 

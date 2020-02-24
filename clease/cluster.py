@@ -105,15 +105,15 @@ class Cluster(object):
         return Atoms(symbols, positions=positions)
 
     def __str__(self):
-        str_rep = 'Name: {}\n'.format(self.name)
-        str_rep += 'Diameter: {}\n'.format(self.diameter)
-        str_rep += 'Size: {}\n'.format(self.size)
-        str_rep += 'Ref. indx: {}\n'.format(self.ref_indx)
-        str_rep += 'Trans. symm group: {}\n'.format(self.group)
-        str_rep += 'Indices: {}\n'.format(self.indices)
-        str_rep += 'Equiv. sites: {}\n'.format(self.equiv_sites)
-        str_rep += 'Fingerprint: {}\n'.format(self.fp)
-        str_rep += 'Information: {}\n'.format(self.info)
+        str_rep = f"Name: {self.name}\n"
+        str_rep += f"Diameter: {self.diameter}\n"
+        str_rep += f"Size: {self.size}\n"
+        str_rep += f"Ref. indx: {self.ref_indx}\n"
+        str_rep += f"Trans. symm group: {self.group}\n"
+        str_rep += f"Indices: {self.indices}\n"
+        str_rep += f"Equiv. sites: {self.equiv_sites}\n"
+        str_rep += f"Fingerprint: {self.fp}\n"
+        str_rep += f"Information: {self.info}\n"
         return str_rep
 
     def get_figure_key(self, figure):
@@ -161,8 +161,8 @@ class Cluster(object):
             if translated_figure == target_figure:
                 return self._order_equiv_sites(figure)
 
-        raise RuntimeError("There are no matching figure for ref_indx: {} and "
-                           "figure: {}!".format(ref_indx, target_figure))
+        raise RuntimeError(f"There are no matching figure for ref_indx: "
+                           f"{ref_indx} and figure: {target_figure}!")
 
     def get_all_figure_keys(self):
         return [self.get_figure_key(fig) for fig in self.indices]

@@ -93,13 +93,13 @@ class Montecarlo(object):
         """
         self.energy_bias = 0.0
         num_steps = num_sweeps*len(self.atoms)
-        self.log("Probing energy bias using {} MC steps...".format(num_steps))
+        self.log(f"Probing energy bias using {num_steps} MC steps...")
         for _ in range(num_steps):
             E, _ = self._mc_step()
             self.mean_energy += E
             self.energy_squared += E**2
 
-        self.log("Energy after probing: {}".format(self.current_energy))
+        self.log(f"Energy after probing: {self.current_energy}")
         self.energy_bias = self.current_energy
         self._remove_bias_from_empty_eci(self.energy_bias)
 
@@ -124,8 +124,8 @@ class Montecarlo(object):
         self.last_energies[0] = self.current_energy
 
         if abs(self.current_energy) > 1E-6:
-            raise RuntimeError("Energy is not 0 after subtracting "
-                               "the bias. Got {}".format(self.current_energy))
+            raise RuntimeError(f"Energy is not 0 after subtracting "
+                               f"the bias. Got {self.current_energy}")
 
         self.log('Bias subtracted from empty cluster...')
 
@@ -135,7 +135,6 @@ class Montecarlo(object):
         self.atoms.get_calculator().update_eci(eci)
         calc = self.atoms.get_calculator()
         self.current_energy = calc.calculate(None, None, None)
-        #self.energy_bias = 0.0
         self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
@@ -204,7 +203,7 @@ class Montecarlo(object):
         calc.clear_history()
 
         if attempts == max_attempts:
-            raise RuntimeError("Could insert {} {} atoms!".format(num, symbol))
+            raise RuntimeError(f"Could insert {num} {symbol} atoms!")
 
     def update_current_energy(self):
         """Enforce a new energy evaluation."""
@@ -254,7 +253,7 @@ class Montecarlo(object):
         """Logs the message as info."""
         allowed_modes = ["info", "warning"]
         if mode not in allowed_modes:
-            raise ValueError("Mode has to be one of {}".format(allowed_modes))
+            raise ValueError(f"Mode has to be one of {allowed_modes}")
 
         _logger(msg)
 
@@ -330,8 +329,8 @@ class Montecarlo(object):
         """
         if not obs.interval_ok(interval):
             name = type(obs).__name__
-            raise ValueError("Invalid interval for {}. Check docstring "
-                             "of the observer.".format(name))
+            raise ValueError(f"Invalid interval for {name}. Check docstring "
+                             f"of the observer.")
 
         self.observers.append((interval, obs))
 
@@ -372,17 +371,16 @@ class Montecarlo(object):
                 ms_per_step = 1000.0 * self.status_every_sec / \
                     float(self.current_step - prev)
                 accept_rate = self.num_accepted / float(self.current_step)
-                self.log(
-                    "%d of %d steps. %.2f ms per step. Acceptance rate: %.2f" %
-                    (self.current_step, steps, ms_per_step, accept_rate))
+                self.log(f"{self.current_step} of {steps} steps. "
+                         f"{ms_per_step:.2f} ms per step. Acceptance rate: "
+                         f"{accept_rate:.2f}")
                 prev = self.current_step
                 start = time.time()
 
             if self.quit:
                 break
 
-        self.log(
-            "Reached maximum number of steps ({} mc steps)".format(steps))
+        self.log(f"Reached maximum number of steps ({steps} mc steps)")
 
         # NOTE: Also update current_energy
         self._undo_energy_bias_from_eci()
@@ -397,8 +395,7 @@ class Montecarlo(object):
         v_info = sys.version_info
         meta_info = {
             "timestamp": st,
-            "python_version": "{}.{}.{}".format(v_info.major, v_info.minor,
-                                                v_info.micro)
+            "python_version": f"{v_info.major}.{v_info.minor}.{v_info.micro}"
         }
         return meta_info
 
@@ -414,7 +411,7 @@ class Montecarlo(object):
         quantities["temperature"] = self.T
         at_count = self.count_atoms()
         for key, value in at_count.items():
-            name = "{}_conc".format(key)
+            name = f"{key}_conc"
             conc = float(value) / len(self.atoms)
             quantities[name] = conc
 

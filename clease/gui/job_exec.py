@@ -71,7 +71,7 @@ class JobExec(Screen):
         msg += 'cutoff and k-point density, followed by another calculation\n'
         msg += 'with higher energy cutoff and k-point density. You can \n'
         msg += 'specify additional arguments by passing comma-separated\n'
-        msg += 'values. For instance, if your script can accept energy cutoff\n' 
+        msg += 'values. For instance, if your script can accept energy cutoff\n'
         msg += 'and k-point density as arguments, you can add 500, 5.4 to the\n'
         msg += 'field to pass the respective values. The executed command\n'
         msg += 'when the run button is pressed will be:\n\n'
@@ -85,7 +85,7 @@ class JobExec(Screen):
     def run_on_separate_thread(self, cmd, script, ids, args):
         app = App.get_running_app()
         for i, uid in enumerate(ids):
-            msg = 'Running job {} of {}'.format(i, len(ids))
+            msg = f"Running job {i} of {len(ids)}"
             app.root.ids.status.text = msg
             subprocess.check_call([cmd, script, str(uid)] + args)
         app.root.ids.status.text = JOB_EXEC_MSG['jobs_finished']

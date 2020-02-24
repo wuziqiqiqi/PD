@@ -68,10 +68,9 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
 
     num_basis = len(concentration.orig_basis_elements)
     if num_basis != structures[crystalstructure]:
-        msg = "{} has {} basis. ".format(
-            crystalstructure, structures[crystalstructure])
-        msg += "The number of basis specified by basis_elements is "
-        msg += "{}".format(num_basis)
+        msg = f"{crystalstructure} has {structures[crystalstructure]} basis. "
+        msg += f"The number of basis specified by basis_elements is "
+        msg += f"{num_basis}"
         raise ValueError(msg)
 
     basis_elements = concentration.orig_basis_elements
@@ -185,7 +184,7 @@ def settingFromJSON(fname):
     elif factory == 'CECrystal':
         setting = CECrystal(**kwargs)
     else:
-        raise ValueError('Unknown factory {}'.format(factory))
+        raise ValueError(f"Unknown factory {factory}")
     setting.include_background_atoms = data['include_background_atoms']
     setting.skew_threshold = data['skew_threshold']
     setting.basis_func_type = data['basis_func_type']

@@ -45,7 +45,6 @@ class TestMCMainPage(unittest.TestCase):
         page = MCMainPage()
         page.ids.sizeInput.text = str(size)
         page.ids.sizeInput.dispatch('on_text_validate')
-        
 
         lengths_ang = atoms.get_cell_lengths_and_angles()
         length_str = page.mc_cell_lengths
@@ -57,7 +56,7 @@ class TestMCMainPage(unittest.TestCase):
 
         ang_str = page.angle_info
         ang_str = ang_str.replace('deg', '')
-        ang = list(map(float, ang_str.split(' ')))
+        ang = list(map(float, ang_str.split('  ')))
         self.assertTrue(np.allclose(ang, lengths_ang[3:]))
 
         num_str = page.num_atoms

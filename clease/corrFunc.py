@@ -89,7 +89,7 @@ class CorrFunction(object):
             print the progress of reconfiguration if set to *True*
         """
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
+        tab_name = f"{self.setting.basis_func_type.name}_cf"
         db.delete_external_table(tab_name)
         select = []
         if select_cond is not None:
@@ -102,13 +102,12 @@ class CorrFunction(object):
         row_ids = [row.id for row in db.select(select)]
         num_reconf = len(row_ids)
         if verbose:
-            print('{} entries will be reconfigured'.format(num_reconf))
+            print(f"{num_reconf} entries will be reconfigured")
         for count, row_id in enumerate(row_ids):
             # TODO: Should this be part of DB API?
             # get new CF based on setting
             if verbose:
-                print("updating {} of {} entries".format(count+1, num_reconf),
-                      end="\r")
+                print(f"updating {count+1} of {num_reconf} entries", end="\r")
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
             db.update(row_id, external_tables={tab_name: cf})
@@ -124,8 +123,8 @@ class CorrFunction(object):
             return True
 
         for count, id in enumerate(inconsistent_ids):
-            print("updating {} of {} entries"
-                  "".format(count+1, len(inconsistent_ids)), end="\r")
+            print(f"updating {count+1} of {len(inconsistent_ids)} entries",
+                  end="\r")
             self.reconfigure_db_entries(select_cond=[('id', '=', id)],
                                         verbose=False)
         print("\nreconfiguration completed")
@@ -137,7 +136,7 @@ class CorrFunction(object):
               names as stored in setting.cf_names.
         """
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
+        tab_name = f"{self.setting.basis_func_type.name}_cf"
         cf_names = sorted(self.setting.all_cf_names)
         inconsistent_ids = []
         for row in db.select('struct_type=initial'):
@@ -147,12 +146,12 @@ class CorrFunction(object):
                 inconsistent_ids.append(row.id)
 
         if len(inconsistent_ids) > 0:
-            print("{} inconsistent entries found in '{}' table."
-                  "".format(len(inconsistent_ids), tab_name))
+            print(f"{len(inconsistent_ids)} inconsistent entries found in "
+                  f"'{tab_name}' table.")
             for id in inconsistent_ids:
-                print('  id: {}, name: {}'.format(id, db.get(id).name))
+                print(f"  id: {id}, name: {db.get(id).name}")
         else:
-            print("'{}' table has no inconsistent entries.".format(tab_name))
+            print(f"'{tab_name}' table has no inconsistent entries.")
         return inconsistent_ids
 
     def check_cell_size(self, atoms):

@@ -195,7 +195,7 @@ class CanonicalMCPage(Screen):
             eci_file = mc_main_page.ids.eciFileInput.text
             size = int(mc_main_page.ids.sizeInput.text)
             if not os.path.exists(eci_file):
-                msg = 'Cannot load ECI from {}. No such file.'.format(eci_file)
+                msg = f"Cannot load ECI from {eci_file}. No such file."
                 app.root.ids.status.text = msg
                 return
 

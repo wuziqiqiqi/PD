@@ -736,7 +736,7 @@ class NewStructures(object):
             keys = list(count.keys())
             keys.sort()
             for k in keys:
-                fu += "{}{}".format(k, int(count[k] / gcdp))
+                fu += f"{k}{int(count[k] / gcdp)}"
             if i < len(atom_count) - 1:
                 fu += "_"
         return fu
@@ -799,7 +799,7 @@ class NewStructures(object):
             atoms = self._get_struct_at_conc(conc_type='random')
             cfm[count] = self.corrfunc.get_cf(atoms, 'array')
             count += 1
-            _logger('sampling {} ouf of {}'.format(count, num_samples_var))
+            _logger(f"sampling {count} ouf of {num_samples_var}")
 
         sigma = np.cov(cfm.T)
         mu = np.mean(cfm, axis=0)

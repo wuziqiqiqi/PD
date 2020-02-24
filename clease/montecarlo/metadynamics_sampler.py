@@ -152,17 +152,15 @@ class MetaDynamicsSampler(object):
 
         sweep_no = 0
         counter = 0
-        _logger('Starting metadynamics sampling...')
-        _logger('Writing result to {} every {} sec'.format(self.fname,
-                                                           self.log_freq))
+        _logger(f"Starting metadynamics sampling...")
+        _logger(f"Writing result to {self.fname} every {self.log_freq} sec")
         while not conv:
             counter += 1
             if time.time() - now > self.log_freq:
-                msg = 'Sweep no. {} '.format(int(counter/len(self.mc.atoms)))
-                msg += 'Average visits: {:.2e}. Min/avg: {:.2e}'.format(
-                    self.progress_info['mean'],
-                    self.progress_info['minval'])
-                msg += ' x: {:.2e}'.format(self.bias.getter(None))
+                msg = f"Sweep no. {int(counter/len(self.mc.atoms))} "
+                msg += f"Average visits: {self.progress_info['mean']:.2e}. "
+                msg += f"Min/avg: {self.progress_info['minval']:.2e} "
+                msg += f"x: {self.bias.getter(None):.2e}"
                 _logger(msg)
                 self.save()
                 now = time.time()
@@ -186,8 +184,7 @@ class MetaDynamicsSampler(object):
             if self.quit:
                 break
 
-        _logger('Results from metadynamics sampling written to '
-                '{}'.format(self.fname))
+        _logger(f"Results from metadynamics sampling written to {self.fname}")
         self.save()
 
     def save(self):

@@ -192,9 +192,9 @@ class Concentration(object):
 
         if A_eq.shape[1] != self.num_concs:
             raise InvalidConstraintError(
-                "The number of columns in A_eq has to match the number of "
-                "concentration variables. A_eq needs to have "
-                "{} columns".format(self.num_concs))
+                f"The number of columns in A_eq has to match the number of "
+                f"concentration variables. A_eq needs to have "
+                f"{self.num_concs} columns")
 
         if A_eq.shape[0] != len(b_eq):
             raise InvalidConstraintError(
@@ -231,9 +231,9 @@ class Concentration(object):
 
         if A_lb.shape[1] != self.num_concs:
             raise InvalidConstraintError(
-                "The number of columns in A_lb has to match the number of "
-                "concentration variables. Hence, A_lb needs to have "
-                "{} columns".format(self.num_concs))
+                f"The number of columns in A_lb has to match the number of "
+                f"concentration variables. Hence, A_lb needs to have "
+                f"{self.num_concs} columns")
 
         if A_lb.shape[0] != len(b_lb):
             raise InvalidConstraintError(
@@ -260,17 +260,15 @@ class Concentration(object):
         """
         if len(ranges) != len(self.basis_elements):
             raise InvalidConstraintError(
-                "The number of bases is wrong. Expected {}, got {}"
-                "".format(len(self.basis_elements), len(ranges))
-            )
+                f"The number of bases is wrong. Expected "
+                f"{len(self.basis_elements)}, got {len(ranges)}")
 
         for item, basis in zip(ranges, self.basis_elements):
             if len(item) != len(basis):
                 raise InvalidConstraintError(
-                    "Inconsistent number of elements in basis. "
-                    "Expected {}, got {}. Basis elements: {}"
-                    "".format(len(basis), len(item), self.basis_elements)
-                )
+                    f"Inconsistent number of elements in basis. "
+                    f"Expected {len(basis)}, got {len(item)}. Basis elements: "
+                    f"{self.basis_elements}")
             for rng in item:
                 if len(rng) != 2:
                     raise InvalidConstraintError(
@@ -346,8 +344,8 @@ class Concentration(object):
         # Ensure valid chemical formula
         for _, value in sum_of_variable_coeff.items():
             if value != 0:
-                raise ValueError("Invalid formula! {} {}"
-                                 "".format(string, sum_of_variable_coeff))
+                raise ValueError(f"Invalid formula! {string} "
+                                 f"{sum_of_variable_coeff}")
         return integers
 
     def _num_atoms_in_basis(self, formulas, variable_range):
@@ -382,11 +380,9 @@ class Concentration(object):
 
         if len(formulas) != len(self.basis_elements):
             raise InvalidConstraintError(
-                "Inconsistent number of basis passed. "
-                "Expected: {}, got {}. Basis elements: {}"
-                "".format(len(self.basis_elements), len(formulas),
-                          self.basis_elements)
-            )
+                f"Inconsistent number of basis passed. "
+                f"Expected: {len(self.basis_elements)}, got {len(formulas)}. "
+                f"Basis elements: {self.basis_elements}")
 
         element_conc = self._parse_formula_unit_string(formulas)
         num_atoms_in_basis = self._num_atoms_in_basis(formulas, variable_range)
@@ -425,8 +421,8 @@ class Concentration(object):
             ref_col = reference_elements[variable]["col"]
 
             if ref_element is None:
-                raise RuntimeError("Did not find reference element for symbol "
-                                   "{}".format(variable))
+                raise RuntimeError(f"Did not find reference element for symbol"
+                                   f" {variable}")
 
             # Extract the coefficients of other elements with their
             # concenctrations defined as multiples of the symbol
@@ -517,8 +513,8 @@ class Concentration(object):
             if variable_symbol in formula:
                 return basis
 
-        raise ValueError("Did not find any basis containing "
-                         "{}".format(variable_symbol))
+        raise ValueError(f"Did not find any basis containing "
+                         f"{variable_symbol}")
 
     def _get_col_of_element_in_basis(self, basis, element):
         """Return column number in the matrix corresponding to element."""
@@ -531,9 +527,9 @@ class Concentration(object):
                 return col
             col += 1
 
-        raise RuntimeError("Did not find any column corresponding to "
-                           "{} in basis {}. Current basis_elements are {}"
-                           "".format(element, basis, self.basis_elements))
+        raise RuntimeError(f"Did not find any column corresponding to "
+                           f"{element} in basis {basis}. "
+                           f"Current basis_elements are {self.basis_elements}")
 
     def _get_coeff(self, string):
         """Get the coefficient in front of the symbol.
@@ -806,10 +802,9 @@ class Concentration(object):
         """
 
         if len(num_atoms_in_basis) != len(self.basis_elements):
-            raise ValueError("Number of atoms has to be specified for each "
-                             "basis. Given: {}. Expected: {}"
-                             "".format(len(num_atoms_in_basis),
-                                       len(self.basis_elements)))
+            raise ValueError(f"Number of atoms has to be specified for each "
+                             f"basis. Given: {len(num_atoms_in_basis)}. "
+                             f"Expected: {len(self.basis_elements)}")
 
         int_array = np.zeros(self.num_concs, dtype=int)
         start = 0
@@ -839,9 +834,9 @@ class Concentration(object):
         dot_prod = self.A_eq.dot(int_array)
         num_basis = len(num_atoms_in_basis)
         if not np.allclose(dot_prod[:num_basis], b_eq[:num_basis]):
-            msg = "The conversion from floating point concentration to int "
-            msg += "is not consistent. Expected: {}, ".format(b_eq)
-            msg += "got: {}".format(dot_prod)
+            msg = f"The conversion from floating point concentration to int "
+            msg += f"is not consistent. Expected: {b_eq}, "
+            msg += f"got: {dot_prod}"
             raise IntConversionNotConsistentError(msg)
         return int_array
 

@@ -6,7 +6,6 @@ from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction
 from clease.settings import ClusterExpansionSetting
-# from clease.calculator.duplication_count_tracker import DuplicationCountTracker
 from clease_cxx import PyCEUpdater
 
 
@@ -210,7 +209,7 @@ class Clease(Calculator):
         for index in changed:
             if self.is_backround_index[index] and \
                     not self.setting.include_background_atoms:
-                msg = "Atom with index {} is a background atom.".format(index)
+                msg = f"Atom with index {index} is a background atom."
                 raise MovedIgnoredAtomError(msg)
 
         return changed
@@ -245,7 +244,7 @@ class Clease(Calculator):
         """Write energy to log file."""
         if self.logfile is None:
             return True
-        self.logfile.write('{}\n'.format(self.energy))
+        self.logfile.write(f"{self.energy}\n")
         self.logfile.flush()
 
     def update_eci(self, eci):

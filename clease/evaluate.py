@@ -114,7 +114,7 @@ class Evaluate(object):
             max_dia = self._get_max_cluster_dia(max_cluster_dia)
             self.cf_names = self._filter_cname_circum_dia(max_dia)
 
-        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
+        tab_name = f"{self.setting.basis_func_type.name}_cf"
 
         # TODO: At a later stage we might want to pass the data manager as an
         # argument since Evaluate does not depend on the details on how the
@@ -145,8 +145,10 @@ class Evaluate(object):
 
     @property
     def concentrations(self):
-        singlet_cols = [i for i, n in enumerate(self.cf_names) if n.startswith('c1')]
-        return singlets2conc(self.setting.basis_functions, self.cf_matrix[:, singlet_cols])
+        singlet_cols = [i for i, n in enumerate(self.cf_names)
+                        if n.startswith('c1')]
+        return singlets2conc(self.setting.basis_functions,
+                             self.cf_matrix[:, singlet_cols])
 
     @property
     def default_select_cond(self):
@@ -163,8 +165,8 @@ class Evaluate(object):
             fitting_scheme = fitting_scheme.lower()
             self.scheme_string = fitting_scheme
             if fitting_scheme not in allowed_fitting_schemes:
-                raise ValueError("Fitting scheme has to be one of "
-                                 "{}".format(allowed_fitting_schemes))
+                raise ValueError(f"Fitting scheme has to be one of "
+                                 f"{allowed_fitting_schemes}")
             if fitting_scheme in ["ridge", "tikhonov", "l2"]:
                 from clease.regression import Tikhonov
                 self.scheme = Tikhonov(alpha=alpha)
@@ -175,9 +177,9 @@ class Evaluate(object):
                 # Perform ordinary least squares
                 self.scheme = LinearRegression()
         else:
-            raise ValueError("Fitting scheme has to be one of {} "
-                             "or an LinearRegression instance."
-                             "".format(allowed_fitting_schemes))
+            raise ValueError(f"Fitting scheme has to be one of "
+                             f"{allowed_fitting_schemes} or a "
+                             f"LinearRegression instance.")
 
         # If the fitting scheme is changed, the ECIs computed are no
         # longer consistent with the scheme
@@ -330,17 +332,15 @@ class Evaluate(object):
             cv = self.loocv_fast() * 1000.0
         elif self.scoring_scheme == "k-fold":
             cv = self.k_fold_cv() * 1000.0
-            cv_name = "{}-fold".format(self.nsplits)
+            cv_name = f"{self.nsplits}-fold"
         t = np.arange(rmin - 10, rmax + 10, 1)
         fig = plt.figure()
         ax = fig.add_subplot(111)
         if self.effective_num_data_pts != len(self.e_dft):
-            ax.set_title('Fit using {} data points. Eff. num. data points '
-                         '{:.1f}'.format(self.e_dft.shape[0],
-                                         self.effective_num_data_pts))
+            ax.set_title(f"Fit using {self.e_dft.shape[0]} data points. Eff. "
+                         f"num. data points {self.effective_num_data_pts:.1f}")
         else:
-            ax.set_title('Fit using {} data points.'
-                         ''.format(self.e_dft.shape[0]))
+            ax.set_title(f"Fit using {self.e_dft.shape[0]} data points.")
 
         if self.effective_num_data_pts != len(self.e_dft):
             w = np.diag(self.weight_matrix)
@@ -359,9 +359,8 @@ class Evaluate(object):
         ax.set_ylabel(r'$E_{DFT}$ (eV/atom)')
         ax.set_xlabel(r'$E_{pred}$ (eV/atom)')
         ax.text(0.95, 0.01,
-                cv_name + " = {0:.3f} meV/atom \n"
-                "RMSE = {1:.3f} meV/atom"
-                "".format(cv, self.rmse() * 1000.0),
+                cv_name + f" = {cv:.3f} meV/atom \n"
+                f"RMSE = {self.rmse() * 1000.0:.3f} meV/atom",
                 verticalalignment='bottom', horizontalalignment='right',
                 transform=ax.transAxes, fontsize=12)
         if self.e_pred_loo is not None:
@@ -558,8 +557,7 @@ class Evaluate(object):
                 num_eci = len(np.nonzero(self.get_eci())[0])
                 alpha = scheme.get_scalar_parameter()
                 alphas.append(alpha)
-                logger.info('{:.10f}\t {}\t {:.10f}'.format(alpha, num_eci,
-                                                            cv[i]))
+                logger.info(f"{alpha:.10f}\t {num_eci}\t {cv[i]:.10f}")
 
         return alphas, cv
 
@@ -632,9 +630,9 @@ class Evaluate(object):
         ax.semilogx(min_alpha, min_cv * 1000, 'bo', mfc='none')
         ax.set_ylabel('CV score (meV/atom)')
         ax.set_xlabel('alpha')
-        ax.text(0.65, 0.01, "min. CV score:\n"
-                "alpha = {0:.10f} \n"
-                "CV = {1:.3f} meV/atom".format(min_alpha, min_cv * 1000.0),
+        ax.text(0.65, 0.01, f"min. CV score:\n"
+                f"alpha = {min_alpha:.10f} \n"
+                f"CV = {min_cv * 1000.0:.3f} meV/atom",
                 verticalalignment='bottom', horizontalalignment='left',
                 transform=ax.transAxes, fontsize=10)
         if savefig:
@@ -742,7 +740,7 @@ class Evaluate(object):
             annotations.append([data["name"][indx] for indx in sort_index])
             mrk = markers[size % len(markers)]
             line = ax.plot(data["d"], data["eci"],
-                           label="{}-body".format(size), marker=mrk,
+                           label=f"{size}-body", marker=mrk,
                            mfc="none", ls="", markersize=8)
             lines.append(line[0])
 
@@ -986,5 +984,5 @@ def loocv_mp(args):
     elif evaluator.scoring_scheme == "k-fold":
         cv = evaluator.k_fold_cv()
     num_eci = len(np.nonzero(evaluator.get_eci())[0])
-    logger.info('{:.10f}\t {}\t {:.10f}'.format(alpha, num_eci, cv))
+    logger.info(f"{alpha:.10f}\t {num_eci}\t {cv:.10f}")
     return cv

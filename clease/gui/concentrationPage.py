@@ -41,13 +41,13 @@ class ConcentrationPage(Screen):
         return sum(len(item) for item in self.grouped_elements)
 
     def add_constraint(self):
-        layout = StackLayout(id="cnst{}".format(self.next_constraint_id),
+        layout = StackLayout(id=f"cnst{self.next_constraint_id}",
                              size_hint=[1, 0.05])
         width = 1.0 / float((self.num_conc_vars + 3))
         for i in range(self.num_conc_vars):
             layout.add_widget(TextInput(text='0', size_hint=[width, 1],
                                         write_tab=False, multiline=False,
-                                        id='conc{}'.format(i)))
+                                        id=f"conc{i}"))
         layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
                                   id='comparisonSpinner',
                                   size_hint=[width, 1]))

@@ -327,7 +327,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Save the results from file."""
         with open(self.fname, 'w') as outfile:
             json.dump(self.to_dict(), outfile)
-        _logger("Backup data written to {}".format(self.fname))
+        _logger(f"Backup data written to {self.fname}")
 
     @staticmethod
     def load(fname):
@@ -395,8 +395,8 @@ class BayesianCompressiveSensing(LinearRegression):
         allowed_strategies = ["random", "max_increase"]
 
         if self.select_strategy not in allowed_strategies:
-            raise ValueError("select_strategy has to be one of {}"
-                             "".format(allowed_strategies))
+            msg = f"select_strategy has to be one of {allowed_strategies}"
+            raise ValueError(msg)
 
         self.X = X
         self.y = y
@@ -408,14 +408,13 @@ class BayesianCompressiveSensing(LinearRegression):
         d_gamma = 1E100
         while iteration < self.maxiter:
             if time.time() - now > self.output_rate_sec:
-                msg = "Iter: {} ".format(iteration)
-                msg += "RMSE: {:.3E} ".format(1000.0*self.rmse())
-                cv = 1000.0*self.estimate_loocv()
-                msg += "LOOCV (approx.): {:.3E} ".format(cv)
-                msg += "Num ECI: {} ".format(self.num_ecis)
-                msg += "Lamb: {:.3E} ".format(self.lamb)
-                msg += "Shape lamb: {:.3E}".format(self.shape_lamb)
-                msg += "Noise: {:.3E}".format(np.sqrt(1.0/self.inv_variance))
+                msg = f"Iter: {iteration} "
+                msg += f"RMSE: {1000.0*self.rmse():.3E} "
+                msg += f"LOOCV (approx.): {1000.0*self.estimate_loocv():.3E} "
+                msg += f"Num ECI: {self.num_ecis} "
+                msg += f"Lamb: {self.lamb:.3E} "
+                msg += f"Shape lamb: {self.shape_lamb:.3E} "
+                msg += f"Noise: {np.sqrt(1.0/self.inv_variance):.3E}"
                 self.log(msg)
                 now = time.time()
 

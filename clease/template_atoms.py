@@ -55,9 +55,9 @@ class TemplateAtoms(object):
     def __str__(self):
         """Print a summary of the class."""
         msg = "=== TemplateAtoms ===\n"
-        msg += "Supercell factor: {}\n".format(self.supercell_factor)
-        msg += "Size: {}\n".format(self.size)
-        msg += "Skew threshold: {}\n".format(self.skew_threshold)
+        msg += f"Supercell factor: {self.supercell_factor}\n"
+        msg += f"Size: {self.size}\n"
+        msg += f"Skew threshold: {self.skew_threshold}\n"
         return msg
 
     def add_cell_filter(self, cell_filter):
@@ -167,9 +167,9 @@ class TemplateAtoms(object):
         template.info['size'] = size
 
         if not np.allclose(atoms.get_cell(), template.get_cell()):
-            raise ValueError("Inconsistent cells! Passed atoms\n"
-                             "{}\nGenerated template\n"
-                             "".format(atoms.get_cell(), template.get_cell()))
+            raise ValueError(f"Inconsistent cells! Passed atoms\n"
+                             f"{atoms.get_cell()}\nGenerated template\n"
+                             f"{template.get_cell()}")
 
         if not self.is_valid(atoms=template):
             raise ValueError("Requested template violates the constraints!")
@@ -189,9 +189,9 @@ class TemplateAtoms(object):
             check_valid_conversion_matrix(scale_int)
             return scale_int.tolist()
 
-        raise ValueError("The passed atoms object cannot be described by "
-                         "repeating of the unit cells. Scale factors found "
-                         "{}".format(size_factor))
+        raise ValueError(f"The passed atoms object cannot be described by "
+                         f"repeating of the unit cells. Scale factors found "
+                         f"{size_factor}")
 
     def get_all_templates(self):
         """Return a list with all templates."""
@@ -341,7 +341,6 @@ def check_valid_conversion_matrix(array):
     """
     determinant = np.linalg.det(array)
     if determinant < 0.0:
-        raise ValueError("The determinant of the size matrix is less than "
-                         "zero (got {}). For a right "
-                         "coordinate system, we need a positive "
-                         "determinant!".format(determinant))
+        raise ValueError(f"The determinant of the size matrix is less than "
+                         f"zero (got {determinant}). For a right coordinate "
+                         f"system, we need a positive determinant.")

@@ -19,16 +19,15 @@ class DataNormalizer:
         self.meanY = None
         self.fail_on_constant = fail_on_constant
 
-    def normalize(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def normalize(self,
+                  X: np.ndarray,
+                  y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Normalizes the each column of X to zero mean and unit variance. y is
         shifted to zero mean (variance is not altered)
 
-        Parameters:
-            X: np.ndarray
-                Design matrix shape (N x M)
-            y: np.ndarray
-                Target values length N
+        :param X: Design matrix shape (N x M)
+        :param y: Target values length N
 
         Returns:
             X_norm, y_shifted (e.g. normalized X matrix and shifted y values)
@@ -39,9 +38,9 @@ class DataNormalizer:
         self.stdX = np.std(X, axis=0, ddof=1)
         tol = 1e-16
         if np.any(self.stdX < tol) and self.fail_on_constant:
-            raise ValueError('DataNormalizer: The following columns has a '
-                             'constant value:\n{}\n Please remove these.'
-                             ''.format(self.constant_cols(X)))
+            raise ValueError(f"DataNormalizer: The following columns has a "
+                             f"constant value:\n{self.constant_cols(X)}\n"
+                             f"Please remove these.")
         else:
             self.stdX[self.stdX < tol] = 1.0
         X_norm = (X - self.meanX)/self.stdX

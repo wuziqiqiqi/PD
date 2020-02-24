@@ -32,14 +32,11 @@ class EnergyEvolution(MCObserver):
             return
         self.energies = []
 
-    def save(self, fname="energy_evolution"):
+    def save(self, fname: str = "energy_evolution") -> None:
         """Save the energy evolution in .csv file.
 
-        Parameters:
-
-        fname: str
-            File name without the extension (.csv)
+        :param fname: File name without the extension (.csv)
         """
         full_fname = fname + '.csv'
         np.savetxt(full_fname, self.energies, delimiter=",")
-        print("Energy evolution data saved to {}".format(full_fname))
+        print(f"Energy evolution data saved to {full_fname}")

@@ -27,8 +27,8 @@ class ClusterList(object):
         for c in clusters:
             if c.group == group:
                 return c
-        raise ValueError("There are no cluster named {} and group {}"
-                         "".format(name, group))
+        msg = f"There are no cluster named {name} and group {group}"
+        raise ValueError(msg)
 
     def get_by_size(self, size):
         # Return all clusters with a given size
@@ -231,7 +231,7 @@ class ClusterList(object):
                 # Fix distance string
                 new_name = deepcopy(n)
                 prefix = n.rpartition('_')[0]
-                new_dist = '{:04d}'.format(prefixes.index(prefix))
+                new_dist = f"{prefixes.index(prefix):04d}"
                 new_name = ''.join([new_name[:4], new_dist, new_name[8:]])
                 name_map[n] = new_name
 

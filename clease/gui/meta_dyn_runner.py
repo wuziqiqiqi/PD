@@ -48,7 +48,7 @@ class MetaDynRunner(object):
                 mc = SGCMonteCarlo(self.atoms, self.T,
                                    symbols=self.mc_params['symbols'])
             else:
-                msg = 'Unknown MC algorithm. Params: {}'.format(self.mc_params)
+                msg = f"Unknown MC algorithm. Params: {self.mc_params}"
                 self.status.text = msg
                 run_calc = False
 

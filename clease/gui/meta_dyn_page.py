@@ -213,9 +213,7 @@ class MetaDynPage(Screen):
         if text == 'Semi-grand canonical':
             symbols = self.unique_symbols()
             default_symbs = ', '.join(symbols)
-            def_chem_pot = ', '.join(['{}: 0.0'.format(s)
-                                      for s in symbols[:-1]])
-
+            def_chem_pot = ', '.join([f"{s}: 0.0" for s in symbols[:-1]])
             content = SGCEditor(close=self.close_sgc_editor,
                                 symbols=default_symbs,
                                 chem_pot=def_chem_pot)
@@ -260,7 +258,7 @@ class MetaDynPage(Screen):
         eci_file = main_mc_page.ids.eciFileInput.text
 
         if not os.path.exists(eci_file):
-            msg = META_DYN_MSG['no_eci'] + '{}'.format(eci_file)
+            msg = META_DYN_MSG['no_eci'] + f"{eci_file}"
             app.root.ids.status.text = msg
             return
 

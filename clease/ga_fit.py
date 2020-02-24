@@ -19,8 +19,8 @@ class GAFit(object):
     Parameters:
 
     cf_matrix: np.ndarray
-        Design matrix of the linear regression (nxm) where n is the number of data
-        points and m is the number of features
+        Design matrix of the linear regression (nxm) where n is the number of
+        data points and m is the number of features
 
     e_dft: list
         Array of length n with DFT energies
@@ -60,8 +60,8 @@ class GAFit(object):
         allowed_cost_funcs = ["bic", "aic", "aicc"]
 
         if cost_func not in allowed_cost_funcs:
-            raise ValueError("Cost func has to be one of {}"
-                             "".format(allowed_cost_funcs))
+            raise ValueError(f"Cost func has to be one of "
+                             f"{allowed_cost_funcs}")
 
         if cost_func == "aic":
             self.cost_func = aic
@@ -116,7 +116,7 @@ class GAFit(object):
 
     def _init_from_file(self):
         """Initialize the population from file."""
-        _logger("Initializing population from {}".format(self.fname))
+        _logger(f"Initializing population from {self.fname}")
         individuals = []
         with open(self.fname, 'r') as infile:
             for line in infile:
@@ -269,10 +269,9 @@ class GAFit(object):
             new_generation.append(new_individual2)
 
         if len(new_generation) != len(self.individuals):
-            raise RuntimeError("Size of generation changed! "
-                               "Original size: {}. New size: {}"
-                               "".format(len(self.individuals),
-                                         len(new_generation)))
+            raise RuntimeError(f"Size of generation changed! Original size: "
+                               f"{len(self.individuals)}. New size: "
+                               f"{len(new_generation)}")
         self.individuals = new_generation
 
     def _is_in_population(self, ind, pop):
@@ -352,7 +351,7 @@ class GAFit(object):
                 out.write(",".join(str(x) for x in
                                    self.index_of_selected_clusters(i)))
                 out.write("\n")
-        _logger("\nPopulation written to {}".format(self.fname))
+        _logger(f"\nPopulation written to {self.fname}")
 
     def plot_evolution(self):
         """Create a plot of the evolution."""
@@ -400,12 +399,10 @@ class GAFit(object):
             best3 = np.abs(np.sort(self.fitness)[::-1][:3])
             loocv_msg = ""
 
-            self.log("Generation: {}. Top 3 scores {:.2e} (-){:.2e} (-){:.2e} "
-                     "Num ECI: {}. Pop. div: {:.2f} {}"
-                     "".format(gen,
-                               best3[0], best3[0] - best3[1],
-                               best3[0] - best3[2], num_eci, diversity,
-                               loocv_msg))
+            self.log(f"Generation: {gen}. Top 3 scores {best3[0]:.2e} "
+                     f"(-){best3[0] - best3[1]:.2e} (-)"
+                     f"{best3[0] - best3[2]:.2e} Num ECI: {num_eci}. "
+                     f"Pop. div: {diversity:.2f} {loocv_msg}")
             self.mutate()
             self.create_new_generation()
             if abs(current_best - self.fitness[best_indx]) > min_change:
@@ -418,8 +415,8 @@ class GAFit(object):
                 self.save_population()
 
             if num_gen_without_change >= gen_without_change:
-                self.log("\nReached {} generations without sufficient "
-                         "improvement.".format(gen_without_change))
+                self.log(f"\nReached {gen_without_change} generations without "
+                         f"sufficient improvement.")
                 break
             gen += 1
 

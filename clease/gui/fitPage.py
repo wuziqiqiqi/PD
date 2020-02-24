@@ -276,7 +276,7 @@ class FitPage(Screen):
         try:
             with open(fname, 'w') as out:
                 json.dump(self.eci, out, separators=(',', ': '), indent=2)
-            msg = 'ECIs saved to {}'.format(fname)
+            msg = f"ECIs saved to {fname}"
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
             traceback.print_exc()
@@ -399,13 +399,13 @@ class FitPage(Screen):
             App.get_running_app().root.ids.status.text = str(exc)
 
     def set_cv(self, cv):
-        self.ids.cvLabel.text = 'CV: {:.3f} meV/atom'.format(cv)
+        self.ids.cvLabel.text = f"CV: {cv:.3f} meV/atom"
 
     def set_rmse(self, rmse):
-        self.ids.rmseLabel.text = 'RMSE: {:.3f} meV/atom'.format(rmse)
+        self.ids.rmseLabel.text = f"RMSE: {rmse:.3f} meV/atom"
 
     def set_mae(self, mae):
-        self.ids.maeLabel.text = 'MAE: {:.3f} meV/atom'.format(mae)
+        self.ids.maeLabel.text = f"MAE: {mae:.3f} meV/atom"
 
     def _eci_has_been_fitted(self):
         return self.e_dft is not None and self.e_ce is not None
@@ -492,12 +492,8 @@ class FitPage(Screen):
         legend_items = []
         for k in sorted_keys:
             color = get_color_from_hex(ECI_GRAPH_COLORS[int(k)-2])[:3]
-            legend_items.append(
-                {
-                    'text': '{}-body'.format(k),
-                    'color': color,
-                }
-            )
+            legend_items.append({'text': f"{k}-body",
+                                 'color': color})
         self.legend.setup(legend_items, num_rows=num_rows, num_cols=num_cols)
 
     def update_plots(self):

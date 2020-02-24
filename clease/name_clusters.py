@@ -21,13 +21,13 @@ def name_clusters(fingerprints):
             assert abs(dia - distance_list[index]) < 2E-6
 
             if index < 10:
-                prefix = 'c{}_d000{}'.format(s, index)
+                prefix = f"c{s}_d000{index}"
             elif index < 100:
-                prefix = 'c{}_d00{}'.format(s, index)
+                prefix = f"c{s}_d00{index}"
             elif index < 1000:
-                prefix = 'c{}_d0{}'.format(s, index)
+                prefix = f"c{s}_d0{index}"
             else:
-                prefix = 'c{}_d{}'.format(s, index)
+                prefix = f"c{s}_d{index}"
         prefixes.append(prefix)
 
         fp_list = prefix_dict.get(prefix, [])
@@ -42,7 +42,7 @@ def name_clusters(fingerprints):
     names = []
     for prefix, fp in zip(prefixes, fingerprints):
         suffix = prefix_dict[prefix].index(fp)
-        names.append(prefix+'_{}'.format(suffix))
+        names.append(prefix+f"_{suffix}")
     return names
 
 

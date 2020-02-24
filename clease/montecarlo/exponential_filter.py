@@ -44,19 +44,19 @@ class ExponentialFilter(object):
     def status_msg(self, std_value=None):
         """Return status message as a string."""
         msg = "======== EXPONENTIAL FILTER INFORMATION ========\n"
-        msg += "Number of samples: {}\n".format(self.n_samples)
+        msg += f"Number of samples: {self.n_samples}\n"
         values = self.get()
         std = np.zeros_like(values)
         if std_value is not None:
             std = self.get_std(std_value)
         for i in range(len(self.filter_values)):
             if std_value is None:
-                msg += "Decay time: {}. ".format(self.tau[i])
-                msg += "Value: {}\n".format(values[i])
+                msg += f"Decay time: {self.tau[i]}. "
+                msg += f"Value: {values[i]}\n"
             else:
-                msg += "Decay time: {}. ".format(int(self.tau[i]))
-                msg += "Value: {} +- {} ".format(values[i], std[i])
-                msg += "({}\%)\n".format(100 * std[i] / values[i])
+                msg += f"Decay time: {int(self.tau[i])}. "
+                msg += f"Value: {values[i]} +- {std[i]} "
+                msg += f"({100 * std[i] / values[i]} %)\n"
         msg += "===============================================\n"
         return msg
 

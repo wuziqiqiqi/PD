@@ -102,7 +102,7 @@ class SGCMonteCarlo(Montecarlo):
             msg = "A chemical potential not being trackted is added. Make "
             msg += "sure that all the following keys are in the ECIs before "
             msg += "they are passed to the calculator: "
-            msg += "{}\n".format(list(chem_pot.keys()))
+            msg += f"{list(chem_pot.keys())}\n"
             msg += "(Add them with a zero ECI value if they are not supposed "
             msg += "to be included.)"
             raise InvalidChemicalPotentialError(msg)
@@ -176,8 +176,8 @@ class SGCMonteCarlo(Montecarlo):
                 "c1_1": -0.1,
                 "c1_2": 0.05
             }
-            raise ValueError("No chemicalpotentials given. Has to be "
-                             "dictionary of the form {}".format(ex_chem_pot))
+            raise ValueError(f"No chemicalpotentials given. Has to be "
+                             f"dictionary of the form {ex_chem_pot}")
 
         if chem_pot is not None:
             self.chemical_potential = chem_pot
@@ -236,13 +236,13 @@ class SGCMonteCarlo(Montecarlo):
 
         # Add singlets and chemical potential to the dictionary
         for i in range(len(singlets)):
-            name = "singlet_{}".format(self.chem_pot_names[i])
+            name = f"singlet_{self.chem_pot_names[i]}"
             quantities[name] = singlets[i]
 
-            name = "var_singlet_{}".format(self.chem_pot_names[i])
+            name = f"var_singlet_{self.chem_pot_names[i]}"
             quantities[name] = singlets_sq[i] - singlets[i]**2
 
-            name = "mu_{}".format(self.chem_pot_names[i])
+            name = f"mu_{self.chem_pot_names[i]}"
             quantities[name] = self.chem_pots[i]
 
         quantities.update(self.meta_info)

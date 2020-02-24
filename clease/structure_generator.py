@@ -88,8 +88,7 @@ class StructureGenerator(object):
         # Number of integers for max counters
         len_num_steps = len(str(self.num_steps_per_temp))
         len_max_temp = len(str(N))
-        _logger('Generating log statements every {} s'.format(
-            self.output_every))
+        _logger(f"Generating log statements every {self.output_every} s")
 
         for Ti, temp in enumerate(temps):
             self.temp = temp
@@ -100,16 +99,13 @@ class StructureGenerator(object):
 
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted)/count
-                    _logger(("T Step: {0:>{1}} of {2}, "
-                             # Print same len as max required
-                             "Temp: {3:>10.3f}, "
-                             # Print same len as max required
-                             "MC Step: {4:>{5}d} of {6}, "
-                             "Accept. rate: {7:.2f} %").format(
-                                 Ti+1, len_max_temp, N,
-                                 temp, count, len_num_steps,
-                                 self.num_steps_per_temp,
-                                 acc_rate*100))
+                    _logger(f"T Step: {Ti+1:>{len_max_temp}} of {N}, "
+                            # Print same len as max required
+                            f"Temp: {temp:>10.3f}, "
+                            # Print same len as max required
+                            f"MC Step: {count:>{len_num_steps}d} of "
+                            f"{self.num_steps_per_temp}, "
+                            f"Accept. rate: {acc_rate*100:.2f} %")
                     now = time.time()
 
                 if bool(getrandbits(1)) and self.alter_composition:
@@ -172,7 +168,7 @@ class StructureGenerator(object):
         self.temp = 10000000.0
         while count < max_count:
             if time.time() - now > self.output_every:
-                _logger("Progress ({}%)".format(100*count/max_count))
+                _logger(f"Progress ({100*count/max_count} %)")
                 now = time.time()
 
             if bool(getrandbits(1)) and self.alter_composition:
@@ -195,7 +191,7 @@ class StructureGenerator(object):
             self._accept()
         init_temp, final_temp = self._estimate_temp_range()
         self.temp = init_temp
-        _logger('init_temp= {}, final_temp= {}'.format(init_temp, final_temp))
+        _logger(f"init_temp= {init_temp}, final_temp= {final_temp}")
         return init_temp, final_temp
 
     def _swap_two_atoms(self):
@@ -278,15 +274,15 @@ class StructureGenerator(object):
 
                 # Print a summary of all basis functions (useful for debuggin)
                 for k in final_cf:
-                    _logger('{}: {} {}'.format(
-                        k, final_cf[k], self.cf_generated_structure[k]))
+                    _logger(f"{k}: {final_cf[k]} "
+                            f"{self.cf_generated_structure[k]}")
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):
         """Get correlation function of every entry in DB."""
         cfm = []
         db = connect(self.setting.db_name)
-        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
+        tab_name = f"{self.setting.basis_func_type.name}_cf"
         for row in db.select(struct_type='initial'):
             cfm.append([row[tab_name][x] for x in self.cf_names])
         cfm = np.array(cfm, dtype=float)
@@ -353,7 +349,7 @@ class ProbeStructure(StructureGenerator):
                 self.mu = data['mu']
                 self.o_mv = mean_variance(self.o_cfm, self.sigma, self.mu)
             else:
-                raise IOError("'{}' not found.".format(fname))
+                raise IOError(f"'{fname}' not found.")
         else:
             self.o_mv = mean_variance_approx(self.o_cfm)
         self.avg_mv = 0.0
@@ -462,7 +458,7 @@ class GSStructure(StructureGenerator):
                             self.num_temp)
         try:
             for T in temps.tolist():
-                _logger("Current temperature: {}K".format(T))
+                _logger(f"Current temperature: {T} K")
                 mc = Montecarlo(self.atoms, T)
                 mc.attach(low_en_obs)
                 mc.add_constraint(cnst)

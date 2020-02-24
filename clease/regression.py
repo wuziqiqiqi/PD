@@ -28,10 +28,9 @@ class LinearRegression(object):
         """
         if self._weight_matrix is not None:
             if self._weight_matrix.shape[1] != len(data):
-                raise ValueError("The provided weight matrix needs to have "
-                                 "dimensiont {}x{}, {} given"
-                                 "".format(len(data), len(data),
-                                           self._weight_matrix.shape))
+                raise ValueError(f"The provided weight matrix needs to have "
+                                 f"dimension {len(data)}x{len(data)}, "
+                                 f"{self._weight_matrix.shape} given")
 
     def fit(self, X, y):
         """Fit a linear model by performing ordinary least squares
@@ -136,7 +135,7 @@ class Tikhonov(LinearRegression):
             if np.any(np.abs(X[:, 0] - 1.0) > 1e-16):
                 msg = "Tikhonov: Expect that the first column in X corresponds"
                 msg += "to a bias term. Therefore, all entries should be 1."
-                msg += "Got:\n{}\n".format(X[:, 0])
+                msg += f"Got:\n{X[:, 0]}\n"
                 raise ValueError(msg)
             normalizer = DataNormalizer()
             X_fit, y_fit = normalizer.normalize(X[:, 1:], y)

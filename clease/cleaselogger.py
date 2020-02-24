@@ -44,7 +44,7 @@ class CLEASELogger:
         elif isinstance(verbose, int):
             return LogVerbosity(verbose)
         else:
-            raise ValueError('Bad verbosity level: {}'.format(verbose))
+            raise ValueError(f"Bad verbosity level: {verbose}")
 
     def __call__(self, *args, verbose=LogVerbosity.INFO, **kwargs):
         verbose = self.format_verbose(verbose)
@@ -52,5 +52,4 @@ class CLEASELogger:
             print(*args, file=self._fd, **kwargs)
 
     def __str__(self):
-        return 'Verbosity threshold: {}, FD: {}'.format(str(self.verbosity),
-                                                        self.fd)
+        return f"Verbosity threshold: {str(self.verbosity)}, FD: {self.fd}"

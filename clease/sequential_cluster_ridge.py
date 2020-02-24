@@ -49,8 +49,8 @@ class SequentialClusterRidge(LinearRegression):
         _logger("       SUPPORT EXPANDING L2 SUMMARY         ")
         _logger("--------------------------------------------")
         for i in range(20):
-            _logger("Num. coeff: {:9d} CV: {:9.3f} meV/atom"
-                    "".format(len(coeffs[srt_idx[i]]), cvs[srt_idx[i]]))
+            _logger(f"Num. coeff: {len(coeffs[srt_idx[i]]):9d} "
+                    f"CV: {cvs[srt_idx[i]]:9.3f} meV/atom")
         _logger("--------------------------------------------")
 
     def fit(self, X, y):
