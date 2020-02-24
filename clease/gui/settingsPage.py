@@ -45,7 +45,7 @@ class SettingsPage(Screen):
                 'cell_size': self.ids.sizeInput.text,
                 'cell_mode_spinner': self.ids.sizeSpinner.text,
                 'supercell_factor': self.ids.scFactorInput.text,
-                'skewness_factor': self.ids.skewFactorInput.text}
+                'skew_threshold': self.ids.skewThresholdInput.text}
 
     def from_dict(self, data):
         self.ids.typeSpinner.text = data['type']
@@ -65,7 +65,7 @@ class SettingsPage(Screen):
         self.ids.sizeInput.text = data.get('cell_size', '3, 3, 3')
         self.ids.sizeSpinner.text = data.get('cell_mode_spinner', 'Fixed')
         self.ids.scFactorInput.text = data.get('supercell_factor', '20')
-        self.ids.skewFactorInput.text = data.get('skewness_factor', '4')
+        self.ids.skewThresholdInput.text = data.get('skew_threshold', '40')
 
     def load(self, path, filename):
         self.db_path = path
@@ -283,7 +283,7 @@ class SettingsPage(Screen):
                 App.get_running_app().root.ids.status.text = msg
                 return 1
 
-            if self.ids.skewFactorInput.text == '':
+            if self.ids.skewThresholdInput.text == '':
                 msg = 'Skewness factor has to be given'
                 App.get_running_app().root.ids.status.text = msg
                 return 1
@@ -315,7 +315,7 @@ class SettingsPage(Screen):
             self.ids.sizeLabel.color = active
 
             self.ids.scFactorInput.disabled = True
-            self.ids.skewFactorInput.disabled = True
+            self.ids.skewThresholdInput.disabled = True
             self.ids.sizeInput.disabled = False
         else:
             self.ids.skewnessLabel.color = active
@@ -323,7 +323,7 @@ class SettingsPage(Screen):
             self.ids.sizeLabel.color = inactive
 
             self.ids.scFactorInput.disabled = False
-            self.ids.skewFactorInput.disabled = False
+            self.ids.skewThresholdInput.disabled = False
             self.ids.sizeInput.disabled = True
 
     def apply_settings(self):
@@ -352,7 +352,7 @@ class SettingsPage(Screen):
 
             settingPage = self.to_dict()
             supercell_factor = int(settingPage['supercell_factor'])
-            skewness_factor = int(settingPage['skewness_factor'])
+            skew_threshold = int(settingPage['skew_threshold'])
             size = None
 
             if self.ids.sizeSpinner.text == 'Fixed':
@@ -366,7 +366,7 @@ class SettingsPage(Screen):
 
             initializer = SettingsInitializer()
             initializer.basis_func_type = settingPage['basis_function']
-            initializer.skew_threshold = skewness_factor
+            initializer.skew_threshold = skew_threshold
             initializer.app = App.get_running_app()
             initializer.status = App.get_running_app().root.ids.status
 
@@ -398,7 +398,7 @@ class SettingsPage(Screen):
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
                 initializer.basis_function = settingPage['basis_function']
-                initializer.skew_threshold = skewness_factor
+                initializer.skew_threshold = skew_threshold
                 Thread(target=initializer.initialize).start()
             else:
                 if settingPage['cellpar'] == '':
@@ -426,7 +426,7 @@ class SettingsPage(Screen):
                     max_cluster_size=int(settingPage['cluster_size']),
                     basis_function=settingPage['basis_function'],
                     size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skewness_factor,
+                    skew_threshold=skew_threshold,
                     concentration=conc, db_name=settingPage['db_name'],
                     spacegroup=sp
                 )
