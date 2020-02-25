@@ -88,32 +88,32 @@ class CorrFunction(object):
         verbose: bool
             print the progress of reconfiguration if set to *True*
         """
-        db = connect(self.setting.db_name)
-        tab_name = f"{self.setting.basis_func_type.name}_cf"
-        db.delete_external_table(tab_name)
-        select = []
-        if select_cond is not None:
-            for cond in select_cond:
-                select.append(cond)
-        else:
-            select = [('struct_type', '=', 'initial')]
+        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
+        with connect(self.setting.db_name) as db:
+            db.delete_external_table(tab_name)
+            select = []
+            if select_cond is not None:
+                for cond in select_cond:
+                    select.append(cond)
+            else:
+                select = [('struct_type', '=', 'initial')]
 
-        # get how many entries need to be reconfigured
-        row_ids = [row.id for row in db.select(select)]
-        num_reconf = len(row_ids)
-        if verbose:
-            print(f"{num_reconf} entries will be reconfigured")
-        for count, row_id in enumerate(row_ids):
-            # TODO: Should this be part of DB API?
-            # get new CF based on setting
+            # get how many entries need to be reconfigured
+            row_ids = [row.id for row in db.select(select)]
+            num_reconf = len(row_ids)
             if verbose:
-                print(f"updating {count+1} of {num_reconf} entries", end="\r")
-            atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
-            cf = self.get_cf(atoms)
-            db.update(row_id, external_tables={tab_name: cf})
+                print(f"{num_reconf} entries will be reconfigured")
+            for count, row_id in enumerate(row_ids):
 
-        if verbose:
-            print("\nreconfiguration completed")
+                if verbose:
+                    print(f"updating {count+1} of {num_reconf} entries",
+                          end="\r")
+                atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
+                cf = self.get_cf(atoms)
+                db.update(row_id, external_tables={tab_name: cf})
+
+            if verbose:
+                print("\nreconfiguration completed")
 
     def reconfigure_inconsistent_cf_table_entries(self):
         """Find and correct inconsistent correlation functions in table."""

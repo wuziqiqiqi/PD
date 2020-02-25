@@ -1,6 +1,9 @@
 """Unit tests for the corr function class."""
 import os
-from clease import CEBulk, CorrFunction, Concentration
+from clease import CEBulk, CorrFunction, Concentration, NewStructures
+from ase.calculators.singlepoint import SinglePointCalculator
+from ase.db import connect
+from random import choice
 import unittest
 
 
@@ -79,11 +82,31 @@ class TestCorrFunc(unittest.TestCase):
         with self.assertRaises(ClusterNotTrackedError):
             corr.get_cf_by_names(atoms, ['c4_d0001_0_0000'])
 
-    def tearDown(self):
-        try:
-            os.remove(db_name)
-        except Exception:
-            pass
+    def test_reconfigure(self):
+        setting = get_bc_setting("test_reconfigure.db")
+        newStruct = NewStructures(setting)
+        for i in range(10):
+            atoms = setting.atoms.copy()
+            for a in atoms:
+                a.symbol = choice(['Al', 'Mg', 'Si'])
+
+            final = atoms.copy()
+            calc = SinglePointCalculator(final, energy=-0.2)
+            final.set_calculator(calc)
+            newStruct.insert_structure(init_struct=atoms, final_struct=final)
+
+        # Collect final_struct_ids
+        db = connect(setting.db_name)
+        query = [('struct_type', '=', 'initial')]
+        final_str_ids = [row.final_struct_id for row in db.select(query)]
+
+        cf = CorrFunction(setting)
+        cf.reconfigure_db_entries()
+
+        # Confirm that the final_str_ids strays the same
+        final_str_ids_rec = [row.final_struct_id for row in db.select(query)]
+        self.assertListEqual(final_str_ids, final_str_ids_rec)
+        os.remove(setting.db_name)
 
 
 if __name__ == '__main__':
