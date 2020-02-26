@@ -192,7 +192,7 @@ class ClusterExpansionSetting(object):
         unique_element = self.unique_element_without_background()
 
         if isinstance(bf_type, BasisFunction):
-            if bf_type.unique_elements != unique_element:
+            if bf_type.unique_elements != sorted(unique_element):
                 raise ValueError("Unique elements in BasisFunction instance "
                                  "is different from the one in settings")
             self._basis_func_type = bf_type
