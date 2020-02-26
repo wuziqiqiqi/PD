@@ -60,7 +60,7 @@ class DataManager(object):
         >>> from ase.calculators.emt import EMT
         >>> db_name = 'somedb.db'
         >>> db = connect(db_name)  # Make sure that the DB exists
-        >>> db.write(Atoms(), external_tables={'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
+        >>> db.write(Atoms('Cu'), external_tables={'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
         1
         >>> final = Atoms('Cu')
         >>> final.set_calculator(EMT())
@@ -224,41 +224,36 @@ class CorrelationFunctionGetter(object):
         return self.cf_names
 
     def __call__(self, ids: List[int]) -> np.ndarray:
-        id_seq = ','.join(['?']*len(ids))
-        name_seq = ','.join(['?']*len(self.cf_names))
-        sql = f"SELECT * FROM {self.tab_name} WHERE id IN ({id_seq}) AND key IN ({name_seq})"
-        args = ids + self.cf_names
+        sql = f"SELECT * FROM {self.tab_name}"
         id_cf_values = {}
         id_cf_names = {}
+
+        id_set = set(ids)
         with connect(self.db_name) as db:
             con = db.connection
             cur = con.cursor()
-            cur.execute(sql, args)
+            cur.execute(sql)
 
             for row in cur.fetchall():
-                name = row[0]
-                value = row[1]
-                dbId = row[2]
+                name, value, db_id = row
+                if db_id in id_set:
+                    cur_row = id_cf_values.get(db_id, [])
+                    names = id_cf_names.get(db_id, [])
 
-                cur_row = id_cf_values.get(dbId, [])
-                names = id_cf_names.get(dbId, [])
+                    cur_row.append(value)
+                    names.append(name)
 
-                cur_row.append(value)
-                names.append(name)
-
-                id_cf_values[dbId] = cur_row
-                id_cf_names[dbId] = names
+                    id_cf_values[db_id] = cur_row
+                    id_cf_names[db_id] = names
 
         # Make sure that all the rows are ordered in the same way
-        key = list(id_cf_names.keys())[0]
-        self._cf_names = id_cf_names[key]
-        cf_name_col = {n: i for i, n in enumerate(id_cf_names[key])}
+        cf_name_col = {n: i for i, n in enumerate(self.cf_names)}
 
         cf_matrix = np.zeros((len(id_cf_values), len(cf_name_col)))
         row = 0
-        for row, dbId in enumerate(ids):
-            cf_values = id_cf_values[dbId]
-            cf_names = id_cf_names[dbId]
+        for row, db_id in enumerate(ids):
+            cf_values = id_cf_values[db_id]
+            cf_names = id_cf_names[db_id]
             cols = [cf_name_col[name] for name in cf_names]
             cf_matrix[row, :] = np.array(cf_values)[cols]
             row += 1
@@ -278,31 +273,42 @@ class FinalStructEnergyGetter(object):
         return "E_DFT (eV/atom)"
 
     def __call__(self, ids: List[int]) -> np.ndarray:
-        id_seq = ','.join(['?']*len(ids))
-        sql = f"SELECT value, id FROM number_key_values WHERE key='final_struct_id' AND id IN ({id_seq})"
-
+        sql = f"SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
+        id_set = set(ids)
         # Map beetween the initial structure and the index in the id list
         init_struct_idx = {idx: i for i, idx in enumerate(ids)}
 
         with connect(self.db_name) as db:
             con = db.connection
             cur = con.cursor()
-            cur.execute(sql, ids)
+            cur.execute(sql)
             final_struct_ids = []
 
             # Map the between final struct id and initial struct id
             init_struct_ids = {}
             for row in cur.fetchall():
                 final_id, init_id = row
-                final_struct_ids.append(final_id)
-                init_struct_ids[final_id] = init_id
-            final_struct_id_seq = ','.join(['?']*len(final_struct_ids))
-            sql = f"SELECT id, energy, natoms FROM systems WHERE id IN ({final_struct_id_seq})"
-            cur.execute(sql, final_struct_ids)
+                if init_id in id_set:
+                    final_struct_ids.append(final_id)
+                    init_struct_ids[final_id] = init_id
+
+            # Extract the number of atoms of the initial structure
+            sql = "SELECT id, natoms FROM systems"
+            cur.execute(sql)
+            num_atoms = {}
+            for row in cur.fetchall():
+                db_id, natoms = row
+                if db_id in id_set:
+                    num_atoms[db_id] = natoms
+
+            final_struct_ids = set(final_struct_ids)
+            sql = f"SELECT id, energy FROM systems"
+            cur.execute(sql)
             energies = np.zeros(len(final_struct_ids))
             for row in cur.fetchall():
-                final_id, energy, natoms = row
-                init_id = init_struct_ids[final_id]
-                idx = init_struct_idx[init_id]
-                energies[idx] = energy/natoms
+                final_id, energy = row
+                if final_id in final_struct_ids:
+                    init_id = init_struct_ids[final_id]
+                    idx = init_struct_idx[init_id]
+                    energies[idx] = energy/num_atoms[init_id]
         return energies
