@@ -12,6 +12,9 @@ from clease import (CEBulk, CorrFunction, NewStructures, Evaluate,
                     Concentration, settingFromJSON)
 from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
+from clease.basis_function import (
+    Polynomial, Trigonometric, BinaryLinear
+)
 from ase.calculators.emt import EMT
 from ase.db import connect
 from ase.build import bulk
@@ -379,6 +382,29 @@ class TestCEBulk(unittest.TestCase):
         ratio = num_O/5.0
         self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
+
+    def test_save_load_all_bf(self):
+        conc = Concentration(basis_elements=[['Au', 'Cu', 'X']])
+        db_name = 'test_save_load_all_bf.db'
+        setting = CEBulk(
+            conc, db_name=db_name, max_cluster_size=2, max_cluster_dia=5.0,
+            a=3.0)
+
+        fname = 'save_load_all_bf.json'
+        bfs = [Polynomial(setting.unique_elements),
+               Trigonometric(setting.unique_elements),
+               BinaryLinear(setting.unique_elements),
+               BinaryLinear(setting.unique_elements, redundant_element='X')]
+
+        for bf in bfs:
+            setting.basis_func_type = bf
+            setting.save(fname)
+            setting2 = settingFromJSON(fname)
+            bf2 = setting2.basis_func_type
+            for k in bf.__dict__.keys():
+                self.assertEqual(bf, bf2)
+        os.remove(db_name)
+        os.remove(fname)
 
     def tearDown(self):
         if update_reference_file:

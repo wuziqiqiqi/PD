@@ -8,6 +8,9 @@ from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
 from clease.settings import ClusterExpansionSetting
 from clease import Concentration
+from clease.basis_function import (
+    Polynomial, Trigonometric, BinaryLinear
+)
 from copy import deepcopy
 import json
 
@@ -187,5 +190,13 @@ def settingFromJSON(fname):
         raise ValueError(f"Unknown factory {factory}")
     setting.include_background_atoms = data['include_background_atoms']
     setting.skew_threshold = data['skew_threshold']
-    setting.basis_func_type = data['basis_func_type']
+    bf_dict = data['basis_func_type']
+    name = bf_dict.pop('name')
+
+    if name == 'polynmial':
+        setting.basis_func_type = Polynomial(**bf_dict)
+    elif name == 'trigonometric':
+        setting.basis_func_type = Trigonometric(**bf_dict)
+    elif name == 'binary_linear':
+        setting.basis_func_type = BinaryLinear(**bf_dict)
     return setting

@@ -215,7 +215,7 @@ class ClusterExpansionSetting(object):
             'kwargs': self.kwargs,
             'include_background_atoms': self.include_background_atoms,
             'skew_threshold': self.skew_threshold,
-            'basis_func_type': self.basis_func_type.name
+            'basis_func_type': self.basis_func_type.todict()
         }
 
     def _get_concentration(self, concentration):

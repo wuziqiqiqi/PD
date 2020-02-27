@@ -2,18 +2,19 @@
 import numpy as np
 import math
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
+from typing import List, Dict, Optional
 
 
 class BasisFunction(object):
     """Base class for all Basis Functions."""
 
-    def __init__(self, unique_elements):
+    def __init__(self, unique_elements: List[str]):
         self.name = "generic"
         self._unique_elements = sorted(unique_elements)
         if self.num_unique_elements < 2:
             raise ValueError("Systems must have more than 1 type of element.")
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.name == other.name and \
             self.unique_elements == other.unique_elements
 
@@ -47,9 +48,18 @@ class BasisFunction(object):
         raise NotImplementedError("get_basis_functions has to be implemented "
                                   "in derived classes!")
 
-    def customize_full_cluster_name(self, full_cluster_name):
+    def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Customize the full cluster names. Default is to do nothing."""
         return full_cluster_name
+
+    def todict(self) -> dict:
+        """
+        Create a dictionary representation of the basis function class
+        """
+        return {
+            'name': self.name,
+            'unique_elements': self.unique_elements
+        }
 
 
 class Polynomial(BasisFunction):
@@ -60,11 +70,11 @@ class Polynomial(BasisFunction):
     Physica A: Statistical Mechanics and Its Applications, 128(1-2), 334-350.
     """
 
-    def __init__(self, unique_elements):
+    def __init__(self, unique_elements: List[str]):
         BasisFunction.__init__(self, unique_elements)
         self.name = "polynomial"
 
-    def get_spin_dict(self):
+    def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
         gram_schmidt = GramSchmidtMonimial(self.num_unique_elements)
         spin_values = gram_schmidt.values
@@ -73,7 +83,7 @@ class Polynomial(BasisFunction):
             spin_dict[self.unique_elements[x]] = spin_values[x]
         return spin_dict
 
-    def get_basis_functions(self):
+    def get_basis_functions(self) -> List[Dict[str, float]]:
         """Create basis functions to guarantee the orthonormality."""
         gram_schmidt = GramSchmidtMonimial(self.num_unique_elements)
         gram_schmidt.build()
@@ -89,11 +99,11 @@ class Trigonometric(BasisFunction):
     266-278.
     """
 
-    def __init__(self, unique_elements):
+    def __init__(self, unique_elements: List[str]):
         BasisFunction.__init__(self, unique_elements)
         self.name = "trigonometric"
 
-    def get_spin_dict(self):
+    def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
         spin_values = list(range(self.num_unique_elements))
         spin_dict = {}
@@ -101,7 +111,7 @@ class Trigonometric(BasisFunction):
             spin_dict[self.unique_elements[x]] = spin_values[x]
         return spin_dict
 
-    def get_basis_functions(self):
+    def get_basis_functions(self) -> List[Dict[str, float]]:
         """Create basis functions to guarantee the orthonormality."""
         alpha = list(range(1, self.num_unique_elements))
         bf_list = []
@@ -130,7 +140,7 @@ class Trigonometric(BasisFunction):
         return bf_list
 
 
-def kronecker(i, j):
+def kronecker(i: int, j: int) -> int:
     """Kronecker delta function."""
     if i == j:
         return 1
@@ -146,15 +156,16 @@ class BinaryLinear(BasisFunction):
     Journal of Phase Equilibria and Diffusion 37(1) 44-52.
     """
 
-    def __init__(self, unique_elements, reduntant_element="auto"):
-        if reduntant_element == "auto":
+    def __init__(self, unique_elements: List[str],
+                 redundant_element: Optional[str] = "auto"):
+        if redundant_element == "auto":
             self.redundant_element = sorted(unique_elements)[0]
         else:
-            self.redundant_element = reduntant_element
+            self.redundant_element = redundant_element
         BasisFunction.__init__(self, unique_elements)
         self.name = "binary_linear"
 
-    def get_spin_dict(self):
+    def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
         spin_values = list(range(self.num_unique_elements))
         spin_dict = {}
@@ -162,7 +173,7 @@ class BinaryLinear(BasisFunction):
             spin_dict[self.unique_elements[x]] = spin_values[x]
         return spin_dict
 
-    def get_basis_functions(self):
+    def get_basis_functions(self) -> List[Dict[str, float]]:
         """Create orthonormal basis functions.
 
         Due to the constraint that any site is occupied by exactly one element,
@@ -180,7 +191,7 @@ class BinaryLinear(BasisFunction):
             bf_list.append(new_bf)
         return bf_list
 
-    def _decoration2element(self, dec_num):
+    def _decoration2element(self, dec_num: int) -> str:
         """Get the element with its basis function equal to 1."""
         bf = self.bf_list[dec_num]
         for k, v in bf.items():
@@ -188,7 +199,7 @@ class BinaryLinear(BasisFunction):
                 return k
         raise ValueError("Did not find any element where the value is 1.")
 
-    def customize_full_cluster_name(self, full_cluster_name):
+    def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Translate the decoration number to element names."""
         dec = full_cluster_name.rpartition("_")[1]
         name = full_cluster_name.rpartition("_")[0]
@@ -197,3 +208,11 @@ class BinaryLinear(BasisFunction):
             element = self._decoration2element(int(decnum))
             new_dec += f"{element}"
         return name + "_" + new_dec
+
+    def todict(self) -> dict:
+        """
+        Creates a dictionary representation of the class
+        """
+        dct_rep = BasisFunction.todict(self)
+        dct_rep['redundant_element'] = self.redundant_element
+        return dct_rep
