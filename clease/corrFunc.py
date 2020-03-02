@@ -5,7 +5,7 @@ from clease import ClusterExpansionSetting
 from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from clease_cxx import PyCEUpdater
-
+from clease import _logger
 
 class ClusterNotTrackedError(Exception):
     pass
@@ -102,18 +102,18 @@ class CorrFunction(object):
         row_ids = [row.id for row in db.select(select)]
         num_reconf = len(row_ids)
         if verbose:
-            print(f"{num_reconf} entries will be reconfigured")
+            _logger(f"{num_reconf} entries will be reconfigured")
         for count, row_id in enumerate(row_ids):
 
             if verbose:
-                print(f"updating {count+1} of {num_reconf} entries",
+                _logger(f"updating {count+1} of {num_reconf} entries",
                         end="\r")
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
             db.update(row_id, external_tables={tab_name: cf})
 
         if verbose:
-            print("\nreconfiguration completed")
+            _logger("\nreconfiguration completed")
 
     def reconfigure_inconsistent_cf_table_entries(self):
         """Find and correct inconsistent correlation functions in table."""
@@ -123,11 +123,11 @@ class CorrFunction(object):
             return True
 
         for count, id in enumerate(inconsistent_ids):
-            print(f"updating {count+1} of {len(inconsistent_ids)} entries",
+            _logger(f"updating {count+1} of {len(inconsistent_ids)} entries",
                   end="\r")
             self.reconfigure_db_entries(select_cond=[('id', '=', id)],
                                         verbose=False)
-        print("\nreconfiguration completed")
+        _logger("\nreconfiguration completed")
 
     def check_consistency_of_cf_table_entries(self):
         """Get IDs of the structures with inconsistent correlation functions.
@@ -146,12 +146,12 @@ class CorrFunction(object):
                 inconsistent_ids.append(row.id)
 
         if len(inconsistent_ids) > 0:
-            print(f"{len(inconsistent_ids)} inconsistent entries found in "
+            _logger(f"{len(inconsistent_ids)} inconsistent entries found in "
                   f"'{tab_name}' table.")
             for id in inconsistent_ids:
-                print(f"  id: {id}, name: {db.get(id).name}")
+                _logger(f"  id: {id}, name: {db.get(id).name}")
         else:
-            print(f"'{tab_name}' table has no inconsistent entries.")
+            _logger(f"'{tab_name}' table has no inconsistent entries.")
         return inconsistent_ids
 
     def check_cell_size(self, atoms):

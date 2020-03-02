@@ -2,7 +2,7 @@ from clease.tools import dec_string, list2str
 from itertools import product
 from clease.tools import flatten
 from copy import deepcopy
-
+from clease import _logger
 
 class ClusterList(object):
     def __init__(self):
@@ -105,7 +105,7 @@ class ClusterList(object):
 
         for c1, c2 in zip(self.clusters, other.clusters):
             if c1 != c2:
-                print(c1, c2)
+                _logger(c1, c2)
                 return False
         return True
 
