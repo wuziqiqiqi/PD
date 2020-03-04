@@ -1,4 +1,4 @@
-"""Definition of ClusterExpansionSetting Class.
+"""Definition of ClusterExpansionSettings Class.
 
 This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
@@ -6,6 +6,8 @@ Cluster Expansion in different conditions.
 from copy import deepcopy
 import numpy as np
 from ase.db import connect
+from ase import Atoms
+from typing import List, Dict, Optional, Union
 
 from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
@@ -18,12 +20,14 @@ from clease.cluster_manager import ClusterManager
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
 
 
-class ClusterExpansionSetting(object):
+class ClusterExpansionSettings(object):
     """Base class for all Cluster Expansion settings."""
 
-    def __init__(self, prim, concentration, size=None, supercell_factor=27,
-                 db_name='clease.db', max_cluster_size=4,
-                 max_cluster_dia=[5.0, 5.0, 5.0]):
+    def __init__(self, prim: Atoms, concentration: Concentration,
+                 size: Optional[int] = None,
+                 supercell_factor: Optional[int] = 27,
+                 db_name: str = 'clease.db', max_cluster_size: int = 4,
+                 max_cluster_dia: Union[float, List[float]] = [5.0, 5.0, 5.0]) -> None:
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
                        'db_name': db_name,
@@ -72,27 +76,27 @@ class ClusterExpansionSetting(object):
             raise ValueError("list of elements is needed for each basis")
 
     @property
-    def atoms(self):
+    def atoms(self) -> Atoms:
         return self.atoms_mng.atoms
 
     @property
-    def all_elements(self):
+    def all_elements(self) -> List[str]:
         return sorted([item for row in self.basis_elements for item in row])
 
     @property
-    def num_elements(self):
+    def num_elements(self) -> int:
         return len(self.all_elements)
 
     @property
-    def unique_elements(self):
+    def unique_elements(self) -> List[str]:
         return sorted(list(set(deepcopy(self.all_elements))))
 
     @property
-    def num_unique_elements(self):
+    def num_unique_elements(self) -> int:
         return len(self.unique_elements)
 
     @property
-    def ref_index_trans_symm(self):
+    def ref_index_trans_symm(self) -> List[int]:
         return [i[0] for i in self.index_by_sublattice]
 
     @property
@@ -100,7 +104,7 @@ class ClusterExpansionSetting(object):
         return self.template_atoms.skew_threshold
 
     @skew_threshold.setter
-    def skew_threshold(self, threshold):
+    def skew_threshold(self, threshold: int) -> None:
         '''
         Maximum acceptable skew level (ratio of max and min diagonal of the
         Niggli reduced cell)
@@ -108,7 +112,7 @@ class ClusterExpansionSetting(object):
         self.template_atoms.skew_threshold = threshold
 
     @property
-    def background_indices(self):
+    def background_indices(self) -> List[int]:
         """Get indices of the background atoms."""
         # check if any basis consists of only one element type
         basis = [i for i, b in enumerate(self.basis_elements) if len(b) == 1]
@@ -119,11 +123,11 @@ class ClusterExpansionSetting(object):
         return bkg_indices
 
     @property
-    def include_background_atoms(self):
+    def include_background_atoms(self) -> bool:
         return self._include_background_atoms
 
     @include_background_atoms.setter
-    def include_background_atoms(self, value: bool):
+    def include_background_atoms(self, value: bool) -> None:
         if value == self._include_background_atoms:
             return
         self._include_background_atoms = value
@@ -139,7 +143,7 @@ class ClusterExpansionSetting(object):
             self.unique_element_without_background()
 
     @property
-    def spin_dict(self):
+    def spin_dict(self) -> Dict[str, float]:
         return self.basis_func_type.spin_dict
 
     @property
@@ -147,36 +151,36 @@ class ClusterExpansionSetting(object):
         return self.basis_func_type.basis_functions
 
     @property
-    def ignore_background_atoms(self):
+    def ignore_background_atoms(self) -> bool:
         return not self.include_background_atoms
 
     @property
-    def multiplicity_factor(self):
+    def multiplicity_factor(self) -> Dict[str, float]:
         """Return the multiplicity factor of each cluster."""
         num_sites_in_group = [len(x) for x in self.index_by_sublattice]
         return self.cluster_list.multiplicity_factors(num_sites_in_group)
 
     @property
-    def all_cf_names(self):
+    def all_cf_names(self) -> List[str]:
         num_bf = len(self.basis_functions)
         return self.cluster_list.get_all_cf_names(num_bf)
 
     @property
-    def num_cf(self):
+    def num_cf(self) -> int:
         """Return the number of correlation functions."""
         return len(self.all_cf_names)
 
     @property
-    def index_by_basis(self):
+    def index_by_basis(self) -> List[List[int]]:
         first_symb_in_basis = [x[0] for x in self.basis_elements]
         return self.atoms_mng.index_by_symbol(first_symb_in_basis)
 
     @property
-    def index_by_sublattice(self):
+    def index_by_sublattice(self) -> List[List[int]]:
         return self.atoms_mng.index_by_tag()
 
     @property
-    def num_basis(self):
+    def num_basis(self) -> int:
         return len(self.basis_elements)
 
     @property
@@ -210,7 +214,7 @@ class ClusterExpansionSetting(object):
             raise ValueError("basis_function has to be an instance of "
                              "BasisFunction or a string")
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return {
             'kwargs': self.kwargs,
             'include_background_atoms': self.include_background_atoms,

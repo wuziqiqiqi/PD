@@ -2,6 +2,7 @@ from clease.tools import dec_string, list2str
 from itertools import product
 from clease.tools import flatten
 from copy import deepcopy
+from typing import List, Dict
 from clease import _logger
 
 class ClusterList(object):
@@ -70,14 +71,11 @@ class ClusterList(object):
             cf_names.append(name + '_' + dec_str)
         return sorted(list(set(cf_names)))
 
-    def get_all_cf_names(self, num_bf):
+    def get_all_cf_names(self, num_bf: int) -> List[str]:
         """
         Return a list of all correlation function names
 
-        Parameters:
-
-        num_bf: int
-            Number of basis functions
+        :param num_bf: Number of basis functions
         """
         all_cf_names = []
         for cluster in self.clusters:
@@ -87,7 +85,7 @@ class ClusterList(object):
                 all_cf_names += self.get_cf_names(cluster, num_bf)
         return sorted(list(set(all_cf_names)))
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.clusters)
 
     def __getitem__(self, index):
@@ -139,7 +137,8 @@ class ClusterList(object):
                 indices_per_group[i].update(flatten(c.indices))
         return [list(x) for x in indices_per_group]
 
-    def multiplicity_factors(self, num_sites_per_group):
+    def multiplicity_factors(
+            self, num_sites_per_group: List[int]) -> Dict[str, float]:
         mult_factors = {}
         norm = {}
         for cluster in self.clusters:

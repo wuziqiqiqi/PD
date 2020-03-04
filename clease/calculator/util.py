@@ -10,7 +10,7 @@ def attach_calculator(setting=None, atoms=None, eci={}):
 
     Parameters:
 
-    setting: `ClusterExpansionSetting` object
+    setting: `ClusterExpansionSettings` object
 
     eci: dict
         Dictionary containing cluster names and their ECI values

@@ -5,7 +5,7 @@ from ase.utils import basestring
 from ase.atoms import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction
-from clease.settings import ClusterExpansionSetting
+from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater
 
 
@@ -19,7 +19,7 @@ class Clease(Calculator):
 
     Parameters:
 
-    setting: `ClusterExpansionSetting` object
+    setting: `ClusterExpansionSettings` object
 
     eci: dict
         Dictionary containing cluster names and their ECI values
@@ -42,7 +42,7 @@ class Clease(Calculator):
                  logfile=None):
         Calculator.__init__(self)
 
-        if not isinstance(setting, ClusterExpansionSetting):
+        if not isinstance(setting, ClusterExpansionSettings):
             msg = "setting must be CEBulk or CECrystal object."
             raise TypeError(msg)
         self.parameters["eci"] = eci

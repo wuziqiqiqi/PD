@@ -96,8 +96,8 @@ class ValidConcentrationFilter(AtomsFilter):
 
     Parameters:
 
-    setting: ClusterExpansionSetting
-        Instance of `ClusterExpansionSetting`
+    setting: ClusterExpansionSettings
+        Instance of `ClusterExpansionSettings`
     """
 
     def __init__(self, concentration, index_by_basis):

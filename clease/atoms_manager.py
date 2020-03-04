@@ -1,10 +1,8 @@
 import numpy as np
-from math import gcd
 from scipy.spatial import cKDTree as KDTree
+from typing import List
+from ase import Atoms
 from ase.geometry import wrap_positions
-from ase.build import make_supercell
-from clease.tools import wrap_and_sort_by_position
-from ase.io import write
 
 
 class AtomsManager(object):
@@ -12,15 +10,20 @@ class AtomsManager(object):
     Manager class for the Atoms object used in a cluster expansion context.
     This class can return indices of the Atoms object grouped according to
     various schemes.
+
+    :param atoms: ASE Atoms object
     """
 
-    def __init__(self, atoms):
+    def __init__(self, atoms: Atoms) -> None:
         self.atoms = atoms
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AtomsManager):
+            return NotImplemented
+
         return self.atoms == other.atoms
 
-    def index_by_tag(self):
+    def index_by_tag(self) -> List[List[int]]:
         """Return atomic indices that are grouped by their tags.
 
         This method assumes that all atoms are tagged and the tags are in a
@@ -37,7 +40,7 @@ class AtomsManager(object):
             ind_by_tag[atom.tag].append(atom.index)
         return ind_by_tag
 
-    def index_by_symbol(self, symbols):
+    def index_by_symbol(self, symbols: List) -> List[List[int]]:
         """Group atomic indices by its atomic symbols.
 
 
@@ -52,10 +55,7 @@ class AtomsManager(object):
             returned as group 1, the indices of Cu and X are returned as group
             2 and the indices of Ag are returned as group 3.
 
-        Parameters:
-
-        symbols: list
-            List with symbols that define a group
+        :param symbols: List of symbols that define a group
         """
         ind_by_symbol = [[] for _ in symbols]
         group_map = {}
@@ -71,30 +71,26 @@ class AtomsManager(object):
             ind_by_symbol[group_map[atom.symbol]].append(atom.index)
         return ind_by_symbol
 
-    def unique_elements(self, ignore=[]):
+    def unique_elements(self, ignore: List[str] = []) -> List[str]:
         """Return a list of symbols of unique elements.
 
-        Parameters:
-
-        ignore: list
-            list of symbols to ignore in finding unique elements.
+        :param ignore: List of symbols to ignore in finding unique elements.
         """
         all_unique = set([a.symbol for a in self.atoms])
         return list(all_unique - set(ignore))
 
-    def single_element_sites(self, allowed_elements):
+    def single_element_sites(
+            self, allowed_elements: List[List[str]]) -> List[int]:
         """
         Return a list of sites that can only be occupied by a single element
         according to allowed_elements.
 
-        Parameters:
-
-        allowed_elements: list
-            List of allowed elements on each site. `allowed_elements` takes the
-            same format/style as `basis_elements` in setting (i.e., a nested
-            list with each sublist containing a list of elements in a basis).
-            It is assumed that all of the first elements in each group is
-            present in self.atoms. For example, if `allowed_elements` is
+        :param allowed_elements: List of allowed elements on each site.
+            `allowed_elements` takes the same format/style as
+            `basis_elements` in settings (i.e., a nested list with each
+            sublist containing a list of elements in a basis). It is assumed
+            that the first elements in each group is present in self.atoms.
+            For example, if `allowed_elements` is
             [['Au', 'Ag' 'X], ['Cu', 'X']] it means that all sites of the
             `self.atoms` must be occupied by either Au or Cu. All of the
             original sites occupied by Au can be occupied by Ag or X in cluster
@@ -108,15 +104,12 @@ class AtomsManager(object):
                 single_sites.append(atom.index)
         return single_sites
 
-    def tag_indices_of_corresponding_atom(self, ref_atoms):
+    def tag_indices_of_corresponding_atom(self, ref_atoms: Atoms) -> None:
         """
         Tag `self.atoms` with the indices of its corresponding atom (equivalent
         position) in `ref_atoms` when the positions are wrapped.
 
-
-        Parameters:
-
-        ref_atoms: Atoms object
+        :param ref_atoms: ASE Atoms object
         """
         pos = self.atoms.get_positions()
         wrapped_pos = wrap_positions(pos, ref_atoms.get_cell())

@@ -8,13 +8,15 @@ from typing import List, Dict, Optional
 class BasisFunction(object):
     """Base class for all Basis Functions."""
 
-    def __init__(self, unique_elements: List[str]):
+    def __init__(self, unique_elements: List[str]) -> None:
         self.name = "generic"
         self._unique_elements = sorted(unique_elements)
         if self.num_unique_elements < 2:
             raise ValueError("Systems must have more than 1 type of element.")
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BasisFunction):
+            return False
         return self.name == other.name and \
             self.unique_elements == other.unique_elements
 

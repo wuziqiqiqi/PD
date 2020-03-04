@@ -6,7 +6,7 @@ or CECrystal class.
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
-from clease.settings import ClusterExpansionSetting
+from clease.settings import ClusterExpansionSettings
 from clease import Concentration
 from clease.basis_function import (
     Polynomial, Trigonometric, BinaryLinear
@@ -82,7 +82,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
                 c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)
 
-    setting = ClusterExpansionSetting(
+    setting = ClusterExpansionSettings(
         prim, concentration, size, supercell_factor, db_name, max_cluster_size,
         max_cluster_dia)
 
@@ -156,7 +156,7 @@ def CECrystal(concentration, spacegroup=1, basis=None,
         primitive_cell=True)
     prim = wrap_and_sort_by_position(prim)
 
-    setting = ClusterExpansionSetting(
+    setting = ClusterExpansionSettings(
         prim, concentration, size, supercell_factor, db_name,
         max_cluster_size, max_cluster_dia)
     setting.kwargs.update(

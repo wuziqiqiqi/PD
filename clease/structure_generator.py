@@ -7,7 +7,7 @@ from copy import deepcopy
 import numpy as np
 from numpy.linalg import inv, pinv
 from ase.db import connect
-from clease import ClusterExpansionSetting, CorrFunction
+from clease import ClusterExpansionSettings, CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from clease import _logger
@@ -23,7 +23,7 @@ class StructureGenerator(object):
 
     def __init__(self, setting, atoms, struct_per_gen, init_temp=None,
                  final_temp=None, num_temp=5, num_steps_per_temp=10000):
-        if not isinstance(setting, ClusterExpansionSetting):
+        if not isinstance(setting, ClusterExpansionSettings):
             raise TypeError("setting must be CEBulk or CECrystal "
                             "object")
 

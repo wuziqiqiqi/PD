@@ -11,7 +11,7 @@ from ase.io import read
 from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
-from clease import ClusterExpansionSetting, CorrFunction
+from clease import ClusterExpansionSettings, CorrFunction
 from clease.montecarlo.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import (
@@ -45,7 +45,7 @@ class NewStructures(object):
     :param struct_per_gen: Number of structures to generate per generation
     """
 
-    def __init__(self, setting: ClusterExpansionSetting,
+    def __init__(self, setting: ClusterExpansionSettings,
                  generation_number: int = None,
                  struct_per_gen: int = 5) -> None:
         self.setting = setting

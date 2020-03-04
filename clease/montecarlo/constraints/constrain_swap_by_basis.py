@@ -16,7 +16,7 @@ class ConstrainSwapByBasis(MCConstraint):
 
     index_by_basis: list
         Indices ordered by basis (same as `index_by_basis` parameter in
-        `ClusterExpansionSetting`).
+        `ClusterExpansionSettings`).
         If an Atoms object has 10 sites where the first 4 belongs to the
         first basis, the next 3 belongs to the next basis and the last 3
         belongs to the last basis, the `index_by_basis` would be

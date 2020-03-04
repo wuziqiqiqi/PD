@@ -1,7 +1,7 @@
 """Module for calculating correlation functions."""
 from __future__ import print_function
 from ase.atoms import Atoms
-from clease import ClusterExpansionSetting
+from clease import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
 from clease_cxx import PyCEUpdater
@@ -27,7 +27,7 @@ class CorrFunction(object):
     """
 
     def __init__(self, setting, parallel=False, num_core="all"):
-        if not isinstance(setting, ClusterExpansionSetting):
+        if not isinstance(setting, ClusterExpansionSettings):
             raise TypeError("setting must be CEBulk or CECrystal "
                             "object")
         self.setting = setting
@@ -180,5 +180,5 @@ class CorrFunction(object):
             raise ClusterNotTrackedError(
                 "The correlation function of non-existing cluster is "
                 "requested, but the name does not exist in "
-                "ClusterExpansionSetting. Check that the cutoffs are "
+                "ClusterExpansionSettings. Check that the cutoffs are "
                 "correct, and try to run reconfigure_settings")

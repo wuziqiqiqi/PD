@@ -315,7 +315,7 @@ def symbols2integer(basis_functions):
     Parameters:
 
     basis_functions: list of dict
-        The basis function dictionary from ClusterExpansionSetting
+        The basis function dictionary from ClusterExpansionSettings
     """
     symb_id = {}
     for i, symb in enumerate(basis_functions[0].keys()):
@@ -330,7 +330,7 @@ def bf2npyarray(basis_functions, symb_id):
     Parameters:
 
     basis_function: list of dict
-        Basis function dictionary from ClusterExpansionSetting
+        Basis function dictionary from ClusterExpansionSettings
 
     symb_id: dict
         Dictionary of symbol integer (see symbols2integer)

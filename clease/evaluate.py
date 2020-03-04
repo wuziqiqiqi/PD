@@ -6,7 +6,7 @@ import multiprocessing as mp
 import logging as lg
 from clease import _logger
 from ase.utils import basestring
-from clease import ClusterExpansionSetting
+from clease import ClusterExpansionSettings
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 from clease.tools import singlets2conc
@@ -46,7 +46,7 @@ class Evaluate(object):
         maximum diameter of the cluster (in angstrom) to include in the fit.
         If ``None``, no restriction on the diameter. Note that this diameter of
         the circumscribed sphere, which is slightly different from the meaning
-        of max_cluster_dia in `ClusterExpansionSetting` where it refers to the
+        of max_cluster_dia in `ClusterExpansionSettings` where it refers to the
         the maximum internal distance between any of the atoms in the cluster.
 
     scoring_scheme: str
@@ -79,8 +79,8 @@ class Evaluate(object):
                  scoring_scheme='loocv', min_weight=1.0, nsplits=10,
                  num_repetitions=1):
         """Initialize the Evaluate class."""
-        if not isinstance(setting, ClusterExpansionSetting):
-            msg = "setting must be ClusterExpansionSetting object"
+        if not isinstance(setting, ClusterExpansionSettings):
+            msg = "setting must be ClusterExpansionSettings object"
             raise TypeError(msg)
 
         self.setting = setting

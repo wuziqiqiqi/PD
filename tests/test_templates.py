@@ -118,7 +118,7 @@ class TestTemplates(unittest.TestCase):
                 break
         self.assertTrue(found_conventional)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSettings.create_cluster_list_and_trans_matrix')
     def test_fixed_vol_with_conc_constraint(self, *args):
         A_eq = [[3, -2]]
         b_eq = [0]

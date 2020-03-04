@@ -345,7 +345,7 @@ class TestCEBulk(unittest.TestCase):
 
         os.remove(db_name)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSettings.create_cluster_list_and_trans_matrix')
     def test_fcc_binary_fixed_conc(self, *args):
         # c_Au = 1/3 and c_Cu = 2/3
         A_eq = [[2, -1]]
@@ -364,7 +364,7 @@ class TestCEBulk(unittest.TestCase):
         self.assertAlmostEqual(ratio, int(ratio))
         os.remove(db_name)
 
-    @patch('clease.settings_bulk.ClusterExpansionSetting.create_cluster_list_and_trans_matrix')
+    @patch('clease.settings_bulk.ClusterExpansionSettings.create_cluster_list_and_trans_matrix')
     def test_rocksalt_conc_fixed_one_basis(self, *args):
         db_name = 'test_rocksalt_fixed_one_basis.db'
         basis_elem = [['Li', 'X'], ['O', 'F']]

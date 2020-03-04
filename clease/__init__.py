@@ -17,7 +17,7 @@ from clease.template_filters import DistanceBetweenFacetsFilter
 from clease.template_filters import VolumeToSurfaceRatioFilter
 from clease.template_filters import AngleFilter
 from clease.atoms_manager import AtomsManager
-from clease.settings import ClusterExpansionSetting
+from clease.settings import ClusterExpansionSettings
 from clease.concentration import Concentration
 from clease.settings_bulk import CEBulk, CECrystal, settingFromJSON
 from clease.evaluate import Evaluate

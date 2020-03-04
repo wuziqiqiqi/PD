@@ -29,7 +29,7 @@ class MCRunner(object):
     temps: list
         List with temperatures
 
-    settings: ClusterExpansionSetting
+    settings: ClusterExpansionSettings
         Settings object holder the required information
 
     sweeps: int
