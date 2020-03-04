@@ -3,7 +3,8 @@ from ase.db import connect
 from ase.calculators.emt import EMT
 from ase.build import bulk
 from ase import Atoms
-from clease import CorrFuncEnergyDataManager
+from clease import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
+from clease.data_manager import FinalVolumeGetter
 from clease.data_manager import InconsistentDataError
 from clease.tools import update_db
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -29,40 +30,58 @@ def create_db(db_name):
 
 class TestDataManager(unittest.TestCase):
     def test_corr_final_energy(self):
-        db_name = 'test_get_data.db'
-        create_db(db_name)
         cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
-        manager = CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func')
-        X, y = manager.get_data([('converged', '=', 1)])
+        db_name = 'test_get_data.db'
 
-        expect_X = np.zeros((10, 3))
-        expect_X[:, 0] = 0.0
-        expect_X[:, 1] = 1.0
-        expect_X[:, 2] = -1.0
-        self.assertTrue(np.allclose(X, expect_X))
+        managers = [
+            CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
+            CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
+        ]
 
-        csvfile = 'dataset.csv'
-        manager.to_csv(csvfile)
+        tests = [
+            {
+                'manager': CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
+                'expect_header': "# c0,c1_1,c2_d0000_0_00,E_DFT (eV/atom)\n",
+            },
+            {
+                'manager': CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
+                'expect_header': "# c0,c1_1,c2_d0000_0_00,Volume (A^3)\n",
+            }
+        ]
 
-        expect_header = "# c0,c1_1,c2_d0000_0_00,E_DFT (eV/atom)\n"
-        with open(csvfile, 'r') as f:
-            header = f.readline()
-
-        self.assertEqual(header, expect_header)
-        X_read = np.loadtxt(csvfile, delimiter=',')
-        os.remove(csvfile)
-        self.assertTrue(np.allclose(X, X_read[:, :-1]))
-        self.assertTrue(np.allclose(y, X_read[:, -1]))
-
-        # Add an initial structure that is by mistake labeled as converged
-        db = connect(db_name)
-        db.write(Atoms(), converged=True,
-                 external_tables={'cf_func': {k: 1.0 for k in cf_names}})
-
-        with self.assertRaises(InconsistentDataError):
+        for test in tests:
+            create_db(db_name)
+            manager = test['manager']
             X, y = manager.get_data([('converged', '=', 1)])
 
-        os.remove(db_name)
+            expect_X = np.zeros((10, 3))
+            expect_X[:, 0] = 0.0
+            expect_X[:, 1] = 1.0
+            expect_X[:, 2] = -1.0
+            self.assertTrue(np.allclose(X, expect_X))
+
+            csvfile = 'dataset.csv'
+            manager.to_csv(csvfile)
+
+            expect_header = test['expect_header']
+            with open(csvfile, 'r') as f:
+                header = f.readline()
+
+            self.assertEqual(header, expect_header)
+            X_read = np.loadtxt(csvfile, delimiter=',')
+            os.remove(csvfile)
+            self.assertTrue(np.allclose(X, X_read[:, :-1]))
+            self.assertTrue(np.allclose(y, X_read[:, -1]))
+
+            # Add an initial structure that is by mistake labeled as converged
+            db = connect(db_name)
+            db.write(Atoms(), converged=True,
+                     external_tables={'cf_func': {k: 1.0 for k in cf_names}})
+
+            with self.assertRaises(InconsistentDataError):
+                X, y = manager.get_data([('converged', '=', 1)])
+
+            os.remove(db_name)
 
     def test_get_pattern(self):
         db_name = 'test_get_pattern.db'
@@ -147,24 +166,56 @@ class TestDataManager(unittest.TestCase):
             update_db(uid_initial=init_id, final_struct=atoms, db_name=db_name)
 
         cf_names = list(cf_func.keys())
-        manager = CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func')
-        query = [('converged', '=', 1)]
-        X, y = manager.get_data(query)
 
-        # Extract via ASE calls
-        X_ase = []
-        y_ase = []
-        for row in db.select(query):
-            x_row = [row['cf_func'][n] for n in cf_names]
-            X_ase.append(x_row)
+        tests = [
+            {
+                'manager': CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
+                'target_col': 'energy'
+            },
+            {
+                'manager': CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
+                'target_col': 'volume'
+            }
+        ]
 
-            fid = row.final_struct_id
-            final_row = db.get(id=fid)
-            y_ase.append(final_row.energy/final_row.natoms)
+        for test in tests:
+            query = [('converged', '=', 1)]
+            manager = test['manager']
+            X, y = manager.get_data(query)
 
-        self.assertTrue(np.allclose(X_ase, X))
-        self.assertTrue(np.allclose(y, y_ase))
+            # Extract via ASE calls
+            X_ase = []
+            y_ase = []
+            for row in db.select(query):
+                x_row = [row['cf_func'][n] for n in cf_names]
+                X_ase.append(x_row)
+
+                fid = row.final_struct_id
+                final_row = db.get(id=fid)
+                y_ase.append(final_row[test['target_col']]/final_row.natoms)
+
+            self.assertTrue(np.allclose(X_ase, X))
+            self.assertTrue(np.allclose(y, y_ase))
         os.remove(db_name)
+
+    def test_final_volume_getter(self):
+        db_name = 'test_final_volume_getter.db'
+
+        with connect(db_name) as db:
+            expected_volumes = []
+            for i in range(10):
+                init_struct = bulk('Cu')
+                db.write(init_struct, final_struct_id=2*i+2)
+                final_struct = init_struct.copy()
+                db.write(final_struct)
+                N = len(init_struct)
+                expected_volumes.append(final_struct.get_volume()/N)
+
+        final_vol_getter = FinalVolumeGetter(db_name)
+        ids = list(range(1, 21, 2))
+        volumes = final_vol_getter(ids)
+        os.remove(db_name)
+        self.assertTrue(np.allclose(expected_volumes, volumes))
 
 
 if __name__ == '__main__':

@@ -3,7 +3,8 @@ from ase.db import connect
 import numpy as np
 from clease.tools import add_file_extension
 from ase.db.core import parse_selection
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Set
+import sqlite3
 
 
 class InconsistentDataError(Exception):
@@ -76,6 +77,8 @@ class DataManager(object):
         keys, cmps = parse_selection(select_cond)
         db = connect(self.db_name)
         sql, args = db.create_select_statement(keys, cmps)
+
+        # Extract the ids in the database that corresponds to select_cond
         sql = sql.replace('systems.*', 'systems.id')
         with connect(self.db_name) as db:
             con = db.connection
@@ -83,13 +86,15 @@ class DataManager(object):
             cur.execute(sql, args)
             ids = [row[0] for row in cur.fetchall()]
         ids.sort()
+
+        # Extract design matrix and the target values
         cfm = feature_getter(ids)
         target = target_getter(ids)
 
         self._X = np.array(cfm, dtype=float)
         self._y = np.array(target)
         self._feat_names = feature_getter.names()
-        self._target_name = target_getter.name()
+        self._target_name = target_getter.name
 
         nrows = self._X.shape[0]
         num_data = len(self._y)
@@ -229,13 +234,17 @@ class CorrelationFunctionGetter(object):
         id_cf_names = {}
 
         id_set = set(ids)
+
         with connect(self.db_name) as db:
             con = db.connection
             cur = con.cursor()
             cur.execute(sql)
 
-            for row in cur.fetchall():
-                name, value, db_id = row
+            # Extract the correlation function name and value. The ID is also
+            # extracted to check if it is in ids. The correlation functions
+            # are placed in a dictionary because the IDs is not nessecarily
+            # a monotone sequence of ints
+            for name, value, db_id in cur.fetchall():
                 if db_id in id_set:
                     cur_row = id_cf_values.get(db_id, [])
                     names = id_cf_names.get(db_id, [])
@@ -251,6 +260,9 @@ class CorrelationFunctionGetter(object):
 
         cf_matrix = np.zeros((len(id_cf_values), len(cf_name_col)))
         row = 0
+
+        # Convert the correlation function dictionary to a numpy 2D array
+        # such that is can be passed to a fitting algorithm
         for row, db_id in enumerate(ids):
             cf_values = id_cf_values[db_id]
             cf_names = id_cf_names[db_id]
@@ -269,6 +281,7 @@ class FinalStructEnergyGetter(object):
     def __init__(self, db_name: str):
         self.db_name = db_name
 
+    @property
     def name(self):
         return "E_DFT (eV/atom)"
 
@@ -286,29 +299,128 @@ class FinalStructEnergyGetter(object):
 
             # Map the between final struct id and initial struct id
             init_struct_ids = {}
-            for row in cur.fetchall():
-                final_id, init_id = row
+            for final_id, init_id in cur.fetchall():
                 if init_id in id_set:
                     final_struct_ids.append(final_id)
                     init_struct_ids[final_id] = init_id
 
             # Extract the number of atoms of the initial structure
-            sql = "SELECT id, natoms FROM systems"
-            cur.execute(sql)
-            num_atoms = {}
-            for row in cur.fetchall():
-                db_id, natoms = row
-                if db_id in id_set:
-                    num_atoms[db_id] = natoms
+            num_atoms = extract_num_atoms(cur, id_set)
 
             final_struct_ids = set(final_struct_ids)
             sql = f"SELECT id, energy FROM systems"
             cur.execute(sql)
             energies = np.zeros(len(final_struct_ids))
-            for row in cur.fetchall():
-                final_id, energy = row
+
+            # Populate the energies array
+            for final_id, energy in cur.fetchall():
                 if final_id in final_struct_ids:
                     init_id = init_struct_ids[final_id]
                     idx = init_struct_idx[init_id]
                     energies[idx] = energy/num_atoms[init_id]
         return energies
+
+
+class FinalVolumeGetter(object):
+    """
+    Class that extracts the final volume per atom of the relaxed structure
+    """
+    def __init__(self, db_name: str):
+        self.db_name = db_name
+
+    @property
+    def name(self):
+        return "Volume (A^3)"
+
+    def __call__(self, ids: List[int]) -> np.ndarray:
+        id_set = set(ids)
+        query = "SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
+
+        init_ids = {}
+        id_idx = {db_id: i for i, db_id in enumerate(ids)}
+        with connect(self.db_name) as db:
+            cur = db.connection.cursor()
+            cur.execute(query)
+            final_struct_ids = []
+
+            # Extract the final struct id. Create a mapping between
+            # final structure ids and initial structure ids for later
+            # reference
+            for value, db_id in cur.fetchall():
+                final_id = int(value)
+                if db_id in id_set:
+                    final_struct_ids.append(final_id)
+                    init_ids[final_id] = db_id
+
+            num_atoms = extract_num_atoms(cur, id_set)
+
+            final_struct_ids = set(final_struct_ids)
+            query = 'SELECT id, volume FROM systems'
+            cur.execute(query)
+            volumes = np.zeros(len(init_ids))
+
+            # Extract the volume of the final structure and normalize it by
+            # the number of atoms in the initial structure. The reason why
+            # the number of atoms in the initial structure needs to be used,
+            # is that vacancies are typically removed before the DFT run
+            # starts. Consequently, they are missing in the final structure
+            # and the number of atoms in that structure will be wrong
+            for db_id, vol in cur.fetchall():
+                if db_id in final_struct_ids:
+                    init_id = init_ids[db_id]
+                    idx = id_idx[init_id]
+                    volumes[idx] = vol/num_atoms[init_id]
+        return volumes
+
+
+class CorrFuncVolumeDataManager(DataManager):
+    """
+    CorrFuncVolumeDataManager is a convenience class provided
+    to handle the standard case where the features are correlation functions
+    and the target is the volume of the relaxed cell
+
+    Parameters
+
+    db_name: Name of the database being passed
+
+    cf_names: List with the correlation function names to extract
+
+    tab_name: Name of the table where the correlation functions are stored
+    """
+    def __init__(self, db_name: str, cf_names: List[str], tab_name: str):
+        DataManager.__init__(self, db_name)
+        self.tab_name = tab_name
+        self.cf_names = cf_names
+
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Return X and y, where X is the design matrix containing correlation
+        functions and y is the DFT energy per atom.
+
+        Parameters:
+
+        select_cond: list
+            List with select conditions for the database
+            (e.g. [('converged', '=', True)])
+        """
+        return DataManager.get_data(
+            self, select_cond,
+            CorrelationFunctionGetter(self.db_name, self.cf_names,
+                                      self.tab_name), FinalVolumeGetter(self.db_name))
+
+
+def extract_num_atoms(cur: sqlite3.Cursor,
+                      ids: Set[int]) -> Dict[int, int]:
+    """
+    Extract the number of atoms for all ids
+
+    cur: SQL-cursor object
+    ids: Set with IDs in the database.
+    """
+    sql = "SELECT id, natoms FROM systems"
+    cur.execute(sql)
+    num_atoms = {}
+    for db_id, natoms in cur.fetchall():
+        if db_id in ids:
+            num_atoms[db_id] = natoms
+    return num_atoms
