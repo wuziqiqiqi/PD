@@ -275,7 +275,8 @@ def random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=100):
                     f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
             last_print = time.time()
 
-    cv_params = sorted(cv_params)
+    cv_params = sorted(cv_params, key=lambda x: x[0])
+
     res = {
         'best_coeffs': best_coeff,
         'best_params': best_param,
