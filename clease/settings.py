@@ -352,7 +352,7 @@ class ClusterExpansionSettings(object):
     def _format_max_cluster_dia(self, max_cluster_dia):
         """Get max_cluster_dia in numpy array form"""
         # max_cluster_dia is list or array
-        if isinstance(max_cluster_dia, (list, np.ndarray)):
+        if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
             # Length should be either max_cluster_size+1 or max_cluster_size-1
             if len(max_cluster_dia) == self.max_cluster_size + 1:
                 for i in range(2):

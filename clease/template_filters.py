@@ -184,3 +184,27 @@ class AngleFilter(CellFilter):
         max_ok = all(x > cos_max for x in cos_a)
         min_ok = all(x < cos_min for x in cos_a)
         return max_ok and min_ok
+
+
+class CellVectorDirectionFilter(CellFilter):
+    """
+    Filter that forces a vector to be parallel to a given vector
+
+    Parameters:
+
+    cell_vector: int
+        Cell vector that is constrained (has to 0, 1 or 2)
+
+    direction: list of length 3
+        Unit vector in the direction where the selected vector
+        should be
+    """
+    def __init__(self, cell_vector=0, direction=[0, 0, 1], tol=1e-7):
+        self.cell_vector = cell_vector
+        self.direction = direction
+        self.tol = tol
+
+    def __call__(self, cell):
+        vec = cell[self.cell_vector]
+        dot = np.dot(vec, self.direction)/np.sqrt(np.dot(vec, vec))
+        return abs(dot - 1.0) > self.tol

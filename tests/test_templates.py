@@ -4,10 +4,12 @@ import os
 from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.build import niggli_reduce
+from ase.db import connect
 from clease import Concentration, ValidConcentrationFilter, CEBulk
 from clease.template_atoms import TemplateAtoms
 from clease.template_filters import (AtomsFilter, CellFilter, SkewnessFilter,
-                                     DistanceBetweenFacetsFilter)
+                                     DistanceBetweenFacetsFilter,
+                                     CellVectorDirectionFilter)
 from clease.tools import wrap_and_sort_by_position
 import numpy as np
 import unittest
@@ -179,6 +181,31 @@ class TestTemplates(unittest.TestCase):
         for f in template_atoms.cell_filters:
             if isinstance(f, SkewnessFilter):
                 self.assertEqual(f.ratio, 100)
+
+    def test_cell_direction_filter(self):
+        db_name = 'templates_cell_direction_filter.db'
+        prim_cell = bulk("Cu", a=4.05, crystalstructure='fcc', cubic=True)
+        db = connect(db_name)
+        db.write(prim_cell, name='primitive_cell')
+
+        cell_filter = CellVectorDirectionFilter(
+            cell_vector=2, direction=[0, 0, 1])
+
+        template_atoms = TemplateAtoms(
+            prim_cell, supercell_factor=1,
+            size=None, skew_threshold=40000)
+
+        template_atoms.add_cell_filter(cell_filter)
+
+        templates = template_atoms.get_fixed_volume_templates(
+            num_prim_cells=5, num_templates=20)
+
+        self.assertGreater(len(templates), 1)
+        for temp in templates:
+            _, _, a3 = temp.get_cell()
+            self.assertTrue(np.allclose(a3[:2], [0.0, 0.0]))
+        os.remove(db_name)
+
 
 def get_settings_placeholder_valid_conc_filter(system):
     """

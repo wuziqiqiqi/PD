@@ -5,8 +5,10 @@ or CECrystal class.
 """
 from ase.build import bulk
 from ase.spacegroup import crystal
+from ase import Atoms
 from clease.tools import wrap_and_sort_by_position
 from clease.settings import ClusterExpansionSettings
+from clease.settings_slab import CESlab
 from clease import Concentration
 from clease.basis_function import (
     Polynomial, Trigonometric, BinaryLinear
@@ -186,6 +188,11 @@ def settingFromJSON(fname):
         setting = CEBulk(**kwargs)
     elif factory == 'CECrystal':
         setting = CECrystal(**kwargs)
+    elif factory == 'CESlab':
+        cnv_cell_dict = kwargs.pop('conventional_cell')
+        cnv_cell = Atoms.fromdict(cnv_cell_dict)
+        kwargs['conventional_cell'] = cnv_cell
+        setting = CESlab(**kwargs)
     else:
         raise ValueError(f"Unknown factory {factory}")
     setting.include_background_atoms = data['include_background_atoms']
