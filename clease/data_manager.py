@@ -3,7 +3,7 @@ from ase.db import connect
 import numpy as np
 from clease.tools import add_file_extension
 from ase.db.core import parse_selection
-from typing import Tuple, List, Dict, Set
+from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
 
 
@@ -18,8 +18,7 @@ class DataManager(object):
 
     Parameters:
 
-    db_name:
-        Name of the database
+    : param db_name: Name of the database
     """
     def __init__(self, db_name: str):
         self.db_name = db_name
@@ -28,25 +27,46 @@ class DataManager(object):
         self._feat_names = None
         self._target_name = None
 
-    def get_data(self, select_cond: List[tuple], feature_getter: callable,
-                 target_getter: callable) -> Tuple[np.ndarray, np.ndarray]:
+    def get_ids(self, select_cond: List[tuple]) -> List[int]:
+        """
+        Return ids in the database that corresponds to the passed
+        selection condition.
+
+        :param select_cond: ASE select condition. The database IDs matching
+            the select condition is returned.
+        """
+        keys, cmps = parse_selection(select_cond)
+        db = connect(self.db_name)
+        sql, args = db.create_select_statement(keys, cmps)
+
+        # Extract the ids in the database that corresponds to select_cond
+        sql = sql.replace('systems.*', 'systems.id')
+        with connect(self.db_name) as db:
+            con = db.connection
+            cur = con.cursor()
+            cur.execute(sql, args)
+            ids = [row[0] for row in cur.fetchall()]
+        ids.sort()
+        return ids
+
+    def get_data(self, select_cond: List[tuple],
+                 feature_getter: Callable[[List[int]], np.ndarray],
+                 target_getter: Callable[[List[int]], np.ndarray]
+                 ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix X and the target data y
 
-        Parameters:
-
-        select_cond: list
-            List of tuples with selection conditions
+        :param select_cond: List of tuples with selection conditions
             (e.g. [('converged', '='' True)])
 
-        feature_getter:
+        :param feature_getter:
             Callable object that returns design matrix. It
             also needs a method get_feature_names that returns a name of
             each feature. The passed instance should take a list of IDs
             as input argument and return a numpy array corresponding to
             the design matrix
 
-        target_getter:
+        :param target_getter:
             Callable object that extracts the target value. The __call__
             method takes a list of ids in the database and return a numpy
             array with the target values (e.g. energy per atom)
@@ -74,18 +94,7 @@ class DataManager(object):
         >>> manager = DataManager(db_name)
         >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter, targ_getter)
         """
-        keys, cmps = parse_selection(select_cond)
-        db = connect(self.db_name)
-        sql, args = db.create_select_statement(keys, cmps)
-
-        # Extract the ids in the database that corresponds to select_cond
-        sql = sql.replace('systems.*', 'systems.id')
-        with connect(self.db_name) as db:
-            con = db.connection
-            cur = con.cursor()
-            cur.execute(sql, args)
-            ids = [row[0] for row in cur.fetchall()]
-        ids.sort()
+        ids = self.get_ids(select_cond)
 
         # Extract design matrix and the target values
         cfm = feature_getter(ids)
@@ -93,7 +102,7 @@ class DataManager(object):
 
         self._X = np.array(cfm, dtype=float)
         self._y = np.array(target)
-        self._feat_names = feature_getter.names()
+        self._feat_names = feature_getter.names
         self._target_name = target_getter.name
 
         nrows = self._X.shape[0]
@@ -121,10 +130,7 @@ class DataManager(object):
         thus each row in the file contains the correlation function values and
         the corresponding DFT energy value.
 
-        Parameter:
-
-        fname: str
-            Filename to write to. Typically this should end with .csv
+        :param fname: Filename to write to. Typically this should end with .csv
         """
         if self._X is None:
             return
@@ -135,14 +141,11 @@ class DataManager(object):
         np.savetxt(fname, data, delimiter=",", header=header)
         _logger(f"Dataset exported to {fname}")
 
-    def get_matching_names(self, pattern):
+    def get_matching_names(self, pattern: str) -> List[str]:
         """
         Get names that matches pattern
 
-        Parameters:
-
-        pattern: str
-            Pattern which the string should contain.
+        :param pattern: Pattern which the string should contain.
 
         Example:
 
@@ -151,14 +154,11 @@ class DataManager(object):
         """
         return [n for n in self._feat_names if pattern in n]
 
-    def get_cols(self, names):
+    def get_cols(self, names: List[str]) -> np.ndarray:
         """
         Get all columns corresponding to the names
 
-        Parameters:
-
-        names: list
-            List of names (e.g. ['c0', 'c1_1'])
+        :pram names: List of names (e.g. ['c0', 'c1_1'])
         """
         name_idx = {n: i for i, n in enumerate(self._feat_names)}
         indices = [name_idx[n] for n in names]
@@ -171,28 +171,23 @@ class CorrFuncEnergyDataManager(DataManager):
     to handle the standard case where the features are correlation functions
     and the target is the DFT energy per atom
 
-    Parameters
+    :param db_name: Name of the database being passed
 
-    db_name: Name of the database being passed
+    :param cf_names: List with the correlation function names to extract
 
-    cf_names: List with the correlation function names to extract
-
-    tab_name: Name of the table where the correlation functions are stored
+    :param tab_name: Name of the table where the correlation functions are stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str):
+    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
 
-    def get_data(self, select_cond):
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return X and y, where X is the design matrix containing correlation
         functions and y is the DFT energy per atom.
 
-        Parameters:
-
-        select_cond: list
-            List with select conditions for the database
+        :param select_cond: List with select conditions for the database
             (e.g. [('converged', '=', True)])
         """
         return DataManager.get_data(
@@ -206,22 +201,19 @@ class CorrelationFunctionGetter(object):
     CorrelationFunctionGetter is a class that extracts
     the correlation functions from an AtomsRow object
 
-    Parameters:
+    :param db_name: Name of the database
 
-    db_name:
-        Name of the database
-    cf_names: list
-        List with the names of the correlation functions
+    :param cf_names: List with the names of the correlation functions
 
-    tab_name: str
-        Name of the external table where the correlation functions
+    :param tab_name: Name of the external table where the correlation functions
         are stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str):
+    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
         self.db_name = db_name
         self.cf_names = cf_names
         self.tab_name = tab_name
 
+    @property
     def names(self):
         """
         Return a name of each column
@@ -229,6 +221,13 @@ class CorrelationFunctionGetter(object):
         return self.cf_names
 
     def __call__(self, ids: List[int]) -> np.ndarray:
+        """
+        Extracts the design matrix associated with the database IDs. The first
+        row in the matrix corresponds to the first item in ids, the second row
+        corresponds to the second item in ids etc.
+
+        :param ids: Database IDs of initial structures
+        """
         sql = f"SELECT * FROM {self.tab_name}"
         id_cf_values = {}
         id_cf_names = {}
@@ -277,8 +276,10 @@ class FinalStructEnergyGetter(object):
     FinalStructEnergyGetter is a callable class that returns the final energy
     (typically after structure relaxation) corresponding to the passed
     AtomsRow object.
+
+    :param db_name: Name of the database
     """
-    def __init__(self, db_name: str):
+    def __init__(self, db_name: str) -> None:
         self.db_name = db_name
 
     @property
@@ -286,6 +287,13 @@ class FinalStructEnergyGetter(object):
         return "E_DFT (eV/atom)"
 
     def __call__(self, ids: List[int]) -> np.ndarray:
+        """
+        Extract the final energy of the ids passed. In the returned array, the first
+        energy corresponds to the first item in ids, the second energy corresponds to
+        the second item in ids etc.
+
+        :param ids: Database ids of initial structures
+        """
         sql = f"SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
         id_set = set(ids)
         # Map beetween the initial structure and the index in the id list
@@ -324,8 +332,10 @@ class FinalStructEnergyGetter(object):
 class FinalVolumeGetter(object):
     """
     Class that extracts the final volume per atom of the relaxed structure
+
+    :param db_name: Name of the database
     """
-    def __init__(self, db_name: str):
+    def __init__(self, db_name: str) -> None:
         self.db_name = db_name
 
     @property
@@ -333,6 +343,13 @@ class FinalVolumeGetter(object):
         return "Volume (A^3)"
 
     def __call__(self, ids: List[int]) -> np.ndarray:
+        """
+        Extracts the final volume of the ids passed. In the returned array, the first
+        volume corresponds to the first item in ids, the second volume corresponds to 
+        the second item in ids etc.
+
+        :param ids: Database IDs of initial structures
+        """
         id_set = set(ids)
         query = "SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
 
@@ -379,15 +396,13 @@ class CorrFuncVolumeDataManager(DataManager):
     to handle the standard case where the features are correlation functions
     and the target is the volume of the relaxed cell
 
-    Parameters
+    :param db_name: Name of the database being passed
 
-    db_name: Name of the database being passed
+    :param cf_names: List with the correlation function names to extract
 
-    cf_names: List with the correlation function names to extract
-
-    tab_name: Name of the table where the correlation functions are stored
+    :param tab_name: Name of the table where the correlation functions are stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str):
+    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -395,7 +410,7 @@ class CorrFuncVolumeDataManager(DataManager):
     def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return X and y, where X is the design matrix containing correlation
-        functions and y is the DFT energy per atom.
+        functions and y is the volume per atom.
 
         Parameters:
 
@@ -414,8 +429,8 @@ def extract_num_atoms(cur: sqlite3.Cursor,
     """
     Extract the number of atoms for all ids
 
-    cur: SQL-cursor object
-    ids: Set with IDs in the database.
+    :param cur: SQL-cursor object
+    :param ids: Set with IDs in the database.
     """
     sql = "SELECT id, natoms FROM systems"
     cur.execute(sql)
@@ -424,3 +439,161 @@ def extract_num_atoms(cur: sqlite3.Cursor,
         if db_id in ids:
             num_atoms[db_id] = natoms
     return num_atoms
+
+
+class CorrelationFunctionGetterVolDepECI(DataManager):
+    """
+    Extracts correlation functions, multiplied with a power of the volume per
+    atom. The feature names are named according to the correlation function
+    names in the database, but a suffix of _Vd is appended. d is an integer
+    inticading the power. Thus, if the name is for example c2_d0000_0_00_V2,
+    it means that the column contains the correlation function c2_d0000_0_00,
+    multiplied by V^2, where V is the volume per atom.
+
+    :param db_name: Name of the database
+
+    :param tab_name: Name of the table where correlation functions are stored
+
+    :param cf_names: Name of the correlation functions that should be extracted
+
+    :param order: Each ECI will be a polynomial in the volume of the passed
+        order (default: 0)
+
+    :param properties: List of properties that should be used in fitting. Can
+        be energy, pressure, bulk_mod. (default: ['energy', 'pressure']).
+        The pressure is always assumed to be zero (e.g. the energies passed
+        are for relaxed structures.). All entries in the database are expected
+        to have an energy. The remaining properties (e.g. bulk_mod) is not
+        required for all structures. In class will pick up and the material
+        property for the structures where it is present.
+    """
+    def __init__(self, db_name: str, tab_name: str, cf_names: List[str],
+                 order: Optional[int] = 0,
+                 properties: Optional[Tuple[str]] = ('energy', 'pressure')) -> None:
+        self.db_name = db_name
+        self.tab_name = tab_name
+        self.order = order
+        self.cf_names = cf_names
+        self.properties = properties
+        self._X = None
+        self._y = None
+
+    def build(self, ids: List[int]) -> np.ndarray:
+        """
+        Construct the design matrix and the target value required to fit a 
+        cluster expansion model to all material properties in self.properties.
+
+        :param ids: List of ids to take into account
+        """
+        cf_getter = CorrelationFunctionGetter(self.db_name, self.cf_names,
+                                              self.tab_name)
+        cf = cf_getter(ids)
+
+        volume_getter = FinalVolumeGetter(self.db_name)
+        volumes = volume_getter(ids)
+
+        energy_getter = FinalStructEnergyGetter(self.db_name)
+        energies = energy_getter(ids)
+
+        target_values = [energies]
+        target_val_names = ['energy']
+
+        cf_vol_dep = np.zeros((cf.shape[0], (self.order+1)*cf.shape[1]))
+        counter = 0
+        self._feat_names = []
+
+        # Construct the part of the design matrix that corresponds to
+        # energy fitting (e.g. if there are N energy calculations we construct
+        # the firxt N rows of the design matrix)
+        for col in range(cf.shape[1]):
+            for power in range(self.order+1):
+                cf_vol_dep[:, counter] = cf[:, col]*volumes**power
+                counter += 1
+                self._feat_names.append(cf_getter.names[col] + f"_V{power}")
+
+        # Add pressure data. P = dE/dV = 0 (we assume relaxed structures)
+        if 'pressure' in self.properties:
+            pressure_cf = np.zeros_like(cf_vol_dep)
+            counter = 0
+
+            # Construct the part of the design matrix that corresponds to
+            # pressure fitting (e.g. if there are N energy calculations,
+            # we construct row N:2*N). Note that the pressure is assumed
+            # to be zero
+            for col in range(0, cf.shape[1]):
+                for power in range(self.order+1):
+                    pressure_cf[:, counter] = power*cf[:, col]*volumes**(power-1)
+                    counter += 1
+
+            # Update the full design matrix and the target values
+            cf_vol_dep = np.vstack((cf_vol_dep, pressure_cf))
+            target_values.append(np.zeros(pressure_cf.shape[0]))
+            target_val_names.append('pressure')
+
+        id_row = {db_id: i for i, db_id in enumerate(ids)}
+
+        # Add bulk modulus data. B = V*d^2E/dV^2
+        if 'bulk_mod' in self.properties:
+            bulk_mod = self._extract_key(set(ids), 'bulk_mod')
+            bulk_mod_rows = [id_row[k] for k in bulk_mod.keys()]
+            bulk_mod_cf = np.zeros((len(bulk_mod), cf_vol_dep.shape[1]))
+
+            counter = 0
+            vols = volumes[bulk_mod_rows]
+
+            # Extract the part of the design matrix that corresponds to fitting
+            # bulk moduli. If there are Nb calculations that has a bulk modulus
+            # we construct row 2*N:2*N+Nb
+            for col in range(0, cf.shape[1]):
+                for power in range(self.order+1):
+                    bulk_mod_cf[:, counter] = vols*cf[bulk_mod_rows, col]
+                    bulk_mod_cf[:, counter] *= power*(power-1)*vols**(power-2)
+                    counter += 1
+
+            # Update the full design matrix as well as the target values
+            cf_vol_dep = np.vstack((cf_vol_dep, bulk_mod_cf))
+            target_values.append(bulk_mod.values())
+            target_val_names.append('bulk_mod')
+
+        # Assign the global design matrix to the attribute _X, the vector with
+        # all target values to _y and construct the name of the target_value by
+        # joining all subnames
+        self._X = cf_vol_dep
+        self._y = np.array([x for values in target_values for x in values])
+        self._target_name = '-'.join(target_val_names)
+
+    def _extract_key(self, ids: Set[int], key: str) -> Dict[int, float]:
+        """
+        Extract a key from the database for the ids in the passed set that
+        has a bulk modlus entry. The function returns a dictionary where the
+        key is the ID in the database and the value is the extracted quantity
+
+        :param ids: Set of all ids that should be considered
+
+        :param key: Name of the key to be extracted
+        """
+        query = f"SELECT value, id FROM number_key_values WHERE key='{key}'"
+
+        id_key = {}
+        with connect(self.db_name) as db:
+            cur = db.connection.cursor()
+            cur.execute(query)
+            for value, db_id in cur.fetchall():
+
+                # Extract only the ones that are present in the set of ids
+                if db_id in ids:
+                    id_key[db_id] = value
+        return id_key
+
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Return the design matrix and the target values for the entries
+        corresponding to select_cond.
+
+        :param select_cond: ASE select condition. The design matrix and the target vector
+            will be extracted for rows matching the passed condition.
+        """
+        ids = self.get_ids(select_cond)
+
+        self.build(ids)
+        return self._X, self._y

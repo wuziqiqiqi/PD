@@ -4,8 +4,10 @@ from ase.calculators.emt import EMT
 from ase.build import bulk
 from ase import Atoms
 from clease import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
-from clease.data_manager import FinalVolumeGetter
-from clease.data_manager import InconsistentDataError
+from clease.data_manager import (
+    FinalVolumeGetter, CorrelationFunctionGetterVolDepECI,
+    InconsistentDataError
+)
 from clease.tools import update_db
 from ase.calculators.singlepoint import SinglePointCalculator
 import numpy as np
@@ -216,6 +218,78 @@ class TestDataManager(unittest.TestCase):
         volumes = final_vol_getter(ids)
         os.remove(db_name)
         self.assertTrue(np.allclose(expected_volumes, volumes))
+
+    def test_cf_vol_dep_eci(self):
+        db_name = 'test_cf_vol_dep_eci.db'
+
+        N = 10
+        with connect(db_name) as db:
+            volumes = []
+            energies = []
+            for i in range(N):
+                init_struct = bulk('Cu', a=3.9+0.1*i)*(1, 1, i+1)
+                cf = {'c0': 0.5, 'c1_1': -1.0}
+                db.write(init_struct, external_tables={'cf': cf},
+                         final_struct_id=2*i+2, converged=1)
+                final_struct = init_struct.copy()
+                calc = EMT()
+                final_struct.set_calculator(calc)
+                energy = final_struct.get_potential_energy()
+                energies.append(energy/len(final_struct))
+                volumes.append(final_struct.get_volume()/len(final_struct))
+                db.write(final_struct)
+
+        cf_getter = CorrelationFunctionGetterVolDepECI(
+            db_name, 'cf', ['c0', 'c1_1'], order=2,
+            properties=['energy', 'pressure'])
+
+        X, y = cf_getter.get_data([('converged', '=', 1)])
+
+        expected_names = ['c0_V0', 'c0_V1', 'c0_V2',
+                          'c1_1_V0', 'c1_1_V1', 'c1_1_V2']
+        self.assertEqual(cf_getter._feat_names, expected_names)
+
+        X_expect = np.zeros((2*N, 6))
+        self.assertEqual(X_expect.shape, X.shape)
+        volumes = np.array(volumes)
+        X_expect[:N, 0] = cf['c0']
+        X_expect[:N, 1] = cf['c0']*volumes
+        X_expect[:N, 2] = cf['c0']*volumes**2
+        X_expect[:N, 3] = cf['c1_1']
+        X_expect[:N, 4] = cf['c1_1']*volumes
+        X_expect[:N, 5] = cf['c1_1']*volumes**2
+
+        X_expect[N:2*N, 0] = 0.0
+        X_expect[N:2*N, 1] = cf['c0']
+        X_expect[N:2*N, 2] = 2*cf['c0']*volumes
+        X_expect[N:2*N, 3] = 0.0
+        X_expect[N:2*N, 4] = cf['c1_1']
+        X_expect[N:2*N, 5] = 2*cf['c1_1']*volumes
+        self.assertTrue(np.allclose(X, X_expect))
+
+        y_expect = np.zeros(2*N)
+        y_expect[:N] = energies
+        self.assertTrue(np.allclose(y, y_expect))
+
+        # Add bulk modulus to a few data points
+        db.update(1, bulk_mod=100.5)
+        db.update(5, bulk_mod=20.0)
+        db.update(7, bulk_mod=56.5)
+
+        # Extract data again
+        cf_getter.properties = ('energy', 'pressure', 'bulk_mod')
+        X, y = cf_getter.get_data([('converged', '=', 1)])
+
+        y_bulk = [100.5, 20.0, 56.5]
+        X_bulk = np.zeros((3, 6))
+        X_bulk[:, 2] = 2*cf['c0']*volumes[[0, 2, 3]]
+        X_bulk[:, 5] = 2*cf['c1_1']*volumes[[0, 2, 3]]
+        X_expect = np.vstack((X_expect, X_bulk))
+        y_expect = np.append(y_expect, y_bulk)
+        self.assertTrue(np.allclose(X, X_expect))
+        self.assertTrue(np.allclose(y, y_expect))
+
+        os.remove(db_name)
 
 
 if __name__ == '__main__':
