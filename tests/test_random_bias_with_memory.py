@@ -50,7 +50,8 @@ class TestRandomBiasWithMemory(unittest.TestCase):
         conc = Concentration(basis_elements=[['Al', 'Mg']])
         setting = CEBulk(conc, db_name=db_name, a=4.05,
                          max_cluster_size=2,
-                         max_cluster_dia=3.0, crystalstructure='fcc')
+                         max_cluster_dia=3.0, crystalstructure='fcc',
+                         size=[4, 4, 4])
 
         atoms = setting.atoms.copy()
         atoms = attach_calculator(setting=setting, atoms=atoms,
