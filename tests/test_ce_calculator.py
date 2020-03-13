@@ -3,7 +3,7 @@ import os
 from random import randint
 import numpy as np
 from clease import CEBulk, CECrystal, CorrFunction, Concentration
-from clease.calculator import Clease, attach_calculator
+from clease.calculator import Clease, attach_calculator, get_ce_energy
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
@@ -345,7 +345,7 @@ class TestCECalculator(unittest.TestCase):
         eci['c0'] = 1.0
         atoms = setting.atoms.copy() * (3, 3, 3)
 
-        # Simpy confirm that no exception is raised.
+        # Simply confirm that no exception is raised.
         # In the past, this failed.
         _ = attach_calculator(setting, atoms=atoms, eci=eci)
         os.remove('test_aucu.db')
@@ -409,6 +409,13 @@ class TestCECalculator(unittest.TestCase):
             self.assertAlmostEqual(cf_calc[k], v)
         # os.remove(db_name)
 
+    def test_get_ce_energy(self):
+        db_name = 'test_ce_energy.db'
+        settings, atoms = get_binary(db_name)
+
+        # simple test to receive float energy value
+        energy = get_ce_energy(settings, atoms, eci=generate_ex_eci(settings))
+        self.assertEqual(type(energy), float)
 
 if __name__ == '__main__':
     unittest.main()

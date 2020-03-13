@@ -1,23 +1,17 @@
 import json
-import os
-from clease import CorrFunction
+from clease import CorrFunction, ClusterExpansionSettings
 from clease.calculator import Clease
-from clease.tools import nested_list2str
+from ase import Atoms
+from typing import Dict
 
 
-def attach_calculator(setting=None, atoms=None, eci={}):
+def attach_calculator(setting: ClusterExpansionSettings,
+                      atoms: Atoms, eci: Dict[str, float] = {}) -> Atoms:
     """Utility function for an efficient initialization of large cells.
 
-    Parameters:
-
-    setting: `ClusterExpansionSettings` object
-
-    eci: dict
-        Dictionary containing cluster names and their ECI values
-
-    atoms: Atoms object
-        Atoms object for MC simulations.
-
+    :param settings: ClusterExpansionSettings object (e.g., CEBulk, CECyrstal)
+    :param eci: Dictionary containing cluster names and their ECI values
+    :param atoms: ASE Atoms object.
     """
     cf_names = list(eci.keys())
     init_cf = CorrFunction(setting).get_cf_by_names(setting.atoms, cf_names)
@@ -33,6 +27,18 @@ def attach_calculator(setting=None, atoms=None, eci={}):
     return atoms
 
 
-def save_info(fname, data):
-    with open(fname, 'w') as outfile:
-        json.dump(data, outfile)
+def get_ce_energy(settings: ClusterExpansionSettings, atoms: Atoms,
+                  eci: Dict[str, float]) -> float:
+    """Get energy of the ASE Atoms object based on given ECI values.
+
+    :param settings: ClusterExpansionSettings object (e.g., CEBulk, CECyrstal)
+    :param atoms: ASE Atoms object representing the considered atomic
+        arrangement
+    :param eci: ECI values to be used to calculate the energy
+    """
+    # temp atoms to avoid making unexpected changes to passed atoms
+    temp_atoms = atoms.copy()
+    calc = Clease(settings, eci=eci)
+    temp_atoms.set_calculator(calc)
+    energy = temp_atoms.get_potential_energy()
+    return energy
