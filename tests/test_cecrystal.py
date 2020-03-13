@@ -1,7 +1,7 @@
 """Test to initiatialize CE using a CECrystal."""
 import os
 import json
-from clease import CECrystal, NewStructures, CorrFunction, settingFromJSON
+from clease import CECrystal, NewStructures, CorrFunction, settingsFromJSON
 from clease.newStruct import MaxAttemptReachedError
 from clease.concentration import Concentration
 from clease.tools import wrap_and_sort_by_position
@@ -19,10 +19,10 @@ update_reference_file = False
 tol = 1E-9
 
 
-def get_figures_of_family(setting, cname):
+def get_figures_of_family(settings, cname):
     """Return the figures of a given cluster family."""
     figures = []
-    clusters = setting.cluster_list.get_by_name(cname)
+    clusters = settings.cluster_list.get_by_name(cname)
     for cluster in clusters:
         figures.append(cluster.indices)
     return figures
@@ -77,7 +77,7 @@ class TestCECrystal(unittest.TestCase):
 
         bsg.basis_func_type = 'binary_linear'
         bsg.save('demo_save.json')
-        bsg_loaded = settingFromJSON('demo_save.json')
+        bsg_loaded = settingsFromJSON('demo_save.json')
         for k, v in bsg.__dict__.items():
             if k in ['kwargs', 'size', 'atoms_mng', 'trans_matrix',
                      'cluster_list']:
@@ -179,9 +179,9 @@ class TestCECrystal(unittest.TestCase):
             self.assertAlmostEqual(cf[key], all_cf["Ta_O_X_grouped"][key], msg=key)
 
         try:
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_initial_pool()
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -228,9 +228,9 @@ class TestCECrystal(unittest.TestCase):
         self.assertEqual(len(bsg.basis_functions), 1)
 
         try:
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_initial_pool()
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -277,9 +277,9 @@ class TestCECrystal(unittest.TestCase):
         assert len(bsg.index_by_sublattice) == 1
 
         try:
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_initial_pool()
-            ns = NewStructures(setting=bsg, struct_per_gen=2)
+            ns = NewStructures(settings=bsg, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -290,16 +290,16 @@ class TestCECrystal(unittest.TestCase):
     def test_bkg_symb_in_additional_basis(self):
         db_name = 'bg_sym_check.db'
         conc = Concentration(basis_elements=[['Mg', 'Sn', 'X'], ['Sn']])
-        setting = CECrystal(cellpar=[6.75, 6.75, 6.75, 90, 90, 90],
-                            basis=[(0.25, 0.25, 0.25), (0, 0, 0)],
-                            concentration=conc,
-                            spacegroup=225,
-                            size=[(-1, 1, 1), (1, -1, 1), (1, 1, -1)],
-                            supercell_factor=1,
-                            db_name=db_name,
-                            max_cluster_size=2,
-                            max_cluster_dia=5.0)
-        bfs = setting.basis_functions
+        settings = CECrystal(cellpar=[6.75, 6.75, 6.75, 90, 90, 90],
+                             basis=[(0.25, 0.25, 0.25), (0, 0, 0)],
+                             concentration=conc,
+                             spacegroup=225,
+                             size=[(-1, 1, 1), (1, -1, 1), (1, 1, -1)],
+                             supercell_factor=1,
+                             db_name=db_name,
+                             max_cluster_size=2,
+                             max_cluster_dia=5.0)
+        bfs = settings.basis_functions
         self.assertEqual(len(bfs), 2)
 
         for bf in bfs:

@@ -48,13 +48,13 @@ class TestRandomBiasWithMemory(unittest.TestCase):
     def test_attached_to_mc(self):
         db_name = 'random_bias.db'
         conc = Concentration(basis_elements=[['Al', 'Mg']])
-        setting = CEBulk(conc, db_name=db_name, a=4.05,
-                         max_cluster_size=2,
-                         max_cluster_dia=3.0, crystalstructure='fcc',
-                         size=[4, 4, 4])
+        settings = CEBulk(conc, db_name=db_name, a=4.05,
+                          max_cluster_size=2,
+                          max_cluster_dia=3.0, crystalstructure='fcc',
+                          size=[4, 4, 4])
 
-        atoms = setting.atoms.copy()
-        atoms = attach_calculator(setting=setting, atoms=atoms,
+        atoms = settings.atoms.copy()
+        atoms = attach_calculator(settings=settings, atoms=atoms,
                                   eci={'c0': 0.0, 'c2_d0000_0_00': 1.0})
 
         atoms[0].symbol = 'Mg'

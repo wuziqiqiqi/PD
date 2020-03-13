@@ -4,7 +4,7 @@ import numpy as np
 from clease.settings_slab import (
     get_prim_slab_cell, add_vacuum_layers, CESlab
 )
-from clease import Concentration, settingFromJSON
+from clease import Concentration, settingsFromJSON
 import os
 import ase
 
@@ -67,7 +67,7 @@ class TestCESlab(unittest.TestCase):
         backup_file = 'test_save_ceslab.json'
         settings.save(backup_file)
 
-        settings2 = settingFromJSON(backup_file)
+        settings2 = settingsFromJSON(backup_file)
 
         self.assertEqual(settings.atoms, settings2.atoms)
         self.assertEqual(settings.size, settings2.size)

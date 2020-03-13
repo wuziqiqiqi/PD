@@ -17,7 +17,7 @@ class CorrFunction(object):
 
     Parameters:
 
-    setting: settings object
+    settings: settings object
 
     parallel: bool (optional)
         specify whether or not to use the parallel processing for `get_cf`
@@ -27,11 +27,11 @@ class CorrFunction(object):
         specify the number of cores to use for parallelization.
     """
 
-    def __init__(self, setting, parallel=False, num_core="all"):
-        if not isinstance(setting, ClusterExpansionSettings):
+    def __init__(self, settings, parallel=False, num_core="all"):
+        if not isinstance(settings, ClusterExpansionSettings):
             raise TypeError("setting must be CEBulk or CECrystal "
                             "object")
-        self.setting = setting
+        self.settings = settings
 
     def get_cf(self, atoms):
         """
@@ -44,7 +44,7 @@ class CorrFunction(object):
         """
         if not isinstance(atoms, Atoms):
             raise TypeError('atoms must be an Atoms object')
-        cf_names = self.setting.all_cf_names
+        cf_names = self.settings.all_cf_names
         return self.get_cf_by_names(atoms, cf_names)
 
     def get_cf_by_names(self, atoms, cf_names, warm=False):
@@ -70,8 +70,8 @@ class CorrFunction(object):
 
         eci = {name: 1.0 for name in cf_names}
         cf = {name: 1.0 for name in cf_names}
-        updater = PyCEUpdater(atoms, self.setting, cf, eci,
-                              self.setting.cluster_list)
+        updater = PyCEUpdater(atoms, self.settings, cf, eci,
+                              self.settings.cluster_list)
         cf = updater.calculate_cf_from_scratch(atoms, cf_names)
         return cf
 
@@ -89,8 +89,8 @@ class CorrFunction(object):
         verbose: bool
             print the progress of reconfiguration if set to *True*
         """
-        tab_name = "{}_cf".format(self.setting.basis_func_type.name)
-        db = connect(self.setting.db_name)
+        tab_name = "{}_cf".format(self.settings.basis_func_type.name)
+        db = connect(self.settings.db_name)
         db.delete_external_table(tab_name)
         select = []
         if select_cond is not None:
@@ -134,11 +134,11 @@ class CorrFunction(object):
         """Get IDs of the structures with inconsistent correlation functions.
 
         Note: consisent structures have the exactly the same list of cluster
-              names as stored in setting.cf_names.
+              names as stored in settings.cf_names.
         """
-        db = connect(self.setting.db_name)
-        tab_name = f"{self.setting.basis_func_type.name}_cf"
-        cf_names = sorted(self.setting.all_cf_names)
+        db = connect(self.settings.db_name)
+        tab_name = f"{self.settings.basis_func_type.name}_cf"
+        cf_names = sorted(self.settings.all_cf_names)
         inconsistent_ids = []
         for row in db.select('struct_type=initial'):
             tab_entries = row.get(tab_name, {})
@@ -163,7 +163,7 @@ class CorrFunction(object):
         atoms: Atoms object
             Unrelaxed structure
         """
-        self.setting.set_active_template(atoms=atoms)
+        self.settings.set_active_template(atoms=atoms)
         return atoms
 
     def _cf_name_exists(self, cf_name):
@@ -174,10 +174,10 @@ class CorrFunction(object):
         cluster_name: str
             Cluster name to check
         """
-        return cf_name in self.setting.all_cf_names
+        return cf_name in self.settings.all_cf_names
 
     def _confirm_cf_names_exists(self, cf_names):
-        if not set(cf_names).issubset(self.setting.all_cf_names):
+        if not set(cf_names).issubset(self.settings.all_cf_names):
             raise ClusterNotTrackedError(
                 "The correlation function of non-existing cluster is "
                 "requested, but the name does not exist in "

@@ -14,7 +14,7 @@ class PairConstraint(MCConstraint):
     pair_cluster: Cluster
         Instance of a the Cluster class. An instance of a cluster class can
         for instance be obtained from a ClusterExpansionSettings object
-        via setting.cluster_list.get_by_name("c2_d000_0")[0]
+        via settings.cluster_list.get_by_name("c2_d000_0")[0]
 
     trans_matrix: list of dicts
         Translation matrix for indices. This can be obtained from the

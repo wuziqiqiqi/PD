@@ -20,13 +20,13 @@ Au\ :sub:`x`\ Cu\ :sub:`1-x` for all :math:`0 \leq x \leq 1` on FCC lattice
 with a lattice constant of 3.8 Å
 
 >>> from clease import CEBulk
->>> setting = CEBulk(crystalstructure='fcc',
-...                  a=3.8,
-...                  supercell_factor=64,
-...                  concentration=conc,
-...                  db_name="aucu.db",
-...                  max_cluster_size=4,
-...                  max_cluster_dia=[6.0, 4.5, 4.5])
+>>> settings = CEBulk(crystalstructure='fcc',
+...                   a=3.8,
+...                   supercell_factor=64,
+...                   concentration=conc,
+...                   db_name="aucu.db",
+...                   max_cluster_size=4,
+...                   max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. testcleanup::
 

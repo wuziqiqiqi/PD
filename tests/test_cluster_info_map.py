@@ -20,10 +20,10 @@ class TestClusterInfoMapper(unittest.TestCase):
         db_name = "test_bulk_info_map_fcc.db"
         basis_elements = [['Au', 'Cu']]
         concentration = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(crystalstructure='fcc', a=4.05, size=[6, 6, 6],
-                         concentration=concentration, db_name=db_name,
-                         max_cluster_dia=[4.3, 4.3, 4.3],
-                         max_cluster_size=4)
+        settings = CEBulk(crystalstructure='fcc', a=4.05, size=[6, 6, 6],
+                          concentration=concentration, db_name=db_name,
+                          max_cluster_dia=[4.3, 4.3, 4.3],
+                          max_cluster_size=4)
 
         # Let's try to obtain cluster info for conventional cell
         atoms_small = bulk("Au", crystalstructure="fcc", cubic=True, a=4.05)
@@ -31,7 +31,7 @@ class TestClusterInfoMapper(unittest.TestCase):
         atoms_small = wrap_and_sort_by_position(atoms_small)
 
         info_mapper = ClusterInfoMapper(
-            setting.atoms, setting.trans_matrix, setting.cluster_list)
+            settings.atoms, settings.trans_matrix, settings.cluster_list)
 
         map_info, map_tm = info_mapper.map_info(atoms_small)
 
@@ -39,14 +39,14 @@ class TestClusterInfoMapper(unittest.TestCase):
         atoms_small[4].symbol = 'Cu'
 
         # Generate the cubic from scratch
-        setting.set_active_template(atoms=atoms_small)
+        settings.set_active_template(atoms=atoms_small)
 
-        cf = CorrFunction(setting)
+        cf = CorrFunction(settings)
         cf1 = cf.get_cf(atoms_small)
 
         # Change the info to the mapped one
-        setting.cluster_list = map_info
-        setting.trans_matrix = map_tm
+        settings.cluster_list = map_info
+        settings.trans_matrix = map_tm
         cf2 = cf.get_cf(atoms_small)
 
         os.remove(db_name)

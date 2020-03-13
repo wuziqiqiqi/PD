@@ -9,7 +9,7 @@ from cython.operator import dereference, postincrement
 cdef class PyCEUpdater:
     """Cython wrapper for the C++ class"""
     cdef CEUpdater *thisptr
-    cdef object setting
+    cdef object settings
     cdef object corr_func
     cdef object eci
 
@@ -19,11 +19,11 @@ cdef class PyCEUpdater:
     def __dealloc__(self):
         del self.thisptr
 
-    def __init__(self, atoms, setting, corr_func, eci, cluster_info):
-        self.setting = setting
+    def __init__(self, atoms, settings, corr_func, eci, cluster_info):
+        self.settings = settings
         self.corr_func = corr_func
         self.eci = eci
-        self.thisptr.init(atoms, setting, corr_func, eci, cluster_info)
+        self.thisptr.init(atoms, settings, corr_func, eci, cluster_info)
 
     def clear_history(self):
         self.thisptr.clear_history()

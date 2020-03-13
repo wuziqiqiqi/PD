@@ -83,8 +83,8 @@ class MCRunner(object):
         # Temporarily disable info update during initalisation
         self.app_root.info_update_disabled = True
         self.app_root.view_mc_cell_disabled = True
-        self.atoms = attach_calculator(setting=self.settings, atoms=self.atoms,
-                                       eci=self.eci)
+        self.atoms = attach_calculator(settings=self.settings,
+                                       atoms=self.atoms, eci=self.eci)
         self.app_root.active_template_is_mc_cell = True
         self.app_root.info_update_disabled = False
         self.app_root.view_mc_cell_disabled = False

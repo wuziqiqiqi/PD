@@ -12,90 +12,90 @@ def do_test_2(basis_function, db_name):
     basis_elements = [['Au', 'Cu']]
     concentration = Concentration(basis_elements=basis_elements)
 
-    setting = CEBulk(crystalstructure="fcc",
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     max_cluster_size=2,
-                     db_name=db_name)
-    setting.basis_func_type = basis_function
-    check_orthonormal(setting)
+    settings = CEBulk(crystalstructure="fcc",
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      max_cluster_size=2,
+                      db_name=db_name)
+    settings.basis_func_type = basis_function
+    check_orthonormal(settings)
 
 
 def do_test_3(basis_function, db_name):
     """Test for 3 element case."""
     basis_elements = [['Au', 'Cu', 'Ag']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure="fcc",
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     max_cluster_size=2,
-                     db_name=db_name)
-    setting.basis_func_type = basis_function
-    check_orthonormal(setting)
+    settings = CEBulk(crystalstructure="fcc",
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      max_cluster_size=2,
+                      db_name=db_name)
+    settings.basis_func_type = basis_function
+    check_orthonormal(settings)
 
 
 def do_test_4(basis_function, db_name):
     """Test for 4 element case."""
     basis_elements = [['Au', 'Cu', 'Ag', 'Ni']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure="fcc",
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     max_cluster_size=2,
-                     db_name=db_name)
-    setting.basis_func_type = basis_function
-    check_orthonormal(setting)
+    settings = CEBulk(crystalstructure="fcc",
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      max_cluster_size=2,
+                      db_name=db_name)
+    settings.basis_func_type = basis_function
+    check_orthonormal(settings)
 
 
 def do_test_5(basis_function, db_name):
     """Test for 5 element case."""
     basis_elements = [['Au', 'Cu', 'Ag', 'Ni', 'Fe']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure="fcc",
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     max_cluster_size=2,
-                     db_name=db_name)
-    setting.basis_func_type = basis_function
-    check_orthonormal(setting)
+    settings = CEBulk(crystalstructure="fcc",
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      max_cluster_size=2,
+                      db_name=db_name)
+    settings.basis_func_type = basis_function
+    check_orthonormal(settings)
 
 
 def do_test_6(basis_function, db_name):
     """Test for 6 element case."""
     basis_elements = [['Au', 'Cu', 'Ag', 'Ni', 'Fe', 'H']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure="fcc",
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     max_cluster_size=2,
-                     db_name=db_name)
-    setting.basis_func_type = basis_function
-    check_orthonormal(setting)
+    settings = CEBulk(crystalstructure="fcc",
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      max_cluster_size=2,
+                      db_name=db_name)
+    settings.basis_func_type = basis_function
+    check_orthonormal(settings)
 
 
-def check_orthonormal(setting):
+def check_orthonormal(settings):
     """Check orthonormality."""
-    for bf in setting.basis_functions:
+    for bf in settings.basis_functions:
         sum = 0
-        for key, _ in setting.spin_dict.items():
+        for key, _ in settings.spin_dict.items():
             sum += bf[key] * bf[key]
-        sum /= setting.num_unique_elements
+        sum /= settings.num_unique_elements
         assert abs(sum - 1.0) < tol
 
     # Check zeros
-    alpha = list(range(len(setting.basis_functions)))
+    alpha = list(range(len(settings.basis_functions)))
     comb = list(itertools.combinations(alpha, 2))
     for c in comb:
         sum = 0
-        for key, _ in setting.spin_dict.items():
-            sum += setting.basis_functions[c[0]][key] \
-                   * setting.basis_functions[c[1]][key]
-        sum /= setting.num_unique_elements
+        for key, _ in settings.spin_dict.items():
+            sum += settings.basis_functions[c[0]][key] \
+                   * settings.basis_functions[c[1]][key]
+        sum /= settings.num_unique_elements
         assert abs(sum) < tol
 
 

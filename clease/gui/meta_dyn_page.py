@@ -330,7 +330,7 @@ class MetaDynPage(Screen):
 
         runner = MetaDynRunner(
             atoms=atoms, meta_page=self, max_sweeps=max_sweeps,
-            setting=settings, app_root=app.root,
+            settings=settings, app_root=app.root,
             eci=eci, status=app.root.ids.status,
             mc_params=self.ensemble_params, T=T,
             bias=pot, flat=flat_limit, mod_factor=mod_factor,

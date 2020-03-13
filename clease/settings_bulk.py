@@ -84,14 +84,14 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
                 c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)
 
-    setting = ClusterExpansionSettings(
+    settings = ClusterExpansionSettings(
         prim, concentration, size, supercell_factor, db_name, max_cluster_size,
         max_cluster_dia)
 
-    setting.kwargs.update(
+    settings.kwargs.update(
         {'crystalstructure': crystalstructure, 'a': a,
          'c': c, 'covera': covera, 'u': u, 'factory': 'CEBulk'})
-    return setting
+    return settings
 
 
 def CECrystal(concentration, spacegroup=1, basis=None,
@@ -158,24 +158,24 @@ def CECrystal(concentration, spacegroup=1, basis=None,
         primitive_cell=True)
     prim = wrap_and_sort_by_position(prim)
 
-    setting = ClusterExpansionSettings(
+    settings = ClusterExpansionSettings(
         prim, concentration, size, supercell_factor, db_name,
         max_cluster_size, max_cluster_dia)
-    setting.kwargs.update(
+    settings.kwargs.update(
         {'basis': deepcopy(basis), 'spacegroup': spacegroup, 'cell': cell,
          'cellpar': cellpar, 'ab_normal': ab_normal,
          'factory': 'CECrystal'})
-    return setting
+    return settings
 
 
-def settingFromJSON(fname):
+def settingsFromJSON(fname):
     """
-    Initialise setting from JSON file.
+    Initialise settings from JSON file.
 
     Parameters:
 
     fname: str
-        JSON file where setting are stored
+        JSON file where settings are stored
     """
     with open(fname, 'r') as infile:
         data = json.load(infile)
@@ -185,25 +185,25 @@ def settingFromJSON(fname):
     conc = Concentration.from_dict(kwargs['concentration'])
     kwargs['concentration'] = conc
     if factory == 'CEBulk':
-        setting = CEBulk(**kwargs)
+        settings = CEBulk(**kwargs)
     elif factory == 'CECrystal':
-        setting = CECrystal(**kwargs)
+        settings = CECrystal(**kwargs)
     elif factory == 'CESlab':
         cnv_cell_dict = kwargs.pop('conventional_cell')
         cnv_cell = Atoms.fromdict(cnv_cell_dict)
         kwargs['conventional_cell'] = cnv_cell
-        setting = CESlab(**kwargs)
+        settings = CESlab(**kwargs)
     else:
         raise ValueError(f"Unknown factory {factory}")
-    setting.include_background_atoms = data['include_background_atoms']
-    setting.skew_threshold = data['skew_threshold']
+    settings.include_background_atoms = data['include_background_atoms']
+    settings.skew_threshold = data['skew_threshold']
     bf_dict = data['basis_func_type']
     name = bf_dict.pop('name')
 
     if name == 'polynmial':
-        setting.basis_func_type = Polynomial(**bf_dict)
+        settings.basis_func_type = Polynomial(**bf_dict)
     elif name == 'trigonometric':
-        setting.basis_func_type = Trigonometric(**bf_dict)
+        settings.basis_func_type = Trigonometric(**bf_dict)
     elif name == 'binary_linear':
-        setting.basis_func_type = BinaryLinear(**bf_dict)
-    return setting
+        settings.basis_func_type = BinaryLinear(**bf_dict)
+    return settings

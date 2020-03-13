@@ -53,7 +53,7 @@ public:
   CEUpdater* copy() const;
 
   /** Initialize the object (cluster_info should contain duplication factors) */
-  void init(PyObject *py_atoms, PyObject *setting, PyObject *corrFunc, PyObject *eci, PyObject *cluster_list);
+  void init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc, PyObject *eci, PyObject *cluster_list);
 
   /** Change values of ECIs */
   void set_eci( PyObject *eci );

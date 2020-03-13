@@ -96,7 +96,7 @@ class ValidConcentrationFilter(AtomsFilter):
 
     Parameters:
 
-    setting: ClusterExpansionSettings
+    settings: ClusterExpansionSettings
         Instance of `ClusterExpansionSettings`
     """
 

@@ -22,7 +22,7 @@ class Evaluate(object):
 
     Parameters:
 
-    setting: CEBulk or BulkSapcegroup object
+    settings: CEBulk or BulkSapcegroup object
 
     cf_names: list
         Names of clusters to include in the evalutation.
@@ -72,22 +72,22 @@ class Evaluate(object):
         validation score obtained in each of the runs.
     """
 
-    def __init__(self, setting, cf_names=None, select_cond=None,
+    def __init__(self, settings, cf_names=None, select_cond=None,
                  parallel=False, num_core="all", fitting_scheme="ridge",
                  alpha=1E-5, max_cluster_size=None, max_cluster_dia=None,
                  scoring_scheme='loocv', min_weight=1.0, nsplits=10,
                  num_repetitions=1):
         """Initialize the Evaluate class."""
-        if not isinstance(setting, ClusterExpansionSettings):
-            msg = "setting must be ClusterExpansionSettings object"
+        if not isinstance(settings, ClusterExpansionSettings):
+            msg = "settings must be ClusterExpansionSettings object"
             raise TypeError(msg)
 
-        self.setting = setting
+        self.settings = settings
         if cf_names is None:
-            self.cf_names = sorted(self.setting.all_cf_names)
+            self.cf_names = sorted(self.settings.all_cf_names)
         else:
             self.cf_names = sorted(cf_names)
-        self.num_elements = setting.num_elements
+        self.num_elements = settings.num_elements
         self.scoring_scheme = scoring_scheme
 
         self.scheme = None
@@ -113,23 +113,23 @@ class Evaluate(object):
             max_dia = self._get_max_cluster_dia(max_cluster_dia)
             self.cf_names = self._filter_cname_circum_dia(max_dia)
 
-        tab_name = f"{self.setting.basis_func_type.name}_cf"
+        tab_name = f"{self.settings.basis_func_type.name}_cf"
 
         # TODO: At a later stage we might want to pass the data manager as an
         # argument since Evaluate does not depend on the details on how the
         # data was optained
         self.dm = CorrFuncEnergyDataManager(
-            setting.db_name, tab_name, self.cf_names)
+            settings.db_name, tab_name, self.cf_names)
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
-        db = connect(setting.db_name)
+        db = connect(settings.db_name)
         self.names = [row.name for row in db.select(self.select_cond)]
 
         self.effective_num_data_pts = len(self.e_dft)
         self.weight_matrix = np.eye(len(self.e_dft))
         self._update_convex_hull_weight(min_weight)
 
-        self.multiplicity_factor = self.setting.multiplicity_factor
+        self.multiplicity_factor = self.settings.multiplicity_factor
         self.eci = None
         self.alpha = None
         self.e_pred_loo = None
@@ -146,7 +146,7 @@ class Evaluate(object):
     def concentrations(self):
         singlet_cols = [i for i, n in enumerate(self.cf_names)
                         if n.startswith('c1')]
-        return singlets2conc(self.setting.basis_functions,
+        return singlets2conc(self.settings.basis_functions,
                              self.cf_matrix[:, singlet_cols])
 
     @property
@@ -196,18 +196,18 @@ class Evaluate(object):
     def _get_max_cluster_dia(self, max_cluster_dia):
         """Make max_cluster_dia in a numpy array form."""
         if isinstance(max_cluster_dia, (list, np.ndarray)):
-            if len(max_cluster_dia) == self.setting.max_cluster_size + 1:
+            if len(max_cluster_dia) == self.settings.max_cluster_size + 1:
                 for i in range(2):
                     max_cluster_dia[i] = 0.
                 max_cluster_dia = np.array(max_cluster_dia, dtype=float)
-            elif len(max_cluster_dia) == self.setting.max_cluster_size - 1:
+            elif len(max_cluster_dia) == self.settings.max_cluster_size - 1:
                 max_cluster_dia = np.array(max_cluster_dia, dtype=float)
                 max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
             else:
                 raise ValueError("Invalid length for max_cluster_dia.")
         # max_cluster_dia is int or float
         elif isinstance(max_cluster_dia, (int, float)):
-            max_cluster_dia *= np.ones(self.setting.max_cluster_size - 1,
+            max_cluster_dia *= np.ones(self.settings.max_cluster_size - 1,
                                        dtype=float)
             max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
 
@@ -221,7 +221,7 @@ class Evaluate(object):
             return
 
         from clease import ConvexHull
-        cnv_hull = ConvexHull(self.setting.db_name,
+        cnv_hull = ConvexHull(self.settings.db_name,
                               select_cond=self.select_cond)
         hull = cnv_hull.get_convex_hull()
 
@@ -372,7 +372,7 @@ class Evaluate(object):
             else:
                 data_points = [lines[0], lines[2]]
             annotations = [self.names, self.names]
-            db_name = self.setting.db_name
+            db_name = self.settings.db_name
             ShowStructureOnClick(fig, ax, data_points, annotations, db_name)
         else:
             if savefig:
@@ -439,7 +439,7 @@ class Evaluate(object):
 
         # Optionally show the convex hull
         if show_hull:
-            cnv_hull = ConvexHull(self.setting.db_name,
+            cnv_hull = ConvexHull(self.settings.db_name,
                                   select_cond=self.select_cond)
             fig = cnv_hull.plot()
 
@@ -893,7 +893,7 @@ class Evaluate(object):
                 continue
 
             prefix = name.rpartition("_")[0]
-            cluster = self.setting.cluster_list.get_by_name(prefix)[0]
+            cluster = self.settings.cluster_list.get_by_name(prefix)[0]
             dia = cluster.diameter
 
             if dia < max_dia[size]:
@@ -908,7 +908,7 @@ class Evaluate(object):
             List with IDs to leave out of the dataset
         """
 
-        db = connect(self.setting.db_name)
+        db = connect(self.settings.db_name)
 
         mse = 0.0
         count = 0

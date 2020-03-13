@@ -11,10 +11,10 @@ import time
 import unittest
 
 
-def generate_ex_eci(setting):
+def generate_ex_eci(settings):
     """Return dummy ECIs. All are set to -0.001."""
-    cf = CorrFunction(setting)
-    cf = cf.get_cf(setting.atoms)
+    cf = CorrFunction(settings)
+    cf = cf.get_cf(settings.atoms)
     eci = {key: -0.001 for key in cf}
     return eci
 
@@ -23,33 +23,33 @@ def get_binary(db_name):
     """Return a simple binary test structure."""
     basis_elements = [["Au", "Cu"]]
     concentration = Concentration(basis_elements=basis_elements)
-    bc_setting = CEBulk(crystalstructure="fcc",
-                        a=4.05,
-                        size=[3, 3, 3],
-                        concentration=concentration,
-                        db_name=db_name,
-                        max_cluster_size=3,
-                        max_cluster_dia=[5.0, 5.0])
+    bc_settings = CEBulk(crystalstructure="fcc",
+                         a=4.05,
+                         size=[3, 3, 3],
+                         concentration=concentration,
+                         db_name=db_name,
+                         max_cluster_size=3,
+                         max_cluster_dia=[5.0, 5.0])
 
     atoms = bulk("Au", crystalstructure="fcc", a=4.05)
     atoms = atoms * (3, 3, 3)
     for i in range(int(len(atoms) / 2)):
         atoms[i].symbol = "Au"
         atoms[-i - 1].symbol = "Cu"
-    return bc_setting, wrap_and_sort_by_position(atoms)
+    return bc_settings, wrap_and_sort_by_position(atoms)
 
 
 def get_ternary(db_name):
     """Return a ternary test structure."""
     basis_elements = [["Au", "Cu", "Zn"]]
     concentration = Concentration(basis_elements=basis_elements)
-    bc_setting = CEBulk(crystalstructure="fcc",
-                        a=4.05,
-                        size=[3, 3, 3],
-                        concentration=concentration,
-                        db_name=db_name,
-                        max_cluster_dia=[5.0, 5.0],
-                        max_cluster_size=3)
+    bc_settings = CEBulk(crystalstructure="fcc",
+                         a=4.05,
+                         size=[3, 3, 3],
+                         concentration=concentration,
+                         db_name=db_name,
+                         max_cluster_dia=[5.0, 5.0],
+                         max_cluster_size=3)
 
     atoms = bulk("Au", crystalstructure="fcc", a=4.05)
     atoms = atoms * (3, 3, 3)
@@ -57,20 +57,20 @@ def get_ternary(db_name):
         atoms[3 * i].symbol = "Au"
         atoms[3 * i + 1].symbol = "Cu"
         atoms[3 * i + 2].symbol = "Zn"
-    return bc_setting, wrap_and_sort_by_position(atoms)
+    return bc_settings, wrap_and_sort_by_position(atoms)
 
 
 def get_rocksalt(db_name):
     """Test rocksalt where passed atoms with background_atoms."""
     basis_elements = [['Li', 'X', 'V'], ['O']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure='rocksalt',
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     db_name=db_name,
-                     max_cluster_size=3,
-                     max_cluster_dia=[7.0, 7.0])
+    settings = CEBulk(crystalstructure='rocksalt',
+                      a=4.05,
+                      size=[3, 3, 3],
+                      concentration=concentration,
+                      db_name=db_name,
+                      max_cluster_size=3,
+                      max_cluster_dia=[7.0, 7.0])
 
     atoms = bulk("LiO", crystalstructure="rocksalt", a=4.05)
     atoms = atoms * (3, 3, 3)
@@ -80,22 +80,22 @@ def get_rocksalt(db_name):
             atoms[Li_indx[i]].symbol = 'V'
         else:
             atoms[Li_indx[i]].symbol = 'X'
-    return setting, wrap_and_sort_by_position(atoms)
+    return settings, wrap_and_sort_by_position(atoms)
 
 
 def rocksalt_with_self_interaction(size, db_name):
     basis_elements = [['Li', 'Mn', 'X'], ['O', 'X']]
     concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure='rocksalt',
-                     a=4.05,
-                     size=size,
-                     concentration=concentration,
-                     db_name=db_name,
-                     max_cluster_size=3,
-                     max_cluster_dia=[7.0, 4.0])
-    setting.basis_func_type = 'trigonometric'
-    atoms = setting.atoms.copy()
-    return setting, atoms
+    settings = CEBulk(crystalstructure='rocksalt',
+                      a=4.05,
+                      size=size,
+                      concentration=concentration,
+                      db_name=db_name,
+                      max_cluster_size=3,
+                      max_cluster_dia=[7.0, 4.0])
+    settings.basis_func_type = 'trigonometric'
+    atoms = settings.atoms.copy()
+    return settings, atoms
 
 
 def get_spacegroup(db_name):
@@ -112,35 +112,35 @@ def get_spacegroup(db_name):
     concentration = Concentration(basis_elements=basis_elements,
                                   grouped_basis=grouped_basis)
 
-    setting = CECrystal(basis=basis,
-                        spacegroup=spacegroup,
-                        cellpar=cellpar,
-                        size=size,
-                        concentration=concentration,
-                        db_name=db_name,
-                        max_cluster_size=3,
-                        max_cluster_dia=[5.0, 5.0])
-    setting.include_background_atoms = True
+    settings = CECrystal(basis=basis,
+                         spacegroup=spacegroup,
+                         cellpar=cellpar,
+                         size=size,
+                         concentration=concentration,
+                         db_name=db_name,
+                         max_cluster_size=3,
+                         max_cluster_dia=[5.0, 5.0])
+    settings.include_background_atoms = True
 
     atoms = crystal(symbols=['O', 'X', 'O', 'Ta'], basis=basis,
                     spacegroup=spacegroup, cell=None,
                     cellpar=cellpar, ab_normal=(0, 0, 1),
                     size=size)
 
-    return setting, wrap_and_sort_by_position(atoms)
+    return settings, wrap_and_sort_by_position(atoms)
 
 
-def do_test_update_correlation_functions(setting, atoms, n_trial_configs=20,
+def do_test_update_correlation_functions(settings, atoms, n_trial_configs=20,
                                          fixed=()):
     """Perform swaps and check that the correlation functions match.
 
     The comparison is done by check that each CF in the Clease
     calculator is the same as the ones obtained by direct calculation.
     """
-    cf = CorrFunction(setting)
+    cf = CorrFunction(settings)
 
-    eci = generate_ex_eci(setting)
-    calc = Clease(setting, eci=eci)
+    eci = generate_ex_eci(settings)
+    calc = Clease(settings, eci=eci)
     atoms.set_calculator(calc)
 
     timings = []
@@ -172,13 +172,13 @@ def do_test_update_correlation_functions(setting, atoms, n_trial_configs=20,
     print(np.mean(timings))
 
 
-def do_test_insert_element(setting, atoms, n_trial_configs=20):
+def do_test_insert_element(settings, atoms, n_trial_configs=20):
     from random import choice
-    cf = CorrFunction(setting)
-    eci = generate_ex_eci(setting)
-    calc = Clease(setting, eci=eci)
+    cf = CorrFunction(settings)
+    eci = generate_ex_eci(settings)
+    calc = Clease(settings, eci=eci)
     atoms.set_calculator(calc)
-    elements = setting.unique_elements
+    elements = settings.unique_elements
     for _ in range(n_trial_configs):
         indx1 = randint(0, len(atoms) - 1)
         symb1 = atoms[indx1].symbol
@@ -199,13 +199,13 @@ def do_test_insert_element(setting, atoms, n_trial_configs=20):
 class TestCECalculator(unittest.TestCase):
     def test_normfactors_no_self_interaction(self):
         db_name = 'cecalc_binary_norm_fac.db'
-        setting, atoms = get_binary(db_name)
+        settings, atoms = get_binary(db_name)
 
-        eci = generate_ex_eci(setting)
-        calc = Clease(setting, eci=eci)
+        eci = generate_ex_eci(settings)
+        calc = Clease(settings, eci=eci)
         atoms.set_calculator(calc)
 
-        for cluster in setting.cluster_list:
+        for cluster in settings.cluster_list:
             if cluster.name == 'c0' or cluster.name == 'c1':
                 continue
             norm_factors = cluster.info['normalization_factor']
@@ -213,9 +213,9 @@ class TestCECalculator(unittest.TestCase):
 
     def test_indices_of_changed_symbols(self):
         db_name = 'indices_changes_symbol.db'
-        setting, atoms = get_binary(db_name)
-        eci = generate_ex_eci(setting)
-        calc = Clease(setting, eci=eci)
+        settings, atoms = get_binary(db_name)
+        eci = generate_ex_eci(settings)
+        calc = Clease(settings, eci=eci)
         atoms.set_calculator(calc)
 
         changes = [2, 6]
@@ -232,80 +232,80 @@ class TestCECalculator(unittest.TestCase):
     def test_update_corr_func_binary(self):
         db_name = 'cecalc_corr_func_binary.db'
         print('binary')
-        bin_setting, bin_atoms = get_binary(db_name)
-        do_test_update_correlation_functions(bin_setting, bin_atoms,
+        bin_settings, bin_atoms = get_binary(db_name)
+        do_test_update_correlation_functions(bin_settings, bin_atoms,
                                              n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_ternary(self):
         db_name = 'cecalc_corr_func_ternary.db'
         print('ternary')
-        tern_setting, tern_atoms = get_ternary(db_name)
-        do_test_update_correlation_functions(tern_setting, tern_atoms,
+        tern_settings, tern_atoms = get_ternary(db_name)
+        do_test_update_correlation_functions(tern_settings, tern_atoms,
                                              n_trial_configs=5)
         os.remove(db_name)
 
     def test_update_corr_func_rocksalt(self):
         db_name = 'cecalc_corr_func_rocksalt.db'
         print('rocksalt')
-        rs_setting, rs_atoms = get_rocksalt(db_name)
-        do_test_update_correlation_functions(rs_setting, rs_atoms,
+        rs_settings, rs_atoms = get_rocksalt(db_name)
+        do_test_update_correlation_functions(rs_settings, rs_atoms,
                                              n_trial_configs=5, fixed=['O'])
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x1(self):
         print('rocksalt with self interaction 1x1x1')
         db_name = 'cecalc_rs_1x1x1.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 1],
-                                                              db_name)
-        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=5)
+        rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 1],
+                                                               db_name)
+        do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=5)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x2(self):
         db_name = 'cecalc_rs_1x1x2.db'
         print('rocksalt with self interaction 1x1x2')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 2],
+        rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 2],
                                                               db_name)
-        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=1)
+        do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=1)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x1x3(self):
         db_name = 'cecalc_rs_1x1x3.db'
         print('rocksalt with self interaction 1x1x3')
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 1, 3],
-                                                              db_name)
-        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 3],
+                                                               db_name)
+        do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
     def test_insert_element_rocksalt_1x2x3(self):
         print('rocksalt with self interaction 1x2x3')
         db_name = 'cecalc_rs_1x2x3.db'
-        rs_setting, rs_atoms = rocksalt_with_self_interaction([1, 2, 3],
+        rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 2, 3],
                                                               db_name)
-        do_test_insert_element(rs_setting, rs_atoms, n_trial_configs=10)
+        do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=10)
         os.remove(db_name)
 
     def test_update_corr_func_spacegroup(self):
         print('spacegroup')
         db_name = 'cecalc_corrfunc_spacegroup.db'
-        sp_setting, sp_atoms = get_spacegroup(db_name)
-        do_test_update_correlation_functions(sp_setting, sp_atoms,
+        sp_settings, sp_atoms = get_spacegroup(db_name)
+        do_test_update_correlation_functions(sp_settings, sp_atoms,
                                              n_trial_configs=5, fixed=['Ta'])
         os.remove(db_name)
 
     def test_init_large_cell(self):
         print('Init large cell')
         db_name = 'cecalc_init_large_cell.db'
-        rs_setting, _ = rocksalt_with_self_interaction([1, 2, 3], db_name)
+        rs_settings, _ = rocksalt_with_self_interaction([1, 2, 3], db_name)
 
         atoms = bulk('LiO', crystalstructure='rocksalt', a=4.05, cubic=True)
         atoms = atoms * (2, 2, 2)
-        eci = generate_ex_eci(rs_setting)
+        eci = generate_ex_eci(rs_settings)
 
         # Use quick way of initialisation object
-        atoms = attach_calculator(setting=rs_setting, atoms=atoms, eci=eci)
+        atoms = attach_calculator(settings=rs_settings, atoms=atoms, eci=eci)
 
-        cf = CorrFunction(rs_setting)
+        cf = CorrFunction(rs_settings)
         init_cf = atoms.get_calculator().init_cf
 
         final_cf = cf.get_cf(atoms)
@@ -332,36 +332,36 @@ class TestCECalculator(unittest.TestCase):
 
     def test_4body_attach(self):
         conc = Concentration(basis_elements=[['Au', 'Cu']])
-        setting = CEBulk(crystalstructure='fcc',
-                         a=4.0,
-                         size=[2, 2, 2],
-                         concentration=conc,
-                         db_name="test_aucu.db",
-                         max_cluster_size=4,
-                         max_cluster_dia=[6.0, 5.0, 5.0])
+        settings = CEBulk(crystalstructure='fcc',
+                          a=4.0,
+                          size=[2, 2, 2],
+                          concentration=conc,
+                          db_name="test_aucu.db",
+                          max_cluster_size=4,
+                          max_cluster_dia=[6.0, 5.0, 5.0])
 
-        cf = CorrFunction(setting).get_cf(setting.atoms)
+        cf = CorrFunction(settings).get_cf(settings.atoms)
         eci = {k: 0.0 for k in cf.keys()}
         eci['c0'] = 1.0
-        atoms = setting.atoms.copy() * (3, 3, 3)
+        atoms = settings.atoms.copy() * (3, 3, 3)
 
         # Simply confirm that no exception is raised.
         # In the past, this failed.
-        _ = attach_calculator(setting, atoms=atoms, eci=eci)
+        _ = attach_calculator(settings, atoms=atoms, eci=eci)
         os.remove('test_aucu.db')
 
     def test_given_change_and_restore(self):
         db_name = 'test_given_change.db'
-        setting, atoms = get_binary(db_name)
+        settings, atoms = get_binary(db_name)
 
         for atom in atoms:
             atom.symbol = 'Au'
 
-        calc = Clease(setting, eci=generate_ex_eci(setting))
+        calc = Clease(settings, eci=generate_ex_eci(settings))
         atoms.set_calculator(calc)
 
         os.remove(db_name)
-        cf = CorrFunction(setting)
+        cf = CorrFunction(settings)
 
         init_cf = cf.get_cf(atoms)
 

@@ -8,26 +8,26 @@ class TestSupercelLFactor(unittest.TestCase):
         db_name = 'test_sc_factor_fcc_sf.db'
         conc = Concentration(basis_elements=[['Au', 'Cu']])
 
-        setting = CEBulk(crystalstructure='fcc', a=4.0,
-                         supercell_factor=8,
-                         concentration=conc, db_name=db_name,
-                         max_cluster_size=4, max_cluster_dia=4.01)
-        setting.skew_threshold = 4
-        setting.include_background_atoms = True
+        settings = CEBulk(crystalstructure='fcc', a=4.0,
+                          supercell_factor=8,
+                          concentration=conc, db_name=db_name,
+                          max_cluster_size=4, max_cluster_dia=4.01)
+        settings.skew_threshold = 4
+        settings.include_background_atoms = True
 
-        scaled = setting.template_atoms.get_all_scaled_templates()
+        scaled = settings.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 3)
 
         os.remove(db_name)
 
-        setting = CEBulk(crystalstructure='fcc', a=4.01,
-                         supercell_factor=None, size=[2, 2, 2],
-                         concentration=conc, db_name=db_name,
-                         max_cluster_size=4, max_cluster_dia=4.0)
-        setting.skew_threshold = 4
-        setting.include_background_atoms = True
+        settings = CEBulk(crystalstructure='fcc', a=4.01,
+                          supercell_factor=None, size=[2, 2, 2],
+                          concentration=conc, db_name=db_name,
+                          max_cluster_size=4, max_cluster_dia=4.0)
+        settings.skew_threshold = 4
+        settings.include_background_atoms = True
 
-        scaled = setting.template_atoms.get_all_scaled_templates()
+        scaled = settings.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 1)
 
         os.remove(db_name)
@@ -40,21 +40,21 @@ class TestSupercelLFactor(unittest.TestCase):
         concentration = Concentration(basis_elements=basis_elements,
                                       grouped_basis=grouped_basis)
 
-        setting = CECrystal(basis=[(0., 0., 0.),
-                                   (0.3894, 0.1405, 0.),
-                                   (0.201, 0.3461, 0.5),
-                                   (0.2244, 0.3821, 0.)],
-                            spacegroup=55,
-                            cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                            supercell_factor=10,
-                            concentration=concentration,
-                            db_name=db_name,
-                            max_cluster_size=3,
-                            max_cluster_dia=3.0)
-        setting.basis_func_type = 'binary_linear'
-        setting.skew_threshold = 4
+        settings = CECrystal(basis=[(0., 0., 0.),
+                                    (0.3894, 0.1405, 0.),
+                                    (0.201, 0.3461, 0.5),
+                                    (0.2244, 0.3821, 0.)],
+                             spacegroup=55,
+                             cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
+                             supercell_factor=10,
+                             concentration=concentration,
+                             db_name=db_name,
+                             max_cluster_size=3,
+                             max_cluster_dia=3.0)
+        settings.basis_func_type = 'binary_linear'
+        settings.skew_threshold = 4
 
-        scaled = setting.template_atoms.get_all_scaled_templates()
+        scaled = settings.template_atoms.get_all_scaled_templates()
         self.assertEqual(len(scaled), 20)
         os.remove(db_name)
 

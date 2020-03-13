@@ -21,7 +21,7 @@ from clease.template_filters import AngleFilter
 from clease.atoms_manager import AtomsManager
 from clease.settings import ClusterExpansionSettings
 from clease.concentration import Concentration
-from clease.settings_bulk import CEBulk, CECrystal, settingFromJSON
+from clease.settings_bulk import CEBulk, CECrystal, settingsFromJSON
 from clease.settings_slab import CESlab
 from clease.evaluate import Evaluate
 from clease.corrFunc import CorrFunction
@@ -46,6 +46,6 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'CorrFuncVolumeDataManager', 'EquivalentCellsFilter',
            'ValidConcentrationFilter', 'DistanceBetweenFacetsFilter',
            'CellVectorDirectionFilter', 'AngleFilter',
-           'ClusterExpansionSettings', 'settingFromJSON', 'CESlab',
+           'ClusterExpansionSettings', 'settingsFromJSON', 'CESlab',
            'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
            'ClusterManager', 'VolumeToSurfaceRatioFilter']

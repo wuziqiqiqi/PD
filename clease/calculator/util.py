@@ -4,7 +4,7 @@ from ase import Atoms
 from typing import Dict
 
 
-def attach_calculator(setting: ClusterExpansionSettings,
+def attach_calculator(settings: ClusterExpansionSettings,
                       atoms: Atoms, eci: Dict[str, float] = {}) -> Atoms:
     """Utility function for an efficient initialization of large cells.
 
@@ -13,15 +13,15 @@ def attach_calculator(setting: ClusterExpansionSettings,
     :param atoms: ASE Atoms object.
     """
     cf_names = list(eci.keys())
-    init_cf = CorrFunction(setting).get_cf_by_names(setting.atoms, cf_names)
+    init_cf = CorrFunction(settings).get_cf_by_names(settings.atoms, cf_names)
 
-    template = setting.template_atoms.get_template_matching_atoms(
+    template = settings.template_atoms.get_template_matching_atoms(
         atoms=atoms)
-    setting.set_active_template(atoms=template)
+    settings.set_active_template(atoms=template)
 
-    atoms = setting.atoms.copy()
+    atoms = settings.atoms.copy()
 
-    calc = Clease(setting, eci=eci, init_cf=init_cf)
+    calc = Clease(settings, eci=eci, init_cf=init_cf)
     atoms.set_calculator(calc)
     return atoms
 

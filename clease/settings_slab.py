@@ -53,7 +53,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
     prim = get_prim_slab_cell(conventional_cell, miller)
 
     # Slab should always have one cell vector along the z-axis
-    setting = ClusterExpansionSettings(
+    settings = ClusterExpansionSettings(
         prim, concentration, size=size,
         max_cluster_dia=max_cluster_dia,
         max_cluster_size=max_cluster_size,
@@ -66,7 +66,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
         if isinstance(v, np.ndarray):
             dict_rep[k] = v.tolist()
 
-    setting.kwargs.update(
+    settings.kwargs.update(
         {
             'factory': 'CESlab',
             'miller': miller,
@@ -74,7 +74,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
             'size': size
         }
     )
-    return setting
+    return settings
 
 
 def get_prim_slab_cell(conventional_cell: Union[Atoms, str],

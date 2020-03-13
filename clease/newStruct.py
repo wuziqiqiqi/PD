@@ -39,18 +39,18 @@ class NewStructures(object):
     """
     Generate new structure in ASE Atoms object format.
 
-    :param setting: Cluster expansion settings.
+    :param settings: Cluster expansion settings.
     :param generation_number: Generation number to be assigned to the newly
         generated structure
     :param struct_per_gen: Number of structures to generate per generation
     """
 
-    def __init__(self, setting: ClusterExpansionSettings,
+    def __init__(self, settings: ClusterExpansionSettings,
                  generation_number: int = None,
                  struct_per_gen: int = 5) -> None:
-        self.setting = setting
-        self.db = connect(setting.db_name)
-        self.corrfunc = CorrFunction(self.setting)
+        self.settings = settings
+        self.db = connect(settings.db_name)
+        self.corrfunc = CorrFunction(self.settings)
         self.struct_per_gen = struct_per_gen
 
         if generation_number is None:
@@ -115,7 +115,7 @@ class NewStructures(object):
         num_to_generate = self.num_to_gen()
 
         while current_count < num_to_generate:
-            self.setting.set_active_template(atoms=atoms)
+            self.settings.set_active_template(atoms=atoms)
             # Break out of the loop if reached struct_per_gen
             num_struct = self.num_in_gen()
             if num_struct >= self.struct_per_gen:
@@ -125,7 +125,7 @@ class NewStructures(object):
 
             _logger(f"Generating structure {current_count + 1} out of "
                     f"{num_to_generate}.")
-            ps = ProbeStructure(self.setting, struct, num_to_generate,
+            ps = ProbeStructure(self.settings, struct, num_to_generate,
                                 init_temp, final_temp, num_temp,
                                 num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
@@ -152,7 +152,7 @@ class NewStructures(object):
 
     @property
     def corr_func_table_name(self) -> str:
-        return f"{self.setting.basis_func_type.name}_cf"
+        return f"{self.settings.basis_func_type.name}_cf"
 
     def generate_gs_structure_multiple_templates(
             self, eci: Dict[str, float], num_templates: int = 20,
@@ -205,27 +205,27 @@ class NewStructures(object):
 
         See docstring of `generate_gs_structure` for the rest of the arguments.
         """
-        templates = self.setting.template_atoms.get_fixed_volume_templates(
+        templates = self.settings.template_atoms.get_fixed_volume_templates(
             num_templates=num_templates, num_prim_cells=num_prim_cells)
 
         if len(templates) == 0:
             msg = "Could not find any templates with matching the constraints"
             raise RuntimeError(msg)
 
-        self.setting.set_active_template(atoms=templates[0])
+        self.settings.set_active_template(atoms=templates[0])
 
-        nib = [len(x) for x in self.setting.index_by_basis]
-        x = self.setting.concentration.get_random_concentration(nib=nib)
-        num_insert = self.setting.concentration.conc_in_int(nib, x)
+        nib = [len(x) for x in self.settings.index_by_basis]
+        x = self.settings.concentration.get_random_concentration(nib=nib)
+        num_insert = self.settings.concentration.conc_in_int(nib, x)
 
         energies = []
         gs_structs = []
         for i, atoms in enumerate(templates):
             _logger(f"Searching for GS in template {i} of {len(templates)}")
-            self.setting.set_active_template(atoms=atoms)
+            self.settings.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
-            es = GSStructure(self.setting, struct, self.struct_per_gen,
+            es = GSStructure(self.settings, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
 
@@ -236,7 +236,7 @@ class NewStructures(object):
         # Find the position of the minimum energy structure
         min_energy_indx = np.argmin(energies)
         gs = gs_structs[min_energy_indx]
-        self.setting.set_active_template(atoms=gs)
+        self.settings.set_active_template(atoms=gs)
         self.insert_structure(init_struct=gs_structs[min_energy_indx])
 
     def generate_gs_structure(self, atoms: Union[ase.Atoms, List[ase.Atoms]],
@@ -296,10 +296,10 @@ class NewStructures(object):
         num_to_generate = min([self.num_to_gen(), len(structs)])
         while current_count < num_to_generate:
             struct = structs[current_count].copy()
-            self.setting.set_active_template(atoms=struct)
+            self.settings.set_active_template(atoms=struct)
             _logger(f"Generating structure {current_count + 1} out of "
                     f"{num_to_generate}.")
-            es = GSStructure(self.setting, struct, self.struct_per_gen,
+            es = GSStructure(self.settings, struct, self.struct_per_gen,
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
             gs_struct, cf = es.generate()
@@ -375,7 +375,7 @@ class NewStructures(object):
         unique_structure_found = False
 
         while not unique_structure_found and num_attempts < max_attempt:
-            self.setting.set_active_template(atoms=atoms)
+            self.settings.set_active_template(atoms=atoms)
             new_atoms = self._get_struct_at_conc(conc_type="random")
             fu = self._get_formula_unit(new_atoms)
             if not self._exists_in_db(new_atoms, fu):
@@ -407,14 +407,14 @@ class NewStructures(object):
                 msg += f"struct_per_gen={self.struct_per_gen}, "
                 msg += f"{self.num_in_gen()} present)"
                 _logger(msg)
-                self.setting.set_active_template(atoms=struct)
+                self.settings.set_active_template(atoms=struct)
                 num_to_gen = self.num_to_gen()
                 concs = []
                 # Get unique concentrations
                 num_attempt = 0
-                nib = [len(x) for x in self.setting.index_by_basis]
+                nib = [len(x) for x in self.settings.index_by_basis]
                 while len(concs) < num_to_gen:
-                    x = self.setting.concentration.get_random_concentration(
+                    x = self.settings.concentration.get_random_concentration(
                         nib=nib)
                     if True in [np.allclose(x, i) for i in concs]:
                         num_attempt += 1
@@ -427,9 +427,9 @@ class NewStructures(object):
                         msg += f"compositions using the provided Atoms object."
                         raise RuntimeError(msg)
                 num_atoms_in_basis = [len(indices) for indices
-                                      in self.setting.index_by_basis]
+                                      in self.settings.index_by_basis]
                 for x in concs:
-                    num_insert = self.setting.concentration.conc_in_int(
+                    num_insert = self.settings.concentration.conc_in_int(
                         num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
 
@@ -440,14 +440,14 @@ class NewStructures(object):
                     structs.append(wrap_and_sort_by_position(struct))
             else:
                 concs = []
-                nib = [len(x) for x in self.setting.index_by_basis]
+                nib = [len(x) for x in self.settings.index_by_basis]
                 for struct in atoms:
-                    self.setting.set_active_template(atoms=struct)
-                    x = self.setting.concentration.get_random_concentration(
+                    self.settings.set_active_template(atoms=struct)
+                    x = self.settings.concentration.get_random_concentration(
                         nib=nib)
                     num_atoms_in_basis = [len(indices) for indices
-                                          in self.setting.index_by_basis]
-                    num_insert = self.setting.concentration.conc_in_int(
+                                          in self.settings.index_by_basis]
+                    num_insert = self.settings.concentration.conc_in_int(
                         num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
         return structs
@@ -482,7 +482,7 @@ class NewStructures(object):
                 "of an element is at max/min")
         indx_in_each_basis = []
         start = 0
-        for basis in self.setting.concentration.basis_elements:
+        for basis in self.settings.concentration.basis_elements:
             indx_in_each_basis.append(list(range(start, start + len(basis))))
             start += len(basis)
 
@@ -504,15 +504,15 @@ class NewStructures(object):
             will start from the passed Atoms object.
         """
         if atoms is None:
-            atoms = self.setting.atoms.copy()
+            atoms = self.settings.atoms.copy()
 
         if random_comp:
-            self.setting.set_active_template(atoms=atoms)
+            self.settings.set_active_template(atoms=atoms)
             atoms = self._get_struct_at_conc(conc_type="random")
 
         num = self.num_to_gen()
         try:
-            generator = MetropolisTrajectory(self.setting, atoms, num)
+            generator = MetropolisTrajectory(self.settings, atoms, num)
             all_atoms = generator.generate()
             for a in all_atoms:
                 self.insert_structure(init_struct=a)
@@ -532,17 +532,17 @@ class NewStructures(object):
         :param index: Index of the flattened basis_element array to specify
             which element to be maximized/minimized
         """
-        conc = self.setting.concentration
+        conc = self.settings.concentration
         if conc_type == 'min':
             x = conc.get_conc_min_component(index)
         elif conc_type == 'max':
             x = conc.get_conc_max_component(index)
         else:
-            nib = [len(x) for x in self.setting.index_by_basis]
+            nib = [len(x) for x in self.settings.index_by_basis]
             x = conc.get_random_concentration(nib=nib)
 
         num_atoms_in_basis = [len(indices) for indices
-                              in self.setting.index_by_basis]
+                              in self.settings.index_by_basis]
         num_to_insert = conc.conc_in_int(num_atoms_in_basis, x)
         atoms = self._random_struct_at_conc(num_to_insert)
 
@@ -622,7 +622,7 @@ class NewStructures(object):
         else:
             init = wrap_and_sort_by_position(read(init_struct))
 
-        self.setting.set_active_template(atoms=init_struct)
+        self.settings.set_active_template(atoms=init_struct)
 
         formula_unit = self._get_formula_unit(init)
         if self._exists_in_db(init, formula_unit):
@@ -713,14 +713,14 @@ class NewStructures(object):
         kvp['name'] = formula_unit + f"_{count}"
         kvp['formula_unit'] = formula_unit
         kvp['struct_type'] = 'initial'
-        kvp['size'] = nested_list2str(self.setting.size)
+        kvp['size'] = nested_list2str(self.settings.size)
         return kvp
 
     def _get_formula_unit(self, atoms: ase.Atoms) -> str:
         """Generates a reduced formula unit for the structure."""
         atom_count = []
         all_nums = []
-        for group in self.setting.index_by_basis:
+        for group in self.settings.index_by_basis:
             new_count = {}
             for indx in group:
                 symbol = atoms[indx].symbol
@@ -745,14 +745,14 @@ class NewStructures(object):
             self, num_atoms_to_insert: np.ndarray) -> ase.Atoms:
         """Generate a random structure."""
         rnd_indices = []
-        for indices in self.setting.index_by_basis:
+        for indices in self.settings.index_by_basis:
             rnd_indices.append(deepcopy(indices))
             shuffle(rnd_indices[-1])
 
         # Insert the number of atoms
-        basis_elem = self.setting.concentration.basis_elements
+        basis_elem = self.settings.concentration.basis_elements
         assert len(rnd_indices) == len(basis_elem)
-        atoms = self.setting.atoms.copy()
+        atoms = self.settings.atoms.copy()
         current_conc = 0
         num_atoms_inserted = 0
         for basis in range(len(rnd_indices)):
@@ -793,7 +793,7 @@ class NewStructures(object):
                 'specified in the *num_samples_var* argument.\n'
                 '===========================================================')
         count = 0
-        cfm = np.zeros((num_samples_var, len(self.setting.all_cf_names)),
+        cfm = np.zeros((num_samples_var, len(self.settings.all_cf_names)),
                        dtype=float)
         while count < num_samples_var:
             atoms = self._get_struct_at_conc(conc_type='random')

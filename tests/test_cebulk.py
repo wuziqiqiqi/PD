@@ -9,7 +9,7 @@
 import os
 import json
 from clease import (CEBulk, CorrFunction, NewStructures, Evaluate,
-                    Concentration, settingFromJSON)
+                    Concentration, settingsFromJSON)
 from clease.newStruct import MaxAttemptReachedError
 from clease.tools import update_db
 from clease.basis_function import (
@@ -31,17 +31,17 @@ update_reference_file = False
 tol = 1E-9
 
 
-def get_figures_of_family(setting, cname):
+def get_figures_of_family(settings, cname):
     """Return the figures of a given cluster family."""
     figures = []
-    clusters = setting.cluster_list.get_by_name(cname)
+    clusters = settings.cluster_list.get_by_name(cname)
     for cluster in clusters:
         figures.append(cluster.indices)
     return figures
 
 
-def calculate_cf(setting, atoms):
-    cf = CorrFunction(setting)
+def calculate_cf(settings, atoms):
+    cf = CorrFunction(settings)
     cf_dict = cf.get_cf(atoms)
     return cf_dict
 
@@ -51,29 +51,29 @@ class TestCEBulk(unittest.TestCase):
         db_name = 'test_load_from_db.db'
         basis_elements = [['Au', 'Cu']]
         conc = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(concentration=conc, crystalstructure='fcc',
-                         a=4.05, size=[1, 1, 1], db_name=db_name,
-                         max_cluster_dia=[4.3, 4.3, 4.3],
-                         max_cluster_size=4)
-        orig_atoms = setting.atoms.copy()
+        settings = CEBulk(concentration=conc, crystalstructure='fcc',
+                          a=4.05, size=[1, 1, 1], db_name=db_name,
+                          max_cluster_dia=[4.3, 4.3, 4.3],
+                          max_cluster_size=4)
+        orig_atoms = settings.atoms.copy()
         atoms = bulk('Au', crystalstructure='fcc', a=4.05, cubic=True)
-        setting.set_active_template(atoms=atoms)
+        settings.set_active_template(atoms=atoms)
 
         # Try to read back the old atoms
-        setting.set_active_template(atoms=orig_atoms)
+        settings.set_active_template(atoms=orig_atoms)
         os.remove(db_name)
 
     def test_corrfunc(self):
         db_name = "test_bulk_corrfunc.db"
         basis_elements = [['Au', 'Cu']]
         conc = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(concentration=conc, crystalstructure='fcc',
-                         a=4.05, size=[3, 3, 3], db_name=db_name,
-                         max_cluster_dia=[4.3, 4.3, 4.3], max_cluster_size=4)
-        atoms = setting.atoms.copy()
+        settings = CEBulk(concentration=conc, crystalstructure='fcc',
+                          a=4.05, size=[3, 3, 3], db_name=db_name,
+                          max_cluster_dia=[4.3, 4.3, 4.3], max_cluster_size=4)
+        atoms = settings.atoms.copy()
         atoms[0].symbol = 'Cu'
         atoms[3].symbol = 'Cu'
-        cf = calculate_cf(setting, atoms)
+        cf = calculate_cf(settings, atoms)
 
         if update_reference_file:
             all_cf["binary_fcc"] = cf
@@ -84,15 +84,15 @@ class TestCEBulk(unittest.TestCase):
 
         basis_elements = [['Li', 'V'], ['X', 'O']]
         conc = Concentration(basis_elements=basis_elements)
-        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
-                         a=4.0, size=[2, 2, 1], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
-        atoms = setting.atoms.copy()
+        settings = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                          a=4.0, size=[2, 2, 1], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
+        atoms = settings.atoms.copy()
         Li_ind = [atom.index for atom in atoms if atom.symbol == 'Li']
         X_ind = [atom.index for atom in atoms if atom.symbol == 'X']
         atoms[Li_ind[0]].symbol = 'V'
         atoms[X_ind[0]].symbol = 'O'
-        cf = calculate_cf(setting, atoms)
+        cf = calculate_cf(settings, atoms)
         if update_reference_file:
             all_cf["two_basis"] = cf
         for key in cf.keys():
@@ -102,13 +102,13 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
         conc = Concentration(basis_elements=basis_elements,
                              grouped_basis=[[0, 1]])
-        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
-                         a=4.0, size=[2, 2, 1], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
-        atoms = setting.atoms.copy()
+        settings = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                          a=4.0, size=[2, 2, 1], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
+        atoms = settings.atoms.copy()
         atoms[1].symbol = 'Cl'
         atoms[7].symbol = 'Cl'
-        cf = calculate_cf(setting, atoms)
+        cf = calculate_cf(settings, atoms)
         if update_reference_file:
             all_cf["one_grouped_basis"] = cf
         for key in cf.keys():
@@ -118,14 +118,14 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
         conc = Concentration(basis_elements=basis_elements,
                              grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
-                         a=4.0, size=[2, 2, 2], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
-        atoms = setting.atoms.copy()
+        settings = CEBulk(concentration=conc, crystalstructure="fluorite",
+                          a=4.0, size=[2, 2, 2], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
+        atoms = settings.atoms.copy()
         O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
         atoms[O_ind[0]].symbol = 'F'
         atoms[O_ind[1]].symbol = 'F'
-        cf = calculate_cf(setting, atoms)
+        cf = calculate_cf(settings, atoms)
         if update_reference_file:
             all_cf["two_grouped_basis_bckgrnd"] = cf
 
@@ -143,10 +143,10 @@ class TestCEBulk(unittest.TestCase):
         db_name = "test_bulk_binary_system.db"
         basis_elements = [['Au', 'Cu']]
         conc = Concentration(basis_elements=basis_elements)
-        bc_setting = CEBulk(concentration=conc, crystalstructure='fcc',
-                            a=4.05, size=[3, 3, 3], db_name=db_name)
+        bc_settings = CEBulk(concentration=conc, crystalstructure='fcc',
+                             a=4.05, size=[3, 3, 3], db_name=db_name)
 
-        newstruct = NewStructures(bc_setting, struct_per_gen=3)
+        newstruct = NewStructures(bc_settings, struct_per_gen=3)
         newstruct.generate_initial_pool()
 
         # Compute the energy of the structures
@@ -161,31 +161,31 @@ class TestCEBulk(unittest.TestCase):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
         # Evaluate
-        evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        evaluator = Evaluate(bc_settings, fitting_scheme="l2", alpha=1E-6)
 
         # Test subclusters for pairs
-        for cluster in bc_setting.cluster_list.get_by_size(2):
-            sub_cl = bc_setting.cluster_list.get_subclusters(cluster)
+        for cluster in bc_settings.cluster_list.get_by_size(2):
+            sub_cl = bc_settings.cluster_list.get_subclusters(cluster)
             sub_cl_name = set([c.name for c in sub_cl])
             self.assertTrue(sub_cl_name == set(["c0", "c1"]))
 
         # Test a few known clusters. Triplet nearest neighbour
         name = "c3_d0000_0"
-        triplet = bc_setting.cluster_list.get_by_name(name)[0]
-        sub_cl = bc_setting.cluster_list.get_subclusters(triplet)
+        triplet = bc_settings.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_settings.cluster_list.get_subclusters(triplet)
         sub_cl_name = set([c.name for c in sub_cl])
         self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0"]))
 
         name = "c3_d0001_0"
-        triplet = bc_setting.cluster_list.get_by_name(name)[0]
-        sub_cl = (bc_setting.cluster_list.get_subclusters(triplet))
+        triplet = bc_settings.cluster_list.get_by_name(name)[0]
+        sub_cl = (bc_settings.cluster_list.get_subclusters(triplet))
         sub_cl_name = set([c.name for c in sub_cl])
         self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0",
                                             "c2_d0001_0"]))
 
         name = "c4_d0000_0"
-        quad = bc_setting.cluster_list.get_by_name(name)[0]
-        sub_cl = bc_setting.cluster_list.get_subclusters(quad)
+        quad = bc_settings.cluster_list.get_by_name(name)[0]
+        sub_cl = bc_settings.cluster_list.get_subclusters(quad)
         sub_cl_name = set([c.name for c in sub_cl])
         self.assertTrue(sub_cl_name == set(["c0", "c1", "c2_d0000_0",
                                             "c3_d0000_0"]))
@@ -193,7 +193,7 @@ class TestCEBulk(unittest.TestCase):
         # Try to insert an atoms object with a strange
         P = [[-1, 1, 1], [1, -1, 1], [1, 1, -1]]
         self.assertGreater(np.linalg.det(P), 0)
-        atoms = make_supercell(bc_setting.prim_cell, P)
+        atoms = make_supercell(bc_settings.prim_cell, P)
 
         atoms[0].symbol = 'Cu'
         newstruct.insert_structure(init_struct=atoms)
@@ -213,8 +213,8 @@ class TestCEBulk(unittest.TestCase):
         os.remove(db_name)
 
         # Test load save
-        bc_setting.save("demo_save.json")
-        bc_setting = settingFromJSON("demo_save.json")
+        bc_settings.save("demo_save.json")
+        bc_settings = settingsFromJSON("demo_save.json")
         os.remove("demo_save.json")
         os.remove(db_name)
 
@@ -223,10 +223,10 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Li', 'V'], ['X', 'O']]
         conc = Concentration(basis_elements=basis_elements)
 
-        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
-                         a=4.0, size=[2, 2, 1], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
-        ns = NewStructures(setting=setting, struct_per_gen=2)
+        settings = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                          a=4.0, size=[2, 2, 1], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
+        ns = NewStructures(settings, struct_per_gen=2)
         ns.generate_initial_pool()
 
         # At this point there should be the following
@@ -250,19 +250,19 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
         conc = Concentration(basis_elements=basis_elements,
                              grouped_basis=[[0, 1]])
-        setting = CEBulk(concentration=conc, crystalstructure="rocksalt",
-                         a=4.0, size=[2, 2, 1], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
+        settings = CEBulk(concentration=conc, crystalstructure="rocksalt",
+                          a=4.0, size=[2, 2, 1], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.0, 4.0])
 
-        self.assertEqual(setting.num_basis, 1)
-        self.assertEqual(len(setting.index_by_basis), 1)
-        self.assertTrue(setting.spin_dict == {'Cl': 1.0, 'Na': -1.0})
-        self.assertEqual(len(setting.basis_functions), 1)
+        self.assertEqual(settings.num_basis, 1)
+        self.assertEqual(len(settings.index_by_basis), 1)
+        self.assertTrue(settings.spin_dict == {'Cl': 1.0, 'Na': -1.0})
+        self.assertEqual(len(settings.basis_functions), 1)
         try:
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_random_structures()
             ns.generate_initial_pool()
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -282,23 +282,23 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Zr', 'Ce'], ['O'], ['O']]
         conc = Concentration(basis_elements=basis_elements,
                              grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
-                         a=4.0, size=[2, 2, 3], db_name=db_name,
-                         max_cluster_size=2, max_cluster_dia=[4.01])
-        setting.include_background_atoms = True
-        fam_figures = get_figures_of_family(setting, "c2_d0005_0")
+        settings = CEBulk(concentration=conc, crystalstructure="fluorite",
+                          a=4.0, size=[2, 2, 3], db_name=db_name,
+                          max_cluster_size=2, max_cluster_dia=[4.01])
+        settings.include_background_atoms = True
+        fam_figures = get_figures_of_family(settings, "c2_d0005_0")
         self.assertEqual(len(fam_figures[0]), 6)
         self.assertEqual(len(fam_figures[1]), 6)
         self.assertEqual(len(fam_figures[2]), 6)
-        self.assertEqual(setting.num_basis, 2)
-        self.assertEqual(len(setting.index_by_basis), 2)
-        self.assertTrue(setting.spin_dict == {'Ce': 1.0, 'O': -1.0, 'Zr': 0})
-        self.assertEqual(len(setting.basis_functions), 2)
+        self.assertEqual(settings.num_basis, 2)
+        self.assertEqual(len(settings.index_by_basis), 2)
+        self.assertTrue(settings.spin_dict == {'Ce': 1.0, 'O': -1.0, 'Zr': 0})
+        self.assertEqual(len(settings.basis_functions), 2)
 
         try:
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_initial_pool()
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -308,10 +308,10 @@ class TestCEBulk(unittest.TestCase):
 
         # Try to create a cell with previously failing size
         size = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]])
-        atoms = make_supercell(setting.prim_cell, size)
+        atoms = make_supercell(settings.prim_cell, size)
 
         # This will fail if coordinatation number is wrong
-        setting.set_active_template(atoms=atoms)
+        settings.set_active_template(atoms=atoms)
         os.remove(db_name)
 
     def test_2grouped_basis_bckgrnd_probe(self):
@@ -324,18 +324,18 @@ class TestCEBulk(unittest.TestCase):
         basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
         conc = Concentration(basis_elements=basis_elements,
                              grouped_basis=[[0], [1, 2]])
-        setting = CEBulk(concentration=conc, crystalstructure="fluorite",
-                         a=4.0, size=[2, 2, 2], db_name=db_name,
-                         max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
-        self.assertEqual(setting.num_basis, 2)
-        self.assertEqual(len(setting.index_by_basis), 2)
-        self.assertTrue(setting.spin_dict == {'F': 1.0, 'O': -1.0})
-        self.assertEqual(len(setting.basis_functions), 1)
+        settings = CEBulk(concentration=conc, crystalstructure="fluorite",
+                          a=4.0, size=[2, 2, 2], db_name=db_name,
+                          max_cluster_size=3, max_cluster_dia=[4.01, 4.01])
+        self.assertEqual(settings.num_basis, 2)
+        self.assertEqual(len(settings.index_by_basis), 2)
+        self.assertTrue(settings.spin_dict == {'F': 1.0, 'O': -1.0})
+        self.assertEqual(len(settings.basis_functions), 1)
 
         try:
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_initial_pool()
-            ns = NewStructures(setting=setting, struct_per_gen=2)
+            ns = NewStructures(settings, struct_per_gen=2)
             ns.generate_probe_structure(init_temp=1.0, final_temp=0.001,
                                         num_temp=5, num_steps_per_temp=100,
                                         approx_mean_var=True)
@@ -353,12 +353,12 @@ class TestCEBulk(unittest.TestCase):
         db_name = 'test_fcc_binary_fixed_conc.db'
         conc = Concentration(basis_elements=[['Au', 'Cu']],
                              A_eq=A_eq, b_eq=b_eq)
-        setting = CEBulk(concentration=conc, crystalstructure='fcc', a=3.8,
-                         supercell_factor=27, max_cluster_dia=5.0,
-                         max_cluster_size=3, db_name=db_name)
+        settings = CEBulk(concentration=conc, crystalstructure='fcc', a=3.8,
+                          supercell_factor=27, max_cluster_dia=5.0,
+                          max_cluster_size=3, db_name=db_name)
 
         # Loop through templates and check that all satisfy constraints
-        atoms = setting.atoms
+        atoms = settings.atoms
         num = len(atoms)
         ratio = num / 3.0
         self.assertAlmostEqual(ratio, int(ratio))
@@ -372,12 +372,12 @@ class TestCEBulk(unittest.TestCase):
         b_eq = [0]
         conc = Concentration(basis_elements=basis_elem,
                              A_eq=A_eq, b_eq=b_eq)
-        setting = CEBulk(concentration=conc, crystalstructure='rocksalt',
-                         a=3.8, supercell_factor=27, max_cluster_dia=5.0,
-                         max_cluster_size=3,
-                         db_name=db_name)
+        settings = CEBulk(concentration=conc, crystalstructure='rocksalt',
+                          a=3.8, supercell_factor=27, max_cluster_dia=5.0,
+                          max_cluster_size=3,
+                          db_name=db_name)
 
-        atoms = setting.atoms
+        atoms = settings.atoms
         num_O = sum(1 for atom in atoms if atom.symbol == 'O')
         ratio = num_O/5.0
         self.assertAlmostEqual(ratio, int(ratio))
@@ -386,21 +386,21 @@ class TestCEBulk(unittest.TestCase):
     def test_save_load_all_bf(self):
         conc = Concentration(basis_elements=[['Au', 'Cu', 'X']])
         db_name = 'test_save_load_all_bf.db'
-        setting = CEBulk(
+        settings = CEBulk(
             conc, db_name=db_name, max_cluster_size=2, max_cluster_dia=5.0,
             a=3.0)
 
         fname = 'save_load_all_bf.json'
-        bfs = [Polynomial(setting.unique_elements),
-               Trigonometric(setting.unique_elements),
-               BinaryLinear(setting.unique_elements),
-               BinaryLinear(setting.unique_elements, redundant_element='X')]
+        bfs = [Polynomial(settings.unique_elements),
+               Trigonometric(settings.unique_elements),
+               BinaryLinear(settings.unique_elements),
+               BinaryLinear(settings.unique_elements, redundant_element='X')]
 
         for bf in bfs:
-            setting.basis_func_type = bf
-            setting.save(fname)
-            setting2 = settingFromJSON(fname)
-            bf2 = setting2.basis_func_type
+            settings.basis_func_type = bf
+            settings.save(fname)
+            settings2 = settingsFromJSON(fname)
+            bf2 = settings2.basis_func_type
             for k in bf.__dict__.keys():
                 self.assertEqual(bf, bf2)
         os.remove(db_name)

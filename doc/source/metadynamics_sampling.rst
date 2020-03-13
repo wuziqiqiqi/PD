@@ -78,20 +78,20 @@ favorite example: AuCu!
 >>> from clease import Concentration
 >>> from clease import CEBulk
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
->>> setting = CEBulk(crystalstructure='fcc',
-...                  a=3.8,
-...                  supercell_factor=27,
-...                  concentration=conc,
-...                  db_name="aucu_metadyn.db",
-...                  max_cluster_size=2,
-...                  max_cluster_dia=[4.0])
+>>> settings = CEBulk(crystalstructure='fcc',
+...                   a=3.8,
+...                   supercell_factor=27,
+...                   concentration=conc,
+...                   db_name="aucu_metadyn.db",
+...                   max_cluster_size=2,
+...                   max_cluster_dia=[4.0])
 
 The next thing we need to do is to load the ECIs and attach the calculator
 
 >>> eci = {'c0': -1.0, 'c1_0': 0.1, 'c2_d0000_0_00': -0.2}
->>> atoms = setting.atoms.copy()*(5, 5, 5)
+>>> atoms = settings.atoms.copy()*(5, 5, 5)
 >>> from clease.calculator import attach_calculator
->>> atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+>>> atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
 In pratice, the collective variables are calculated via one of the observers
 in CLEASE. If you plan to implement your own observers to use here, please note

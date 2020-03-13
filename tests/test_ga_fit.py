@@ -14,15 +14,15 @@ import unittest
 def init_system(db_name):
     basis_elements = [['Au', 'Cu']]
     concentration = Concentration(basis_elements=basis_elements)
-    bc_setting = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
-                        concentration=concentration, db_name=db_name,
-                        max_cluster_size=3, max_cluster_dia=[0, 0, 4.06, 4.06])
+    bc_settings = CEBulk(crystalstructure='fcc', a=4.05, size=[3, 3, 3],
+                         concentration=concentration, db_name=db_name,
+                         max_cluster_size=3, max_cluster_dia=[0, 0, 4.06, 4.06])
 
-    newstruct = NewStructures(bc_setting, struct_per_gen=3)
+    newstruct = NewStructures(bc_settings, struct_per_gen=3)
     newstruct.generate_initial_pool()
 
     # Insert 30 random configurations
-    atoms = bc_setting.atoms.copy()
+    atoms = bc_settings.atoms.copy()
     symbols = ["Au", "Cu"]
     for _ in range(6):
         for atom in atoms:
@@ -40,15 +40,15 @@ def init_system(db_name):
         atoms.set_calculator(calc)
         atoms.get_potential_energy()
         update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
-    return bc_setting
+    return bc_settings
 
 
 class TestGAFit(unittest.TestCase):
     def test_init_from_file(self):
         db_name = 'test_ga_fit.db'
-        setting = init_system(db_name)
+        settings = init_system(db_name)
         backup = "ga_test.csv"
-        evaluator = Evaluate(setting)
+        evaluator = Evaluate(settings)
         selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
         try:
             selector.run(gen_without_change=3, save_interval=1)

@@ -7,7 +7,7 @@ from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog
 from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
-from clease.gui.settingInitializer import SettingsInitializer
+from clease.gui.settingsInitializer import SettingsInitializer
 from threading import Thread
 import traceback
 
@@ -350,83 +350,83 @@ class SettingsPage(Screen):
             if self.check_user_input() != 0:
                 return
 
-            settingPage = self.to_dict()
-            supercell_factor = int(settingPage['supercell_factor'])
-            skew_threshold = int(settingPage['skew_threshold'])
+            settingsPage = self.to_dict()
+            supercell_factor = int(settingsPage['supercell_factor'])
+            skew_threshold = int(settingsPage['skew_threshold'])
             size = None
 
             if self.ids.sizeSpinner.text == 'Fixed':
-                size = parse_size(settingPage['cell_size'])
+                size = parse_size(settingsPage['cell_size'])
 
-            if settingPage['max_cluster_dia'] == '':
+            if settingsPage['max_cluster_dia'] == '':
                 max_cluster_dia = None
             else:
                 max_cluster_dia =\
-                    parse_max_cluster_dia(settingPage['max_cluster_dia'])
+                    parse_max_cluster_dia(settingsPage['max_cluster_dia'])
 
             initializer = SettingsInitializer()
-            initializer.basis_func_type = settingPage['basis_function']
+            initializer.basis_func_type = settingsPage['basis_function']
             initializer.skew_threshold = skew_threshold
             initializer.app = App.get_running_app()
             initializer.status = App.get_running_app().root.ids.status
 
-            if settingPage["type"] == 'CEBulk':
-                if settingPage['aParameter'] == '':
+            if settingsPage["type"] == 'CEBulk':
+                if settingsPage['aParameter'] == '':
                     a = None
                 else:
-                    a = float(settingPage['aParameter'])
+                    a = float(settingsPage['aParameter'])
 
-                if settingPage['cParameter'] == '':
+                if settingsPage['cParameter'] == '':
                     c = None
                 else:
-                    c = float(settingPage['cParameter'])
+                    c = float(settingsPage['cParameter'])
 
-                if settingPage['uParameter'] == '':
+                if settingsPage['uParameter'] == '':
                     u = None
                 else:
-                    u = float(settingPage['uParameter'])
+                    u = float(settingsPage['uParameter'])
                 kwargs = dict(
-                    crystalstructure=settingPage['crystalstructure'], a=a,
+                    crystalstructure=settingsPage['crystalstructure'], a=a,
                     c=c, u=u,
-                    db_name=settingPage['db_name'], concentration=conc,
+                    db_name=settingsPage['db_name'], concentration=conc,
                     max_cluster_dia=max_cluster_dia,
-                    max_cluster_size=int(settingPage['cluster_size']),
+                    max_cluster_size=int(settingsPage['cluster_size']),
                     size=size, supercell_factor=supercell_factor,
                 )
-                msg = "Applying settings to database..."
+                msg = "Applying settingss to database..."
                 App.get_running_app().root.ids.status.text = msg
                 initializer.type = 'CEBulk'
                 initializer.kwargs = kwargs
-                initializer.basis_function = settingPage['basis_function']
+                initializer.basis_function = settingsPage['basis_function']
                 initializer.skew_threshold = skew_threshold
                 Thread(target=initializer.initialize).start()
             else:
-                if settingPage['cellpar'] == '':
+                if settingsPage['cellpar'] == '':
                     cellpar = None
                 else:
-                    cellpar = parse_cellpar(settingPage['cellpar'])
+                    cellpar = parse_cellpar(settingsPage['cellpar'])
 
-                if settingPage['basis'] == '':
+                if settingsPage['basis'] == '':
                     basis = None
                 else:
-                    basis = parse_coordinate_basis(settingPage['basis'])
+                    basis = parse_coordinate_basis(settingsPage['basis'])
 
-                if settingPage['cell'] == '':
+                if settingsPage['cell'] == '':
                     cell = None
                 else:
-                    cell = parse_cell(settingPage['cell'])
+                    cell = parse_cell(settingsPage['cell'])
 
-                sp = int(settingPage['spacegroup'])
-                msg = "Applying settings to database..."
+                sp = int(settingsPage['spacegroup'])
+                msg = "Applying settingss to database..."
                 App.get_running_app().root.ids.status.text = msg
                 kwargs = dict(
                     basis=basis, cellpar=cellpar, cell=cell,
                     max_cluster_dia=max_cluster_dia,
-                    max_cluster_size=int(settingPage['cluster_size']),
-                    basis_function=settingPage['basis_function'],
+                    max_cluster_size=int(settingsPage['cluster_size']),
+                    basis_function=settingsPage['basis_function'],
                     size=size, supercell_factor=supercell_factor,
                     skew_threshold=skew_threshold,
-                    concentration=conc, db_name=settingPage['db_name'],
+                    concentration=conc, db_name=settingsPage['db_name'],
                     spacegroup=sp
                 )
                 initializer.type = 'CECrystal'

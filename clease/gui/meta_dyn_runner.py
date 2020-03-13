@@ -5,7 +5,7 @@ from clease.gui.meta_dyn_gui_updater import MetaDynGuiUpdater
 
 class MetaDynRunner(object):
     def __init__(self, atoms=None, meta_page=None, max_sweeps=None,
-                 setting=None, app_root=None, eci=None, status=None,
+                 settings=None, app_root=None, eci=None, status=None,
                  mc_params=None, T=None, bias=None, flat=None,
                  mod_factor=None, backup_file=None, update_interval=10):
         self.atoms = atoms
@@ -13,10 +13,10 @@ class MetaDynRunner(object):
         self.meta_page = meta_page
         self.update_interval = update_interval
         self.max_sweeps = max_sweeps
-        self.setting = setting
+        self.settings = settings
         self.app_root = app_root
         self.eci = eci
-        self.orig_template = self.setting.atoms.copy()
+        self.orig_template = settings.atoms.copy()
         self.status = status
         self.mc_params = mc_params
         self.bias = bias
@@ -30,8 +30,8 @@ class MetaDynRunner(object):
         # Temporarily disable info update during initalisation
         self.app_root.info_update_disabled = True
         self.app_root.view_mc_cell_disabled = True
-        self.atoms = attach_calculator(setting=self.setting, atoms=self.atoms,
-                                       eci=self.eci)
+        self.atoms = attach_calculator(settings=self.settings,
+                                       atoms=self.atoms, eci=self.eci)
         self.app_root.active_template_is_mc_cell = True
         self.app_root.info_update_disabled = False
         self.app_root.view_mc_cell_disabled = False
@@ -69,7 +69,7 @@ class MetaDynRunner(object):
             update_status_on_end = False
 
         # Reset the old template
-        self.setting.set_active_template(atoms=self.orig_template)
+        self.settings.set_active_template(atoms=self.orig_template)
         self.app_root.active_template_is_mc_cell = False
         self.meta_page.mc_is_running = False
 

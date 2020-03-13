@@ -13,13 +13,13 @@ and the clusters
   from clease import Concentration
   from clease import CEBulk
   conc = Concentration(basis_elements=[['Au', 'Cu']])
-  setting = CEBulk(crystalstructure='fcc',
-                   a=3.8,
-                   supercell_factor=27,
-                   concentration=conc,
-                   db_name="aucu.db",
-                   max_cluster_size=3,
-                   max_cluster_dia=[6.0, 5.0])
+  settings = CEBulk(crystalstructure='fcc',
+                    a=3.8,
+                    supercell_factor=27,
+                    concentration=conc,
+                    db_name="aucu.db",
+                    max_cluster_size=3,
+                    max_cluster_dia=[6.0, 5.0])
 
 Next, we need to specify a set if ECIs. These can for instance be loaded
 from a file, but here we hard code them for simplicity
@@ -35,8 +35,8 @@ MC cell by repeating the *atoms* object of the settings.
 .. code-block:: python
 
   from clease.calculator import attach_calculator
-  atoms = setting.atoms.copy()*(5, 5, 5)
-  atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+  atoms = settings.atoms.copy()*(5, 5, 5)
+  atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
 Let's insert a few *Cu* atoms
 

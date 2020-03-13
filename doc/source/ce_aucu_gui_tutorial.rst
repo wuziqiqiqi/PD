@@ -24,7 +24,7 @@ Then, we need to specify the elements
     :width: 80%
     :align: center
 
-Next, we move to the **Settings** panel to specify the CE setting parameters.
+Next, we move to the **Settings** panel to specify the CE settings parameters.
 The relavant parameters we need to specify are:
 
 1. Scheme to construct the unit cell. We can use either *bulk* or *crystal*

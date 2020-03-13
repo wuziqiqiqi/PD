@@ -187,7 +187,7 @@ class SGCMonteCarlo(Montecarlo):
 
     def singlet2composition(self, avg_singlets):
         """Convert singlets to composition."""
-        bf = self.atoms.get_calculator().setting.basis_functions
+        bf = self.atoms.get_calculator().settings.basis_functions
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
 
         index = {s: i for i, s in enumerate(self.symbols)}

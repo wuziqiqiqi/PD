@@ -19,36 +19,36 @@ np.random.seed(0)
 
 def get_example_mc_system(db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu']])
-    setting = CEBulk(db_name=db_name, concentration=conc,
-                     crystalstructure='fcc', a=4.0,
-                     max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
-                     size=[2, 2, 2])
+    settings = CEBulk(db_name=db_name, concentration=conc,
+                      crystalstructure='fcc', a=4.0,
+                      max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
+                      size=[2, 2, 2])
 
-    atoms = setting.atoms.copy()*(3, 3, 3)
-    cf = CorrFunction(setting)
-    cf_scratch = cf.get_cf(setting.atoms)
+    atoms = settings.atoms.copy()*(3, 3, 3)
+    cf = CorrFunction(settings)
+    cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
     eci['c0'] = -1.0
     eci['c2_d0000_0_00'] = -0.2
-    atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
 
 def get_rocksalt_mc_system(db_name):
     conc = Concentration(basis_elements=[['Si', 'X'], ['O', 'C']])
-    setting = CEBulk(db_name=db_name, concentration=conc,
-                     crystalstructure='rocksalt', a=4.0,
-                     max_cluster_size=3, max_cluster_dia=[2.51, 3.0],
-                     size=[2, 2, 2])
-    atoms = setting.atoms.copy()*(3, 3, 3)
-    cf = CorrFunction(setting)
-    cf_scratch = cf.get_cf(setting.atoms)
+    settings = CEBulk(db_name=db_name, concentration=conc,
+                      crystalstructure='rocksalt', a=4.0,
+                      max_cluster_size=3, max_cluster_dia=[2.51, 3.0],
+                      size=[2, 2, 2])
+    atoms = settings.atoms.copy()*(3, 3, 3)
+    cf = CorrFunction(settings)
+    cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
     eci['c0'] = -1.0
     eci['c2_d0000_0_00'] = -0.2
-    atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
 
@@ -67,7 +67,7 @@ class TestMonteCarlo(unittest.TestCase):
             mc.run(steps=10000)
             E.append(mc.get_thermodynamic_quantities()['energy'])
 
-        cf = CorrFunction(atoms.get_calculator().setting)
+        cf = CorrFunction(atoms.get_calculator().settings)
         cf_calc = atoms.get_calculator().get_cf()
         cf_scratch = cf.get_cf(atoms)
 
@@ -201,8 +201,8 @@ class TestMonteCarlo(unittest.TestCase):
     def test_constrain_swap(self):
         db_name = 'test_constrain_swap.db'
         atoms = get_rocksalt_mc_system(db_name)
-        setting = atoms.get_calculator().setting
-        i_by_basis = setting.index_by_basis
+        settings = atoms.get_calculator().settings
+        i_by_basis = settings.index_by_basis
 
         # Insert a few vacancies
         num_X = 0

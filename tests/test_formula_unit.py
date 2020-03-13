@@ -15,14 +15,14 @@ class TestFormulaUnit(unittest.TestCase):
         b_lb = [2]
         conc = Concentration(basis_elements=basis_elements, A_eq=A_eq,
                              b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
-        setting = CEBulk(crystalstructure="rocksalt",
-                         a=4.0,
-                         size=[2, 2, 3],
-                         concentration=conc,
-                         db_name=db_name,
-                         max_cluster_size=3,
-                         max_cluster_dia=4.)
-        newstruct = NewStructures(setting=setting)
+        settings = CEBulk(crystalstructure="rocksalt",
+                          a=4.0,
+                          size=[2, 2, 3],
+                          concentration=conc,
+                          db_name=db_name,
+                          max_cluster_size=3,
+                          max_cluster_dia=4.)
+        newstruct = NewStructures(settings=settings)
 
         test = bulk(name='LiO', crystalstructure='rocksalt', a=4.0) * (2, 2, 3)
         atoms = wrap_and_sort_by_position(test.copy())

@@ -569,6 +569,6 @@ class FitPage(Screen):
             msg += 'last time'
             app.root.ids.status.text = msg
         except Exception:
-            msg = 'Failed load previous fitting setting. '
+            msg = 'Failed load previous fitting settings. '
             msg += 'Please set your settings again in the editor.'
             app.root.ids.status.text = msg

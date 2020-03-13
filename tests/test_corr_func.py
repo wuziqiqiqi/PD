@@ -11,7 +11,7 @@ basis_elements = [["Au", "Cu", "Si"]]
 concentration = Concentration(basis_elements=basis_elements)
 
 
-def get_bc_setting(db_name):
+def get_bc_settings(db_name):
     return CEBulk(crystalstructure="fcc", a=4.05, size=[4, 4, 4],
                   concentration=concentration, db_name=db_name,
                   max_cluster_size=3, max_cluster_dia=[5.73, 5.73])
@@ -30,9 +30,9 @@ class TestCorrFunc(unittest.TestCase):
     def test_trans_matrix(self):
         """Check that the MIC distance between atoms are correct."""
         db_name = "test_corrfunc_transmat.db"
-        bc_setting = get_bc_setting(db_name)
-        atoms = bc_setting.atoms
-        tm = bc_setting.trans_matrix
+        bc_settings = get_bc_settings(db_name)
+        atoms = bc_settings.atoms
+        tm = bc_settings.trans_matrix
         ref_dist = atoms.get_distance(0, 1, mic=True)
         for indx in range(len(atoms)):
             dist = atoms.get_distance(indx, tm[indx][1], mic=True)
@@ -44,15 +44,15 @@ class TestCorrFunc(unittest.TestCase):
         basis_elements = [['Li', 'X'], ['O', 'X']]
         concentration = Concentration(basis_elements=basis_elements)
         db_name_sc = "rocksalt_sc.db"
-        setting = CEBulk(crystalstructure='rocksalt',
-                         a=4.05,
-                         size=[1, 1, 1],
-                         concentration=concentration,
-                         db_name=db_name_sc,
-                         max_cluster_size=3,
-                         max_cluster_dia=[7.0, 4.0])
-        atoms = setting.atoms.copy()
-        cf = CorrFunction(setting)
+        settings = CEBulk(crystalstructure='rocksalt',
+                          a=4.05,
+                          size=[1, 1, 1],
+                          concentration=concentration,
+                          db_name=db_name_sc,
+                          max_cluster_size=3,
+                          max_cluster_dia=[7.0, 4.0])
+        atoms = settings.atoms.copy()
+        cf = CorrFunction(settings)
         cf_dict = cf.get_cf(atoms)
 
         atoms = wrap_and_sort_by_position(atoms*(4, 3, 2))
@@ -66,15 +66,15 @@ class TestCorrFunc(unittest.TestCase):
         basis_elements = [['Li', 'X'], ['O', 'X']]
         concentration = Concentration(basis_elements=basis_elements)
         db_name_sc = "rocksalt_sc.db"
-        setting = CEBulk(crystalstructure='rocksalt',
-                         a=4.05,
-                         size=[1, 1, 1],
-                         concentration=concentration,
-                         db_name=db_name_sc,
-                         max_cluster_size=3,
-                         max_cluster_dia=[7.0, 4.0])
-        corr = CorrFunction(setting)
-        atoms = setting.atoms
+        settings = CEBulk(crystalstructure='rocksalt',
+                          a=4.05,
+                          size=[1, 1, 1],
+                          concentration=concentration,
+                          db_name=db_name_sc,
+                          max_cluster_size=3,
+                          max_cluster_dia=[7.0, 4.0])
+        corr = CorrFunction(settings)
+        atoms = settings.atoms
         # No error should occure
         corr.get_cf_by_names(atoms, ['c3_d0000_0_000'])
 
@@ -83,10 +83,10 @@ class TestCorrFunc(unittest.TestCase):
             corr.get_cf_by_names(atoms, ['c4_d0001_0_0000'])
 
     def test_reconfigure(self):
-        setting = get_bc_setting("test_reconfigure.db")
-        newStruct = NewStructures(setting)
+        settings = get_bc_settings("test_reconfigure.db")
+        newStruct = NewStructures(settings)
         for i in range(10):
-            atoms = setting.atoms.copy()
+            atoms = settings.atoms.copy()
             for a in atoms:
                 a.symbol = choice(['Al', 'Mg', 'Si'])
 
@@ -96,17 +96,17 @@ class TestCorrFunc(unittest.TestCase):
             newStruct.insert_structure(init_struct=atoms, final_struct=final)
 
         # Collect final_struct_ids
-        db = connect(setting.db_name)
+        db = connect(settings.db_name)
         query = [('struct_type', '=', 'initial')]
         final_str_ids = [row.final_struct_id for row in db.select(query)]
 
-        cf = CorrFunction(setting)
+        cf = CorrFunction(settings)
         cf.reconfigure_db_entries()
 
         # Confirm that the final_str_ids strays the same
         final_str_ids_rec = [row.final_struct_id for row in db.select(query)]
         self.assertListEqual(final_str_ids, final_str_ids_rec)
-        os.remove(setting.db_name)
+        os.remove(settings.db_name)
 
 
 if __name__ == '__main__':

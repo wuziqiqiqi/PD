@@ -18,7 +18,7 @@ class MovedIgnoredAtomError(Exception):
 class Clease(Calculator):
     """Class for calculating energy using CLEASE.
 
-    :param setting: `ClusterExpansionSettings` object
+    :param settings: `ClusterExpansionSettings` object
 
     :param eci: Dictionary containing cluster names and their ECI values
 
@@ -35,18 +35,18 @@ class Clease(Calculator):
     name = 'CLEASE'
     implemented_properties = ['energy']
 
-    def __init__(self, setting: ClusterExpansionSettings,
+    def __init__(self, settings: ClusterExpansionSettings,
                  eci: Dict[str, float],
                  init_cf: Optional[Dict[str, float]] = None,
                  logfile: Union[TextIO, str, None] = None) -> None:
         Calculator.__init__(self)
 
-        if not isinstance(setting, ClusterExpansionSettings):
-            msg = "setting must be CEBulk or CECrystal object."
+        if not isinstance(settings, ClusterExpansionSettings):
+            msg = "settings must be CEBulk or CECrystal object."
             raise TypeError(msg)
         self.parameters["eci"] = eci
-        self.setting = setting
-        self.corrFunc = CorrFunction(setting)
+        self.settings = settings
+        self.corrFunc = CorrFunction(settings)
         self.eci = eci
         # store cluster names
         self.cf_names = list(eci.keys())
@@ -88,17 +88,17 @@ class Clease(Calculator):
         thus, include self-interactions. This methods corrects the impact of
         self-interactions.
         """
-        symm_group = np.zeros(len(self.setting.atoms), dtype=np.uint8)
-        for num, group in enumerate(self.setting.index_by_sublattice):
+        symm_group = np.zeros(len(self.settings.atoms), dtype=np.uint8)
+        for num, group in enumerate(self.settings.index_by_sublattice):
             symm_group[group] = num
 
-        cluster_list = self.setting.cluster_list
+        cluster_list = self.settings.cluster_list
         for cluster in cluster_list:
             fig_keys = list(set(cluster.get_all_figure_keys()))
             num_occ = {}
             for key in fig_keys:
                 num_occ[key] = cluster_list.num_occ_figure(
-                    key, cluster.name, symm_group, self.setting.trans_matrix)
+                    key, cluster.name, symm_group, self.settings.trans_matrix)
             num_fig_occ = cluster.num_fig_occurences
             norm_factors = {}
             for key in fig_keys:
@@ -120,25 +120,25 @@ class Clease(Calculator):
             self.init_cf = \
                 self.corrFunc.get_cf_by_names(self.atoms, self.cf_names)
 
-        if len(self.setting.atoms) != len(atoms):
-            msg = "Passed Atoms object and setting.atoms should have same "
+        if len(self.settings.atoms) != len(atoms):
+            msg = "Passed Atoms object and settings.atoms should have same "
             msg += "number of atoms."
             raise ValueError(msg)
 
-        if not np.allclose(atoms.positions, self.setting.atoms.positions):
+        if not np.allclose(atoms.positions, self.settings.atoms.positions):
             msg = "Positions of all atoms in the passed Atoms object and "
-            msg += "setting.atoms should be the same. "
+            msg += "settings.atoms should be the same. "
             raise ValueError(msg)
 
         self.symmetry_group = np.zeros(len(atoms), dtype=int)
-        for symm, indices in enumerate(self.setting.index_by_sublattice):
+        for symm, indices in enumerate(self.settings.index_by_sublattice):
             self.symmetry_group[indices] = symm
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
-        self.is_backround_index[self.setting.background_indices] = 1
+        self.is_backround_index[self.settings.background_indices] = 1
 
         self._set_norm_factors()
-        self.updater = PyCEUpdater(self.atoms, self.setting, self.init_cf,
-                                   self.eci, self.setting.cluster_list)
+        self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf,
+                                   self.eci, self.settings.cluster_list)
 
     def get_energy_given_change(
             self, system_changes: List[Tuple[int, str, str]]) -> float:
@@ -211,7 +211,7 @@ class Clease(Calculator):
         changed = self.updater.get_changed_sites(self.atoms)
         for index in changed:
             if self.is_backround_index[index] and \
-                    not self.setting.include_background_atoms:
+                    not self.settings.include_background_atoms:
                 msg = f"Atom with index {index} is a background atom."
                 raise MovedIgnoredAtomError(msg)
 

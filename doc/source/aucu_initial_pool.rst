@@ -3,13 +3,13 @@
   from clease import Concentration
   conc = Concentration(basis_elements=[['Au', 'Cu']])
   from clease import CEBulk
-  setting = CEBulk(crystalstructure='fcc',
-                   a=3.8,
-                   supercell_factor=64,
-                   concentration=conc,
-                   db_name="aucu.db",
-                   max_cluster_size=4,
-                   max_cluster_dia=[6.0, 4.5, 4.5])
+  settings = CEBulk(crystalstructure='fcc',
+                    a=3.8,
+                    supercell_factor=64,
+                    concentration=conc,
+                    db_name="aucu.db",
+                    max_cluster_size=4,
+                    max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. _aucu_initial_pool:
 .. module:: clease.newStruct
@@ -22,14 +22,14 @@ Generating initial structures
 Generating initial pool of structures
 -------------------------------------
 
-After the cluster expansion setting is specified, the next step is to generate
+After the cluster expansion settings is specified, the next step is to generate
 initial structures to start training the CE model. New structures for training
 CE model are generated using :class:`NewStructures` class, which contains
 several methods for generating structures. The initial pool of structures is
 generated using :meth:`generate_initial_pool` method as
 
 >>> from clease import NewStructures
->>> ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
+>>> ns = NewStructures(settings, generation_number=0, struct_per_gen=10)
 >>> ns.generate_initial_pool()
 
 The :meth:`generate_initial_pool` method generates one structure per
@@ -77,7 +77,7 @@ random structures using :meth:`generate_random_structures` method by altering
 the above script with
 
 >>> from clease import NewStructures
->>> ns = NewStructures(setting, generation_number=0,
+>>> ns = NewStructures(settings, generation_number=0,
 ...                    struct_per_gen=10)
 >>> ns.generate_random_structures()
 
@@ -89,7 +89,7 @@ can pass template atoms with desired size. For example, you can force the
 new structures to be :math:`3 \times 3 \times 3` supercell by using
 
 >>> from ase.db import connect
->>> ns = NewStructures(setting, generation_number=0,
+>>> ns = NewStructures(settings, generation_number=0,
 ...                    struct_per_gen=10)
 >>>
 >>> # get template with the cell size = 3x3x3

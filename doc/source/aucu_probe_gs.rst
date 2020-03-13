@@ -25,7 +25,7 @@ values to maximize the difference in correlation function of the new structure.
   :options: +SKIP
 
   >>> from clease import NewStructures
-  >>> ns = NewStructures(setting, generation_number=1, struct_per_gen=10)
+  >>> ns = NewStructures(settings, generation_number=1, struct_per_gen=10)
   >>> ns.generate_probe_structure()
 
 Once 10 additional structures are generated, you can re-run the script in
@@ -55,7 +55,7 @@ compositions based on current CE model.
   >>> with open('eci_l1.json') as f:
   ...     eci = json.load(f)
   >>>
-  >>> ns = NewStructures(setting, generation_number=2, struct_per_gen=10)
+  >>> ns = NewStructures(settings, generation_number=2, struct_per_gen=10)
   >>>
   >>> ns.generate_gs_structure(atoms=template, init_temp=2000,
   ...                          final_temp=1, num_temp=10,

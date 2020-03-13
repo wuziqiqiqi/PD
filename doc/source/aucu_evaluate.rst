@@ -8,15 +8,15 @@
   from clease.tools import update_db
 
   conc = Concentration(basis_elements=[['Au', 'Cu']])
-  setting = CEBulk(crystalstructure='fcc',
-                   a=3.8,
-                   supercell_factor=64,
-                   concentration=conc,
-                   db_name="aucu.db",
-                   max_cluster_size=4,
-                   max_cluster_dia=[6.0, 4.5, 4.5])
+  settings = CEBulk(crystalstructure='fcc',
+                    a=3.8,
+                    supercell_factor=64,
+                    concentration=conc,
+                    db_name="aucu.db",
+                    max_cluster_size=4,
+                    max_cluster_dia=[6.0, 4.5, 4.5])
 
-  ns = NewStructures(setting, generation_number=0, struct_per_gen=10)
+  ns = NewStructures(settings, generation_number=0, struct_per_gen=10)
   ns.generate_initial_pool()
 
   calc = EMT()
@@ -55,7 +55,7 @@ for all structures that are not yet converged
 
   >>> from clease import Evaluate
   >>>
-  >>> eva = Evaluate(setting=setting, scoring_scheme='k-fold', nsplits=10)
+  >>> eva = Evaluate(settings=settings, scoring_scheme='k-fold', nsplits=10)
   >>> # scan different values of alpha and return the value of alpha that yields
   >>> # the lowest CV score
   >>> eva.set_fitting_scheme(fitting_scheme='l1')

@@ -128,13 +128,13 @@ class TestTemplates(unittest.TestCase):
                              A_eq=A_eq, b_eq=b_eq)
 
         db_name = 'test_fixed_vol_conc_constraint.db'
-        setting = CEBulk(crystalstructure='fcc', a=3.8, size=[1, 1, 5],
-                         db_name=db_name, max_cluster_size=2,
-                         max_cluster_dia=3.0, concentration=conc,
-                         supercell_factor=40)
-        setting.skew_threshold = 100
+        settings = CEBulk(crystalstructure='fcc', a=3.8, size=[1, 1, 5],
+                          db_name=db_name, max_cluster_size=2,
+                          max_cluster_dia=3.0, concentration=conc,
+                          supercell_factor=40)
+        settings.skew_threshold = 100
 
-        tmp = setting.template_atoms
+        tmp = settings.template_atoms
 
         sizes = [4, 5, 7, 10]
         valid_size = [5, 10]

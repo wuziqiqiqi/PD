@@ -234,9 +234,9 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
     return np.array(distances[1:])
 
 
-def reconfigure(setting, select_cond=None):
+def reconfigure(settings, select_cond=None):
     from clease import CorrFunction
-    CorrFunction(setting).reconfigure_db_entries(select_cond)
+    CorrFunction(settings).reconfigure_db_entries(select_cond)
 
 
 def split_dataset(X, y, nsplits=10):

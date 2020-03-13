@@ -12,19 +12,19 @@ class TestSGCMonteCarlo(unittest.TestCase):
     def test_run(self):
         db_name = 'sgc_test_aucu.db'
         conc = Concentration(basis_elements=[['Au', 'Cu']])
-        setting = CEBulk(db_name=db_name, concentration=conc,
-                         crystalstructure='fcc', a=4.0,
-                         max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
-                         size=[2, 2, 2])
+        settings = CEBulk(db_name=db_name, concentration=conc,
+                          crystalstructure='fcc', a=4.0,
+                          max_cluster_size=3, max_cluster_dia=[5.0, 4.1],
+                          size=[2, 2, 2])
 
-        atoms = setting.atoms.copy()*(3, 3, 3)
-        cf = CorrFunction(setting)
-        cf_scratch = cf.get_cf(setting.atoms)
+        atoms = settings.atoms.copy()*(3, 3, 3)
+        cf = CorrFunction(settings)
+        cf_scratch = cf.get_cf(settings.atoms)
         eci = {k: 0.0 for k, v in cf_scratch.items()}
 
         eci['c0'] = -1.0
         eci['c2_d0000_0_00'] = -0.2
-        atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+        atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
         E = []
         for T in [5000, 2000, 1000, 500, 100]:
@@ -46,23 +46,23 @@ class TestSGCMonteCarlo(unittest.TestCase):
     def test_constrain_inserts(self):
         db_name = 'test_constrain_inserts.db'
         conc = Concentration(basis_elements=[['Si', 'X'], ['O', 'C']])
-        setting = CEBulk(db_name=db_name, concentration=conc,
-                         crystalstructure='rocksalt', a=4.0,
-                         max_cluster_size=3, max_cluster_dia=[2.51, 3.0],
-                         size=[2, 2, 2])
-        atoms = setting.atoms.copy()*(3, 3, 3)
-        cf = CorrFunction(setting)
-        cf_scratch = cf.get_cf(setting.atoms)
+        settings = CEBulk(db_name=db_name, concentration=conc,
+                          crystalstructure='rocksalt', a=4.0,
+                          max_cluster_size=3, max_cluster_dia=[2.51, 3.0],
+                          size=[2, 2, 2])
+        atoms = settings.atoms.copy()*(3, 3, 3)
+        cf = CorrFunction(settings)
+        cf_scratch = cf.get_cf(settings.atoms)
         eci = {k: 0.0 for k, v in cf_scratch.items()}
 
         eci['c0'] = -1.0
         eci['c2_d0000_0_00'] = -0.2
-        atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+        atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
         mc = SGCMonteCarlo(atoms, 100000, symbols=['Si', 'X', 'O', 'C'])
 
         elem_basis = [['Si', 'X'], ['O', 'C']]
-        cnst = ConstrainElementInserts(atoms, setting.index_by_basis,
+        cnst = ConstrainElementInserts(atoms, settings.index_by_basis,
                                        elem_basis)
         chem_pot = {'c1_0': 0.0, 'c1_1': -0.1, 'c1_2': 0.1}
         mc.add_constraint(cnst)
@@ -76,7 +76,7 @@ class TestSGCMonteCarlo(unittest.TestCase):
                                  zip(orig_symbols, new_symb))))
 
         # Check that we only have correct entries
-        for allowed, basis in zip(elem_basis, setting.index_by_basis):
+        for allowed, basis in zip(elem_basis, settings.index_by_basis):
             for index in basis:
                 self.assertTrue(atoms[index].symbol in allowed)
 
@@ -84,20 +84,21 @@ class TestSGCMonteCarlo(unittest.TestCase):
         db_name = 'test_constrain_pair.db'
         a = 4.0
         conc = Concentration(basis_elements=[['Si', 'X']])
-        setting = CEBulk(db_name=db_name, concentration=conc,
-                         crystalstructure='fcc', a=a,
-                         max_cluster_size=3, max_cluster_dia=[3.9, 3.0],
-                         size=[2, 2, 2])
+        settings = CEBulk(db_name=db_name, concentration=conc,
+                          crystalstructure='fcc', a=a,
+                          max_cluster_size=3, max_cluster_dia=[3.9, 3.0],
+                          size=[2, 2, 2])
 
-        atoms = setting.atoms.copy()*(3, 3, 3)
-        cf = CorrFunction(setting)
-        cf_scratch = cf.get_cf(setting.atoms)
+        atoms = settings.atoms.copy()*(3, 3, 3)
+        cf = CorrFunction(settings)
+        cf_scratch = cf.get_cf(settings.atoms)
         eci = {k: 0.0 for k, v in cf_scratch.items()}
-        atoms = attach_calculator(setting, atoms=atoms, eci=eci)
+        atoms = attach_calculator(settings, atoms=atoms, eci=eci)
         mc = SGCMonteCarlo(atoms, 100000000, symbols=['Si', 'X'])
 
-        cluster = setting.cluster_list.get_by_name("c2_d0000_0")[0]
-        cnst = PairConstraint(['X', 'X'], cluster, setting.trans_matrix, atoms)
+        cluster = settings.cluster_list.get_by_name("c2_d0000_0")[0]
+        cnst = PairConstraint(
+            ['X', 'X'], cluster, settings.trans_matrix, atoms)
         mc.add_constraint(cnst)
 
         nn_dist = a/np.sqrt(2.0)
