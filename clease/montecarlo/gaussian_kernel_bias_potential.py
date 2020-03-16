@@ -46,7 +46,8 @@ class GaussianKernelBiasPotential(BiasPotential):
         self.xmax_corrected = self.xmax + self.pad*width
         self.centers = np.linspace(self.xmin_corrected, self.xmax_corrected,
                                    self.num_kernels)
-        self.dx = (self.xmax_corrected - self.xmin_corrected)/(self.num_kernels-1)
+        self.dx = (self.xmax_corrected - self.xmin_corrected) / \
+            (self.num_kernels-1)
 
     def get_index(self, x):
         return int((x-self.xmin_corrected)/self.dx)

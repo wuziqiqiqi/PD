@@ -19,7 +19,8 @@ class Sparsifier(object):
         self._aicc = []
         self._num_features = []
 
-    def sparsify(self, fitter: LinearRegression, X: np.ndarray, y: np.ndarray) -> Tuple[List[int], np.ndarray]:
+    def sparsify(self, fitter: LinearRegression, X: np.ndarray,
+                 y: np.ndarray) -> Tuple[List[int], np.ndarray]:
         """
         Remove the feature corresponding to the smallest coefficient
         iteratively. On each step, modified Afaike information
@@ -47,9 +48,10 @@ class Sparsifier(object):
 
             If the following is returned
             [0, 4, 8, 9], [0.1, 0.5, 0.8, -1.0]
-            it means that feature no. 0, 4, 8 and 9 was selected. The coefficients
-            corresponding to these features are returned in the second array. The 
-            coefficients of all other features in the model is zero.
+            it means that feature no. 0, 4, 8 and 9 was selected. The
+            coefficients corresponding to these features are returned in the
+            second array. The coefficients of all other features in the model
+            is zero.
         """
         self.clear()
         best_selection = None

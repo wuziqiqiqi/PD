@@ -81,7 +81,8 @@ class DataManager(object):
         >>> from ase.calculators.emt import EMT
         >>> db_name = 'somedb.db'
         >>> db = connect(db_name)  # Make sure that the DB exists
-        >>> db.write(Atoms('Cu'), external_tables={'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
+        >>> db.write(Atoms('Cu'), external_tables={
+        ... 'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
         1
         >>> final = Atoms('Cu')
         >>> final.set_calculator(EMT())
@@ -92,7 +93,8 @@ class DataManager(object):
         ... 'c2_d0000_0_00'], 'polynomial_cf')
         >>> targ_getter = FinalStructEnergyGetter(db_name)
         >>> manager = DataManager(db_name)
-        >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter, targ_getter)
+        >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter,
+        ... targ_getter)
         """
         ids = self.get_ids(select_cond)
 
@@ -175,9 +177,11 @@ class CorrFuncEnergyDataManager(DataManager):
 
     :param cf_names: List with the correlation function names to extract
 
-    :param tab_name: Name of the table where the correlation functions are stored
+    :param tab_name: Name of the table where the correlation functions are
+        stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
+    def __init__(self, db_name: str, cf_names: List[str],
+                 tab_name: str) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -192,7 +196,8 @@ class CorrFuncEnergyDataManager(DataManager):
         """
         return DataManager.get_data(
             self, select_cond,
-            CorrelationFunctionGetter(self.db_name, self.cf_names, self.tab_name),
+            CorrelationFunctionGetter(self.db_name, self.cf_names,
+                                      self.tab_name),
             FinalStructEnergyGetter(self.db_name))
 
 
@@ -208,7 +213,8 @@ class CorrelationFunctionGetter(object):
     :param tab_name: Name of the external table where the correlation functions
         are stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
+    def __init__(self, db_name: str, cf_names: List[str],
+                 tab_name: str) -> None:
         self.db_name = db_name
         self.cf_names = cf_names
         self.tab_name = tab_name
@@ -288,13 +294,14 @@ class FinalStructEnergyGetter(object):
 
     def __call__(self, ids: List[int]) -> np.ndarray:
         """
-        Extract the final energy of the ids passed. In the returned array, the first
-        energy corresponds to the first item in ids, the second energy corresponds to
-        the second item in ids etc.
+        Extract the final energy of the ids passed. In the returned array, the
+        first energy corresponds to the first item in ids, the second energy
+        corresponds to the second item in ids etc.
 
         :param ids: Database ids of initial structures
         """
-        sql = f"SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
+        sql = "SELECT value, id FROM number_key_values "
+        sql += "WHERE key='final_struct_id'"
         id_set = set(ids)
         # Map beetween the initial structure and the index in the id list
         init_struct_idx = {idx: i for i, idx in enumerate(ids)}
@@ -344,14 +351,15 @@ class FinalVolumeGetter(object):
 
     def __call__(self, ids: List[int]) -> np.ndarray:
         """
-        Extracts the final volume of the ids passed. In the returned array, the first
-        volume corresponds to the first item in ids, the second volume corresponds to 
-        the second item in ids etc.
+        Extracts the final volume of the ids passed. In the returned array,
+        the first volume corresponds to the first item in ids, the second
+        volume corresponds to the second item in ids etc.
 
         :param ids: Database IDs of initial structures
         """
         id_set = set(ids)
-        query = "SELECT value, id FROM number_key_values WHERE key='final_struct_id'"
+        query = "SELECT value, id FROM number_key_values "
+        query += "WHERE key='final_struct_id'"
 
         init_ids = {}
         id_idx = {db_id: i for i, db_id in enumerate(ids)}
@@ -400,9 +408,11 @@ class CorrFuncVolumeDataManager(DataManager):
 
     :param cf_names: List with the correlation function names to extract
 
-    :param tab_name: Name of the table where the correlation functions are stored
+    :param tab_name: Name of the table where the correlation functions are
+        stored
     """
-    def __init__(self, db_name: str, cf_names: List[str], tab_name: str) -> None:
+    def __init__(self, db_name: str, cf_names: List[str],
+                 tab_name: str) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -420,8 +430,9 @@ class CorrFuncVolumeDataManager(DataManager):
         """
         return DataManager.get_data(
             self, select_cond,
-            CorrelationFunctionGetter(self.db_name, self.cf_names,
-                                      self.tab_name), FinalVolumeGetter(self.db_name))
+            CorrelationFunctionGetter(
+                self.db_name, self.cf_names, self.tab_name),
+            FinalVolumeGetter(self.db_name))
 
 
 def extract_num_atoms(cur: sqlite3.Cursor,
@@ -469,7 +480,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
     """
     def __init__(self, db_name: str, tab_name: str, cf_names: List[str],
                  order: Optional[int] = 0,
-                 properties: Optional[Tuple[str]] = ('energy', 'pressure')) -> None:
+                 properties: Tuple[str] = ('energy', 'pressure')) -> None:
         self.db_name = db_name
         self.tab_name = tab_name
         self.order = order
@@ -480,7 +491,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
     def build(self, ids: List[int]) -> np.ndarray:
         """
-        Construct the design matrix and the target value required to fit a 
+        Construct the design matrix and the target value required to fit a
         cluster expansion model to all material properties in self.properties.
 
         :param ids: List of ids to take into account
@@ -521,8 +532,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             # we construct row N:2*N). Note that the pressure is assumed
             # to be zero
             for col in range(0, cf.shape[1]):
-                for power in range(self.order+1):
-                    pressure_cf[:, counter] = power*cf[:, col]*volumes**(power-1)
+                for p in range(self.order+1):
+                    pressure_cf[:, counter] = p*cf[:, col]*volumes**(p-1)
                     counter += 1
 
             # Update the full design matrix and the target values
@@ -590,8 +601,9 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         Return the design matrix and the target values for the entries
         corresponding to select_cond.
 
-        :param select_cond: ASE select condition. The design matrix and the target vector
-            will be extracted for rows matching the passed condition.
+        :param select_cond: ASE select condition. The design matrix and the
+            target vector will be extracted for rows matching the passed
+            condition.
         """
         ids = self.get_ids(select_cond)
 

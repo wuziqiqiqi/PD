@@ -15,9 +15,7 @@ from clease.gui.job_exec import JobExec
 from clease.gui.mc_header import MCHeader
 from clease.gui.load_save_dialog import LoadDialog, SaveDialog
 from clease.gui.db_browser import DbBrowser
-from ase.db import connect
 from clease import Evaluate
-import subprocess
 import signal
 from pathlib import Path
 import traceback
@@ -32,7 +30,6 @@ except ImportError:
 import json
 from threading import Thread
 
-import os.path as op
 import os
 
 main_path = Path(__file__)

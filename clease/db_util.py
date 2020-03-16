@@ -10,7 +10,8 @@ def get_all_cf_names(db_name: str, tab_name: str) -> Set[str]:
 
     db_name: Name of the database
 
-    tab_name: Name of the table in the database where correlation functions are stores
+    tab_name: Name of the table in the database where correlation functions
+        are stores
     """
     with connect(db_name) as db:
         query = f"SELECT key FROM {tab_name}"

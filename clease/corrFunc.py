@@ -7,6 +7,7 @@ from ase.db import connect
 from clease_cxx import PyCEUpdater
 from clease import _logger
 
+
 class ClusterNotTrackedError(Exception):
     pass
 
@@ -124,7 +125,7 @@ class CorrFunction(object):
 
         for count, id in enumerate(inconsistent_ids):
             _logger(f"updating {count+1} of {len(inconsistent_ids)} entries",
-                  end="\r")
+                    end="\r")
             self.reconfigure_db_entries(select_cond=[('id', '=', id)],
                                         verbose=False)
         _logger("\nreconfiguration completed")
@@ -147,7 +148,7 @@ class CorrFunction(object):
 
         if len(inconsistent_ids) > 0:
             _logger(f"{len(inconsistent_ids)} inconsistent entries found in "
-                  f"'{tab_name}' table.")
+                    f"'{tab_name}' table.")
             for id in inconsistent_ids:
                 _logger(f"  id: {id}, name: {db.get(id).name}")
         else:

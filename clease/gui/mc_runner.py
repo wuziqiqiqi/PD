@@ -4,7 +4,7 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import EnergyPlotUpdater
 from clease.tools import wrap_and_sort_by_position
-from clease.gui.constants import CONC_PER_BASIS, SYSTEMS_FROM_DB
+from clease.gui.constants import SYSTEMS_FROM_DB
 import traceback
 from ase.db import connect
 
@@ -132,7 +132,7 @@ class MCRunner(object):
             try:
                 float_v = float(v)
                 float_thermo[k] = float_v
-            except:
+            except Exception:
                 pass
         db = connect(self.db_name)
 

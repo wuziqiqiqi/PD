@@ -50,7 +50,7 @@ def parse_grouped_basis_elements(string):
             raise exc_type(msg)
         return grouped
 
-    except Exception as exc:
+    except Exception:
         raise exc_type(msg)
 
 
@@ -87,7 +87,7 @@ def parse_size(string):
 
         return matrix
 
-    except Exception as exc:
+    except Exception:
         pass
 
     msg = 'Size has to be a list with 3 ints (i.e. 3, 4, 5) or rows of a '
@@ -138,7 +138,7 @@ def parse_cellpar(string):
             raise ValueError()
         return cellpar
 
-    except Exception as exc:
+    except Exception:
         pass
 
     msg = 'Cell parameters has to be a list of six numbers (a, b, c, alpha, '
@@ -229,10 +229,11 @@ def parse_concentration_list(string):
         for b in per_basis:
             conc_per_basis.append([float(x) for x in b.split(',')])
         return conc_per_basis
-    except:
+    except Exception:
         pass
 
-    msg = 'Concentration list has to be given as one comma separated list per basis'
+    msg = 'Concentration list has to be given as one comma separated list per '
+    msg += 'basis'
     raise ValueError(msg)
 
 

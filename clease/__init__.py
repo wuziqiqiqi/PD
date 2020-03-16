@@ -9,6 +9,7 @@ def set_verbosity(verbosity):
 def set_fd(fd):
     _logger.fd = fd
 
+
 __version__ = '0.9.12'
 
 from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
@@ -42,4 +43,9 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
            'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
            'SkewnessFilter', 'DataManager', 'CorrFuncEnergyDataManager',
-           'CorrFuncVolumeDataManager']
+           'CorrFuncVolumeDataManager', 'EquivalentCellsFilter',
+           'ValidConcentrationFilter', 'DistanceBetweenFacetsFilter',
+           'CellVectorDirectionFilter', 'AngleFilter',
+           'ClusterExpansionSettings', 'settingFromJSON', 'CESlab',
+           'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
+           'ClusterManager', 'VolumeToSurfaceRatioFilter']

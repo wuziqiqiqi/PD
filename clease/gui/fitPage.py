@@ -21,7 +21,6 @@ from kivy.utils import get_color_from_hex
 from kivy_garden.graph import Graph, ScatterPlot, BarPlot, LinePlot
 import numpy as np
 import traceback
-from clease.gui.legend import Legend
 
 
 class ECIOptimizer(object):

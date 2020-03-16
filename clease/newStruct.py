@@ -4,7 +4,7 @@ import numpy as np
 from random import shuffle
 from copy import deepcopy
 from functools import reduce
-from typing import List, Dict, Optional, Union, Callable
+from typing import List, Dict, Optional, Union
 
 import ase
 from ase.io import read

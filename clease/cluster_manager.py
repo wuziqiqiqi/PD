@@ -3,7 +3,6 @@ from clease.cluster_list import ClusterList
 from clease.cluster import Cluster
 from itertools import product, chain
 from clease.name_clusters import name_clusters, size
-from scipy.spatial import KDTree
 from copy import deepcopy
 import numpy as np
 from ase.geometry import wrap_positions
@@ -24,7 +23,8 @@ class ClusterManager(object):
         self.clusters = ClusterList()
 
     def __eq__(self, other):
-        return self.clusters == other.clusters and self.generator == other.generator
+        return self.clusters == other.clusters and \
+            self.generator == other.generator
 
     def build(self, max_size=4, max_cluster_dia=4.0):
         """
@@ -178,8 +178,8 @@ class ClusterManager(object):
 
     def create_four_vector_lut(self, template):
         """
-        Construct a lookup table (LUT) for the index in template given the wrapped
-        vector
+        Construct a lookup table (LUT) for the index in template given the
+        wrapped vector
 
         Parameter:
 

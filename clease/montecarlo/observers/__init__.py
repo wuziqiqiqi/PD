@@ -11,4 +11,5 @@ from clease.montecarlo.observers.concentration_observer import ConcentrationObse
 
 __all__ = ["MCObserver", "SGCObserver", "CorrelationFunctionObserver",
            "Snapshot", "EnergyEvolution", "LowestEnergyStructure",
-           "DiffractionObserver", "EnergyPlotUpdater", "ConcentrationObserver"]
+           "DiffractionObserver", "EnergyPlotUpdater", "ConcentrationObserver",
+           "SiteOrderParameter"]

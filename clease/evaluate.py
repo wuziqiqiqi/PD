@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
-from clease import _logger
 from ase.utils import basestring
 from clease import ClusterExpansionSettings
 from clease.mp_logger import MultiprocessHandler

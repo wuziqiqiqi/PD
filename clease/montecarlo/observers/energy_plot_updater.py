@@ -11,7 +11,6 @@ class EnergyPlotUpdater(MCObserver):
 
     def __call__(self, system_changes):
         e = self.energy_obs.mean_energies
-        e_inst = self.energy_obs.energies
         xmax = len(e) + 1
         ymin = np.min(e) - e[0]
         ymax = np.max(e) - e[0]

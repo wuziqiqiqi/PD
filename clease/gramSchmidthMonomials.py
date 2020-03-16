@@ -84,7 +84,8 @@ class GramSchmidtMonimial(object):
                 new_bf_values.append(self.evaluate_monomial_basis_function(
                     bf1, self.values[i]))
                 for bf2 in range(bf1):
-                    new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2)*self.bf_values[bf2][i]
+                    new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2) \
+                        * self.bf_values[bf2][i]
 
             self.bf_values.append(new_bf_values)
 
@@ -158,7 +159,8 @@ class GramSchmidtMonimial(object):
         """
         return self.bf_values[bf][valueIndex]
 
-    def evaluate_monomial_basis_function(self, power: int, value: float) -> float:
+    def evaluate_monomial_basis_function(self, power: int,
+                                         value: float) -> float:
         """
         Evaluate monimial basis
 

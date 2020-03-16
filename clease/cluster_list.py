@@ -5,6 +5,7 @@ from copy import deepcopy
 from typing import List, Dict
 from clease import _logger
 
+
 class ClusterList(object):
     def __init__(self):
         self.clusters = []

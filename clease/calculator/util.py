@@ -1,4 +1,3 @@
-import json
 from clease import CorrFunction, ClusterExpansionSettings
 from clease.calculator import Clease
 from ase import Atoms

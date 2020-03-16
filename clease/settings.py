@@ -27,7 +27,7 @@ class ClusterExpansionSettings(object):
                  size: Optional[int] = None,
                  supercell_factor: Optional[int] = 27,
                  db_name: str = 'clease.db', max_cluster_size: int = 4,
-                 max_cluster_dia: Union[float, List[float]] = [5.0, 5.0, 5.0]) -> None:
+                 max_cluster_dia: Union[float, List[float]] = 5.0) -> None:
         self.kwargs = {'size': size,
                        'supercell_factor': supercell_factor,
                        'db_name': db_name,

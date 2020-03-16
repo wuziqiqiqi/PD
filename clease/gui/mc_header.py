@@ -2,7 +2,6 @@ from kivy.uix.screenmanager import Screen
 from kivy.properties import StringProperty
 from clease.gui.mc_main_page import MCMainPage
 from clease.gui.canonical_mc_page import CanonicalMCPage
-import traceback
 from kivy.app import App
 from threading import Thread
 from clease.gui.constants import SCREEN_TRANSLATIONS

@@ -1,7 +1,6 @@
 from itertools import filterfalse, product
 import numpy as np
 from clease.cluster_fingerprint import ClusterFingerprint
-from scipy.spatial import cKDTree as KDTree
 from ase.geometry import wrap_positions
 
 

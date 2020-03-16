@@ -6,4 +6,4 @@ from clease.montecarlo.constraints.collective_variable_constraint import Collect
 from clease.montecarlo.constraints.pair_constraint import PairConstraint
 
 __all__ = ["MCConstraint", "ConstrainSwapByBasis", "ConstrainElementInserts",
-            "FixedElement", "CollectiveVariableConstraint", "PairConstraint"]
+           "FixedElement", "CollectiveVariableConstraint", "PairConstraint"]

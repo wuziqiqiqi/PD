@@ -168,14 +168,14 @@ class CanonicalMCPage(Screen):
             try:
                 concs = parse_comma_sep_list_of_int(conc_string)
                 conc_mode = SYSTEMS_FROM_DB
-            except:
+            except Exception:
                 pass
 
             if conc_mode is None:
                 try:
                     concs = parse_concentration_list(conc_string)
                     conc_mode = CONC_PER_BASIS
-                except:
+                except Exception:
                     pass
 
             if conc_mode is None:

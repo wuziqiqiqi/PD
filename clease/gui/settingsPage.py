@@ -336,8 +336,8 @@ class SettingsPage(Screen):
             A_lb, rhs_lb, A_eq, rhs_eq = conc_page.get_constraint_matrices()
 
             if not conc_page.elements:
-                msg = 'It appears that the Apply button in Concentration panel '
-                msg += 'was not clicked.'
+                msg = 'It appears that the Apply button in Concentration panel'
+                msg += ' was not clicked.'
                 App.get_running_app().root.ids.status.text = msg
                 return
             basis_elements = conc_page.elements
@@ -415,7 +415,6 @@ class SettingsPage(Screen):
                     cell = None
                 else:
                     cell = parse_cell(settingPage['cell'])
-
 
                 sp = int(settingPage['spacegroup'])
                 msg = "Applying settings to database..."
