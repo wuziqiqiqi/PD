@@ -65,7 +65,7 @@ class LinearRegression(object):
     def is_scalar(self):
         return False
 
-    def get_scalar_parameter(self) -> None:
+    def get_scalar_parameter(self):  # pragma: no cover
         raise ValueError("Fitting scheme is not described by a scalar "
                          "parameter!")
 
@@ -205,7 +205,7 @@ class Lasso(LinearRegression):
         return LinearRegression.weight_matrix(self)
 
     @weight_matrix.setter
-    def weight_matrix(self, X: np.ndarray):
+    def weight_matrix(self, X):  # pragma: no cover
         raise NotImplementedError("Currently Lasso does not support "
                                   "data weighting.")
 
@@ -228,7 +228,7 @@ class Lasso(LinearRegression):
     def get_scalar_parameter(self) -> float:
         return self.alpha
 
-    def precision_matrix(self, X: np.ndarray) -> None:
+    def precision_matrix(self, X):  # pragma: no cover
         raise NotImplementedError("Precision matrix for LASSO is not "
                                   "implemented.")
 
