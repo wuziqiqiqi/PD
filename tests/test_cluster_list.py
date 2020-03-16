@@ -3,6 +3,7 @@ from ase.build import bulk
 from clease.cluster import Cluster
 from clease.cluster_list import ClusterList
 from clease.cluster_fingerprint import ClusterFingerprint
+from clease.cluster_generator import ClusterGenerator
 import numpy as np
 
 
@@ -28,6 +29,18 @@ class TestClusterList(unittest.TestCase):
         self.assertEqual(cluster1.ref_indx, cluster2.ref_indx)
         self.assertEqual(cluster1.indices, cluster2.indices)
         self.assertEqual(cluster1.group, cluster2.group)
+
+    def test_get_occurence_counts(self):
+        cluster_list = ClusterList()
+        fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
+        predict_number_cluster = 5
+        for i in range(predict_number_cluster):
+            cluster = Cluster('c_0', 3, 5.4, fp, i,
+                              [[1, 0, ], [3, 4]], [], 0)
+            cluster_list.append(cluster)
+        cluster_from_method = cluster_list.get_occurence_counts()
+        real_number_cluster = len(cluster_from_method)
+        self.assertEqual(real_number_cluster, predict_number_cluster)
 
     def test_parent_tracker(self):
         atoms = bulk("NaCl", crystalstructure='rocksalt', a=4.0)

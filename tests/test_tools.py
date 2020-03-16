@@ -4,7 +4,7 @@ from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
     cname_lt, singlets2conc, aic, aicc, bic,
-    get_extension, add_file_extension
+    get_extension, add_file_extension, equivalent_deco
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -12,6 +12,31 @@ import numpy as np
 
 
 class TestTools(unittest.TestCase):
+    def test_equivalent_deco(self):
+        predict_result=[{'deco': [1,2,3,4],
+                         'equiv_site': [[0,1,2]],
+                         'result': [[1,2,3,4],
+                                    [1,3,2,4],
+                                    [2,1,3,4],
+                                    [2,3,1,4],
+                                    [3,1,2,4],
+                                    [3,2,1,4]]},
+                        {'deco': [1, 2, 3, 4],
+                         'equiv_site': [[0, 3]],
+                         'result': [[1, 2, 3, 4],
+                                    [4, 2, 3, 1]],},
+                        {'deco': [1, 2, 3, 4],
+                         'equiv_site': [],
+                         'result': [[1, 2, 3, 4]]}
+                        ]
+        method_result=[]
+        for dict_list in predict_result:
+            method_result.append(equivalent_deco(dict_list['deco'],dict_list['equiv_site']))
+
+        for count,result_method in enumerate(method_result):
+            self.assertListEqual(predict_result[count]['result'], result_method)
+
+
     def test_min_distance_from_facet(self):
         a = 4.0
         atoms = bulk('Al', crystalstructure='sc', a=a)

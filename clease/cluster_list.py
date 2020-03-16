@@ -178,7 +178,7 @@ class ClusterList(object):
         """Count the number of occurences of all figures."""
         occ_counts = []
         for cluster in self.clusters:
-            occ_counts.append(cluster.num_fig_occurence)
+            occ_counts.append(cluster.num_fig_occurences)
         return occ_counts
 
     def num_occ_figure(self, fig_key, c_name, symm_groups, trans_matrix):
