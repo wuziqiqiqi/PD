@@ -1,5 +1,6 @@
 from clease.regression import LinearRegression, Tikhonov
 from clease.tools import split_dataset
+from typing import List, Dict, Union, Callable
 from clease import _logger
 import numpy as np
 from random import choice
@@ -30,31 +31,28 @@ class PhysicalRidge(LinearRegression):
     the size and diameter respectively. The product goes over all coefficients
     in the model M.
 
-    Parameters:
+    :param lamb_size: Prefactor in front of the size penalization
 
-    lamb_size: float
-        Prefactor in front of the size penalization
+    :param lamb_dia: Prefactor in fron the the diameter penalization
 
-    lamb_dia: float
-        Prefactor in fron the the diameter penalization
-
-    size_decay: str or callable
-        The size_decay function in the priors explained above. It can
-        be one of ['linear', 'exponential', 'polyN'], where N is any integer,
-        or a callable function with
+    :param size_decay: The size_decay function in the priors explained above.
+        It can be one of ['linear', 'exponential', 'polyN'],
+        where N is any integer, or a callable function with
         the signature f(size), where size is the number of atoms in the
         cluster. If polyN is given the penalization is proportional to
         size**N
 
-    dia_decay: str or callable
-        The dia_decay function in the priors explained above. It can be
-        one of ['linear', 'exponential', 'polyN'] where N is any integer,
-        of a callabel function with the signature f(dia) where dia is the
-        diameter. If polyN is given the penalization is proportional to
-        dia**N
+    :param dia_decay: The dia_decay function in the priors explained above.
+        It can be one of ['linear', 'exponential', 'polyN']
+        where N is any integer, of a callable function
+        with the signature f(dia) where dia is the diameter.
+        If polyN is given the penalization is proportional to dia**N
     """
-    def __init__(self, lamb_size=1e-6, lamb_dia=1e-6, size_decay='linear',
-                 dia_decay='linear'):
+    def __init__(self, lamb_size: float = 1e-6,
+                 lamb_dia: float = 1e-6,
+                 size_decay: Union[str, Callable[[int], float]] = 'linear',
+                 dia_decay: Union[str, Callable[[int], float]] = 'linear'
+                 ) -> None:
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
         self._size_decay = get_size_decay(size_decay)
@@ -63,42 +61,38 @@ class PhysicalRidge(LinearRegression):
         self.diameters = []
 
     @property
-    def size_decay(self):
+    def size_decay(self) -> Callable[[int], float]:
         return self._size_decay
 
     @size_decay.setter
-    def size_decay(self, decay):
+    def size_decay(self, decay: Union[str, Callable[[int], float]]) -> None:
         self._size_decay = get_size_decay(decay)
 
     @property
-    def dia_decay(self):
+    def dia_decay(self) -> Callable[[int], float]:
         return self._dia_decay
 
     @dia_decay.setter
-    def dia_decay(self, decay):
+    def dia_decay(self, decay: Union[str, Callable[[int], float]]) -> None:
         self._dia_decay = get_dia_decay(decay)
 
-    def sizes_from_names(self, names):
+    def sizes_from_names(self, names: List[str]) -> None:
         """
         Extract the sizes from a list of correlation function names
 
-        Parameter:
-
-        names: list
-            List of cluster names. The length of the list has to match the
+        :param names: List of cluster names.
+            The length of the list has to match the
             number of columns in the X matrix passed to the fit method.
             Ex: ['c0', 'c1_1', 'c2_d0000_0_00']
         """
         self.sizes = [int(n[1]) for n in names]
 
-    def diameters_from_names(self, names):
+    def diameters_from_names(self, names: List[str]) -> None:
         """
         Extract the diameters from a list of correltion function names
 
-        Parameter:
-
-        names: list
-            List of cluster names. The length of the list has to match the
+        :param names: List of cluster names.
+            The length of the list has to match the
             number of columns in the X matrix passed to the fit method.
             Ex: ['c0', 'c1_1', 'c2_d0000_0_00']
         """
@@ -112,19 +106,15 @@ class PhysicalRidge(LinearRegression):
                 diameters.append(dia)
         self.diameters = diameters
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """
         Fit ECIs
 
-        Parameters:
-
-        X: ndarray
-            Design matrix with correlation functions. The shape is N x M,
+        :param X: Design matrix with correlation functions. The shape is N x M,
             where N is the number of data points and M is the number of
             correlation functions
 
-        y: ndarray
-            Vector with target values. The length of this vector is N
+        :param y: Vector with target values. The length of this vector is N
             (e.g. equal to the number of rows in X)
         """
         if X.shape[1] != len(self.sizes) or X.shape[1] != len(self.diameters):
@@ -143,27 +133,28 @@ class PhysicalRidge(LinearRegression):
         return regressor.fit(X, y)
 
 
-def linear_size(size):
+def linear_size(size: int) -> float:
     if size == 0:
         return 0.0
     return size
 
 
-def linear_dia(dia):
+def linear_dia(dia: int) -> float:
     return dia
 
 
-def exponential_size(size):
+def exponential_size(size: int) -> float:
     if size == 0:
         return 0.0
     return np.exp(size-1) - 1
 
 
-def exponential_dia(dia):
+def exponential_dia(dia: int) -> float:
     return np.exp(dia) - 1.0
 
 
-def get_size_decay(decay):
+def get_size_decay(decay: Union[str, Callable[[int], float]]
+                   ) -> Callable[[int], float]:
     if isinstance(decay, str):
         if decay == 'linear':
             return linear_size
@@ -180,7 +171,8 @@ def get_size_decay(decay):
     raise ValueError("size_decay has to be either a string or callable")
 
 
-def get_dia_decay(decay):
+def get_dia_decay(decay: Union[str, Callable[[int], float]]
+                  ) -> Callable[[int], float]:
     if isinstance(decay, str):
         if decay == 'linear':
             return linear_dia
@@ -197,17 +189,18 @@ def get_dia_decay(decay):
     raise ValueError("dia_decay has to be either a string or callable")
 
 
-def random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=100):
+def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
+                        params: Dict,
+                        X: np.ndarray,
+                        y: np.ndarray,
+                        cv: int = 5,
+                        num_trials: int = 100) -> Dict:
     """
     Estimate the hyper parameters of the Physical Ridge by random search.
 
-    Parameters:
+    :param phys_ridge: Instance of the physical ridge class
 
-    phys_ridge: PhysicalRidge
-        Instance of the physical ridgre class
-
-    params: dict
-        Dictionary with candiates for all parameters. Example:
+    :param params: Dictionary with candiates for all parameters. Example:
         {
             'lamb_dia': [1e-12, 1e-11, 1e-4, 1e-3],
             'lamb_size': [1e-12, 1e-11, 1e-4, 1e-3],
@@ -217,11 +210,10 @@ def random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=100):
         on each iteration a random combination of the the specified
         candidates will be attempted.
 
-    cv: int
-        Number of folds used for cross validation
+    :param cv: Number of folds used for cross validation
 
-    num_trials: int
-        Number of combinations of hyper parameters that will be tried
+    :param num_trials: Number of combinations of hyper parameters
+        that will be tried
     """
     best_param = None
     best_cv = 0.0
@@ -275,8 +267,7 @@ def random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=100):
                     f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
             last_print = time.time()
 
-    cv_params = sorted(cv_params, key=lambda x: x[0])
-
+    cv_params = sorted(cv_params)
     res = {
         'best_coeffs': best_coeff,
         'best_params': best_param,

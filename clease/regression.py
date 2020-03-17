@@ -2,10 +2,11 @@
 import numpy as np
 from numpy.linalg import pinv
 from clease.dataNormalizer import DataNormalizer
+from typing import Union, Optional, List
 
 
 class LinearRegression(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self._weight_matrix = None
         self.tol = 1E-8
 
@@ -17,14 +18,11 @@ class LinearRegression(object):
     def weight_matrix(self, matrix):
         self._weight_matrix = matrix
 
-    def _ensure_weight_matrix_consistency(self, data):
+    def _ensure_weight_matrix_consistency(self, data: np.ndarray) -> None:
         """Raise an error if the dimensions of the
            weight matrix is not consistent.
 
-        Parameters:
-
-        data: numpy.ndarray
-            y-values in the fit
+        :param data: y-values in the fit
         """
         if self._weight_matrix is not None:
             if self._weight_matrix.shape[1] != len(data):
@@ -32,15 +30,14 @@ class LinearRegression(object):
                                  f"dimension {len(data)}x{len(data)}, "
                                  f"{self._weight_matrix.shape} given")
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit a linear model by performing ordinary least squares
 
         y = Xc
 
-        Parameters:
+        :param X: Design matrix (NxM)
 
-        X: Design matrix (NxM)
-        y: Data points (vector of length N)
+        :param y: Data points (vector of length N)
         """
         self._ensure_weight_matrix_consistency(y)
 
@@ -53,7 +50,7 @@ class LinearRegression(object):
         coeff = V.dot(np.diag(diag_item)).dot(U.T).dot(y)
         return coeff
 
-    def precision_matrix(self, X):
+    def precision_matrix(self, X: np.ndarray) -> np.ndarray:
         U, D, V_h = np.linalg.svd(X, full_matrices=False)
         V = V_h.T
         diag = np.zeros_like(D)
@@ -62,13 +59,13 @@ class LinearRegression(object):
         return V.dot(np.diag(diag)).dot(V.T)
 
     @staticmethod
-    def get_instance_array():
+    def get_instance_array() -> List[object]:
         return [LinearRegression()]
 
     def is_scalar(self):
         return False
 
-    def get_scalar_parameter(self):
+    def get_scalar_parameter(self) -> None:
         raise ValueError("Fitting scheme is not described by a scalar "
                          "parameter!")
 
@@ -80,10 +77,7 @@ class LinearRegression(object):
 class Tikhonov(LinearRegression):
     """Ridge regularization.
 
-    Parameters:
-
-    alpha: float, 1D or 2D numpy array
-        regularization term
+    :param alpha: regularization term
         - float: A single regularization coefficient is used for all features.
                  Tikhonov matrix is T = alpha * I (I = identity matrix).
         - 1D array: Regularization coefficient is defined for each feature.
@@ -94,17 +88,18 @@ class Tikhonov(LinearRegression):
                     The dimensions of the matrix should be M * M where M is the
                     number of features.
 
-    normalize: bool
-        If True each feature will be normalized to before fitting
+    :param normalize: If True each feature will be normalized to before fitting
     """
 
-    def __init__(self, alpha=1E-5, penalize_bias_term=False, normalize=True):
+    def __init__(self, alpha: Union[float, np.ndarray] = 1E-5,
+                 penalize_bias_term: bool = False,
+                 normalize: bool = True) -> None:
         LinearRegression.__init__(self)
         self.alpha = alpha
         self.penalize_bias_term = penalize_bias_term
         self.normalize = normalize
 
-    def _get_tikhonov_matrix(self, num_clusters):
+    def _get_tikhonov_matrix(self, num_clusters: int) -> np.ndarray:
         if isinstance(self.alpha, np.ndarray):
             if len(self.alpha.shape) == 1:
                 tikhonov = np.diag(self.alpha)
@@ -120,7 +115,7 @@ class Tikhonov(LinearRegression):
             tikhonov *= np.sqrt(self.alpha)
         return tikhonov
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on Ridge regularizeation."""
         self._ensure_weight_matrix_consistency(y)
 
@@ -150,7 +145,7 @@ class Tikhonov(LinearRegression):
             coeff = coeff_with_bias
         return coeff
 
-    def precision_matrix(self, X):
+    def precision_matrix(self, X: np.ndarray) -> np.ndarray:
         """Calculate the presicion matrix."""
         num_features = X.shape[1]
         tikhonov = self._get_tikhonov_matrix(num_features)
@@ -166,7 +161,10 @@ class Tikhonov(LinearRegression):
         return precision
 
     @staticmethod
-    def get_instance_array(alpha_min, alpha_max, num_alpha=10, scale='log'):
+    def get_instance_array(alpha_min: float,
+                           alpha_max: float,
+                           num_alpha: int = 10,
+                           scale: Optional[str] = 'log') -> List[object]:
         if scale == 'log':
             alpha = np.logspace(np.log10(alpha_min), np.log10(alpha_max),
                                 int(num_alpha), endpoint=True)
@@ -175,10 +173,10 @@ class Tikhonov(LinearRegression):
                                 endpoint=True)
         return [Tikhonov(alpha=a) for a in alpha]
 
-    def is_scalar(self):
+    def is_scalar(self) -> bool:
         return isinstance(self.alpha, float)
 
-    def get_scalar_parameter(self):
+    def get_scalar_parameter(self) -> float:
         if self.is_scalar():
             return self.alpha
         LinearRegression.get_scalar_parameter(self)
@@ -187,17 +185,14 @@ class Tikhonov(LinearRegression):
 class Lasso(LinearRegression):
     """LASSO regularization.
 
-    Parameter:
-
-    alpha: float
-        regularization coefficient
+    :param alpha: regularization coefficient
     """
 
-    def __init__(self, alpha=1E-5):
+    def __init__(self, alpha: float = 1E-5) -> None:
         LinearRegression.__init__(self)
         self.alpha = alpha
 
-    def fit(self, X, y):
+    def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on LASSO regularizeation."""
         from sklearn.linear_model import Lasso
         lasso = Lasso(alpha=self.alpha, fit_intercept=False, copy_X=True,
@@ -210,12 +205,15 @@ class Lasso(LinearRegression):
         return LinearRegression.weight_matrix(self)
 
     @weight_matrix.setter
-    def weight_matrix(self, X):
+    def weight_matrix(self, X: np.ndarray):
         raise NotImplementedError("Currently Lasso does not support "
                                   "data weighting.")
 
     @staticmethod
-    def get_instance_array(alpha_min, alpha_max, num_alpha=10, scale='log'):
+    def get_instance_array(alpha_min: float,
+                           alpha_max: float,
+                           num_alpha: int = 10,
+                           scale: str = 'log') -> List[object]:
         if scale == 'log':
             alpha = np.logspace(np.log10(alpha_min), np.log10(alpha_max),
                                 int(num_alpha), endpoint=True)
@@ -227,10 +225,10 @@ class Lasso(LinearRegression):
     def is_scalar(self):
         return True
 
-    def get_scalar_parameter(self):
+    def get_scalar_parameter(self) -> float:
         return self.alpha
 
-    def precision_matrix(self, X):
+    def precision_matrix(self, X: np.ndarray) -> None:
         raise NotImplementedError("Precision matrix for LASSO is not "
                                   "implemented.")
 
