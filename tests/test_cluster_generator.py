@@ -96,6 +96,24 @@ class TestClusterGenerator(unittest.TestCase):
                 i, test['lattice'], lattice)
             self.assertEqual(lattice, test['lattice'], msg=msg)
 
+    def test_get_max_distance(self):
+        a = 3.8
+        atoms = bulk('Fe', a=a)
+        generator = ClusterGenerator(atoms)
+        generator.prim.cell = [[1,0,0], [0, 1, 0], [0, 0, 1]]
+
+        true_list = [{'input': [[1, 2, 3, 0], [3, 4, 1, 0]],
+             'result': 3.4641},
+             {'input': [[1, 2, 3, 0], [2, 3, 4, 0]],
+              'result': 1.7321},
+             {'input': [[1, 2, 3, 0], [2, 3, 4, 0], [3, 4, 1, 0]],
+              'result': 3.4641}]
+        predict_list = []
+        for fig in true_list:
+            predict_list.append(generator.get_max_distance(fig['input']))
+        for true, predict in zip(true_list, predict_list):
+            self.assertAlmostEqual(true['result'], round(predict, 4))
+
 
 if __name__ == '__main__':
     unittest.main()
