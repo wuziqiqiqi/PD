@@ -108,7 +108,7 @@ class Evaluate(object):
         # Remove the cluster names that correspond to clusters larger than the
         # specified size and diameter.
         if max_cluster_size is not None:
-            self.cf_names = self._filter_cname_on_size()
+            self.cf_names = self._filter_cname_on_size(max_cluster_size)
         if max_cluster_dia is not None:
             max_dia = self._get_max_cluster_dia(max_cluster_dia)
             self.cf_names = self._filter_cname_circum_dia(max_dia)
@@ -880,9 +880,7 @@ class Evaluate(object):
         Filter the cluster names based on the diameter of the circumscribed
         sphere.
 
-        Paramaeter:
-
-        max_dia: list of float
+        :param max_dia: list of float
             Diameter of the cirscumscribed sphere for each size
         """
         filtered_names = []
@@ -890,6 +888,9 @@ class Evaluate(object):
             size = int(name[1])
             if size >= len(max_dia):
                 raise ValueError("Inconsistent length of max_dia")
+            elif size in [0, 1]:
+                filtered_names.append(name)
+                continue
 
             prefix = name.rpartition("_")[0]
             cluster = self.setting.cluster_list.get_by_name(prefix)[0]
@@ -903,9 +904,7 @@ class Evaluate(object):
         """
         Estimate the generalization error to new datapoints
 
-        Parameters:
-
-        validation_ids: list of int
+        :param validation_ids: list of int
             List with IDs to leave out of the dataset
         """
 

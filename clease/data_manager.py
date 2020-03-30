@@ -16,9 +16,7 @@ class DataManager(object):
     DataManager is a class for extracting data from CLEASE databases to be
     used to fit ECIs
 
-    Parameters:
-
-    : param db_name: Name of the database
+    :param db_name: Name of the database
     """
     def __init__(self, db_name: str):
         self.db_name = db_name
@@ -210,8 +208,8 @@ class CorrelationFunctionGetter(object):
 
     :param cf_names: List with the names of the correlation functions
 
-    :param tab_name: Name of the external table where the correlation functions
-        are stored
+    :param tab_name: Name of the external table where the correlation
+        functions are stored
     """
     def __init__(self, db_name: str, cf_names: List[str],
                  tab_name: str) -> None:
@@ -250,7 +248,7 @@ class CorrelationFunctionGetter(object):
             # are placed in a dictionary because the IDs is not nessecarily
             # a monotone sequence of ints
             for name, value, db_id in cur.fetchall():
-                if db_id in id_set:
+                if db_id in id_set and name in self.cf_names:
                     cur_row = id_cf_values.get(db_id, [])
                     names = id_cf_names.get(db_id, [])
 
@@ -417,7 +415,8 @@ class CorrFuncVolumeDataManager(DataManager):
         self.tab_name = tab_name
         self.cf_names = cf_names
 
-    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_data(self,
+                 select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return X and y, where X is the design matrix containing correlation
         functions and y is the volume per atom.
@@ -596,7 +595,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
                     id_key[db_id] = value
         return id_key
 
-    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_data(self,
+                 select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix and the target values for the entries
         corresponding to select_cond.
