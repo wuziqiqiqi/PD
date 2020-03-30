@@ -6,7 +6,7 @@ from ase import Atoms
 from clease import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
 from clease.data_manager import (
     FinalVolumeGetter, CorrelationFunctionGetterVolDepECI,
-    InconsistentDataError
+    InconsistentDataError, CorrelationFunctionGetter
 )
 from clease.tools import update_db
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -35,18 +35,15 @@ class TestDataManager(unittest.TestCase):
         cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
         db_name = 'test_get_data.db'
 
-        managers = [
-            CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
-            CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
-        ]
-
         tests = [
             {
-                'manager': CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
+                'manager': CorrFuncEnergyDataManager(db_name, 'cf_func',
+                                                     cf_names),
                 'expect_header': "# c0,c1_1,c2_d0000_0_00,E_DFT (eV/atom)\n",
             },
             {
-                'manager': CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
+                'manager': CorrFuncVolumeDataManager(db_name, 'cf_func',
+                                                     cf_names),
                 'expect_header': "# c0,c1_1,c2_d0000_0_00,Volume (A^3)\n",
             }
         ]
@@ -89,7 +86,7 @@ class TestDataManager(unittest.TestCase):
         db_name = 'test_get_pattern.db'
         create_db(db_name)
         cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
-        manager = CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func')
+        manager = CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names)
         manager.get_data([('converged', '=', 1)])
         os.remove(db_name)
 
@@ -120,7 +117,7 @@ class TestDataManager(unittest.TestCase):
         db_name = 'test_get_cols.db'
         create_db(db_name)
         cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
-        manager = CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func')
+        manager = CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names)
         X, _ = manager.get_data([('converged', '=', 1)])
         os.remove(db_name)
 
@@ -171,11 +168,21 @@ class TestDataManager(unittest.TestCase):
 
         tests = [
             {
-                'manager': CorrFuncEnergyDataManager(db_name, cf_names, 'cf_func'),
+                'manager': CorrFuncEnergyDataManager(db_name, 'cf_func',
+                                                     cf_names),
                 'target_col': 'energy'
             },
             {
-                'manager': CorrFuncVolumeDataManager(db_name, cf_names, 'cf_func'),
+                'manager': CorrFuncVolumeDataManager(db_name, 'cf_func',
+                                                     cf_names),
+                'target_col': 'volume'
+            },
+             {
+                'manager': CorrFuncEnergyDataManager(db_name, 'cf_func', None),
+                'target_col': 'energy'
+            },
+            {
+                'manager': CorrFuncVolumeDataManager(db_name, 'cf_func', None),
                 'target_col': 'volume'
             }
         ]
@@ -290,6 +297,44 @@ class TestDataManager(unittest.TestCase):
         self.assertTrue(np.allclose(y, y_expect))
 
         os.remove(db_name)
+
+    def test_is_matrix_representable(self):
+        getter = CorrelationFunctionGetter('somedb.db', 'sometable')
+        tests = [
+            {
+                'id_cf_names': {
+                    1: ['abc', 'def', 'ghi'],
+                    2: ['abc', 'def', 'ghi']
+                },
+                'matrix_repr': True,
+                'min_common': set(['abc', 'def', 'ghi'])
+            },
+            {
+                'id_cf_names': {
+                    1: ['abc', 'def', 'ghi'],
+                    2: ['abc', 'def', 'ghj']
+                },
+                'matrix_repr': False,
+                'min_common': set(['abc', 'def'])
+            },
+            {
+                'id_cf_names': {
+                    1: ['abc', 'def', 'ghi'],
+                    2: ['abc', 'ghi']
+                },
+                'matrix_repr': False,
+                'min_common': set(['abc', 'ghi'])
+            }
+        ]
+
+        for test in tests:
+            self.assertEqual(
+                getter._is_matrix_representable(test['id_cf_names']),
+                test['matrix_repr']
+            )
+
+            min_set = getter._minimum_common_cf_set(test['id_cf_names'])
+            self.assertSetEqual(min_set, test['min_common'])
 
 
 if __name__ == '__main__':

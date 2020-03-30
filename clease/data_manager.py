@@ -1,7 +1,7 @@
 from clease import _logger
 from ase.db import connect
 import numpy as np
-from clease.tools import add_file_extension
+from clease.tools import add_file_extension, sort_cf_names
 from ase.db.core import parse_selection
 from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
@@ -87,8 +87,8 @@ class DataManager(object):
         >>> _ = final.get_potential_energy()
         >>> db.write(final)
         2
-        >>> feat_getter = CorrelationFunctionGetter(db_name, ['c0', 'c1_0',
-        ... 'c2_d0000_0_00'], 'polynomial_cf')
+        >>> feat_getter = CorrelationFunctionGetter(db_name, 'polynomial_cf',
+        ... ['c0', 'c1_0', 'c2_d0000_0_00'], )
         >>> targ_getter = FinalStructEnergyGetter(db_name)
         >>> manager = DataManager(db_name)
         >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter,
@@ -178,8 +178,8 @@ class CorrFuncEnergyDataManager(DataManager):
     :param tab_name: Name of the table where the correlation functions are
         stored
     """
-    def __init__(self, db_name: str, cf_names: List[str],
-                 tab_name: str) -> None:
+    def __init__(self, db_name: str, tab_name: str,
+                 cf_names: Optional[List[str]] = None) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -194,8 +194,8 @@ class CorrFuncEnergyDataManager(DataManager):
         """
         return DataManager.get_data(
             self, select_cond,
-            CorrelationFunctionGetter(self.db_name, self.cf_names,
-                                      self.tab_name),
+            CorrelationFunctionGetter(self.db_name, self.tab_name,
+                                      self.cf_names),
             FinalStructEnergyGetter(self.db_name))
 
 
@@ -206,13 +206,15 @@ class CorrelationFunctionGetter(object):
 
     :param db_name: Name of the database
 
-    :param cf_names: List with the names of the correlation functions
-
     :param tab_name: Name of the external table where the correlation
         functions are stored
+
+    :param cf_names: List with the names of the correlation functions.
+        If None, all correlation functions in the database will be
+        extracted
     """
-    def __init__(self, db_name: str, cf_names: List[str],
-                 tab_name: str) -> None:
+    def __init__(self, db_name: str, tab_name: str,
+                 cf_names: Optional[List[str]] = None) -> None:
         self.db_name = db_name
         self.cf_names = cf_names
         self.tab_name = tab_name
@@ -224,11 +226,51 @@ class CorrelationFunctionGetter(object):
         """
         return self.cf_names
 
+    def _extract_cf_name(self, name: str) -> bool:
+        """
+        Return True if the name should be extracted
+        """
+        return self.cf_names is None or name in self.cf_names
+
+    def _is_matrix_representable(
+            self, id_cf_names: Dict[int, List[str]]
+            ) -> bool:
+        """
+        Check if the extracted correlation functions can be represented as a
+        matrix.
+        """
+        reference = sorted(list(id_cf_names.values())[0])
+
+        # Check the names of the correlation functions is equal for
+        # all rows
+        for v in id_cf_names.values():
+            srt_v = sorted(v)
+            if len(srt_v) != len(reference):
+                return False
+            if any(x != y for x, y in zip(reference, srt_v)):
+                return False
+        return True
+
+    def _minimum_common_cf_set(
+            self, id_cf_names: Dict[int, List[str]]
+            ) -> Set[str]:
+        """
+        Returns the minimum set of correlation functions that exists for all
+        rows.
+        """
+        common_cf = set(list(id_cf_names.values())[0])
+        for v in id_cf_names.values():
+            common_cf = common_cf.intersection(v)
+        return common_cf
+
     def __call__(self, ids: List[int]) -> np.ndarray:
         """
         Extracts the design matrix associated with the database IDs. The first
         row in the matrix corresponds to the first item in ids, the second row
-        corresponds to the second item in ids etc.
+        corresponds to the second item in ids etc. If cf_names was None, all
+        correlation functions in the database will be extracted. cf_names will
+        be updated such that it reflects the names of the correlation functions
+        that were extracted.
 
         :param ids: Database IDs of initial structures
         """
@@ -248,7 +290,7 @@ class CorrelationFunctionGetter(object):
             # are placed in a dictionary because the IDs is not nessecarily
             # a monotone sequence of ints
             for name, value, db_id in cur.fetchall():
-                if db_id in id_set and name in self.cf_names:
+                if db_id in id_set and self._extract_cf_name(name):
                     cur_row = id_cf_values.get(db_id, [])
                     names = id_cf_names.get(db_id, [])
 
@@ -257,6 +299,22 @@ class CorrelationFunctionGetter(object):
 
                     id_cf_values[db_id] = cur_row
                     id_cf_names[db_id] = names
+
+        if not self._is_matrix_representable(id_cf_names):
+            min_set = self._minimum_common_cf_set(id_cf_names)
+            msg = "The extracted correlation functions cannot be "
+            msg += "represented as a matrix because there are a "
+            msg += "number of columns for each row or at least one of "
+            msg += "the names of the column differ.\n"
+            msg += "Minimum common set of correlation functions.\n"
+            msg += f"{min_set}\n"
+            raise InconsistentDataError(msg)
+
+        if self.cf_names is None:
+            self.cf_names = set([v for item in id_cf_names.values()
+                                 for v in item])
+            self.cf_names = list(self.cf_names)
+            self.cf_names = sort_cf_names(self.cf_names)
 
         # Make sure that all the rows are ordered in the same way
         cf_name_col = {n: i for i, n in enumerate(self.cf_names)}
@@ -404,13 +462,14 @@ class CorrFuncVolumeDataManager(DataManager):
 
     :param db_name: Name of the database being passed
 
-    :param cf_names: List with the correlation function names to extract
-
     :param tab_name: Name of the table where the correlation functions are
         stored
+
+    :param cf_names: List with the correlation function names to extract.
+        If None, all correlation functions in the database will be extracted.
     """
-    def __init__(self, db_name: str, cf_names: List[str],
-                 tab_name: str) -> None:
+    def __init__(self, db_name: str, tab_name: str,
+                 cf_names: Optional[List[str]] = None) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -430,7 +489,7 @@ class CorrFuncVolumeDataManager(DataManager):
         return DataManager.get_data(
             self, select_cond,
             CorrelationFunctionGetter(
-                self.db_name, self.cf_names, self.tab_name),
+                self.db_name, self.tab_name, self.cf_names),
             FinalVolumeGetter(self.db_name))
 
 
@@ -495,8 +554,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         :param ids: List of ids to take into account
         """
-        cf_getter = CorrelationFunctionGetter(self.db_name, self.cf_names,
-                                              self.tab_name)
+        cf_getter = CorrelationFunctionGetter(
+            self.db_name, self.tab_name, self.cf_names)
         cf = cf_getter(ids)
 
         volume_getter = FinalVolumeGetter(self.db_name)

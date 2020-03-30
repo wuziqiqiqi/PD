@@ -4,7 +4,8 @@ from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
     cname_lt, singlets2conc, aic, aicc, bic,
-    get_extension, add_file_extension, equivalent_deco
+    get_extension, add_file_extension, equivalent_deco,
+    sort_cf_names
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -304,6 +305,26 @@ class TestTools(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             add_file_extension('data.json', 'csv')
+
+    def test_sort_cf_names(self):
+        tests = [
+            {
+                'names': ['c1_8', 'c0_0', 'c1_1'],
+                'expect': ['c0_0', 'c1_1', 'c1_8']
+            },
+            {
+                'names': ['c2_d0010_0_00', 'c2_d0009_0_00', 'c0_0', 'c1_1', ],
+                'expect': ['c0_0', 'c1_1', 'c2_d0009_0_00', 'c2_d0010_0_00']
+            },
+            {
+                'names': ['c3_d0008_0_00', 'c2_d0009_0_00', 'c0_0', 'c1_1', ],
+                'expect': ['c0_0', 'c1_1', 'c2_d0009_0_00', 'c3_d0008_0_00']
+            }
+        ]
+
+        for test in tests:
+            sorted_names = sort_cf_names(test['names'])
+            self.assertListEqual(sorted_names, test['expect'])
 
 
 if __name__ == '__main__':

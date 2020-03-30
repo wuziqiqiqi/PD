@@ -5,10 +5,13 @@ from itertools import (
 )
 import numpy as np
 from collections.abc import Iterable
+from typing import List
+from typing import Iterable as tIterable
 from random import sample
 from ase.db import connect
 from clease import _logger
 from scipy.spatial import cKDTree as KDTree
+import re
 
 
 class ApproxEqualityList(object):
@@ -833,3 +836,29 @@ def add_file_extension(fname, ext):
     if current_ext == '':
         return fname + '.' + ext
     raise ValueError(f"Passed extenstion {current_ext} expected {ext}")
+
+
+def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
+    """
+    Return a sorted list of correlation function names. The names are
+    sorted according to the following criteria
+
+    1. Size
+    2. Diameter
+    3. Lexicographical order of the name itself
+    """
+    sizes = [int(n[1]) for n in cf_names]
+    # Regular expression that extracts all digits after the occurence
+    # of _d (e.g. c2_d0001_0_00 --> 0001)
+    prog = re.compile("_d(\\d+)")
+    dia_str = [prog.findall(n) for n in cf_names]
+    dia = []
+    for d in dia_str:
+        if d:
+            dia.append(int(d[0]))
+        else:
+            dia.append(0)
+
+    sort_obj = [(s, d, n) for s, d, n in zip(sizes, dia, cf_names)]
+    sort_obj.sort()
+    return [s[-1] for s in sort_obj]

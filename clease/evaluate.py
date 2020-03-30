@@ -119,7 +119,7 @@ class Evaluate(object):
         # argument since Evaluate does not depend on the details on how the
         # data was optained
         self.dm = CorrFuncEnergyDataManager(
-            setting.db_name, self.cf_names, tab_name)
+            setting.db_name, tab_name, self.cf_names)
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
         db = connect(setting.db_name)
