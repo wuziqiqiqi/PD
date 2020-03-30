@@ -258,6 +258,15 @@ class Clease(Calculator):
         """
         self.eci = eci
         self.updater.set_eci(eci)
+        self._on_eci_changed()
 
     def get_singlets(self) -> np.ndarray:
         return self.updater.get_singlets()
+
+    def _on_eci_changed(self):
+        """
+        Callback that is called after ECIs are changed. It is provided such
+        that calculators inheriting from this class (and implementing this
+        method) can be notified when the ECIs are changed.
+        """
+        pass
