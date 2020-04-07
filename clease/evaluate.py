@@ -10,6 +10,7 @@ from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 from clease.tools import singlets2conc
 from clease.data_manager import CorrFuncEnergyDataManager
+from typing import Optional, Dict
 
 
 # Initialize a module-wide logger
@@ -960,6 +961,65 @@ class Evaluate(object):
         elif self.scoring_scheme == "k-fold":
             cv = self.k_fold_cv() * 1000.0
         return cv
+
+    def get_energy_predict(self) -> np.ndarray:
+        """
+        Perform matrix multiplication of eci and cf_matrix
+
+        :return: Energy prediction calculated by eci
+        """
+        if self.eci is None:
+            raise ValueError("ECIs have not been fitted yet.")
+        return self.cf_matrix.dot(self.eci)
+
+    def subtract_predict_dft(self) -> np.ndarray:
+        """
+        Subtract energy prediction from energy DFT
+
+        :return: Energy prediction calculated by eci
+        """
+        e_pred = self.get_energy_predict()
+        delta_e = self.e_dft - e_pred
+        return delta_e
+
+    def subtract_predict_dft_loo(self) -> Optional[np.ndarray]:
+        """
+        Subtract energy prediction from energy DFT
+
+        :return: Energy prediction calculated by eci
+        """
+        if self.e_pred_loo is None:
+            return None
+        loo_delta = (self.e_dft - self.e_pred_loo) * 1000.0
+        return loo_delta
+
+    def get_eci_by_size(self) -> Dict[str, Dict[str, list]]:
+        """
+        Classify distance, eci and cf_name according to cluster body size
+
+        :return: Dictionary contains
+            * first index
+                - body size of cluster
+            * second index
+                - "distance" : distance of the cluster
+                - "eci" : eci of the cluster
+                - "name" : name of the cluster
+        """
+        if self.eci is None:
+            raise ValueError("ECIs have not been fitted yet.")
+        distances = self._distance_from_names()
+
+        # Structure the ECIs in terms by size
+        eci_by_size = {}
+        for name, distance, eci in zip(self.cf_names, distances, self.eci):
+            size = int(name[1])
+            if size not in eci_by_size.keys():
+                eci_by_size[size] = {"distance": [], "eci": [], "name": []}
+            eci_by_size[size]["distance"].append(distance)
+            eci_by_size[size]["eci"].append(eci)
+            eci_by_size[size]["name"].append(name)
+
+        return eci_by_size
 
 
 def loocv_mp(args):
