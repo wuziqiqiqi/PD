@@ -10,7 +10,7 @@ from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 from clease.tools import singlets2conc
 from clease.data_manager import CorrFuncEnergyDataManager
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 
 # Initialize a module-wide logger
@@ -901,12 +901,11 @@ class Evaluate(object):
                 filtered_names.append(name)
         return filtered_names
 
-    def generalization_error(self, validation_id):
+    def generalization_error(self, validation_id: List[int]):
         """
         Estimate the generalization error to new datapoints
 
-        :param validation_ids: list of int
-            List with IDs to leave out of the dataset
+        :param validation_ids: List with IDs to leave out of the dataset
         """
 
         db = connect(self.settings.db_name)
@@ -966,7 +965,7 @@ class Evaluate(object):
         """
         Perform matrix multiplication of eci and cf_matrix
 
-        :return: Energy prediction calculated by eci
+        :return: Energy predicted using ECIs
         """
         if self.eci is None:
             raise ValueError("ECIs have not been fitted yet.")
@@ -974,9 +973,10 @@ class Evaluate(object):
 
     def subtract_predict_dft(self) -> np.ndarray:
         """
-        Subtract energy prediction from energy DFT
+        Subtract CE predicted energy from DFT energy
 
-        :return: Energy prediction calculated by eci
+        :return: Energy difference between DFT and CE model
+            (i.e., E_DFT - E_CE) in the original unit (typically eV)
         """
         e_pred = self.get_energy_predict()
         delta_e = self.e_dft - e_pred
@@ -984,14 +984,16 @@ class Evaluate(object):
 
     def subtract_predict_dft_loo(self) -> Optional[np.ndarray]:
         """
-        Subtract energy prediction from energy DFT
+        Subtract CE predicted energy from DFT energy in the leave-one-out
+        scheme.
 
-        :return: Energy prediction calculated by eci
+        :return: Energy difference between DFT and CE model
+            (i.e., E_DFT - E_CE_LOO) in the original unit (typically eV)
         """
         if self.e_pred_loo is None:
             return None
-        loo_delta = (self.e_dft - self.e_pred_loo) * 1000.0
-        return loo_delta
+        delta_e_loo = self.e_dft - self.e_pred_loo
+        return delta_e_loo
 
     def get_eci_by_size(self) -> Dict[str, Dict[str, list]]:
         """
