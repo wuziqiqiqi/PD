@@ -5,7 +5,8 @@ from ase.db import connect
 import numpy as np
 import unittest
 from clease.tools import update_db
-from clease.plot_post_process import plot_fit, plot_fit_residual, plot_eci
+from clease.plot_post_process import plot_fit, plot_fit_residual,\
+    plot_eci, plot_cv
 
 
 def create_database():
@@ -106,6 +107,30 @@ class TestEvaluate(unittest.TestCase):
                              np.ndarray.tolist(fig.gca().lines[5].get_ydata()))
         self.assertListEqual(predict['axhline_xy'],
                              np.ndarray.tolist(fig.gca().axhline().get_xydata()))
+
+    def test_plot_cv(self):
+        predict = {"title": "plot_FIT_TEST",
+                   "xlabel": "alpha",
+                   "ylabel": "DFT_FIT"}
+        plot_args = {"title": predict["title"],
+                     "ylabel": predict["ylabel"]}
+
+        evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1E-6)
+        alphas = [0.1, 0.2, 0.3, 0.4, 0.5]
+        evaluator.cv_for_alpha(alphas)
+
+        predict['alpha_cv'] = evaluator.cv_scores
+
+        fig = plot_cv(evaluator, plot_args)
+
+        self.assertEqual(predict['title'], fig.get_axes()[0].get_title())
+        self.assertEqual(predict["xlabel"], fig.get_axes()[0].get_xlabel())
+        self.assertEqual(predict["ylabel"], fig.get_axes()[0].get_ylabel())
+
+        true_list = fig.gca().get_lines()[0].get_xdata().tolist()
+
+        for predict, true in zip(predict['alpha_cv'],true_list):
+            self.assertEqual(predict['alpha'], true)
 
 
 if __name__ == '__main__':

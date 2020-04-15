@@ -6,6 +6,7 @@ import multiprocessing as mp
 import logging as lg
 from ase.utils import basestring
 from clease import ClusterExpansionSettings
+from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
 from clease.tools import singlets2conc
@@ -142,6 +143,7 @@ class Evaluate(object):
                 self.num_core = int(num_core)
 
         self.set_fitting_scheme(fitting_scheme, alpha)
+        self._cv_scores = []
 
     @property
     def concentrations(self):
@@ -560,6 +562,35 @@ class Evaluate(object):
                 logger.info(f"{alpha:.10f}\t {num_eci}\t {cv[i]:.10f}")
 
         return alphas, cv
+
+    def cv_for_alpha(self, alphas: List[float]) -> None:
+        """
+        Calculate the CV scores for alphas using the fitting scheme
+        specified in the Evaluate object.
+
+        :param alphas: List of alpha values to get CV scores
+        """
+        if not isinstance(self.scheme, LinearRegression):
+            raise TypeError("Fitting scheme must be a LinearRegression")
+
+        for alpha in alphas:
+            self.scheme.alpha = alpha
+            if self.scoring_scheme == "loocv":
+                cv = self.loocv()
+            elif self.scoring_scheme == "loocv_fast":
+                cv = self.loocv_fast()
+            elif self.scoring_scheme == "k-fold":
+                cv = self.k_fold_cv()
+            num_eci = len(np.nonzero(self.get_eci())[0])
+            self._cv_scores.append({'alpha': alpha, 'cv': cv})
+            logger.info(f"{alpha:.10f}\t {num_eci}\t {cv:.10f}")
+
+    @property
+    def cv_scores(self):
+        if not self._cv_scores:
+            raise ValueError("CV scores have not been calculated yet")
+
+        return self._cv_scores
 
     def plot_CV(self, alpha_min=1E-7, alpha_max=1.0, num_alpha=10, scale='log',
                 logfile=None, fitting_schemes=None, savefig=False, fname=None):

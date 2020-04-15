@@ -140,3 +140,45 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
         lines.append(line[0])
     ax.legend()
     return fig
+
+
+def plot_cv(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
+    """
+    Figure object of CV values according to alpha values
+    If the plot_args dictionary contains keys,
+    return  figure object to relate plot_args  keys
+
+    :param evaluate: Use the evaluate object
+    to define the plot argument.
+    :param plot_args: plot_args dictionary contains:
+        - "xlabel": x-axis label
+        - "ylabel": y-axis label
+        - "title": title of plot
+
+    :return: Figure instance of plot
+    """
+    alpha_cv_data = evaluate.cv_scores
+    xlabel = plot_args.get("xlabel",  "alpha")
+    ylabel = plot_args.get("ylabel", 'CV score (meV/atom)')
+    title = plot_args.get("title", 'CV score vs. alpha')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+
+    # this variable is for getting minimum cv
+    min_cv = min(alpha_cv_data, key=lambda x: x['cv'])
+    X = []
+    Y = []
+    for data in alpha_cv_data:
+        X.append(data['alpha'])
+        Y.append(data['cv'])
+    ax.plot(X, Y)
+    ax.text(0.65, 0.01, f"min. CV score:\n"
+                        f"alpha = {min_cv['alpha']:.10f} \n"
+                        f"CV = {min_cv['cv'] * 1000.0:.3f}"
+                        f" meV/atom",
+            verticalalignment='bottom', horizontalalignment='left',
+            transform=ax.transAxes, fontsize=10)
+    return fig

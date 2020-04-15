@@ -197,6 +197,80 @@ class TestEvaluate(unittest.TestCase):
         true_list = evaluator._filter_cname_circum_dia(setting.max_cluster_dia)
         self.assertListEqual(input['true'], true_list)
 
+    def test_cv_for_alpha(self):
+        """
+        Temporary name of new 'alpha_cv' method.
+        If the document is updated related to evaluate class,
+        The method name should be changed.
+        """
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        alphas=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
+        true_list = []
+        evaluator.cv_for_alpha(alphas)
+        for alpha in alphas:
+            evaluator.scheme.alpha = alpha
+            true_list.append(evaluator.loocv())
+        predict_list = evaluator.cv_scores
+        predict_list = [tmp_i['cv'] for tmp_i in predict_list]
+        self.assertListEqual(true_list, predict_list)
+
+    def test_get_energy_predict(self):
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        evaluator.get_eci()
+        true_list = evaluator.cf_matrix.dot(evaluator.eci)
+        predict_list = evaluator.get_energy_predict()
+        self.assertListEqual(true_list.tolist(), predict_list.tolist())
+
+    def test_get_energy_predict(self):
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        evaluator.get_eci()
+        true_list = evaluator.cf_matrix.dot(evaluator.eci)
+        predict_list = evaluator.get_energy_predict()
+        self.assertListEqual(true_list.tolist(), predict_list.tolist())
+
+    def test_subtract_predict_dft(self):
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        evaluator.get_eci()
+        e_pred = evaluator.get_energy_predict()
+        true_delta = evaluator.e_dft - e_pred
+        predict_delta = evaluator.subtract_predict_dft()
+        self.assertListEqual(true_delta.tolist(), predict_delta.tolist())
+
+    def test_subtract_predict_dft_loo(self):
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        evaluator.loocv()
+        true_delta = evaluator.e_dft - evaluator.e_pred_loo
+        predict_delta = evaluator.subtract_predict_dft_loo()
+        self.assertListEqual(true_delta.tolist(), predict_delta.tolist())
+
+    def test_get_eci_by_size(self):
+        evaluator = Evaluate(settings=bc_setting, fitting_scheme='l1')
+        evaluator.get_eci()
+        name_list = []
+        distance_list = []
+        eci_list = []
+        distances = evaluator._distance_from_names()
+
+        # Structure the ECIs in terms by size
+
+        for name, distance, eci in zip(evaluator.cf_names, distances, evaluator.eci):
+            distance_list.append(distance)
+            eci_list.append(eci)
+            name_list.append(name)
+        dict_eval = evaluator.get_eci_by_size()
+
+        predict_name = []
+        predict_eci = []
+        predict_distance = []
+
+        for tmpi in dict_eval:
+            predict_name = predict_name + dict_eval[tmpi]['name']
+            predict_eci = predict_eci + dict_eval[tmpi]['eci']
+            predict_distance = predict_distance + dict_eval[tmpi]['distance']
+
+        self.assertEqual(name_list, predict_name)
+        self.assertEqual(eci_list, predict_eci)
+        self.assertEqual(distance_list, predict_distance)
 
 if __name__ == '__main__':
     unittest.main()
