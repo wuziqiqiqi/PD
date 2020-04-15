@@ -7,7 +7,7 @@ from clease.gui.constants import INACTIVE_TEXT_COLOR, FOREGROUND_TEXT_COLOR
 from clease.gui.load_save_dialog import LoadDialog
 from clease.gui.util import parse_max_cluster_dia, parse_size
 from clease.gui.util import parse_cell, parse_coordinate_basis, parse_cellpar
-from clease.gui.settingsInitializer import SettingsInitializer
+from clease.gui.settings_initializer import SettingsInitializer
 from threading import Thread
 import traceback
 

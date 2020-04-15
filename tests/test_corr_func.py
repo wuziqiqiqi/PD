@@ -62,7 +62,7 @@ class TestCorrFunc(unittest.TestCase):
         os.remove(db_name_sc)
 
     def test_error_message_for_non_existent_cluster(self):
-        from clease.corrFunc import ClusterNotTrackedError
+        from clease.corr_func import ClusterNotTrackedError
         basis_elements = [['Li', 'X'], ['O', 'X']]
         concentration = Concentration(basis_elements=basis_elements)
         db_name_sc = "rocksalt_sc.db"

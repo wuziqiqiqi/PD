@@ -12,7 +12,7 @@
                     max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. _aucu_initial_pool:
-.. module:: clease.newStruct
+.. module:: clease.new_struct
 
 
 Generating initial structures

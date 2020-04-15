@@ -1,5 +1,5 @@
 import unittest
-from clease.gui.concObsEditor import ConcObsEditor
+from clease.gui.conc_obs_editor import ConcObsEditor
 import clease.gui
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
@@ -28,5 +28,5 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()

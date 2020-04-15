@@ -1,5 +1,5 @@
 import unittest
-from clease.dataNormalizer import DataNormalizer
+from clease.data_normalizer import DataNormalizer
 import numpy as np
 
 

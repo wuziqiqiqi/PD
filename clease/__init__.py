@@ -24,8 +24,8 @@ from clease.concentration import Concentration
 from clease.settings_bulk import CEBulk, CECrystal, settingsFromJSON
 from clease.settings_slab import CESlab
 from clease.evaluate import Evaluate
-from clease.corrFunc import CorrFunction
-from clease.newStruct import NewStructures
+from clease.corr_func import CorrFunction
+from clease.new_struct import NewStructures
 from clease.convexhull import ConvexHull
 from clease.regression import LinearRegression, Tikhonov, Lasso
 from clease.physical_ridge import PhysicalRidge

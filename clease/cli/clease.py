@@ -42,7 +42,7 @@ def main():
         if args.setup:
             install_gui_dependencies([])
         else:
-            from clease.gui.cleaseGUI import CleaseGUI
+            from clease.gui.clease_gui import CleaseGUI
             CleaseGUI().run()
     elif args.command == 'db':
         db_cli(args)

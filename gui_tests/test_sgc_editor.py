@@ -1,5 +1,5 @@
 import unittest
-from clease.gui.sgcEditor import SGCEditor
+from clease.gui.sgc_editor import SGCEditor
 import clease.gui
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
@@ -89,5 +89,5 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()

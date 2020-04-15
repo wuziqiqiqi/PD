@@ -6,8 +6,8 @@ from clease.gui.constants import (
 from kivy.app import App
 from kivy.uix.popup import Popup
 from clease.gui.help_message_popup import HelpMessagePopup
-from clease.gui.concObsEditor import ConcObsEditor
-from clease.gui.sgcEditor import SGCEditor
+from clease.gui.conc_obs_editor import ConcObsEditor
+from clease.gui.sgc_editor import SGCEditor
 from threading import Thread
 from clease.gui.meta_dyn_runner import MetaDynRunner
 from clease.montecarlo import BinnedBiasPotential

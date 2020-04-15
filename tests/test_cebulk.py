@@ -10,7 +10,7 @@ import os
 import json
 from clease import (CEBulk, CorrFunction, NewStructures, Evaluate,
                     Concentration, settingsFromJSON)
-from clease.newStruct import MaxAttemptReachedError
+from clease.new_struct import MaxAttemptReachedError
 from clease.tools import update_db
 from clease.basis_function import (
     Polynomial, Trigonometric, BinaryLinear

@@ -92,11 +92,10 @@ class InsertStructureCB(object):
     Callable class used to update the status field when inserting
     structures
 
-    Parameters:
-
-    status: widget
+    :param status: widget
         Status field of the page
     """
+
     def __init__(self, status):
         self.status = status
 

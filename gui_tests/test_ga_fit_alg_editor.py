@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from clease.gui.fittingAlgorithmEditors import GAEditor
-from clease.gui.fitPage import FitPage
+from clease.gui.fitting_alg_editors import GAEditor
+from clease.gui.fit_page import FitPage
 import clease.gui
 from kivy.uix.textinput import TextInput
 from kivy.lang import Builder
@@ -41,7 +41,7 @@ class TestGAEditor(unittest.TestCase):
         ga_edit.ids.costFuncHelp.dispatch('on_release')
         close(ga_edit)
 
-    @patch('clease.gui.fitPage.App')
+    @patch('clease.gui.fit_page.App')
     def test_closing(self, app_mock):
         clear_cached_values()
         page = FitPage()
@@ -68,11 +68,12 @@ class TestGAEditor(unittest.TestCase):
         page.dismiss_popup()
         self.assertEqual(num_calls, 5)
 
+
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("gaEditor.kv")
-    Builder.load_file("fitLayout.kv")
-    Builder.load_file('help_message_layout.kv')
+    Builder.load_file("ga_editor.kv")
+    Builder.load_file("fit_page.kv")
+    Builder.load_file('help_message.kv')
     unittest.main()

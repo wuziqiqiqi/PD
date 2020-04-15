@@ -40,9 +40,10 @@ class TestCanonicalMCPage(unittest.TestCase):
                     page._pop_up.content.ids.closeButton.dispatch('on_release')
                     self.assertIsNone(page._pop_up)
 
+
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()

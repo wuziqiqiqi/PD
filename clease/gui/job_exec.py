@@ -115,4 +115,5 @@ class JobExec(Screen):
 
         cmd = self.ids.cmdInput.text
         script = self.ids.scriptInput.text
-        Thread(target=self.run_on_separate_thread, args=(cmd, script, dbIds, args)).start()
+        Thread(target=self.run_on_separate_thread,
+               args=(cmd, script, dbIds, args)).start()

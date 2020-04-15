@@ -43,7 +43,7 @@ class SimpleCalc(Calculator):
 
 def fake_attach(**kwargs):
     calc = SimpleCalc()
-    calc.atoms =  kwargs['atoms']
+    calc.atoms = kwargs['atoms']
     kwargs['atoms'].set_calculator(calc)
     return kwargs['atoms']
 
@@ -263,5 +263,5 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()

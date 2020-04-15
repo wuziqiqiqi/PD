@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock, ANY
 
-from clease.gui.fitPage import FitPage
+from clease.gui.fit_page import FitPage
 import clease.gui
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
@@ -47,9 +47,9 @@ class FitPageTests(unittest.TestCase):
             screen.dismiss_popup()
             last_pop_title = new_title
 
-    @patch('clease.gui.fitPage.Evaluate')
-    @patch('clease.gui.fitPage.GAFit')
-    @patch('clease.gui.fitPage.App')
+    @patch('clease.gui.fit_page.Evaluate')
+    @patch('clease.gui.fit_page.GAFit')
+    @patch('clease.gui.fit_page.App')
     def test_ga_fit(self, app_mock, ga_fit_eval_mock, eval_mock):
         # Specify required return values
         eval_mock.return_value.eci = np.array([1.0, 2.0])
@@ -96,15 +96,16 @@ class FitPageTests(unittest.TestCase):
         tol = 1E-6
         self.assertTrue(
             all(map(lambda x:
-                abs(x[0][0] - x[1][0]) < 1E-6 and abs(x[0][1] - x[1][1]) < tol,
-                zip(expect, page.energy_plot.points))))
+                    abs(x[0][0] - x[1][0]) < 1E-6 and abs(x[0]
+                                                          [1] - x[1][1]) < tol,
+                    zip(expect, page.energy_plot.points))))
 
         # Check that the ECI plot has been updated
         self.assertEqual(len(page.eci_plots[0].points), 1)
         self.assertAlmostEqual(page.eci_plots[0].points[0][1], 2.0)
 
-    @patch('clease.gui.fitPage.Evaluate')
-    @patch('clease.gui.fitPage.App')
+    @patch('clease.gui.fit_page.Evaluate')
+    @patch('clease.gui.fit_page.App')
     def test_fit_db_select_cond(self, app_mock, eval_mock):
         root = MagicMock()
         root.ids.status.text = 'Nothing'
@@ -131,7 +132,7 @@ class FitPageTests(unittest.TestCase):
             max_cluster_size=ANY, nsplits=ANY, num_repetitions=ANY,
             scoring_scheme=ANY, select_cond=[('gen', '=', 2.0)])
 
-    @patch('clease.gui.fitPage.App')
+    @patch('clease.gui.fit_page.App')
     def test_auto_load_fit_settings(self, app_mock):
         clear_cache()
         page = FitPage()
@@ -182,9 +183,9 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("fitLayout.kv")
-    Builder.load_file("gaEditor.kv")
-    Builder.load_file("lassoEditorLayout.kv")
-    Builder.load_file("l2EditorLayout.kv")
-    Builder.load_file("bcsEditorLayout.kv")
+    Builder.load_file("fit_page.kv")
+    Builder.load_file("ga_editor.kv")
+    Builder.load_file("lasso_editor.kv")
+    Builder.load_file("l2_editor.kv")
+    Builder.load_file("bcs_editor.kv")
     unittest.main()

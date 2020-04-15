@@ -123,7 +123,7 @@ class TestNewStruct(unittest.TestCase):
             self.assertEqual(gen, action['expect'], msg=msg)
         os.remove(db_name)
 
-    @patch('clease.newStruct.GSStructure')
+    @patch('clease.new_struct.GSStructure')
     def test_num_generated_structures(self, gs_mock):
 
         conc = Concentration(basis_elements=[['Au', 'Cu']])

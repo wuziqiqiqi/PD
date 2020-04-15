@@ -122,6 +122,6 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()
     unittest.main()

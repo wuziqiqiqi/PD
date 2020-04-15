@@ -2,7 +2,7 @@
 import os
 import json
 from clease import CECrystal, NewStructures, CorrFunction, settingsFromJSON
-from clease.newStruct import MaxAttemptReachedError
+from clease.new_struct import MaxAttemptReachedError
 from clease.concentration import Concentration
 from clease.tools import wrap_and_sort_by_position
 from ase.db import connect

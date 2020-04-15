@@ -1,4 +1,4 @@
-from clease.gui.cleaseGUI import CleaseGUI
+from clease.gui.clease_gui import CleaseGUI
 import unittest
 import time
 from kivy.clock import Clock
@@ -46,6 +46,7 @@ class TestSettingsPage(unittest.TestCase):
         Clock.schedule_once(lambda x: self.run_tests(app),
                             self.interval)
         app.run()
+
 
 if __name__ == '__main__':
     unittest.main()

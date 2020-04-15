@@ -8,9 +8,8 @@ from clease.gui.util import (
 )
 from clease.gui.constants import FOREGROUND_TEXT_COLOR
 from clease.gui.constants import ECI_GRAPH_COLORS
-from clease.gui.fittingAlgorithmEditors import (
-    FitAlgEditor, LassoEditor, L2Editor, BCSEditor,
-    GAEditor
+from clease.gui.fitting_alg_editors import (
+    FitAlgEditor, LassoEditor, L2Editor, BCSEditor, GAEditor
 )
 from clease.gui.legend import Legend
 from clease.gui import backup_folder
@@ -72,7 +71,8 @@ class GAClusterSelector(object):
             ga = GAFit(evaluator.cf_matrix, evaluator.e_dft, **self.kwargs)
             best_indx = ga.run(gen_without_change=gen_without_change)
 
-            cf_names = [evaluator.cf_names[i] for i, flag in enumerate(best_indx) if flag]
+            cf_names = [evaluator.cf_names[i]
+                        for i, flag in enumerate(best_indx) if flag]
             optimizer = ECIOptimizer()
             optimizer.fit_page = self.fit_page
             optimizer.evaluator = Evaluate(

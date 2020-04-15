@@ -4,12 +4,12 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.resources import resource_add_path
 from kivy.uix.popup import Popup
 
-from clease.gui.settingsPage import SettingsPage
-from clease.gui.concentrationPage import ConcentrationPage
-from clease.gui.newStructPage import NewStructPage
-from clease.gui.fitPage import FitPage
+from clease.gui.settings_page import SettingsPage
+from clease.gui.concentration_page import ConcentrationPage
+from clease.gui.new_struct_page import NewStructPage
+from clease.gui.fit_page import FitPage
 from clease.gui.meta_dyn_page import MetaDynPage
-from clease.gui.reconfigDB import ReconfigDB
+from clease.gui.reconfig_db import ReconfigDB
 from kivy.core.window import Window
 from clease.gui.job_exec import JobExec
 from clease.gui.mc_header import MCHeader
@@ -35,7 +35,7 @@ import os
 main_path = Path(__file__)
 resource_add_path(main_path.parent / 'layout')
 
-Builder.load_file("cleaseGUILayout.kv")
+Builder.load_file("clease_gui.kv")
 
 
 class WindowFrame(StackLayout):
@@ -136,7 +136,8 @@ class WindowFrame(StackLayout):
         mc_header = self.ids.sm.get_screen('MCHeader')
         data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
         data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').to_dict()
-        data['meta_dyn_page'] = mc_header.ids.sm.get_screen('MetaDynPage').to_dict()
+        data['meta_dyn_page'] = mc_header.ids.sm.get_screen(
+            'MetaDynPage').to_dict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)

@@ -5,14 +5,14 @@ from kivy.lang import Builder
 from kivy.resources import resource_add_path
 import os.path as op
 import os
-from clease.gui.cleaseGUI import WindowFrame
+from clease.gui.clease_gui import WindowFrame
 
 
 class TestActionBar(unittest.TestCase):
-    @patch('clease.gui.concentrationPage.App')
-    @patch('clease.gui.settingsPage.App')
+    @patch('clease.gui.concentration_page.App')
+    @patch('clease.gui.settings_page.App')
     @patch('ase.visualize.view')
-    @patch('clease.gui.cleaseGUI.App')
+    @patch('clease.gui.clease_gui.App')
     def test_view_clusters(self, app_mock, view_mock, app_set, _):
         wf = WindowFrame()
         app_mock.get_running_app = MagicMock(return_value=MagicMock(root=wf))
@@ -29,9 +29,9 @@ class TestActionBar(unittest.TestCase):
         wf.view_clusters()
         wf.settings.cluster_mng.get_figures.assert_called_with()
 
-    @patch('clease.gui.concentrationPage.ConcentrationPage.check_user_input')
-    @patch('clease.gui.settingsPage.SettingsPage.check_user_input')
-    @patch('clease.gui.cleaseGUI.App')
+    @patch('clease.gui.concentration_page.ConcentrationPage.check_user_input')
+    @patch('clease.gui.settings_page.SettingsPage.check_user_input')
+    @patch('clease.gui.clease_gui.App')
     def test_save_session(self, app_mock, settings_usr_input, conc_usr_input):
         wf = WindowFrame()
         app_mock.get_running_app = MagicMock(return_value=MagicMock(root=wf))
@@ -46,8 +46,8 @@ class TestActionBar(unittest.TestCase):
         wf.load_session('', [fname])
         os.remove(fname)
 
-    @patch('clease.gui.cleaseGUI.Evaluate')
-    @patch('clease.gui.cleaseGUI.App')
+    @patch('clease.gui.clease_gui.Evaluate')
+    @patch('clease.gui.clease_gui.App')
     def test_export_dataset(self, app_mock, eval_mock):
         wf = WindowFrame()
         app_mock.get_running_app = MagicMock(return_value=MagicMock(root=wf))
@@ -69,7 +69,7 @@ class TestActionBar(unittest.TestCase):
         self.assertIsNone(wf._pop_up)
         eval_mock.return_value.export_dataset.assert_called_with(fname)
 
-    @patch('clease.gui.cleaseGUI.App')
+    @patch('clease.gui.clease_gui.App')
     def test_export_settings(self, app_mock):
         wf = WindowFrame()
         wf.settings = MagicMock()
@@ -89,10 +89,9 @@ class TestActionBar(unittest.TestCase):
         wf.settings.save.assert_called_with(fname)
 
 
-
 if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("cleaseGUILayout.kv")
+    Builder.load_file("clease_gui.kv")
     unittest.main()

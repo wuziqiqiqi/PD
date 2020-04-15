@@ -1,7 +1,7 @@
 """Collection of classess to perform regression."""
 import numpy as np
 from numpy.linalg import pinv
-from clease.dataNormalizer import DataNormalizer
+from clease.data_normalizer import DataNormalizer
 from typing import Union, Optional, List
 
 

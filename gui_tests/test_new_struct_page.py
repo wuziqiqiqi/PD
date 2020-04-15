@@ -1,5 +1,5 @@
 import unittest
-from clease.gui.newStructPage import NewStructPage, InsertStructureCB
+from clease.gui.new_struct_page import NewStructPage, InsertStructureCB
 from kivy.lang import Builder
 from kivy.resources import resource_add_path
 import os.path as op
@@ -41,7 +41,7 @@ class NewStructPageTest(unittest.TestCase):
         screen.dismiss_popup()
 
     @patch('clease.NewStructures')
-    @patch('clease.gui.newStructPage.App')
+    @patch('clease.gui.new_struct_page.App')
     def test_exhaustive_gui(self, app_mock, new_struct_mock):
         page = NewStructPage()
 
@@ -79,8 +79,8 @@ class NewStructPageTest(unittest.TestCase):
         os.remove(eci_file)
         self.assertEqual(method.call_count, 1)
 
-    @patch('clease.gui.newStructPage.InsertStructureCB')
-    @patch('clease.gui.newStructPage.App')
+    @patch('clease.gui.new_struct_page.InsertStructureCB')
+    @patch('clease.gui.new_struct_page.App')
     @patch('clease.NewStructures')
     def test_import_structures(self, new_struct_mock, kivy_mock, cb_mock):
         init_file = 'initial_structure.traj'
@@ -120,7 +120,6 @@ class NewStructPageTest(unittest.TestCase):
             kivy_mock.get_running_app().root.ids.status)
         method.assert_called_once_with(traj_init=init_file, cb=cb_mock())
 
-
         del traj_init
         del traj_final
         os.remove(init_file)
@@ -150,7 +149,7 @@ class NewStructPageTest(unittest.TestCase):
     def run_with_app(self, app):
         self.load_pop_ups(app)
 
-    @patch('clease.gui.newStructPage.App')
+    @patch('clease.gui.new_struct_page.App')
     @patch('clease.NewStructures')
     def test_missing_eci_file(self, ns_mock, app_mock):
         # Set up the Mock such that we can check the error message
@@ -216,5 +215,5 @@ if __name__ == '__main__':
     main_path = op.abspath(clease.gui.__file__)
     main_path = main_path.rpartition("/")[0]
     resource_add_path(main_path + '/layout')
-    Builder.load_file("newStructPageLayout.kv")
+    Builder.load_file("new_struct_page.kv")
     unittest.main()
