@@ -386,7 +386,7 @@ class ClusterExpansionSettings(object):
         """Display all clusters along with their names."""
         from ase.gui.gui import GUI
         from ase.gui.images import Images
-        figures = self.cluster_mngr.get_figures()
+        figures = self.cluster_mng.get_figures()
         images = Images()
         images.initialize(figures)
         gui = GUI(images, expr='')
