@@ -21,7 +21,7 @@ class BasisFunction(object):
             self.unique_elements == other.unique_elements
 
     @property
-    def unique_elements(self):
+    def unique_elements(self) -> List[str]:
         return self._unique_elements
 
     @unique_elements.setter
@@ -29,15 +29,15 @@ class BasisFunction(object):
         self._unique_elements = sorted(elements)
 
     @property
-    def num_unique_elements(self):
+    def num_unique_elements(self) -> int:
         return len(self.unique_elements)
 
     @property
-    def spin_dict(self):
+    def spin_dict(self) -> Dict[str, int]:
         return self.get_spin_dict()
 
     @property
-    def basis_functions(self):
+    def basis_functions(self) -> List[Dict[str, float]]:
         return self.get_basis_functions()
 
     def get_spin_dict(self):
@@ -195,7 +195,7 @@ class BinaryLinear(BasisFunction):
 
     def _decoration2element(self, dec_num: int) -> str:
         """Get the element with its basis function equal to 1."""
-        bf = self.bf_list[dec_num]
+        bf = self.basis_functions[dec_num]
         for k, v in bf.items():
             if v == 1:
                 return k
@@ -203,8 +203,8 @@ class BinaryLinear(BasisFunction):
 
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Translate the decoration number to element names."""
-        dec = full_cluster_name.rpartition("_")[1]
-        name = full_cluster_name.rpartition("_")[0]
+        dec = full_cluster_name.rsplit("_", 1)[1]
+        name = full_cluster_name.rsplit("_", 1)[0]
         new_dec = ""
         for decnum in dec:
             element = self._decoration2element(int(decnum))
