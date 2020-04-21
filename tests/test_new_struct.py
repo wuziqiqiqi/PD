@@ -196,8 +196,8 @@ class TestNewStruct(unittest.TestCase):
             }
         ]
 
-        # # Patch the insert method such that we don't need to calculate the
-        # # correlation functions etc.
+        # Patch the insert method such that we don't need to calculate the
+        # correlation functions etc.
         def insert_struct_patch(self, init_struct=None, final_struct=None,
                                 name=None, cf=None):
             atoms = bulk('Au')
@@ -237,6 +237,36 @@ class TestNewStruct(unittest.TestCase):
                 self.assertEqual(num_in_gen, test['struct_per_gen'], msg=msg)
 
             os.remove(db_name)
+
+    def test_unique_name(self):
+        db_name = 'test_unique_name.db'
+        settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
+        settings.db_name = db_name
+        settings.size = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
+
+        atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+        db = connect(db_name)
+        # suffix 0, 3 and 9 missing
+        suffixes = [1, 2, 4, 5, 6, 7, 8, 10, 11]
+        with connect(db_name) as db:
+            for suffix in suffixes:
+                db.write(atoms, gen=0,
+                         name=f"Na1_Cl1_{suffix}", formula_unit="Na1_Cl1")
+
+        N = 5
+        new_struct = NewStructures(
+            settings, generation_number=None, struct_per_gen=N)
+
+        answer_list = ["Na1_Cl1_0", "Na1_Cl1_3",
+                       "Na1_Cl1_9", "Na1_Cl1_12", "Na1_Cl1_13"]
+
+        for answer in answer_list:
+            kvp = new_struct._get_kvp(atoms, formula_unit='Na1_Cl1')
+            self.assertEqual(answer, kvp['name'])
+            self.assertEqual(1, kvp['gen'])
+            db.write(atoms, kvp)
+
+        os.remove(db_name)
 
 
 if __name__ == '__main__':

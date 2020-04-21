@@ -712,10 +712,19 @@ class NewStructures(object):
         kvp['started'] = False
         kvp['queued'] = False
 
-        count = 0
-        for _ in self.db.select(formula_unit=formula_unit):
-            count += 1
-        kvp['name'] = formula_unit + f"_{count}"
+        suffixes = []
+        for row in self.db.select(formula_unit=formula_unit):
+            suffixes.append(int(row.name.rsplit("_", 1)[1]))
+        suffixes.sort()
+
+        suffix = len(suffixes)
+        for i in range(len(suffixes)):
+            if i != suffixes[i] and i not in suffixes:
+                suffix = i
+                break
+
+        suffix = min(suffix, len(suffixes))
+        kvp['name'] = formula_unit + f"_{suffix}"
         kvp['formula_unit'] = formula_unit
         kvp['struct_type'] = 'initial'
         kvp['size'] = nested_list2str(self.settings.size)
