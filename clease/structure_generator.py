@@ -61,7 +61,7 @@ class StructureGenerator(object):
 
     def _is_valid(self, atoms):
         return self.settings.concentration.is_valid(
-                self.settings.index_by_basis, atoms)
+            self.settings.index_by_basis, atoms)
 
     def _reset(self):
         pass
@@ -135,7 +135,7 @@ class StructureGenerator(object):
         # Force an energy evaluation to update the results dictionary
         self.generated_structure.get_potential_energy()
 
-        # Check thate correlation function matach the expected value
+        # Check that correlation function match the expected value
         self._check_consistency()
         cf = self.corrFunc.get_cf(self.generated_structure)
         return self.generated_structure, cf
@@ -258,7 +258,7 @@ class StructureGenerator(object):
                 self.atoms[indx].symbol = new_symbol
 
                 if self.settings.concentration.is_valid(
-                     self.settings.index_by_basis, self.atoms):
+                        self.settings.index_by_basis, self.atoms):
                     break
                 self.atoms[indx].symbol = old_symbol
 
@@ -463,17 +463,20 @@ class GSStructure(StructureGenerator):
                 mc.attach(low_en_obs)
                 mc.add_constraint(cnst)
                 mc.run(steps=self.num_steps_per_temp)
-            emin_atoms = low_en_obs.emin_atoms
+            self.generated_structure = low_en_obs.emin_atoms
         except TooFewElementsError:
             # In case there are two few elements, the ground state is equal to
             # the initial configuration
-            emin_atoms = self.atoms
+            self.generated_structure = self.atoms
 
-        cf = self.corrFunc.get_cf(emin_atoms)
+        cf = self.corrFunc.get_cf(self.generated_structure)
+        # cf_trimmed = {key: value for (key, value) in cf
+        #               if key in list(self.eci.keys())}
         calc = Clease(self.settings, eci=self.eci)
-        emin_atoms.set_calculator(calc)
+        self.generated_structure.set_calculator(calc)
+        self.generated_structure.get_potential_energy()
 
-        return emin_atoms, cf
+        return self.generated_structure, cf
 
 
 class MetropolisTrajectory(object):

@@ -6,7 +6,7 @@ from copy import deepcopy
 from functools import reduce
 from typing import List, Dict, Optional, Union
 
-import ase
+from ase import Atoms
 from ase.io import read
 from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
@@ -65,7 +65,7 @@ class NewStructures(object):
         return max(self.struct_per_gen - self.num_in_gen(), 0)
 
     def generate_probe_structure(
-            self, atoms: Optional[ase.Atoms] = None,
+            self, atoms: Optional[Atoms] = None,
             init_temp: Optional[float] = None,
             final_temp: Optional[float] = None,
             num_temp: int = 5, num_steps_per_temp: int = 1000,
@@ -147,7 +147,7 @@ class NewStructures(object):
                 num_attempt = 0
 
             _logger("Probe structure generated.\n")
-            self.insert_structure(init_struct=probe_struct)
+            self.insert_structure(init_struct=probe_struct, cf=cf)
             current_count += 1
 
     @property
@@ -220,6 +220,7 @@ class NewStructures(object):
 
         energies = []
         gs_structs = []
+        cf_dicts = []
         for i, atoms in enumerate(templates):
             _logger(f"Searching for GS in template {i} of {len(templates)}")
             self.settings.set_active_template(atoms=atoms)
@@ -229,17 +230,20 @@ class NewStructures(object):
                              init_temp, final_temp, num_temp,
                              num_steps_per_temp, eci)
 
-            gs_struct, _ = es.generate()
+            gs_struct, cf_struct = es.generate()
             gs_structs.append(gs_struct)
+            cf_dicts.append(cf_struct)
             energies.append(gs_struct.get_potential_energy())
 
         # Find the position of the minimum energy structure
         min_energy_indx = np.argmin(energies)
         gs = gs_structs[min_energy_indx]
-        self.settings.set_active_template(atoms=gs)
-        self.insert_structure(init_struct=gs_structs[min_energy_indx])
+        cf = cf_dicts[min_energy_indx]
 
-    def generate_gs_structure(self, atoms: Union[ase.Atoms, List[ase.Atoms]],
+        self.settings.set_active_template(atoms=gs)
+        self.insert_structure(init_struct=gs, cf=cf)
+
+    def generate_gs_structure(self, atoms: Union[Atoms, List[Atoms]],
                               eci: Dict[str, float],
                               init_temp: float = 2000.0,
                               final_temp: float = 1.0,
@@ -322,11 +326,11 @@ class NewStructures(object):
             min_energy = gs_struct.get_potential_energy()
             msg = f"Structure with E = {min_energy:.3f} generated.\n"
             _logger(msg)
-            self.insert_structure(init_struct=gs_struct)
+            self.insert_structure(init_struct=gs_struct, cf=cf)
             current_count += 1
 
     def generate_random_structures(
-            self, atoms: Optional[ase.Atoms] = None) -> None:
+            self, atoms: Optional[Atoms] = None) -> None:
         """
         Generate random structures until the number of structures with
         `generation_number` equals `struct_per_gen`.
@@ -358,7 +362,7 @@ class NewStructures(object):
                          f"DB after {int(max_attempt * max_fail)} attempts.")
 
     def generate_one_random_structure(
-            self, atoms: Optional[ase.Atoms] = None) -> bool:
+            self, atoms: Optional[Atoms] = None) -> bool:
         """
         Generate and insert a random structure to database if a unique
         structure is found.
@@ -392,8 +396,8 @@ class NewStructures(object):
         return True
 
     def _set_initial_structures(
-            self, atoms: ase.Atoms or List[ase.Atoms],
-            random_composition: bool = False) -> List[ase.Atoms]:
+            self, atoms: Union[Atoms, List[Atoms]],
+            random_composition: bool = False) -> List[Atoms]:
         structs = []
         if atoms is not list:
             struct = wrap_and_sort_by_position(atoms)
@@ -452,7 +456,7 @@ class NewStructures(object):
                     structs.append(self._random_struct_at_conc(num_insert))
         return structs
 
-    def generate_initial_pool(self, atoms: Optional[ase.Atoms] = None) -> None:
+    def generate_initial_pool(self, atoms: Optional[Atoms] = None) -> None:
         """
         Generate initial pool of structures.
 
@@ -492,7 +496,7 @@ class NewStructures(object):
             self.insert_structure(init_struct=atoms)
 
     def generate_metropolis_trajectory(
-            self, atoms: Optional[ase.Atoms] = None,
+            self, atoms: Optional[Atoms] = None,
             random_comp: bool = True) -> None:
         """
         Generate a set of structures consists of single atom swaps
@@ -525,7 +529,7 @@ class NewStructures(object):
                 raise exc
 
     def _get_struct_at_conc(
-            self, conc_type: str = 'random', index: int = 0) -> ase.Atoms:
+            self, conc_type: str = 'random', index: int = 0) -> Atoms:
         """Generate a structure at a concentration specified.
 
         :param conc_type: One of 'min', 'max' and 'random'
@@ -598,12 +602,11 @@ class NewStructures(object):
             cb(num_ins, len(traj_in))
 
     def insert_structure(
-            self, init_struct: Union[ase.Atoms, str],
-            final_struct: Optional[Union[ase.Atoms, str]] = None,
-            name: Optional[str] = None) -> None:
+            self, init_struct: Union[Atoms, str],
+            final_struct: Optional[Union[Atoms, str]] = None,
+            name: Optional[str] = None,
+            cf: Optional[Dict[str, float]] = None) -> None:
         """Insert a structure to the database.
-
-        Parameters:
 
         :param init_struct: Unrelaxed initial structure. If a string is passed,
             it should be the file name with .xyz, .cif or .traj extension.
@@ -611,49 +614,52 @@ class NewStructures(object):
             It can be either ASE Atoms object or file anme ending with .traj.
         :param name: (Optional) name of the DB entry if a custom name is to be
             used. If `None`, default naming convention will be used.
+        :param cf: (Optional) full correlation function of the initial
+            structure (correlation functions with zero values should also be
+            included). If cf is given, the preprocessing of the init_structure
+            is bypassed and the given cf is inserted in DB.
         """
         if name is not None:
             num = sum(1 for _ in self.db.select(['name', '=', name]))
             if num > 0:
                 raise ValueError(f"Name: {name} already exists in DB!")
 
-        if isinstance(init_struct, ase.Atoms):
-            init = wrap_and_sort_by_position(init_struct)
-        else:
-            init = wrap_and_sort_by_position(read(init_struct))
+        if cf is None:
+            if isinstance(init_struct, Atoms):
+                init_struct = wrap_and_sort_by_position(init_struct)
+            else:
+                init_struct = wrap_and_sort_by_position(read(init_struct))
+            cf = self.corrfunc.get_cf(init_struct)
 
         self.settings.set_active_template(atoms=init_struct)
 
-        formula_unit = self._get_formula_unit(init)
-        if self._exists_in_db(init, formula_unit):
+        formula_unit = self._get_formula_unit(init_struct)
+        if self._exists_in_db(init_struct, formula_unit):
             _logger("Supplied structure already exists in DB. "
                     "The structure will not be inserted.")
             return
 
-        cf = self.corrfunc.get_cf(init)
-        kvp = self._get_kvp(init, formula_unit)
+        kvp = self._get_kvp(init_struct, formula_unit)
 
         if name is not None:
             kvp['name'] = name
-
         kvp['converged'] = False
         kvp['started'] = False
         kvp['queued'] = False
         kvp['struct_type'] = 'initial'
         tab_name = self.corr_func_table_name
-        uid_init = self.db.write(init, kvp, external_tables={tab_name: cf})
+        uid_init = self.db.write(init_struct, kvp,
+                                 external_tables={tab_name: cf})
 
         if final_struct is not None:
-            if isinstance(final_struct, ase.Atoms):
-                final = final_struct
-            else:
-                final = read(final_struct)
+            if not isinstance(final_struct, Atoms):
+                final_struct = read(final_struct)
             kvp_final = {'struct_type': 'final', 'name': kvp['name']}
-            uid = self.db.write(final, kvp_final)
+            uid = self.db.write(final_struct, kvp_final)
             self.db.update(uid_init, converged=True, started='', queued='',
                            final_struct_id=uid)
 
-    def _exists_in_db(self, atoms: ase.Atom,
+    def _exists_in_db(self, atoms: Atoms,
                       formula_unit: Optional[str] = None) -> bool:
         """
         Check to see if the passed atoms already exists in DB.
@@ -690,8 +696,7 @@ class NewStructures(object):
             atoms_in_db.append(row.toatoms())
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
-    def _get_kvp(
-            self, atoms: ase.Atoms, formula_unit: str = None) -> Dict:
+    def _get_kvp(self, atoms: Atoms, formula_unit: str = None) -> Dict:
         """
         Create a dictionary of key-value pairs and return it.
 
@@ -716,7 +721,7 @@ class NewStructures(object):
         kvp['size'] = nested_list2str(self.settings.size)
         return kvp
 
-    def _get_formula_unit(self, atoms: ase.Atoms) -> str:
+    def _get_formula_unit(self, atoms: Atoms) -> str:
         """Generates a reduced formula unit for the structure."""
         atom_count = []
         all_nums = []
@@ -741,8 +746,7 @@ class NewStructures(object):
                 fu += "_"
         return fu
 
-    def _random_struct_at_conc(
-            self, num_atoms_to_insert: np.ndarray) -> ase.Atoms:
+    def _random_struct_at_conc(self, num_atoms_to_insert: np.ndarray) -> Atoms:
         """Generate a random structure."""
         rnd_indices = []
         for indices in self.settings.index_by_basis:

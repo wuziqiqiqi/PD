@@ -199,11 +199,14 @@ class TestNewStruct(unittest.TestCase):
         # # Patch the insert method such that we don't need to calculate the
         # # correlation functions etc.
         def insert_struct_patch(self, init_struct=None, final_struct=None,
-                                name=None):
+                                name=None, cf=None):
             atoms = bulk('Au')
             kvp = self._get_kvp(atoms, 'Au')
             db = connect(db_name)
-            db.write(atoms, kvp)
+            if cf is None:
+                db.write(atoms, kvp)
+            else:
+                db.write(atoms, kvp, external_tables={'tab_name': cf})
 
         NewStructures.insert_structure = insert_struct_patch
         NewStructures._get_formula_unit = lambda self, atoms: 'Au'
