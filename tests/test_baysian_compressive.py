@@ -58,10 +58,8 @@ class TestBayesianCompressiveSensing(unittest.TestCase):
         eci = bayes.fit(X, y)
         self.assertEqual(len(eci), 400)
 
-        expected = np.zeros(400)
-        expected[0] = 20
-        expected[23] = -3
-        self.assertTrue(np.allclose(eci, expected, atol=1E-2))
+        pred = X.dot(eci)
+        self.assertTrue(np.allclose(pred, y, atol=1e-2))
 
         prec = bayes.precision_matrix(X)
         self.assertTrue(prec.shape == (400, 400))

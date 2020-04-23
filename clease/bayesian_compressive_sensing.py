@@ -284,8 +284,9 @@ class BayesianCompressiveSensing(LinearRegression):
                                for i in range(len(self.gammas))])
 
         if np.all(new_gammas < 0.0):
-            raise RuntimeError("All gammas are smaller than 0!"
-                               "Cannot include any!")
+            _logger("Warning! Cannot determine which gamma to "
+                    "include. Trying random selection...")
+            return np.random.randint(0, high=(len(self.gammas)))
 
         new_gammas[new_gammas < 0.0] = 0.0
         current_likeli = self.log_likelihood_for_each_gamma(self.gammas)
