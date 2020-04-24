@@ -8,6 +8,7 @@ from ase.atoms import Atoms
 import os
 from ase.db import connect
 from ase.calculators.emt import EMT
+import re
 
 
 class TestDBBrowser(unittest.TestCase):
@@ -44,8 +45,102 @@ class TestDBBrowser(unittest.TestCase):
         expect = header + line2
         str_rep = browser.ids.text_field.text
         str_rep = str_rep.replace(' ', '')
+        print(str_rep)
         self.assertEqual(str_rep, expect)
+
+        # Check that we extract the correct IDs for some tougher queries
+        for i in range(20):
+            db.write(Atoms('H'), gen=i, objNo=f'obj{int(i/4)}',
+                     group=i % 4)
+
+        tests = [
+            {
+                'query': 'id>15,id<18',
+                'expect': [16, 17]
+            },
+            {
+                'query': 'gen<5',
+                'expect': [1, 2, 3, 4, 5, 6, 7]
+            },
+            {
+                'query': 'id>11, group=0',
+                'expect': [15, 19]
+            },
+            {
+                'query': 'id>=11, objNo=obj2',
+                'expect': [11, 12, 13, 14]
+            }
+        ]
+
+        for test in tests:
+            browser.ids.queryInput.text = test['query']
+            browser.ids.queryInput.dispatch('on_text_validate')
+
+            # Extract ids from the text displayed in the browser
+            idsShown = []
+            prog = re.compile(r"\|([1-9]+)\|")
+            for line in browser.ids.text_field.text.split('\n'):
+                line = line.replace(' ', '')
+                m = prog.match(line)
+                if m is None:
+                    continue
+                idsShown.append(int(m.group(1)))
+            self.assertEqual(idsShown, test['expect'])
+
         os.remove(db_name)
+
+    def test_select_conditions(self):
+        db_name = 'test_select_cond.db'
+        db = connect('test_select_cond.db')  # Initialize the DB
+        db.write(Atoms('H'))
+        browser = DbBrowser(db_name=db_name)
+
+        operators = ['=', '!=', '>', '<', '>=', '<=']
+        tests = []
+
+        # Add single variable from systems table
+        for operator in operators:
+            tests.append({
+                'query': f'id{operator}2',
+                'system': [{
+                    'sql': f'id{operator}?',
+                    'value': '2',
+                }],
+                'kvp': {}
+            })
+
+        # Add single variable from kvps
+        for operator in operators:
+            tests.append({
+                'query': f'gen{operator}3',
+                'system': [],
+                'kvp': {
+                    'gen': {
+                        'sql': [f'value{operator}?'],
+                        'values': ['3']
+                    }
+                }
+            })
+
+        tests.append({
+            'query': 'gen>=3,gen<10,converged=1',
+            'system': [],
+            'kvp': {
+                'gen': {
+                    'sql': ['value>=?', 'value<?'],
+                    'values': ['3', '10']
+                },
+                'converged': {
+                    'sql': ['value=?'],
+                    'values': ['1']
+                }
+            }})
+
+        for test in tests:
+            syst, kvp = browser._get_select_conditions(test['query'])
+            for item1, item2 in zip(syst, test['system']):
+                self.assertDictEqual(item1, item2)
+            self.assertDictEqual(kvp, test['kvp'])
 
 
 if __name__ == '__main__':
