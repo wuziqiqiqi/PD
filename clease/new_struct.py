@@ -15,8 +15,7 @@ from clease import ClusterExpansionSettings, CorrFunction
 from clease.montecarlo.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import (
-    ProbeStructure, GSStructure, MetropolisTrajectory
-)
+    ProbeStructure, GSStructure, MetropolisTrajectory)
 from clease import _logger
 
 try:
@@ -59,7 +58,13 @@ class NewStructures(object):
             self.gen = generation_number
 
     def num_in_gen(self) -> int:
-        return len([row.id for row in self.db.select(gen=self.gen)])
+        with connect(self.settings.db_name) as db:
+            cur = db.connection.cursor()
+            cur.execute(
+                "SELECT id FROM number_key_values WHERE key=? AND value=?",
+                ("gen", self.gen))
+            num_in_gen = len(cur.fetchall())
+        return num_in_gen
 
     def num_to_gen(self) -> int:
         return max(self.struct_per_gen - self.num_in_gen(), 0)
@@ -620,7 +625,12 @@ class NewStructures(object):
             is bypassed and the given cf is inserted in DB.
         """
         if name is not None:
-            num = sum(1 for _ in self.db.select(['name', '=', name]))
+            with connect(self.settings.db_name) as db:
+                cur = db.connection.cursor()
+                cur.execute(
+                    "SELECT id FROM text_key_values WHERE key=? and value=?",
+                    ("name", name))
+                num = len(cur.fetchall())
             if num > 0:
                 raise ValueError(f"Name: {name} already exists in DB!")
 
@@ -691,9 +701,11 @@ class NewStructures(object):
         symmcheck = SymmetryEquivalenceCheck(angle_tol=1.0, ltol=0.05,
                                              stol=0.05, scale_volume=True,
                                              to_primitive=to_prim)
+
         atoms_in_db = []
         for row in self.db.select(cond):
             atoms_in_db.append(row.toatoms())
+
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
     def _get_kvp(self, atoms: Atoms, formula_unit: str = None) -> Dict:
@@ -713,8 +725,17 @@ class NewStructures(object):
         kvp['queued'] = False
 
         suffixes = []
-        for row in self.db.select(formula_unit=formula_unit):
-            suffixes.append(int(row.name.rsplit("_", 1)[1]))
+        with connect(self.settings.db_name) as db:
+            cur = db.connection.cursor()
+            cur.execute(
+                "SELECT id FROM text_key_values WHERE key=? AND value=?",
+                ("formula_unit", formula_unit))
+            ids = [i[0] for i in cur.fetchall()]
+            for id in ids:
+                cur.execute(
+                    "SELECT value FROM text_key_values WHERE key=? AND id=?",
+                    ("name", id))
+                suffixes.append(int(cur.fetchone()[0].rsplit("_", 1)[1]))
         suffixes.sort()
 
         suffix = len(suffixes)
@@ -781,15 +802,21 @@ class NewStructures(object):
 
     def _determine_gen_number(self) -> int:
         """Determine generation number based on the values in DB."""
-        try:
-            gens = [row.get('gen') for row in self.db.select()]
-            gens = [i for i in gens if i is not None]
-            gen = max(gens)
-            num_in_gen = len([row.id for row in self.db.select(gen=gen)])
-            if num_in_gen >= self.struct_per_gen:
-                gen += 1
-        except ValueError:
-            gen = 0
+        with connect(self.settings.db_name) as db:
+            cur = db.connection.cursor()
+            cur.execute(
+                "SELECT value FROM number_key_values WHERE key='gen'")
+            gens = [int(i[0]) for i in cur.fetchall()]
+            if len(gens) == 0:
+                gen = 0
+            else:
+                gen = max(gens)
+                cur.execute(
+                    "SELECT id FROM number_key_values WHERE key=? AND value=?",
+                    ("gen", gen))
+                num_in_gen = len(cur.fetchall())
+                if num_in_gen >= self.struct_per_gen:
+                    gen += 1
         return gen
 
     def _generate_sigma_mu(self, num_samples_var: int) -> None:

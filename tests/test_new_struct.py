@@ -25,6 +25,7 @@ class TestNewStruct(unittest.TestCase):
     def test_insert_structures(self):
         settings_mock = MagicMock(spec=ClusterExpansionSettings)
         settings_mock.db_name = 'test_insert_structures.db'
+        connect(settings_mock.db_name).write(Atoms('H'))
         settings_mock.basis_func_type = BfSchemePlaceholder()
 
         # Mock several methods
@@ -81,6 +82,7 @@ class TestNewStruct(unittest.TestCase):
         db_name = 'test_gen_number.db'
         settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
         settings.db_name = db_name
+        connect(db_name).write(Atoms('H'))
         N = 5
         new_struct = NewStructures(
             settings, generation_number=None, struct_per_gen=N)
