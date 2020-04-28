@@ -9,20 +9,25 @@ from clease import _logger
 class ClusterList(object):
     def __init__(self):
         self.clusters = []
+        self.index_by_name = {}
 
     def append(self, cluster):
         self.clusters.append(cluster)
+        idx = self.index_by_name.get(cluster.name, [])
+        idx.append(len(self.clusters)-1)
+        self.index_by_name[cluster.name] = idx
 
     def clear(self):
         """Clear the content."""
         self.clusters = []
+        self.index_by_name = {}
 
     @property
     def names(self):
-        return list(set([c.name for c in self.clusters]))
+        return list(self.index_by_name.keys())
 
     def get_by_name(self, name):
-        return [c for c in self.clusters if c.name == name]
+        return [self.clusters[i] for i in self.index_by_name[name]]
 
     def get_by_name_and_group(self, name, group):
         clusters = self.get_by_name(name)
