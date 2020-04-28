@@ -9,7 +9,7 @@ from clease import ClusterExpansionSettings
 from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
-from clease.tools import singlets2conc
+from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import CorrFuncEnergyDataManager
 from typing import Optional, Dict, List
 
@@ -124,8 +124,11 @@ class Evaluate(object):
             settings.db_name, tab_name, self.cf_names)
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
-        db = connect(settings.db_name)
-        self.names = [row.name for row in db.select(self.select_cond)]
+
+        ids = get_ids(select_cond, settings.db_name)
+        with connect(settings.db_name) as db:
+            cur = db.connection.cursor()
+            self.names = get_attribute(ids, cur, "name", "text_key_values")
 
         self.effective_num_data_pts = len(self.e_dft)
         self.weight_matrix = np.eye(len(self.e_dft))

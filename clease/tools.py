@@ -5,10 +5,12 @@ from itertools import (
 )
 import numpy as np
 from collections.abc import Iterable
-from typing import List
+from typing import List, Optional, Tuple
 from typing import Iterable as tIterable
+from typing_extensions import Protocol
 from random import sample
 from ase.db import connect
+from ase.db.core import parse_selection
 from clease import _logger
 from scipy.spatial import cKDTree as KDTree
 import re
@@ -174,7 +176,6 @@ def update_db(uid_initial=None, final_struct=None, db_name=None,
         If desired, one can pass additional key-value-pairs for the
         entry containing the final structure
     """
-    from ase.db import connect
     db = connect(db_name)
 
     init_row = db.get(id=uid_initial)
@@ -269,23 +270,17 @@ def split_dataset(X, y, nsplits=10):
     return partitions
 
 
-def random_validation_set(num=10, select_cond=None, db_name=None):
+def random_validation_set(num: int = 10, select_cond: Optional[list] = None,
+                          db_name: Optional[str] = None):
     """
     Construct a random test set.
 
-    Parameters:
-
-    num: int
-        Number of datapoints to include in the test set
-    select_cond: list
-        Select condition to be used to select items from
+    :param num: Number of datapoints to include in the test set
+    :param select_cond: Select condition to be used to select items from
         the database. If not given, it will be struct_type='initial',
         converged=True
-    db_name str:
-        Name of the database
+    :param db_name: Name of the database
     """
-
-    db = connect(db_name)
     if select_cond is None:
         select_cond = [('struct_type', '=', 'initial'),
                        ('converged', '=', True)]
@@ -293,20 +288,15 @@ def random_validation_set(num=10, select_cond=None, db_name=None):
     if db_name is None:
         raise ValueError("No database provided!")
 
-    all_ids = []
-    for row in db.select(select_cond):
-        all_ids.append(row.id)
+    all_ids = get_ids(select_cond, db_name)
     return sample(all_ids, num)
 
 
-def exclude_ids(ids):
+def exclude_ids(ids: List[int]) -> List[tuple]:
     """
     Construct a select condition based on the ids passed.
 
-    Parameters:
-
-    ids: list of int
-        List of IDs
+    :params ids: List of IDs
     """
     return [("id", "!=", x) for x in ids]
 
@@ -814,20 +804,15 @@ def get_extension(fname):
     return fname.rpartition('.')[-1]
 
 
-def add_file_extension(fname, ext):
+def add_file_extension(fname: str, ext: str) -> str:
     """
     Adds the wanted file extension to a filename. If a file extension
     is already present and it matches the wanted file extension, nothing
     is done. If it does not match, a ValueError is raised. Finally, if
     no file extension exist the wanted extension is added
 
-    Parameters:
-
-    fname: str
-        Filename
-
-    ext: str
-        Extension (without .) example (csv, txt, json)
+    :param fname: file name
+    :param ext: extension (without .) example (csv, txt, json)
     """
     if fname.endswith(ext):
         return fname
@@ -862,3 +847,65 @@ def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     sort_obj = [(s, d, n) for s, d, n in zip(sizes, dia, cf_names)]
     sort_obj.sort()
     return [s[-1] for s in sort_obj]
+
+
+def get_ids(select_cond: List[tuple], db_name: str) -> List[int]:
+    """
+    Return ids in the datase that correspond to the passed selection.
+
+    :param select_cond: ASE select conditions.
+
+    :return: List of database IDs matching the select conditions.
+
+    """
+    keys, cmps = parse_selection(select_cond)
+    db = connect(db_name)
+    sql, args = db.create_select_statement(keys, cmps)
+
+    # Extract the ids in the database that corresponds to select_cond
+    sql = sql.replace('systems.*', 'systems.id')
+    with connect(db_name) as db:
+        con = db.connection
+        cur = con.cursor()
+        cur.execute(sql, args)
+        ids = [row[0] for row in cur.fetchall()]
+    ids.sort()
+    return ids
+
+
+class SQLCursor(Protocol):
+    def execute(self, sql: str, placeholder: Tuple[str]) -> None:
+        pass
+
+    def fetchall(self) -> tuple:
+        pass
+
+
+def get_attribute(
+        ids: List[int], cur: SQLCursor, key: str, table: str) -> list:
+    """
+    Retrieve the value of the given key for the rows with the given ID of
+    the database entry.
+
+    :param ids: list of IDs
+    :param cur: cursor for the database
+    :param key: name of the key
+    :param table: name of the table
+    """
+    known_tables = ["text_key_values", "number_key_values"]
+
+    if table not in known_tables:
+        raise ValueError(f"Table has to be one of {known_tables}")
+
+    sql = f'SELECT value, id FROM {table} WHERE key=?'
+    id_set = set(ids)
+    cur.execute(sql, (key,))
+
+    row_id_value = {}
+    for value, row_id in cur.fetchall():
+        if row_id in id_set:
+            row_id_value[row_id] = value
+
+    # Convert to a list that matches the order of the IDs that
+    # was passed
+    return [row_id_value[k] for k in ids]

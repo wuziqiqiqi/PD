@@ -37,6 +37,7 @@ def build_ext(ext_module):
     from Cython.Build import cythonize
     return cythonize(ext_module)
 
+
 # Get version number
 with open('clease/__init__.py') as fd:
     version = re.search("__version__ = '(.*)'", fd.read()).group(1)
@@ -76,11 +77,13 @@ setup(
     version=version,
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
-    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v{0}/clease-v{0}.zip'.format(version),
+    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v{0}/clease-v{0}.zip'.format(
+        version),
     include_package_data=True,
     package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
-    keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
+    keywords=['Cluster Expansion', 'Monte Carlo',
+              'Computational materials', 'Materials research'],
     entry_points={'console_scripts': ['clease=clease.cli.clease:main']},
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -89,5 +92,6 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8'
     ],
-    install_requires=['ase>=3.19', 'matplotlib', 'spglib', 'scikit-learn']
+    install_requires=['ase>=3.19', 'matplotlib', 'spglib', 'scikit-learn',
+                      'typing_extensions']
 )

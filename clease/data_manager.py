@@ -1,8 +1,7 @@
 from clease import _logger
 from ase.db import connect
 import numpy as np
-from clease.tools import add_file_extension, sort_cf_names
-from ase.db.core import parse_selection
+from clease.tools import add_file_extension, sort_cf_names, get_ids
 from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
 
@@ -18,34 +17,13 @@ class DataManager(object):
 
     :param db_name: Name of the database
     """
+
     def __init__(self, db_name: str):
         self.db_name = db_name
         self._X = None
         self._y = None
         self._feat_names = None
         self._target_name = None
-
-    def get_ids(self, select_cond: List[tuple]) -> List[int]:
-        """
-        Return ids in the database that corresponds to the passed
-        selection condition.
-
-        :param select_cond: ASE select condition. The database IDs matching
-            the select condition is returned.
-        """
-        keys, cmps = parse_selection(select_cond)
-        db = connect(self.db_name)
-        sql, args = db.create_select_statement(keys, cmps)
-
-        # Extract the ids in the database that corresponds to select_cond
-        sql = sql.replace('systems.*', 'systems.id')
-        with connect(self.db_name) as db:
-            con = db.connection
-            cur = con.cursor()
-            cur.execute(sql, args)
-            ids = [row[0] for row in cur.fetchall()]
-        ids.sort()
-        return ids
 
     def get_data(self, select_cond: List[tuple],
                  feature_getter: Callable[[List[int]], np.ndarray],
@@ -94,7 +72,7 @@ class DataManager(object):
         >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter,
         ... targ_getter)
         """
-        ids = self.get_ids(select_cond)
+        ids = get_ids(select_cond, self.db_name)
 
         # Extract design matrix and the target values
         cfm = feature_getter(ids)
@@ -178,6 +156,7 @@ class CorrFuncEnergyDataManager(DataManager):
     :param tab_name: Name of the table where the correlation functions are
         stored
     """
+
     def __init__(self, db_name: str, tab_name: str,
                  cf_names: Optional[List[str]] = None) -> None:
         DataManager.__init__(self, db_name)
@@ -213,6 +192,7 @@ class CorrelationFunctionGetter(object):
         If None, all correlation functions in the database will be
         extracted
     """
+
     def __init__(self, db_name: str, tab_name: str,
                  cf_names: Optional[List[str]] = None) -> None:
         self.db_name = db_name
@@ -234,7 +214,7 @@ class CorrelationFunctionGetter(object):
 
     def _is_matrix_representable(
             self, id_cf_names: Dict[int, List[str]]
-            ) -> bool:
+    ) -> bool:
         """
         Check if the extracted correlation functions can be represented as a
         matrix.
@@ -253,7 +233,7 @@ class CorrelationFunctionGetter(object):
 
     def _minimum_common_cf_set(
             self, id_cf_names: Dict[int, List[str]]
-            ) -> Set[str]:
+    ) -> Set[str]:
         """
         Returns the minimum set of correlation functions that exists for all
         rows.
@@ -341,6 +321,7 @@ class FinalStructEnergyGetter(object):
 
     :param db_name: Name of the database
     """
+
     def __init__(self, db_name: str) -> None:
         self.db_name = db_name
 
@@ -398,6 +379,7 @@ class FinalVolumeGetter(object):
 
     :param db_name: Name of the database
     """
+
     def __init__(self, db_name: str) -> None:
         self.db_name = db_name
 
@@ -468,6 +450,7 @@ class CorrFuncVolumeDataManager(DataManager):
     :param cf_names: List with the correlation function names to extract.
         If None, all correlation functions in the database will be extracted.
     """
+
     def __init__(self, db_name: str, tab_name: str,
                  cf_names: Optional[List[str]] = None) -> None:
         DataManager.__init__(self, db_name)
@@ -536,6 +519,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         required for all structures. In class will pick up and the material
         property for the structures where it is present.
     """
+
     def __init__(self, db_name: str, tab_name: str, cf_names: List[str],
                  order: Optional[int] = 0,
                  properties: Tuple[str] = ('energy', 'pressure')) -> None:
@@ -664,7 +648,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             target vector will be extracted for rows matching the passed
             condition.
         """
-        ids = self.get_ids(select_cond)
+        ids = get_ids(select_cond, self.db_name)
 
         self.build(ids)
         return self._X, self._y
