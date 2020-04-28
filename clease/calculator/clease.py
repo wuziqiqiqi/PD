@@ -1,7 +1,6 @@
 """Calculator for Cluster Expansion."""
 import sys
 import numpy as np
-from ase.utils import basestring
 from ase import Atoms
 from ase.calculators.calculator import Calculator
 from clease import CorrFunction
@@ -65,7 +64,7 @@ class Clease(Calculator):
             raise ValueError(msg)
 
         # logfile
-        if isinstance(logfile, basestring):
+        if isinstance(logfile, str):
             if logfile == '-':
                 logfile = sys.stdout
             else:

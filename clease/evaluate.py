@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
-from ase.utils import basestring
 from clease import ClusterExpansionSettings
 from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
@@ -714,7 +713,7 @@ class Evaluate(object):
 
     def _initialize_logfile(self, logfile):
         # logfile setup
-        if isinstance(logfile, basestring):
+        if isinstance(logfile, str):
             if logfile == '-':
                 handler = lg.StreamHandler(sys.stdout)
                 handler.setLevel(lg.INFO)
