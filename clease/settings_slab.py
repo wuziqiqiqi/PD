@@ -1,7 +1,7 @@
 from clease import (
     ClusterExpansionSettings, Concentration
 )
-from ase.build import surface
+from ase.build import surface, make_supercell
 from ase import Atoms
 from typing import Union, Tuple, Optional
 import numpy as np
@@ -83,10 +83,10 @@ def get_prim_slab_cell(conventional_cell: Union[Atoms, str],
     Returns the primitive cell used for slab CE
 
     :param conventional_cell:
-        Bulk lattice structure. Note that the unit-cell
-        must be the conventional cell - not the primitive cell. One can also
-        give the chemical symbol as a string, in which case the correct bulk
-        lattice will be generated automatically.
+        Bulk lattice structure. Note that the unit cell must be a conventional
+        cell - not the primitive cell. One can also give the chemical symbol
+        as a string, in which case the correct bulk lattice will be generated
+        automatically.
 
     :param miller:
         Surface normal in Miller indices (h,k,l).
@@ -95,26 +95,33 @@ def get_prim_slab_cell(conventional_cell: Union[Atoms, str],
     return prim
 
 
-def add_vacuum_layers(atoms: Atoms, thickness: float) -> Atoms:
+def add_vacuum_layers(atoms: Atoms, prim: Atoms, thickness: float) -> Atoms:
     """
     Add vacuum layers to the slab
 
-    :param atoms: Atoms object representing the slab
+    :param atoms:
+        ASE Atoms object representing the slab
 
-    :param thickness: Thickness of the vacuum layer
+    :param thickness:
+        Thickness of the vacuum layer
     """
-    vacuum = atoms.copy()
+    # construct one layer of vacuum filled with vacancies
+    prim_xy = prim.cell[:3]
+    atoms_xy = atoms.cell[:3]
+    P = atoms_xy.dot(np.linalg.inv(prim_xy))[:2].astype(int)
+    P = np.vstack((P, [0, 0, 1]))
+    vacuum = make_supercell(prim, P)
     for atom in vacuum:
         atom.symbol = 'X'
 
     dz = atoms.get_cell()[2, 2]
     vacuum.translate([0, 0, dz])
 
-    num_cells = int(thickness/dz) + 1
-    vacuum *= (1, 1, num_cells)
+    one_layer_thickness = vacuum.get_cell()[2, 2]
+    # upside-down division to get ceiling division
+    num_vac_layers = int(-(-thickness//one_layer_thickness))
+    vacuum *= (1, 1, num_vac_layers)
 
     atoms += vacuum
-    cell = atoms.get_cell()
-    cell[2, 2] += num_cells*dz
-    atoms.set_cell(cell)
+    atoms.cell[2, 2] += vacuum.cell[2, 2]
     return atoms

@@ -42,12 +42,14 @@ class TestCESlab(unittest.TestCase):
     def test_add_vacuum_layers(self):
         atoms = bulk('Al', a=4.05, cubic=True)
         prim = get_prim_slab_cell(atoms, [1, 1, 1])
+        z_prim = prim.cell[2, 2]
         atoms = prim*(1, 1, 3)
-        z_orig = atoms.get_cell()[2, 2]
-        atoms = add_vacuum_layers(atoms, 10.0)
-        new_z = atoms.get_cell()[2, 2]
-        n = int(10.0/z_orig) + 2
-        self.assertAlmostEqual(new_z, n*z_orig)
+        z_orig = atoms.cell[2, 2]
+        atoms = add_vacuum_layers(atoms, prim, 10.0)
+        new_z = atoms.cell[2, 2]
+        z_vac = int(-(-10.0//z_prim)) * z_prim
+        self.assertGreater(z_vac, 10)
+        self.assertAlmostEqual(new_z, z_orig+z_vac)
 
         tol = 1e-6
         for atom in atoms:
