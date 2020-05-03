@@ -37,6 +37,7 @@ from clease.cluster_manager import ClusterManager
 from clease.data_manager import (
     DataManager, CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
 )
+from clease.structure_mapper import StructureMapper
 
 __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'NewStructures', 'NewStructures', 'Evaluate', 'AtomsManager',
@@ -48,4 +49,4 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'CellVectorDirectionFilter', 'AngleFilter',
            'ClusterExpansionSettings', 'settingsFromJSON', 'CESlab',
            'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
-           'ClusterManager', 'VolumeToSurfaceRatioFilter']
+           'ClusterManager', 'VolumeToSurfaceRatioFilter', 'StructureMapper']
