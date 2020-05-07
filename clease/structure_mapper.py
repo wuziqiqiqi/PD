@@ -12,6 +12,7 @@ class TransformInfo(object):
     """
     def __init__(self):
         self.displacements = []
+        self.dispVec = []
         self.strain = []
 
     def todict(self) -> dict:
@@ -94,7 +95,7 @@ class StructureMapper(object):
             for j in range(len(template)):
                 d = template[j].position - atoms[i].position
                 all_dist_vec.append(d)
-        _, micDist = find_mic(all_dist_vec, cell)
+        distVec, micDist = find_mic(all_dist_vec, cell)
         distances = micDist.reshape((len(atoms), len(template)))
 
         # Snap atoms to ideal sites such that collective distance
@@ -107,4 +108,7 @@ class StructureMapper(object):
         transform_info = TransformInfo()
         transform_info.displacements = displacements
         transform_info.strain = strain
+        transform_info.dispVec = np.array([distVec[i*len(template) + j]
+                                           for i in range(len(atoms))
+                                           for j in range(len(template))])
         return template, transform_info
