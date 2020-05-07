@@ -735,7 +735,11 @@ class NewStructures(object):
                 cur.execute(
                     "SELECT value FROM text_key_values WHERE key=? AND id=?",
                     ("name", id))
-                suffixes.append(int(cur.fetchone()[0].rsplit("_", 1)[1]))
+                name = cur.fetchone()[0]
+                suffix = 0
+                if "_" in name:
+                    suffix = int(name.rpartition("_")[-1])
+                suffixes.append(suffix)
         suffixes.sort()
 
         suffix = len(suffixes)
