@@ -47,18 +47,22 @@ class PhysicalRidge(LinearRegression):
         where N is any integer, of a callable function
         with the signature f(dia) where dia is the diameter.
         If polyN is given the penalization is proportional to dia**N
+
+    :param normalize: If True the data will be normalized to unit variance
+        and zero mean before fitting.
     """
     def __init__(self, lamb_size: float = 1e-6,
                  lamb_dia: float = 1e-6,
                  size_decay: Union[str, Callable[[int], float]] = 'linear',
-                 dia_decay: Union[str, Callable[[int], float]] = 'linear'
-                 ) -> None:
+                 dia_decay: Union[str, Callable[[int], float]] = 'linear',
+                 normalize: bool = True) -> None:
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
         self._size_decay = get_size_decay(size_decay)
         self._dia_decay = get_dia_decay(dia_decay)
         self.sizes = []
         self.diameters = []
+        self.normalize = normalize
 
     @property
     def size_decay(self) -> Callable[[int], float]:
@@ -124,12 +128,16 @@ class PhysicalRidge(LinearRegression):
             msg += f"Num. diameters: {len(self.diameters)}"
             raise ValueError(msg)
 
-        # Omit the bias term (first column since we are using normalized data)
-        size_decay = np.array([self.size_decay(x) for x in self.sizes[1:]])
-        dia_decay = np.array([self.dia_decay(x) for x in self.diameters[1:]])
+        start = 0
+        if self.normalize:
+            # Omit the bias term (first column since we are using normalized data)
+            start = 1
+
+        size_decay = np.array([self.size_decay(x) for x in self.sizes[start:]])
+        dia_decay = np.array([self.dia_decay(x) for x in self.diameters[start:]])
 
         penalty = np.sqrt(self.lamb_size*size_decay + self.lamb_dia*dia_decay)
-        regressor = Tikhonov(alpha=penalty, normalize=True)
+        regressor = Tikhonov(alpha=penalty, normalize=self.normalize)
         return regressor.fit(X, y)
 
 

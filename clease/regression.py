@@ -128,9 +128,9 @@ class Tikhonov(LinearRegression):
         y_fit = y
         if self.normalize:
             if np.any(np.abs(X[:, 0] - 1.0) > 1e-16):
-                msg = "Tikhonov: Expect that the first column in X corresponds"
-                msg += "to a bias term. Therefore, all entries should be 1."
-                msg += f"Got:\n{X[:, 0]}\n"
+                msg = "Tikhonov: When normalize=True. The first column in X "
+                msg += "should correspond to a to a bias term. Therefore, all "
+                msg += f"entries should be 1.\nGot:\n{X[:, 0]}\n"
                 raise ValueError(msg)
             normalizer = DataNormalizer()
             X_fit, y_fit = normalizer.normalize(X[:, 1:], y)
