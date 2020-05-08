@@ -13,6 +13,7 @@ class DataNormalizer:
         is encountered. Otherwise, the standard deviation of these column
         will be set to 1.0
     """
+
     def __init__(self, fail_on_constant=False):
         self.meanX = None
         self.stdX = None

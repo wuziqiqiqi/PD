@@ -271,8 +271,7 @@ class CorrelationFunctionGetter(object):
         id_set = set(ids)
 
         with connect(self.db_name) as db:
-            con = db.connection
-            cur = con.cursor()
+            cur = db.connection.cursor()
             cur.execute(sql)
 
             # Extract the correlation function name and value. The ID is also
@@ -354,8 +353,7 @@ class FinalStructEnergyGetter(object):
         init_struct_idx = {idx: i for i, idx in enumerate(ids)}
 
         with connect(self.db_name) as db:
-            con = db.connection
-            cur = con.cursor()
+            cur = db.connection.cursor()
             cur.execute(sql)
             final_struct_ids = []
 
@@ -373,7 +371,6 @@ class FinalStructEnergyGetter(object):
             sql = "SELECT id, energy FROM systems"
             cur.execute(sql)
             energies = np.zeros(len(final_struct_ids))
-
             # Populate the energies array
             for final_id, energy in cur.fetchall():
                 if final_id in final_struct_ids:

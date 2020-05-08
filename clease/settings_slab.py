@@ -1,10 +1,11 @@
+import numpy as np
+from typing import Union, Tuple, Optional
+from ase import Atoms
+from ase.build import surface, make_supercell
+from ase.geometry import get_layers
 from clease import (
     ClusterExpansionSettings, Concentration
 )
-from ase.build import surface, make_supercell
-from ase import Atoms
-from typing import Union, Tuple, Optional
-import numpy as np
 
 
 def CESlab(conventional_cell: Union[Atoms, str],
@@ -124,4 +125,31 @@ def add_vacuum_layers(atoms: Atoms, prim: Atoms, thickness: float) -> Atoms:
 
     atoms += vacuum
     atoms.cell[2, 2] += vacuum.cell[2, 2]
+    return atoms
+
+
+def remove_vacuum_layers(atoms: Atoms) -> Atoms:
+    """
+    Remove vacuum layers from the slab.
+
+    :param atoms:
+        ASE Atoms object representing the slab with vacuum
+    """
+    atoms = atoms.copy()
+    tags, levels = get_layers(atoms, miller=(0, 0, 1))
+    num_total_layers = np.amax(tags, axis=None) + 1
+    vac_layers = []
+
+    for layer in range(num_total_layers):
+        symbols = [atoms[i].symbol for i,
+                   tag in enumerate(tags) if tag == layer]
+        if set(symbols) == {'X'}:
+            vac_layers.append(layer)
+
+    del atoms[[atoms[i].index for i,
+               tag in enumerate(tags) if tag in vac_layers]]
+
+    num_vac_layers = len(vac_layers)
+    atoms.cell[2, 2] *= (num_total_layers - num_vac_layers)/num_total_layers
+
     return atoms

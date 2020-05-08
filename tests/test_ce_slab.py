@@ -2,7 +2,7 @@ import unittest
 from ase.build import bulk
 import numpy as np
 from clease.settings_slab import (
-    get_prim_slab_cell, add_vacuum_layers, CESlab
+    get_prim_slab_cell, add_vacuum_layers, remove_vacuum_layers, CESlab
 )
 from clease import Concentration, settingsFromJSON
 import os
@@ -76,6 +76,14 @@ class TestCESlab(unittest.TestCase):
         self.assertEqual(settings.concentration, settings2.concentration)
         os.remove(db_name)
         os.remove(backup_file)
+
+    def test_remove_vacuum(self):
+        unit_cell = bulk('Au', crystalstructure='fcc', cubic=True)
+        prim = get_prim_slab_cell(unit_cell, [1, 1, 1])
+        atoms = prim * (3, 3, 3)
+        slab = add_vacuum_layers(atoms.copy(), prim, thickness=20)
+        recovered = remove_vacuum_layers(slab)
+        self.assertEqual(atoms, recovered)
 
 
 if __name__ == '__main__':
