@@ -1,10 +1,12 @@
-from clease.regression import LinearRegression, Tikhonov
+from clease.regression import LinearRegression
+from clease.data_normalizer import DataNormalizer
 from clease.tools import split_dataset
-from typing import List, Dict, Union, Callable
+from typing import List, Dict, Union, Callable, Tuple
 from clease import _logger
 import numpy as np
 from random import choice
 import time
+from clease.svd import SVD
 
 
 class PhysicalRidge(LinearRegression):
@@ -50,12 +52,23 @@ class PhysicalRidge(LinearRegression):
 
     :param normalize: If True the data will be normalized to unit variance
         and zero mean before fitting.
+
+        NOTE: Normalization works only when the first column in X corresponds
+        to a constant. If the X matrix contains several simultaneous fits
+        (e.g. energy, pressure, bulk moduli) there will typically be different
+        columns that corresponds to the bias term for the different groups. It
+        is recommended to put normalize=False for such cases.
+
+    :param reuse_svd: If True, a cached SVD will be used when calling fit.
+        The SVD can be re-used of the design matrix is the same, but
+        regularization parameters change. If False, SVD is recalcualted
+        everytime. Default: False.
     """
     def __init__(self, lamb_size: float = 1e-6,
                  lamb_dia: float = 1e-6,
                  size_decay: Union[str, Callable[[int], float]] = 'linear',
                  dia_decay: Union[str, Callable[[int], float]] = 'linear',
-                 normalize: bool = True) -> None:
+                 normalize: bool = True, reuse_svd: bool = False) -> None:
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
         self._size_decay = get_size_decay(size_decay)
@@ -63,6 +76,21 @@ class PhysicalRidge(LinearRegression):
         self.sizes = []
         self.diameters = []
         self.normalize = normalize
+        self.reuse_svd = reuse_svd
+        self.svd = SVD()
+        self.normalizer = DataNormalizer()
+
+    def fit_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        If normalize is True, a normalized version of the passed data is
+        returned. Otherwise, X and y is returned as they are passed.
+
+        :param X: Design matrix
+        :param y: Target data
+        """
+        if self.normalize:
+            X_fit, y_fit = self.normalizer.normalize(X, y)
+        return X, y
 
     @property
     def size_decay(self) -> Callable[[int], float]:
@@ -128,17 +156,28 @@ class PhysicalRidge(LinearRegression):
             msg += f"Num. diameters: {len(self.diameters)}"
             raise ValueError(msg)
 
-        start = 0
+        X_fit, y_fit = self.fit_data(X, y)
+
+        size_decay = np.array([self.size_decay(x) for x in self.sizes])
+        dia_decay = np.array([self.dia_decay(x) for x in self.diameters])
+
+        penalty = self.lamb_size*size_decay + self.lamb_dia*dia_decay
+
+        if not self.svd.has_matrices():
+            self.svd.calculate(X)
+
+        V = self.svd.Vh.T
+        D = self.svd.S/(self.svd.S**2 + penalty[:len(self.svd.S)])
+        coeff = V.dot(np.diag(D)).dot(self.svd.U.T).dot(y)
+
+        if not self.reuse_svd:
+            self.svd.clear()
+
         if self.normalize:
-            # Omit the bias term (first column since we are using normalized data)
-            start = 1
-
-        size_decay = np.array([self.size_decay(x) for x in self.sizes[start:]])
-        dia_decay = np.array([self.dia_decay(x) for x in self.diameters[start:]])
-
-        penalty = np.sqrt(self.lamb_size*size_decay + self.lamb_dia*dia_decay)
-        regressor = Tikhonov(alpha=penalty, normalize=self.normalize)
-        return regressor.fit(X, y)
+            coeff_transformed = self.normalizer.convert(coeff)
+            coeff_transformed[0] = self.normalizer.bias(coeff)
+            coeff = coeff_transformed
+        return coeff
 
 
 def linear_size(size: int) -> float:
@@ -230,6 +269,14 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
 
     cv_params = []
     last_print = time.time()
+    partitions = split_dataset(X, y, nsplits=cv)
+
+    # Pre-calculate SVDs
+    svds = [SVD() for _ in range(len(partitions))]
+    for i, p in enumerate(partitions):
+        X, _ = phys_ridge.fit_data(p['train_X'], p['train_y'])
+        svds[i].calculate(X)
+
     for i in range(num_trials):
         lamb_dia = choice(params.get('lamb_dia', [phys_ridge.lamb_dia]))
         lamb_size = choice(params.get('lamb_size', [phys_ridge.lamb_size]))
@@ -248,11 +295,10 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
             'dia_decay': dia_decay,
         }
 
-        partitions = split_dataset(X, y, nsplits=cv)
-
         cv_score = 0.0
         mse = 0.0
-        for p in partitions:
+        for j, p in enumerate(partitions):
+            phys_ridge.svd = svds[j]
             coeff = phys_ridge.fit(p['train_X'], p['train_y'])
             pred = p['validate_X'].dot(coeff)
             cv_score += np.sqrt(np.mean((pred - p['validate_y'])**2))
@@ -275,7 +321,7 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
                     f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
             last_print = time.time()
 
-    cv_params = sorted(cv_params)
+    cv_params = sorted(cv_params, key=lambda x: x[0])
     res = {
         'best_coeffs': best_coeff,
         'best_params': best_param,
