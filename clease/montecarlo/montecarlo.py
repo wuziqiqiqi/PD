@@ -38,6 +38,7 @@ class Montecarlo(object):
     def __init__(self, atoms, temp):
         self.name = "MonteCarlo"
         self.atoms = atoms
+        self.active_indices = list(range(len(atoms)))
         self.T = temp
 
         # List of observers that will be called every n-th step
