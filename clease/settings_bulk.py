@@ -74,7 +74,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
     num_basis = len(concentration.orig_basis_elements)
     if num_basis != structures[crystalstructure]:
         msg = f"{crystalstructure} has {structures[crystalstructure]} basis. "
-        msg += f"The number of basis specified by basis_elements is "
+        msg += "The number of basis specified by basis_elements is "
         msg += f"{num_basis}"
         raise ValueError(msg)
 

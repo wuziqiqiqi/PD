@@ -139,13 +139,13 @@ class NewStructures(object):
             probe_struct.get_calculator().results.pop('energy')
             formula_unit = self._get_formula_unit(probe_struct)
             if self._exists_in_db(probe_struct, formula_unit):
-                msg = f"generated structure is already in DB.\n"
-                msg += f"generating again... "
+                msg = "generated structure is already in DB.\n"
+                msg += "generating again... "
                 msg += f"{num_attempt + 1} out of {max_attempt} attempts."
                 _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
-                    msg = f"Could not generate probe structure in "
+                    msg = "Could not generate probe structure in "
                     msg += f"{max_attempt} attempts."
                     raise MaxAttemptReachedError(msg)
             else:
@@ -315,8 +315,8 @@ class NewStructures(object):
             formula_unit = self._get_formula_unit(gs_struct)
 
             if self._exists_in_db(gs_struct, formula_unit):
-                msg = f"generated structure is already in DB.\n"
-                msg += f"generating again... "
+                msg = "generated structure is already in DB.\n"
+                msg += "generating again... "
                 msg += f"{num_attempt + 1} out of {max_attempt} attempts"
                 _logger(msg)
                 num_attempt += 1
@@ -433,7 +433,7 @@ class NewStructures(object):
 
                     if num_attempt > 100:
                         msg = f"Could not find {self.num_to_gen} unique "
-                        msg += f"compositions using the provided Atoms object."
+                        msg += "compositions using the provided Atoms object."
                         raise RuntimeError(msg)
                 num_atoms_in_basis = [len(indices) for indices
                                       in self.settings.index_by_basis]

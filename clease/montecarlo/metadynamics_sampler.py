@@ -152,7 +152,7 @@ class MetaDynamicsSampler(object):
 
         sweep_no = 0
         counter = 0
-        _logger(f"Starting metadynamics sampling...")
+        _logger("Starting metadynamics sampling...")
         _logger(f"Writing result to {self.fname} every {self.log_freq} sec")
         while not conv:
             counter += 1

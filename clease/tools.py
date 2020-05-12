@@ -524,7 +524,7 @@ def species_chempot2eci(bf_list, species_chempot):
         chemical potentials for all elements except one.
     """
     if len(species_chempot) != len(bf_list):
-        msg = f"Inconsistent number of chemical potentials. Basis functions\n"
+        msg = "Inconsistent number of chemical potentials. Basis functions\n"
         msg += f"{bf_list}. Passed chemical potentials {species_chempot}"
         raise ValueError(msg)
 

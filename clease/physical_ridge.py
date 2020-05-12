@@ -122,7 +122,7 @@ class PhysicalRidge(LinearRegression):
             (e.g. equal to the number of rows in X)
         """
         if X.shape[1] != len(self.sizes) or X.shape[1] != len(self.diameters):
-            msg = f"Inconsistent number of columns in X. "
+            msg = "Inconsistent number of columns in X. "
             msg += f"Num. columns: {X.shape[1]} "
             msg += f"Num. sizes: {len(self.sizes)} "
             msg += f"Num. diameters: {len(self.diameters)}"

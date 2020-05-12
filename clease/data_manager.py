@@ -113,7 +113,7 @@ class DataManager(object):
         if self._X is None:
             return
         fname = add_file_extension(fname, 'csv')
-        header = f",".join(self._feat_names) + f",{self._target_name}"
+        header = ",".join(self._feat_names) + f",{self._target_name}"
         data = np.hstack((self._X,
                           np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
@@ -360,7 +360,7 @@ class FinalStructEnergyGetter(object):
             num_atoms = extract_num_atoms(cur, id_set)
 
             final_struct_ids = set(final_struct_ids)
-            sql = f"SELECT id, energy FROM systems"
+            sql = "SELECT id, energy FROM systems"
             cur.execute(sql)
             energies = np.zeros(len(final_struct_ids))
 

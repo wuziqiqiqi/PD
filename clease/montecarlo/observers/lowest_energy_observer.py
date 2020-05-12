@@ -51,6 +51,6 @@ class LowestEnergyStructure(MCObserver):
             self.emin_atoms = self.atoms.copy()
             self.lowest_energy_cf = calc.get_cf()
             if self.verbose:
-                msg = f"Found new low energy structure. "
+                msg = "Found new low energy structure. "
                 msg += f"New energy: {self.lowest_energy} eV. Change: {dE} eV"
                 _logger(msg)

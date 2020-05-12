@@ -834,7 +834,7 @@ class Concentration(object):
         dot_prod = self.A_eq.dot(int_array)
         num_basis = len(num_atoms_in_basis)
         if not np.allclose(dot_prod[:num_basis], b_eq[:num_basis]):
-            msg = f"The conversion from floating point concentration to int "
+            msg = "The conversion from floating point concentration to int "
             msg += f"is not consistent. Expected: {b_eq}, "
             msg += f"got: {dot_prod}"
             raise IntConversionNotConsistentError(msg)

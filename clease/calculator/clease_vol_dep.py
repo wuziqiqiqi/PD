@@ -81,8 +81,8 @@ class CleaseVolDep(Clease):
             raise ValueError(f"Invalid format of ECI names. Got\n{eci.keys()}")
 
         if not vol_coeff_format_ok(vol_coeff.keys()):
-            raise ValueError(f"Invalid format of volume coefficient names. "
-                             "Got\n{vol_coeff.keys()}")
+            raise ValueError("Invalid format of volume coefficient names. "
+                             f"Got\n{vol_coeff.keys()}")
 
         cf_to_track = unique_eci_names_no_vol(eci.keys())
         cf_to_track = cf_to_track.union(set(vol_coeff.keys()))

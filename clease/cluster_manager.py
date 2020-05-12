@@ -49,9 +49,9 @@ class ClusterManager(object):
         lattices = []
         diameters = []
         sizes = []
-        for l, s in product(num_lattices, cluster_size):
+        for latt, s in product(num_lattices, cluster_size):
             clusters, fps = self.generator.generate(
-                s, max_cluster_dia[s], ref_lattice=l)
+                s, max_cluster_dia[s], ref_lattice=latt)
 
             eq_sites = []
             for c in clusters:
@@ -60,7 +60,7 @@ class ClusterManager(object):
             all_fps += fps
             all_clusters += clusters
             all_eq_sites += eq_sites
-            lattices += [l]*len(clusters)
+            lattices += [latt]*len(clusters)
             sizes += [s]*len(clusters)
             diameters += [2*np.sqrt(fp[0]) for fp in fps]
 
