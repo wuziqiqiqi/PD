@@ -296,6 +296,23 @@ class TestDataManager(unittest.TestCase):
         self.assertTrue(np.allclose(X, X_expect))
         self.assertTrue(np.allclose(y, y_expect))
 
+        # Extract with the pressure derivative
+        db.update(1, dBdP=0.3)
+        db.update(5, dBdP=4.0)
+        db.update(7, dBdP=2.3)
+
+        # Extract data again
+        cf_getter.properties = ('energy', 'pressure', 'bulk_mod', 'dBdP')
+        X, y = cf_getter.get_data([('converged', '=', 1)])
+
+        y_dBdP = np.array([0.3, 4.0, 2.3])
+        X_dBdP = np.zeros((3, 6))
+        X_dBdP[:, 2] = 2*(1.0 + y_dBdP)*cf['c0']
+        X_dBdP[:, 5] = 2*(1.0 + y_dBdP)*cf['c1_1']
+        X_expect = np.vstack((X_expect, X_dBdP))
+        y_expect = np.append(y_expect, np.zeros(3))
+        self.assertTrue(np.allclose(X, X_expect))
+        self.assertTrue(np.allclose(y, y_expect))
         os.remove(db_name)
 
     def test_is_matrix_representable(self):

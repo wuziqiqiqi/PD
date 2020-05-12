@@ -608,6 +608,31 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             target_values.append(bulk_mod.values())
             target_val_names.append('bulk_mod')
 
+        # Add the pressure derivative of the bulk modulus (dB/dP)
+        if 'dBdP' in self.properties:
+            dBdP = self._extract_key(set(ids), 'dBdP')
+            dBdP_rows = [id_row[k] for k in dBdP.keys()]
+            dBdP_cf = np.zeros((len(dBdP), cf_vol_dep.shape[1]))
+            dBdP = np.array(list(dBdP.values()))
+
+            counter = 0
+            vols = volumes[dBdP_rows]
+            for col in range(cf.shape[1]):
+                for power in range(self.order+1):
+                    # Double derivative of the energy
+                    dE2 = power*(power-1)*cf[dBdP_rows, col]*vols**(power-2)
+
+                    # Third derivative of the energy
+                    dE3 = power*(power-1)*(power-2)*cf[dBdP_rows, col] * \
+                        vols**(power-3)
+                    dBdP_cf[:, counter] = (1.0 + dBdP)*dE2 + vols*dE3
+                    counter += 1
+
+            # Update the full design matrix
+            cf_vol_dep = np.vstack((cf_vol_dep, dBdP_cf))
+            target_values.append(np.zeros(len(dBdP)))
+            target_val_names.append('dBdP')
+
         # Assign the global design matrix to the attribute _X, the vector with
         # all target values to _y and construct the name of the target_value by
         # joining all subnames
