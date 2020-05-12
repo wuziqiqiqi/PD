@@ -150,11 +150,48 @@ class CleaseVolDep(Clease):
             cf = self.get_cf()
 
         vol = self.get_volume(cf)
-        d2EdV = sum(p*(p-1)*self.eci_with_vol.get(k+f"_V{p}", 0.0)*cf[k]*vol**(p-2)
-                    for k in cf.keys() for p in range(2, self.max_power+1))
-        B = vol*d2EdV
+        B = vol*self._d2EdV2(cf, vol)
         self.results['bulk_mod'] = B
         return B
+
+    def _d2EdV2(self, cf: Dict[str, float], vol: float) -> float:
+        """
+        Return the double derivative of the energy with respect
+        to the volume
+
+        :param cf: Correlation functions
+        :param vol: Volume
+        """
+        return sum(p*(p-1)*self.eci_with_vol.get(k+f"_V{p}", 0.0) *
+                   cf[k]*vol**(p-2) for k in cf.keys()
+                   for p in range(2, self.max_power+1))
+
+    def _d3EdV3(self, cf: Dict[str, float], vol: float) -> float:
+        """
+        Return the third derivative of the energy with respect to
+        the volume
+
+        :param cf: Correlation functions
+        :param vol: Volume
+        """
+        return sum(p*(p-1)*(p-2)*self.eci_with_vol.get(k+f"_V{p}", 0.0) *
+                   cf[k]*vol**(p-3) for k in cf.keys()
+                   for p in range(3, self.max_power+1))
+
+    def get_dBdP(self, cf: Dict[str, float] = None) -> float:
+        """
+        Return the pressure derivative of the bulk modulus of the
+        current structure.
+
+        :param cf: Correlation functions. If not given, the correlation
+            functions are updated to match the current state of the attached
+            atoms object
+        """
+        if cf is None:
+            self.update_cf(None)
+            cf = self.get_cf()
+        vol = self.get_volume(cf)
+        return -1.0 - vol*self._d3EdV3(cf, vol)/self._d2EdV2(cf, vol)
 
     def get_energy_given_change(self, system_changes: Union[List[tuple], None]):
         """

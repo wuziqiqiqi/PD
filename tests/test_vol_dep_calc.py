@@ -98,10 +98,10 @@ class TestVolDepCalc(unittest.TestCase):
         eci = {
             eci_keys[0] + '_V0': 2.0,
             eci_keys[0] + '_V1': -1.0,
-            eci_keys[0] + '_V2': 0.5,
+            eci_keys[0] + '_V2': 1.0,
             eci_keys[1] + '_V0': 3.0,
-            eci_keys[1] + '_V1': 1.0,
-            eci_keys[1] + '_V2': -0.5,
+            eci_keys[1] + '_V1': -2.0,
+            eci_keys[1] + '_V2': 0.5,
         }
 
         vol_coeff = {
@@ -129,8 +129,11 @@ class TestVolDepCalc(unittest.TestCase):
         self.assertAlmostEqual(P, expect_P)
 
         B = calc.get_bulk_modulus(cf)
-        expect_B = 0.0
+        expect_B = 3.0
         self.assertAlmostEqual(B, expect_B)
+
+        dBdP = calc.get_dBdP(cf)
+        self.assertAlmostEqual(dBdP, -1.0)
 
     def test_update_eci(self):
         db_name = 'test_update_eci.db'
