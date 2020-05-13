@@ -142,6 +142,16 @@ class DataManager(object):
         indices = [name_idx[n] for n in names]
         return self._X[:, indices]
 
+    def groups(self) -> List[int]:
+        """
+        Returns the group of each item in the X matrix. In the top-level
+        DataManager it is assumed that each row in the X matrix constitutes
+        its own group. But this method may be overrided in child classes.
+        """
+        if self._X is None:
+            return []
+        return list(range(self._X.shape[0]))
+
 
 class CorrFuncEnergyDataManager(DataManager):
     """
@@ -530,6 +540,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         self.properties = properties
         self._X = None
         self._y = None
+        self._groups = []
 
     def build(self, ids: List[int]) -> np.ndarray:
         """
@@ -554,6 +565,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         cf_vol_dep = np.zeros((cf.shape[0], (self.order+1)*cf.shape[1]))
         counter = 0
         self._feat_names = []
+        self._groups = list(range(cf_vol_dep.shape[0]))
 
         # Construct the part of the design matrix that corresponds to
         # energy fitting (e.g. if there are N energy calculations we construct
@@ -583,6 +595,10 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             target_values.append(np.zeros(pressure_cf.shape[0]))
             target_val_names.append('pressure')
 
+            # All data points have a pressure, the groups just repeats
+            # themselves
+            self._groups += self._groups
+
         id_row = {db_id: i for i, db_id in enumerate(ids)}
 
         # Add bulk modulus data. B = V*d^2E/dV^2
@@ -607,6 +623,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             cf_vol_dep = np.vstack((cf_vol_dep, bulk_mod_cf))
             target_values.append(bulk_mod.values())
             target_val_names.append('bulk_mod')
+            self._groups += [self._groups[r] for r in bulk_mod_rows]
 
         # Add the pressure derivative of the bulk modulus (dB/dP)
         if 'dBdP' in self.properties:
@@ -632,6 +649,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             cf_vol_dep = np.vstack((cf_vol_dep, dBdP_cf))
             target_values.append(np.zeros(len(dBdP)))
             target_val_names.append('dBdP')
+            self._groups += [self._groups[r] for r in dBdP_rows]
 
         # Assign the global design matrix to the attribute _X, the vector with
         # all target values to _y and construct the name of the target_value by
@@ -677,3 +695,9 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         self.build(ids)
         return self._X, self._y
+
+    def groups(self) -> List[int]:
+        """
+        Return the group of each rows.
+        """
+        return self._groups

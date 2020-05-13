@@ -58,6 +58,7 @@ class TestDataManager(unittest.TestCase):
             expect_X[:, 1] = 1.0
             expect_X[:, 2] = -1.0
             self.assertTrue(np.allclose(X, expect_X))
+            self.assertEqual(manager.groups(), list(range(X.shape[0])))
 
             csvfile = 'dataset.csv'
             manager.to_csv(csvfile)
@@ -257,6 +258,8 @@ class TestDataManager(unittest.TestCase):
         self.assertEqual(cf_getter._feat_names, expected_names)
 
         X_expect = np.zeros((2*N, 6))
+        expect_groups = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+                         0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         self.assertEqual(X_expect.shape, X.shape)
         volumes = np.array(volumes)
         X_expect[:N, 0] = cf['c0']
@@ -273,6 +276,7 @@ class TestDataManager(unittest.TestCase):
         X_expect[N:2*N, 4] = cf['c1_1']
         X_expect[N:2*N, 5] = 2*cf['c1_1']*volumes
         self.assertTrue(np.allclose(X, X_expect))
+        self.assertEqual(cf_getter.groups(), expect_groups)
 
         y_expect = np.zeros(2*N)
         y_expect[:N] = energies
@@ -293,8 +297,10 @@ class TestDataManager(unittest.TestCase):
         X_bulk[:, 5] = 2*cf['c1_1']*volumes[[0, 2, 3]]
         X_expect = np.vstack((X_expect, X_bulk))
         y_expect = np.append(y_expect, y_bulk)
+        expect_groups += [0, 2, 3]
         self.assertTrue(np.allclose(X, X_expect))
         self.assertTrue(np.allclose(y, y_expect))
+        self.assertEqual(cf_getter.groups(), expect_groups)
 
         # Extract with the pressure derivative
         db.update(1, dBdP=0.3)
@@ -311,8 +317,10 @@ class TestDataManager(unittest.TestCase):
         X_dBdP[:, 5] = 2*(1.0 + y_dBdP)*cf['c1_1']
         X_expect = np.vstack((X_expect, X_dBdP))
         y_expect = np.append(y_expect, np.zeros(3))
+        expect_groups += [0, 2, 3]
         self.assertTrue(np.allclose(X, X_expect))
         self.assertTrue(np.allclose(y, y_expect))
+        self.assertEqual(cf_getter.groups(), expect_groups)
         os.remove(db_name)
 
     def test_is_matrix_representable(self):
