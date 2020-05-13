@@ -241,7 +241,8 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
                         X: np.ndarray,
                         y: np.ndarray,
                         cv: int = 5,
-                        num_trials: int = 100) -> Dict:
+                        num_trials: int = 100,
+                        groups: List[int] = []) -> Dict:
     """
     Estimate the hyper parameters of the Physical Ridge by random search.
 
@@ -261,6 +262,9 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
 
     :param num_trials: Number of combinations of hyper parameters
         that will be tried
+
+    :param groups: Grouping information for X and y matrix. See docstring
+        of `clease.tools.split_dataset` for furhter information.
     """
     best_param = None
     best_cv = 0.0
@@ -269,7 +273,7 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
 
     cv_params = []
     last_print = time.time()
-    partitions = split_dataset(X, y, nsplits=cv)
+    partitions = split_dataset(X, y, nsplits=cv, groups=groups)
 
     # Pre-calculate SVDs
     svds = [SVD() for _ in range(len(partitions))]
