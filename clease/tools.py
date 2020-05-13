@@ -5,7 +5,7 @@ from itertools import (
 )
 import numpy as np
 from collections.abc import Iterable
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
 from random import sample
@@ -240,14 +240,32 @@ def reconfigure(settings, select_cond=None):
     CorrFunction(settings).reconfigure_db_entries(select_cond)
 
 
-def split_dataset(X, y, nsplits=10):
+def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
+                  groups: List[int] = []) -> List[Dict[str, np.ndarray]]:
     """Split the dataset such that it can be used for k-fold
-        cross validation."""
+        cross validation.
+
+    :param X: Design matrix
+    :param y: Target values
+    :param nsplits: Number of partittions
+    :param groups: List of the same length as y. Each row
+        in y with the same group tag, is treated as the same
+        group. Datapoints in the same group are never split
+        across different partitions. If an empty list is give,
+        each item in y is assumed to constitute its own group.
+    """
     from random import shuffle
-    indices = list(range(len(y)))
-    shuffle(indices)
+
+    if not groups:
+        groups = list(range(len(y)))
+    unique_groups = list(set(groups))
+
+    if len(unique_groups) < nsplits:
+        raise ValueError("The number of unique groups has to be greater "
+                         "than the number of partitions.")
+    shuffle(unique_groups)
     partitions = []
-    num_validation = int(len(y)/nsplits)
+    num_validation = int(len(unique_groups)/nsplits)
 
     if num_validation < 1:
         num_validation = 1
@@ -255,16 +273,21 @@ def split_dataset(X, y, nsplits=10):
         start = i*num_validation
         end = (i+1)*num_validation
         if i == nsplits-1:
-            indx = indices[start:]
+            chosen_groups = unique_groups[start:]
         else:
-            indx = indices[start:end]
-        mask = np.zeros(len(y), dtype=np.uint8)
-        mask[indx] = 1
+            chosen_groups = unique_groups[start:end]
+
+        group_mask = np.zeros(len(groups), dtype=np.uint8)
+        group_mask[chosen_groups] = 1
+        index_mask = np.zeros(len(y), dtype=np.uint8)
+        for i, g in enumerate(groups):
+            if group_mask[g]:
+                index_mask[i] = 1
         data = {
-            "train_X": X[mask == 0, :],
-            "train_y": y[mask == 0],
-            "validate_X": X[mask == 1, :],
-            "validate_y": y[mask == 1]
+            "train_X": X[index_mask == 0, :],
+            "train_y": y[index_mask == 0],
+            "validate_X": X[index_mask == 1, :],
+            "validate_y": y[index_mask == 1]
         }
         partitions.append(data)
     return partitions

@@ -5,7 +5,7 @@ from clease.tools import (
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
     cname_lt, singlets2conc, aic, aicc, bic,
     get_extension, add_file_extension, equivalent_deco,
-    sort_cf_names
+    sort_cf_names, split_dataset
 )
 from clease.basis_function import Polynomial
 from itertools import product
@@ -325,6 +325,50 @@ class TestTools(unittest.TestCase):
         for test in tests:
             sorted_names = sort_cf_names(test['names'])
             self.assertListEqual(sorted_names, test['expect'])
+
+    def test_split_dataset(self):
+        X = np.zeros((100, 10))
+        y = np.zeros(100)
+
+        # Case 1: Split without specifying groups
+        partitions = split_dataset(X, y, nsplits=5)
+
+        for p in partitions:
+            self.assertEqual(p['train_X'].shape, (80, 10))
+            self.assertEqual(len(p['train_y']), 80)
+            self.assertEqual(p['validate_X'].shape, (20, 10))
+            self.assertEqual(len(p['validate_y']), 20)
+
+        # Case 2: Specify groups and check that entries that belonds
+        # to the same groups is not split accross different partitions
+
+        groups = []
+        for i in range(len(X)):
+            y[i] = i % 20
+            X[i, :] = i % 20
+            X = X.astype(int)
+            y = y.astype(int)
+            groups.append(i % 20)
+
+        partitions = split_dataset(X, y, nsplits=5, groups=groups)
+        for p in partitions:
+            groups_train = set()
+            groups_validate = set()
+
+            flatX = p['train_X'].ravel().tolist()
+            groups_train = groups_train.union(set(flatX))
+            groups_train = groups_train.union(set(p['train_y']))
+
+            flatX = p['validate_X'].ravel().tolist()
+            groups_validate = groups_validate.union(set(flatX))
+            groups_validate = groups_validate.union(set(p['validate_y']))
+
+            # Make sure that the intersection between groups_train and groups
+            # validate is an empty set
+            self.assertEqual(set(), groups_train.intersection(groups_validate))
+
+
+
 
 
 if __name__ == '__main__':
