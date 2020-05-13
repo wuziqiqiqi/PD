@@ -1,15 +1,17 @@
 import unittest
 from ase.build import bulk
+from ase.db import connect
 from clease.tools import (
     min_distance_from_facet, factorize, all_integer_transform_matrices,
     species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
     cname_lt, singlets2conc, aic, aicc, bic,
     get_extension, add_file_extension, equivalent_deco,
-    sort_cf_names, split_dataset
+    sort_cf_names, split_dataset, common_cf_names
 )
 from clease.basis_function import Polynomial
 from itertools import product
 import numpy as np
+import os
 
 
 class TestTools(unittest.TestCase):
@@ -367,8 +369,40 @@ class TestTools(unittest.TestCase):
             # validate is an empty set
             self.assertEqual(set(), groups_train.intersection(groups_validate))
 
+    def test_common_cf_names(self):
+        db_name = "test_common_cf_names.db"
+        db = connect(db_name)
+        table = 'polynomial_cf'
+        atoms = bulk('Au')
+        cfs = [
+            {
+                'c1_1': 0.0,
+                'c2_d0000_0_00': 1.0,
+                'c3_d0000_0_000': -1.0,
+            },
+            {
+                'c1_1': 0.0,
+                'c2_d0000_0_00': 1.0,
+                'c3_d0000_0_000': -1.0,
+            },
+            {
+                'c1_1': 0.2,
+                'c3_d0000_0_000': 2.0
+            }
+        ]
+        for cf in cfs:
+            db.write(atoms, external_tables={
+                table: cf
+            })
 
+        ids = set([1, 2, 3])
+        with connect(db_name) as db:
+            cur = db.connection.cursor()
+            common = common_cf_names(ids, cur, table)
 
+        expect_common = set(['c1_1', 'c3_d0000_0_000'])
+        os.remove(db_name)
+        self.assertEqual(common, expect_common)
 
 
 if __name__ == '__main__':

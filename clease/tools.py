@@ -5,7 +5,7 @@ from itertools import (
 )
 import numpy as np
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Set
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
 from random import sample
@@ -932,3 +932,30 @@ def get_attribute(
     # Convert to a list that matches the order of the IDs that
     # was passed
     return [row_id_value[k] for k in ids]
+
+
+def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
+    """
+    Extracts all correlation function names that are present for all
+    ids
+
+    :param ids: List of ids that should be checked
+    :param cur: SQL cursor
+    :param table: Table to check
+    """
+    known_tables = ['polynomial_cf', 'binary_linear_cf',
+                    'trigonometric_cf']
+    if table not in known_tables:
+        raise ValueError(f"Table has to be one of {known_tables}")
+
+    sql = f"SELECT key, id FROM {table}"
+    cur.execute(sql)
+    cf_names = {}
+    for cf_name, row_id in cur.fetchall():
+        if row_id in ids:
+            current = cf_names.get(row_id, set())
+            current.add(cf_name)
+            cf_names[row_id] = current
+
+    # Calculate the intersection between all sets
+    return set.intersection(*list(cf_names.values()))
