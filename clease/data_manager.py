@@ -4,6 +4,7 @@ import numpy as np
 from clease.tools import add_file_extension, sort_cf_names, get_ids
 from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
+from itertools import combinations_with_replacement as cwr
 
 
 class InconsistentDataError(Exception):
@@ -165,13 +166,17 @@ class CorrFuncEnergyDataManager(DataManager):
 
     :param tab_name: Name of the table where the correlation functions are
         stored
+
+    :param order: Order of the correlation function. Default 1.
     """
 
     def __init__(self, db_name: str, tab_name: str,
-                 cf_names: Optional[List[str]] = None) -> None:
+                 cf_names: Optional[List[str]] = None,
+                 order: int = 1) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
+        self.order = order
 
     def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -184,7 +189,7 @@ class CorrFuncEnergyDataManager(DataManager):
         return DataManager.get_data(
             self, select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name,
-                                      self.cf_names),
+                                      self.cf_names, order=self.order),
             FinalStructEnergyGetter(self.db_name))
 
 
@@ -201,13 +206,17 @@ class CorrelationFunctionGetter(object):
     :param cf_names: List with the names of the correlation functions.
         If None, all correlation functions in the database will be
         extracted
+
+    :param order: Order of the correlation function. Default is 1.
     """
 
     def __init__(self, db_name: str, tab_name: str,
-                 cf_names: Optional[List[str]] = None) -> None:
+                 cf_names: Optional[List[str]] = None,
+                 order: int = 1) -> None:
         self.db_name = db_name
         self.cf_names = cf_names
         self.tab_name = tab_name
+        self.order = order
 
     @property
     def names(self):
@@ -319,6 +328,29 @@ class CorrelationFunctionGetter(object):
             cols = [cf_name_col[name] for name in cf_names]
             cf_matrix[row, :] = np.array(cf_values)[cols]
             row += 1
+
+        if self.order > 1:
+            cf_matrix = self._include_higher_order(cf_matrix)
+        return cf_matrix
+
+    def _include_higher_order(self, cf_matrix: np.ndarray) -> np.ndarray:
+        """
+        Adds columns to the cf_matrix consisting of higher orders.
+
+        :param cf_matrix: Matrix holding first order correlation functions
+        """
+        first_order_cf_indices = list(range(1, cf_matrix.shape[1]))
+        nrows = cf_matrix.shape[0]
+        for order in range(2, self.order+1):
+            for comb in cwr(first_order_cf_indices, r=order):
+                X = np.ones((nrows, 1))
+                for i in comb:
+                    X[:, 0] *= cf_matrix[:, i]
+                cf_matrix = np.hstack((cf_matrix, X))
+                name = '*'.join(self.cf_names[i] for i in comb)
+
+                # Add the new to the list of cf names
+                self.cf_names.append(name)
         return cf_matrix
 
 
@@ -456,13 +488,17 @@ class CorrFuncVolumeDataManager(DataManager):
 
     :param cf_names: List with the correlation function names to extract.
         If None, all correlation functions in the database will be extracted.
+
+    :param order: Order of the correlation functions. Default 1.
     """
 
     def __init__(self, db_name: str, tab_name: str,
-                 cf_names: Optional[List[str]] = None) -> None:
+                 cf_names: Optional[List[str]] = None,
+                 order: int = 1) -> None:
         DataManager.__init__(self, db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
+        self.order = order
 
     def get_data(self,
                  select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
@@ -479,7 +515,8 @@ class CorrFuncVolumeDataManager(DataManager):
         return DataManager.get_data(
             self, select_cond,
             CorrelationFunctionGetter(
-                self.db_name, self.tab_name, self.cf_names),
+                self.db_name, self.tab_name, self.cf_names,
+                order=self.order),
             FinalVolumeGetter(self.db_name))
 
 
@@ -525,16 +562,21 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         to have an energy. The remaining properties (e.g. bulk_mod) is not
         required for all structures. In class will pick up and the material
         property for the structures where it is present.
+
+    :param cf_order: The energy is expanded up and (inluding) this order
+        in the correlation function. Default is 1.
     """
 
     def __init__(self, db_name: str, tab_name: str, cf_names: List[str],
                  order: Optional[int] = 0,
-                 properties: Tuple[str] = ('energy', 'pressure')) -> None:
+                 properties: Tuple[str] = ('energy', 'pressure'),
+                 cf_order: int = 1) -> None:
         self.db_name = db_name
         self.tab_name = tab_name
         self.order = order
         self.cf_names = cf_names
         self.properties = properties
+        self.cf_order = cf_order
         self._X = None
         self._y = None
         self._groups = []
@@ -547,7 +589,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         :param ids: List of ids to take into account
         """
         cf_getter = CorrelationFunctionGetter(
-            self.db_name, self.tab_name, self.cf_names)
+            self.db_name, self.tab_name, self.cf_names,
+            order=self.cf_order)
         cf = cf_getter(ids)
 
         volume_getter = FinalVolumeGetter(self.db_name)

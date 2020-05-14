@@ -361,6 +361,38 @@ class TestDataManager(unittest.TestCase):
             min_set = getter._minimum_common_cf_set(test['id_cf_names'])
             self.assertSetEqual(min_set, test['min_common'])
 
+    def test_cf_second_order(self):
+        db_name = "test_second_order.db"
+        db = connect(db_name)
+        cfs = [
+            {
+                'c1': 1.0,
+                'c2': 1.0,
+                'c3': 2.0,
+            },
+            {
+                'c1': 1.0,
+                'c2': 2.0,
+                'c3': 4.0,
+            }
+        ]
+
+        ids = []
+        for cf in cfs:
+            uid = db.write(Atoms(), external_tables={
+                'polynomial_cf': cf
+            }, struct_type='initial')
+            ids.append(uid)
+
+        getter = CorrelationFunctionGetter(
+            db_name, 'polynomial_cf', order=2
+        )
+        X = getter(ids)
+        expect = np.array([[1.0, 1.0, 2.0, 1.0, 2.0, 4.0],
+                           [1.0, 2.0, 4.0, 4.0, 8.0, 16.0]])
+        os.remove(db_name)
+        self.assertTrue(np.allclose(X, expect))
+
 
 if __name__ == '__main__':
     unittest.main()
