@@ -30,6 +30,9 @@ from clease.convexhull import ConvexHull
 from clease.regression import LinearRegression, Tikhonov, Lasso
 from clease.constrained_ridge import ConstrainedRidge
 from clease.physical_ridge import PhysicalRidge
+from clease.generalized_ridge_regression import (
+    GeneralizedRidgeRegression, EigenDecomposition
+)
 from clease.ga_fit import GAFit
 from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
 from clease.sequential_cluster_ridge import SequentialClusterRidge
@@ -51,4 +54,5 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'ClusterExpansionSettings', 'settingsFromJSON', 'CESlab',
            'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
            'ClusterManager', 'VolumeToSurfaceRatioFilter', 'StructureMapper',
-           'ConstrainedRidge']
+           'ConstrainedRidge', 'GeneralizedRidgeRegression',
+           'EigenDecomposition']
