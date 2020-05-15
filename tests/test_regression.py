@@ -1,4 +1,4 @@
-from clease import LinearRegression, Lasso, Tikhonov
+from clease import LinearRegression, Lasso, Tikhonov, ConstrainedRidge
 import numpy as np
 import unittest
 
@@ -113,6 +113,39 @@ class Test_Tikhonov(unittest.TestCase):
             if predict:
                 Tik.alpha = test['alpha']
                 self.assertEqual(Tik.get_scalar_parameter(), test['alpha'])
+
+
+class TestConstrainedRidge(unittest.TestCase):
+    def test_constrained_ridge(self):
+        X = np.zeros((3, 5))
+        x = np.linspace(0.0, 1.0, 3)
+        for i in range(X.shape[1]):
+            X[:, i] = x**i
+
+        y = 2.0*x - 3.0*x**3
+
+        alpha = 1e-5
+        alpha_vec = np.zeros(5) + alpha
+        regressor = ConstrainedRidge(alpha_vec)
+        coeff = regressor.fit(X, y)
+        pred = X.dot(coeff)
+        self.assertTrue(np.allclose(y, pred, atol=1e-3))
+
+        # Apply a constraint the first coefficient is
+        # two times the second
+        A = np.array([[0.0, -1.0, 2.0, 0.0, 0.0]])
+        c = np.zeros(1)
+
+        # We know have five unknowns, three data points and one constraint
+        # Thus, there is still one additional degree of freedom. Thys,
+        # all data points should still be fitted accurately
+        regressor.add_constraint(A, c)
+        coeff = regressor.fit(X, y)
+        pred = X.dot(coeff)
+        self.assertTrue(np.allclose(y, pred, atol=1e-3))
+
+        # Make sure the constrain it satisfied
+        self.assertAlmostEqual(coeff[1], 2*coeff[2])
 
 
 class Test_Lasso(unittest.TestCase):

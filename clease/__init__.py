@@ -28,6 +28,7 @@ from clease.corr_func import CorrFunction
 from clease.new_struct import NewStructures
 from clease.convexhull import ConvexHull
 from clease.regression import LinearRegression, Tikhonov, Lasso
+from clease.constrained_ridge import ConstrainedRidge
 from clease.physical_ridge import PhysicalRidge
 from clease.ga_fit import GAFit
 from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
@@ -49,4 +50,5 @@ __all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
            'CellVectorDirectionFilter', 'AngleFilter',
            'ClusterExpansionSettings', 'settingsFromJSON', 'CESlab',
            'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
-           'ClusterManager', 'VolumeToSurfaceRatioFilter', 'StructureMapper']
+           'ClusterManager', 'VolumeToSurfaceRatioFilter', 'StructureMapper',
+           'ConstrainedRidge']
