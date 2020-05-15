@@ -44,6 +44,29 @@ class TestPhysicalRidge(unittest.TestCase):
 
         random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=5)
 
+    def test_constraints(self):
+        phys_ridge = PhysicalRidge(lamb_dia=0.0, lamb_size=1e-4,
+                                   normalize=False)
+        X = np.zeros((3, 5))
+        x = np.array([0.0, 2.0, 4.0])
+        for i in range(5):
+            X[:, i] = x**i
+        y = 2.0*x + x**2
+        phys_ridge.diameters = np.zeros(5)
+        phys_ridge.sizes = 2*np.ones(5)
+
+        coeff = phys_ridge.fit(X, y)
+        pred = X.dot(coeff)
+        self.assertTrue(np.allclose(y, pred, atol=1e-3))
+
+        A = np.array([[0.0, 1.0, 1.0, 0.0, 0.0]])
+        c = np.zeros(1)
+        phys_ridge.add_constraint(A, c)
+        coeff = phys_ridge.fit(X, y)
+        pred = X.dot(coeff)
+        self.assertTrue(np.allclose(y, pred, atol=1e-3))
+
+        self.assertAlmostEqual(coeff[1], -coeff[2])
 
 
 if __name__ == '__main__':

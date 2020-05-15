@@ -7,6 +7,7 @@ import numpy as np
 from random import choice
 import time
 from clease.svd import SVD
+from clease import ConstrainedRidge
 
 
 class PhysicalRidge(LinearRegression):
@@ -79,6 +80,21 @@ class PhysicalRidge(LinearRegression):
         self.reuse_svd = reuse_svd
         self.svd = SVD()
         self.normalizer = DataNormalizer()
+        self._constraint = None
+
+    def add_constraint(self, A: np.ndarray, c: np.ndarray) -> None:
+        """
+        Adds a constraint that the coefficients (ECI) has to obey,
+        A.dot(coeff) = c
+
+        :param A: Matrix describing the linear constraint
+        :param c: Vector representing the right hand side of
+            constraint equations
+        """
+        self._constraint = {
+            'A': A,
+            'c': c
+        }
 
     def fit_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -163,12 +179,19 @@ class PhysicalRidge(LinearRegression):
 
         penalty = self.lamb_size*size_decay + self.lamb_dia*dia_decay
 
-        if not self.svd.has_matrices():
-            self.svd.calculate(X)
+        if self._constraint is not None:
+            # Use the constrained Tikhonov verison
+            regressor = ConstrainedRidge(penalty)
+            regressor.add_constraint(self._constraint['A'],
+                                     self._constraint['c'])
+            coeff = regressor.fit(X_fit, y_fit)
+        else:
+            if not self.svd.has_matrices():
+                self.svd.calculate(X)
 
-        V = self.svd.Vh.T
-        D = self.svd.S/(self.svd.S**2 + penalty[:len(self.svd.S)])
-        coeff = V.dot(np.diag(D)).dot(self.svd.U.T).dot(y)
+            V = self.svd.Vh.T
+            D = self.svd.S/(self.svd.S**2 + penalty[:len(self.svd.S)])
+            coeff = V.dot(np.diag(D)).dot(self.svd.U.T).dot(y)
 
         if not self.reuse_svd:
             self.svd.clear()

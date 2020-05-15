@@ -75,5 +75,5 @@ class ConstrainedRidge(LinearRegression):
         :param y: target values
         """
         matrix, rhs = self.kkt_system(X, y)
-        coeff = np.linalg.lstsq(matrix, rhs, rcond=None)[0]
+        coeff = np.linalg.solve(matrix, rhs)
         return coeff[:X.shape[1]]
