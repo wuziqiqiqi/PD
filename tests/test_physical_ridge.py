@@ -68,6 +68,40 @@ class TestPhysicalRidge(unittest.TestCase):
 
         self.assertAlmostEqual(coeff[1], -coeff[2])
 
+    def test_non_constant_penalization(self):
+        phys_ridge = PhysicalRidge(
+            lamb_size=1.0, lamb_dia=1.0, size_decay="linear",
+            dia_decay="linear", normalize=False)
+        tests = [
+            {
+                'X': np.array([[1.0, 2.0], [-1.0, 3.0]]),
+                'y': np.ones(2),
+                'sizes': [2, 4],
+                'diameters': [0.0, 0.0],
+                'expect': np.array([5.0/67.0, 20.0/67.0])
+            },
+            {
+                'X': np.array([[1.0, 2.0, -3.0], [-1.0, 3.0, 6.0]]),
+                'y': np.ones(2),
+                'expect': np.array([59.0/706.0, 209.0/706.0, 3.0/706.0]),
+                'sizes': [2, 4, 2],
+                'diameters': [0.0, 0.0, 0.0]
+            },
+             {
+                'X': np.array([[1.0, 2.0], [-1.0, 3.0], [-5.0, 8.0]]),
+                'y': np.ones(3),
+                'expect': np.array([32.0/167.0, 43.0/167.0]),
+                'sizes': [2, 4],
+                'diameters': [0.0, 0.0]
+            }
+        ]
+
+        for test in tests:
+            phys_ridge.sizes = test['sizes']
+            phys_ridge.diameters = test['diameters']
+            coeff = phys_ridge.fit(test['X'], test['y'])
+            self.assertTrue(np.allclose(coeff, test['expect']))
+
 
 if __name__ == '__main__':
     unittest.main()

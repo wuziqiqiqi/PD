@@ -6,8 +6,8 @@ from clease import _logger
 import numpy as np
 from random import choice
 import time
-from clease.svd import SVD
 from clease import ConstrainedRidge
+from scipy.linalg import solve_triangular
 
 
 class PhysicalRidge(LinearRegression):
@@ -59,17 +59,12 @@ class PhysicalRidge(LinearRegression):
         (e.g. energy, pressure, bulk moduli) there will typically be different
         columns that corresponds to the bias term for the different groups. It
         is recommended to put normalize=False for such cases.
-
-    :param reuse_svd: If True, a cached SVD will be used when calling fit.
-        The SVD can be re-used of the design matrix is the same, but
-        regularization parameters change. If False, SVD is recalcualted
-        everytime. Default: False.
     """
     def __init__(self, lamb_size: float = 1e-6,
                  lamb_dia: float = 1e-6,
                  size_decay: Union[str, Callable[[int], float]] = 'linear',
                  dia_decay: Union[str, Callable[[int], float]] = 'linear',
-                 normalize: bool = True, reuse_svd: bool = False) -> None:
+                 normalize: bool = True) -> None:
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
         self._size_decay = get_size_decay(size_decay)
@@ -77,8 +72,6 @@ class PhysicalRidge(LinearRegression):
         self.sizes = []
         self.diameters = []
         self.normalize = normalize
-        self.reuse_svd = reuse_svd
-        self.svd = SVD()
         self.normalizer = DataNormalizer()
         self._constraint = None
 
@@ -186,15 +179,10 @@ class PhysicalRidge(LinearRegression):
                                      self._constraint['c'])
             coeff = regressor.fit(X_fit, y_fit)
         else:
-            if not self.svd.has_matrices():
-                self.svd.calculate(X)
-
-            V = self.svd.Vh.T
-            D = self.svd.S/(self.svd.S**2 + penalty[:len(self.svd.S)])
-            coeff = V.dot(np.diag(D)).dot(self.svd.U.T).dot(y)
-
-        if not self.reuse_svd:
-            self.svd.clear()
+            matrix = np.vstack((X, np.diag(np.sqrt(penalty))))
+            Q, R = np.linalg.qr(matrix)
+            rhs = np.concatenate((y, np.zeros(len(penalty))))
+            coeff = solve_triangular(R, Q.T.dot(rhs), lower=False)
 
         if self.normalize:
             coeff_transformed = self.normalizer.convert(coeff)
@@ -298,12 +286,6 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
     last_print = time.time()
     partitions = split_dataset(X, y, nsplits=cv, groups=groups)
 
-    # Pre-calculate SVDs
-    svds = [SVD() for _ in range(len(partitions))]
-    for i, p in enumerate(partitions):
-        X, _ = phys_ridge.fit_data(p['train_X'], p['train_y'])
-        svds[i].calculate(X)
-
     for i in range(num_trials):
         lamb_dia = choice(params.get('lamb_dia', [phys_ridge.lamb_dia]))
         lamb_size = choice(params.get('lamb_size', [phys_ridge.lamb_size]))
@@ -325,7 +307,6 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
         cv_score = 0.0
         mse = 0.0
         for j, p in enumerate(partitions):
-            phys_ridge.svd = svds[j]
             coeff = phys_ridge.fit(p['train_X'], p['train_y'])
             pred = p['validate_X'].dot(coeff)
             cv_score += np.sqrt(np.mean((pred - p['validate_y'])**2))
