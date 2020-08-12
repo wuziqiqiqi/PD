@@ -99,6 +99,8 @@ class PhysicalRidge(LinearRegression):
         """
         if self.normalize:
             X_fit, y_fit = self.normalizer.normalize(X, y)
+            # Skip constant term since y is shifted to have mean zero (and thus the constant term is zero)
+            return X_fit[:, 1:], y_fit
         return X, y
 
     @property
@@ -171,6 +173,11 @@ class PhysicalRidge(LinearRegression):
         dia_decay = np.array([self.dia_decay(x) for x in self.diameters])
 
         penalty = self.lamb_size*size_decay + self.lamb_dia*dia_decay
+        if len(penalty) == X_fit.shape[1] + 1:
+            # In this case the constant term in X was removed
+            penalty = penalty[1:]
+        elif len(penalty) != X_fit.shape[1]:
+            raise RuntimeError(f"Num. penalty {len(penalty)}. Num feature {X_fit.shape[1]}.")
 
         if self._constraint is not None:
             # Use the constrained Tikhonov verison
@@ -179,14 +186,15 @@ class PhysicalRidge(LinearRegression):
                                      self._constraint['c'])
             coeff = regressor.fit(X_fit, y_fit)
         else:
-            matrix = np.vstack((X, np.diag(np.sqrt(penalty))))
+            matrix = np.vstack((X_fit, np.diag(np.sqrt(penalty))))
             Q, R = np.linalg.qr(matrix)
-            rhs = np.concatenate((y, np.zeros(len(penalty))))
+            rhs = np.concatenate((y_fit, np.zeros(len(penalty))))
             coeff = solve_triangular(R, Q.T.dot(rhs), lower=False)
 
         if self.normalize:
-            coeff_transformed = self.normalizer.convert(coeff)
-            coeff_transformed[0] = self.normalizer.bias(coeff)
+            coeff_with_bias_term = np.concatenate(([0.0], coeff))
+            coeff_transformed = self.normalizer.convert(coeff_with_bias_term)
+            coeff_transformed[0] = self.normalizer.bias(coeff_with_bias_term)
             coeff = coeff_transformed
         return coeff
 

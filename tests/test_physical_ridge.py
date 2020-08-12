@@ -44,6 +44,23 @@ class TestPhysicalRidge(unittest.TestCase):
 
         random_cv_hyper_opt(phys_ridge, params, X, y, cv=5, num_trials=5)
 
+    def test_normalize(self):
+        X = np.array([[1.0, 0.3, 0.5, 0.6],
+                      [1.0, -0.2, 0.7, 0.9],
+                      [1.0, -0.6, 0.3, 0.8],
+                      [1.0, 0.2, 0.6, 1.2]])
+        y = np.array([0.4, 0.2, -0.1, -0.6])
+
+        for normalize in [False, True]:
+            phys_ridge = PhysicalRidge(normalize=normalize)
+            phys_ridge.sizes = [1, 2, 3, 4]
+            phys_ridge.diameters = [1, 2, 3, 4]
+            coeff = phys_ridge.fit(X, y)
+            pred = X.dot(coeff)
+
+            # Allow some tolerence since we don't expect perfect match because of the regularization
+            self.assertTrue(np.allclose(y, pred, atol=1e-4), msg=f"Normalize: {normalize}")
+
     def test_constraints(self):
         phys_ridge = PhysicalRidge(lamb_dia=0.0, lamb_size=1e-4,
                                    normalize=False)
