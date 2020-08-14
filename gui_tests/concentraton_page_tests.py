@@ -7,8 +7,7 @@ class ConcentrationPageTest(unittest.TestCase):
         screen = app.root.ids.sm.get_screen('Concentration')
         num_children = len(screen.ids.mainConcLayout.children)
         screen.ids.addConstraintButton.dispatch('on_release')
-        self.assertEqual(len(screen.ids.mainConcLayout.children),
-                         num_children + 1)
+        self.assertEqual(len(screen.ids.mainConcLayout.children), num_children + 1)
 
         # Locate the remove button
         for widget in screen.ids.mainConcLayout.children:
@@ -18,8 +17,7 @@ class ConcentrationPageTest(unittest.TestCase):
                 for ch in widget.children:
                     if ch.text == 'Remove':
                         ch.dispatch('on_press')
-        self.assertEqual(len(screen.ids.mainConcLayout.children),
-                         num_children)
+        self.assertEqual(len(screen.ids.mainConcLayout.children), num_children)
 
     def check_matrices(self, app):
         screen = app.root.ids.sm.get_screen('Concentration')

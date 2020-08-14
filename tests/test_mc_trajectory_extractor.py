@@ -4,43 +4,39 @@ from clease.mc_trajectory_extractor import MCTrajectoryExtractor
 
 
 class TestMCTrajectoryExtractor(unittest.TestCase):
+
     def test_is_related_by_swap(self):
-        atAl = bulk('Al')*(2, 2, 2)
+        atAl = bulk('Al') * (2, 2, 2)
         atAl[0].symbol = 'X'
 
-        atAl2 = bulk('Al')*(2, 2, 2)
+        atAl2 = bulk('Al') * (2, 2, 2)
         atAl2[4].symbol = 'X'
 
-        atAl3 = bulk('Al')*(2, 2, 2)
+        atAl3 = bulk('Al') * (2, 2, 2)
         atAl3[0].symbol = 'X'
         atAl3[4].symbol = 'X'
 
-        atAl4 = bulk('Al')*(2, 2, 2)
+        atAl4 = bulk('Al') * (2, 2, 2)
         atAl4[0].symbol = 'X'
         atAl4[1].symbol = 'Cu'
 
-        tests = [
-            {
-                'atoms1': bulk('Al')*(2, 2, 2),
-                'atoms2': bulk('Al'),
-                'expect': False
-            },
-            {
-                'atoms1': atAl,
-                'atoms2': atAl2,
-                'expect': True
-            },
-            {
-                'atoms1': atAl,
-                'atoms2': atAl3,
-                'expect': False
-            },
-            {
-                'atoms1': atAl,
-                'atoms2': atAl4,
-                'expect': False
-            }
-        ]
+        tests = [{
+            'atoms1': bulk('Al') * (2, 2, 2),
+            'atoms2': bulk('Al'),
+            'expect': False
+        }, {
+            'atoms1': atAl,
+            'atoms2': atAl2,
+            'expect': True
+        }, {
+            'atoms1': atAl,
+            'atoms2': atAl3,
+            'expect': False
+        }, {
+            'atoms1': atAl,
+            'atoms2': atAl4,
+            'expect': False
+        }]
 
         extractor = MCTrajectoryExtractor()
         for t in tests:
@@ -48,7 +44,7 @@ class TestMCTrajectoryExtractor(unittest.TestCase):
             self.assertEqual(res, t['expect'])
 
     def test_find_swaps(self):
-        atoms = bulk('Al')*(4, 4, 4)
+        atoms = bulk('Al') * (4, 4, 4)
         atoms[0].symbol = 'X'
 
         atoms1 = atoms.copy()

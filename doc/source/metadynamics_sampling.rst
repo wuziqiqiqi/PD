@@ -75,8 +75,7 @@ Carrying out a metadynamics calculation in practice
 As before, we first need to define the settings. Let's once again use our
 favorite example: AuCu!
 
->>> from clease import Concentration
->>> from clease import CEBulk
+>>> from clease.settings import CEBulk, Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 >>> settings = CEBulk(crystalstructure='fcc',
 ...                   a=3.8,

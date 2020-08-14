@@ -10,6 +10,7 @@ from ase.atoms import Atoms
 
 
 class TestMCHeader(unittest.TestCase):
+
     def test_change_screen(self):
         page = MCHeader()
         items = page.ids.pageSpinner.values

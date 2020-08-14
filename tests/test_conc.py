@@ -1,12 +1,14 @@
+from collections import OrderedDict
+import unittest
+
 import numpy as np
 import numpy.testing
-from clease.concentration import Concentration
-from collections import OrderedDict
-from clease.concentration import InvalidConstraintError
-import unittest
+from clease.settings import Concentration
+from clease.settings.concentration import InvalidConstraintError
 
 
 class TestConc(unittest.TestCase):
+
     def test_full_range(self):
         basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
         conc_cls = Concentration(basis_elements=basis_elements)
@@ -85,15 +87,13 @@ class TestConc(unittest.TestCase):
 
         # 11) Wrong number of formulas
         with self.assertRaises(InvalidConstraintError):
-            conc_cls.set_conc_formula_unit(formulas=formulas,
-                                           variable_range=variable_range)
+            conc_cls.set_conc_formula_unit(formulas=formulas, variable_range=variable_range)
 
     def fixed_composition(self):
         basis_elements = [['Li', 'Ru'], ['O', 'X']]
         A_eq = [[0, 3, 0, 0], [0, 0, 0, 2]]
         b_eq = [1, 1]
-        conc = Concentration(basis_elements=basis_elements, A_eq=A_eq,
-                             b_eq=b_eq)
+        conc = Concentration(basis_elements=basis_elements, A_eq=A_eq, b_eq=b_eq)
         rand = conc.get_random_concentration()
         self.assertTrue(np.allclose(rand, np.array([2. / 3, 1. / 3, 0.5, 0.5])))
 
@@ -103,8 +103,11 @@ class TestConc(unittest.TestCase):
         b_eq = [1]
         A_lb = [[0, 0, 0, 3, 0]]
         b_lb = [2]
-        conc = Concentration(basis_elements=basis_elements, A_eq=A_eq,
-                             b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
+        conc = Concentration(basis_elements=basis_elements,
+                             A_eq=A_eq,
+                             b_eq=b_eq,
+                             A_lb=A_lb,
+                             b_lb=b_lb)
         rand = conc.get_random_concentration()
         sum1 = np.sum(rand[:3])
         self.assertAlmostEqual(sum1, 1)
@@ -140,18 +143,13 @@ class TestConc(unittest.TestCase):
         var_range["y"] = (0, 0.75)
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=var_range)
-        A_eq = np.array([[1, 1, 1, 0, 0],
-                         [0, 0, 0, 1, 1],
-                         [0, 3, 0, 0, 0]])
+        A_eq = np.array([[1, 1, 1, 0, 0], [0, 0, 0, 1, 1], [0, 3, 0, 0, 0]])
         b_eq = np.array([1, 1, 1])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(5)
         b_lb_implicit = np.zeros(5)
-        A_lb = np.array([[3, 0, 0, 0, 0],
-                         [-3, 0, 0, 0, 0],
-                         [0, 0, 0, 0, 3],
-                         [0, 0, 0, 0, -3]])
+        A_lb = np.array([[3, 0, 0, 0, 0], [-3, 0, 0, 0, 0], [0, 0, 0, 0, 3], [0, 0, 0, 0, -3]])
         b_lb = np.array([0, -2, 0, -0.75])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -164,18 +162,14 @@ class TestConc(unittest.TestCase):
         range = OrderedDict({"x": (0, 2)})
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
-        A_eq = np.array([[1, 1, 1, 0, 0],
-                         [0, 0, 0, 1, 1],
-                         [0, 3, 0, 0, 0],
-                         [0, 0, 0, 3, 0],
+        A_eq = np.array([[1, 1, 1, 0, 0], [0, 0, 0, 1, 1], [0, 3, 0, 0, 0], [0, 0, 0, 3, 0],
                          [0, 0, 0, 0, 3]])
         b_eq = np.array([1, 1, 1, 2, 1])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(5)
         b_lb_implicit = np.zeros(5)
-        A_lb = np.array([[3, 0, 0, 0, 0],
-                         [-3, 0, 0, 0, 0]])
+        A_lb = np.array([[3, 0, 0, 0, 0], [-3, 0, 0, 0, 0]])
         b_lb = np.array([0, -2])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -188,15 +182,13 @@ class TestConc(unittest.TestCase):
         range = OrderedDict({"x": (0, 1)})
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
-        A_eq = np.array([[1, 1, 1],
-                         [0, 1, -3]])
+        A_eq = np.array([[1, 1, 1], [0, 1, -3]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(3)
         b_lb_implicit = np.zeros(3)
-        A_lb = np.array([[0, 0, 4],
-                         [0, 0, -4]])
+        A_lb = np.array([[0, 0, 4], [0, 0, -4]])
         b_lb = np.array([0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -209,15 +201,13 @@ class TestConc(unittest.TestCase):
         range = OrderedDict({"x": (0, 1)})
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
-        A_eq = np.array([[1, 1, 1],
-                         [0, -1, 1]])
+        A_eq = np.array([[1, 1, 1], [0, -1, 1]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(3)
         b_lb_implicit = np.zeros(3)
-        A_lb = np.array([[0, 2, 0],
-                         [0, -2, 0]])
+        A_lb = np.array([[0, 2, 0], [0, -2, 0]])
         b_lb = np.array([0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -230,17 +220,13 @@ class TestConc(unittest.TestCase):
         range = {"x": (0, 1), "y": (0, 1)}
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
-        A_eq = np.array([[1, 1, 1, 1],
-                         [0, -1, 1, 0]])
+        A_eq = np.array([[1, 1, 1, 1], [0, -1, 1, 0]])
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
         A_lb_implicit = np.identity(4)
         b_lb_implicit = np.zeros(4)
-        A_lb = np.array([[0, 0, 0, 3],
-                         [0, 0, 0, -3],
-                         [0, 3, 0, 0],
-                         [0, -3, 0, 0]])
+        A_lb = np.array([[0, 0, 0, 3], [0, 0, 0, -3], [0, 3, 0, 0], [0, -3, 0, 0]])
         b_lb = np.array([0, -1, 0, -1])
         A_lb = np.vstack((A_lb_implicit, A_lb))
         b_lb = np.append(b_lb_implicit, b_lb)
@@ -254,15 +240,17 @@ class TestConc(unittest.TestCase):
         A_lb = [[0, 0, 1, 0, 0, -1, 0]]
         b_lb = [0]
         conc = Concentration(basis_elements=basis_elements,
-                             A_eq=A_eq, b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
+                             A_eq=A_eq,
+                             b_eq=b_eq,
+                             A_lb=A_lb,
+                             b_lb=b_lb)
         linked = conc._linked_basis
         self.assertEqual(sum(1 for i, num in enumerate(linked) if num == i), 1)
 
         A_lb = [[1, 0, 0, 1, 0, -1, 0]]
         b_lb = [0]
 
-        conc = Concentration(basis_elements=basis_elements,
-                             A_lb=A_lb, b_lb=b_lb)
+        conc = Concentration(basis_elements=basis_elements, A_lb=A_lb, b_lb=b_lb)
         linked = conc._linked_basis
         self.assertEqual(sum(1 for i, num in enumerate(linked) if num == i), 1)
 
@@ -273,7 +261,10 @@ class TestConc(unittest.TestCase):
         A_lb = [[0, 0, 1, 0, 0, 0, 0, -1]]
         b_lb = [0]
         conc = Concentration(basis_elements=basis_elements,
-                             A_eq=A_eq, b_eq=b_eq, A_lb=A_lb, b_lb=b_lb)
+                             A_eq=A_eq,
+                             b_eq=b_eq,
+                             A_lb=A_lb,
+                             b_lb=b_lb)
         linked = conc._linked_basis
         self.assertEqual(sum(1 for i, num in enumerate(linked) if num == i), 2)
 

@@ -23,6 +23,7 @@ class PairConstraint(MCConstraint):
     atoms: Atoms object
         Atoms object used for MC calculations
     """
+
     def __init__(self, elements, pair_cluster, trans_matrix, atoms):
         self.elements = sorted(elements)
         self.pair_cluster = pair_cluster

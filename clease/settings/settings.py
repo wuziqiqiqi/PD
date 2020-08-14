@@ -4,36 +4,44 @@ This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
 from copy import deepcopy
+from typing import List, Dict, Optional, Union
+
 import numpy as np
 from ase.db import connect
 from ase import Atoms
-from typing import List, Dict, Optional, Union
 
 from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
-from clease.concentration import Concentration
 from clease import AtomsManager
-from clease.cluster_list import ClusterList
+from clease.cluster import ClusterList, ClusterManager
 from clease.template_filters import ValidConcentrationFilter
-from clease.cluster_manager import ClusterManager
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
+from . import Concentration
+
+__all__ = ('ClusterExpansionSettings',)
 
 
-class ClusterExpansionSettings(object):
+class ClusterExpansionSettings:
     """Base class for all Cluster Expansion settings."""
 
-    def __init__(self, prim: Atoms, concentration: Concentration,
+    def __init__(self,
+                 prim: Atoms,
+                 concentration: Concentration,
                  size: Optional[int] = None,
                  supercell_factor: Optional[int] = 27,
-                 db_name: str = 'clease.db', max_cluster_size: int = 4,
+                 db_name: str = 'clease.db',
+                 max_cluster_size: int = 4,
                  max_cluster_dia: Union[float, List[float]] = 5.0) -> None:
-        self.kwargs = {'size': size,
-                       'supercell_factor': supercell_factor,
-                       'db_name': db_name,
-                       'max_cluster_size': max_cluster_size,
-                       'max_cluster_dia': deepcopy(max_cluster_dia)}
+        self.kwargs = {
+            'size': size,
+            'supercell_factor': supercell_factor,
+            'db_name': db_name,
+            'max_cluster_size': max_cluster_size,
+            'max_cluster_dia': deepcopy(max_cluster_dia)
+        }
         self._include_background_atoms = False
+        self.trans_matrix = None
         self.concentration = self._get_concentration(concentration)
         self.cluster_list = ClusterList()
         self.basis_elements = deepcopy(self.concentration.basis_elements)
@@ -48,26 +56,22 @@ class ClusterExpansionSettings(object):
         self.cluster_mng = ClusterManager(self.prim_no_bkg())
 
         prim_mng = AtomsManager(prim)
-        prim_ind_by_basis = prim_mng.index_by_symbol(
-            [x[0] for x in self.basis_elements])
-        conc_filter = ValidConcentrationFilter(concentration,
-                                               prim_ind_by_basis)
+        prim_ind_by_basis = prim_mng.index_by_symbol([x[0] for x in self.basis_elements])
+        conc_filter = ValidConcentrationFilter(concentration, prim_ind_by_basis)
 
-        self.template_atoms = TemplateAtoms(
-            self.prim_cell, supercell_factor=supercell_factor,
-            size=self.size, skew_threshold=40, filters=[conc_filter])
+        self.template_atoms = TemplateAtoms(self.prim_cell,
+                                            supercell_factor=supercell_factor,
+                                            size=self.size,
+                                            skew_threshold=40,
+                                            filters=[conc_filter])
 
         self.atoms_mng = AtomsManager(None)
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
-        self.cluster_mng.build(
-            max_size=self.max_cluster_size,
-            max_cluster_dia=self.max_cluster_dia
-        )
+        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
 
-        self.set_active_template(
-            atoms=self.template_atoms.weighted_random_template())
+        self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
         unique_element_no_bkg = self.unique_element_without_background()
         self._basis_func_type = Polynomial(unique_element_no_bkg)
@@ -136,8 +140,7 @@ class ClusterExpansionSettings(object):
         else:
             self.cluster_mng = ClusterManager(self.prim_no_bkg())
 
-        self.cluster_mng.build(max_size=self.max_cluster_size,
-                               max_cluster_dia=self.max_cluster_dia)
+        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
         self.create_cluster_list_and_trans_matrix()
         self.basis_func_type.unique_elements = \
             self.unique_element_without_background()
@@ -211,8 +214,7 @@ class ClusterExpansionSettings(object):
                 msg = f"basis function type {bf_type} is not supported."
                 raise ValueError(msg)
         else:
-            raise ValueError("basis_function has to be an instance of "
-                             "BasisFunction or a string")
+            raise ValueError("basis_function has to be an instance of BasisFunction or a string")
 
     def to_dict(self) -> Dict:
         return {
@@ -228,8 +230,7 @@ class ClusterExpansionSettings(object):
         elif isinstance(concentration, dict):
             conc = Concentration.from_dict(concentration)
         else:
-            raise TypeError("concentration has to be either dict or "
-                            "instance of Concentration")
+            raise TypeError("concentration has to be either dict or instance of Concentration")
         self.kwargs["concentration"] = conc.to_dict()
         return conc
 
@@ -288,8 +289,7 @@ class ClusterExpansionSettings(object):
     def set_active_template(self, atoms=None):
         """Set a new template atoms object."""
         if atoms is not None:
-            template = self.template_atoms.get_template_matching_atoms(
-                atoms=atoms)
+            template = self.template_atoms.get_template_matching_atoms(atoms=atoms)
         else:
             template = self.template_atoms.weighted_random_template()
 
@@ -299,8 +299,7 @@ class ClusterExpansionSettings(object):
             # Check that the positions of the generated template
             # matches the ones in the passed object
             atoms = wrap_and_sort_by_position(atoms)
-            if not np.allclose(template.get_positions(),
-                               atoms.get_positions()):
+            if not np.allclose(template.get_positions(), atoms.get_positions()):
                 raise ValueError(f"Inconsistent positions. Passed object\n"
                                  f"{atoms.get_positions()}\nGenerated template"
                                  f"\n{template.get_positions()}")
@@ -346,31 +345,30 @@ class ClusterExpansionSettings(object):
         return uid
 
     def _get_prim_cell(self):
-        raise NotImplementedError("This function has to be implemented in "
-                                  "in derived classes.")
+        raise NotImplementedError("This function has to be implemented in in derived classes.")
 
     def _format_max_cluster_dia(self, max_cluster_dia):
         """Get max_cluster_dia in numpy array form"""
         # max_cluster_dia is list or array
         if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
             # Length should be either max_cluster_size+1 or max_cluster_size-1
+            mcd = np.array(max_cluster_dia, dtype=float)
             if len(max_cluster_dia) == self.max_cluster_size + 1:
                 for i in range(2):
-                    max_cluster_dia[i] = 0.
-                max_cluster_dia = np.array(max_cluster_dia, dtype=float)
+                    mcd[i] = 0.
             elif len(max_cluster_dia) == self.max_cluster_size - 1:
-                max_cluster_dia = np.array(max_cluster_dia, dtype=float)
-                max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
+                mcd = np.insert(mcd, 0, [0., 0.])
             else:
                 raise ValueError("Invalid length for max_cluster_dia.")
         # max_cluster_dia is int or float
         elif isinstance(max_cluster_dia, (int, float)):
-            max_cluster_dia *= np.ones(self.max_cluster_size - 1, dtype=float)
-            max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
+            mcd = np.ones(self.max_cluster_size - 1, dtype=float) * max_cluster_dia
+            mcd = np.insert(mcd, 0, [0., 0.])
         # Case for *None* or something else
         else:
-            raise ValueError("max_cluster_dia must be float, int or list.")
-        return max_cluster_dia.round(decimals=3)
+            raise TypeError("max_cluster_dia is of wrong type, got: {}".format(
+                type(max_cluster_dia)))
+        return mcd.round(decimals=3)
 
     def _get_atoms(self):
         """Create atoms with a user-specified size."""
@@ -414,8 +412,7 @@ class ClusterExpansionSettings(object):
         for elements in basis_elements:
             first_elements.append(elements[0])
         if len(set(first_elements)) != num_basis:
-            raise ValueError("First element of different basis should not be "
-                             "the same.")
+            raise ValueError("First element of different basis should not be the same.")
 
     def save(self, filename):
         """Write Setting object to a file in JSON format.

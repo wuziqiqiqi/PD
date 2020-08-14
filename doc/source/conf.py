@@ -16,7 +16,6 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'CLEASE'
@@ -28,7 +27,6 @@ version = ''
 # The full version, including alpha/beta/rc tags
 release = '1.0'
 
-
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -39,14 +37,8 @@ release = '1.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.todo',
-    'sphinx.ext.coverage',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode'
+    'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo', 'sphinx.ext.coverage',
+    'sphinx.ext.mathjax', 'sphinx.ext.napoleon', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode'
 ]
 
 doctest_global_setup = '''
@@ -81,7 +73,6 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -110,12 +101,10 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'CLEASEdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -141,20 +130,14 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'CLEASE.tex', 'CLEASE Documentation',
-     'J. H. Chang, D. Kleiven', 'manual'),
+    (master_doc, 'CLEASE.tex', 'CLEASE Documentation', 'J. H. Chang, D. Kleiven', 'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, 'clease', 'CLEASE Documentation',
-     [author], 1)
-]
-
+man_pages = [(master_doc, 'clease', 'CLEASE Documentation', [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -162,11 +145,9 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'CLEASE', 'CLEASE Documentation',
-     author, 'CLEASE', 'One line description of project.',
-     'Miscellaneous'),
+    (master_doc, 'CLEASE', 'CLEASE Documentation', author, 'CLEASE',
+     'One line description of project.', 'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -184,7 +165,6 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
 
 # -- Extension configuration -------------------------------------------------
 

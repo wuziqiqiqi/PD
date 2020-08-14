@@ -1,58 +1,51 @@
-from clease.cleaselogger import CLEASELogger, LogVerbosity
-_logger = CLEASELogger()
+# pylint: disable=undefined-variable
+from deprecated import deprecated
+from .cleaselogger import _logger
+from .cleaselogger import *
+from .template_filters import *
+from .atoms_manager import *
+from .convexhull import *
+from .data_manager import *
+from .structure_mapper import *
+from .evaluate import *
+from .new_struct import NewStructures  # Promotion for convenience
+from .svd import *
+from .concentration import *
+from .regression_old import *
+
+from . import cluster
+from . import new_struct
+from . import corr_func
+from . import settings
+from . import basis_function
+from . import montecarlo
+from . import mp_logger
+from . import tools
+from . import template_atoms
+from . import concentration
+
+__version__ = '0.10.0'
 
 
-def set_verbosity(verbosity):
-    _logger.verbosity = verbosity
+@deprecated(version='0.10.0', reason='import CEBulk from clease.settings instead')
+def CEBulk(*args, **kwargs):
+    return settings.CEBulk(*args, **kwargs)
 
 
-def set_fd(fd):
-    _logger.fd = fd
+@deprecated(version='0.10.0', reason='import CECrystal from clease.settings instead')
+def CECrystal(*args, **kwargs):
+    return settings.CECrystal(*args, **kwargs)
 
 
-__version__ = '0.9.12'
+@deprecated(version='0.10.0', reason='import CESlab from clease.settings instead')
+def CESlab(*args, **kwargs):
+    return settings.CESlab(*args, **kwargs)
 
-from clease.template_filters import SkewnessFilter, EquivalentCellsFilter
-from clease.template_filters import ValidConcentrationFilter
-from clease.template_filters import DistanceBetweenFacetsFilter
-from clease.template_filters import VolumeToSurfaceRatioFilter
-from clease.template_filters import CellVectorDirectionFilter
-from clease.template_filters import AngleFilter
-from clease.atoms_manager import AtomsManager
-from clease.settings import ClusterExpansionSettings
-from clease.concentration import Concentration
-from clease.settings_bulk import CEBulk, CECrystal, settingsFromJSON
-from clease.settings_slab import CESlab
-from clease.evaluate import Evaluate
-from clease.corr_func import CorrFunction
-from clease.new_struct import NewStructures
-from clease.convexhull import ConvexHull
-from clease.regression import LinearRegression, Tikhonov, Lasso
-from clease.constrained_ridge import ConstrainedRidge
-from clease.physical_ridge import PhysicalRidge
-from clease.generalized_ridge_regression import (
-    GeneralizedRidgeRegression, EigenDecomposition
-)
-from clease.ga_fit import GAFit
-from clease.bayesian_compressive_sensing import BayesianCompressiveSensing
-from clease.sequential_cluster_ridge import SequentialClusterRidge
-from clease.cluster_info_mapper import ClusterInfoMapper
-from clease.cluster_manager import ClusterManager
-from clease.data_manager import (
-    DataManager, CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
-)
-from clease.structure_mapper import StructureMapper
 
-__all__ = ['CEBulk', 'CECrystal', 'Concentration', 'CorrFunction',
-           'NewStructures', 'NewStructures', 'Evaluate', 'AtomsManager',
-           'ConvexHull', 'LinearRegression', 'Tikhonov', 'Lasso',
-           'GAFit', 'BayesianCompressiveSensing', 'LogVerbosity',
-           'SkewnessFilter', 'DataManager', 'CorrFuncEnergyDataManager',
-           'CorrFuncVolumeDataManager', 'EquivalentCellsFilter',
-           'ValidConcentrationFilter', 'DistanceBetweenFacetsFilter',
-           'CellVectorDirectionFilter', 'AngleFilter',
-           'ClusterExpansionSettings', 'settingsFromJSON', 'CESlab',
-           'PhysicalRidge', 'SequentialClusterRidge', 'ClusterInfoMapper',
-           'ClusterManager', 'VolumeToSurfaceRatioFilter', 'StructureMapper',
-           'ConstrainedRidge', 'GeneralizedRidgeRegression',
-           'EigenDecomposition']
+ADDITIONAL = ('settings', 'basis_function', 'corr_func', 'new_struct', 'NewStructures', 'cluster',
+              'tools', 'montecarlo', 'mp_logger', '_logger', 'template_atoms', 'CEBulk',
+              'CECrystal', 'CESlab', 'concentration')
+
+__all__ = (cleaselogger.__all__ + template_filters.__all__ + atoms_manager.__all__ +
+           concentration.__all__ + evaluate.__all__ + convexhull.__all__ + data_manager.__all__ +
+           structure_mapper.__all__ + svd.__all__ + regression_old.__all__ + ADDITIONAL)

@@ -9,6 +9,7 @@ from clease.gui.canonical_mc_page import CanonicalMCPage
 
 
 class TestCanonicalMCPage(unittest.TestCase):
+
     def test_load_save(self):
         page = CanonicalMCPage()
 

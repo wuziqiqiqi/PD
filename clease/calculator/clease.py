@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from clease import CorrFunction
+from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater
 from typing import Dict, Optional, TextIO, Union, List, Tuple
@@ -34,7 +34,8 @@ class Clease(Calculator):
     name = 'CLEASE'
     implemented_properties = ['energy']
 
-    def __init__(self, settings: ClusterExpansionSettings,
+    def __init__(self,
+                 settings: ClusterExpansionSettings,
                  eci: Dict[str, float],
                  init_cf: Optional[Dict[str, float]] = None,
                  logfile: Union[TextIO, str, None] = None) -> None:
@@ -96,8 +97,8 @@ class Clease(Calculator):
             fig_keys = list(set(cluster.get_all_figure_keys()))
             num_occ = {}
             for key in fig_keys:
-                num_occ[key] = cluster_list.num_occ_figure(
-                    key, cluster.name, symm_group, self.settings.trans_matrix)
+                num_occ[key] = cluster_list.num_occ_figure(key, cluster.name, symm_group,
+                                                           self.settings.trans_matrix)
             num_fig_occ = cluster.num_fig_occurences
             norm_factors = {}
             for key in fig_keys:
@@ -136,11 +137,10 @@ class Clease(Calculator):
         self.is_backround_index[self.settings.background_indices] = 1
 
         self._set_norm_factors()
-        self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf,
-                                   self.eci, self.settings.cluster_list)
+        self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf, self.eci,
+                                   self.settings.cluster_list)
 
-    def get_energy_given_change(
-            self, system_changes: List[Tuple[int, str, str]]) -> float:
+    def get_energy_given_change(self, system_changes: List[Tuple[int, str, str]]) -> float:
         """
         Calculate the energy when the change is known. No checking will be
         performed.
@@ -220,8 +220,7 @@ class Clease(Calculator):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
 
-    def update_cf(self, system_changes: Optional[List[Tuple[int, str, str]]] =
-                  None) -> None:
+    def update_cf(self, system_changes: Optional[List[Tuple[int, str, str]]] = None) -> None:
         """Update correlation function based on the reference value.
 
         :param system_changes: List of system changes. For example, if the
@@ -233,8 +232,7 @@ class Clease(Calculator):
         if system_changes is None:
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
-            system_changes = [(x, symbols[x], self.atoms[x].symbol)
-                              for x in swapped_indices]
+            system_changes = [(x, symbols[x], self.atoms[x].symbol) for x in swapped_indices]
         for change in system_changes:
             self.updater.update_cf(change)
 

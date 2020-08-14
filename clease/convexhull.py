@@ -3,8 +3,10 @@ import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
 from ase.db import connect
 
+__all__ = ('ConvexHull',)
 
-class ConvexHull(object):
+
+class ConvexHull:
     """
     Evaluates data from database and construct the convex hull
 
@@ -33,8 +35,14 @@ class ConvexHull(object):
         be {"Au": (0, 0.5)}.
     """
 
-    def __init__(self, db_name, select_cond=None, atoms_per_fu=1,
-                 conc_scale=1.0, conc_ranges={}):
+    def __init__(self,
+                 db_name,
+                 select_cond=None,
+                 atoms_per_fu=1,
+                 conc_scale=1.0,
+                 conc_ranges: dict = None):
+        if conc_ranges is None:
+            conc_ranges = {}
         self.db_name = db_name
         self.atoms_per_fu = atoms_per_fu
         self.conc_scale = conc_scale
@@ -106,10 +114,10 @@ class ConvexHull(object):
                     f_id = row.get("final_struct_id", -1)
                     if f_id >= 0:
                         # New format where energy is in a separate entry
-                        v["energy"] = self.db.get(id=f_id).energy/row.natoms
+                        v["energy"] = self.db.get(id=f_id).energy / row.natoms
                     else:
                         # Old format where the energy is stored in same entry
-                        v["energy"] = row.energy/row.natoms
+                        v["energy"] = row.energy / row.natoms
                     for k_count in count.keys():
                         v[f"{k_count}_conc"] = count[k_count]
         return end_points
@@ -163,19 +171,18 @@ class ConvexHull(object):
                 if k not in count.keys():
                     conc[k].append(0.0)
                 else:
-                    conc[k].append(count[k]/row.natoms)
+                    conc[k].append(count[k] / row.natoms)
 
             final_struct_id = row.get("final_struct_id", -1)
             if final_struct_id >= 0:
                 # New format where energy is stored in a separate DB entry
-                form_energy = self.db.get(id=final_struct_id).energy/row.natoms
+                form_energy = self.db.get(id=final_struct_id).energy / row.natoms
             else:
                 # Old format where the energy is stored in the init structure
-                form_energy = row.energy/row.natoms
+                form_energy = row.energy / row.natoms
 
             # Subtract the appropriate weights
-            form_energy -= sum(conc[k][-1]*self.weights[k]
-                               for k in conc.keys())
+            form_energy -= sum(conc[k][-1] * self.weights[k] for k in conc.keys())
             energies.append(form_energy)
             ids.append(row.id)
 
@@ -220,8 +227,7 @@ class ConvexHull(object):
         tol = 1E-4
         return all(self.energies[i] <= tol for i in simplex)
 
-    def plot(self, fig=None, concs=None, energies=None,
-             marker="o", mfc="none"):
+    def plot(self, fig=None, concs=None, energies=None, marker="o", mfc="none"):
         """Plot formation energies."""
         from matplotlib import pyplot as plt
 
@@ -243,7 +249,7 @@ class ConvexHull(object):
         if fig is None:
             fig = plt.figure()
             for i in range(num_plots):
-                fig.add_subplot(1, num_plots, i+1)
+                fig.add_subplot(1, num_plots, i + 1)
 
         if concs is None:
             concs = self.concs
@@ -257,7 +263,7 @@ class ConvexHull(object):
             x = np.array(concs[elems[i]])
             x /= self.conc_scale
 
-            ax.plot(x, energies*self.atoms_per_fu, marker, mfc=mfc)
+            ax.plot(x, energies * self.atoms_per_fu, marker, mfc=mfc)
 
             if self.atoms_per_fu > 1:
                 unit = "eV/f.u."
@@ -273,8 +279,10 @@ class ConvexHull(object):
                 for simpl in c_hull.simplices:
                     if self._is_lower_conv_hull(simpl):
                         x_cnv = [x[simpl[0]], x[simpl[1]]]
-                        y_cnv = [self.energies[simpl[0]]*self.atoms_per_fu,
-                                 self.energies[simpl[1]]*self.atoms_per_fu]
+                        y_cnv = [
+                            self.energies[simpl[0]] * self.atoms_per_fu,
+                            self.energies[simpl[1]] * self.atoms_per_fu
+                        ]
                         ax.plot(x_cnv, y_cnv, color="black")
             ax.set_xlabel(f"{elems[i]} conc")
         return fig
@@ -326,13 +334,12 @@ class ConvexHull(object):
 
         data = cnv_hull.points[list(indices), :]
 
-        form_energy = tot_en - sum(self.weights[k]*conc[k]
-                                   for k in conc.keys())
+        form_energy = tot_en - sum(self.weights[k] * conc[k] for k in conc.keys())
 
         min_en = np.min(data[:, -1])
         max_en = np.max(data[:, -1])
         diff = max_en - min_en
-        normalization = 0.5*diff
+        normalization = 0.5 * diff
 
         # Normalize the energy data
         data[:, -1] /= normalization
@@ -342,7 +349,7 @@ class ConvexHull(object):
 
         data_vec = np.zeros(data.shape[1])
         data_vec[:-1] = [conc.get(k, 0.0) for k in self._unique_elem[:-1]]
-        data_vec[-1] = form_energy/normalization
+        data_vec[-1] = form_energy / normalization
         data_vec -= mean
 
         inner_prod = data.dot(data_vec)
@@ -360,4 +367,4 @@ class ConvexHull(object):
         tot_energy: float
             Total energy per atom
         """
-        return tot_energy - sum(self.weights[k]*conc[k] for k in conc.keys())
+        return tot_energy - sum(self.weights[k] * conc[k] for k in conc.keys())

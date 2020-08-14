@@ -4,6 +4,8 @@ import math
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
 from typing import List, Dict, Optional
 
+__all__ = ('BasisFunction', 'Polynomial', 'Trigonometric', 'BinaryLinear')
+
 
 class BasisFunction(object):
     """Base class for all Basis Functions."""
@@ -42,13 +44,12 @@ class BasisFunction(object):
 
     def get_spin_dict(self):
         """Get spin dictionary."""
-        raise NotImplementedError("get_spin_dict has to be implemented in "
-                                  "derived classes!")
+        raise NotImplementedError("get_spin_dict has to be implemented in derived classes!")
 
     def get_basis_functions(self):
         """Get basis function."""
-        raise NotImplementedError("get_basis_functions has to be implemented "
-                                  "in derived classes!")
+        raise NotImplementedError(("get_basis_functions has to be implemented "
+                                   "in derived classes!"))
 
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Customize the full cluster names. Default is to do nothing."""
@@ -58,10 +59,7 @@ class BasisFunction(object):
         """
         Create a dictionary representation of the basis function class
         """
-        return {
-            'name': self.name,
-            'unique_elements': self.unique_elements
-        }
+        return {'name': self.name, 'unique_elements': self.unique_elements}
 
 
 class Polynomial(BasisFunction):
@@ -121,7 +119,7 @@ class Trigonometric(BasisFunction):
         for a in alpha:
             bf = {}
             for key, value in self.spin_dict.items():
-                var = 2 * np.pi * math.ceil(a/2.) * value
+                var = 2 * np.pi * math.ceil(a / 2.) * value
                 var /= self.num_unique_elements
                 if a % 2 == 1:
                     bf[key] = -np.cos(var) + 0.
@@ -142,7 +140,7 @@ class Trigonometric(BasisFunction):
         return bf_list
 
 
-def kronecker(i: int, j: int) -> int:
+def _kronecker(i: int, j: int) -> int:
     """Kronecker delta function."""
     if i == j:
         return 1
@@ -158,8 +156,7 @@ class BinaryLinear(BasisFunction):
     Journal of Phase Equilibria and Diffusion 37(1) 44-52.
     """
 
-    def __init__(self, unique_elements: List[str],
-                 redundant_element: Optional[str] = "auto"):
+    def __init__(self, unique_elements: List[str], redundant_element: Optional[str] = "auto"):
         if redundant_element == "auto":
             self.redundant_element = sorted(unique_elements)[0]
         else:
@@ -188,8 +185,9 @@ class BinaryLinear(BasisFunction):
         for bf_num in range(num_bf):
             if self.unique_elements[bf_num] == self.redundant_element:
                 continue
-            new_bf = {symb: float(kronecker(i, bf_num))
-                      for i, symb in enumerate(self.unique_elements)}
+            new_bf = {
+                symb: float(_kronecker(i, bf_num)) for i, symb in enumerate(self.unique_elements)
+            }
             bf_list.append(new_bf)
         return bf_list
 

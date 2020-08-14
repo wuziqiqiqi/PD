@@ -5,22 +5,27 @@ or CECrystal class.
 """
 from ase.build import bulk
 from ase.spacegroup import crystal
-from ase import Atoms
 from clease.tools import wrap_and_sort_by_position
-from clease.settings import ClusterExpansionSettings
-from clease.settings_slab import CESlab
-from clease import Concentration
-from clease.basis_function import (
-    Polynomial, Trigonometric, BinaryLinear
-)
+from .settings import ClusterExpansionSettings
 from copy import deepcopy
-import json
+
+__all__ = (
+    'CEBulk',
+    'CECrystal',
+)
 
 
-def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
-           covera=None, u=None, size=None, supercell_factor=27,
-           db_name='clease.db', max_cluster_size=4,
-           max_cluster_dia=[5.0, 5.0, 5.0]):
+def CEBulk(concentration,
+           crystalstructure='sc',
+           a=None,
+           c=None,
+           covera=None,
+           u=None,
+           size=None,
+           supercell_factor=27,
+           db_name='clease.db',
+           max_cluster_size=4,
+           max_cluster_dia=(5.0, 5.0, 5.0)):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -67,9 +72,18 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
         A list of int or float containing the maximum diameter of clusters
         (in Å)
     """
-    structures = {'sc': 1, 'fcc': 1, 'bcc': 1, 'hcp': 1, 'diamond': 1,
-                  'zincblende': 2, 'rocksalt': 2, 'cesiumchloride': 2,
-                  'fluorite': 3, 'wurtzite': 2}
+    structures = {
+        'sc': 1,
+        'fcc': 1,
+        'bcc': 1,
+        'hcp': 1,
+        'diamond': 1,
+        'zincblende': 2,
+        'rocksalt': 2,
+        'cesiumchloride': 2,
+        'fluorite': 3,
+        'wurtzite': 2
+    }
 
     num_basis = len(concentration.orig_basis_elements)
     if num_basis != structures[crystalstructure]:
@@ -80,24 +94,34 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None,
 
     basis_elements = concentration.orig_basis_elements
     name = ''.join(x[0] for x in basis_elements)
-    prim = bulk(name=name, crystalstructure=crystalstructure, a=a,
-                c=c, covera=covera, u=u)
+    prim = bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)
 
-    settings = ClusterExpansionSettings(
-        prim, concentration, size, supercell_factor, db_name, max_cluster_size,
-        max_cluster_dia)
+    settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
+                                        max_cluster_size, max_cluster_dia)
 
-    settings.kwargs.update(
-        {'crystalstructure': crystalstructure, 'a': a,
-         'c': c, 'covera': covera, 'u': u, 'factory': 'CEBulk'})
+    settings.kwargs.update({
+        'crystalstructure': crystalstructure,
+        'a': a,
+        'c': c,
+        'covera': covera,
+        'u': u,
+        'factory': 'CEBulk'
+    })
     return settings
 
 
-def CECrystal(concentration, spacegroup=1, basis=None,
-              cell=None, cellpar=None, ab_normal=(0, 0, 1), size=None,
-              supercell_factor=27, db_name='clease.db', max_cluster_size=4,
-              max_cluster_dia=[5.0, 5.0, 5.0]):
+def CECrystal(concentration,
+              spacegroup=1,
+              basis=None,
+              cell=None,
+              cellpar=None,
+              ab_normal=(0, 0, 1),
+              size=None,
+              supercell_factor=27,
+              db_name='clease.db',
+              max_cluster_size=4,
+              max_cluster_dia=(5.0, 5.0, 5.0)):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
@@ -152,58 +176,24 @@ def CECrystal(concentration, spacegroup=1, basis=None,
     for x in range(num_basis):
         symbols.append(concentration.orig_basis_elements[x][0])
 
-    prim = crystal(
-        symbols=symbols, basis=basis, spacegroup=spacegroup, cell=cell,
-        cellpar=cellpar, ab_normal=ab_normal, size=[1, 1, 1],
-        primitive_cell=True)
+    prim = crystal(symbols=symbols,
+                   basis=basis,
+                   spacegroup=spacegroup,
+                   cell=cell,
+                   cellpar=cellpar,
+                   ab_normal=ab_normal,
+                   size=[1, 1, 1],
+                   primitive_cell=True)
     prim = wrap_and_sort_by_position(prim)
 
-    settings = ClusterExpansionSettings(
-        prim, concentration, size, supercell_factor, db_name,
-        max_cluster_size, max_cluster_dia)
-    settings.kwargs.update(
-        {'basis': deepcopy(basis), 'spacegroup': spacegroup, 'cell': cell,
-         'cellpar': cellpar, 'ab_normal': ab_normal,
-         'factory': 'CECrystal'})
-    return settings
-
-
-def settingsFromJSON(fname):
-    """
-    Initialise settings from JSON file.
-
-    Parameters:
-
-    fname: str
-        JSON file where settings are stored
-    """
-    with open(fname, 'r') as infile:
-        data = json.load(infile)
-
-    factory = data['kwargs'].pop('factory')
-    kwargs = data['kwargs']
-    conc = Concentration.from_dict(kwargs['concentration'])
-    kwargs['concentration'] = conc
-    if factory == 'CEBulk':
-        settings = CEBulk(**kwargs)
-    elif factory == 'CECrystal':
-        settings = CECrystal(**kwargs)
-    elif factory == 'CESlab':
-        cnv_cell_dict = kwargs.pop('conventional_cell')
-        cnv_cell = Atoms.fromdict(cnv_cell_dict)
-        kwargs['conventional_cell'] = cnv_cell
-        settings = CESlab(**kwargs)
-    else:
-        raise ValueError(f"Unknown factory {factory}")
-    settings.include_background_atoms = data['include_background_atoms']
-    settings.skew_threshold = data['skew_threshold']
-    bf_dict = data['basis_func_type']
-    name = bf_dict.pop('name')
-
-    if name == 'polynmial':
-        settings.basis_func_type = Polynomial(**bf_dict)
-    elif name == 'trigonometric':
-        settings.basis_func_type = Trigonometric(**bf_dict)
-    elif name == 'binary_linear':
-        settings.basis_func_type = BinaryLinear(**bf_dict)
+    settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
+                                        max_cluster_size, max_cluster_dia)
+    settings.kwargs.update({
+        'basis': deepcopy(basis),
+        'spacegroup': spacegroup,
+        'cell': cell,
+        'cellpar': cellpar,
+        'ab_normal': ab_normal,
+        'factory': 'CECrystal'
+    })
     return settings

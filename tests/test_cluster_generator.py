@@ -1,13 +1,16 @@
-from clease.cluster_generator import ClusterGenerator
-from clease import CEBulk, Concentration
-from clease.tools import wrap_and_sort_by_position
-import unittest
-from ase.build import bulk
-import numpy as np
 import os
+import unittest
+
+import numpy as np
+from ase.build import bulk
+
+from clease.cluster import ClusterGenerator
+from clease.settings import CEBulk, Concentration
+from clease.tools import wrap_and_sort_by_position
 
 
 class TestClusterGenerator(unittest.TestCase):
+
     def test_sites_cutoff_fcc(self):
         atoms = bulk('Al', a=4.05)
         generator = ClusterGenerator(atoms)
@@ -31,11 +34,11 @@ class TestClusterGenerator(unittest.TestCase):
         generator = ClusterGenerator(atoms)
 
         # Neighbour distances
-        nn = np.sqrt(3)*a/2.0
+        nn = np.sqrt(3) * a / 2.0
         snn = a
-        indices = list(generator.sites_within_cutoff(nn+0.01, [0, 0, 0, 0]))
+        indices = list(generator.sites_within_cutoff(nn + 0.01, [0, 0, 0, 0]))
         self.assertEqual(len(indices), 8)
-        indices = list(generator.sites_within_cutoff(snn+0.01, [0, 0, 0, 0]))
+        indices = list(generator.sites_within_cutoff(snn + 0.01, [0, 0, 0, 0]))
         self.assertEqual(len(indices), 14)
 
     def test_generate_pairs_fcc(self):
@@ -63,26 +66,22 @@ class TestClusterGenerator(unittest.TestCase):
         self.assertEqual(equiv, [[0, 1, 2]])
 
     def test_get_lattice(self):
-        tests = [
-            {
-                'prim': bulk('Al'),
-                'atoms': bulk('Al')*(2, 2, 2),
-                'site': 4,
-                'lattice': 0
-            },
-            {
-                'prim': bulk('LiX', 'rocksalt', 4.0),
-                'atoms': bulk('LiX', 'rocksalt', 4.0)*(1, 2, 3),
-                'site': 4,
-                'lattice': 0,
-            },
-            {
-                'prim': bulk('LiX', 'rocksalt', 4.0),
-                'atoms': bulk('LiX', 'rocksalt', 4.0)*(1, 2, 3),
-                'site': 5,
-                'lattice': 1,
-            }
-        ]
+        tests = [{
+            'prim': bulk('Al'),
+            'atoms': bulk('Al') * (2, 2, 2),
+            'site': 4,
+            'lattice': 0
+        }, {
+            'prim': bulk('LiX', 'rocksalt', 4.0),
+            'atoms': bulk('LiX', 'rocksalt', 4.0) * (1, 2, 3),
+            'site': 4,
+            'lattice': 0,
+        }, {
+            'prim': bulk('LiX', 'rocksalt', 4.0),
+            'atoms': bulk('LiX', 'rocksalt', 4.0) * (1, 2, 3),
+            'site': 5,
+            'lattice': 1,
+        }]
 
         for i, test in enumerate(tests):
             test['atoms'].wrap()
@@ -92,22 +91,25 @@ class TestClusterGenerator(unittest.TestCase):
             pos = test['atoms'][test['site']].position
             gen = ClusterGenerator(test['prim'])
             lattice = gen.get_lattice(pos)
-            msg = 'Test #{} falied. Expected: {} Got {}'.format(
-                i, test['lattice'], lattice)
+            msg = 'Test #{} falied. Expected: {} Got {}'.format(i, test['lattice'], lattice)
             self.assertEqual(lattice, test['lattice'], msg=msg)
 
     def test_get_max_distance(self):
         a = 3.8
         atoms = bulk('Fe', a=a)
         generator = ClusterGenerator(atoms)
-        generator.prim.cell = [[1,0,0], [0, 1, 0], [0, 0, 1]]
+        generator.prim.cell = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-        true_list = [{'input': [[1, 2, 3, 0], [3, 4, 1, 0]],
-             'result': 3.4641},
-             {'input': [[1, 2, 3, 0], [2, 3, 4, 0]],
-              'result': 1.7321},
-             {'input': [[1, 2, 3, 0], [2, 3, 4, 0], [3, 4, 1, 0]],
-              'result': 3.4641}]
+        true_list = [{
+            'input': [[1, 2, 3, 0], [3, 4, 1, 0]],
+            'result': 3.4641
+        }, {
+            'input': [[1, 2, 3, 0], [2, 3, 4, 0]],
+            'result': 1.7321
+        }, {
+            'input': [[1, 2, 3, 0], [2, 3, 4, 0], [3, 4, 1, 0]],
+            'result': 3.4641
+        }]
         predict_list = []
         for fig in true_list:
             predict_list.append(generator.get_max_distance(fig['input']))

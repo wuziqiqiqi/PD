@@ -16,6 +16,7 @@ class RandomBiasWithMemory(BiasPotential):
     atoms: Atoms
         Atoms object used for the Monte Carlo sampling
     """
+
     def __init__(self, std, atoms):
         BiasPotential.__init__(self)
         self.std = std

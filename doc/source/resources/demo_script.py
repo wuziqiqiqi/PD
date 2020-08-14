@@ -13,13 +13,12 @@ def main(argv):
     db = connect(db_name)
     calc = EMT()
     atoms = db.get(id=db_id).toatoms()
-    atoms.set_calculator(calc)
+    atoms.calc = calc
     str_filter = StrainFilter(atoms)
 
     relaxer = BFGS(str_filter)
     relaxer.run(fmax=0.003)
-    update_db(uid_initial=db_id, final_struct=atoms,
-              db_name=db_name)
+    update_db(uid_initial=db_id, final_struct=atoms, db_name=db_name)
 
 
 if __name__ == '__main__':

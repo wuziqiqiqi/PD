@@ -1,11 +1,13 @@
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
-from typing import List
+from typing import List, Sequence
 from ase import Atoms
 from ase.geometry import wrap_positions
 
+__all__ = ('AtomsManager',)
 
-class AtomsManager(object):
+
+class AtomsManager:
     """
     Manager class for the Atoms object used in a cluster expansion context.
     This class can return indices of the Atoms object grouped according to
@@ -71,7 +73,7 @@ class AtomsManager(object):
             ind_by_symbol[group_map[atom.symbol]].append(atom.index)
         return ind_by_symbol
 
-    def unique_elements(self, ignore: List[str] = []) -> List[str]:
+    def unique_elements(self, ignore: Sequence[str] = ()) -> List[str]:
         """Return a list of symbols of unique elements.
 
         :param ignore: List of symbols to ignore in finding unique elements.
@@ -79,8 +81,7 @@ class AtomsManager(object):
         all_unique = set([a.symbol for a in self.atoms])
         return list(all_unique - set(ignore))
 
-    def single_element_sites(
-            self, allowed_elements: List[List[str]]) -> List[int]:
+    def single_element_sites(self, allowed_elements: List[List[str]]) -> List[int]:
         """
         Return a list of sites that can only be occupied by a single element
         according to allowed_elements.
@@ -118,8 +119,7 @@ class AtomsManager(object):
         dists, indices = tree.query(wrapped_pos)
 
         if not np.allclose(dists, 0.0):
-            raise ValueError("Not all sites has a corresponding atom in the "
-                             "passed Atoms object")
+            raise ValueError("Not all sites has a corresponding atom in the passed Atoms object")
 
         for atom, tag in zip(self.atoms, indices.tolist()):
             atom.tag = tag

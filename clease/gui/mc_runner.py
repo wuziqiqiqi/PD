@@ -55,9 +55,20 @@ class MCRunner(object):
         If conc_mode is SYSTEMS_FROM_DB the concentration is read from
         the item in the database with this ID.
     """
-    def __init__(self, atoms=None, eci=None, mc_page=None, conc=None,
-                 temps=None, settings=None, sweeps=None, status=None,
-                 db_name=None, conc_mode=None, next_mc_obj=None, db_id=None,
+
+    def __init__(self,
+                 atoms=None,
+                 eci=None,
+                 mc_page=None,
+                 conc=None,
+                 temps=None,
+                 settings=None,
+                 sweeps=None,
+                 status=None,
+                 db_name=None,
+                 conc_mode=None,
+                 next_mc_obj=None,
+                 db_id=None,
                  app_root=None):
         self.atoms = wrap_and_sort_by_position(atoms)
         self.settings = settings
@@ -83,8 +94,7 @@ class MCRunner(object):
         # Temporarily disable info update during initalisation
         self.app_root.info_update_disabled = True
         self.app_root.view_mc_cell_disabled = True
-        self.atoms = attach_calculator(settings=self.settings,
-                                       atoms=self.atoms, eci=self.eci)
+        self.atoms = attach_calculator(settings=self.settings, atoms=self.atoms, eci=self.eci)
         self.app_root.active_template_is_mc_cell = True
         self.app_root.info_update_disabled = False
         self.app_root.view_mc_cell_disabled = False
@@ -95,12 +105,11 @@ class MCRunner(object):
             return
 
         ibb = self.settings.index_by_basis
-        for conc_per_basis, indices, symbs in zip(self.conc, ibb,
-                                                  self.basis_elements):
+        for conc_per_basis, indices, symbs in zip(self.conc, ibb, self.basis_elements):
             start = 0
             for c, s in zip(conc_per_basis[1:], symbs[1:]):
-                num = int(c*len(indices))
-                for i in range(start, num+start):
+                num = int(c * len(indices))
+                for i in range(start, num + start):
                     self.atoms[indices[i]].symbol = s
                 start += num
         formula = self.atoms.get_chemical_formula()
@@ -137,8 +146,7 @@ class MCRunner(object):
         db = connect(self.db_name)
 
         if self.conc_mode == SYSTEMS_FROM_DB:
-            db.update(self.db_id,
-                      external_tables={'thermo_data': float_thermo})
+            db.update(self.db_id, external_tables={'thermo_data': float_thermo})
         else:
             db.write(self.atoms, external_tables={'thermo_data': float_thermo})
 
@@ -152,23 +160,22 @@ class MCRunner(object):
             mc = Montecarlo(self.atoms, 200)
             energy_evol = EnergyEvolution(mc, ignore_reset=True)
 
-            energy_update_rate = 5*len(self.atoms)
+            energy_update_rate = 5 * len(self.atoms)
             mc.attach(energy_evol, interval=energy_update_rate)
 
-            energy_plot = EnergyPlotUpdater(
-                energy_obs=energy_evol, graph=self.mc_page.energy_graph,
-                mean_plot=self.mc_page.mean_energy_plot)
+            energy_plot = EnergyPlotUpdater(energy_obs=energy_evol,
+                                            graph=self.mc_page.energy_graph,
+                                            mean_plot=self.mc_page.mean_energy_plot)
             mc.attach(energy_plot, interval=energy_update_rate)
 
-            cnst = ConstrainSwapByBasis(
-                self.atoms, self.settings.index_by_basis)
+            cnst = ConstrainSwapByBasis(self.atoms, self.settings.index_by_basis)
             mc.add_constraint(cnst)
             self.mc_page.bind_mc(mc)
 
             for T in self.temps:
                 mc.T = T
                 self.status.text = f"Current temperature {T} K"
-                mc.run(steps=self.sweeps*len(self.atoms))
+                mc.run(steps=self.sweeps * len(self.atoms))
                 thermo = mc.get_thermodynamic_quantities()
                 self.write_thermodynamic_data_to_db(thermo)
 

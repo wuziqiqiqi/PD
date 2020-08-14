@@ -43,8 +43,7 @@ class TestSettingsPage(unittest.TestCase):
 
     def test_gui(self):
         app = CleaseGUI()
-        Clock.schedule_once(lambda x: self.run_tests(app),
-                            self.interval)
+        Clock.schedule_once(lambda x: self.run_tests(app), self.interval)
         app.run()
 
 

@@ -24,6 +24,7 @@ class ConstrainSwapByBasis(MCConstraint):
 
     Note: swaps are only allowed within each basis, not across two basis.
     """
+
     def __init__(self, atoms, index_by_basis):
         self.basis = np.zeros(len(atoms))
 

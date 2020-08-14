@@ -7,6 +7,7 @@ class MCTrajectoryExtractor(object):
     Class that extracts structures that are related by two atoms swap from
     a list of atoms
     """
+
     def is_related_by_swap(self, atoms1, atoms2):
         """
         Check if the second atom can be obtained by swapping two
@@ -33,9 +34,9 @@ class MCTrajectoryExtractor(object):
         """
         swaps = []
         for i, atoms1 in enumerate(all_atoms):
-            for j, atoms2 in enumerate(all_atoms[i+1:]):
+            for j, atoms2 in enumerate(all_atoms[i + 1:]):
                 if self.is_related_by_swap(atoms1, atoms2):
-                    swaps.append((i, i+j+1))
+                    swaps.append((i, i + j + 1))
         return swaps
 
     def swap_energy_deviations(self, swaps, e_pred, e_ref):
@@ -79,7 +80,7 @@ class MCTrajectoryExtractor(object):
         var: float
             Variance
         """
-        return np.exp(-(x - mu)**2/(2*var))/np.sqrt(2*np.pi*var)
+        return np.exp(-(x - mu)**2 / (2 * var)) / np.sqrt(2 * np.pi * var)
 
     def plot_swap_deviation(self, dev):
         """
@@ -90,8 +91,7 @@ class MCTrajectoryExtractor(object):
         ax = fig.add_subplot(1, 1, 1)
         hist, bins = np.histogram(np.array(dev), bins='auto')
         dx = bins[1] - bins[0]
-        ax.plot(bins[1:] - 0.5*dx, hist/np.trapz(hist, dx=dx),
-                'o', mfc='none', color='grey')
+        ax.plot(bins[1:] - 0.5 * dx, hist / np.trapz(hist, dx=dx), 'o', mfc='none', color='grey')
         ax.set_xlabel("Energy deviation (eV)")
         ax.set_ylabel("Probability Density")
         mu = np.mean(dev)
@@ -100,18 +100,18 @@ class MCTrajectoryExtractor(object):
         _logger(f"Standard deviation {np.sqrt(var)} eV")
 
         rng = bins[-1] - bins[0]
-        x = np.linspace(bins[0] - 0.2*rng, bins[-1] + 0.2*rng, 100)
+        x = np.linspace(bins[0] - 0.2 * rng, bins[-1] + 0.2 * rng, 100)
         y = self.gaussian(x, mu, var)
         ax.plot(x, y, color="#3c362b")
-        x = np.linspace(mu-np.sqrt(var), mu + np.sqrt(var), 100)
+        x = np.linspace(mu - np.sqrt(var), mu + np.sqrt(var), 100)
         y = self.gaussian(x, mu, var)
         ax.fill_between(x, y, color="#8c361f", alpha=0.3)
 
-        x = np.linspace(mu+np.sqrt(var), mu + 2*np.sqrt(var), 100)
+        x = np.linspace(mu + np.sqrt(var), mu + 2 * np.sqrt(var), 100)
         y = self.gaussian(x, mu, var)
         ax.fill_between(x, y, color="#5b4930", alpha=0.3)
 
-        x = np.linspace(mu-2*np.sqrt(var), mu - np.sqrt(var), 100)
+        x = np.linspace(mu - 2 * np.sqrt(var), mu - np.sqrt(var), 100)
         y = self.gaussian(x, mu, var)
         ax.fill_between(x, y, color="#5b4930", alpha=0.3)
         return fig

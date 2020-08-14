@@ -2,12 +2,13 @@
 import os
 import math
 import time
-from random import choice, getrandbits
 from copy import deepcopy
 import numpy as np
+from numpy.random import choice
 from numpy.linalg import inv, pinv
 from ase.db import connect
-from clease import ClusterExpansionSettings, CorrFunction
+from clease.settings import ClusterExpansionSettings
+from clease.corr_func import CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
 from clease import _logger
@@ -18,14 +19,19 @@ from clease.montecarlo.montecarlo import TooFewElementsError
 from ase.io.trajectory import TrajectoryReader
 
 
-class StructureGenerator(object):
+class StructureGenerator:
     """Base class for generating new strctures."""
 
-    def __init__(self, settings, atoms, struct_per_gen, init_temp=None,
-                 final_temp=None, num_temp=5, num_steps_per_temp=10000):
+    def __init__(self,
+                 settings,
+                 atoms,
+                 struct_per_gen,
+                 init_temp=None,
+                 final_temp=None,
+                 num_temp=5,
+                 num_steps_per_temp=10000):
         if not isinstance(settings, ClusterExpansionSettings):
-            raise TypeError("settings must be CEBulk or CECrystal "
-                            "object")
+            raise TypeError("settings must be CEBulk or CECrystal " "object")
 
         self.settings = settings
         self.trans_matrix = settings.trans_matrix
@@ -45,7 +51,7 @@ class StructureGenerator(object):
         # but the energy produced from this should never be used
         self.eci = {name: 1. for name in self.cf_names}
         calc = Clease(self.settings, eci=self.eci)
-        self.atoms.set_calculator(calc)
+        self.atoms.calc = calc
         self.output_every = 30
         self.init_temp = init_temp
         self.final_temp = final_temp
@@ -60,8 +66,7 @@ class StructureGenerator(object):
         self.cf_generated_structure = None
 
     def _is_valid(self, atoms):
-        return self.settings.concentration.is_valid(
-            self.settings.index_by_basis, atoms)
+        return self.settings.concentration.is_valid(self.settings.index_by_basis, atoms)
 
     def _reset(self):
         pass
@@ -74,13 +79,10 @@ class StructureGenerator(object):
             self.init_temp, self.final_temp = self._determine_temps()
 
         if self.init_temp <= self.final_temp:
-            raise ValueError("Initial temperature must be higher than final"
-                             " temperature")
+            raise ValueError("Initial temperature must be higher than final temperature")
         self._reset()
 
-        temps = np.logspace(math.log10(self.init_temp),
-                            math.log10(self.final_temp),
-                            self.num_temp)
+        temps = np.logspace(math.log10(self.init_temp), math.log10(self.final_temp), self.num_temp)
         now = time.time()
         change_element = self._has_more_than_one_conc()
 
@@ -98,7 +100,7 @@ class StructureGenerator(object):
                 count += 1
 
                 if time.time() - now > self.output_every:
-                    acc_rate = float(num_accepted)/count
+                    acc_rate = float(num_accepted) / count
                     _logger(f"T Step: {Ti+1:>{len_max_temp}} of {N}, "
                             # Print same len as max required
                             f"Temp: {temp:>10.3f}, "
@@ -108,7 +110,7 @@ class StructureGenerator(object):
                             f"Accept. rate: {acc_rate*100:.2f} %")
                     now = time.time()
 
-                if bool(getrandbits(1)) and self.alter_composition:
+                if choice([True, False]) and self.alter_composition:
                     # Change element Type
                     if change_element:
                         self._change_element_type()
@@ -123,14 +125,13 @@ class StructureGenerator(object):
 
                 if self._accept():
                     num_accepted += 1
-                    self.atoms.get_calculator().clear_history()
+                    self.atoms.calc.clear_history()
                 else:
-                    self.atoms.get_calculator().restore()
+                    self.atoms.calc.restore()
 
         # Create a new calculator and attach it to the generated structure
-        calc = Clease(self.settings, eci=self.eci,
-                      init_cf=self.cf_generated_structure)
-        self.generated_structure.set_calculator(calc)
+        calc = Clease(self.settings, eci=self.eci, init_cf=self.cf_generated_structure)
+        self.generated_structure.calc = calc
 
         # Force an energy evaluation to update the results dictionary
         self.generated_structure.get_potential_energy()
@@ -142,12 +143,11 @@ class StructureGenerator(object):
 
     def _set_generated_structure(self):
         self.generated_structure = self.atoms.copy()
-        cf_dict = self.atoms.get_calculator().get_cf()
+        cf_dict = self.atoms.calc.get_cf()
         self.cf_generated_structure = deepcopy(cf_dict)
 
     def _accept(self):
-        raise NotImplementedError('_accept should be implemented in the '
-                                  'inherited class.')
+        raise NotImplementedError('_accept should be implemented in the ' 'inherited class.')
 
     def _estimate_temp_range(self):
         raise NotImplementedError('_estimate_temp_range should be '
@@ -158,8 +158,7 @@ class StructureGenerator(object):
                                   'in the inherited class.')
 
     def _determine_temps(self):
-        _logger("Temperature range not given. "
-                "Determining the range automatically.")
+        _logger("Temperature range not given. " "Determining the range automatically.")
         self._reset()
         count = 0
         max_count = 100
@@ -171,7 +170,7 @@ class StructureGenerator(object):
                 _logger(f"Progress ({100*count/max_count} %)")
                 now = time.time()
 
-            if bool(getrandbits(1)) and self.alter_composition:
+            if choice([True, False]) and self.alter_composition:
                 # Change element Type
                 if self._has_more_than_one_conc():
                     self._change_element_type()
@@ -257,8 +256,7 @@ class StructureGenerator(object):
             if new_symbol != old_symbol:
                 self.atoms[indx].symbol = new_symbol
 
-                if self.settings.concentration.is_valid(
-                        self.settings.index_by_basis, self.atoms):
+                if self.settings.concentration.is_valid(self.settings.index_by_basis, self.atoms):
                     break
                 self.atoms[indx].symbol = old_symbol
 
@@ -267,15 +265,14 @@ class StructureGenerator(object):
         final_cf = \
             self.corrFunc.get_cf_by_names(
                 self.generated_structure,
-                self.atoms.get_calculator().cf_names)
+                self.atoms.calc.cf_names)
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'
 
                 # Print a summary of all basis functions (useful for debuggin)
                 for k in final_cf:
-                    _logger(f"{k}: {final_cf[k]} "
-                            f"{self.cf_generated_structure[k]}")
+                    _logger(f"{k}: {final_cf[k]} {self.cf_generated_structure[k]}")
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):
@@ -331,14 +328,19 @@ class ProbeStructure(StructureGenerator):
                   Reads sigma and mu from 'probe_structure-sigma_mu.npz' file.
     """
 
-    def __init__(self, settings, atoms, struct_per_gen, init_temp=None,
-                 final_temp=None, num_temp=5, num_steps_per_temp=1000,
+    def __init__(self,
+                 settings,
+                 atoms,
+                 struct_per_gen,
+                 init_temp=None,
+                 final_temp=None,
+                 num_temp=5,
+                 num_steps_per_temp=1000,
                  approx_mean_var=False):
 
-        StructureGenerator.__init__(self, settings, atoms, struct_per_gen,
-                                    init_temp, final_temp, num_temp,
-                                    num_steps_per_temp)
-        self.o_cf = self.atoms.get_calculator().cf
+        StructureGenerator.__init__(self, settings, atoms, struct_per_gen, init_temp, final_temp,
+                                    num_temp, num_steps_per_temp)
+        self.o_cf = self.atoms.calc.cf
         self.o_cfm = np.vstack((self.cfm, self.o_cf))
         self.approx_mean_var = approx_mean_var
         fname = 'probe_structure-sigma_mu.npz'
@@ -360,7 +362,7 @@ class ProbeStructure(StructureGenerator):
 
     def _accept(self):
         """Accept the last change."""
-        cfm = np.vstack((self.cfm, self.atoms.get_calculator().cf))
+        cfm = np.vstack((self.cfm, self.atoms.calc.cf))
         if self.approx_mean_var:
             n_mv = mean_variance_approx(cfm)
         else:
@@ -379,7 +381,7 @@ class ProbeStructure(StructureGenerator):
         if self.o_mv > n_mv:
             accept = True
         else:
-            accept = np.exp((self.o_mv-n_mv)/self.temp) > np.random.uniform()
+            accept = np.exp((self.o_mv - n_mv) / self.temp) > np.random.uniform()
 
         self.avg_diff += abs(n_mv - self.o_mv)
         if accept:
@@ -392,7 +394,7 @@ class ProbeStructure(StructureGenerator):
     def _estimate_temp_range(self):
         if self.num_steps == 0:
             return 100000.0, 1.0
-        avg_diff = self.avg_diff/self.num_steps
+        avg_diff = self.avg_diff / self.num_steps
         init_temp = 10 * avg_diff
         final_temp = 0.01 * avg_diff
         return init_temp, final_temp
@@ -401,7 +403,7 @@ class ProbeStructure(StructureGenerator):
     def avg_mean_variance(self):
         if self.num_steps == 0:
             return 0.0
-        return self.avg_mv/self.num_steps
+        return self.avg_mv / self.num_steps
 
     def _reset(self):
         self.avg_mv = 0.0
@@ -438,24 +440,27 @@ class GSStructure(StructureGenerator):
         Dictionary containing cluster names and their ECI values
     """
 
-    def __init__(self, settings, atoms, struct_per_gen, init_temp=2000,
-                 final_temp=10, num_temp=10, num_steps_per_temp=100000,
+    def __init__(self,
+                 settings,
+                 atoms,
+                 struct_per_gen,
+                 init_temp=2000,
+                 final_temp=10,
+                 num_temp=10,
+                 num_steps_per_temp=100000,
                  eci=None):
-        StructureGenerator.__init__(self, settings, atoms, struct_per_gen,
-                                    init_temp, final_temp, num_temp,
-                                    num_steps_per_temp)
+        StructureGenerator.__init__(self, settings, atoms, struct_per_gen, init_temp, final_temp,
+                                    num_temp, num_steps_per_temp)
         self.alter_composition = False
         self.eci = eci
         calc = Clease(self.settings, eci=eci)
-        self.atoms.set_calculator(calc)
+        self.atoms.calc = calc
 
     def generate(self):
         low_en_obs = LowestEnergyStructure(self.atoms, verbose=False)
         cnst = ConstrainSwapByBasis(self.atoms, self.settings.index_by_basis)
 
-        temps = np.logspace(math.log10(self.init_temp),
-                            math.log10(self.final_temp),
-                            self.num_temp)
+        temps = np.logspace(math.log10(self.init_temp), math.log10(self.final_temp), self.num_temp)
         try:
             for T in temps.tolist():
                 _logger(f"Current temperature: {T} K")
@@ -473,13 +478,14 @@ class GSStructure(StructureGenerator):
         # cf_trimmed = {key: value for (key, value) in cf
         #               if key in list(self.eci.keys())}
         calc = Clease(self.settings, eci=self.eci)
-        self.generated_structure.set_calculator(calc)
+        self.generated_structure.calc = calc
         self.generated_structure.get_potential_energy()
 
         return self.generated_structure, cf
 
 
 class MetropolisTrajectory(object):
+
     def __init__(self, settings, atoms, num):
         self.settings = settings
         self.atoms = atoms
@@ -489,7 +495,7 @@ class MetropolisTrajectory(object):
         cnst = ConstrainSwapByBasis(self.atoms, self.settings.index_by_basis)
         eci = {'c0': 0.0}
         calc = Clease(self.settings, eci=eci)
-        self.atoms.set_calculator(calc)
+        self.atoms.calc = calc
 
         mc = Montecarlo(self.atoms, 10000000)
         mc.add_constraint(cnst)

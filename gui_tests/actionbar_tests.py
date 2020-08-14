@@ -2,6 +2,7 @@ import unittest
 
 
 class ActionBarTests(unittest.TestCase):
+
     def run_save_as_button(self, app):
         settings_screen = app.root.ids.sm.get_screen('Settings')
         conc_screen = app.root.ids.sm.get_screen('Concentration')

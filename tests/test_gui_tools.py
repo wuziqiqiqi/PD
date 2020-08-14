@@ -1,14 +1,12 @@
 import unittest
-from clease.gui.util import (
-    parse_temperature_list, parse_concentration_list,
-    parse_cellpar, parse_cell, parse_coordinate_basis,
-    parse_grouped_basis_elements, BasisSpecifiedInManyGroupsError,
-    parse_select_cond
-)
+from clease.gui.util import (parse_temperature_list, parse_concentration_list, parse_cellpar,
+                             parse_cell, parse_coordinate_basis, parse_grouped_basis_elements,
+                             BasisSpecifiedInManyGroupsError, parse_select_cond)
 import numpy as np
 
 
 class TestGUIUtil(unittest.TestCase):
+
     def test_temp_list(self):
         temps = parse_temperature_list('1000, 900, 500, 345.6')
         expect = [1000, 900, 500, 345.6]
@@ -136,45 +134,37 @@ class TestGUIUtil(unittest.TestCase):
             _ = parse_grouped_basis_elements(text)
 
     def test_query_parser(self):
-        tests = [
-            {
-                'query': 'name=myname',
-                'expect': [('name', '=', 'myname')]
-            },
-            {
-                'query': 'gen=0',
-                'expect': [('gen', '=', 0)]
-            },
-            {
-                'query': 'energy=1.3',
-                'expect': [('energy', '=', 1.3)]
-            },
-            {
-                'query': 'energy>4.3',
-                'expect': [('energy', '>', 4.3)]
-            },
-            {
-                'query': 'energy<4.3',
-                'expect': [('energy', '<', 4.3)]
-            },
-            {
-                'query': 'energy<=4.3',
-                'expect': [('energy', '<=', 4.3)]
-            },
-            {
-                'query': 'energy>=4.3',
-                'expect': [('energy', '>=', 4.3)]
-            },
-            {
-                'query': 'energy>=4.3,gen=2',
-                'expect': [('energy', '>=', 4.3), ('gen', '=', 2)]
-            }
-        ]
+        tests = [{
+            'query': 'name=myname',
+            'expect': [('name', '=', 'myname')]
+        }, {
+            'query': 'gen=0',
+            'expect': [('gen', '=', 0)]
+        }, {
+            'query': 'energy=1.3',
+            'expect': [('energy', '=', 1.3)]
+        }, {
+            'query': 'energy>4.3',
+            'expect': [('energy', '>', 4.3)]
+        }, {
+            'query': 'energy<4.3',
+            'expect': [('energy', '<', 4.3)]
+        }, {
+            'query': 'energy<=4.3',
+            'expect': [('energy', '<=', 4.3)]
+        }, {
+            'query': 'energy>=4.3',
+            'expect': [('energy', '>=', 4.3)]
+        }, {
+            'query': 'energy>=4.3,gen=2',
+            'expect': [('energy', '>=', 4.3), ('gen', '=', 2)]
+        }]
 
         for i, test in enumerate(tests):
             got = parse_select_cond(test['query'])
             msg = 'Test #{} failed. Test: {} Got: {}'.format(i, test, got)
             self.assertEqual(test['expect'], got, msg=msg)
+
 
 if __name__ == '__main__':
     unittest.main()

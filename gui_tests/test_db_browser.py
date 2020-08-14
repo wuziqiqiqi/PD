@@ -12,21 +12,20 @@ import re
 
 
 class TestDBBrowser(unittest.TestCase):
+
     def test_db_updates(self):
         db_name = 'test_db_updates.db'
 
         db = connect(db_name)
         atoms = Atoms('CO')
         calc = EMT()
-        atoms.set_calculator(calc)
+        atoms.calc = calc
         energy1 = atoms.get_potential_energy()
 
-        db.write(atoms, struct_type='initial', gen=0, name='CO_1',
-                 converged=True, size='1x2x3')
+        db.write(atoms, struct_type='initial', gen=0, name='CO_1', converged=True, size='1x2x3')
         atoms[1].symbol = 'H'
         energy2 = atoms.get_potential_energy()
-        db.write(atoms, struct_type='final', gen=1, name='CH_1',
-                 converged=False, size='3x2x1')
+        db.write(atoms, struct_type='final', gen=1, name='CH_1', converged=False, size='3x2x1')
 
         browser = DbBrowser(db_name=db_name)
         str_rep = browser.ids.text_field.text
@@ -50,27 +49,21 @@ class TestDBBrowser(unittest.TestCase):
 
         # Check that we extract the correct IDs for some tougher queries
         for i in range(20):
-            db.write(Atoms('H'), gen=i, objNo=f'obj{int(i/4)}',
-                     group=i % 4)
+            db.write(Atoms('H'), gen=i, objNo=f'obj{int(i/4)}', group=i % 4)
 
-        tests = [
-            {
-                'query': 'id>15,id<18',
-                'expect': [16, 17]
-            },
-            {
-                'query': 'gen<5',
-                'expect': [1, 2, 3, 4, 5, 6, 7]
-            },
-            {
-                'query': 'id>11, group=0',
-                'expect': [15, 19]
-            },
-            {
-                'query': 'id>=11, objNo=obj2',
-                'expect': [11, 12, 13, 14]
-            }
-        ]
+        tests = [{
+            'query': 'id>15,id<18',
+            'expect': [16, 17]
+        }, {
+            'query': 'gen<5',
+            'expect': [1, 2, 3, 4, 5, 6, 7]
+        }, {
+            'query': 'id>11, group=0',
+            'expect': [15, 19]
+        }, {
+            'query': 'id>=11, objNo=obj2',
+            'expect': [11, 12, 13, 14]
+        }]
 
         for test in tests:
             browser.ids.queryInput.text = test['query']
@@ -134,7 +127,8 @@ class TestDBBrowser(unittest.TestCase):
                     'sql': ['value=?'],
                     'values': ['1']
                 }
-            }})
+            }
+        })
 
         for test in tests:
             syst, kvp = browser._get_select_conditions(test['query'])

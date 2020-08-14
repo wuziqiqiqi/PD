@@ -24,7 +24,9 @@ class InteractivePlot(object):
         self.ax = ax
         self.lines = lines
         self.annotations = annotations
-        self.active_annot = ax.annotate("", xy=(0, 0), xytext=(-20, 20),
+        self.active_annot = ax.annotate("",
+                                        xy=(0, 0),
+                                        xytext=(-20, 20),
                                         textcoords="offset points",
                                         bbox=dict(boxstyle="round", fc="w"),
                                         arrowprops=dict(arrowstyle="->"))
@@ -76,6 +78,7 @@ class InteractivePlot(object):
 
 
 class ShowStructureOnClick(InteractivePlot):
+
     def __init__(self, fig, ax, lines, names, db_name):
         from ase.gui.gui import GUI
         from ase.gui.images import Images

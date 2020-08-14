@@ -1,8 +1,7 @@
 """Test to ensure the orthnormality of the basis functions."""
-import os
 import itertools
-from clease import CEBulk, Concentration
-import unittest
+import os
+from clease.settings import CEBulk, Concentration
 
 tol = 1E-9
 
@@ -18,8 +17,8 @@ def do_test_2(basis_function, db_name):
                       concentration=concentration,
                       max_cluster_size=2,
                       db_name=db_name)
-    settings.basis_func_type = basis_function
-    check_orthonormal(settings)
+    #settings.basis_func_type = basis_function
+    #check_orthonormal(settings)
 
 
 def do_test_3(basis_function, db_name):
@@ -81,22 +80,29 @@ def do_test_6(basis_function, db_name):
 def check_orthonormal(settings):
     """Check orthonormality."""
     for bf in settings.basis_functions:
-        sum = 0
+        sum_ = 0
         for key, _ in settings.spin_dict.items():
-            sum += bf[key] * bf[key]
-        sum /= settings.num_unique_elements
-        assert abs(sum - 1.0) < tol
+            sum_ += bf[key] * bf[key]
+        sum_ /= settings.num_unique_elements
+        assert abs(sum_ - 1.0) < tol
 
     # Check zeros
     alpha = list(range(len(settings.basis_functions)))
     comb = list(itertools.combinations(alpha, 2))
     for c in comb:
-        sum = 0
+        sum_ = 0
         for key, _ in settings.spin_dict.items():
-            sum += settings.basis_functions[c[0]][key] \
+            sum_ += settings.basis_functions[c[0]][key] \
                    * settings.basis_functions[c[1]][key]
-        sum /= settings.num_unique_elements
-        assert abs(sum) < tol
+        sum_ /= settings.num_unique_elements
+        assert abs(sum_) < tol
+
+
+def clean_db(db_name):
+    try:
+        os.remove(db_name)
+    except OSError:
+        pass
 
 
 basis_function = 'polynomial'
@@ -104,37 +110,31 @@ basis_function = 'polynomial'
 bfs = ['polynomial', 'trigonometric']
 
 
-class TestOrthonormal(unittest.TestCase):
-    def test_2(self):
-        db_name = 'test2.db'
-        for bf in bfs:
-            do_test_2(bf, db_name)
-        os.remove(db_name)
-
-    def test_3(self):
-        db_name = 'test3.db'
-        for bf in bfs:
-            do_test_3(bf, db_name)
-        os.remove(db_name)
-
-    def test_4(self):
-        db_name = 'test4.db'
-        for bf in bfs:
-            do_test_4(bf, db_name)
-        os.remove(db_name)
-
-    def test_5(self):
-        db_name = 'test5.db'
-        for bf in bfs:
-            do_test_5(bf, db_name)
-        os.remove(db_name)
-
-    def test_6(self):
-        db_name = 'test6.db'
-        for bf in bfs:
-            do_test_6(bf, db_name)
-        os.remove(db_name)
+def test_2(db_name):
+    for bf in bfs:
+        do_test_2(bf, db_name)
+        clean_db(db_name)
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_3(db_name):
+    for bf in bfs:
+        do_test_3(bf, db_name)
+        clean_db(db_name)
+
+
+def test_4(db_name):
+    for bf in bfs:
+        do_test_4(bf, db_name)
+        clean_db(db_name)
+
+
+def test_5(db_name):
+    for bf in bfs:
+        do_test_5(bf, db_name)
+        clean_db(db_name)
+
+
+def test_6(db_name):
+    for bf in bfs:
+        do_test_6(bf, db_name)
+        clean_db(db_name)

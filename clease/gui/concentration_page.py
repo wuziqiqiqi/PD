@@ -20,12 +20,13 @@ class ConcentrationPage(Screen):
         if len(self.grouped_elements) != len(new_elements):
             return True
 
-        if any(len(a) != len(b) for a, b in zip(self.grouped_elements,
-                                                new_elements)):
+        if any(len(a) != len(b) for a, b in zip(self.grouped_elements, new_elements)):
             return True
 
-        return any(any(symb1 != symb2 for symb1, symb2 in zip(a, b))
-                   for a, b in zip(self.grouped_elements, new_elements))
+        return any(
+            any(symb1 != symb2
+                for symb1, symb2 in zip(a, b))
+            for a, b in zip(self.grouped_elements, new_elements))
 
     def _group_elements(self, elements, grouped_basis):
         if grouped_basis is None:
@@ -41,19 +42,22 @@ class ConcentrationPage(Screen):
         return sum(len(item) for item in self.grouped_elements)
 
     def add_constraint(self):
-        layout = StackLayout(id=f"cnst{self.next_constraint_id}",
-                             size_hint=[1, 0.05])
+        layout = StackLayout(id=f"cnst{self.next_constraint_id}", size_hint=[1, 0.05])
         width = 1.0 / float((self.num_conc_vars + 3))
         for i in range(self.num_conc_vars):
-            layout.add_widget(TextInput(text='0', size_hint=[width, 1],
-                                        write_tab=False, multiline=False,
-                                        id=f"conc{i}"))
-        layout.add_widget(Spinner(text='<=', values=['<=', '>=', '='],
-                                  id='comparisonSpinner',
-                                  size_hint=[width, 1]))
-        layout.add_widget(TextInput(text='0', size_hint=[width, 1],
-                                    write_tab=False, multiline=False,
-                                    id='rhs'))
+            layout.add_widget(
+                TextInput(text='0',
+                          size_hint=[width, 1],
+                          write_tab=False,
+                          multiline=False,
+                          id=f"conc{i}"))
+        layout.add_widget(
+            Spinner(text='<=',
+                    values=['<=', '>=', '='],
+                    id='comparisonSpinner',
+                    size_hint=[width, 1]))
+        layout.add_widget(
+            TextInput(text='0', size_hint=[width, 1], write_tab=False, multiline=False, id='rhs'))
         layout.add_widget(
             Button(text='Remove',
                    size_hint=[width, 1],
@@ -154,10 +158,10 @@ class ConcentrationPage(Screen):
                 continue
 
             if child.id.startswith('conc'):
-                row.append(sign*float(child.text))
+                row.append(sign * float(child.text))
                 ids.append(child.id)
             elif child.id == 'rhs':
-                rhs = sign*float(child.text)
+                rhs = sign * float(child.text)
 
         zipped = sorted(zip(ids, row))
         row = [z[1] for z in zipped]
@@ -202,12 +206,14 @@ class ConcentrationPage(Screen):
 
     def to_dict(self):
         A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
-        data = {'elements': self.ids.elementInput.text,
-                'grouped_basis': self.ids.groupedBasisInput.text,
-                'A_lb': A_lb,
-                'rhs_lb': rhs_lb,
-                'A_eq': A_eq,
-                'rhs_eq': rhs_eq}
+        data = {
+            'elements': self.ids.elementInput.text,
+            'grouped_basis': self.ids.groupedBasisInput.text,
+            'A_lb': A_lb,
+            'rhs_lb': rhs_lb,
+            'A_eq': A_eq,
+            'rhs_eq': rhs_eq
+        }
         return data
 
     def set_Elements_GroupedBasis(self, elements, grouped_basis):

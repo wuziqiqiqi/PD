@@ -56,7 +56,7 @@ class SGCObserver(MCObserver):
         self.quantities["singlets_sq"] += new_singlets**2
         self.quantities["energy"] += E
         self.quantities["energy_sq"] += E**2
-        self.quantities["singl_eng"] += new_singlets*E
+        self.quantities["singl_eng"] += new_singlets * E
 
     @property
     def energy(self):

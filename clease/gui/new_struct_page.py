@@ -24,6 +24,7 @@ class BaseGenerator(object):
 
 
 class InitialPoolGenerator(BaseGenerator):
+
     def generate(self):
         try:
             self.generator.generate_initial_pool(atoms=self.atoms)
@@ -35,6 +36,7 @@ class InitialPoolGenerator(BaseGenerator):
 
 
 class RandomStructureGenerator(BaseGenerator):
+
     def generate(self):
         try:
             self.generator.generate_random_structures(atoms=self.atoms)
@@ -54,9 +56,11 @@ class ProbeStructureGenerator(BaseGenerator):
 
     def generate(self):
         try:
-            self.generator.generate_probe_structure(
-                atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
-                num_temp=self.num_temp, num_steps_per_temp=self.num_steps)
+            self.generator.generate_probe_structure(atoms=self.atoms,
+                                                    init_temp=self.Tmax,
+                                                    final_temp=self.Tmin,
+                                                    num_temp=self.num_temp,
+                                                    num_steps_per_temp=self.num_steps)
             msg = 'Probe strcutres generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
@@ -75,10 +79,13 @@ class GSStructGenerator(object):
 
     def generate(self):
         try:
-            self.generator.generate_gs_structure(
-                atoms=self.atoms, init_temp=self.Tmax, final_temp=self.Tmin,
-                num_temp=self.num_temps, num_steps_per_temp=self.num_steps,
-                eci=self.eci, random_composition=self.randomize)
+            self.generator.generate_gs_structure(atoms=self.atoms,
+                                                 init_temp=self.Tmax,
+                                                 final_temp=self.Tmin,
+                                                 num_temp=self.num_temps,
+                                                 num_steps_per_temp=self.num_steps,
+                                                 eci=self.eci,
+                                                 random_composition=self.randomize)
             msg = 'Ground-state structures generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
@@ -116,9 +123,12 @@ class ExaustiveGSStructGenerator(object):
         try:
             self.generator.generate_gs_structure_multiple_templates(
                 num_templates=self.num_templates,
-                num_prim_cells=self.num_prim_cells, init_temp=self.Tmax,
-                final_temp=self.Tmin, num_temp=self.num_temps,
-                num_steps_per_temp=self.num_steps, eci=self.eci)
+                num_prim_cells=self.num_prim_cells,
+                init_temp=self.Tmax,
+                final_temp=self.Tmin,
+                num_temp=self.num_temps,
+                num_steps_per_temp=self.num_steps,
+                eci=self.eci)
             msg = 'Ground-state structures generated.'
             App.get_running_app().root.ids.status.text = msg
         except Exception as exc:
@@ -231,22 +241,28 @@ class NewStructPage(Screen):
         self._pop_up = None
 
     def show_load_eci_dialog(self):
-        content = LoadDialog(
-            load=lambda path, filename: self.load(path, filename, 'eci'),
-            cancel=self.dismiss_popup)
+        content = LoadDialog(load=lambda path, filename: self.load(path, filename, 'eci'),
+                             cancel=self.dismiss_popup)
 
-        self._pop_up = Popup(title="Load ECI filename", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load ECI filename",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_load_template_dialog(self):
-        content = LoadDialog(
-            load=lambda path, filename: self.load(path, filename, 'template'),
-            cancel=self.dismiss_popup)
+        content = LoadDialog(load=lambda path, filename: self.load(path, filename, 'template'),
+                             cancel=self.dismiss_popup)
 
-        self._pop_up = Popup(title="Load template atoms", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load template atoms",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -318,7 +334,7 @@ class NewStructPage(Screen):
             Tmin = float(self.ids.tempMinInput.text)
             Tmax = float(self.ids.tempMaxInput.text)
             num_temps = int(self.ids.numTempInput.text)
-            num_steps = int(self.ids.numSweepsInput.text)*len(atoms)
+            num_steps = int(self.ids.numSweepsInput.text) * len(atoms)
             num_templates = int(self.ids.numTemplateInput.text)
             num_prim_cells = int(self.ids.numPrimCellsInput.text)
 
@@ -445,23 +461,13 @@ class NewStructPage(Screen):
 
             # The argument passed is a trajectory file
             if final.endswith('.traj') and init.endswith('.traj'):
-                kwargs = {
-                    'traj_init': init,
-                    'traj_final': final,
-                    'cb': InsertStructureCB(status)
-                }
-                Thread(target=generator.insert_structures,
-                       kwargs=kwargs).start()
+                kwargs = {'traj_init': init, 'traj_final': final, 'cb': InsertStructureCB(status)}
+                Thread(target=generator.insert_structures, kwargs=kwargs).start()
             elif init.endswith('.traj'):
-                kwargs = {
-                    'traj_init': init,
-                    'cb': InsertStructureCB(status)
-                }
-                Thread(target=generator.insert_structures,
-                       kwargs=kwargs).start()
+                kwargs = {'traj_init': init, 'cb': InsertStructureCB(status)}
+                Thread(target=generator.insert_structures, kwargs=kwargs).start()
             else:
-                generator.insert_structure(init_struct=init_struct,
-                                           final_struct=final_struct)
+                generator.insert_structure(init_struct=init_struct, final_struct=final_struct)
         except Exception as exc:
             traceback.print_exc()
             App.get_running_app().root.ids.status.text = str(exc)
@@ -479,24 +485,29 @@ class NewStructPage(Screen):
         self.dismiss_popup()
 
     def show_load_init_struct_dialog(self):
-        content = LoadDialog(
-            load=lambda path, filename: self.load_structures(path, filename,
-                                                             True),
-            cancel=self.dismiss_popup)
+        content = LoadDialog(load=lambda path, filename: self.load_structures(path, filename, True),
+                             cancel=self.dismiss_popup)
 
-        self._pop_up = Popup(title="Load initial structure", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load initial structure",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_load_final_struct_dialog(self):
         content = LoadDialog(
-            load=lambda path, filename: self.load_structures(path, filename,
-                                                             False),
+            load=lambda path, filename: self.load_structures(path, filename, False),
             cancel=self.dismiss_popup)
 
-        self._pop_up = Popup(title="Load final structure", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load final structure",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -527,6 +538,5 @@ class NewStructPage(Screen):
         self.ids.numSweepsInput.text = data.get('num_sweeps', '100')
         self.ids.eciFileInput.text = data.get('eci_file', '')
         self.ids.templateAtomsInput.text = data.get('template_file', '')
-        self.ids.newStructTypeSpinner.text = data.get('generation_scheme',
-                                                      'Random structure')
+        self.ids.newStructTypeSpinner.text = data.get('generation_scheme', 'Random structure')
         self.ids.numTemplateInput.text = data.get('num_templates', '1')

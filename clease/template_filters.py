@@ -1,6 +1,10 @@
 from itertools import product, permutations, combinations
 import numpy as np
 
+__all__ = ('SkewnessFilter', 'EquivalentCellsFilter', 'ValidConcentrationFilter',
+           'DistanceBetweenFacetsFilter', 'VolumeToSurfaceRatioFilter', 'CellVectorDirectionFilter',
+           'AngleFilter')
+
 
 class AtomsFilter(object):
     """
@@ -51,7 +55,7 @@ class SkewnessFilter(CellFilter):
             diag_lengths.append(length)
         max_length = np.max(diag_lengths)
         min_length = np.min(diag_lengths)
-        return max_length/min_length
+        return max_length / min_length
 
     def __call__(self, cell):
         diag_ratio = self._get_max_min_diag_ratio(cell)
@@ -107,8 +111,8 @@ class ValidConcentrationFilter(AtomsFilter):
     def __call__(self, atoms):
         num_in_template = sum(len(x) for x in self.index_by_basis)
         num_in_atoms = len(atoms)
-        ratio = num_in_atoms/num_in_template
-        nib = [len(x)*ratio for x in self.index_by_basis]
+        ratio = num_in_atoms / num_in_template
+        nib = [len(x) * ratio for x in self.index_by_basis]
 
         if not np.allclose(nib, np.round(nib)):
             return False
@@ -126,6 +130,7 @@ class ValidConcentrationFilter(AtomsFilter):
 
 
 class DistanceBetweenFacetsFilter(CellFilter):
+
     def __init__(self, ratio):
         self.ratio = ratio
 
@@ -147,10 +152,11 @@ class DistanceBetweenFacetsFilter(CellFilter):
 
         d_min = min(dists)
         d_max = max(dists)
-        return d_max/d_min < self.ratio
+        return d_max / d_min < self.ratio
 
 
 class VolumeToSurfaceRatioFilter(CellFilter):
+
     def __init__(self, ratio):
         self.ratio = ratio
 
@@ -162,20 +168,21 @@ class VolumeToSurfaceRatioFilter(CellFilter):
             v2 = cell[span[1], :]
             normal = np.cross(v1, v2)
             area = np.abs(normal.dot(normal))
-            surf += 2*area
+            surf += 2 * area
 
-        factor = area/(6.0*vol**(2.0/3.0))
+        factor = area / (6.0 * vol**(2.0 / 3.0))
         return factor < self.ratio
 
 
 class AngleFilter(CellFilter):
+
     def __init__(self, min_angle, max_angle):
         self.min_angle = min_angle
         self.max_angle = max_angle
 
     def __call__(self, cell):
-        cos_max = np.cos(self.max_angle*np.pi/180.0)
-        cos_min = np.cos(self.min_angle*np.pi/180.0)
+        cos_max = np.cos(self.max_angle * np.pi / 180.0)
+        cos_min = np.cos(self.min_angle * np.pi / 180.0)
 
         cos_a = []
         for vec in combinations([0, 1, 2], r=2):
@@ -199,12 +206,13 @@ class CellVectorDirectionFilter(CellFilter):
         Unit vector in the direction where the selected vector
         should be
     """
-    def __init__(self, cell_vector=0, direction=[0, 0, 1], tol=1e-7):
+
+    def __init__(self, cell_vector=0, direction=(0, 0, 1), tol=1e-7):
         self.cell_vector = cell_vector
         self.direction = direction
         self.tol = tol
 
     def __call__(self, cell):
         vec = cell[self.cell_vector]
-        dot = np.dot(vec, self.direction)/np.sqrt(np.dot(vec, vec))
+        dot = np.dot(vec, self.direction) / np.sqrt(np.dot(vec, vec))
         return abs(dot - 1.0) > self.tol

@@ -59,8 +59,12 @@ class FitAlgEditor(FloatLayout):
 
     def show_help_message(self, msg, title):
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title=title, content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title=title,
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 

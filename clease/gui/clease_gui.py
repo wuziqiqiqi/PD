@@ -56,8 +56,12 @@ class WindowFrame(StackLayout):
 
     def show_load_session_dialog(self):
         content = LoadDialog(load=self.load_session, cancel=self.dismiss_popup)
-        self._pop_up = Popup(title="Load CLEASE session", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load CLEASE session",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -136,8 +140,7 @@ class WindowFrame(StackLayout):
         mc_header = self.ids.sm.get_screen('MCHeader')
         data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
         data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').to_dict()
-        data['meta_dyn_page'] = mc_header.ids.sm.get_screen(
-            'MetaDynPage').to_dict()
+        data['meta_dyn_page'] = mc_header.ids.sm.get_screen('MetaDynPage').to_dict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)
@@ -153,11 +156,16 @@ class WindowFrame(StackLayout):
         if self.ids.sm.get_screen('Concentration').check_user_input() != 0:
             return
 
-        content = SaveDialog(save=self.save_session, cancel=self.dismiss_popup,
+        content = SaveDialog(save=self.save_session,
+                             cancel=self.dismiss_popup,
                              fname="cleaseDemo.json")
 
-        self._pop_up = Popup(title="Save CLEASE session", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Save CLEASE session",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -235,8 +243,12 @@ class WindowFrame(StackLayout):
         db_name = screen.ids.dbNameInput.text
 
         content = DbBrowser(close=self.dismiss_popup, db_name=db_name)
-        self._pop_up = Popup(title="DB Browser", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="DB Browser",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -259,7 +271,7 @@ class WindowFrame(StackLayout):
             if self.active_template_is_mc_cell:
                 atoms = settings.atoms.copy()
             else:
-                atoms = settings.prim_cell*(size, size, size)
+                atoms = settings.prim_cell * (size, size, size)
             return atoms
         except Exception as exc:
             traceback.print_exc()
@@ -296,27 +308,35 @@ class WindowFrame(StackLayout):
             except Exception as exc:
                 app.root.ids.status.text = str(exc)
             app.root.ids.status.text = "Finished exporting dataset"
+
         Thread(target=exportFunc).start()
         self.dismiss_popup()
 
     def show_export_fit_data_dialog(self):
-        content = SaveDialog(
-            save=self.export_fit_data, cancel=self.dismiss_popup,
-            fname='fitData.csv')
+        content = SaveDialog(save=self.export_fit_data,
+                             cancel=self.dismiss_popup,
+                             fname='fitData.csv')
 
-        self._pop_up = Popup(title="Export Fit Data", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Export Fit Data",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def show_export_settings_dialog(self):
-        content = SaveDialog(
-            save=self.export_settings, cancel=self.dismiss_popup,
-            fname='cleaseSettings.json'
-        )
+        content = SaveDialog(save=self.export_settings,
+                             cancel=self.dismiss_popup,
+                             fname='cleaseSettings.json')
 
-        self._pop_up = Popup(title="Export Settings", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Export Settings",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -335,6 +355,7 @@ class WindowFrame(StackLayout):
 
 
 class CleaseGUI(App):
+
     def __init__(self):
         App.__init__(self)
         self.settings = None
@@ -345,7 +366,7 @@ class CleaseGUI(App):
         return WindowFrame()
 
     def on_keyboard(self, window, key, scancode, codepoint, modifier):
-        if modifier in[['ctrl'], ['meta']] and codepoint == 's':
+        if modifier in [['ctrl'], ['meta']] and codepoint == 's':
             self.root.save_session_to_current_file()
 
     def on_stop(self):

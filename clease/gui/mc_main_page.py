@@ -34,8 +34,12 @@ class MCMainPage(Screen):
         msg += 'extension of the active template will be used for the\n'
         msg += 'MC calculation\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Concentration input", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Concentration input",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -63,8 +67,12 @@ class MCMainPage(Screen):
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
-        self._pop_up = Popup(title="Load ECIs", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load ECIs",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -76,10 +84,7 @@ class MCMainPage(Screen):
         self.dismiss_popup()
 
     def to_dict(self):
-        return {
-            'size': self.ids.sizeInput.text,
-            'eci_file': self.ids.eciFileInput.text
-        }
+        return {'size': self.ids.sizeInput.text, 'eci_file': self.ids.eciFileInput.text}
 
     def from_dict(self, dct):
         self.ids.sizeInput.text = dct.get('size', '1')

@@ -8,29 +8,24 @@ import os
 
 
 class TestSGCEditor(unittest.TestCase):
+
     def test_symbol_parsing(self):
-        tests = [
-            {
-                'input': 'Au, Cu',
-                'expect': ['Au', 'Cu']
-            },
-            {
-                'input': 'Au,Cu',
-                'expect': ['Au', 'Cu']
-            },
-            {
-                'input': '[Au, Cu]',
-                'expect': ['Au', 'Cu']
-            },
-            {
-                'input': '(Au, Cu)',
-                'expect': ['Au', 'Cu']
-            },
-            {
-                'input': 'Al, Mg, X, Si',
-                'expect': ['Al', 'Mg', 'X', 'Si']
-            }
-        ]
+        tests = [{
+            'input': 'Au, Cu',
+            'expect': ['Au', 'Cu']
+        }, {
+            'input': 'Au,Cu',
+            'expect': ['Au', 'Cu']
+        }, {
+            'input': '[Au, Cu]',
+            'expect': ['Au', 'Cu']
+        }, {
+            'input': '(Au, Cu)',
+            'expect': ['Au', 'Cu']
+        }, {
+            'input': 'Al, Mg, X, Si',
+            'expect': ['Al', 'Mg', 'X', 'Si']
+        }]
         editor = SGCEditor(symbols='Au, Cu', chem_pot='Au: 0.0')
 
         for i, test in enumerate(tests):
@@ -42,24 +37,29 @@ class TestSGCEditor(unittest.TestCase):
             self.assertEqual(value, test['expect'], msg=msg)
 
     def test_chem_pot_parsing(self):
-        tests = [
-            {
-                'input': 'c1_0: 0.1',
-                'expect': {'c1_0': 0.1}
-            },
-            {
-                'input': '{{c1_0: 0.1}}',
-                'expect': {'c1_0': 0.1}
-            },
-            {
-                'input': 'c1_0: 0.4, c1_2: 0.7',
-                'expect': {'c1_0': 0.4, 'c1_2': 0.7}
-            },
-            {
-                'input': 'c1_0: 0.4,c1_2: 0.7',
-                'expect': {'c1_0': 0.4, 'c1_2': 0.7}
+        tests = [{
+            'input': 'c1_0: 0.1',
+            'expect': {
+                'c1_0': 0.1
             }
-        ]
+        }, {
+            'input': '{{c1_0: 0.1}}',
+            'expect': {
+                'c1_0': 0.1
+            }
+        }, {
+            'input': 'c1_0: 0.4, c1_2: 0.7',
+            'expect': {
+                'c1_0': 0.4,
+                'c1_2': 0.7
+            }
+        }, {
+            'input': 'c1_0: 0.4,c1_2: 0.7',
+            'expect': {
+                'c1_0': 0.4,
+                'c1_2': 0.7
+            }
+        }]
 
         editor = SGCEditor(symbols='Au, Cu', chem_pot='Au: 0.0')
         for i, test in enumerate(tests):
@@ -78,10 +78,8 @@ class TestSGCEditor(unittest.TestCase):
 
         # Open a new editor and confirm that the texr mathes
         editor2 = SGCEditor(symbols='Au, Cu', chem_pot='Au: 0.0')
-        self.assertEqual(editor.ids.symbolInput.text,
-                         editor2.ids.symbolInput.text)
-        self.assertEqual(editor.ids.chemPotInput.text,
-                         editor2.ids.chemPotInput.text)
+        self.assertEqual(editor.ids.symbolInput.text, editor2.ids.symbolInput.text)
+        self.assertEqual(editor.ids.chemPotInput.text, editor2.ids.chemPotInput.text)
         os.remove(editor.fname)
 
 

@@ -1,10 +1,10 @@
 .. testsetup::
 
-  from clease import Concentration
+  from clease.settings import Concentration
   conc = Concentration(basis_elements=[['Au', 'Cu']])
 
 .. _aucu_setting:
-.. module:: clease.settings_bulk
+.. module:: clease.settings
 
 Specify CE settings
 ===================
@@ -19,7 +19,7 @@ Here is how to specify the settings for performing CE on
 Au\ :sub:`x`\ Cu\ :sub:`1-x` for all :math:`0 \leq x \leq 1` on FCC lattice
 with a lattice constant of 3.8 Å
 
->>> from clease import CEBulk
+>>> from clease.settings import CEBulk
 >>> settings = CEBulk(crystalstructure='fcc',
 ...                   a=3.8,
 ...                   supercell_factor=64,

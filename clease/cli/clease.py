@@ -23,19 +23,20 @@ def main():
     parser = argparse.ArgumentParser(description="CLEASE CLI")
     subparsers = parser.add_subparsers(help="Sub command help", dest="command")
     gui_parser = subparsers.add_parser("gui", help="Launches the CLEASE GUI")
-    gui_parser.add_argument(
-        "--setup", help="Install missing dependencies required to launch the "
-                        "GUI", action="store_true")
+    gui_parser.add_argument("--setup",
+                            help="Install missing dependencies required to launch the "
+                            "GUI",
+                            action="store_true")
 
     db_parser = subparsers.add_parser("db", help="Launch the CLEASE DB CLI")
     db_parser.add_argument("name", help="Name of the database")
-    db_parser.add_argument(
-        "--show", help="[tab, names, cf]. If tab: The name of all correlation "
-                       "function tables is shown.\n"
-                       "If names, the name of all known correlation functions "
-                       "is shown\n"
-                       "If cf, the correlation functions of the given ID is "
-                       "shown (See ID argument)")
+    db_parser.add_argument("--show",
+                           help="[tab, names, cf]. If tab: The name of all correlation "
+                           "function tables is shown.\n"
+                           "If names, the name of all known correlation functions "
+                           "is shown\n"
+                           "If cf, the correlation functions of the given ID is "
+                           "shown (See ID argument)")
     db_parser.add_argument("--id", help="Database ID to operate on")
     args = parser.parse_args()
     if args.command == 'gui':

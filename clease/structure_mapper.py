@@ -5,21 +5,21 @@ from scipy.optimize import linear_sum_assignment
 from typing import Tuple
 from ase.geometry import find_mic
 
+__all__ = ('TransformInfo', 'StructureMapper')
+
 
 class TransformInfo(object):
     """
     Class for holding information about snap transformation
     """
+
     def __init__(self):
         self.displacements = []
         self.dispVec = []
         self.strain = []
 
     def todict(self) -> dict:
-        return {
-            'displacements': list(self.displacements),
-            'strain': list(self.strain)
-        }
+        return {'displacements': list(self.displacements), 'strain': list(self.strain)}
 
 
 class StructureMapper(object):
@@ -30,6 +30,7 @@ class StructureMapper(object):
     :param symprec: Symmetry precision (see refine_cell in spglib)
     :param angle_tol: Angle tolerance (see refine_cell in spglib)
     """
+
     def __init__(self, symprec: float = 0.1, angle_tol: float = 5.0):
         self.symprec = symprec
         self.angle_tol = angle_tol
@@ -46,16 +47,15 @@ class StructureMapper(object):
         scaled_pos = atoms.get_scaled_positions()
         numbers = np.array(atoms.numbers)
 
-        result = spglib.refine_cell(
-            (cell, scaled_pos, numbers),
-            symprec=self.symprec, angle_tolerance=self.angle_tol)
+        result = spglib.refine_cell((cell, scaled_pos, numbers),
+                                    symprec=self.symprec,
+                                    angle_tolerance=self.angle_tol)
 
         if result is None:
             raise RuntimeError("Could not refine cell")
 
         lattice, scaled_pos, numbers = result
-        return Atoms(numbers=numbers, cell=lattice,
-                     scaled_positions=scaled_pos, pbc=[1, 1, 1])
+        return Atoms(numbers=numbers, cell=lattice, scaled_positions=scaled_pos, pbc=[1, 1, 1])
 
     def strain(self, cell1: Cell, cell2: Cell) -> np.ndarray:
         """
@@ -70,10 +70,9 @@ class StructureMapper(object):
         :param cell2: Second cell
         """
         P = cell2.dot(np.linalg.inv(cell1))
-        return 0.5*(P.T.dot(P) - np.eye(3))
+        return 0.5 * (P.T.dot(P) - np.eye(3))
 
-    def snap_to_lattice(self, atoms: Atoms, template: Atoms
-                        ) -> Tuple[Atoms, TransformInfo]:
+    def snap_to_lattice(self, atoms: Atoms, template: Atoms) -> Tuple[Atoms, TransformInfo]:
         """
         Snaps atoms to an ideal lattice. If the number of atoms in the
         relaxed atoms object is less than the number of atoms in the template,
@@ -108,7 +107,7 @@ class StructureMapper(object):
         transform_info = TransformInfo()
         transform_info.displacements = displacements
         transform_info.strain = strain
-        transform_info.dispVec = np.array([distVec[i*len(template) + j]
-                                           for i in range(len(atoms))
-                                           for j in range(len(template))])
+        transform_info.dispVec = np.array([
+            distVec[i * len(template) + j] for i in range(len(atoms)) for j in range(len(template))
+        ])
         return template, transform_info

@@ -10,8 +10,7 @@ and the clusters
 
 .. code-block:: python
 
-  from clease import Concentration
-  from clease import CEBulk
+  from clease.settings import CEBulk, Concentration
   conc = Concentration(basis_elements=[['Au', 'Cu']])
   settings = CEBulk(crystalstructure='fcc',
                     a=3.8,

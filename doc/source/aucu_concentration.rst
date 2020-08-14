@@ -11,7 +11,7 @@ composition range of Au\ :sub:`x`\ Cu\ :sub:`1-x` where
 :math:`0 \leq x \leq 1`. The :class:`Concentration` object can be created
 simply as
 
->>> from clease import Concentration
+>>> from clease.settings import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 
 because there is no restriction imposed on the concentration range. Note that
@@ -81,7 +81,7 @@ The first method is to specify the extra constraint using ``A_eq``, ``b_eq``,
 ``A_lb`` and ``b_lb``. For this particular case, the extra constraint is
 specified using ``A_lb`` and ``b_lb`` arguments as
 
->>> from clease import Concentration
+>>> from clease.settings import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
 
 A list of many examples on how linear systems equations can be used, is found 
@@ -92,7 +92,7 @@ strings. The :class:`Concentration` class contains
 :meth:`~Concentration.set_conc_formula_unit()` method which accepts formula
 strings and variable range, which can be invoked as
 
->>> from clease import Concentration
+>>> from clease.settings import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 >>> conc.set_conc_formula_unit(formulas=["Au<x>Cu<1-x>"], variable_range={"x": (0, 0.5)})
 
@@ -101,7 +101,7 @@ using :meth:`~Concentration.set_conc_ranges()` method in :class:`Concentration`
 class. The lower and upper bound of species are specified in a nested list in
 the same order as the ``basis_elements`` as
 
->>> from clease import Concentration
+>>> from clease.settings import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
 >>> conc.set_conc_ranges(ranges=[[(0, 0.5), (0.5, 1)]])
 

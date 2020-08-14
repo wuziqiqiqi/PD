@@ -1,7 +1,8 @@
-from clease import _logger
-from clease import LinearRegression
-from clease import Tikhonov
 import numpy as np
+from clease import _logger
+from .regression import LinearRegression, Tikhonov
+
+__all__ = ('SequentialClusterRidge',)
 
 
 class SequentialClusterRidge(LinearRegression):
@@ -24,13 +25,15 @@ class SequentialClusterRidge(LinearRegression):
     num_alpha: int
         Number of alpha values
     """
+
     def __init__(self, min_alpha=1e-10, max_alpha=10.0, num_alpha=20):
-        LinearRegression.__init__(self)
+        super().__init__()
         self.min_alpha = min_alpha
         self.max_alpha = max_alpha
         self.num_alpha = num_alpha
 
-    def _cv(self, X, coeff, y, l2scheme):
+    @staticmethod
+    def _cv(X, coeff, y, l2scheme):
         """
         Calcualtes the cross validation score
         """
@@ -40,7 +43,8 @@ class SequentialClusterRidge(LinearRegression):
         dy_loo = dy / (1 - np.diag(X.dot(prec).dot(X.T)))
         return np.sqrt(np.mean(dy_loo**2))
 
-    def _print_summary(self, cvs, coeffs):
+    @staticmethod
+    def _print_summary(cvs, coeffs):
         """
         Prints a summary of the search
         """
@@ -68,15 +72,13 @@ class SequentialClusterRidge(LinearRegression):
             Vector of length N
         """
         numFeat = X.shape[1]
-        alphas = np.logspace(
-            np.log10(self.min_alpha), np.log10(self.max_alpha),
-            self.num_alpha)
+        alphas = np.logspace(np.log10(self.min_alpha), np.log10(self.max_alpha), self.num_alpha)
 
         coeffs = []
         cvs = []
         for i in range(2, numFeat):
-            for j in range(len(alphas)):
-                scheme = Tikhonov(alpha=alphas[j])
+            for alpha in alphas:
+                scheme = Tikhonov(alpha=alpha)
                 design = X[:, :i]
                 coeff = scheme.fit(design, y)
                 cv = self._cv(design, coeff, y, scheme)

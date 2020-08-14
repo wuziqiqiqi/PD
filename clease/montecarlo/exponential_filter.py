@@ -3,6 +3,7 @@ from scipy.optimize import minimize
 
 
 class ExponentialFilter(object):
+
     def __init__(self, min_time=1, max_time=10, n_subfilters=2, dt=1):
         self.min_time = min_time
         self.max_time = max_time
@@ -71,11 +72,11 @@ class ExponentialFilter(object):
         Sxy = np.sum(x * y / var)
         Ss = np.sum(1.0 / var)
         N = len(y)
-        slope = (Ss*Sxy - Sx*Sy) / (Ss*Sxx - Sx**2)
+        slope = (Ss * Sxy - Sx * Sy) / (Ss * Sxx - Sx**2)
         if std_value is None:
             return slope
         std = self.get_std(std_value)
-        var_slope = np.sum(std)/(N*Sxx - Sxy)
+        var_slope = np.sum(std) / (N * Sxx - Sxy)
         return slope, np.sqrt(var_slope)
 
     def exponential_extrapolation(self):
@@ -93,8 +94,9 @@ class ExponentialFilter(object):
             constant = params[0]
             prefactor = params[1]
             damping = params[2]
-            predict = constant + prefactor*np.exp(-damping*x)
+            predict = constant + prefactor * np.exp(-damping * x)
             return np.sum((y - predict)**2)
+
         res = minimize(cost, x0=(y[0], 0.0, 0.0))
         params = res["x"]
         return params[0]

@@ -112,8 +112,7 @@ def parse_elements(string):
 
         filtered = string.replace('(', '')
         filtered = filtered.split('),')
-        symb_list = [[x.replace(')', '').strip() for x in sub.split(',')]
-                     for sub in filtered]
+        symb_list = [[x.replace(')', '').strip() for x in sub.split(',')] for sub in filtered]
 
         for sub in symb_list:
             if any(x not in chemical_symbols for x in sub):
@@ -153,8 +152,7 @@ def parse_cell(string):
 
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
-    filtered = [[x.replace(')', '').strip() for x in sub.split(',')]
-                for sub in filtered]
+    filtered = [[x.replace(')', '').strip() for x in sub.split(',')] for sub in filtered]
 
     cell = []
     try:
@@ -181,8 +179,7 @@ def parse_coordinate_basis(string):
 
     filtered = string.replace('(', '')
     filtered = filtered.split('),')
-    filtered = [[x.replace(')', '').strip() for x in sub.split(',')]
-                for sub in filtered]
+    filtered = [[x.replace(')', '').strip() for x in sub.split(',')] for sub in filtered]
 
     cell = []
     try:
@@ -223,8 +220,7 @@ def parse_comma_sep_list_of_int(string):
 
 def parse_concentration_list(string):
     try:
-        per_basis = [x.replace('(', '').replace(')', '')
-                     for x in string.split('),')]
+        per_basis = [x.replace('(', '').replace(')', '') for x in string.split('),')]
         conc_per_basis = []
         for b in per_basis:
             conc_per_basis.append([float(x) for x in b.split(',')])

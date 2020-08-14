@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import multiprocessing as mp
 import logging as lg
-from clease import ClusterExpansionSettings
+from clease.settings import ClusterExpansionSettings
 from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
 from ase.db import connect
@@ -12,18 +12,18 @@ from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import CorrFuncEnergyDataManager
 from typing import Optional, Dict, List
 
+__all__ = ('Evaluate',)
 
 # Initialize a module-wide logger
 logger = lg.getLogger(__name__)
 logger.setLevel(lg.INFO)
 
 
-class Evaluate(object):
-    """Evaluate RMSE/MAE of the fit and CV scores.
+class Evaluate:
+    """
+    Evaluate RMSE/MAE of the fit and CV scores.
 
-    Parameters:
-
-    settings: CEBulk or BulkSapcegroup object
+    :param settings: ClusterExpansionSettings object
 
     cf_names: list
         Names of clusters to include in the evalutation.
@@ -73,10 +73,19 @@ class Evaluate(object):
         validation score obtained in each of the runs.
     """
 
-    def __init__(self, settings, cf_names=None, select_cond=None,
-                 parallel=False, num_core="all", fitting_scheme="ridge",
-                 alpha=1E-5, max_cluster_size=None, max_cluster_dia=None,
-                 scoring_scheme='loocv', min_weight=1.0, nsplits=10,
+    def __init__(self,
+                 settings,
+                 cf_names=None,
+                 select_cond=None,
+                 parallel=False,
+                 num_core="all",
+                 fitting_scheme="ridge",
+                 alpha=1E-5,
+                 max_cluster_size=None,
+                 max_cluster_dia=None,
+                 scoring_scheme='loocv',
+                 min_weight=1.0,
+                 nsplits=10,
                  num_repetitions=1):
         """Initialize the Evaluate class."""
         if not isinstance(settings, ClusterExpansionSettings):
@@ -119,8 +128,7 @@ class Evaluate(object):
         # TODO: At a later stage we might want to pass the data manager as an
         # argument since Evaluate does not depend on the details on how the
         # data was optained
-        self.dm = CorrFuncEnergyDataManager(
-            settings.db_name, tab_name, self.cf_names)
+        self.dm = CorrFuncEnergyDataManager(settings.db_name, tab_name, self.cf_names)
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
 
@@ -149,28 +157,23 @@ class Evaluate(object):
 
     @property
     def concentrations(self):
-        singlet_cols = [i for i, n in enumerate(self.cf_names)
-                        if n.startswith('c1')]
-        return singlets2conc(self.settings.basis_functions,
-                             self.cf_matrix[:, singlet_cols])
+        singlet_cols = [i for i, n in enumerate(self.cf_names) if n.startswith('c1')]
+        return singlets2conc(self.settings.basis_functions, self.cf_matrix[:, singlet_cols])
 
     @property
     def default_select_cond(self):
-        return [('converged', '=', True),
-                ('struct_type', '=', 'initial')]
+        return [('converged', '=', True), ('struct_type', '=', 'initial')]
 
     def set_fitting_scheme(self, fitting_scheme="ridge", alpha=1E-9):
         from clease.regression import LinearRegression
-        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2",
-                                   "ols"]
+        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2", "ols"]
         if isinstance(fitting_scheme, LinearRegression):
             self.scheme = fitting_scheme
         elif isinstance(fitting_scheme, str):
             fitting_scheme = fitting_scheme.lower()
             self.scheme_string = fitting_scheme
             if fitting_scheme not in allowed_fitting_schemes:
-                raise ValueError(f"Fitting scheme has to be one of "
-                                 f"{allowed_fitting_schemes}")
+                raise ValueError(f"Fitting scheme has to be one of " f"{allowed_fitting_schemes}")
             if fitting_scheme in ["ridge", "tikhonov", "l2"]:
                 from clease.regression import Tikhonov
                 self.scheme = Tikhonov(alpha=alpha)
@@ -212,8 +215,7 @@ class Evaluate(object):
                 raise ValueError("Invalid length for max_cluster_dia.")
         # max_cluster_dia is int or float
         elif isinstance(max_cluster_dia, (int, float)):
-            max_cluster_dia *= np.ones(self.settings.max_cluster_size - 1,
-                                       dtype=float)
+            max_cluster_dia *= np.ones(self.settings.max_cluster_size - 1, dtype=float)
             max_cluster_dia = np.insert(max_cluster_dia, 0, [0., 0.])
 
         return max_cluster_dia
@@ -226,8 +228,7 @@ class Evaluate(object):
             return
 
         from clease import ConvexHull
-        cnv_hull = ConvexHull(self.settings.db_name,
-                              select_cond=self.select_cond)
+        cnv_hull = ConvexHull(self.settings.db_name, select_cond=self.select_cond)
         hull = cnv_hull.get_convex_hull()
 
         cosine_sim = []
@@ -287,11 +288,9 @@ class Evaluate(object):
         import json
         full_fname = fname + '.json'
         with open(full_fname, 'w') as outfile:
-            json.dump(self.get_eci_dict(), outfile, indent=2,
-                      separators=(",", ": "))
+            json.dump(self.get_eci_dict(), outfile, indent=2, separators=(",", ": "))
 
-    def plot_fit(self, interactive=True, savefig=False, fname=None,
-                 show_hull=True):
+    def plot_fit(self, interactive=True, savefig=False, fname=None, show_hull=True):
         """Plot calculated (DFT) and predicted energies for a given alpha.
 
         Paramters:
@@ -354,19 +353,21 @@ class Evaluate(object):
 
             # Plot again with zero marker width to make the interactive
             # plot work
-            ax.plot(e_pred, self.e_dft, 'o', mfc='none', color="black",
-                    markeredgewidth=0.0)
+            ax.plot(e_pred, self.e_dft, 'o', mfc='none', color="black", markeredgewidth=0.0)
         else:
             ax.plot(e_pred, self.e_dft, 'bo', mfc='none')
         ax.plot(t, t, 'r')
         ax.axis([rmin, rmax, rmin, rmax])
         ax.set_ylabel(r'$E_{DFT}$ (eV/atom)')
         ax.set_xlabel(r'$E_{pred}$ (eV/atom)')
-        ax.text(0.95, 0.01,
+        ax.text(0.95,
+                0.01,
                 cv_name + f" = {cv:.3f} meV/atom \n"
                 f"RMSE = {self.rmse() * 1000.0:.3f} meV/atom",
-                verticalalignment='bottom', horizontalalignment='right',
-                transform=ax.transAxes, fontsize=12)
+                verticalalignment='bottom',
+                horizontalalignment='right',
+                transform=ax.transAxes,
+                fontsize=12)
         if self.e_pred_loo is not None:
             ax.plot(self.e_pred_loo, self.e_dft, 'ro', mfc='none')
 
@@ -387,11 +388,9 @@ class Evaluate(object):
 
         # Create a plot with the residuals
 
-        gridspec_kw = {"wspace": 0.0,
-                       "width_ratios": [5, 1]}
+        gridspec_kw = {"wspace": 0.0, "width_ratios": [5, 1]}
 
-        fig_residual, ax_res = plt.subplots(ncols=2, sharey=True,
-                                            gridspec_kw=gridspec_kw)
+        fig_residual, ax_res = plt.subplots(ncols=2, sharey=True, gridspec_kw=gridspec_kw)
         ax_residual = ax_res[0]
         ax_residual.set_title("LOO residual (o). Residual (v)")
         if self.e_pred_loo is None:
@@ -407,8 +406,12 @@ class Evaluate(object):
 
             # Plot again with zero with to make the interactive
             # plot work
-            ax_residual.plot(self.e_dft, loo_delta, "o",
-                             color="black", markeredgewidth=0.0, mfc="none")
+            ax_residual.plot(self.e_dft,
+                             loo_delta,
+                             "o",
+                             color="black",
+                             markeredgewidth=0.0,
+                             mfc="none")
         else:
             if loo_delta is not None:
                 ax_residual.plot(self.e_dft, loo_delta, "o")
@@ -434,8 +437,7 @@ class Evaluate(object):
             else:
                 data_points = [lines[0]]
                 annotations = [self.names]
-            ShowStructureOnClick(fig_residual, ax_residual, data_points,
-                                 annotations, db_name)
+            ShowStructureOnClick(fig_residual, ax_residual, data_points, annotations, db_name)
         else:
             if savefig:
                 fig_residual.savefig(prefix + "_residuals.png")
@@ -444,16 +446,17 @@ class Evaluate(object):
 
         # Optionally show the convex hull
         if show_hull:
-            cnv_hull = ConvexHull(self.settings.db_name,
-                                  select_cond=self.select_cond)
+            cnv_hull = ConvexHull(self.settings.db_name, select_cond=self.select_cond)
             fig = cnv_hull.plot()
 
             concs = {k: [] for k in cnv_hull._unique_elem}
             for c in self.concentrations:
                 for k in concs.keys():
                     concs[k].append(c.get(k, 0.0))
-            form_en = [cnv_hull.get_formation_energy(c, e)
-                       for c, e in zip(self.concentrations, e_pred.tolist())]
+            form_en = [
+                cnv_hull.get_formation_energy(c, e)
+                for c, e in zip(self.concentrations, e_pred.tolist())
+            ]
             cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
             fig.suptitle("Convex hull DFT (o), CE (x)")
 
@@ -462,8 +465,13 @@ class Evaluate(object):
             else:
                 plt.show()
 
-    def alpha_CV(self, alpha_min=1E-7, alpha_max=1.0, num_alpha=10,
-                 scale='log', logfile=None, fitting_schemes=None):
+    def alpha_CV(self,
+                 alpha_min=1E-7,
+                 alpha_max=1.0,
+                 num_alpha=10,
+                 scale='log',
+                 logfile=None,
+                 fitting_schemes=None):
         """Calculate CV for a given range of alpha.
 
         In addition to calculating CV with respect to alpha, a logfile can be
@@ -506,12 +514,16 @@ class Evaluate(object):
                 raise ValueError("No fitting scheme supplied!")
             if self.scheme_string in ["lasso", "l1"]:
                 from clease.regression import Lasso
-                fitting_schemes = Lasso.get_instance_array(
-                    alpha_min, alpha_max, num_alpha=num_alpha, scale=scale)
+                fitting_schemes = Lasso.get_instance_array(alpha_min,
+                                                           alpha_max,
+                                                           num_alpha=num_alpha,
+                                                           scale=scale)
             elif self.scheme_string in ["ridge", "l2", "tikhonov"]:
                 from clease.regression import Tikhonov
-                fitting_schemes = Tikhonov.get_instance_array(
-                    alpha_min, alpha_max, num_alpha=num_alpha, scale=scale)
+                fitting_schemes = Tikhonov.get_instance_array(alpha_min,
+                                                              alpha_max,
+                                                              num_alpha=num_alpha,
+                                                              scale=scale)
 
         for scheme in fitting_schemes:
             if not isinstance(scheme, LinearRegression):
@@ -523,8 +535,7 @@ class Evaluate(object):
 
         # if the file exists, read the alpha values that are already evaluated.
         self._initialize_logfile(logfile)
-        fitting_schemes = self._remove_existing_alphas(logfile,
-                                                       fitting_schemes)
+        fitting_schemes = self._remove_existing_alphas(logfile, fitting_schemes)
 
         for scheme in fitting_schemes:
             if not isinstance(scheme, LinearRegression):
@@ -536,8 +547,7 @@ class Evaluate(object):
 
         # if the file exists, read the alpha values that are already evaluated.
         self._initialize_logfile(logfile)
-        fitting_schemes = self._remove_existing_alphas(logfile,
-                                                       fitting_schemes)
+        fitting_schemes = self._remove_existing_alphas(logfile, fitting_schemes)
 
         # get CV scores
         alphas = []
@@ -594,8 +604,15 @@ class Evaluate(object):
 
         return self._cv_scores
 
-    def plot_CV(self, alpha_min=1E-7, alpha_max=1.0, num_alpha=10, scale='log',
-                logfile=None, fitting_schemes=None, savefig=False, fname=None):
+    def plot_CV(self,
+                alpha_min=1E-7,
+                alpha_max=1.0,
+                num_alpha=10,
+                scale='log',
+                logfile=None,
+                fitting_schemes=None,
+                savefig=False,
+                fname=None):
         """Plot CV for a given range of alpha.
 
         In addition to plotting CV with respect to alpha, logfile can be used
@@ -640,8 +657,10 @@ class Evaluate(object):
         """
         import matplotlib.pyplot as plt
 
-        alphas, cv = self.alpha_CV(alpha_min=alpha_min, alpha_max=alpha_max,
-                                   num_alpha=num_alpha, scale=scale,
+        alphas, cv = self.alpha_CV(alpha_min=alpha_min,
+                                   alpha_max=alpha_max,
+                                   num_alpha=num_alpha,
+                                   scale=scale,
                                    logfile=logfile,
                                    fitting_schemes=fitting_schemes)
         # --------------- #
@@ -663,11 +682,14 @@ class Evaluate(object):
         ax.semilogx(min_alpha, min_cv * 1000, 'bo', mfc='none')
         ax.set_ylabel('CV score (meV/atom)')
         ax.set_xlabel('alpha')
-        ax.text(0.65, 0.01, f"min. CV score:\n"
+        ax.text(0.65,
+                0.01, f"min. CV score:\n"
                 f"alpha = {min_alpha:.10f} \n"
                 f"CV = {min_cv * 1000.0:.3f} meV/atom",
-                verticalalignment='bottom', horizontalalignment='left',
-                transform=ax.transAxes, fontsize=10)
+                verticalalignment='bottom',
+                horizontalalignment='left',
+                transform=ax.transAxes,
+                fontsize=10)
         if savefig:
             plt.savefig(fname=fname)
         else:
@@ -705,8 +727,7 @@ class Evaluate(object):
             existing_alpha.append(float(line.split()[0]))
         schemes = []
         for scheme in fitting_schemes:
-            exists = np.isclose(existing_alpha, scheme.get_scalar_parameter(),
-                                atol=1E-9).any()
+            exists = np.isclose(existing_alpha, scheme.get_scalar_parameter(), atol=1E-9).any()
             if not exists:
                 schemes.append(scheme)
         return schemes
@@ -727,7 +748,7 @@ class Evaluate(object):
                 if os.stat(logfile).st_size == 0:
                     logger.info("alpha \t\t # ECI \t CV")
 
-    def plot_ECI(self, ignore_sizes=[0], interactive=True):
+    def plot_ECI(self, ignore_sizes=(0,), interactive=True):
         """Plot the all the ECI.
 
         Parameters:
@@ -772,9 +793,13 @@ class Evaluate(object):
             data["eci"] = data["eci"][sort_index]
             annotations.append([data["name"][indx] for indx in sort_index])
             mrk = markers[size % len(markers)]
-            line = ax.plot(data["d"], data["eci"],
-                           label=f"{size}-body", marker=mrk,
-                           mfc="none", ls="", markersize=8)
+            line = ax.plot(data["d"],
+                           data["eci"],
+                           label=f"{size}-body",
+                           marker=mrk,
+                           mfc="none",
+                           ls="",
+                           markersize=8)
             lines.append(line[0])
 
         ax.xaxis.set_major_locator(plt.MultipleLocator(1))
@@ -867,8 +892,7 @@ class Evaluate(object):
         from clease.tools import split_dataset
         avg_score = 0.0
         for _ in range(self.num_repetitions):
-            partitions = split_dataset(self.cf_matrix, self.e_dft,
-                                       nsplits=self.nsplits)
+            partitions = split_dataset(self.cf_matrix, self.e_dft, nsplits=self.nsplits)
             scores = []
             for part in partitions:
                 eci = self.scheme.fit(part["train_X"], part["train_y"])
@@ -1033,8 +1057,10 @@ class Evaluate(object):
         Classify distance, eci and cf_name according to cluster body size
 
         :return: Dictionary contains
+
             * first index
                 - body size of cluster
+
             * second index
                 - "distance" : distance of the cluster
                 - "eci" : eci of the cluster

@@ -1,11 +1,11 @@
-from clease.montecarlo.observers import MCObserver
-from clease.calculator import Clease
 from typing import List, Dict, Tuple
 from ase.units import kB
 import numpy as np
+from clease.montecarlo.observers import MCObserver
+from clease.calculator import Clease
 
 
-class SGCState(object):
+class SGCState:
     """
     Represent a thermodynamic state in the semi-grand-canonical ensemble.
 
@@ -15,6 +15,7 @@ class SGCState(object):
         chemical potentials given for each species to chemical potentials
         for each singlet.
     """
+
     def __init__(self, temp: float, chem_pot: Dict[str, float]):
         self.temp = temp
         self.chem_pot = chem_pot
@@ -31,8 +32,8 @@ class SGCState(object):
         Construct a prefix based on the chemical potentials and the temperature
         """
         prefix = f"{int(self.temp)}K_"
-        prefix += '_'.join(f"{k}{sign_indicator(v)}{int(1000.0*abs(v))}"
-                           for k, v in self.chem_pot.items())
+        prefix += '_'.join(
+            f"{k}{sign_indicator(v)}{int(1000.0*abs(v))}" for k, v in self.chem_pot.items())
         return prefix
 
 
@@ -46,43 +47,45 @@ def sign_indicator(v: float) -> str:
 
 
 class MultiStateSGCConcObserver(MCObserver):
-    """
-    Observer that tracks the concentration at severl different temperatures
-    and/or chemical potentials. The observer utilizes the following results.
-    Let A be an observable, beta 1/kT, mu the chemical potential and n the
+    r"""
+    Observer that tracks the concentration at severl different temperatures and/or chemical
+    potentials. The observer utilizes the following results.
+    Let :math:`A` be an observable, :math:`\beta=\frac{1}{kT}`,
+    :math:`\mu` the chemical potential and :math:`n` the
     number of atoms of one of the species in a binary alloy. The average value
     of the observable is given by
 
-            sum_{conf} Aexp(beta*mu*n-beta*E)
-    <A> = --------------------------------
-                    Z(beta, mu)
+    .. math::
 
-    where Z is the partition function. At a different chemical potential mu'
-    and inverse temperature beta',
+        \langle A \rangle = \frac{\sum_{conf} A \exp{(\beta\mu n - \beta E)}}{Z(\beta, \mu)}
 
-             sum_{conf} Aexp(beta'*mu'*n-beta'*E)
-    <A>' = ----------------------------------------
-                    Z(beta', mu')
+    where :math:`Z` is the partition function. At a different chemical potential :math:`\mu`
+    and inverse temperature :math:`\beta'`,
+
+    .. math::
+
+        \langle A'\rangle' = \frac{\sum_{conf} A \exp{(\beta'\mu'n-\beta' E)}}{Z(\beta', \mu')}
 
     After some algabraic manipulation one arrives at
 
-              <Aexp((beta'*mu' - beta*mu)*n-(beta-beta')*E)>
-    <A>' = ---------------------------------------------------
-              <exp((beta'*mu' - beta*mu)*n-(beta-beta')*E)>
+    .. math::
 
-    where the averages should be taken at inverse temperature beta and chemical
-    potential mu. It should be noted that the predicted value will not be
-    accurate if mu' or beta' is very different from the reference values mu
-    and beta.
+        \langle A'\rangle' =
+            \frac{\langle A \exp{((\beta'\mu' - \beta\mu)n - (\beta-\beta') E)\rangle}}
+            {\langle \exp{((\beta'\mu' - \beta\mu)n - (\beta-\beta') E)\rangle}}
+
+    where the averages should be taken at inverse temperature :math:`\beta` and chemical
+    potential :math:`\mu`. It should be noted that the predicted value will not be
+    accurate if :math:`\mu'` or :math:`\beta'` is very different from the reference values
+    :math:`\mu` and :math:`\beta`.
 
     :param ref_state: Reference state
-    :param thermo_states: List of SGCStates where the concentration should
-        be tracked
-    :param calc: Reference to the calculator attached to the atoms object
-        used in the Monte Carlo simulation
+    :param thermo_states: List of SGCStates where the concentration should be tracked
+    :param calc: Reference to the calculator attached to the atoms object used in the
+        Monte Carlo simulation
     """
-    def __init__(self, ref_state: SGCState, thermo_states: List[SGCState],
-                 calc: Clease):
+
+    def __init__(self, ref_state: SGCState, thermo_states: List[SGCState], calc: Clease):
         self.thermo_states = thermo_states
         self.name = "multi_state_sgc_conc_observer"
         self.calc = calc
@@ -100,17 +103,16 @@ class MultiStateSGCConcObserver(MCObserver):
         Observers are called after system update, thus the calcualtor already
         reflects the changes. system_changes is therefore not used.
         """
-        beta1 = 1.0/(kB*self.ref_state.temp)
+        beta1 = 1.0 / (kB * self.ref_state.temp)
         for state in self.thermo_states:
             cf = self.calc.get_cf()
-            beta2 = 1.0/(kB*state.temp)
-            betadE = sum((beta2*state.chem_pot[k] -
-                          beta1*self.ref_state.chem_pot[k]) *
-                         cf[k] for k in state.chem_pot.keys())
+            beta2 = 1.0 / (kB * state.temp)
+            betadE = sum((beta2 * state.chem_pot[k] - beta1 * self.ref_state.chem_pot[k]) * cf[k]
+                         for k in state.chem_pot.keys())
             E = self.calc.energy
-            weight = np.exp((beta1 - beta2)*E + betadE)
+            weight = np.exp((beta1 - beta2) * E + betadE)
             for k in state.chem_pot.keys():
-                state.singlets[k] += weight*cf[k]
+                state.singlets[k] += weight * cf[k]
                 state.avg_weight += weight
 
     def get_averages(self) -> Dict[str, float]:
@@ -121,5 +123,5 @@ class MultiStateSGCConcObserver(MCObserver):
         for state in self.thermo_states:
             for k, v in state.singlets.items():
                 name = state.prefix + f"_singlet_{k}"
-                averages[name] = v/state.avg_weight
+                averages[name] = v / state.avg_weight
         return averages

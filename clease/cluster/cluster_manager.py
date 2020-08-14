@@ -1,15 +1,18 @@
-from clease.cluster_generator import ClusterGenerator
-from clease.cluster_list import ClusterList
-from clease.cluster import Cluster
 from itertools import product, chain
-from clease.name_clusters import name_clusters, size
 from copy import deepcopy
 import numpy as np
 from ase.geometry import wrap_positions
-from clease.cluster_fingerprint import ClusterFingerprint
+
+from .cluster_fingerprint import ClusterFingerprint
+from .cluster import Cluster
+from .cluster_list import ClusterList
+from .cluster_generator import ClusterGenerator
+from .utils import name_clusters, size
+
+__all__ = ('ClusterManager',)
 
 
-class ClusterManager(object):
+class ClusterManager:
     """
     Manager for construction of all cluster.
 
@@ -18,6 +21,7 @@ class ClusterManager(object):
     prim_cell: ase.Atoms
         Primitive cell
     """
+
     def __init__(self, prim_cell):
         self.generator = ClusterGenerator(prim_cell)
         self.clusters = ClusterList()
@@ -39,9 +43,9 @@ class ClusterManager(object):
             Maximum distance between two atoms in a cluster
         """
         if isinstance(max_cluster_dia, float):
-            max_cluster_dia = [max_cluster_dia for _ in range(max_size+1)]
+            max_cluster_dia = [max_cluster_dia for _ in range(max_size + 1)]
         num_lattices = range(len(self.generator.prim))
-        cluster_size = range(2, max_size+1)
+        cluster_size = range(2, max_size + 1)
         all_fps = []
         names = []
         all_clusters = []
@@ -50,8 +54,7 @@ class ClusterManager(object):
         diameters = []
         sizes = []
         for latt, s in product(num_lattices, cluster_size):
-            clusters, fps = self.generator.generate(
-                s, max_cluster_dia[s], ref_lattice=latt)
+            clusters, fps = self.generator.generate(s, max_cluster_dia[s], ref_lattice=latt)
 
             eq_sites = []
             for c in clusters:
@@ -60,30 +63,44 @@ class ClusterManager(object):
             all_fps += fps
             all_clusters += clusters
             all_eq_sites += eq_sites
-            lattices += [latt]*len(clusters)
-            sizes += [s]*len(clusters)
-            diameters += [2*np.sqrt(fp[0]) for fp in fps]
+            lattices += [latt] * len(clusters)
+            sizes += [s] * len(clusters)
+            diameters += [2 * np.sqrt(fp[0]) for fp in fps]
 
         names = self._get_names(all_fps)
         # Transfer to the cluster list
-        zipped = zip(names, sizes, diameters, all_fps, all_clusters,
-                     all_eq_sites, lattices)
+        zipped = zip(names, sizes, diameters, all_fps, all_clusters, all_eq_sites, lattices)
         for n, s, d, fp, c, eq, l in zipped:
-            cluster = Cluster(name=n, size=s, diameter=d, fingerprint=fp,
-                              ref_indx=-1, indices=c, equiv_sites=eq,
+            cluster = Cluster(name=n,
+                              size=s,
+                              diameter=d,
+                              fingerprint=fp,
+                              ref_indx=-1,
+                              indices=c,
+                              equiv_sites=eq,
                               trans_symm_group=l)
             self.clusters.append(cluster)
 
         # Add singlets and empty
         for i in range(len(self.generator.prim)):
-            self.clusters.append(Cluster(name='c1', size=1, diameter=0.0,
-                                 fingerprint=ClusterFingerprint([1.0]),
-                                 ref_indx=-1, indices=[[[0, 0, 0, i]]],
-                                 equiv_sites=[], trans_symm_group=i))
-            self.clusters.append(Cluster('c0', size=0, diameter=0.0,
-                                         fingerprint=ClusterFingerprint([0.0]),
-                                         ref_indx=-1, indices=[],
-                                         equiv_sites=[], trans_symm_group=i))
+            self.clusters.append(
+                Cluster(name='c1',
+                        size=1,
+                        diameter=0.0,
+                        fingerprint=ClusterFingerprint([1.0]),
+                        ref_indx=-1,
+                        indices=[[[0, 0, 0, i]]],
+                        equiv_sites=[],
+                        trans_symm_group=i))
+            self.clusters.append(
+                Cluster('c0',
+                        size=0,
+                        diameter=0.0,
+                        fingerprint=ClusterFingerprint([0.0]),
+                        ref_indx=-1,
+                        indices=[],
+                        equiv_sites=[],
+                        trans_symm_group=i))
 
     def _get_names(self, all_fps):
         """
@@ -139,8 +156,7 @@ class ClusterManager(object):
         """
         unique = self.unique_four_vectors()
         lut = self.fourvec_to_indx(template, unique)
-        ref_indices = [lut[(0, 0, 0, i)]
-                       for i in range(self.generator.num_sub_lattices)]
+        ref_indices = [lut[(0, 0, 0, i)] for i in range(self.generator.num_sub_lattices)]
 
         cluster_int = deepcopy(self.clusters)
         for cluster in cluster_int:
@@ -151,8 +167,7 @@ class ClusterManager(object):
                 cluster.ref_indx = int(ref_indices[cluster.group])
                 cluster.indices = []
             else:
-                cluster.indices = self.generator.to_atom_index(
-                    cluster.indices, lut)
+                cluster.indices = self.generator.to_atom_index(cluster.indices, lut)
                 cluster.ref_indx = int(ref_indices[cluster.group])
         return cluster_int
 
@@ -237,19 +252,16 @@ class ClusterManager(object):
                 trans_mat.append({})
                 continue
 
-            vec = self.generator.get_four_vector(
-                tmp_pos[atom.index, :], atom.tag)
+            vec = self.generator.get_four_vector(tmp_pos[atom.index, :], atom.tag)
 
             translated_unique[:, :3] = unique_npy[:, :3] + vec[:3]
             translated_unique[:, 3] = unique_npy[:, 3]
             cartesian = self.generator.cartesian(translated_unique)
             cartesian = wrap_positions(cartesian, cell)
 
-            four_vecs = self.generator.get_four_vector(
-                cartesian, translated_unique[:, 3])
+            four_vecs = self.generator.get_four_vector(cartesian, translated_unique[:, 3])
             N = four_vecs.shape[0]
             indices = [lut[tuple(four_vecs[i, :])] for i in range(N)]
 
-            trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique],
-                                      indices)))
+            trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique], indices)))
         return trans_mat

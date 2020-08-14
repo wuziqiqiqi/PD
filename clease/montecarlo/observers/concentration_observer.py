@@ -14,6 +14,7 @@ class ConcentrationObserver(MCObserver):
     element: str
         The element that should be tracked
     """
+
     def __init__(self, atoms, element=None):
         self.element = element
         self.n = len(atoms)
@@ -28,9 +29,9 @@ class ConcentrationObserver(MCObserver):
         new_conc = self.current_conc
         for change in system_change:
             if change[2] == self.element:
-                new_conc += 1.0/self.n
+                new_conc += 1.0 / self.n
             if change[1] == self.element:
-                new_conc -= 1.0/self.n
+                new_conc -= 1.0 / self.n
         return new_conc
 
     def __call__(self, system_change, peak=False):
@@ -55,14 +56,13 @@ class ConcentrationObserver(MCObserver):
         self.num_calls = 1
 
     def get_averages(self):
-        mean_conc = self.avg_conc/self.num_calls
-        var_conc = self.avg_conc_sq/self.num_calls - mean_conc**2
-        return {f"conc_{self.element}": mean_conc,
-                f"conc_var_{self.element}": var_conc}
+        mean_conc = self.avg_conc / self.num_calls
+        var_conc = self.avg_conc_sq / self.num_calls - mean_conc**2
+        return {f"conc_{self.element}": mean_conc, f"conc_var_{self.element}": var_conc}
 
     def calculate_from_scratch(self, atoms):
         num_atoms = sum(1 for a in atoms if a.symbol == self.element)
-        return num_atoms/len(atoms)
+        return num_atoms / len(atoms)
 
     def interval_ok(self, interval):
         return interval == 1

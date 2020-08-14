@@ -1,21 +1,23 @@
-import numpy as np
 from typing import Union, Tuple, Optional
+import numpy as np
 from ase import Atoms
 from ase.build import surface, make_supercell
 from ase.geometry import get_layers
-from clease import (
-    ClusterExpansionSettings, Concentration
-)
+
+from .settings import ClusterExpansionSettings
+from . import Concentration
+
+__all__ = ('CESlab',)
 
 
 def CESlab(conventional_cell: Union[Atoms, str],
-           miller: Tuple[int], concentration: Concentration,
+           miller: Tuple[int],
+           concentration: Concentration,
            size: Optional[Tuple[int]] = (1, 1, 1),
            max_cluster_size: Optional[int] = 4,
            max_cluster_dia: Optional[Tuple[float]] = (5.0, 5.0, 5.0),
            supercell_factor: Optional[int] = 27,
-           db_name: Optional[str] = 'clease.db'
-           ) -> ClusterExpansionSettings:
+           db_name: Optional[str] = 'clease.db') -> ClusterExpansionSettings:
     """
     :param conventional_cell:
         Bulk lattice structure. Note that the unit-cell
@@ -48,38 +50,34 @@ def CESlab(conventional_cell: Union[Atoms, str],
 
     for b in concentration.basis_elements:
         if 'X' not in b:
-            raise ValueError("Slab calculation requires that X is present "
-                             "in all basis")
+            raise ValueError("Slab calculation requires that X is present in all basis")
 
     prim = get_prim_slab_cell(conventional_cell, miller)
 
     # Slab should always have one cell vector along the z-axis
-    settings = ClusterExpansionSettings(
-        prim, concentration, size=size,
-        max_cluster_dia=max_cluster_dia,
-        max_cluster_size=max_cluster_size,
-        supercell_factor=supercell_factor,
-        db_name=db_name
-    )
+    settings = ClusterExpansionSettings(prim,
+                                        concentration,
+                                        size=size,
+                                        max_cluster_dia=max_cluster_dia,
+                                        max_cluster_size=max_cluster_size,
+                                        supercell_factor=supercell_factor,
+                                        db_name=db_name)
 
     dict_rep = conventional_cell.todict()
     for k, v in dict_rep.items():
         if isinstance(v, np.ndarray):
             dict_rep[k] = v.tolist()
 
-    settings.kwargs.update(
-        {
-            'factory': 'CESlab',
-            'miller': miller,
-            'conventional_cell': dict_rep,
-            'size': size
-        }
-    )
+    settings.kwargs.update({
+        'factory': 'CESlab',
+        'miller': miller,
+        'conventional_cell': dict_rep,
+        'size': size
+    })
     return settings
 
 
-def get_prim_slab_cell(conventional_cell: Union[Atoms, str],
-                       miller: Tuple[int]) -> Atoms:
+def get_prim_slab_cell(conventional_cell: Union[Atoms, str], miller: Tuple[int]) -> Atoms:
     """
     Returns the primitive cell used for slab CE
 
@@ -120,7 +118,7 @@ def add_vacuum_layers(atoms: Atoms, prim: Atoms, thickness: float) -> Atoms:
 
     one_layer_thickness = vacuum.get_cell()[2, 2]
     # upside-down division to get ceiling division
-    num_vac_layers = int(-(-thickness//one_layer_thickness))
+    num_vac_layers = int(-(-thickness // one_layer_thickness))
     vacuum *= (1, 1, num_vac_layers)
 
     atoms += vacuum
@@ -141,15 +139,13 @@ def remove_vacuum_layers(atoms: Atoms) -> Atoms:
     vac_layers = []
 
     for layer in range(num_total_layers):
-        symbols = [atoms[i].symbol for i,
-                   tag in enumerate(tags) if tag == layer]
+        symbols = [atoms[i].symbol for i, tag in enumerate(tags) if tag == layer]
         if set(symbols) == {'X'}:
             vac_layers.append(layer)
 
-    del atoms[[atoms[i].index for i,
-               tag in enumerate(tags) if tag in vac_layers]]
+    del atoms[[atoms[i].index for i, tag in enumerate(tags) if tag in vac_layers]]
 
     num_vac_layers = len(vac_layers)
-    atoms.cell[2, 2] *= (num_total_layers - num_vac_layers)/num_total_layers
+    atoms.cell[2, 2] *= (num_total_layers - num_vac_layers) / num_total_layers
 
     return atoms

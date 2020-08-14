@@ -14,28 +14,28 @@ equations with the structure shown below
 
 The number of sublattice concentration is simply the length of the *flattened*
 version of *basis_elements* that is passed to the *Concentration* class. Therefore,
-if *basis_element = [['Au', 'Cu'], ['Cu', 'X]]* there will be to Cu concentrations
+if :code:`basis_element = [['Au', 'Cu'], ['Cu', 'X]]` there will be to Cu concentrations
 you can restrict; one for each sublattice. The total number of sublattice concentrations
 in the example above is 4. Hence, all rows of the matrix has 4 columns. CLEASE has two
 types of constraints: **equality** and **lower bound**. Equality constraints are passed
-via *A_eq* and *b_eq* arguments in the *Concentration* class, and lower bound constraints
-are passed via *A_lb* and *b_lb*. For lower bound constraints, the equality sign 
-in the figure is replaced by a *larger or equal than*-symbol. Note that upper bound constraints
-can trivially be converted to a lower bound constraint by multiplying the equation
-by -1. Finally, the example below shows
-how you can generate random concentrations **satisfying** your constraints. The list
-passed to the function is the number of sites in each sublattice.
+via :code:`A_eq` and :code:`b_eq` arguments in the *Concentration* class, and lower bound 
+constraints are passed via :code:`A_lb` and :code:`b_lb`. For lower bound constraints, the 
+equality sign in the figure is replaced by a *larger or equal than*-symbol. Note that upper 
+bound constraints can trivially be converted to a lower bound constraint by multiplying the 
+equation by -1. Finally, the example below shows how you can generate random concentrations 
+**satisfying** your constraints. The list passed to the function is the number of sites in 
+each sublattice.
 
 >>> import numpy as np
 >>> np.random.seed(0)  # Set a seed for consistent tests
->>> from clease import Concentration
+>>> from clease.settings import Concentration
 
 Binary System With One Basis
 =============================
 
 >>> basis_elements = [['Au', 'Cu']]
 
-This is a system where we have the *basis_elements=[['Au', 'Cu']]*.
+This is a system where we have the :code:`basis_elements=[['Au', 'Cu']]`.
 
 1. Force the Au concentration to be equal to the Cu concentration
 
@@ -53,7 +53,7 @@ This is a system where we have the *basis_elements=[['Au', 'Cu']]*.
     >>> conc = Concentration(basis_elements=basis_elements, A_lb=A_lb, b_lb=b_lb)
     >>> for i in range(10):
     ...    x = conc.get_random_concentration([20])
-    ...    assert 20*x[0] >= 12
+    ...    assert round(20*x[0]) >= 12
 
 Two sublattices
 ================

@@ -10,11 +10,11 @@ Fitting Schemes
 .. autoclass:: clease.regression.Lasso
     :members:
 
-.. autoclass:: clease.ga_fit.GAFit
+.. autoclass:: clease.regression.ga_fit.GAFit
     :members:
 
-.. autoclass:: clease.bayesian_compressive_sensing.BayesianCompressiveSensing
+.. autoclass:: clease.regression.bayesian_compressive_sensing.BayesianCompressiveSensing
     :members:
 
-.. autoclass:: clease.sequential_cluster_ridge.SequentialClusterRidge
+.. autoclass:: clease.regression.sequential_cluster_ridge.SequentialClusterRidge
     :members:

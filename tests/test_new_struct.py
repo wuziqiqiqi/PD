@@ -1,275 +1,262 @@
-import unittest
+import os
+import pytest
 from unittest.mock import MagicMock, patch
-from clease import NewStructures, CEBulk
-from clease import Concentration, ClusterExpansionSettings
+from numpy.random import choice
 from ase.io.trajectory import TrajectoryWriter
 from ase.build import bulk
 from ase.calculators.emt import EMT
 from ase.db import connect
-from random import choice
-import os
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 
+from clease.settings import CEBulk, ClusterExpansionSettings, Concentration
+from clease import NewStructures
 
-class CorrFuncPlaceholder(object):
+
+class CorrFuncPlaceholder:
+
     def get_cf(self, atoms):
         return {'c0': 0.0}
 
 
-class BfSchemePlaceholder(object):
+class BfSchemePlaceholder:
     name = 'basis_func_type'
 
 
-class TestNewStruct(unittest.TestCase):
-    def test_insert_structures(self):
-        settings_mock = MagicMock(spec=ClusterExpansionSettings)
-        settings_mock.db_name = 'test_insert_structures.db'
-        connect(settings_mock.db_name).write(Atoms('H'))
-        settings_mock.basis_func_type = BfSchemePlaceholder()
+def test_insert_structures(db_name, tmpdir):
+    settings_mock = MagicMock(spec=ClusterExpansionSettings)
+    settings_mock.db_name = db_name
+    connect(settings_mock.db_name).write(Atoms('H'))
+    settings_mock.basis_func_type = BfSchemePlaceholder()
 
-        # Mock several methods
-        new_struct = NewStructures(settings_mock)
-        new_struct._exists_in_db = MagicMock(return_value=False)
-        new_struct._get_formula_unit = MagicMock(return_value='AuCu')
-        new_struct.corrfunc = CorrFuncPlaceholder()
-        new_struct._get_kvp = MagicMock(return_value={'name': 'name'})
+    # Mock several methods
+    new_struct = NewStructures(settings_mock)
+    new_struct._exists_in_db = MagicMock(return_value=False)
+    new_struct._get_formula_unit = MagicMock(return_value='AuCu')
+    new_struct.corrfunc = CorrFuncPlaceholder()
+    new_struct._get_kvp = MagicMock(return_value={'name': 'name'})
 
-        symbols = ['Au', 'Cu']
-        traj_in = 'initial_structures.traj'
-        traj_final = 'final_structures.traj'
-        traj_in_obj = TrajectoryWriter(traj_in)
-        traj_final_obj = TrajectoryWriter(traj_final)
+    symbols = ['Au', 'Cu']
+    traj_in = str(tmpdir / 'initial_structures.traj')
+    traj_final = str(tmpdir / 'final_structures.traj')
+    traj_in_obj = TrajectoryWriter(traj_in)
+    traj_final_obj = TrajectoryWriter(traj_final)
 
-        num_struct = 10
-        for i in range(num_struct):
-            init = bulk('Au')*(5, 5, 5)
-            for atom in init:
-                init.symbol = choice(symbols)
+    num_struct = 10
+    for i in range(num_struct):
+        init = bulk('Au') * (5, 5, 5)
+        for atom in init:
+            init.symbol = choice(symbols)
 
-            final = init.copy()
-            calc = EMT()
-            final.set_calculator(calc)
-            final.get_potential_energy()
-            traj_in_obj.write(init)
-            traj_final_obj.write(final)
+        final = init.copy()
+        calc = EMT()
+        final.calc = calc
+        final.get_potential_energy()
+        traj_in_obj.write(init)
+        traj_final_obj.write(final)
 
-        # Test when both initial and final is given
-        new_struct.insert_structures(traj_init=traj_in, traj_final=traj_final)
+    # Test when both initial and final is given
+    new_struct.insert_structures(traj_init=traj_in, traj_final=traj_final)
 
-        # Test when only initial is given
-        new_struct.insert_structures(traj_init=traj_in)
-        traj_in_obj.close()
-        traj_final_obj.close()
-        os.remove(traj_in)
-        os.remove(traj_final)
+    # Test when only initial is given
+    new_struct.insert_structures(traj_init=traj_in)
+    traj_in_obj.close()
+    traj_final_obj.close()
+    os.remove(traj_in)
+    os.remove(traj_final)
 
-        # Run some statistics
-        self.assertEqual(new_struct._exists_in_db.call_count, 2*num_struct)
-        self.assertEqual(new_struct._get_formula_unit.call_count, 2*num_struct)
-        self.assertEqual(new_struct._get_kvp.call_count, 2*num_struct)
+    # Run some statistics
+    assert new_struct._exists_in_db.call_count == 2 * num_struct
+    assert new_struct._get_formula_unit.call_count == 2 * num_struct
+    assert new_struct._get_kvp.call_count == 2 * num_struct
 
-        # Check that final structures has a calculator
-        db = connect(settings_mock.db_name)
-        for row in db.select(struct_type='final'):
-            self.assertEqual(row.calculator, 'emt')
-            energy = row.get('energy', None)
-            self.assertTrue(energy is not None)
+    # Check that final structures has a calculator
+    db = connect(settings_mock.db_name)
+    for row in db.select(struct_type='final'):
+        assert row.calculator == 'emt'
+        energy = row.get('energy', None)
+        assert energy is not None
 
-        os.remove(settings_mock.db_name)
 
-    def test_determine_generation_number(self):
-        db_name = 'test_gen_number.db'
-        settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
-        settings.db_name = db_name
-        connect(db_name).write(Atoms('H'))
-        N = 5
-        new_struct = NewStructures(
-            settings, generation_number=None, struct_per_gen=N)
+def test_determine_generation_number(db_name):
+    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
+    settings.db_name = db_name
+    connect(db_name).write(Atoms('H'))
+    N = 5
+    new_struct = NewStructures(settings, generation_number=None, struct_per_gen=N)
 
-        def insert_in_db(n, gen):
-            with connect(db_name) as db:
-                for _ in range(n):
-                    db.write(Atoms(), gen=gen)
-
-        db_sequence = [
-            {
-                'num_insert': 0,
-                'insert_gen': 0,
-                'expect': 0
-            },
-            {
-                'num_insert': 2,
-                'insert_gen': 0,
-                'expect': 0
-            },
-            {
-                'num_insert': 3,
-                'insert_gen': 0,
-                'expect': 1
-            },
-            {
-                'num_insert': 5,
-                'insert_gen': 1,
-                'expect': 2
-            }
-        ]
-
-        for i, action in enumerate(db_sequence):
-            insert_in_db(action['num_insert'], action['insert_gen'])
-            gen = new_struct._determine_gen_number()
-
-            msg = 'Test: #{} failed'.format(i)
-            msg += 'Action: {}'.format(action)
-            msg += 'returned generation: {}'.format(gen)
-            self.assertEqual(gen, action['expect'], msg=msg)
-        os.remove(db_name)
-
-    @patch('clease.new_struct.GSStructure')
-    def test_num_generated_structures(self, gs_mock):
-
-        conc = Concentration(basis_elements=[['Au', 'Cu']])
-        db_name = 'test_struct_gen_number.db'
-        atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)
-        atoms[0].symbol = 'Cu'
-        atoms[10].symbol = 'Cu'
-
-        def get_random_structure():
-            atoms = bulk('Au', a=2.9, crystalstructure='sc')*(5, 5, 5)
-            for a in atoms:
-                a.symbol = choice(['Au', 'Cu'])
-            atoms.set_calculator(SinglePointCalculator(atoms, energy=0.0))
-            return atoms, {'c1_0': 0.0}
-
-        gs_mock.return_value.generate = get_random_structure
-        gs_mock.return_value.min_energy = 0.0
-
-        func = [
-            {
-                'func': NewStructures.generate_random_structures,
-                'kwargs': {}
-            },
-            {
-                'func': NewStructures.generate_gs_structure_multiple_templates,
-                'kwargs': dict(num_templates=3, num_prim_cells=10,
-                               init_temp=2000, final_temp=1, num_temp=1,
-                               num_steps_per_temp=1, eci=None)
-            },
-            {
-                'func': NewStructures.generate_initial_pool,
-                'kwargs': {'atoms': atoms}
-            },
-            {
-                'func': NewStructures.generate_gs_structure,
-                'kwargs': dict(atoms=atoms, init_temp=2000,
-                               final_temp=1, num_temp=2,
-                               num_steps_per_temp=1, eci=None,
-                               random_composition=True)
-            },
-            {
-                'func': NewStructures.generate_metropolis_trajectory,
-                'kwargs': dict(atoms=atoms, random_comp=False)
-            },
-            {
-                'func': NewStructures.generate_metropolis_trajectory,
-                'kwargs': dict(atoms=atoms, random_comp=True)
-            },
-            {
-                'func': NewStructures.generate_metropolis_trajectory,
-                'kwargs': dict(atoms=None, random_comp=True)
-            }
-        ]
-
-        tests = [
-            {
-                'gen': 0,
-                'struct_per_gen': 5,
-                'expect_num_to_gen': 5
-            },
-            {
-                'gen': 0,
-                'struct_per_gen': 8,
-                'expect_num_to_gen': 3
-            },
-            {
-                'gen': 1,
-                'struct_per_gen': 2,
-                'expect_num_to_gen': 2
-            }
-        ]
-
-        # Patch the insert method such that we don't need to calculate the
-        # correlation functions etc.
-        def insert_struct_patch(self, init_struct=None, final_struct=None,
-                                name=None, cf=None):
-            atoms = bulk('Au')
-            kvp = self._get_kvp(atoms, 'Au')
-            db = connect(db_name)
-            if cf is None:
-                db.write(atoms, kvp)
-            else:
-                db.write(atoms, kvp, external_tables={'tab_name': cf})
-
-        NewStructures.insert_structure = insert_struct_patch
-        NewStructures._get_formula_unit = lambda self, atoms: 'Au'
-
-        for i, f in enumerate(func):
-            settings = CEBulk(conc, max_cluster_dia=3.0, a=2.9,
-                              max_cluster_size=2, crystalstructure='sc',
-                              db_name=db_name)
-            for j, test in enumerate(tests):
-                msg = 'Test #{} failed for func #{}'.format(j, i)
-
-                new_struct = NewStructures(
-                    settings, generation_number=test['gen'],
-                    struct_per_gen=test['struct_per_gen'])
-
-                num_to_gen = new_struct.num_to_gen()
-
-                special_msg = 'Expect num in gen {}. Got: {}'.format(
-                    test['expect_num_to_gen'], num_to_gen)
-
-                self.assertEqual(test['expect_num_to_gen'],
-                                 num_to_gen, msg=msg + special_msg)
-
-                # Call the current generation method
-                f['func'](new_struct, **f['kwargs'])
-
-                num_in_gen = new_struct.num_in_gen()
-                self.assertEqual(num_in_gen, test['struct_per_gen'], msg=msg)
-
-            os.remove(db_name)
-
-    def test_unique_name(self):
-        db_name = 'test_unique_name.db'
-        settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
-        settings.db_name = db_name
-        settings.size = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
-
-        atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
-        db = connect(db_name)
-        # suffix 0, 3 and 9 missing
-        suffixes = [1, 2, 4, 5, 6, 7, 8, 10, 11]
+    def insert_in_db(n, gen):
         with connect(db_name) as db:
-            for suffix in suffixes:
-                db.write(atoms, gen=0,
-                         name=f"Na1_Cl1_{suffix}", formula_unit="Na1_Cl1")
+            for _ in range(n):
+                db.write(Atoms(), gen=gen)
 
-        N = 5
-        new_struct = NewStructures(
-            settings, generation_number=None, struct_per_gen=N)
+    db_sequence = [{
+        'num_insert': 0,
+        'insert_gen': 0,
+        'expect': 0
+    }, {
+        'num_insert': 2,
+        'insert_gen': 0,
+        'expect': 0
+    }, {
+        'num_insert': 3,
+        'insert_gen': 0,
+        'expect': 1
+    }, {
+        'num_insert': 5,
+        'insert_gen': 1,
+        'expect': 2
+    }]
 
-        answer_list = ["Na1_Cl1_0", "Na1_Cl1_3",
-                       "Na1_Cl1_9", "Na1_Cl1_12", "Na1_Cl1_13"]
+    for i, action in enumerate(db_sequence):
+        insert_in_db(action['num_insert'], action['insert_gen'])
+        gen = new_struct._determine_gen_number()
 
-        for answer in answer_list:
-            kvp = new_struct._get_kvp(atoms, formula_unit='Na1_Cl1')
-            self.assertEqual(answer, kvp['name'])
-            self.assertEqual(1, kvp['gen'])
+        msg = 'Test: #{} failed'.format(i)
+        msg += 'Action: {}'.format(action)
+        msg += 'returned generation: {}'.format(gen)
+        assert gen == action['expect'], msg
+
+
+@patch('clease.new_struct.GSStructure')
+def test_num_generated_structures(gs_mock, db_name):
+
+    conc = Concentration(basis_elements=[['Au', 'Cu']])
+    atoms = bulk('Au', a=2.9, crystalstructure='sc') * (5, 5, 5)
+    atoms[0].symbol = 'Cu'
+    atoms[10].symbol = 'Cu'
+
+    def get_random_structure():
+        atoms = bulk('Au', a=2.9, crystalstructure='sc') * (5, 5, 5)
+        for a in atoms:
+            a.symbol = choice(['Au', 'Cu'])
+        atoms.calc = SinglePointCalculator(atoms, energy=0.0)
+        return atoms, {'c1_0': 0.0}
+
+    gs_mock.return_value.generate = get_random_structure
+    gs_mock.return_value.min_energy = 0.0
+
+    func = [{
+        'func': NewStructures.generate_random_structures,
+        'kwargs': {}
+    }, {
+        'func':
+            NewStructures.generate_gs_structure_multiple_templates,
+        'kwargs':
+            dict(num_templates=3,
+                 num_prim_cells=10,
+                 init_temp=2000,
+                 final_temp=1,
+                 num_temp=1,
+                 num_steps_per_temp=1,
+                 eci=None)
+    }, {
+        'func': NewStructures.generate_initial_pool,
+        'kwargs': {
+            'atoms': atoms
+        }
+    }, {
+        'func':
+            NewStructures.generate_gs_structure,
+        'kwargs':
+            dict(atoms=atoms,
+                 init_temp=2000,
+                 final_temp=1,
+                 num_temp=2,
+                 num_steps_per_temp=1,
+                 eci=None,
+                 random_composition=True)
+    }, {
+        'func': NewStructures.generate_metropolis_trajectory,
+        'kwargs': dict(atoms=atoms, random_comp=False)
+    }, {
+        'func': NewStructures.generate_metropolis_trajectory,
+        'kwargs': dict(atoms=atoms, random_comp=True)
+    }, {
+        'func': NewStructures.generate_metropolis_trajectory,
+        'kwargs': dict(atoms=None, random_comp=True)
+    }]
+
+    tests = [{
+        'gen': 0,
+        'struct_per_gen': 5,
+        'expect_num_to_gen': 5
+    }, {
+        'gen': 0,
+        'struct_per_gen': 8,
+        'expect_num_to_gen': 3
+    }, {
+        'gen': 1,
+        'struct_per_gen': 2,
+        'expect_num_to_gen': 2
+    }]
+
+    # Patch the insert method such that we don't need to calculate the
+    # correlation functions etc.
+    def insert_struct_patch(cls, init_struct=None, final_struct=None, name=None, cf=None):
+        atoms = bulk('Au')
+        kvp = cls._get_kvp(atoms, 'Au')
+        db = connect(db_name)
+        if cf is None:
             db.write(atoms, kvp)
+        else:
+            db.write(atoms, kvp, external_tables={'tab_name': cf})
 
-        os.remove(db_name)
+    def _get_formula_unit_patch(cls, *args, **kwargs):
+        return 'Au'
+
+    with patch.object(NewStructures, 'insert_structure', new=insert_struct_patch):
+        with patch.object(NewStructures, '_get_formula_unit', new=_get_formula_unit_patch):
+            for i, f in enumerate(func):
+                settings = CEBulk(conc,
+                                  max_cluster_dia=3.0,
+                                  a=2.9,
+                                  max_cluster_size=2,
+                                  crystalstructure='sc',
+                                  db_name=db_name)
+                for j, test in enumerate(tests):
+                    msg = 'Test #{} failed for func #{}'.format(j, i)
+
+                    new_struct = NewStructures(settings,
+                                               generation_number=test['gen'],
+                                               struct_per_gen=test['struct_per_gen'])
+
+                    num_to_gen = new_struct.num_to_gen()
+
+                    special_msg = 'Expect num in gen {}. Got: {}'.format(
+                        test['expect_num_to_gen'], num_to_gen)
+
+                    assert test['expect_num_to_gen'] == num_to_gen, msg + special_msg
+
+                    # Call the current generation method
+                    f['func'](new_struct, **f['kwargs'])
+
+                    num_in_gen = new_struct.num_in_gen()
+                    assert num_in_gen == test['struct_per_gen'], msg
+
+                os.remove(db_name)  # Need to clear the database
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_unique_name(db_name):
+    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
+    settings.db_name = db_name
+    settings.size = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
+
+    atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+    db = connect(db_name)
+    # suffix 0, 3 and 9 missing
+    suffixes = [1, 2, 4, 5, 6, 7, 8, 10, 11]
+    with connect(db_name) as db:
+        for suffix in suffixes:
+            db.write(atoms, gen=0, name=f"Na1_Cl1_{suffix}", formula_unit="Na1_Cl1")
+
+    N = 5
+    new_struct = NewStructures(settings, generation_number=None, struct_per_gen=N)
+
+    answer_list = ["Na1_Cl1_0", "Na1_Cl1_3", "Na1_Cl1_9", "Na1_Cl1_12", "Na1_Cl1_13"]
+
+    for answer in answer_list:
+        kvp = new_struct._get_kvp(atoms, formula_unit='Na1_Cl1')
+        assert answer == kvp['name']
+        assert 1 == kvp['gen']
+        db.write(atoms, kvp)

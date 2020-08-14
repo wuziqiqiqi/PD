@@ -1,13 +1,23 @@
 import numpy as np
 from copy import deepcopy
-from clease.cluster_fingerprint import ClusterFingerprint
-from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
 from ase import Atoms
+from .cluster_fingerprint import ClusterFingerprint
+from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
+
+__all__ = ('Cluster',)
 
 
 class Cluster(object):
-    def __init__(self, name='c0', size=0, diameter=0.0, fingerprint=None,
-                 ref_indx=0, indices=[], equiv_sites=[], trans_symm_group=0):
+
+    def __init__(self,
+                 name='c0',
+                 size=0,
+                 diameter=0.0,
+                 fingerprint=None,
+                 ref_indx=0,
+                 indices=(),
+                 equiv_sites=(),
+                 trans_symm_group=0):
         self.name = name
         self.size = size
         self.diameter = diameter
@@ -42,15 +52,17 @@ class Cluster(object):
 
     def todict(self):
         """Return a dictionary representation."""
-        return {'indices': self.indices,
-                'size': self.size,
-                'symm': self.group,
-                'diameter': self.diameter,
-                'name': self.name,
-                'fingerprint': self.fp.todict(),
-                'ref_indx': self.ref_indx,
-                'equiv_sites': self.equiv_sites,
-                'info': self.info}
+        return {
+            'indices': self.indices,
+            'size': self.size,
+            'symm': self.group,
+            'diameter': self.diameter,
+            'name': self.name,
+            'fingerprint': self.fp.todict(),
+            'ref_indx': self.ref_indx,
+            'equiv_sites': self.equiv_sites,
+            'info': self.info
+        }
 
     def from_dict(self, data):
         self.indices = data['indices']
@@ -89,8 +101,7 @@ class Cluster(object):
         if len(self.indices[0]) >= len(other.indices[0]):
             return False
 
-        return any(set(s1).issubset(s2) for s1 in self.indices
-                   for s2 in other.indices)
+        return any(set(s1).issubset(s2) for s1 in self.indices for s2 in other.indices)
 
     def get_figure(self, generator):
         if len(self.indices[0][0]) != 4:

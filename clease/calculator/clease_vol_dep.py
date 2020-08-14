@@ -1,4 +1,4 @@
-from clease import ClusterExpansionSettings
+from clease.settings import ClusterExpansionSettings
 from clease.calculator import Clease
 from ase.calculators.calculator import Calculator
 from typing import Dict, Optional, Iterable, Set, List, Union
@@ -73,8 +73,11 @@ class CleaseVolDep(Clease):
         for instance be obtained via `clease.CorrFunction`. If not passed,
         they are calculated from scratch when an atoms object is attached.
     """
-    def __init__(self, settings: ClusterExpansionSettings,
-                 eci: Dict[str, float], vol_coeff: Dict[str, float],
+
+    def __init__(self,
+                 settings: ClusterExpansionSettings,
+                 eci: Dict[str, float],
+                 vol_coeff: Dict[str, float],
                  init_cf: Optional[Dict[str, float]] = None):
 
         if not eci_format_ok(eci.keys()):
@@ -114,9 +117,9 @@ class CleaseVolDep(Clease):
         if cf is None:
             self.update_cf(None)
             cf = self.get_cf()
-        vol = sum(self.vol_coeff[k]*cf[k] for k in self.vol_coeff)
+        vol = sum(self.vol_coeff[k] * cf[k] for k in self.vol_coeff)
         self.results['volume_per_atom'] = vol
-        self.results['volume'] = vol*len(self.atoms)
+        self.results['volume'] = vol * len(self.atoms)
         return vol
 
     def get_pressure(self, cf: Optional[Dict[str, float]] = None) -> float:
@@ -132,8 +135,9 @@ class CleaseVolDep(Clease):
             cf = self.get_cf()
 
         vol = self.get_volume(cf)
-        P = sum(p*self.eci_with_vol.get(k+f"_V{p}", 0.0)*cf[k]*vol**(p-1)
-                for k in cf.keys() for p in range(1, self.max_power+1))
+        P = sum(p * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**(p - 1)
+                for k in cf.keys()
+                for p in range(1, self.max_power + 1))
         self.results['pressure'] = P
         return P
 
@@ -150,7 +154,7 @@ class CleaseVolDep(Clease):
             cf = self.get_cf()
 
         vol = self.get_volume(cf)
-        B = vol*self._d2EdV2(cf, vol)
+        B = vol * self._d2EdV2(cf, vol)
         self.results['bulk_mod'] = B
         return B
 
@@ -162,9 +166,9 @@ class CleaseVolDep(Clease):
         :param cf: Correlation functions
         :param vol: Volume
         """
-        return sum(p*(p-1)*self.eci_with_vol.get(k+f"_V{p}", 0.0) *
-                   cf[k]*vol**(p-2) for k in cf.keys()
-                   for p in range(2, self.max_power+1))
+        return sum(p * (p - 1) * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**(p - 2)
+                   for k in cf.keys()
+                   for p in range(2, self.max_power + 1))
 
     def _d3EdV3(self, cf: Dict[str, float], vol: float) -> float:
         """
@@ -174,9 +178,8 @@ class CleaseVolDep(Clease):
         :param cf: Correlation functions
         :param vol: Volume
         """
-        return sum(p*(p-1)*(p-2)*self.eci_with_vol.get(k+f"_V{p}", 0.0) *
-                   cf[k]*vol**(p-3) for k in cf.keys()
-                   for p in range(3, self.max_power+1))
+        return sum(p * (p - 1) * (p - 2) * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] *
+                   vol**(p - 3) for k in cf.keys() for p in range(3, self.max_power + 1))
 
     def get_dBdP(self, cf: Dict[str, float] = None) -> float:
         """
@@ -191,7 +194,7 @@ class CleaseVolDep(Clease):
             self.update_cf(None)
             cf = self.get_cf()
         vol = self.get_volume(cf)
-        return -1.0 - vol*self._d3EdV3(cf, vol)/self._d2EdV2(cf, vol)
+        return -1.0 - vol * self._d3EdV3(cf, vol) / self._d2EdV2(cf, vol)
 
     def get_energy_given_change(self, system_changes: Union[List[tuple], None]):
         """
@@ -200,14 +203,16 @@ class CleaseVolDep(Clease):
         self.update_cf(system_changes=system_changes)
         cf = self.get_cf()
         vol = self.get_volume(cf)
-        energy = sum(self.eci_with_vol.get(k+f"_V{p}", 0.0)*cf[k]*vol**p
-                     for k in cf.keys() for p in range(self.max_power+1))
-        self.energy = energy*len(self.atoms)
+        energy = sum(
+            self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**p
+            for k in cf.keys()
+            for p in range(self.max_power + 1))
+        self.energy = energy * len(self.atoms)
         self.results['energy'] = self.energy
         return self.energy
 
-    def calculate(self, atoms: Atoms, properties: List[str],
-                  system_changes: Union[List[tuple], None]) -> float:
+    def calculate(self, atoms: Atoms, properties: List[str], system_changes: Union[List[tuple],
+                                                                                   None]) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a

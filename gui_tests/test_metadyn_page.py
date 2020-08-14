@@ -44,11 +44,12 @@ class SimpleCalc(Calculator):
 def fake_attach(**kwargs):
     calc = SimpleCalc()
     calc.atoms = kwargs['atoms']
-    kwargs['atoms'].set_calculator(calc)
+    kwargs['atoms'].calc = calc
     return kwargs['atoms']
 
 
 class TestMetaDynPage(unittest.TestCase):
+
     @patch('clease.gui.meta_dyn_page.App')
     def test_help_messages(self, app_mock):
         page = MetaDynPage()
@@ -61,8 +62,7 @@ class TestMetaDynPage(unittest.TestCase):
                 child.dispatch('on_release')
                 msg = 'Popup not set for button {}'.format(counter)
                 msg += 'Popup is: {}'.format(page._pop_up)
-                self.assertIsInstance(page._pop_up.content, HelpMessagePopup,
-                                      msg=msg)
+                self.assertIsInstance(page._pop_up.content, HelpMessagePopup, msg=msg)
                 page.dismiss_popup()
                 msg = 'Popup not dismissed for button {}'.format(counter)
                 self.assertIsNone(page._pop_up)
@@ -92,23 +92,16 @@ class TestMetaDynPage(unittest.TestCase):
         self.assertEqual(page.ids.flatInput.text, page2.ids.flatInput.text)
         self.assertEqual(page.ids.nbinsInput.text, page2.ids.nbinsInput.text)
         self.assertEqual(page.ids.backupInput.text, page2.ids.backupInput.text)
-        self.assertEqual(page.ids.ensembleSpinner.text,
-                         page2.ids.ensembleSpinner.text)
+        self.assertEqual(page.ids.ensembleSpinner.text, page2.ids.ensembleSpinner.text)
         self.assertEqual(page.ids.modInput.text, page2.ids.modInput.text)
-        self.assertEqual(page.ids.plotIntInput.text,
-                         page2.ids.plotIntInput.text)
+        self.assertEqual(page.ids.plotIntInput.text, page2.ids.plotIntInput.text)
 
     @patch('clease.gui.meta_dyn_page.App')
     def test_observer_popups(self, app_mock):
         page = MetaDynPage()
         page.unique_symbols = lambda: ['Au', 'Cu']
 
-        expectations = {
-            'Concentration': {
-                'name': 'Concentration',
-                'element': 'Au'
-            }
-        }
+        expectations = {'Concentration': {'name': 'Concentration', 'element': 'Au'}}
 
         for name in page.ids.varSpinner.values:
             page.ids.varSpinner.text = name
@@ -131,7 +124,10 @@ class TestMetaDynPage(unittest.TestCase):
             'Semi-grand canonical': {
                 'name': 'Semi-grand canonical',
                 'symbols': ['Au', 'Cu', 'X'],
-                'chem_pot': {'Au': 0.0, 'Cu': 0.0}
+                'chem_pot': {
+                    'Au': 0.0,
+                    'Cu': 0.0
+                }
             }
         }
 
@@ -151,8 +147,7 @@ class TestMetaDynPage(unittest.TestCase):
         status = MagicMock(text='')
         eci_file_input = MagicMock(text='')
         size_input = MagicMock(text='4')
-        other_ids = MagicMock(
-            eciFileInput=eci_file_input, sizeInput=size_input)
+        other_ids = MagicMock(eciFileInput=eci_file_input, sizeInput=size_input)
         ext_screen = MagicMock(ids=other_ids)
 
         sm = MagicMock(get_screen=MagicMock(return_value=ext_screen))
@@ -161,8 +156,7 @@ class TestMetaDynPage(unittest.TestCase):
         ext_screen.ids.sm = sm
 
         ids = MagicMock(status=status, sm=sm)
-        root = MagicMock(settings=None, ids=ids,
-                         active_template_is_mc_cell=True)
+        root = MagicMock(settings=None, ids=ids, active_template_is_mc_cell=True)
         app_mock.get_running_app = MagicMock(return_value=MagicMock(root=root))
         attach_mock.side_effect = fake_attach
 
@@ -183,10 +177,9 @@ class TestMetaDynPage(unittest.TestCase):
 
         # No ECI file
         conc = MagicMock(basis_elements=[['Au', 'Cu', 'X']])
-        bfs = [{'Au': 1.0, 'Cu': -1.0, 'X': 0.0},
-               {'Au': -1.0, 'Cu': 0.0, 'X': 1.0}]
+        bfs = [{'Au': 1.0, 'Cu': -1.0, 'X': 0.0}, {'Au': -1.0, 'Cu': 0.0, 'X': 1.0}]
         root.settings = MagicMock(concentration=conc,
-                                  atoms=bulk('Al')*(2, 2, 2),
+                                  atoms=bulk('Al') * (2, 2, 2),
                                   basis_functions=bfs)
         page.ids.runButton.dispatch('on_release')
         self.assertTrue(status.text.startswith(META_DYN_MSG['no_eci']))

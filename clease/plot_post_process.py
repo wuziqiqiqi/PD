@@ -4,7 +4,7 @@ from clease import Evaluate
 from matplotlib.figure import Figure
 
 
-def plot_fit(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
+def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     """
     Figure object calculated (DFT) and predicted energies.
     If the plot_args dictionary contains keys,
@@ -19,12 +19,13 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
 
     :return: Figure instance of plot
     """
+    if plot_args is None:
+        plot_args = {}
     X = evaluate.get_energy_predict()
     Y = evaluate.e_dft
-    xlabel = plot_args.get("xlabel",  "E_DFT (eV/atom)")
+    xlabel = plot_args.get("xlabel", "E_DFT (eV/atom)")
     ylabel = plot_args.get("ylabel", "E_CE (eV/atom)")
-    title = plot_args.get("title", f"Fit using "
-                                   f"{len(evaluate.e_dft)} data points. ")
+    title = plot_args.get("title", f"Fit using {len(evaluate.e_dft)} data points.")
 
     # rmin, rmax set the plot range of x, y coordinate
     if np.size(X) and np.size(Y) != 0:
@@ -37,7 +38,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
     linear_fit = np.arange(rmin - 10, rmax + 10, 1)
     cv_name = evaluate.scoring_scheme.upper()
     cv = evaluate.get_cv_score()
-    rmse = evaluate.rmse()*1000
+    rmse = evaluate.rmse() * 1000
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -45,17 +46,21 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
     ax.set_ylabel(ylabel)
     ax.set_xlabel(xlabel)
     ax.axis([rmin, rmax, rmin, rmax])
-    ax.text(0.95, 0.01,
-            cv_name + f" = {cv:.3f} meV/atom \n"f"RMSE = {rmse:.3f} meV/atom",
-            verticalalignment='bottom', horizontalalignment='right',
-            transform=ax.transAxes, fontsize=12)
+    ax.text(0.95,
+            0.01,
+            cv_name + f" = {cv:.3f} meV/atom \n"
+            f"RMSE = {rmse:.3f} meV/atom",
+            verticalalignment='bottom',
+            horizontalalignment='right',
+            transform=ax.transAxes,
+            fontsize=12)
     ax.plot(linear_fit, linear_fit, 'r')
     ax.plot(X, Y, 'bo', mfc='none')
 
     return fig
 
 
-def plot_fit_residual(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
+def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     """
     Figure object subtracted (DFT) and predicted energies.
     If the plot_args dictionary contains keys,
@@ -70,14 +75,15 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
 
     :return: Figure instance of plot
     """
+    if plot_args is None:
+        plot_args = {}
     X = evaluate.e_dft
     Y = evaluate.subtract_predict_dft()
-    xlabel = plot_args.get("xlabel",  "#OCC")
+    xlabel = plot_args.get("xlabel", "#OCC")
     ylabel = plot_args.get("ylabel", r"$E_{DFT} - E_{pred}$ (meV/atom)")
     title = plot_args.get("title", "Residual (v)")
 
-    gridspec_kw = {"wspace": 0.0,
-                   "width_ratios": [5, 1]}
+    gridspec_kw = {"wspace": 0.0, "width_ratios": [5, 1]}
     fig, ax = plt.subplots(ncols=2, sharey=True, gridspec_kw=gridspec_kw)
     ax[0].set_title(title)
     ax[0].set_ylabel(ylabel)
@@ -94,7 +100,7 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
     return fig
 
 
-def plot_eci(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
+def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     """
     Figure object of ECI value according to cluster diameter
     If the plot_args dictionary contains keys,
@@ -110,10 +116,11 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
 
     :return: Figure instance of plot
     """
+    if plot_args is None:
+        plot_args = {}
     # eci_by_size dictionary contains eci, name, distance
     eci_by_size = evaluate.get_eci_by_size()
-    xlabel = plot_args.get("xlabel",
-                           "Cluster diameter ($n^{th}$ nearest neighbor)")
+    xlabel = plot_args.get("xlabel", "Cluster diameter ($n^{th}$ nearest neighbor)")
     ylabel = plot_args.get("ylabel", "ECI (eV/atom)")
     title = plot_args.get("title", "Plot ECI")
     sizes = plot_args.get("sizes", list(eci_by_size.keys()))
@@ -134,15 +141,13 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
         X = data["distance"]
         Y = data["eci"]
         mrk = markers[size % len(markers)]
-        line = ax.plot(X, Y,
-                       label=f"{size}-body", marker=mrk,
-                       mfc="none", ls="", markersize=8)
+        line = ax.plot(X, Y, label=f"{size}-body", marker=mrk, mfc="none", ls="", markersize=8)
         lines.append(line[0])
     ax.legend()
     return fig
 
 
-def plot_cv(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
+def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     """
     Figure object of CV values according to alpha values
     If the plot_args dictionary contains keys,
@@ -157,8 +162,10 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
 
     :return: Figure instance of plot
     """
+    if plot_args is None:
+        plot_args = {}
     alpha_cv_data = evaluate.cv_scores
-    xlabel = plot_args.get("xlabel",  "alpha")
+    xlabel = plot_args.get("xlabel", "alpha")
     ylabel = plot_args.get("ylabel", 'CV score (meV/atom)')
     title = plot_args.get("title", 'CV score vs. alpha')
     fig = plt.figure()
@@ -175,10 +182,13 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = {}) -> Figure:
         X.append(data['alpha'])
         Y.append(data['cv'])
     ax.plot(X, Y)
-    ax.text(0.65, 0.01, f"min. CV score:\n"
-                        f"alpha = {min_cv['alpha']:.10f} \n"
-                        f"CV = {min_cv['cv'] * 1000.0:.3f}"
-                        f" meV/atom",
-            verticalalignment='bottom', horizontalalignment='left',
-            transform=ax.transAxes, fontsize=10)
+    ax.text(0.65,
+            0.01, f"min. CV score:\n"
+            f"alpha = {min_cv['alpha']:.10f} \n"
+            f"CV = {min_cv['cv'] * 1000.0:.3f}"
+            f" meV/atom",
+            verticalalignment='bottom',
+            horizontalalignment='left',
+            transform=ax.transAxes,
+            fontsize=10)
     return fig

@@ -1,16 +1,19 @@
 import numpy as np
 
+__all__ = ('SVD',)
 
-class SVD(object):
+
+class SVD:
     """
     Class that stores the singular value decomposition of a matrix X.
     This class can be used if the singular value decomposition of X can
     be re-used many times
     """
+
     def __init__(self):
-        self._U = None   # Right unitary matrix
+        self._U = None  # Right unitary matrix
         self._Vh = None  # Left unititary matrix
-        self._S = None   # Singular values
+        self._S = None  # Singular values
 
     @property
     def U(self) -> np.ndarray:
@@ -44,5 +47,4 @@ class SVD(object):
         """
         Return True if matrices are stored in the attributes
         """
-        return (self._U is not None and self._Vh is not None and
-                self._S is not None)
+        return (self._U is not None and self._Vh is not None and self._S is not None)

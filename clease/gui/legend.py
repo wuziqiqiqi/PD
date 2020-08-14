@@ -2,6 +2,7 @@ from clease.gui.legend_item import LegendItem
 
 
 class Legend(object):
+
     def __init__(self, layout):
         self.layout = layout
 
@@ -22,7 +23,7 @@ class Legend(object):
             Number of columns
         """
         self.layout.clear_widgets()
-        if num_rows*num_cols < len(new_items):
+        if num_rows * num_cols < len(new_items):
             raise ValueError('num_rows*num_cols < len(items)!')
 
         counter = 0

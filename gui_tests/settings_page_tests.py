@@ -2,6 +2,7 @@ import unittest
 
 
 class SettingsPageTests(unittest.TestCase):
+
     def run_test_naviation(self, app):
         # Make sure that we are on the SettingsPage
         self.assertEqual('Concentration', app.root.ids.sm.current)

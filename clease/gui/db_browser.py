@@ -131,8 +131,10 @@ class DbBrowser(FloatLayout):
         prog = re.compile(r"(\w+)[=<>!]*(\w+)")
         known_op = ['=', '>', '<', '>=', '<=', '!=']
 
-        system_cols = ['id', 'calculator', 'energy', 'fmax', 'smax',
-                       'natoms', 'user', 'volume', 'mass', 'charge']
+        system_cols = [
+            'id', 'calculator', 'energy', 'fmax', 'smax', 'natoms', 'user', 'volume', 'mass',
+            'charge'
+        ]
 
         # Construct selection conditions
         for cond in txt.split(','):
@@ -155,16 +157,10 @@ class DbBrowser(FloatLayout):
                 continue
 
             if key in system_cols:
-                system_constraints.append({
-                    'sql': key + op + '?',
-                    'value': value
-                })
+                system_constraints.append({'sql': key + op + '?', 'value': value})
 
             else:
-                default = {
-                    'sql': [],
-                    'values': []
-                }
+                default = {'sql': [], 'values': []}
                 current_constraint = kvp_constraints.get(key, default)
                 current_constraint['sql'].append(f'value{op}?')
                 current_constraint['values'].append(value)
@@ -237,8 +233,7 @@ class DbBrowser(FloatLayout):
 
             # Apply formula constraint
             if formula != 'all':
-                formulaIds = set(k for k, v in formulas.items()
-                                 if v == formula)
+                formulaIds = set(k for k, v in formulas.items() if v == formula)
                 validIds = validIds.intersection(formulaIds)
 
             # Extract information from systems that is consistent

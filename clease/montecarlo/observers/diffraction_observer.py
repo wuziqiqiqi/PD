@@ -9,8 +9,7 @@ class DiffractionUpdater(object):
     This observer has to be executed on every MC step.
     """
 
-    def __init__(self, atoms=None, k_vector=[], active_symbols=[],
-                 all_symbols=[]):
+    def __init__(self, atoms=None, k_vector=(), active_symbols=(), all_symbols=()):
         MCObserver.__init__(self)
         self.orig_symbols = [atom.symbol for atom in atoms]
         self.k_vector = k_vector
@@ -27,9 +26,9 @@ class DiffractionUpdater(object):
         """Update the reflection value."""
         self.prev_value = self.value
         for change in system_changes:
-            f_val = np.exp(1j*self.k_dot_r[change[0]])/self.N
-            self.value += self.indicator[change[2]]*f_val
-            self.value -= self.indicator[change[1]]*f_val
+            f_val = np.exp(1j * self.k_dot_r[change[0]]) / self.N
+            self.value += self.indicator[change[2]] * f_val
+            self.value -= self.indicator[change[1]] * f_val
 
     def undo(self):
         """Undo the last update."""
@@ -42,9 +41,9 @@ class DiffractionUpdater(object):
 
     def calculate_from_scratch(self, symbols):
         """Calculate the intensity from sctrach."""
-        value = 0.0 + 1j*0.0
+        value = 0.0 + 1j * 0.0
         for i, symb in enumerate(symbols):
-            value += self.indicator[symb]*np.exp(1j*self.k_dot_r[i])
+            value += self.indicator[symb] * np.exp(1j * self.k_dot_r[i])
         return value / len(symbols)
 
 
@@ -94,8 +93,12 @@ class DiffractionObserver(MCObserver):
     >>> active_elements = ['Mg', 'Si']
     """
 
-    def __init__(self, atoms=None, k_vector=[], active_symbols=[],
-                 all_symbols=[], name="reflection1"):
+    def __init__(self,
+                 atoms=None,
+                 k_vector=(),
+                 active_symbols=(),
+                 all_symbols=(),
+                 name="reflection1"):
         MCObserver.__init__(self)
         self.updater = \
             DiffractionUpdater(atoms=atoms, k_vector=k_vector,
@@ -110,7 +113,7 @@ class DiffractionObserver(MCObserver):
         self.avg += self.updater.value
 
     def get_averages(self):
-        return {self.name: np.abs(self.avg/self.num_updates)}
+        return {self.name: np.abs(self.avg / self.num_updates)}
 
     def reset(self):
         self.updater.reset()

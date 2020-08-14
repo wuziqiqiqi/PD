@@ -12,6 +12,7 @@ import time
 
 
 class TestJobExecPage(unittest.TestCase):
+
     @patch('clease.gui.job_exec.App')
     def test_to_from_dict(self, app):
         page = JobExec()
@@ -91,24 +92,19 @@ class TestJobExecPage(unittest.TestCase):
     def test_ids_extraction(self):
         page = JobExec()
 
-        tests = [
-            {
-                'input': '1',
-                'expect': [1]
-            },
-            {
-                'input': '1, 2',
-                'expect': [1, 2]
-            },
-            {
-                'input': '1,2,3',
-                'expect': [1, 2, 3]
-            },
-            {
-                'input': '1-6,8,10-12',
-                'expect': [1, 2, 3, 4, 5, 6, 8, 10, 11, 12]
-            }
-        ]
+        tests = [{
+            'input': '1',
+            'expect': [1]
+        }, {
+            'input': '1, 2',
+            'expect': [1, 2]
+        }, {
+            'input': '1,2,3',
+            'expect': [1, 2, 3]
+        }, {
+            'input': '1-6,8,10-12',
+            'expect': [1, 2, 3, 4, 5, 6, 8, 10, 11, 12]
+        }]
 
         for i, test in enumerate(tests):
             res = page._resolve_id_ranges(test['input'].split(','))

@@ -1,11 +1,13 @@
 """Module for calculating correlation functions."""
-from __future__ import print_function
 from ase.atoms import Atoms
-from clease import ClusterExpansionSettings
-from clease.tools import wrap_and_sort_by_position
 from ase.db import connect
-from clease_cxx import PyCEUpdater
+
 from clease import _logger
+from clease.settings import ClusterExpansionSettings
+from clease.tools import wrap_and_sort_by_position
+from clease_cxx import PyCEUpdater
+
+__all__ = ('CorrFunction', 'ClusterNotTrackedError')
 
 
 class ClusterNotTrackedError(Exception):
@@ -29,8 +31,7 @@ class CorrFunction(object):
 
     def __init__(self, settings, parallel=False, num_core="all"):
         if not isinstance(settings, ClusterExpansionSettings):
-            raise TypeError("setting must be CEBulk or CECrystal "
-                            "object")
+            raise TypeError("setting must be CEBulk or CECrystal " "object")
         self.settings = settings
 
     def get_cf(self, atoms):
@@ -70,8 +71,7 @@ class CorrFunction(object):
 
         eci = {name: 1.0 for name in cf_names}
         cf = {name: 1.0 for name in cf_names}
-        updater = PyCEUpdater(atoms, self.settings, cf, eci,
-                              self.settings.cluster_list)
+        updater = PyCEUpdater(atoms, self.settings, cf, eci, self.settings.cluster_list)
         cf = updater.calculate_cf_from_scratch(atoms, cf_names)
         return cf
 
@@ -107,8 +107,7 @@ class CorrFunction(object):
         for count, row_id in enumerate(row_ids):
 
             if verbose:
-                _logger(f"updating {count+1} of {num_reconf} entries",
-                        end="\r")
+                _logger(f"updating {count+1} of {num_reconf} entries", end="\r")
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
             db.update(row_id, external_tables={tab_name: cf})
@@ -124,10 +123,8 @@ class CorrFunction(object):
             return True
 
         for count, id in enumerate(inconsistent_ids):
-            _logger(f"updating {count+1} of {len(inconsistent_ids)} entries",
-                    end="\r")
-            self.reconfigure_db_entries(select_cond=[('id', '=', id)],
-                                        verbose=False)
+            _logger(f"updating {count+1} of {len(inconsistent_ids)} entries", end="\r")
+            self.reconfigure_db_entries(select_cond=[('id', '=', id)], verbose=False)
         _logger("\nreconfiguration completed")
 
     def check_consistency_of_cf_table_entries(self):
@@ -178,8 +175,7 @@ class CorrFunction(object):
 
     def _confirm_cf_names_exists(self, cf_names):
         if not set(cf_names).issubset(self.settings.all_cf_names):
-            raise ClusterNotTrackedError(
-                "The correlation function of non-existing cluster is "
-                "requested, but the name does not exist in "
-                "ClusterExpansionSettings. Check that the cutoffs are "
-                "correct, and try to run reconfigure_settings")
+            raise ClusterNotTrackedError("The correlation function of non-existing cluster is "
+                                         "requested, but the name does not exist in "
+                                         "ClusterExpansionSettings. Check that the cutoffs are "
+                                         "correct, and try to run reconfigure_settings")

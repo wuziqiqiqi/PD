@@ -1,8 +1,9 @@
 .. testsetup::
   :skipif: havedisplay is False
 
-  from clease import Concentration, CEBulk
+  from clease.settings import Concentration
   from clease import NewStructures
+  from clease.settings import CEBulk
   from ase.calculators.emt import EMT
   from ase.db import connect
   from clease.tools import update_db
@@ -24,7 +25,7 @@
 
   for row in db.select(converged=False):
     atoms = row.toatoms()
-    atoms.set_calculator(calc)
+    atoms.calc = calc
     atoms.get_potential_energy()
     update_db(uid_initial=row.id, final_struct=atoms, db_name="aucu.db")
 
@@ -63,7 +64,7 @@ for all structures that are not yet converged
   >>>
   >>> # set the alpha value with the one found above, and fit data using it.
   >>> eva.set_fitting_scheme(fitting_scheme='l1', alpha=alpha)
-  >>> eva.plot_fit()
+  >>> eva.plot_fit(interactive=False)
   >>>
   >>> # plot ECI values
   >>> eva.plot_ECI()

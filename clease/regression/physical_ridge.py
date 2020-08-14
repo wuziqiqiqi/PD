@@ -1,15 +1,20 @@
-from clease.regression import LinearRegression
-from clease.data_normalizer import DataNormalizer
-from clease.tools import split_dataset
-from typing import List, Dict, Union, Callable, Tuple
-from clease import _logger
-import numpy as np
-from random import choice
+from typing import List, Sequence, Dict, Union, Callable, Tuple
 import time
-from clease import ConstrainedRidge
+
+import numpy as np
+from numpy.random import choice
 from scipy.linalg import solve_triangular
 
+from clease import _logger
+from clease.data_normalizer import DataNormalizer
+from clease.tools import split_dataset
+from .regression import LinearRegression
+from .constrained_ridge import ConstrainedRidge
 
+__all__ = ('PhysicalRidge',)
+
+
+# pylint: disable=too-many-instance-attributes
 class PhysicalRidge(LinearRegression):
     """
     Physical Ridge is a special ridge regression scheme that enforces a
@@ -60,11 +65,14 @@ class PhysicalRidge(LinearRegression):
         columns that corresponds to the bias term for the different groups. It
         is recommended to put normalize=False for such cases.
     """
-    def __init__(self, lamb_size: float = 1e-6,
+
+    def __init__(self,
+                 lamb_size: float = 1e-6,
                  lamb_dia: float = 1e-6,
                  size_decay: Union[str, Callable[[int], float]] = 'linear',
                  dia_decay: Union[str, Callable[[int], float]] = 'linear',
                  normalize: bool = True) -> None:
+        super().__init__()
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
         self._size_decay = get_size_decay(size_decay)
@@ -84,10 +92,7 @@ class PhysicalRidge(LinearRegression):
         :param c: Vector representing the right hand side of
             constraint equations
         """
-        self._constraint = {
-            'A': A,
-            'c': c
-        }
+        self._constraint = {'A': A, 'c': c}
 
     def fit_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -99,7 +104,8 @@ class PhysicalRidge(LinearRegression):
         """
         if self.normalize:
             X_fit, y_fit = self.normalizer.normalize(X, y)
-            # Skip constant term since y is shifted to have mean zero (and thus the constant term is zero)
+            # Skip constant term since y is shifted to have mean zero
+            # (and thus the constant term is zero)
             return X_fit[:, 1:], y_fit
         return X, y
 
@@ -172,7 +178,7 @@ class PhysicalRidge(LinearRegression):
         size_decay = np.array([self.size_decay(x) for x in self.sizes])
         dia_decay = np.array([self.dia_decay(x) for x in self.diameters])
 
-        penalty = self.lamb_size*size_decay + self.lamb_dia*dia_decay
+        penalty = self.lamb_size * size_decay + self.lamb_dia * dia_decay
         if len(penalty) == X_fit.shape[1] + 1:
             # In this case the constant term in X was removed
             penalty = penalty[1:]
@@ -182,8 +188,7 @@ class PhysicalRidge(LinearRegression):
         if self._constraint is not None:
             # Use the constrained Tikhonov verison
             regressor = ConstrainedRidge(penalty)
-            regressor.add_constraint(self._constraint['A'],
-                                     self._constraint['c'])
+            regressor.add_constraint(self._constraint['A'], self._constraint['c'])
             coeff = regressor.fit(X_fit, y_fit)
         else:
             matrix = np.vstack((X_fit, np.diag(np.sqrt(penalty))))
@@ -212,44 +217,40 @@ def linear_dia(dia: int) -> float:
 def exponential_size(size: int) -> float:
     if size == 0:
         return 0.0
-    return np.exp(size-1) - 1
+    return np.exp(size - 1) - 1
 
 
 def exponential_dia(dia: int) -> float:
     return np.exp(dia) - 1.0
 
 
-def get_size_decay(decay: Union[str, Callable[[int], float]]
-                   ) -> Callable[[int], float]:
+def get_size_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int], float]:
     if isinstance(decay, str):
         if decay == 'linear':
             return linear_size
-        elif decay == 'exponential':
+        if decay == 'exponential':
             return exponential_size
-        elif decay.startswith('poly'):
+        if decay.startswith('poly'):
             power = int(decay[-1])
             return lambda size: size**power
-        else:
-            raise ValueError(f"Unknown decay type {decay}")
-    elif callable(decay):
+        raise ValueError(f"Unknown decay type {decay}")
+    if callable(decay):
         return decay
 
     raise ValueError("size_decay has to be either a string or callable")
 
 
-def get_dia_decay(decay: Union[str, Callable[[int], float]]
-                  ) -> Callable[[int], float]:
+def get_dia_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int], float]:
     if isinstance(decay, str):
         if decay == 'linear':
             return linear_dia
-        elif decay == 'exponential':
+        if decay == 'exponential':
             return exponential_dia
-        elif decay.startswith('poly'):
+        if decay.startswith('poly'):
             power = int(decay[-1])
             return lambda dia: dia**power
-        else:
-            raise ValueError(f"Unknown decay type {decay}")
-    elif callable(decay):
+        raise ValueError(f"Unknown decay type {decay}")
+    if callable(decay):
         return decay
 
     raise ValueError("dia_decay has to be either a string or callable")
@@ -261,7 +262,7 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
                         y: np.ndarray,
                         cv: int = 5,
                         num_trials: int = 100,
-                        groups: List[int] = []) -> Dict:
+                        groups: Sequence[int] = ()) -> Dict:
     """
     Estimate the hyper parameters of the Physical Ridge by random search.
 
@@ -314,7 +315,7 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
 
         cv_score = 0.0
         mse = 0.0
-        for j, p in enumerate(partitions):
+        for p in partitions:
             coeff = phys_ridge.fit(p['train_X'], p['train_y'])
             pred = p['validate_X'].dot(coeff)
             cv_score += np.sqrt(np.mean((pred - p['validate_y'])**2))

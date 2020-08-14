@@ -1,4 +1,3 @@
-
 class Averager(object):
     """
     Class for robust averaging.
@@ -8,6 +7,7 @@ class Averager(object):
     ref_value: float
         Reference value used to normalise data internally.
     """
+
     def __init__(self, ref_value=1.0):
         self._ref_value = float(ref_value)
 
@@ -26,12 +26,12 @@ class Averager(object):
             Value to be added
         """
         if isinstance(value, Averager):
-            self._mean += value._mean*(value._ref_value/self._ref_value)
+            self._mean += value._mean * (value._ref_value / self._ref_value)
             self._n_samples += value._n_samples
             return self
 
         self._n_samples += 1.0
-        self._mean += value/self._ref_value
+        self._mean += value / self._ref_value
         return self
 
     def __add__(self, other):
@@ -42,10 +42,10 @@ class Averager(object):
         other: Averager
             Another Averager object to be added
         """
-        ratio = (other._ref_value/self._ref_value)
+        ratio = (other._ref_value / self._ref_value)
         new_obj = Averager(ref_value=self._ref_value)
-        new_obj._mean = self._mean + other._mean*ratio
-        new_obj._n_samples = self._n_samples+other._n_samples
+        new_obj._mean = self._mean + other._mean * ratio
+        new_obj._n_samples = self._n_samples + other._n_samples
         return new_obj
 
     def __itruediv__(self, number):
@@ -73,5 +73,5 @@ class Averager(object):
     @property
     def mean(self):
         if self._n_samples == 0:
-            return self._mean*self._ref_value
-        return (self._mean/self._n_samples)*self._ref_value
+            return self._mean * self._ref_value
+        return (self._mean / self._n_samples) * self._ref_value

@@ -11,6 +11,7 @@ import numpy as np
 
 
 class TestMCMainPage(unittest.TestCase):
+
     def test_load_popup(self):
         page = MCMainPage()
         self.assertIsNone(page._pop_up)
@@ -39,7 +40,7 @@ class TestMCMainPage(unittest.TestCase):
 
     def test_cell_info_update(self):
         size = 3
-        atoms = bulk('Al', a=4.05, crystalstructure='fcc')*(size, size, size)
+        atoms = bulk('Al', a=4.05, crystalstructure='fcc') * (size, size, size)
 
         MCMainPage.get_mc_cell = MagicMock(return_value=atoms)
         page = MCMainPage()
@@ -79,10 +80,8 @@ class TestMCMainPage(unittest.TestCase):
         page2 = MCMainPage()
         page2.from_dict(dct)
 
-        self.assertEqual(page2.ids.eciFileInput.text,
-                         page.ids.eciFileInput.text)
-        self.assertEqual(page2.ids.sizeInput.text,
-                         page.ids.sizeInput.text)
+        self.assertEqual(page2.ids.eciFileInput.text, page.ids.eciFileInput.text)
+        self.assertEqual(page2.ids.sizeInput.text, page.ids.sizeInput.text)
 
 
 if __name__ == '__main__':

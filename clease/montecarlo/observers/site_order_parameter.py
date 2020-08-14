@@ -68,8 +68,8 @@ class SiteOrderParameter(MCObserver):
         Get the average and standard deviation of the number of sites that
         are different from the initial state.
         """
-        average = float(self.avg_num_changed)/self.num_calls
-        average_sq = float(self.avg_num_changed_sq)/self.num_calls
+        average = float(self.avg_num_changed) / self.num_calls
+        average_sq = float(self.avg_num_changed_sq) / self.num_calls
         var = average_sq - average**2
 
         # If variance is close to zero it can in some cases by

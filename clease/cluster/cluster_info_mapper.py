@@ -1,28 +1,28 @@
-from scipy.spatial import cKDTree as KDTree
-from ase.geometry import wrap_positions
-from clease.cluster_list import ClusterList
 from copy import deepcopy
 import numpy as np
+from scipy.spatial import cKDTree as KDTree
+from ase.geometry import wrap_positions
+from .cluster_list import ClusterList
+
+__all__ = ('AtomsNotContainedInLargeCellError', 'ClusterInfoMapper')
 
 
 class AtomsNotContainedInLargeCellError(Exception):
     pass
 
 
-class ClusterInfoMapper(object):
+class ClusterInfoMapper:
     """
     Class for accelerating the construction of cluster descriptors when
     the cluster descriptors are already known for a larger cell
 
-    Parameter:
-
-    atoms: Atoms object
+    :param atoms: ASE Atoms object
         Large atoms cell
 
-    trans_matrix: list of dict
+    :param trans_matrix: list of dict
         Translation matrix for the large cell
 
-    cluster_list: ClusterList
+    :param cluster_list: ClusterList
         Cluster info the for the large cell
     """
 
@@ -60,8 +60,7 @@ class ClusterInfoMapper(object):
         for cluster in self.cluster_list:
             new_cluster = deepcopy(cluster)
             new_cluster.ref_indx = int(index_map[cluster.ref_indx])
-            new_cluster.indices = [[int(index_map[x]) for x in sub] for sub
-                                   in cluster.indices]
+            new_cluster.indices = [[int(index_map[x]) for x in sub] for sub in cluster.indices]
             new_cluster_list.append(new_cluster)
         return new_cluster_list
 
@@ -72,8 +71,10 @@ class ClusterInfoMapper(object):
 
         for row in unique:
             row_large = np.where(index_map == row)[0][0]
-            new_tm.append({int(index_map[k]): int(index_map[v])
-                           for k, v in self.trans_matrix[row_large].items()})
+            new_tm.append({
+                int(index_map[k]): int(index_map[v])
+                for k, v in self.trans_matrix[row_large].items()
+            })
         return new_tm
 
     def map_info(self, small_atoms):

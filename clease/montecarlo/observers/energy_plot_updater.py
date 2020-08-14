@@ -4,6 +4,7 @@ import time
 
 
 class EnergyPlotUpdater(MCObserver):
+
     def __init__(self, energy_obs=None, graph=None, mean_plot=None):
         self.energy_obs = energy_obs
         self.graph = graph
@@ -20,11 +21,11 @@ class EnergyPlotUpdater(MCObserver):
 
         self.mean_plot.points = [(i, x - e[0]) for i, x in enumerate(e)]
         y_rng = ymax - ymin
-        ymin -= 0.05*y_rng
-        ymax += 0.05*y_rng
+        ymin -= 0.05 * y_rng
+        ymax += 0.05 * y_rng
         self.graph.xmax = int(xmax)
         self.graph.ymin = float(ymin)
         self.graph.ymax = float(ymax)
-        self.graph.y_ticks_major = float(ymax - ymin)/10.0
-        self.graph.x_ticks_major = float(xmax)/10.0
+        self.graph.y_ticks_major = float(ymax - ymin) / 10.0
+        self.graph.x_ticks_major = float(xmax) / 10.0
         time.sleep(0.01)

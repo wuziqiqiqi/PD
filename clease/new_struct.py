@@ -1,21 +1,23 @@
 """Module for generating new structures for training."""
 import os
 import numpy as np
-from random import shuffle
 from copy import deepcopy
 from functools import reduce
 from typing import List, Dict, Optional, Union
+
+from numpy.random import shuffle
 
 from ase import Atoms
 from ase.io import read
 from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
-from clease import ClusterExpansionSettings, CorrFunction
+from clease.settings import ClusterExpansionSettings
+from clease.corr_func import CorrFunction
+
 from clease.montecarlo.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
-from clease.structure_generator import (
-    ProbeStructure, GSStructure, MetropolisTrajectory)
+from clease.structure_generator import (ProbeStructure, GSStructure, MetropolisTrajectory)
 from clease import _logger
 
 try:
@@ -26,25 +28,27 @@ except ImportError:
 max_attempt = 10
 max_fail = 10
 
+__all__ = ('NewStructures', 'MaxAttemptReachedError')
+
 
 class MaxAttemptReachedError(Exception):
     """Raised when number of try reaches 10."""
 
-    pass
 
-
-# class GenerateStructures(object):
-class NewStructures(object):
+class NewStructures:
     """
     Generate new structure in ASE Atoms object format.
 
     :param settings: Cluster expansion settings.
+
     :param generation_number: Generation number to be assigned to the newly
         generated structure
+
     :param struct_per_gen: Number of structures to generate per generation
     """
 
-    def __init__(self, settings: ClusterExpansionSettings,
+    def __init__(self,
+                 settings: ClusterExpansionSettings,
                  generation_number: int = None,
                  struct_per_gen: int = 5) -> None:
         self.settings = settings
@@ -60,22 +64,22 @@ class NewStructures(object):
     def num_in_gen(self) -> int:
         with connect(self.settings.db_name) as db:
             cur = db.connection.cursor()
-            cur.execute(
-                "SELECT id FROM number_key_values WHERE key=? AND value=?",
-                ("gen", self.gen))
+            cur.execute("SELECT id FROM number_key_values WHERE key=? AND value=?",
+                        ("gen", self.gen))
             num_in_gen = len(cur.fetchall())
         return num_in_gen
 
     def num_to_gen(self) -> int:
         return max(self.struct_per_gen - self.num_in_gen(), 0)
 
-    def generate_probe_structure(
-            self, atoms: Optional[Atoms] = None,
-            init_temp: Optional[float] = None,
-            final_temp: Optional[float] = None,
-            num_temp: int = 5, num_steps_per_temp: int = 1000,
-            approx_mean_var: bool = True,
-            num_samples_var: int = 10000) -> None:
+    def generate_probe_structure(self,
+                                 atoms: Optional[Atoms] = None,
+                                 init_temp: Optional[float] = None,
+                                 final_temp: Optional[float] = None,
+                                 num_temp: int = 5,
+                                 num_steps_per_temp: int = 1000,
+                                 approx_mean_var: bool = True,
+                                 num_samples_var: int = 10000) -> None:
         """
         Generate a probe structure according to PRB 80, 165122 (2009).
 
@@ -128,15 +132,13 @@ class NewStructures(object):
 
             struct = self._get_struct_at_conc(conc_type='random')
 
-            _logger(f"Generating structure {current_count + 1} out of "
-                    f"{num_to_generate}.")
-            ps = ProbeStructure(self.settings, struct, num_to_generate,
-                                init_temp, final_temp, num_temp,
-                                num_steps_per_temp, approx_mean_var)
+            _logger(f"Generating structure {current_count + 1} out of " f"{num_to_generate}.")
+            ps = ProbeStructure(self.settings, struct, num_to_generate, init_temp, final_temp,
+                                num_temp, num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
 
             # Remove energy from result dictionary
-            probe_struct.get_calculator().results.pop('energy')
+            probe_struct.calc.results.pop('energy')
             formula_unit = self._get_formula_unit(probe_struct)
             if self._exists_in_db(probe_struct, formula_unit):
                 msg = "generated structure is already in DB.\n"
@@ -159,11 +161,14 @@ class NewStructures(object):
     def corr_func_table_name(self) -> str:
         return f"{self.settings.basis_func_type.name}_cf"
 
-    def generate_gs_structure_multiple_templates(
-            self, eci: Dict[str, float], num_templates: int = 20,
-            num_prim_cells: int = 2, init_temp: float = 2000.0,
-            final_temp: float = 1.0, num_temp: int = 10,
-            num_steps_per_temp: int = 1000) -> None:
+    def generate_gs_structure_multiple_templates(self,
+                                                 eci: Dict[str, float],
+                                                 num_templates: int = 20,
+                                                 num_prim_cells: int = 2,
+                                                 init_temp: float = 2000.0,
+                                                 final_temp: float = 1.0,
+                                                 num_temp: int = 10,
+                                                 num_steps_per_temp: int = 1000) -> None:
         """
         Generate ground-state structures using multiple templates
         (rather than using fixed cell size and shape). Structures are generated
@@ -182,20 +187,25 @@ class NewStructures(object):
         """
 
         for i in range(self.num_to_gen()):
-            _logger(f"Generating ground-state structures: {i} of "
-                    f"{self.struct_per_gen}")
+            _logger(f"Generating ground-state structures: {i} of " f"{self.struct_per_gen}")
 
             self._generate_one_gs_structure_multiple_templates(
-                eci=eci, num_templates=num_templates,
-                num_prim_cells=num_prim_cells, init_temp=init_temp,
-                final_temp=final_temp, num_temp=num_temp,
+                eci=eci,
+                num_templates=num_templates,
+                num_prim_cells=num_prim_cells,
+                init_temp=init_temp,
+                final_temp=final_temp,
+                num_temp=num_temp,
                 num_steps_per_temp=num_steps_per_temp)
 
-    def _generate_one_gs_structure_multiple_templates(
-            self, eci: Dict[str, float], num_templates: int = 20,
-            num_prim_cells: int = 2, init_temp: float = 2000.0,
-            final_temp: float = 1.0, num_temp: int = 10,
-            num_steps_per_temp=1000) -> None:
+    def _generate_one_gs_structure_multiple_templates(self,
+                                                      eci: Dict[str, float],
+                                                      num_templates: int = 20,
+                                                      num_prim_cells: int = 2,
+                                                      init_temp: float = 2000.0,
+                                                      final_temp: float = 1.0,
+                                                      num_temp: int = 10,
+                                                      num_steps_per_temp=1000) -> None:
         """
         Generate one ground-state structures using multiple templates
         (rather than using fixed cell size and shape).
@@ -231,9 +241,8 @@ class NewStructures(object):
             self.settings.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
-            es = GSStructure(self.settings, struct, self.struct_per_gen,
-                             init_temp, final_temp, num_temp,
-                             num_steps_per_temp, eci)
+            es = GSStructure(self.settings, struct, self.struct_per_gen, init_temp, final_temp,
+                             num_temp, num_steps_per_temp, eci)
 
             gs_struct, cf_struct = es.generate()
             gs_structs.append(gs_struct)
@@ -248,7 +257,8 @@ class NewStructures(object):
         self.settings.set_active_template(atoms=gs)
         self.insert_structure(init_struct=gs, cf=cf)
 
-    def generate_gs_structure(self, atoms: Union[Atoms, List[Atoms]],
+    def generate_gs_structure(self,
+                              atoms: Union[Atoms, List[Atoms]],
                               eci: Dict[str, float],
                               init_temp: float = 2000.0,
                               final_temp: float = 1.0,
@@ -306,11 +316,9 @@ class NewStructures(object):
         while current_count < num_to_generate:
             struct = structs[current_count].copy()
             self.settings.set_active_template(atoms=struct)
-            _logger(f"Generating structure {current_count + 1} out of "
-                    f"{num_to_generate}.")
-            es = GSStructure(self.settings, struct, self.struct_per_gen,
-                             init_temp, final_temp, num_temp,
-                             num_steps_per_temp, eci)
+            _logger(f"Generating structure {current_count + 1} out of " f"{num_to_generate}.")
+            es = GSStructure(self.settings, struct, self.struct_per_gen, init_temp, final_temp,
+                             num_temp, num_steps_per_temp, eci)
             gs_struct, cf = es.generate()
             formula_unit = self._get_formula_unit(gs_struct)
 
@@ -321,9 +329,8 @@ class NewStructures(object):
                 _logger(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
-                    raise MaxAttemptReachedError(
-                        f"Could not generate ground-state structure in "
-                        f"{max_attempt} attempts.")
+                    raise MaxAttemptReachedError(f"Could not generate ground-state structure in "
+                                                 f"{max_attempt} attempts.")
                 continue
             else:
                 num_attempt = 0
@@ -334,8 +341,7 @@ class NewStructures(object):
             self.insert_structure(init_struct=gs_struct, cf=cf)
             current_count += 1
 
-    def generate_random_structures(
-            self, atoms: Optional[Atoms] = None) -> None:
+    def generate_random_structures(self, atoms: Optional[Atoms] = None) -> None:
         """
         Generate random structures until the number of structures with
         `generation_number` equals `struct_per_gen`.
@@ -366,8 +372,7 @@ class NewStructures(object):
             RuntimeError(f"Could not find a structure that does not exist in "
                          f"DB after {int(max_attempt * max_fail)} attempts.")
 
-    def generate_one_random_structure(
-            self, atoms: Optional[Atoms] = None) -> bool:
+    def generate_one_random_structure(self, atoms: Optional[Atoms] = None) -> bool:
         """
         Generate and insert a random structure to database if a unique
         structure is found.
@@ -400,9 +405,9 @@ class NewStructures(object):
         self.insert_structure(init_struct=new_atoms)
         return True
 
-    def _set_initial_structures(
-            self, atoms: Union[Atoms, List[Atoms]],
-            random_composition: bool = False) -> List[Atoms]:
+    def _set_initial_structures(self,
+                                atoms: Union[Atoms, List[Atoms]],
+                                random_composition: bool = False) -> List[Atoms]:
         structs = []
         if atoms is not list:
             struct = wrap_and_sort_by_position(atoms)
@@ -423,8 +428,7 @@ class NewStructures(object):
                 num_attempt = 0
                 nib = [len(x) for x in self.settings.index_by_basis]
                 while len(concs) < num_to_gen:
-                    x = self.settings.concentration.get_random_concentration(
-                        nib=nib)
+                    x = self.settings.concentration.get_random_concentration(nib=nib)
                     if True in [np.allclose(x, i) for i in concs]:
                         num_attempt += 1
                     else:
@@ -435,11 +439,9 @@ class NewStructures(object):
                         msg = f"Could not find {self.num_to_gen} unique "
                         msg += "compositions using the provided Atoms object."
                         raise RuntimeError(msg)
-                num_atoms_in_basis = [len(indices) for indices
-                                      in self.settings.index_by_basis]
+                num_atoms_in_basis = [len(indices) for indices in self.settings.index_by_basis]
                 for x in concs:
-                    num_insert = self.settings.concentration.conc_in_int(
-                        num_atoms_in_basis, x)
+                    num_insert = self.settings.concentration.conc_in_int(num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
 
         else:
@@ -452,12 +454,9 @@ class NewStructures(object):
                 nib = [len(x) for x in self.settings.index_by_basis]
                 for struct in atoms:
                     self.settings.set_active_template(atoms=struct)
-                    x = self.settings.concentration.get_random_concentration(
-                        nib=nib)
-                    num_atoms_in_basis = [len(indices) for indices
-                                          in self.settings.index_by_basis]
-                    num_insert = self.settings.concentration.conc_in_int(
-                        num_atoms_in_basis, x)
+                    x = self.settings.concentration.get_random_concentration(nib=nib)
+                    num_atoms_in_basis = [len(indices) for indices in self.settings.index_by_basis]
+                    num_insert = self.settings.concentration.conc_in_int(num_atoms_in_basis, x)
                     structs.append(self._random_struct_at_conc(num_insert))
         return structs
 
@@ -500,9 +499,9 @@ class NewStructures(object):
             atoms = wrap_and_sort_by_position(atoms)
             self.insert_structure(init_struct=atoms)
 
-    def generate_metropolis_trajectory(
-            self, atoms: Optional[Atoms] = None,
-            random_comp: bool = True) -> None:
+    def generate_metropolis_trajectory(self,
+                                       atoms: Optional[Atoms] = None,
+                                       random_comp: bool = True) -> None:
         """
         Generate a set of structures consists of single atom swaps
 
@@ -528,13 +527,11 @@ class NewStructures(object):
 
         except TooFewElementsError as exc:
             if random_comp:
-                self.generate_metropolis_trajectory(
-                    atoms=atoms, random_comp=True)
+                self.generate_metropolis_trajectory(atoms=atoms, random_comp=True)
             else:
                 raise exc
 
-    def _get_struct_at_conc(
-            self, conc_type: str = 'random', index: int = 0) -> Atoms:
+    def _get_struct_at_conc(self, conc_type: str = 'random', index: int = 0) -> Atoms:
         """Generate a structure at a concentration specified.
 
         :param conc_type: One of 'min', 'max' and 'random'
@@ -550,16 +547,16 @@ class NewStructures(object):
             nib = [len(x) for x in self.settings.index_by_basis]
             x = conc.get_random_concentration(nib=nib)
 
-        num_atoms_in_basis = [len(indices) for indices
-                              in self.settings.index_by_basis]
+        num_atoms_in_basis = [len(indices) for indices in self.settings.index_by_basis]
         num_to_insert = conc.conc_in_int(num_atoms_in_basis, x)
         atoms = self._random_struct_at_conc(num_to_insert)
 
         return atoms
 
-    def insert_structures(
-            self, traj_init: str, traj_final: Optional[str] = None,
-            cb=lambda num, tot: None) -> None:
+    def insert_structures(self,
+                          traj_init: str,
+                          traj_final: Optional[str] = None,
+                          cb=lambda num, tot: None) -> None:
         """
         Insert a sequence of initial and final structures from their
         trajectory files.
@@ -579,7 +576,7 @@ class NewStructures(object):
         if traj_final is None:
             for i, init in enumerate(traj_in):
                 self.insert_structure(init_struct=init)
-                cb(i+1, len(traj_in))
+                cb(i + 1, len(traj_in))
             return
 
         traj_final = TrajectoryReader(traj_final)
@@ -595,8 +592,7 @@ class NewStructures(object):
             count_final = count_atoms(final)
             for k in count_final.keys():
                 if k not in count_init.keys():
-                    raise ValueError("Final and initial structure contains "
-                                     "different elements")
+                    raise ValueError("Final and initial structure contains " "different elements")
 
                 if count_init[k] != count_final[k]:
                     raise ValueError("Final and initial structure has "
@@ -606,11 +602,11 @@ class NewStructures(object):
             num_ins += 1
             cb(num_ins, len(traj_in))
 
-    def insert_structure(
-            self, init_struct: Union[Atoms, str],
-            final_struct: Optional[Union[Atoms, str]] = None,
-            name: Optional[str] = None,
-            cf: Optional[Dict[str, float]] = None) -> None:
+    def insert_structure(self,
+                         init_struct: Union[Atoms, str],
+                         final_struct: Optional[Union[Atoms, str]] = None,
+                         name: Optional[str] = None,
+                         cf: Optional[Dict[str, float]] = None) -> None:
         """Insert a structure to the database.
 
         :param init_struct: Unrelaxed initial structure. If a string is passed,
@@ -627,9 +623,8 @@ class NewStructures(object):
         if name is not None:
             with connect(self.settings.db_name) as db:
                 cur = db.connection.cursor()
-                cur.execute(
-                    "SELECT id FROM text_key_values WHERE key=? and value=?",
-                    ("name", name))
+                cur.execute("SELECT id FROM text_key_values WHERE key=? and value=?",
+                            ("name", name))
                 num = len(cur.fetchall())
             if num > 0:
                 raise ValueError(f"Name: {name} already exists in DB!")
@@ -658,19 +653,16 @@ class NewStructures(object):
         kvp['queued'] = False
         kvp['struct_type'] = 'initial'
         tab_name = self.corr_func_table_name
-        uid_init = self.db.write(init_struct, kvp,
-                                 external_tables={tab_name: cf})
+        uid_init = self.db.write(init_struct, kvp, external_tables={tab_name: cf})
 
         if final_struct is not None:
             if not isinstance(final_struct, Atoms):
                 final_struct = read(final_struct)
             kvp_final = {'struct_type': 'final', 'name': kvp['name']}
             uid = self.db.write(final_struct, kvp_final)
-            self.db.update(uid_init, converged=True, started='', queued='',
-                           final_struct_id=uid)
+            self.db.update(uid_init, converged=True, started='', queued='', final_struct_id=uid)
 
-    def _exists_in_db(self, atoms: Atoms,
-                      formula_unit: Optional[str] = None) -> bool:
+    def _exists_in_db(self, atoms: Atoms, formula_unit: Optional[str] = None) -> bool:
         """
         Check to see if the passed atoms already exists in DB.
 
@@ -698,8 +690,10 @@ class NewStructures(object):
             _logger(msg)
             to_prim = False
 
-        symmcheck = SymmetryEquivalenceCheck(angle_tol=1.0, ltol=0.05,
-                                             stol=0.05, scale_volume=True,
+        symmcheck = SymmetryEquivalenceCheck(angle_tol=1.0,
+                                             ltol=0.05,
+                                             stol=0.05,
+                                             scale_volume=True,
                                              to_primitive=to_prim)
 
         atoms_in_db = []
@@ -727,14 +721,11 @@ class NewStructures(object):
         suffixes = []
         with connect(self.settings.db_name) as db:
             cur = db.connection.cursor()
-            cur.execute(
-                "SELECT id FROM text_key_values WHERE key=? AND value=?",
-                ("formula_unit", formula_unit))
+            cur.execute("SELECT id FROM text_key_values WHERE key=? AND value=?",
+                        ("formula_unit", formula_unit))
             ids = [i[0] for i in cur.fetchall()]
             for id in ids:
-                cur.execute(
-                    "SELECT value FROM text_key_values WHERE key=? AND id=?",
-                    ("name", id))
+                cur.execute("SELECT value FROM text_key_values WHERE key=? AND id=?", ("name", id))
                 name = cur.fetchone()[0]
                 suffix = 0
                 if "_" in name:
@@ -808,16 +799,14 @@ class NewStructures(object):
         """Determine generation number based on the values in DB."""
         with connect(self.settings.db_name) as db:
             cur = db.connection.cursor()
-            cur.execute(
-                "SELECT value FROM number_key_values WHERE key='gen'")
+            cur.execute("SELECT value FROM number_key_values WHERE key='gen'")
             gens = [int(i[0]) for i in cur.fetchall()]
             if len(gens) == 0:
                 gen = 0
             else:
                 gen = max(gens)
-                cur.execute(
-                    "SELECT id FROM number_key_values WHERE key=? AND value=?",
-                    ("gen", gen))
+                cur.execute("SELECT id FROM number_key_values WHERE key=? AND value=?",
+                            ("gen", gen))
                 num_in_gen = len(cur.fetchall())
                 if num_in_gen >= self.struct_per_gen:
                     gen += 1
@@ -837,8 +826,7 @@ class NewStructures(object):
                 'specified in the *num_samples_var* argument.\n'
                 '===========================================================')
         count = 0
-        cfm = np.zeros((num_samples_var, len(self.settings.all_cf_names)),
-                       dtype=float)
+        cfm = np.zeros((num_samples_var, len(self.settings.all_cf_names)), dtype=float)
         while count < num_samples_var:
             atoms = self._get_struct_at_conc(conc_type='random')
             cfm[count] = self.corrfunc.get_cf(atoms, 'array')

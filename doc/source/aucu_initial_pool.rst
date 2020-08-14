@@ -1,8 +1,7 @@
 .. testsetup::
 
-  from clease import Concentration
+  from clease.settings import CEBulk, Concentration
   conc = Concentration(basis_elements=[['Au', 'Cu']])
-  from clease import CEBulk
   settings = CEBulk(crystalstructure='fcc',
                     a=3.8,
                     supercell_factor=64,

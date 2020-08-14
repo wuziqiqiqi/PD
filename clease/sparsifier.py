@@ -8,6 +8,7 @@ class Sparsifier(object):
     """
     Sparsifier can be used to remove coefficicients that has very low values.
     """
+
     def __init__(self):
         self._aicc = []
         self._num_features = []
@@ -61,7 +62,7 @@ class Sparsifier(object):
         min_num_features = 2
         removed = []
         X_masked = X.copy()
-        for i in range(X.shape[1]-min_num_features+1):
+        for i in range(X.shape[1] - min_num_features + 1):
             mask = [j for j in range(X.shape[1]) if j not in removed]
             X_masked = X[:, mask]
             coeff = fitter.fit(X_masked, y)
@@ -74,7 +75,7 @@ class Sparsifier(object):
             afaike_ic = aicc(mse, len(mask), len(y))
 
             self._aicc.append(afaike_ic)
-            self._num_features.append(X.shape[1] - len(removed)+1)
+            self._num_features.append(X.shape[1] - len(removed) + 1)
 
             if best_afaike is None or afaike_ic < best_afaike:
                 best_coeff = coeff

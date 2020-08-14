@@ -1,18 +1,21 @@
-from clease import LinearRegression
+import os
+from numpy.random import shuffle, choice
+import numpy as np
 from clease import _logger
 from clease.tools import (aic, aicc, bic)
-import numpy as np
-import os
-from random import shuffle, choice
+from .regression import LinearRegression
 
 workers = None
+
+__all__ = ('SaturatedPopulationError', 'GAFit')
 
 
 class SaturatedPopulationError(Exception):
     pass
 
 
-class GAFit(object):
+# pylint: disable=too-many-instance-attributes
+class GAFit:
     """
     Genetic Algorithm for selecting relevant clusters.
 
@@ -53,22 +56,21 @@ class GAFit(object):
         (tend to avoid overfitting better than aic)
     """
 
-    def __init__(self, cf_matrix, e_dft, mutation_prob=0.001,
-                 elitism=1, fname="ga_fit.csv", num_individuals="auto",
+    def __init__(self,
+                 cf_matrix,
+                 e_dft,
+                 mutation_prob=0.001,
+                 elitism=1,
+                 fname="ga_fit.csv",
+                 num_individuals="auto",
                  max_num_in_init_pool=None,
                  cost_func="aicc"):
-        allowed_cost_funcs = ["bic", "aic", "aicc"]
+        allowed_cost_funcs = {"bic": bic, "aic": aic, "aicc": aicc}
 
         if cost_func not in allowed_cost_funcs:
-            raise ValueError(f"Cost func has to be one of "
-                             f"{allowed_cost_funcs}")
+            raise ValueError(f"Cost func has to be one of {allowed_cost_funcs.keys()}")
 
-        if cost_func == "aic":
-            self.cost_func = aic
-        elif cost_func == "aicc":
-            self.cost_func = aicc
-        elif cost_func == "bic":
-            self.cost_func = bic
+        self.cost_func = allowed_cost_funcs[cost_func]
 
         # Read required attributes from evaluate
         self.cf_matrix = cf_matrix
@@ -77,7 +79,7 @@ class GAFit(object):
         self.fname_cf_names = fname.rpartition(".")[0] + "_cf_names.txt"
 
         if num_individuals == "auto":
-            self.pop_size = 10*self.cf_matrix.shape[1]
+            self.pop_size = 10 * self.cf_matrix.shape[1]
         else:
             self.pop_size = int(num_individuals)
 
@@ -90,8 +92,7 @@ class GAFit(object):
         self.regression = LinearRegression()
         self.elitism = elitism
         self.mutation_prob = mutation_prob
-        self.statistics = {"best_score": [],
-                           "worst_score": []}
+        self.statistics = {"best_score": [], "worst_score": []}
         self.evaluate_fitness()
         self.check_valid()
 
@@ -144,7 +145,7 @@ class GAFit(object):
 
         info_measure = None
         n_selected = np.sum(individual)
-        mse = np.sum(delta_e**2)/self.num_data
+        mse = np.sum(delta_e**2) / self.num_data
         info_measure = self.cost_func(mse, n_selected, self.num_data)
         return coeff, -info_measure
 
@@ -154,7 +155,8 @@ class GAFit(object):
             _, fit = self.fit_individual(ind)
             self.fitness[i] = fit
 
-    def flip_one_mutation(self, individual):
+    @staticmethod
+    def flip_one_mutation(individual):
         """Apply mutation where one bit flips."""
         indx_sel = list(np.argwhere(individual.T == 1).T[0])
         ns = list(np.argwhere(individual.T == 0).T[0])
@@ -174,7 +176,8 @@ class GAFit(object):
         individual[indx] = (individual[indx] + 1) % 2
         return individual
 
-    def make_valid(self, individual):
+    @staticmethod
+    def make_valid(individual):
         """Make sure that there is at least two active ECIs."""
         if np.sum(individual) < 2:
             while np.sum(individual) < 2:
@@ -213,17 +216,16 @@ class GAFit(object):
 
         if counter >= len(srt_indx):
             self.save_population()
-            raise SaturatedPopulationError("The entrie population has "
-                                           "saturated!")
+            raise SaturatedPopulationError("The entire population has been saturated!")
 
         only_positive = self.fitness - np.min(self.fitness)
         cumulative_sum = np.cumsum(only_positive)
         cumulative_sum /= cumulative_sum[-1]
         num_inserted = len(new_generation)
 
-        max_attempts = 100*self.pop_size
+        max_attempts = 100 * self.pop_size
         # Create new generation by mergin existing
-        for i in range(num_inserted, int(self.pop_size/2)+1):
+        for i in range(num_inserted, int(self.pop_size / 2) + 1):
             rand_num = np.random.rand()
             p1 = np.argmax(cumulative_sum > rand_num)
             p2 = p1
@@ -244,8 +246,8 @@ class GAFit(object):
             # Check if there are any equal individuals in
             # the population
             counter = 0
-            while (self._is_in_population(new_individual, new_generation)
-                    and counter < max_attempts):
+            while (self._is_in_population(new_individual, new_generation) and
+                   counter < max_attempts):
                 new_individual = self.flip_one_mutation(new_individual)
                 new_individual = self.make_valid(new_individual)
                 counter += 1
@@ -256,8 +258,8 @@ class GAFit(object):
             new_generation.append(new_individual)
 
             counter = 0
-            while (self._is_in_population(new_individual2, new_generation)
-                    and counter < max_attempts):
+            while (self._is_in_population(new_individual2, new_generation) and
+                   counter < max_attempts):
                 new_individual2 = self.flip_one_mutation(new_individual2)
                 new_individual2 = self.make_valid(new_individual2)
                 counter += 1
@@ -274,7 +276,8 @@ class GAFit(object):
                                f"{len(new_generation)}")
         self.individuals = new_generation
 
-    def _is_in_population(self, ind, pop):
+    @staticmethod
+    def _is_in_population(ind, pop):
         """Check if the individual is already in the population."""
         return any(np.all(ind == x) for x in pop)
 
@@ -292,7 +295,7 @@ class GAFit(object):
             # Increase the probability of introducing mutations
             # to the least fit individuals
             if abs(self.fitness[i]) > avg_f:
-                mut_prob *= abs(self.fitness[i])/avg_f
+                mut_prob *= abs(self.fitness[i]) / avg_f
 
             if mut_prob > 1.0:
                 mut_prob = 1.0
@@ -314,7 +317,8 @@ class GAFit(object):
         std = np.std(self.individuals)
         return np.mean(std)
 
-    def log(self, msg):
+    @staticmethod
+    def log(msg):
         """Log messages."""
         _logger(msg)
 
@@ -348,8 +352,7 @@ class GAFit(object):
         self.check_valid()
         with open(self.fname, 'w') as out:
             for i in range(len(self.individuals)):
-                out.write(",".join(str(x) for x in
-                                   self.index_of_selected_clusters(i)))
+                out.write(",".join(str(x) for x in self.index_of_selected_clusters(i)))
                 out.write("\n")
         _logger(f"\nPopulation written to {self.fname}")
 
@@ -386,7 +389,7 @@ class GAFit(object):
         num_gen_without_change = 0
         current_best = 0.0
         gen = 0
-        while(True):
+        while True:
             self.evaluate_fitness()
 
             best_indx = np.argmax(self.fitness)

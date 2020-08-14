@@ -13,8 +13,12 @@ class JobExec(Screen):
 
     def open_file_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
-        self._pop_up = Popup(title="Load script", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load script",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -59,8 +63,12 @@ class JobExec(Screen):
         msg += 'specify a range of IDs like this 4-7 which is expanded to\n'
         msg += '4, 5, 6, 7.'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Calculation help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Calculation help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -77,8 +85,12 @@ class JobExec(Screen):
         msg += 'when the run button is pressed will be:\n\n'
         msg += 'python myscript.py <dBId> 500 5.4\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Additional args help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Additional args help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -98,7 +110,7 @@ class JobExec(Screen):
                 splitted = item.split('-')
                 min_id = int(splitted[0])
                 max_id = int(splitted[1])
-                ids += list(range(min_id, max_id+1))
+                ids += list(range(min_id, max_id + 1))
             else:
                 ids.append(int(item))
         return ids
@@ -115,5 +127,4 @@ class JobExec(Screen):
 
         cmd = self.ids.cmdInput.text
         script = self.ids.scriptInput.text
-        Thread(target=self.run_on_separate_thread,
-               args=(cmd, script, dbIds, args)).start()
+        Thread(target=self.run_on_separate_thread, args=(cmd, script, dbIds, args)).start()

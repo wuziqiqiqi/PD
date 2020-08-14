@@ -1,6 +1,8 @@
-from clease.regression import LinearRegression
 from typing import Tuple
 import numpy as np
+from .regression import LinearRegression
+
+__all__ = ('ConstrainedRidge',)
 
 
 class ConstrainedRidge(LinearRegression):
@@ -14,7 +16,9 @@ class ConstrainedRidge(LinearRegression):
         The length of the vector must be the same as the
         number of features to be fitted.
     """
+
     def __init__(self, alpha: np.ndarray):
+        super().__init__()
         self.alpha = alpha
         if len(alpha.shape) == 1:
             self.alpha = np.diag(alpha)
@@ -32,8 +36,7 @@ class ConstrainedRidge(LinearRegression):
             'c': c,
         }
 
-    def kkt_system(self, X: np.ndarray, y: np.ndarray
-                   ) -> Tuple[np.ndarray, np.ndarray]:
+    def kkt_system(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the Karush-Kuhn-Tucker (KKT) system of equations. By solving
         the KKT system, one solves the problem
@@ -57,9 +60,8 @@ class ConstrainedRidge(LinearRegression):
 
         A = self._constraint['A']
         zero = np.zeros((A.shape[0], A.shape[0]))
-        matrix = np.block([[2.0*X.T.dot(X) + self.alpha, A.T],
-                           [A, zero]])
-        rhs = 2.0*X.T.dot(y)
+        matrix = np.block([[2.0 * X.T.dot(X) + self.alpha, A.T], [A, zero]])
+        rhs = 2.0 * X.T.dot(y)
         rhs_constraint = self._constraint['c']
         return matrix, np.concatenate((rhs, rhs_constraint))
 

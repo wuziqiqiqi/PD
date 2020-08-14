@@ -23,7 +23,7 @@ for all structures that are not yet converged
   >>> # Run calculations for all structures that are not converged.
   >>> for row in db.select(converged=False):
   ...   atoms = row.toatoms()
-  ...   atoms.set_calculator(calc)
+  ...   atoms.calc = calc
   ...   atoms.get_potential_energy()
   ...   update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
 

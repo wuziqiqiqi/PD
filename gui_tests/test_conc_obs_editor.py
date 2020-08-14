@@ -12,6 +12,7 @@ def close_func(text):
 
 
 class TestConcObsEditor(unittest.TestCase):
+
     def test_load(self):
         editor = ConcObsEditor(close=close_func, default_element='Au')
         editor.ids.elementInput.text = 'Al'

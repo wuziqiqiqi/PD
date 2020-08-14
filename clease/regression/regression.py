@@ -1,11 +1,14 @@
 """Collection of classess to perform regression."""
+from typing import Union, Optional, List
 import numpy as np
 from numpy.linalg import pinv
 from clease.data_normalizer import DataNormalizer
-from typing import Union, Optional, List
+
+__all__ = ('LinearRegression', 'Tikhonov', 'Lasso')
 
 
-class LinearRegression(object):
+class LinearRegression:
+
     def __init__(self) -> None:
         self._weight_matrix = None
         self.tol = 1E-8
@@ -46,28 +49,27 @@ class LinearRegression(object):
         V = V_h.T
         diag_item = np.zeros_like(D)
         mask = np.abs(D) > self.tol
-        diag_item[mask] = 1.0/D[mask]
+        diag_item[mask] = 1.0 / D[mask]
         coeff = V.dot(np.diag(diag_item)).dot(U.T).dot(y)
         return coeff
 
     def precision_matrix(self, X: np.ndarray) -> np.ndarray:
-        U, D, V_h = np.linalg.svd(X, full_matrices=False)
+        D, V_h = np.linalg.svd(X, full_matrices=False)[1:]  # U is unused
         V = V_h.T
         diag = np.zeros_like(D)
         mask = np.abs(D) > self.tol
-        diag[mask] = 1.0/D[mask]**2
+        diag[mask] = 1.0 / D[mask]**2
         return V.dot(np.diag(diag)).dot(V.T)
 
-    @staticmethod
-    def get_instance_array() -> List[object]:
+    def get_instance_array(self) -> List[object]:
         return [LinearRegression()]
 
     def is_scalar(self):
         return False
 
-    def get_scalar_parameter(self):  # pragma: no cover
-        raise ValueError("Fitting scheme is not described by a scalar "
-                         "parameter!")
+    @staticmethod
+    def get_scalar_parameter():  # pragma: no cover
+        raise ValueError("Fitting scheme is not described by a scalar " "parameter!")
 
     @property
     def support_fast_loocv(self):
@@ -78,12 +80,15 @@ class Tikhonov(LinearRegression):
     """Ridge regularization.
 
     :param alpha: regularization term
+
         - float: A single regularization coefficient is used for all features.
                  Tikhonov matrix is T = alpha * I (I = identity matrix).
+
         - 1D array: Regularization coefficient is defined for each feature.
                     Tikhonov matrix is T = diag(alpha) (the alpha values are
                     put on the diagonal).
                     The length of array should match the number of features.
+
         - 2D array: Full Tikhonov matrix supplied by a user.
                     The dimensions of the matrix should be M * M where M is the
                     number of features.
@@ -91,10 +96,11 @@ class Tikhonov(LinearRegression):
     :param normalize: If True each feature will be normalized to before fitting
     """
 
-    def __init__(self, alpha: Union[float, np.ndarray] = 1E-5,
+    def __init__(self,
+                 alpha: Union[float, np.ndarray] = 1E-5,
                  penalize_bias_term: bool = False,
                  normalize: bool = True) -> None:
-        LinearRegression.__init__(self)
+        super().__init__()
         self.alpha = alpha
         self.penalize_bias_term = penalize_bias_term
         self.normalize = normalize
@@ -136,10 +142,10 @@ class Tikhonov(LinearRegression):
             X_fit, y_fit = normalizer.normalize(X[:, 1:], y)
 
         precision = self.precision_matrix(X_fit)
-        coeff = precision.dot(X_fit.T.dot(W*y_fit))
+        coeff = precision.dot(X_fit.T.dot(W * y_fit))
 
         if self.normalize:
-            coeff_with_bias = np.zeros(len(coeff)+1)
+            coeff_with_bias = np.zeros(len(coeff) + 1)
             coeff_with_bias[1:] = normalizer.convert(coeff)
             coeff_with_bias[0] = normalizer.bias(coeff)
             coeff = coeff_with_bias
@@ -166,11 +172,12 @@ class Tikhonov(LinearRegression):
                            num_alpha: int = 10,
                            scale: Optional[str] = 'log') -> List[object]:
         if scale == 'log':
-            alpha = np.logspace(np.log10(alpha_min), np.log10(alpha_max),
-                                int(num_alpha), endpoint=True)
-        else:
-            alpha = np.linspace(alpha_min, alpha_max, int(num_alpha),
+            alpha = np.logspace(np.log10(alpha_min),
+                                np.log10(alpha_max),
+                                int(num_alpha),
                                 endpoint=True)
+        else:
+            alpha = np.linspace(alpha_min, alpha_max, int(num_alpha), endpoint=True)
         return [Tikhonov(alpha=a) for a in alpha]
 
     def is_scalar(self) -> bool:
@@ -179,7 +186,7 @@ class Tikhonov(LinearRegression):
     def get_scalar_parameter(self) -> float:
         if self.is_scalar():
             return self.alpha
-        LinearRegression.get_scalar_parameter(self)
+        return super().get_scalar_parameter()
 
 
 class Lasso(LinearRegression):
@@ -189,14 +196,17 @@ class Lasso(LinearRegression):
     """
 
     def __init__(self, alpha: float = 1E-5) -> None:
-        LinearRegression.__init__(self)
+        super().__init__()
         self.alpha = alpha
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on LASSO regularizeation."""
-        from sklearn.linear_model import Lasso
-        lasso = Lasso(alpha=self.alpha, fit_intercept=False, copy_X=True,
-                      normalize=True, max_iter=1e6)
+        from sklearn.linear_model import Lasso as skLasso
+        lasso = skLasso(alpha=self.alpha,
+                        fit_intercept=False,
+                        copy_X=True,
+                        normalize=True,
+                        max_iter=1e6)
         lasso.fit(X, y)
         return lasso.coef_
 
@@ -206,8 +216,7 @@ class Lasso(LinearRegression):
 
     @weight_matrix.setter
     def weight_matrix(self, X):  # pragma: no cover
-        raise NotImplementedError("Currently Lasso does not support "
-                                  "data weighting.")
+        raise NotImplementedError("Currently Lasso does not support data weighting.")
 
     @staticmethod
     def get_instance_array(alpha_min: float,
@@ -215,11 +224,12 @@ class Lasso(LinearRegression):
                            num_alpha: int = 10,
                            scale: str = 'log') -> List[object]:
         if scale == 'log':
-            alpha = np.logspace(np.log10(alpha_min), np.log10(alpha_max),
-                                int(num_alpha), endpoint=True)
-        else:
-            alpha = np.linspace(alpha_min, alpha_max, int(num_alpha),
+            alpha = np.logspace(np.log10(alpha_min),
+                                np.log10(alpha_max),
+                                int(num_alpha),
                                 endpoint=True)
+        else:
+            alpha = np.linspace(alpha_min, alpha_max, int(num_alpha), endpoint=True)
         return [Lasso(alpha=a) for a in alpha]
 
     def is_scalar(self):
@@ -229,8 +239,7 @@ class Lasso(LinearRegression):
         return self.alpha
 
     def precision_matrix(self, X):  # pragma: no cover
-        raise NotImplementedError("Precision matrix for LASSO is not "
-                                  "implemented.")
+        raise NotImplementedError("Precision matrix for LASSO is not implemented.")
 
     @property
     def support_fast_loocv(self):

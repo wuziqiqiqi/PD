@@ -20,9 +20,7 @@ class DataNormalizer:
         self.meanY = None
         self.fail_on_constant = fail_on_constant
 
-    def normalize(self,
-                  X: np.ndarray,
-                  y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def normalize(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Normalizes the each column of X to zero mean and unit variance. y is
         shifted to zero mean (variance is not altered)
@@ -44,7 +42,7 @@ class DataNormalizer:
                              f"Please remove these.")
         else:
             self.stdX[self.stdX < tol] = 1.0
-        X_norm = (X - self.meanX)/self.stdX
+        X_norm = (X - self.meanX) / self.stdX
         return X_norm, y_shifted
 
     def constant_cols(self, X: np.ndarray, tol=1e-16) -> np.ndarray:
@@ -95,10 +93,10 @@ class DataNormalizer:
         Returns:
             converted coefficients
         """
-        return coeff/self.stdX
+        return coeff / self.stdX
 
     def bias(self, coeff: np.ndarray) -> float:
         """
         Return the bias term.
         """
-        return self.meanY - np.sum(coeff*self.meanX/self.stdX)
+        return self.meanY - np.sum(coeff * self.meanX / self.stdX)

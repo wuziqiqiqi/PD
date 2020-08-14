@@ -1,8 +1,6 @@
 from kivy.uix.screenmanager import Screen
 from kivy_garden.graph import Graph, LinePlot
-from clease.gui.constants import (
-    FOREGROUND_TEXT_COLOR, META_DYN_MSG
-)
+from clease.gui.constants import (FOREGROUND_TEXT_COLOR, META_DYN_MSG)
 from kivy.app import App
 from kivy.uix.popup import Popup
 from clease.gui.help_message_popup import HelpMessagePopup
@@ -47,46 +45,40 @@ class MetaDynPage(Screen):
             pass
 
         if self.beta_free_energy_graph is None:
-            self.beta_free_energy_graph = Graph(
-                xlabel='Collective variable',
-                ylabel="G/kT",
-                x_ticks_minor=0,
-                x_ticks_major=10,
-                y_ticks_major=10,
-                y_grid_label=True,
-                x_grid_label=True,
-                padding=5,
-                xlog=False,
-                ylog=False,
-                xmin=0.0,
-                ymin=0.0,
-                precision='%1.1e')
+            self.beta_free_energy_graph = Graph(xlabel='Collective variable',
+                                                ylabel="G/kT",
+                                                x_ticks_minor=0,
+                                                x_ticks_major=10,
+                                                y_ticks_major=10,
+                                                y_grid_label=True,
+                                                x_grid_label=True,
+                                                padding=5,
+                                                xlog=False,
+                                                ylog=False,
+                                                xmin=0.0,
+                                                ymin=0.0,
+                                                precision='%1.1e')
 
-            self.beta_free_energy_plot = LinePlot(
-                line_width=1, color=FOREGROUND_TEXT_COLOR)
+            self.beta_free_energy_plot = LinePlot(line_width=1, color=FOREGROUND_TEXT_COLOR)
             self.beta_free_energy_graph.add_plot(self.beta_free_energy_plot)
             self.ids.freeEnergyPlot.add_widget(self.beta_free_energy_graph)
 
-            self.visit_graph = Graph(
-                xlabel='Collective variable',
-                ylabel="Num. visits",
-                x_ticks_minor=0,
-                x_ticks_major=10,
-                y_ticks_major=10,
-                y_grid_label=True,
-                x_grid_label=True,
-                padding=5,
-                xlog=False,
-                ylog=False,
-                xmin=0.0,
-                ymin=0.0,
-                precision='%1.1e')
-            self.visit_plot = LinePlot(
-                line_width=1, color=FOREGROUND_TEXT_COLOR)
-            self.visit_mean_plot = LinePlot(line_width=1,
-                                            color=FOREGROUND_TEXT_COLOR)
-            self.visit_conv_plot = LinePlot(line_width=1,
-                                            color=FOREGROUND_TEXT_COLOR)
+            self.visit_graph = Graph(xlabel='Collective variable',
+                                     ylabel="Num. visits",
+                                     x_ticks_minor=0,
+                                     x_ticks_major=10,
+                                     y_ticks_major=10,
+                                     y_grid_label=True,
+                                     x_grid_label=True,
+                                     padding=5,
+                                     xlog=False,
+                                     ylog=False,
+                                     xmin=0.0,
+                                     ymin=0.0,
+                                     precision='%1.1e')
+            self.visit_plot = LinePlot(line_width=1, color=FOREGROUND_TEXT_COLOR)
+            self.visit_mean_plot = LinePlot(line_width=1, color=FOREGROUND_TEXT_COLOR)
+            self.visit_conv_plot = LinePlot(line_width=1, color=FOREGROUND_TEXT_COLOR)
             self.visit_graph.add_plot(self.visit_plot)
             self.visit_graph.add_plot(self.visit_mean_plot)
             self.visit_graph.add_plot(self.visit_conv_plot)
@@ -113,8 +105,12 @@ class MetaDynPage(Screen):
     def show_temperature_help(self):
         msg = 'Temperature used during sampling given in Kelvin'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Temperature input", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Temperature input",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -122,8 +118,12 @@ class MetaDynPage(Screen):
         msg = 'Collective variable used to map out the \n'
         msg += 'free energy.'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Collective variable", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Collective variable",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -132,8 +132,12 @@ class MetaDynPage(Screen):
         msg += 'where the collective variable is within the \n'
         msg += 'specified range.'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Range help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Range help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -143,8 +147,12 @@ class MetaDynPage(Screen):
         msg += 'is larger that <flatness criteria> times the\n'
         msg += 'mean.\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Flatness help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Flatness help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -152,8 +160,12 @@ class MetaDynPage(Screen):
         msg = 'Number of intervals which is used to partition\n'
         msg += 'the interval.\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Num. bins help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Num. bins help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -164,8 +176,12 @@ class MetaDynPage(Screen):
         msg += 'kT. Hence, if it is 0.01, it means that the energy\n'
         msg += 'is penalised by 0.01*kT.'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Mod. factor help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Mod. factor help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
@@ -174,17 +190,18 @@ class MetaDynPage(Screen):
         msg += 'will be terminated. If it converges before reaching\n'
         msg += 'this number, it stops earlier\n'
         content = HelpMessagePopup(close=self.dismiss_popup, msg=msg)
-        self._pop_up = Popup(title="Max. sweeps help", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Max. sweeps help",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def close_conc_editor(self, element):
         self._pop_up.content.backup()
-        self.observer_params = {
-            'name': 'Concentration',
-            'element': element
-        }
+        self.observer_params = {'name': 'Concentration', 'element': element}
         self.dismiss_popup()
 
     def launch_observer_editor(self, var=None, open_popup=True):
@@ -194,13 +211,16 @@ class MetaDynPage(Screen):
         content = None
         if var == 'Concentration':
             default_elem = sorted(self.unique_symbols())[0]
-            content = ConcObsEditor(close=self.close_conc_editor,
-                                    default_element=default_elem)
+            content = ConcObsEditor(close=self.close_conc_editor, default_element=default_elem)
 
         if content is None:
             return
-        self._pop_up = Popup(title=var, content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title=var,
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         if open_popup:
             self._pop_up.open()
@@ -221,8 +241,12 @@ class MetaDynPage(Screen):
         if content is None:
             return
 
-        self._pop_up = Popup(title=text, content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title=text,
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         if open_popup:
             self._pop_up.open()
@@ -275,7 +299,7 @@ class MetaDynPage(Screen):
             app.root.ids.status.text = META_DYN_MSG['mc_cell_is_template']
             return
 
-        atoms = settings.atoms*(size, size, size)
+        atoms = settings.atoms * (size, size, size)
 
         ensemble = self.ids.ensembleSpinner.text
 
@@ -306,8 +330,7 @@ class MetaDynPage(Screen):
             app.root.ids.status.text = msg
             return
 
-        pot = BinnedBiasPotential(xmin=xmin, xmax=xmax, nbins=nbins,
-                                  getter=getter)
+        pot = BinnedBiasPotential(xmin=xmin, xmax=xmax, nbins=nbins, getter=getter)
 
         fname = self.ids.backupInput.text + '.json'
         if os.path.exists(fname):
@@ -328,13 +351,20 @@ class MetaDynPage(Screen):
             app.root.ids.status.text = META_DYN_MSG['unknown_ens'] + ensemble
             return
 
-        runner = MetaDynRunner(
-            atoms=atoms, meta_page=self, max_sweeps=max_sweeps,
-            settings=settings, app_root=app.root,
-            eci=eci, status=app.root.ids.status,
-            mc_params=self.ensemble_params, T=T,
-            bias=pot, flat=flat_limit, mod_factor=mod_factor,
-            backup_file=fname, update_interval=update_int)
+        runner = MetaDynRunner(atoms=atoms,
+                               meta_page=self,
+                               max_sweeps=max_sweeps,
+                               settings=settings,
+                               app_root=app.root,
+                               eci=eci,
+                               status=app.root.ids.status,
+                               mc_params=self.ensemble_params,
+                               T=T,
+                               bias=pot,
+                               flat=flat_limit,
+                               mod_factor=mod_factor,
+                               backup_file=fname,
+                               update_interval=update_int)
         Thread(target=runner.run).start()
 
     def to_dict(self):
@@ -363,8 +393,7 @@ class MetaDynPage(Screen):
         self.ids.flatInput.text = dct.get('flatness', '0.8')
         self.ids.nbinsInput.text = dct.get('nbins', '50')
         self.ids.backupInput.text = dct.get('backup', 'metadyn')
-        self.ids.ensembleSpinner.text = dct.get('ensemble',
-                                                'Semi-grand canonical')
+        self.ids.ensembleSpinner.text = dct.get('ensemble', 'Semi-grand canonical')
         self.ids.modInput.text = dct.get('mod_factor', '0.1')
         self.ids.maxSweepsInput.text = dct.get('max_sweep', '10000')
         self.ids.plotIntInput.text = dct.get('plot_update_interval', '10')
@@ -384,22 +413,22 @@ class MetaDynPage(Screen):
         xmin = np.min(x)
         xmax = np.max(x)
         x_rng = xmax - xmin
-        xmin -= 0.05*x_rng
-        xmax += 0.05*x_rng
+        xmin -= 0.05 * x_rng
+        xmax += 0.05 * x_rng
 
         betaG -= betaG[0]
         ymin = np.min(betaG)
         ymax = np.max(betaG)
         y_rng = ymax - ymin
-        ymin -= 0.05*y_rng
-        ymax += 0.05*y_rng
+        ymin -= 0.05 * y_rng
+        ymax += 0.05 * y_rng
 
         self.beta_free_energy_graph.xmin = float(xmin)
         self.beta_free_energy_graph.xmax = float(xmax)
         self.beta_free_energy_graph.ymin = float(ymin)
         self.beta_free_energy_graph.ymax = float(ymax)
-        self.beta_free_energy_graph.x_ticks_major = float(xmax - xmin)/10.0
-        self.beta_free_energy_graph.y_ticks_major = float(ymax - ymin)/10.0
+        self.beta_free_energy_graph.x_ticks_major = float(xmax - xmin) / 10.0
+        self.beta_free_energy_graph.y_ticks_major = float(ymax - ymin) / 10.0
         self.beta_free_energy_graph.y_grid_label = True
         self.beta_free_energy_graph.x_grid_label = True
         self.beta_free_energy_plot.points = list(zip(x, betaG))
@@ -422,27 +451,27 @@ class MetaDynPage(Screen):
         xmin = np.min(x)
         xmax = np.max(x)
         x_rng = xmax - xmin
-        xmin -= 0.05*x_rng
-        xmax += 0.05*x_rng
+        xmin -= 0.05 * x_rng
+        xmax += 0.05 * x_rng
 
         ymin = np.min(visits)
         ymax = np.max(visits)
         y_rng = ymax - ymin
-        ymin -= 0.05*y_rng
-        ymax += 0.05*y_rng
+        ymin -= 0.05 * y_rng
+        ymax += 0.05 * y_rng
 
         self.visit_graph.xmin = float(xmin)
         self.visit_graph.xmax = float(xmax)
         self.visit_graph.ymin = float(ymin)
         self.visit_graph.ymax = float(ymax)
-        self.visit_graph.x_ticks_major = float(xmax - xmin)/10.0
-        self.visit_graph.y_ticks_major = float(ymax - ymin)/10.0
+        self.visit_graph.x_ticks_major = float(xmax - xmin) / 10.0
+        self.visit_graph.y_ticks_major = float(ymax - ymin) / 10.0
         self.visit_graph.y_grid_label = True
         self.visit_graph.x_grid_label = True
         self.visit_plot.points = list(zip(x, visits))
         mean = np.mean(visits)
         self.visit_mean_plot.points = [(xmin, mean), (xmax, mean)]
-        conv = flat_criteria*mean
+        conv = flat_criteria * mean
         self.visit_conv_plot.points = [(xmin, conv), (xmax, conv)]
 
     def clear_backup(self):

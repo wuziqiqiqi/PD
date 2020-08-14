@@ -9,6 +9,7 @@ from clease.gui.clease_gui import WindowFrame
 
 
 class TestActionBar(unittest.TestCase):
+
     @patch('clease.gui.concentration_page.App')
     @patch('clease.gui.settings_page.App')
     @patch('ase.visualize.view')

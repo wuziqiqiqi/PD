@@ -1,8 +1,9 @@
 import numpy as np
-from random import choice
+from numpy.random import choice
 
 
-class SwapMoveIndexTracker(object):
+class SwapMoveIndexTracker:
+
     def __init__(self):
         self.symbols = []
         self.tracker = {}
@@ -30,7 +31,7 @@ class SwapMoveIndexTracker(object):
         self.index_loc = np.zeros(len(atoms), dtype=int)
         for atom in atoms:
             self.tracker[atom.symbol].append(atom.index)
-            self.index_loc[atom.index] = len(self.tracker[atom.symbol])-1
+            self.index_loc[atom.index] = len(self.tracker[atom.symbol]) - 1
 
     def move_already_updated(self, system_changes):
         """Return True if system_changes have already been taken into account.

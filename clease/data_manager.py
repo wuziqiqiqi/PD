@@ -6,6 +6,10 @@ from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
 from itertools import combinations_with_replacement as cwr
 
+__all__ = ('InconsistentDataError', 'DataManager', 'CorrFuncEnergyDataManager',
+           'CorrelationFunctionGetter', 'CorrFuncVolumeDataManager',
+           'CorrelationFunctionGetterVolDepECI')
+
 
 class InconsistentDataError(Exception):
     pass
@@ -26,10 +30,8 @@ class DataManager(object):
         self._feat_names = None
         self._target_name = None
 
-    def get_data(self, select_cond: List[tuple],
-                 feature_getter: Callable[[List[int]], np.ndarray],
-                 target_getter: Callable[[List[int]], np.ndarray]
-                 ) -> Tuple[np.ndarray, np.ndarray]:
+    def get_data(self, select_cond: List[tuple], feature_getter: Callable[[List[int]], np.ndarray],
+                 target_getter: Callable[[List[int]], np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix X and the target data y
 
@@ -62,7 +64,7 @@ class DataManager(object):
         ... 'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
         1
         >>> final = Atoms('Cu')
-        >>> final.set_calculator(EMT())
+        >>> final.calc = EMT()
         >>> _ = final.get_potential_energy()
         >>> db.write(final)
         2
@@ -72,6 +74,8 @@ class DataManager(object):
         >>> manager = DataManager(db_name)
         >>> X, y = manager.get_data([('converged', '=', 1)], feat_getter,
         ... targ_getter)
+        >>> import os
+        >>> os.remove(db_name)
         """
         ids = get_ids(select_cond, self.db_name)
 
@@ -87,13 +91,12 @@ class DataManager(object):
         nrows = self._X.shape[0]
         num_data = len(self._y)
         if nrows != num_data:
-            raise InconsistentDataError(
-                f"Num. rows in deisgn matrix {nrows}."
-                f"Num. data points {num_data}\n"
-                "This is normally caused by a non-converged structure "
-                "being extracted from database. Check that all structures"
-                "extracted from DB using your query has a corresponding"
-                "final structure.")
+            raise InconsistentDataError(f"Num. rows in deisgn matrix {nrows}."
+                                        f"Num. data points {num_data}\n"
+                                        "This is normally caused by a non-converged structure "
+                                        "being extracted from database. Check that all structures"
+                                        "extracted from DB using your query has a corresponding"
+                                        "final structure.")
         return self._X, self._y
 
     def to_csv(self, fname: str):
@@ -115,8 +118,7 @@ class DataManager(object):
             return
         fname = add_file_extension(fname, 'csv')
         header = ",".join(self._feat_names) + f",{self._target_name}"
-        data = np.hstack((self._X,
-                          np.reshape(self._y, (len(self._y), -1))))
+        data = np.hstack((self._X, np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
         _logger(f"Dataset exported to {fname}")
 
@@ -170,7 +172,9 @@ class CorrFuncEnergyDataManager(DataManager):
     :param order: Order of the correlation function. Default 1.
     """
 
-    def __init__(self, db_name: str, tab_name: str,
+    def __init__(self,
+                 db_name: str,
+                 tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
         DataManager.__init__(self, db_name)
@@ -188,12 +192,11 @@ class CorrFuncEnergyDataManager(DataManager):
         """
         return DataManager.get_data(
             self, select_cond,
-            CorrelationFunctionGetter(self.db_name, self.tab_name,
-                                      self.cf_names, order=self.order),
+            CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
             FinalStructEnergyGetter(self.db_name))
 
 
-class CorrelationFunctionGetter(object):
+class CorrelationFunctionGetter:
     """
     CorrelationFunctionGetter is a class that extracts
     the correlation functions from an AtomsRow object
@@ -210,7 +213,9 @@ class CorrelationFunctionGetter(object):
     :param order: Order of the correlation function. Default is 1.
     """
 
-    def __init__(self, db_name: str, tab_name: str,
+    def __init__(self,
+                 db_name: str,
+                 tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
         self.db_name = db_name
@@ -231,9 +236,8 @@ class CorrelationFunctionGetter(object):
         """
         return self.cf_names is None or name in self.cf_names
 
-    def _is_matrix_representable(
-            self, id_cf_names: Dict[int, List[str]]
-    ) -> bool:
+    @staticmethod
+    def _is_matrix_representable(id_cf_names: Dict[int, List[str]]) -> bool:
         """
         Check if the extracted correlation functions can be represented as a
         matrix.
@@ -250,9 +254,8 @@ class CorrelationFunctionGetter(object):
                 return False
         return True
 
-    def _minimum_common_cf_set(
-            self, id_cf_names: Dict[int, List[str]]
-    ) -> Set[str]:
+    @staticmethod
+    def _minimum_common_cf_set(id_cf_names: Dict[int, List[str]]) -> Set[str]:
         """
         Returns the minimum set of correlation functions that exists for all
         rows.
@@ -309,8 +312,7 @@ class CorrelationFunctionGetter(object):
             raise InconsistentDataError(msg)
 
         if self.cf_names is None:
-            self.cf_names = set([v for item in id_cf_names.values()
-                                 for v in item])
+            self.cf_names = set([v for item in id_cf_names.values() for v in item])
             self.cf_names = list(self.cf_names)
             self.cf_names = sort_cf_names(self.cf_names)
 
@@ -341,7 +343,7 @@ class CorrelationFunctionGetter(object):
         """
         first_order_cf_indices = list(range(1, cf_matrix.shape[1]))
         nrows = cf_matrix.shape[0]
-        for order in range(2, self.order+1):
+        for order in range(2, self.order + 1):
             for comb in cwr(first_order_cf_indices, r=order):
                 X = np.ones((nrows, 1))
                 for i in comb:
@@ -408,7 +410,7 @@ class FinalStructEnergyGetter(object):
                 if final_id in final_struct_ids:
                     init_id = init_struct_ids[final_id]
                     idx = init_struct_idx[init_id]
-                    energies[idx] = energy/num_atoms[init_id]
+                    energies[idx] = energy / num_atoms[init_id]
         return energies
 
 
@@ -471,7 +473,7 @@ class FinalVolumeGetter(object):
                 if db_id in final_struct_ids:
                     init_id = init_ids[db_id]
                     idx = id_idx[init_id]
-                    volumes[idx] = vol/num_atoms[init_id]
+                    volumes[idx] = vol / num_atoms[init_id]
         return volumes
 
 
@@ -492,7 +494,9 @@ class CorrFuncVolumeDataManager(DataManager):
     :param order: Order of the correlation functions. Default 1.
     """
 
-    def __init__(self, db_name: str, tab_name: str,
+    def __init__(self,
+                 db_name: str,
+                 tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
         DataManager.__init__(self, db_name)
@@ -500,8 +504,7 @@ class CorrFuncVolumeDataManager(DataManager):
         self.cf_names = cf_names
         self.order = order
 
-    def get_data(self,
-                 select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return X and y, where X is the design matrix containing correlation
         functions and y is the volume per atom.
@@ -514,14 +517,11 @@ class CorrFuncVolumeDataManager(DataManager):
         """
         return DataManager.get_data(
             self, select_cond,
-            CorrelationFunctionGetter(
-                self.db_name, self.tab_name, self.cf_names,
-                order=self.order),
+            CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
             FinalVolumeGetter(self.db_name))
 
 
-def extract_num_atoms(cur: sqlite3.Cursor,
-                      ids: Set[int]) -> Dict[int, int]:
+def extract_num_atoms(cur: sqlite3.Cursor, ids: Set[int]) -> Dict[int, int]:
     """
     Extract the number of atoms for all ids
 
@@ -567,7 +567,10 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         in the correlation function. Default is 1.
     """
 
-    def __init__(self, db_name: str, tab_name: str, cf_names: List[str],
+    def __init__(self,
+                 db_name: str,
+                 tab_name: str,
+                 cf_names: List[str],
                  order: Optional[int] = 0,
                  properties: Tuple[str] = ('energy', 'pressure'),
                  cf_order: int = 1) -> None:
@@ -588,9 +591,10 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         :param ids: List of ids to take into account
         """
-        cf_getter = CorrelationFunctionGetter(
-            self.db_name, self.tab_name, self.cf_names,
-            order=self.cf_order)
+        cf_getter = CorrelationFunctionGetter(self.db_name,
+                                              self.tab_name,
+                                              self.cf_names,
+                                              order=self.cf_order)
         cf = cf_getter(ids)
 
         volume_getter = FinalVolumeGetter(self.db_name)
@@ -602,7 +606,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         target_values = [energies]
         target_val_names = ['energy']
 
-        cf_vol_dep = np.zeros((cf.shape[0], (self.order+1)*cf.shape[1]))
+        cf_vol_dep = np.zeros((cf.shape[0], (self.order + 1) * cf.shape[1]))
         counter = 0
         self._feat_names = []
         self._groups = list(range(cf_vol_dep.shape[0]))
@@ -611,8 +615,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         # energy fitting (e.g. if there are N energy calculations we construct
         # the firxt N rows of the design matrix)
         for col in range(cf.shape[1]):
-            for power in range(self.order+1):
-                cf_vol_dep[:, counter] = cf[:, col]*volumes**power
+            for power in range(self.order + 1):
+                cf_vol_dep[:, counter] = cf[:, col] * volumes**power
                 counter += 1
                 self._feat_names.append(cf_getter.names[col] + f"_V{power}")
 
@@ -626,8 +630,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             # we construct row N:2*N). Note that the pressure is assumed
             # to be zero
             for col in range(0, cf.shape[1]):
-                for p in range(self.order+1):
-                    pressure_cf[:, counter] = p*cf[:, col]*volumes**(p-1)
+                for p in range(self.order + 1):
+                    pressure_cf[:, counter] = p * cf[:, col] * volumes**(p - 1)
                     counter += 1
 
             # Update the full design matrix and the target values
@@ -654,9 +658,9 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             # bulk moduli. If there are Nb calculations that has a bulk modulus
             # we construct row 2*N:2*N+Nb
             for col in range(0, cf.shape[1]):
-                for power in range(self.order+1):
-                    bulk_mod_cf[:, counter] = vols*cf[bulk_mod_rows, col]
-                    bulk_mod_cf[:, counter] *= power*(power-1)*vols**(power-2)
+                for power in range(self.order + 1):
+                    bulk_mod_cf[:, counter] = vols * cf[bulk_mod_rows, col]
+                    bulk_mod_cf[:, counter] *= power * (power - 1) * vols**(power - 2)
                     counter += 1
 
             # Update the full design matrix as well as the target values
@@ -675,14 +679,14 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             counter = 0
             vols = volumes[dBdP_rows]
             for col in range(cf.shape[1]):
-                for power in range(self.order+1):
+                for power in range(self.order + 1):
                     # Double derivative of the energy
-                    dE2 = power*(power-1)*cf[dBdP_rows, col]*vols**(power-2)
+                    dE2 = power * (power - 1) * cf[dBdP_rows, col] * vols**(power - 2)
 
                     # Third derivative of the energy
                     dE3 = power*(power-1)*(power-2)*cf[dBdP_rows, col] * \
                         vols**(power-3)
-                    dBdP_cf[:, counter] = (1.0 + dBdP)*dE2 + vols*dE3
+                    dBdP_cf[:, counter] = (1.0 + dBdP) * dE2 + vols * dE3
                     counter += 1
 
             # Update the full design matrix
@@ -721,8 +725,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
                     id_key[db_id] = value
         return id_key
 
-    def get_data(self,
-                 select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix and the target values for the entries
         corresponding to select_cond.

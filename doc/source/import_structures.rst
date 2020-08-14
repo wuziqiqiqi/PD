@@ -20,7 +20,7 @@ file.
     ...     atoms = bulk("Au", a=3.9)*(3, 3, 3)
     ...     writer_initial.write(atoms)
     ...     calc = EMT()
-    ...     atoms.set_calculator(calc)
+    ...     atoms.calc = calc
     ...     atoms.get_potential_energy()
     ...     writer_final.write(atoms)
 
@@ -29,7 +29,8 @@ Next, we want to import these data into CLEASE. First, we create the settings
 
 .. doctest::
     :options: +SKIP
-    >>> from clease import CEBulk, Concentration, NewStructures
+    >>> from clease NewStructures
+    >>> from clease.settings import CEBulk, Concentration
     >>> settings = CEBulk(
     ...     Concentration(basis_elements=[['Au', 'Cu']]), 
     ...     crystalstructure='fcc', a=4.05, db_name="imported.db")

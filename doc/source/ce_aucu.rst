@@ -9,6 +9,7 @@ Constructing your CE model
 .. toctree::
 
   ./aucu_concentration
+  ./linsys_examples
   ./aucu_setting
   ./aucu_initial_pool
   ./aucu_run_calculations

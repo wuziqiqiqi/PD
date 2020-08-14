@@ -1,7 +1,10 @@
 import json
 
+__all__ = ('ClusterFingerprint',)
+
 
 class ClusterFingerprint(object):
+
     def __init__(self, fp, tol=1E-9):
         self.fp = fp
         self.tol = tol
@@ -39,10 +42,7 @@ class ClusterFingerprint(object):
         return json.dumps(self.todict())
 
     def todict(self):
-        return {
-            'tol': self.tol,
-            'fp': self.fp
-        }
+        return {'tol': self.tol, 'fp': self.fp}
 
     def fromJSON(self, data):
         self.tol = data['tol']

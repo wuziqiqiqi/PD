@@ -27,6 +27,7 @@ class GramSchmidtMonimial(object):
     num_symbols:
         Number of unique symbols
     """
+
     def __init__(self, num_symbols: int):
         self.values = []
         if num_symbols % 2 == 1:
@@ -81,8 +82,7 @@ class GramSchmidtMonimial(object):
         for bf1 in range(1, len(self.values)):
             new_bf_values = []
             for i in range(len(self.values)):
-                new_bf_values.append(self.evaluate_monomial_basis_function(
-                    bf1, self.values[i]))
+                new_bf_values.append(self.evaluate_monomial_basis_function(bf1, self.values[i]))
                 for bf2 in range(bf1):
                     new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2) \
                         * self.bf_values[bf2][i]
@@ -111,8 +111,8 @@ class GramSchmidtMonimial(object):
 
         dot_prod = 0.0
         for i in range(len(self.values)):
-            dot_prod += self.bf_values[bf1][i]*self.bf_values[bf2][i]
-        return dot_prod/len(self.values)
+            dot_prod += self.bf_values[bf1][i] * self.bf_values[bf2][i]
+        return dot_prod / len(self.values)
 
     def dot_monomial_bf(self, monomial: int, bf: int) -> float:
         """
@@ -130,8 +130,8 @@ class GramSchmidtMonimial(object):
         dot_prod = 0.0
         for i in range(len(self.values)):
             dot_prod += self.evaluate_monomial_basis_function(
-                monomial, self.values[i])*self.bf_values[bf][i]
-        return dot_prod/len(self.values)
+                monomial, self.values[i]) * self.bf_values[bf][i]
+        return dot_prod / len(self.values)
 
     def norm(self, bf: List[float]) -> float:
         """
@@ -159,8 +159,7 @@ class GramSchmidtMonimial(object):
         """
         return self.bf_values[bf][valueIndex]
 
-    def evaluate_monomial_basis_function(self, power: int,
-                                         value: float) -> float:
+    def evaluate_monomial_basis_function(self, power: int, value: float) -> float:
         """
         Evaluate monimial basis
 

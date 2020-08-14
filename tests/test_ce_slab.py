@@ -1,90 +1,85 @@
-import unittest
-from ase.build import bulk
-import numpy as np
-from clease.settings_slab import (
-    get_prim_slab_cell, add_vacuum_layers, remove_vacuum_layers, CESlab
-)
-from clease import Concentration, settingsFromJSON
+import pytest
 import os
+
+import numpy as np
 import ase
+from ase.build import bulk
+from clease.settings.settings_slab import (get_prim_slab_cell, add_vacuum_layers,
+                                           remove_vacuum_layers, CESlab)
+from clease.settings import settings_from_json, Concentration
+
+# Skip entire module if we are not above ASE 3.19
+pytestmark = pytest.mark.skipif(ase.__version__ < '3.19', reason="CESlab requires ASE > 3.19")
 
 
-class TestCESlab(unittest.TestCase):
-    def test_prim_cell_construction(self):
-        tests = [
-            {
-                'cell': bulk('Al', a=4.05, cubic=True),
-                'miller': [1, 1, 1],
-                'expect_dist': 4.05/np.sqrt(3.0)
-            },
-            {
-                'cell': bulk('Al', a=4.05, cubic=True),
-                'miller': [1, 1, 0],
-                'expect_dist': 4.05/np.sqrt(2.0)
-            },
-            {
-                'cell': bulk('Fe', a=4.05, cubic=True),
-                'miller': [1, 1, 1],
-                'expect_dist': 4.05/np.sqrt(3.0)
-            },
-            {
-                'cell': bulk('Fe', a=4.05, cubic=True),
-                'miller': [1, 1, 0],
-                'expect_dist': 4.05/np.sqrt(2.0)
-            }
-        ]
+def test_prim_cell_construction():
+    tests = [{
+        'cell': bulk('Al', a=4.05, cubic=True),
+        'miller': [1, 1, 1],
+        'expect_dist': 4.05 / np.sqrt(3.0)
+    }, {
+        'cell': bulk('Al', a=4.05, cubic=True),
+        'miller': [1, 1, 0],
+        'expect_dist': 4.05 / np.sqrt(2.0)
+    }, {
+        'cell': bulk('Fe', a=4.05, cubic=True),
+        'miller': [1, 1, 1],
+        'expect_dist': 4.05 / np.sqrt(3.0)
+    }, {
+        'cell': bulk('Fe', a=4.05, cubic=True),
+        'miller': [1, 1, 0],
+        'expect_dist': 4.05 / np.sqrt(2.0)
+    }]
 
-        for i, test in enumerate(tests):
-            prim = get_prim_slab_cell(test['cell'], test['miller'])
-            dist = prim.get_cell()[2, 2]
-            self.assertAlmostEqual(dist, test['expect_dist'])
+    for i, test in enumerate(tests):
+        prim = get_prim_slab_cell(test['cell'], test['miller'])
+        dist = prim.get_cell()[2, 2]
+        assert dist == pytest.approx(test['expect_dist'])
 
-    def test_add_vacuum_layers(self):
-        atoms = bulk('Al', a=4.05, cubic=True)
-        prim = get_prim_slab_cell(atoms, [1, 1, 1])
-        z_prim = prim.cell[2, 2]
-        atoms = prim*(1, 1, 3)
-        z_orig = atoms.cell[2, 2]
-        atoms = add_vacuum_layers(atoms, prim, 10.0)
-        new_z = atoms.cell[2, 2]
-        z_vac = int(-(-10.0//z_prim)) * z_prim
-        self.assertGreater(z_vac, 10)
-        self.assertAlmostEqual(new_z, z_orig+z_vac)
 
-        tol = 1e-6
-        for atom in atoms:
-            if atom.position[2] > z_orig-tol:
-                self.assertEqual(atom.symbol, 'X')
-            else:
-                self.assertEqual(atom.symbol, 'Al')
+def test_add_vacuum_layers():
+    atoms = bulk('Al', a=4.05, cubic=True)
+    prim = get_prim_slab_cell(atoms, [1, 1, 1])
+    z_prim = prim.cell[2, 2]
+    atoms = prim * (1, 1, 3)
+    z_orig = atoms.cell[2, 2]
+    atoms = add_vacuum_layers(atoms, prim, 10.0)
+    new_z = atoms.cell[2, 2]
+    z_vac = int(-(-10.0 // z_prim)) * z_prim
+    assert z_vac > 10
+    assert new_z == pytest.approx(z_orig + z_vac)
 
-    def test_load(self):
-        if ase.__version__ < '3.19':
-            self.skipTest("CESlab requires ASE > 3.19")
-        db_name = 'test_load_save_ceslab.db'
-        atoms = bulk('Al', a=4.05, cubic=True)
-        conc = Concentration(basis_elements=[['Al', 'X']])
-        settings = CESlab(atoms, (1, 1, 1), conc, db_name=db_name)
+    tol = 1e-6
+    for atom in atoms:
+        if atom.position[2] > z_orig - tol:
+            assert atom.symbol == 'X'
+        else:
+            assert atom.symbol == 'Al'
 
-        backup_file = 'test_save_ceslab.json'
-        settings.save(backup_file)
 
-        settings2 = settingsFromJSON(backup_file)
+def test_load(db_name, tmpdir):
+    atoms = bulk('Al', a=4.05, cubic=True)
+    conc = Concentration(basis_elements=[['Al', 'X']])
+    settings = CESlab(atoms, (1, 1, 1), conc, db_name=db_name)
 
-        self.assertEqual(settings.atoms, settings2.atoms)
-        self.assertEqual(settings.size, settings2.size)
-        self.assertEqual(settings.concentration, settings2.concentration)
-        os.remove(db_name)
+    backup_file = str(tmpdir / 'test_save_ceslab.json')
+    settings.save(backup_file)
+
+    settings2 = settings_from_json(backup_file)
+
+    assert settings.atoms == settings2.atoms
+    assert settings.size == settings2.size
+    assert settings.concentration == settings2.concentration
+    try:
         os.remove(backup_file)
-
-    def test_remove_vacuum(self):
-        unit_cell = bulk('Au', crystalstructure='fcc', cubic=True)
-        prim = get_prim_slab_cell(unit_cell, [1, 1, 1])
-        atoms = prim * (3, 3, 3)
-        slab = add_vacuum_layers(atoms.copy(), prim, thickness=20)
-        recovered = remove_vacuum_layers(slab)
-        self.assertEqual(atoms, recovered)
+    except OSError:
+        pass
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_remove_vacuum():
+    unit_cell = bulk('Au', crystalstructure='fcc', cubic=True)
+    prim = get_prim_slab_cell(unit_cell, [1, 1, 1])
+    atoms = prim * (3, 3, 3)
+    slab = add_vacuum_layers(atoms.copy(), prim, thickness=20)
+    recovered = remove_vacuum_layers(slab)
+    assert atoms == recovered

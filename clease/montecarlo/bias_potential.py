@@ -49,8 +49,7 @@ class BiasPotential(object):
         import dill
         with open(fname, 'wb') as outfile:
             dill.dump(self, outfile)
-        print(f"Pseudo binary free energy bias potential written to "
-              f"{fname}")
+        print(f"Pseudo binary free energy bias potential written to " f"{fname}")
 
     @staticmethod
     def load(fname="bias_potential.pkl"):
@@ -83,12 +82,11 @@ class SampledBiasPotential(BiasPotential):
         Array with energies
     """
 
-    def __init__(self, reac_crd=[], free_eng=[]):
+    def __init__(self, reac_crd=(), free_eng=()):
         from scipy.interpolate import interp1d
         self.reac_crd = np.array(reac_crd)
         self.free_eng = np.array(free_eng)
-        self.bias_interp = interp1d(self.reac_crd, self.free_eng,
-                                    fill_value="extrapolate")
+        self.bias_interp = interp1d(self.reac_crd, self.free_eng, fill_value="extrapolate")
 
     def fit_smoothed_curve(self, smooth_length=11, show=False):
         """Fit a smoothed curve to the data.
@@ -108,8 +106,7 @@ class SampledBiasPotential(BiasPotential):
 
         # Update the interpolator
         from scipy.interpolate import interp1d
-        self.bias_interp = interp1d(self.reac_crd, smoothed,
-                                    fill_value="extrapolate")
+        self.bias_interp = interp1d(self.reac_crd, smoothed, fill_value="extrapolate")
 
         if show:
             self.show()
@@ -135,8 +132,7 @@ class SampledBiasPotential(BiasPotential):
         """
         from scipy.interpolate import interp1d
         self.free_eng += other.get(self.reac_crd)
-        self.bias_interp = interp1d(self.reac_crd, self.free_eng,
-                                    fill_value="extrapolate")
+        self.bias_interp = interp1d(self.reac_crd, self.free_eng, fill_value="extrapolate")
         return self
 
     def __add__(self, other):
@@ -167,7 +163,8 @@ class PseudoBinaryFreeEnergyBias(SampledBiasPotential):
         Value of the free energy corresponding to the reac_crd
         array
     """
-    def __init__(self, pseudo_bin_conc_init=None, reac_crd=[], free_eng=[]):
+
+    def __init__(self, pseudo_bin_conc_init=None, reac_crd=(), free_eng=()):
         self._conc_init = pseudo_bin_conc_init
         super(PseudoBinaryFreeEnergyBias, self).__init__(reac_crd, free_eng)
 
@@ -237,7 +234,7 @@ class CovarianceBiasPotential(SampledBiasPotential):
         Free energy at each reaction coordinate
     """
 
-    def __init__(self, cov_range=None, reac_crd=[], free_eng=[]):
+    def __init__(self, cov_range=None, reac_crd=(), free_eng=()):
         super(CovarianceBiasPotential, self).__init__(reac_crd, free_eng)
         self._cov_range = cov_range
 
@@ -245,8 +242,7 @@ class CovarianceBiasPotential(SampledBiasPotential):
     def cov_range(self):
         from cemc.mcmc import CovarianceRangeConstraint
         if not isinstance(self._cov_range, CovarianceRangeConstraint):
-            raise TypeError("cov_range has to be of type "
-                            "CovarianceRangeConstraint")
+            raise TypeError("cov_range has to be of type CovarianceRangeConstraint")
         return self._cov_range
 
     @cov_range.setter

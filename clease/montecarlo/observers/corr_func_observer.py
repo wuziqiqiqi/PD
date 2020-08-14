@@ -43,4 +43,4 @@ class CorrelationFunctionObserver(MCObserver):
         self.counter = 1
 
     def get_averages(self):
-        return {'cf_' + k: v/self.counter for k, v in self.cf.items()}
+        return {'cf_' + k: v / self.counter for k, v in self.cf.items()}

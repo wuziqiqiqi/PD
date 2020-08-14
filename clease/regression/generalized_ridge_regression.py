@@ -1,10 +1,14 @@
-from clease import _logger
-from clease.regression import LinearRegression
 import numpy as np
 from scipy.optimize import minimize
 
+from clease import _logger
+from .regression import LinearRegression
 
-class EigenDecomposition(object):
+__all__ = ('EigenDecomposition', 'GeneralizedRidgeRegression')
+
+
+class EigenDecomposition:
+
     def __init__(self) -> None:
         self.eigvals = None
         self.eigvec = None
@@ -34,7 +38,9 @@ class GeneralizedRidgeRegression(LinearRegression):
         (which it normally is), the result from fit may vary when different
         initial guesses for alpha is provided.
     """
+
     def __init__(self, alpha: np.ndarray = None) -> None:
+        super().__init__()
         self.alpha = alpha
 
         # Dictionary that will be populated with results from the
@@ -47,8 +53,8 @@ class GeneralizedRidgeRegression(LinearRegression):
         # options
         self.minimize_args = {}
 
-    def _A(self, X: np.ndarray, eigen: EigenDecomposition,
-           alpha: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def _A(X: np.ndarray, eigen: EigenDecomposition, alpha: np.ndarray) -> np.ndarray:
         """
         Helper method to form the matrix
         X(X^TX + N*diag(alpha))^{-1}X^T, where N
@@ -60,12 +66,10 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         return np.linalg.multi_dot(
-            [X, eigen.eigvec, np.diag(1.0/(eigen.eigvals + N*alpha)),
-             eigen.eigvec.T, X.T]
-        )
+            [X, eigen.eigvec,
+             np.diag(1.0 / (eigen.eigvals + N * alpha)), eigen.eigvec.T, X.T])
 
-    def _coeff(self, X: np.ndarray, y: np.ndarray,
-               eigen: EigenDecomposition) -> np.ndarray:
+    def _coeff(self, X: np.ndarray, y: np.ndarray, eigen: EigenDecomposition) -> np.ndarray:
         """
         Calculate the coefficients using self.alpha as regularization
 
@@ -75,12 +79,12 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         return np.linalg.multi_dot(
-            [eigen.eigvec, np.diag(1.0/(eigen.eigvals + N*self.alpha)),
-             eigen.eigvec.T, X.T, y]
-        )
+            [eigen.eigvec,
+             np.diag(1.0 / (eigen.eigvals + N * self.alpha)), eigen.eigvec.T, X.T, y])
 
-    def _grad_A(self, X: np.ndarray, eigen: EigenDecomposition,
-                alpha: np.ndarray, component: int) -> np.ndarray:
+    @staticmethod
+    def _grad_A(X: np.ndarray, eigen: EigenDecomposition, alpha: np.ndarray,
+                component: int) -> np.ndarray:
         """
         Return a matrix representing the gradient of the A matrix.
         See the `_A` method.
@@ -93,8 +97,8 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         XdotP = np.dot(X, eigen.eigvec[:, component])
-        weight = N/(eigen.eigvals[component] + N*alpha[component])**2
-        return -np.outer(XdotP, XdotP.T)*weight
+        weight = N / (eigen.eigvals[component] + N * alpha[component])**2
+        return -np.outer(XdotP, XdotP.T) * weight
 
     def _gcv_squared(self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray,
                      eigen: EigenDecomposition) -> float:
@@ -109,11 +113,10 @@ class GeneralizedRidgeRegression(LinearRegression):
         A = self._A(X, eigen, alpha)
         N = len(y)
         mse = np.mean((y - A.dot(y))**2)
-        denum = (1.0 - np.trace(A)/N)**2
-        return mse/denum
+        denum = (1.0 - np.trace(A) / N)**2
+        return mse / denum
 
-    def _grad_gcv_squared(self, alpha: np.ndarray, X: np.ndarray,
-                          y: np.ndarray,
+    def _grad_gcv_squared(self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray,
                           eigen: EigenDecomposition) -> np.ndarray:
         """
         Return the gradient of the squared generalized CV score.
@@ -128,14 +131,14 @@ class GeneralizedRidgeRegression(LinearRegression):
         dev = y - A.dot(y)
         mse = np.mean(dev**2)
         N = len(y)
-        denum = (1.0 - np.trace(A)/N)
+        denum = (1.0 - np.trace(A) / N)
         for i in range(len(grad)):
             gradA = self._grad_A(X, eigen, alpha, i)
-            new_grad = -2.0*np.sum(np.outer(dev, y)*gradA)/(N*denum**2)
+            new_grad = -2.0 * np.sum(np.outer(dev, y) * gradA) / (N * denum**2)
 
             # There is an additional contribution for the diagonal terms
             # in gradA
-            new_grad += 2.0*mse*np.trace(gradA)/(N*denum**3)
+            new_grad += 2.0 * mse * np.trace(gradA) / (N * denum**3)
             grad[i] = new_grad
         return grad
 
@@ -159,11 +162,9 @@ class GeneralizedRidgeRegression(LinearRegression):
         def jac_cost_func(alpha):
             x = np.exp(alpha)
             grad = self._grad_gcv_squared(x, X, y, eigen)
-            return grad*x
+            return grad * x
 
-        res = minimize(cost_func, np.log(self.alpha),
-                       jac=jac_cost_func,
-                       **self.minimize_args)
+        res = minimize(cost_func, np.log(self.alpha), jac=jac_cost_func, **self.minimize_args)
         self.alpha = np.exp(res.x)
 
         if not res.success:
@@ -181,7 +182,7 @@ class GeneralizedRidgeRegression(LinearRegression):
         self.opt_result = {
             'gcv': np.sqrt(res.fun),
             'scipy_opt_res': res,
-            'gcv_dev': (y - X.dot(coeff))/(1.0 - eff_num_params/X.shape[0]),
-            'press_dev': (y - X.dot(coeff))/(1.0 - np.diag(A))
+            'gcv_dev': (y - X.dot(coeff)) / (1.0 - eff_num_params / X.shape[0]),
+            'press_dev': (y - X.dot(coeff)) / (1.0 - np.diag(A))
         }
         return coeff

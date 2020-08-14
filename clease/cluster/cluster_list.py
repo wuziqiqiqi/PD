@@ -1,12 +1,15 @@
-from clease.tools import dec_string, list2str
 from itertools import product
-from clease.tools import flatten
 from copy import deepcopy
 from typing import List, Dict
+
 from clease import _logger
+from clease.tools import flatten, dec_string, list2str
+
+__all__ = ('ClusterList',)
 
 
 class ClusterList(object):
+
     def __init__(self):
         self.clusters = []
         self.index_by_name = {}
@@ -14,7 +17,7 @@ class ClusterList(object):
     def append(self, cluster):
         self.clusters.append(cluster)
         idx = self.index_by_name.get(cluster.name, [])
-        idx.append(len(self.clusters)-1)
+        idx.append(len(self.clusters) - 1)
         self.index_by_name[cluster.name] = idx
 
     def clear(self):
@@ -143,8 +146,7 @@ class ClusterList(object):
                 indices_per_group[i].update(flatten(c.indices))
         return [list(x) for x in indices_per_group]
 
-    def multiplicity_factors(
-            self, num_sites_per_group: List[int]) -> Dict[str, float]:
+    def multiplicity_factors(self, num_sites_per_group: List[int]) -> Dict[str, float]:
         mult_factors = {}
         norm = {}
         for cluster in self.clusters:
@@ -170,8 +172,7 @@ class ClusterList(object):
         self.clusters.sort()
         used_names = set()
         for cluster in self.clusters:
-            if (cluster.name == 'c0' or cluster.name == 'c1' or
-               cluster.name in used_names):
+            if (cluster.name == 'c0' or cluster.name == 'c1' or cluster.name in used_names):
                 continue
             figure = cluster.get_figure(generator)
 
@@ -225,7 +226,7 @@ class ClusterList(object):
         Confirm that cluster names are sequential. If clusters are
         removed from the list, that might not be the case.
         """
-        for s in range(2, self.max_size()+1):
+        for s in range(2, self.max_size() + 1):
             names = list(set([c.name for c in self.get_by_size(s)]))
             names.sort()
             prefixes = list(set([n.rpartition('_')[0] for n in names]))
@@ -254,7 +255,8 @@ class ClusterList(object):
                     uid_map[x] = new_name
 
                 for k, v in uid_map.items():
-                    name_map[k] = ''.join([name_map[k].rpartition('_')[0], '_',
-                                           v.rpartition('_')[2]])
+                    name_map[k] = ''.join(
+                        [name_map[k].rpartition('_')[0], '_',
+                         v.rpartition('_')[2]])
             for c in self.get_by_size(s):
                 c.name = name_map[c.name]

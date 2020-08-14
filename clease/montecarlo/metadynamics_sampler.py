@@ -38,20 +38,21 @@ class MetaDynamicsSampler(object):
     fname: str
         Filename used to store the simulation state when finished
     """
-    def __init__(self, mc=None, bias=None, flat_limit=0.8,
-                 mod_factor=0.1, fname='metadyn.json'):
+
+    def __init__(self, mc=None, bias=None, flat_limit=0.8, mod_factor=0.1, fname='metadyn.json'):
         self.mc = mc
         self.bias = bias
         self.mc.add_bias(self.bias)
-        cnst = CollectiveVariableConstraint(
-            xmin=self.bias.xmin, xmax=self.bias.xmax, getter=self.bias.getter)
+        cnst = CollectiveVariableConstraint(xmin=self.bias.xmin,
+                                            xmax=self.bias.xmax,
+                                            getter=self.bias.getter)
         self.mc.add_constraint(cnst)
         self.mc.update_current_energy()
         self.mc.attach(self.bias.getter, interval=1)
         self.visit_hist = deepcopy(bias)
         self.visit_hist.zero()
         self.flat_limit = flat_limit
-        self.mod_factor = mod_factor*kB*self.mc.T
+        self.mod_factor = mod_factor * kB * self.mc.T
         self.log_freq = 30
         self.fname = fname
         self.progress_info = {'mean': 0.0, 'minimum': 0.0}
@@ -102,13 +103,13 @@ class MetaDynamicsSampler(object):
         self.progress_info['mean'] = avg
 
         if avg > 0.0:
-            self.progress_info['minval'] = minval/avg
+            self.progress_info['minval'] = minval / avg
         else:
             self.progress_info['minval'] = 0.0
 
         if np.max(avg) == 0:
             return False
-        return minval > self.flat_limit*avg
+        return minval > self.flat_limit * avg
 
     def update(self):
         """Update bias potential and visit histogram."""
@@ -131,17 +132,16 @@ class MetaDynamicsSampler(object):
             is reached
         """
         if not self._getter_accepts_none():
-            raise NoneNotAcceptedError("Observer does not accept None as a "
-                                       "system change")
+            raise NoneNotAcceptedError("Observer does not accept None as a system change")
 
         if not self._getter_accepts_peak():
-            raise PeakNotAcceptedError("Observer does not accept peak as a "
-                                       "keyword argument to __call__")
+            raise PeakNotAcceptedError(("Observer does not accept peak as a "
+                                        "keyword argument to __call__"))
 
         if not hasattr(self.bias, 'get_coeff'):
-            raise ValueError('The bias potential needs to have a method ',
-                             'called get_coeff(), which returns a histogram '
-                             'representation of the bias potential')
+            raise ValueError(('The bias potential needs to have a method ',
+                              'called get_coeff(), which returns a histogram '
+                              'representation of the bias potential'))
 
         if not hasattr(self.bias, 'local_update'):
             raise ValueError('The bias potential needs to have a method '
@@ -170,7 +170,7 @@ class MetaDynamicsSampler(object):
             if self.visit_is_flat():
                 conv = True
 
-            sweep_no = int(counter/len(self.mc.atoms))
+            sweep_no = int(counter / len(self.mc.atoms))
 
             if max_sweeps is not None:
                 if sweep_no > max_sweeps:
@@ -178,7 +178,7 @@ class MetaDynamicsSampler(object):
                     conv = True
 
             for obs, interval in self.observers:
-                if counter % (interval*len(self.mc.atoms)) == 0:
+                if counter % (interval * len(self.mc.atoms)) == 0:
                     obs()
 
             if self.quit:
@@ -193,14 +193,8 @@ class MetaDynamicsSampler(object):
         xmin = self.bias.xmin
         xmax = self.bias.xmax
         x = np.linspace(xmin, xmax, 200)
-        beta = 1.0/(kB*self.mc.T)
-        betaG = [self.bias.evaluate(y)*beta for y in x]
-        data = {
-            'bias_pot': pot,
-            'betaG': {
-                'x': x.tolist(),
-                'y': betaG
-            }
-        }
+        beta = 1.0 / (kB * self.mc.T)
+        betaG = [self.bias.evaluate(y) * beta for y in x]
+        data = {'bias_pot': pot, 'betaG': {'x': x.tolist(), 'y': betaG}}
         with open(self.fname, 'w') as out:
             json.dump(data, out)

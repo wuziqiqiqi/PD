@@ -1,6 +1,6 @@
+import numpy as np
 from clease.montecarlo.observers import MCObserver
 from clease import _logger
-import numpy as np
 
 
 class LowestEnergyStructure(MCObserver):
@@ -14,6 +14,7 @@ class LowestEnergyStructure(MCObserver):
     """
 
     def __init__(self, atoms, verbose=True):
+        super().__init__()
         self.atoms = atoms
         self.lowest_energy = np.inf
         self.lowest_energy_cf = None
@@ -36,9 +37,9 @@ class LowestEnergyStructure(MCObserver):
             System changes. See doc-string of
             `clease.montecarlo.observers.MCObserver`
         """
-        energy = self.atoms.get_calculator().results['energy']
+        energy = self.atoms.calc.results['energy']
         if self.emin_atoms is None:
-            calc = self.atoms.get_calculator()
+            calc = self.atoms.calc
             self.lowest_energy_cf = calc.get_cf()
             self.lowest_energy = energy
             self.emin_atoms = self.atoms.copy()
@@ -46,7 +47,7 @@ class LowestEnergyStructure(MCObserver):
 
         if energy < self.lowest_energy:
             dE = energy - self.lowest_energy
-            calc = self.atoms.get_calculator()
+            calc = self.atoms.calc
             self.lowest_energy = energy
             self.emin_atoms = self.atoms.copy()
             self.lowest_energy_cf = calc.get_cf()

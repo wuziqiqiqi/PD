@@ -13,6 +13,7 @@ from ase.io import write
 
 
 class NewStructPageTest(unittest.TestCase):
+
     def load_pop_ups(self, app):
         screen = app.root.ids.sm.get_screen('NewStruct')
 
@@ -99,15 +100,13 @@ class NewStructPageTest(unittest.TestCase):
         page.import_structures()
 
         # Check the argument passed to the cb_mock class
-        cb_mock.assert_called_once_with(
-            kivy_mock.get_running_app().root.ids.status)
+        cb_mock.assert_called_once_with(kivy_mock.get_running_app().root.ids.status)
 
         # Make sure the method is called exactly once
         method = new_struct_mock().insert_structures
 
         # Make sure that insert_structures was called with the right arguments
-        method.assert_called_once_with(
-            traj_init=init_file, traj_final=final_file, cb=cb_mock())
+        method.assert_called_once_with(traj_init=init_file, traj_final=final_file, cb=cb_mock())
 
         # Check that it is called correctly also when only the initial
         # structures are passed
@@ -116,8 +115,7 @@ class NewStructPageTest(unittest.TestCase):
         method.reset_mock()
         page.import_structures()
 
-        cb_mock.assert_called_once_with(
-            kivy_mock.get_running_app().root.ids.status)
+        cb_mock.assert_called_once_with(kivy_mock.get_running_app().root.ids.status)
         method.assert_called_once_with(traj_init=init_file, cb=cb_mock())
 
         del traj_init

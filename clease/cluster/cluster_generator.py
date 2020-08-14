@@ -1,16 +1,19 @@
 from itertools import filterfalse, product
 import numpy as np
-from ase import Atoms
-from clease.cluster_fingerprint import ClusterFingerprint
-from ase.geometry import wrap_positions
 from typing import List, Tuple, Dict, Set, Iterator, Sequence
+from ase import Atoms
+from ase.geometry import wrap_positions
+from .cluster_fingerprint import ClusterFingerprint
+
+__all__ = ('ClusterGenerator', 'SitesWithinCutoff')
 
 
-class ClusterGenerator(object):
+class ClusterGenerator:
     """
     Class for generating cluster info that is independent of the
     template
     """
+
     def __init__(self, prim_cell: Atoms) -> None:
         self.with_cutoff = SitesWithinCutoff(self)
         self.prim = prim_cell
@@ -24,9 +27,7 @@ class ClusterGenerator(object):
         return np.allclose(self.shifts, other.shifts) and \
             np.allclose(self.prim_cell_invT, other.prim_cell_invT)
 
-    def eucledian_distance_vec(self,
-                               x1: Sequence[int],
-                               x2: Sequence[int]) -> np.ndarray:
+    def eucledian_distance_vec(self, x1: Sequence[int], x2: Sequence[int]) -> np.ndarray:
         """
         Eucledian distance between to vectors
 
@@ -74,9 +75,7 @@ class ClusterGenerator(object):
         diff_sq = np.sum((wrapped[0, :] - self.shifts)**2, axis=1)
         return np.argmin(diff_sq)
 
-    def eucledian_distance(self,
-                           x1: Sequence[int],
-                           x2: Sequence[int]) -> float:
+    def eucledian_distance(self, x1: Sequence[int], x2: Sequence[int]) -> float:
         d = self.eucledian_distance_vec(x1, x2)
         return np.sqrt(np.sum(d**2))
 
@@ -98,11 +97,9 @@ class ClusterGenerator(object):
     def num_sub_lattices(self) -> int:
         return len(self.prim)
 
-    def sites_within_cutoff(self,
-                            cutoff: float,
-                            x0: Tuple[int] = (0, 0, 0, 0)) -> filterfalse:
+    def sites_within_cutoff(self, cutoff: float, x0: Tuple[int] = (0, 0, 0, 0)) -> filterfalse:
         min_diag = self.shortest_diag
-        max_int = int(cutoff/min_diag) + 1
+        max_int = int(cutoff / min_diag) + 1
 
         def filter_func(x: int) -> bool:
             d = self.eucledian_distance(x0, x)
@@ -110,10 +107,8 @@ class ClusterGenerator(object):
 
         sites = filterfalse(
             filter_func,
-            product(range(-max_int, max_int+1),
-                    range(-max_int, max_int+1),
-                    range(-max_int, max_int+1),
-                    range(self.num_sub_lattices)))
+            product(range(-max_int, max_int + 1), range(-max_int, max_int + 1),
+                    range(-max_int, max_int + 1), range(self.num_sub_lattices)))
         return sites
 
     def get_fp(self, X: List[np.ndarray]) -> ClusterFingerprint:
@@ -129,7 +124,7 @@ class ClusterGenerator(object):
         for i in range(1, X.shape[0]):
             off_diag += np.diagonal(X, offset=i).tolist()
         N = X.shape[0]
-        assert len(off_diag) == N*(N-1)/2
+        assert len(off_diag) == N * (N - 1) / 2
         inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
         fp = ClusterFingerprint(list(inner))
         return fp
@@ -144,15 +139,12 @@ class ClusterGenerator(object):
         sites = set(map(tuple, sites))
         within_cutoff[tuple(x0)] = sites
         for s in sites:
-            nearby = [s1 for s1 in sites
-                      if self.eucledian_distance(s1, s) <= cutoff and s1 != s]
+            nearby = [s1 for s1 in sites if self.eucledian_distance(s1, s) <= cutoff and s1 != s]
 
             within_cutoff[s] = nearby
         return within_cutoff
 
-    def site_iterator(self,
-                      within_cutoff: Dict,
-                      size: int,
+    def site_iterator(self, within_cutoff: Dict, size: int,
                       ref_lattice: int) -> Iterator[Tuple[int]]:
         """
         Return an iterator of all combinations of sites within a cutoff
@@ -174,7 +166,7 @@ class ClusterGenerator(object):
                     if any(next_item <= v for v in current):
                         continue
                     rem = set.intersection(remaining, within_cutoff[next_item])
-                    yield from recursive_yield(rem, current+[next_item])
+                    yield from recursive_yield(rem, current + [next_item])
 
         for v in within_cutoff[x0]:
             rem = within_cutoff[x0].intersection(within_cutoff[v])
@@ -211,8 +203,7 @@ class ClusterGenerator(object):
                 cluster[i] = ordered_f
         return clusters, all_fps
 
-    def _get_internal_distances(self,
-                                figure: List[List[int]]) -> List[List[float]]:
+    def _get_internal_distances(self, figure: List[List[int]]) -> List[List[float]]:
         """
         Return all the internal distances of a figure
         """
@@ -251,7 +242,7 @@ class ClusterGenerator(object):
         dists = self._get_internal_distances(figure)
         equiv_sites = []
         for i in range(len(dists)):
-            for j in range(i+1, len(dists)):
+            for j in range(i + 1, len(dists)):
                 if np.allclose(dists[i], dists[j]):
                     equiv_sites.append((i, j))
 
@@ -274,11 +265,12 @@ class ClusterGenerator(object):
         return max(max_dists)
 
 
-class SitesWithinCutoff(object):
+class SitesWithinCutoff:
     """
     Class that keeps track of nearby sites. It automatically re-calculates if
     the cutoff changes. If it can re-use a previous result it will do that.
     """
+
     def __init__(self, generator: ClusterGenerator) -> None:
         self.generator = generator
         self.cutoff = 0.0
@@ -292,15 +284,12 @@ class SitesWithinCutoff(object):
             return True
         return ref_lattice not in self.pre_calc.keys()
 
-    def get(self,
-            cutoff: float,
-            ref_lattice: int) -> Dict[int, List[Tuple[int]]]:
+    def get(self, cutoff: float, ref_lattice: int) -> Dict[int, List[Tuple[int]]]:
         """
         Return sites within the cutoff
         """
         if self.must_generate(cutoff, ref_lattice):
-            sites = self.generator.sites_within_cutoff(
-                cutoff, [0, 0, 0, ref_lattice])
+            sites = self.generator.sites_within_cutoff(cutoff, [0, 0, 0, ref_lattice])
             self.pre_calc[ref_lattice] = list(sites)
             self.cutoff = cutoff
         return self.pre_calc[ref_lattice]

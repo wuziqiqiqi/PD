@@ -27,14 +27,14 @@ class SGCMonteCarlo(Montecarlo):
         Possible symbols to be used in swaps
     """
 
-    def __init__(self, atoms, temp, symbols=[]):
+    def __init__(self, atoms, temp, symbols=()):
         Montecarlo.__init__(self, atoms, temp)
 
         self.symbols = symbols
 
         if len(self.symbols) <= 1:
             raise ValueError("At least 2 symbols have to be specified")
-        self.averager = SGCObserver(self.atoms.get_calculator())
+        self.averager = SGCObserver(self.atoms.calc)
 
         self.chem_pots = []
         self.chem_pot_names = []
@@ -55,13 +55,12 @@ class SGCMonteCarlo(Montecarlo):
 
     def _get_trial_move(self):
         """Generate a trial move by flipping the symbol of one atom."""
-        self.current_singlets = self.atoms.get_calculator().get_singlets()
+        self.current_singlets = self.atoms.calc.get_singlets()
         indx = np.random.randint(low=0, high=len(self.atoms))
         old_symb = self.atoms[indx].symbol
         new_symb = old_symb
         while new_symb == old_symb:
-            new_symb = self.symbols[np.random.randint(
-                low=0, high=len(self.symbols))]
+            new_symb = self.symbols[np.random.randint(low=0, high=len(self.symbols))]
         system_changes = [(indx, old_symb, new_symb)]
         return system_changes
 
@@ -97,7 +96,7 @@ class SGCMonteCarlo(Montecarlo):
 
     @chemical_potential.setter
     def chemical_potential(self, chem_pot):
-        eci = self.atoms.get_calculator().eci
+        eci = self.atoms.calc.eci
         if any([k not in eci.keys() for k in chem_pot.keys()]):
             msg = "A chemical potential not being trackted is added. Make "
             msg += "sure that all the following keys are in the ECIs before "
@@ -109,9 +108,8 @@ class SGCMonteCarlo(Montecarlo):
 
         self._chemical_potential = chem_pot
         if self.chem_pot_in_eci:
-            self._reset_eci_to_original(self.atoms.get_calculator().eci)
-        self._include_chemical_potential_in_eci(
-            chem_pot, self.atoms.get_calculator().eci)
+            self._reset_eci_to_original(self.atoms.calc.eci)
+        self._include_chemical_potential_in_eci(chem_pot, self.atoms.calc.eci)
 
     def _include_chemical_potential_in_eci(self, chem_pot, eci):
         """
@@ -134,7 +132,7 @@ class SGCMonteCarlo(Montecarlo):
             self.chem_pot_names.append(key)
             current_eci = eci.get(key, 0.0)
             eci[key] = current_eci - chem_pot[key]
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         calc.update_eci(eci)
         self.chem_pot_in_eci = True
         self.current_energy = calc.calculate(None, None, None)
@@ -148,7 +146,7 @@ class SGCMonteCarlo(Montecarlo):
         """
         for name, val in zip(self.chem_pot_names, self.chem_pots):
             eci_with_chem_pot[name] += val
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         calc.update_eci(eci_with_chem_pot)
         self.chem_pot_in_eci = False
         self.current_energy = calc.calculate(None, None, None)
@@ -157,7 +155,7 @@ class SGCMonteCarlo(Montecarlo):
     def reset_eci(self):
         """Return the ECIs."""
         if self.chem_pot_in_eci:
-            self._reset_eci_to_original(self.atoms.get_calculator().eci)
+            self._reset_eci_to_original(self.atoms.calc.eci)
 
     def run(self, steps=10, chem_pot=None):
         """
@@ -172,10 +170,7 @@ class SGCMonteCarlo(Montecarlo):
         """
 
         if chem_pot is None and self.chemical_potential is None:
-            ex_chem_pot = {
-                "c1_1": -0.1,
-                "c1_2": 0.05
-            }
+            ex_chem_pot = {"c1_1": -0.1, "c1_2": 0.05}
             raise ValueError(f"No chemicalpotentials given. Has to be "
                              f"dictionary of the form {ex_chem_pot}")
 
@@ -187,7 +182,7 @@ class SGCMonteCarlo(Montecarlo):
 
     def singlet2composition(self, avg_singlets):
         """Convert singlets to composition."""
-        bf = self.atoms.get_calculator().settings.basis_functions
+        bf = self.atoms.calc.settings.basis_functions
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
 
         index = {s: i for i, s in enumerate(self.symbols)}
@@ -217,19 +212,19 @@ class SGCMonteCarlo(Montecarlo):
         """
         N = self.averager.counter
         quantities = {}
-        singlets = self.averager.singlets/N
-        singlets_sq = self.averager.quantities["singlets_sq"]/N
+        singlets = self.averager.singlets / N
+        singlets_sq = self.averager.quantities["singlets_sq"] / N
 
         quantities["sgc_energy"] = self.averager.energy.mean + self.energy_bias
         quantities["sgc_heat_capacity"] = self.averager.energy_sq.mean - \
             self.averager.energy.mean**2
 
-        quantities["sgc_heat_capacity"] /= (kB*self.T**2)
+        quantities["sgc_heat_capacity"] /= (kB * self.T**2)
 
         quantities["energy"] = self.averager.energy.mean + self.energy_bias
         natoms = len(self.atoms)
         for i in range(len(self.chem_pots)):
-            quantities["energy"] += self.chem_pots[i]*singlets[i]*natoms
+            quantities["energy"] += self.chem_pots[i] * singlets[i] * natoms
 
         quantities["temperature"] = self.T
         quantities["n_mc_steps"] = self.averager.counter
@@ -255,5 +250,5 @@ class SGCMonteCarlo(Montecarlo):
             print(exc)
 
         if reset_eci:
-            self._reset_eci_to_original(self.atoms.get_calculator().eci)
+            self._reset_eci_to_original(self.atoms.calc.eci)
         return quantities

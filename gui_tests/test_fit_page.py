@@ -19,6 +19,7 @@ def clear_cache():
 
 
 class FitPageTests(unittest.TestCase):
+
     def eci_popup(self, app):
         screen = app.root.ids.sm.get_screen('Fit')
 
@@ -53,8 +54,7 @@ class FitPageTests(unittest.TestCase):
     def test_ga_fit(self, app_mock, ga_fit_eval_mock, eval_mock):
         # Specify required return values
         eval_mock.return_value.eci = np.array([1.0, 2.0])
-        eval_mock.return_value.get_eci_dict.return_value = {'c0': 1.0,
-                                                            'c2_0': 2.0}
+        eval_mock.return_value.get_eci_dict.return_value = {'c0': 1.0, 'c2_0': 2.0}
         eval_mock.return_value.cf_matrix = np.array([[1.0, 1.0], [0.2, -0.1]])
         eval_mock.return_value.e_dft = np.array([-0.5, -0.8])
         eval_mock.return_value.e_pred_loo = np.array([-0.1, 0.9])
@@ -62,8 +62,7 @@ class FitPageTests(unittest.TestCase):
         eval_mock.return_value.rmse.return_value = 0.1
         eval_mock.return_value.mae.return_value = 0.08
 
-        app_mock.get_running_app = MagicMock(root=MagicMock(
-            ids=MagicMock(text='')))
+        app_mock.get_running_app = MagicMock(root=MagicMock(ids=MagicMock(text='')))
 
         # Set fitting algorithm to GA
         page = FitPage()
@@ -95,9 +94,8 @@ class FitPageTests(unittest.TestCase):
         self.assertEqual(len(expect), len(page.energy_plot.points))
         tol = 1E-6
         self.assertTrue(
-            all(map(lambda x:
-                    abs(x[0][0] - x[1][0]) < 1E-6 and abs(x[0]
-                                                          [1] - x[1][1]) < tol,
+            all(
+                map(lambda x: abs(x[0][0] - x[1][0]) < 1E-6 and abs(x[0][1] - x[1][1]) < tol,
                     zip(expect, page.energy_plot.points))))
 
         # Check that the ECI plot has been updated
@@ -127,18 +125,29 @@ class FitPageTests(unittest.TestCase):
         # Check that select condition is passed
         page.ids.dbSelectCondInput.text = 'gen=2'
         page.ids.fitButton.dispatch('on_release')
-        eval_mock.assert_called_with(
-            ANY, alpha=ANY, fitting_scheme=ANY, max_cluster_dia=ANY,
-            max_cluster_size=ANY, nsplits=ANY, num_repetitions=ANY,
-            scoring_scheme=ANY, select_cond=[('gen', '=', 2.0)])
+        eval_mock.assert_called_with(ANY,
+                                     alpha=ANY,
+                                     fitting_scheme=ANY,
+                                     max_cluster_dia=ANY,
+                                     max_cluster_size=ANY,
+                                     nsplits=ANY,
+                                     num_repetitions=ANY,
+                                     scoring_scheme=ANY,
+                                     select_cond=[('gen', '=', 2.0)])
 
     @patch('clease.gui.fit_page.App')
     def test_auto_load_fit_settings(self, app_mock):
         clear_cache()
         page = FitPage()
         expected = {
-            'LASSO': {'alpha': 0.0001, 'algorithm': 'LASSO'},
-            'L2': {'alpha': 0.0001, 'algorithm': 'L2'},
+            'LASSO': {
+                'alpha': 0.0001,
+                'algorithm': 'LASSO'
+            },
+            'L2': {
+                'alpha': 0.0001,
+                'algorithm': 'L2'
+            },
             'BCS': {
                 'algorithm': 'BCS',
                 'shape_var': 0.5,

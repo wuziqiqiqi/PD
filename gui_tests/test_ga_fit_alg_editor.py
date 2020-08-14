@@ -22,6 +22,7 @@ def clear_cached_values():
 
 
 class TestGAEditor(unittest.TestCase):
+
     def test_help_messages(self):
         ga_edit = GAEditor()
 
@@ -61,8 +62,8 @@ class TestGAEditor(unittest.TestCase):
         for field in ga_edit.ids.mainLayout.children:
             if isinstance(field, TextInput):
                 field.dispatch('on_text_validate')
-                page.close_ga_editor.assert_called_with(
-                    '1', '0.1', '100', '150', 'AICC', False, '100')
+                page.close_ga_editor.assert_called_with('1', '0.1', '100', '150', 'AICC', False,
+                                                        '100')
                 num_calls += 1
                 page.close_ga_editor.reset_mock()
         page.dismiss_popup()

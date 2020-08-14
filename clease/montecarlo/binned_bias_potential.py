@@ -21,17 +21,18 @@ class BinnedBiasPotential(BiasPotential):
         Callable object for getting the collective variable.
         It needs to support the peak key word.
     """
+
     def __init__(self, xmin=0.0, xmax=1.0, nbins=10, getter=None):
         self.xmin = xmin
         self.xmax = xmax
         self.nbins = nbins
         self.values = np.zeros(self.nbins)
-        self.dx = (self.xmax - self.xmin)/self.nbins
+        self.dx = (self.xmax - self.xmin) / self.nbins
         self.getter = getter
 
     def get_index(self, x):
         """Return the index corresponding to an x value."""
-        i = int((x - self.xmin)/self.dx)
+        i = int((x - self.xmin) / self.dx)
         if i >= self.nbins:
             i = self.nbins - 1
         elif i < 0:
@@ -40,7 +41,7 @@ class BinnedBiasPotential(BiasPotential):
 
     def get_x(self, index):
         """Return x value corresponding to an index."""
-        return self.xmin + index*self.dx + 0.5*self.dx
+        return self.xmin + index * self.dx + 0.5 * self.dx
 
     def evaluate(self, x):
         """Evaluate the bias potential at x."""
@@ -49,20 +50,20 @@ class BinnedBiasPotential(BiasPotential):
             y_left = self.values[0]
             y_right = self.values[1]
             x_left = self.get_x(0)
-            y = y_left + (x - x_left)*(y_right - y_left)/self.dx
+            y = y_left + (x - x_left) * (y_right - y_left) / self.dx
         elif i == self.nbins - 1:
             y_left = self.values[self.nbins - 2]
             y_right = self.values[self.nbins - 1]
             x_left = self.get_x(self.nbins - 2)
-            y = y_left + (x - x_left)*(y_right - y_left)/self.dx
+            y = y_left + (x - x_left) * (y_right - y_left) / self.dx
         else:
-            x_left = self.get_x(i-1)
+            x_left = self.get_x(i - 1)
             x_center = x_left + self.dx
             x_right = x_center + self.dx
-            y_left = self.values[i-1]
+            y_left = self.values[i - 1]
             y_center = self.values[i]
-            y_right = self.values[i+1]
-            fac = 1.0/self.dx**2
+            y_right = self.values[i + 1]
+            fac = 1.0 / self.dx**2
 
             # Lagrange polynomial
             y = 0.5*fac*(x - x_center)*(x-x_right)*y_left - \

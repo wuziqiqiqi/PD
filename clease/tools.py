@@ -1,22 +1,21 @@
 """A collection of miscellaneous functions used for Cluster Expansion."""
-from itertools import (
-    permutations, combinations, product,
-    filterfalse, chain
-)
-import numpy as np
+import re
+from itertools import (permutations, combinations, product, filterfalse, chain)
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict, Set
+from typing import List, Optional, Tuple, Dict, Set, Sequence
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
-from random import sample
+import numpy as np
+from numpy.random import sample, shuffle
 from ase.db import connect
 from ase.db.core import parse_selection
-from clease import _logger
 from scipy.spatial import cKDTree as KDTree
-import re
+
+from .cleaselogger import _logger
 
 
-class ApproxEqualityList(object):
+# pylint: disable=too-few-public-methods
+class ApproxEqualityList:
     """
     Wrapper around a list which implements a new comparison operator. If two
     items in the list is equal within a given tolerance, the items are
@@ -39,7 +38,7 @@ class ApproxEqualityList(object):
         for x, y in zip(self.array, other.array):
             if x - y < -self.tol:
                 return True
-            elif x - y > self.tol:
+            if x - y > self.tol:
                 return False
         return False
 
@@ -89,8 +88,8 @@ def ndarray2list(data):
         return data
 
     data = list(data)
-    for i in range(len(data)):
-        data[i] = ndarray2list(data[i])
+    for i, value in enumerate(data):
+        data[i] = ndarray2list(value)
     return list(data)
 
 
@@ -131,8 +130,7 @@ def flatten(x):
     """Flatten list."""
     if isinstance(x, Iterable):
         return [a for i in x for a in flatten(i)]
-    else:
-        return [x]
+    return [x]
 
 
 def nested_array2list(array):
@@ -142,18 +140,21 @@ def nested_array2list(array):
     else:
         array = list(array)
     try:
-        for i in range(len(array)):
-            if isinstance(array[i], np.ndarray):
-                array[i] = array[i].tolist()
+        for i, value in enumerate(array):
+            if isinstance(value, np.ndarray):
+                array[i] = value.tolist()
             else:
-                array[i] = list(array[i])
+                array[i] = list(value)
     except TypeError:
         pass
     return array
 
 
-def update_db(uid_initial=None, final_struct=None, db_name=None,
-              custom_kvp_init={}, custom_kvp_final={}):
+def update_db(uid_initial=None,
+              final_struct=None,
+              db_name=None,
+              custom_kvp_init: dict = None,
+              custom_kvp_final: dict = None):
     """Update the database.
 
     Parameters:
@@ -176,6 +177,11 @@ def update_db(uid_initial=None, final_struct=None, db_name=None,
         If desired, one can pass additional key-value-pairs for the
         entry containing the final structure
     """
+    if custom_kvp_init is None:
+        custom_kvp_init = {}
+    if custom_kvp_final is None:
+        custom_kvp_final = {}
+
     db = connect(db_name)
 
     init_row = db.get(id=uid_initial)
@@ -185,8 +191,7 @@ def update_db(uid_initial=None, final_struct=None, db_name=None,
     select_cond = [('name', '=', name), ('struct_type', '=', 'final')]
     exist = sum(1 for row in db.select(select_cond))
     if exist >= 1:
-        _logger(f"A structure with 'name'={name} and 'struct_type'=final "
-                f"already exits in DB")
+        _logger(f"A structure with 'name'={name} and 'struct_type'=final already exits in DB")
         return
 
     # Write the final structure to database
@@ -211,8 +216,7 @@ def exclude_information_entries():
     """Return selection condition to exlcude all entries in the database that
        only contain information about the clusters.
     """
-    return [('name', '!=', 'primitive_cell'),
-            ('name', '!=', 'template')]
+    return [('name', '!=', 'primitive_cell'), ('name', '!=', 'template')]
 
 
 def get_all_internal_distances(atoms, max_dist, ref_indices):
@@ -236,12 +240,14 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
 
 
 def reconfigure(settings, select_cond=None):
-    from clease import CorrFunction
+    from clease.corr_func import CorrFunction  # pylint: disable=import-outside-toplevel
     CorrFunction(settings).reconfigure_db_entries(select_cond)
 
 
-def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
-                  groups: List[int] = []) -> List[Dict[str, np.ndarray]]:
+def split_dataset(X: np.ndarray,
+                  y: np.ndarray,
+                  nsplits: int = 10,
+                  groups: Sequence[int] = ()) -> List[Dict[str, np.ndarray]]:
     """Split the dataset such that it can be used for k-fold
         cross validation.
 
@@ -254,8 +260,6 @@ def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
         across different partitions. If an empty list is give,
         each item in y is assumed to constitute its own group.
     """
-    from random import shuffle
-
     if not groups:
         groups = list(range(len(y)))
     unique_groups = list(set(groups))
@@ -265,14 +269,14 @@ def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
                          "than the number of partitions.")
     shuffle(unique_groups)
     partitions = []
-    num_validation = int(len(unique_groups)/nsplits)
+    num_validation = int(len(unique_groups) / nsplits)
 
     if num_validation < 1:
         num_validation = 1
     for i in range(nsplits):
-        start = i*num_validation
-        end = (i+1)*num_validation
-        if i == nsplits-1:
+        start = i * num_validation
+        end = (i + 1) * num_validation
+        if i == nsplits - 1:
             chosen_groups = unique_groups[start:]
         else:
             chosen_groups = unique_groups[start:end]
@@ -280,9 +284,9 @@ def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
         group_mask = np.zeros(len(groups), dtype=np.uint8)
         group_mask[chosen_groups] = 1
         index_mask = np.zeros(len(y), dtype=np.uint8)
-        for i, g in enumerate(groups):
+        for j, g in enumerate(groups):
             if group_mask[g]:
-                index_mask[i] = 1
+                index_mask[j] = 1
         data = {
             "train_X": X[index_mask == 0, :],
             "train_y": y[index_mask == 0],
@@ -293,7 +297,8 @@ def split_dataset(X: np.ndarray, y: np.ndarray, nsplits: int = 10,
     return partitions
 
 
-def random_validation_set(num: int = 10, select_cond: Optional[list] = None,
+def random_validation_set(num: int = 10,
+                          select_cond: Optional[list] = None,
                           db_name: Optional[str] = None):
     """
     Construct a random test set.
@@ -305,8 +310,7 @@ def random_validation_set(num: int = 10, select_cond: Optional[list] = None,
     :param db_name: Name of the database
     """
     if select_cond is None:
-        select_cond = [('struct_type', '=', 'initial'),
-                       ('converged', '=', True)]
+        select_cond = [('struct_type', '=', 'initial'), ('converged', '=', True)]
 
     if db_name is None:
         raise ValueError("No database provided!")
@@ -366,8 +370,11 @@ def nested_list2str(nested_list):
 
 def str2nested_list(string):
     """Convert string to nested list."""
-    return [list(map(lambda x: int(x), item.split(',')))
-            for item in string.split('x')]
+
+    def _as_int(x):
+        return int(x)
+
+    return [list(map(_as_int, item.split(','))) for item in string.split('x')]
 
 
 def min_distance_from_facet(x, cell):
@@ -435,8 +442,7 @@ def trans_matrix_index2tags(trans_matrix, tagged_atoms, indices=None):
         tag = tagged_atoms[indices[i]].tag
         if used_tags[tag]:
             continue
-        new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag
-                   for k, v in row.items()}
+        new_row = {tagged_atoms[k].tag: tagged_atoms[v].tag for k, v in row.items()}
         used_tags[tag] = True
         new_tm[tag] = new_row
     return new_tm
@@ -457,7 +463,7 @@ def factorize(n):
     while n > 1:
         for i in range(2, n + 1):
             if n % i == 0:
-                n = int(n/i)
+                n = int(n / i)
                 yield i
                 break
 
@@ -473,23 +479,19 @@ def count_atoms(atoms):
 
 
 def all_integer_transform_matrices_given_diag(diag):
-    rng1 = range(0, diag[0]+1)
+    rng1 = range(0, diag[0] + 1)
     rng2 = rng1
-    rng3 = range(0, diag[1]+1)
+    rng3 = range(0, diag[1] + 1)
     for off_diag in product(rng1, rng2, rng3):
-        yield np.array(
-            [[diag[0], off_diag[0], off_diag[1]],
-             [0, diag[1], off_diag[2]],
-             [0, 0, diag[2]]]
-        )
+        yield np.array([[diag[0], off_diag[0], off_diag[1]], [0, diag[1], off_diag[2]],
+                        [0, 0, diag[2]]])
 
 
 def all_integer_transform_matrices_per_diag(n):
     """
     Yield all the integer transform matrices
     """
-    diags = filterfalse(lambda x: x[0]*x[1]*x[2] != n,
-                        product(range(n+1), repeat=3))
+    diags = filterfalse(lambda x: x[0] * x[1] * x[2] != n, product(range(n + 1), repeat=3))
 
     for d in diags:
         yield all_integer_transform_matrices_given_diag(d)
@@ -511,7 +513,7 @@ def rotate_cells(cell, target_cell):
     uvec_cell = np.zeros_like(cell)
     uvec_target_cell = np.zeros_like(target_cell)
     for i in range(3):
-        uvec_cell[i, :] = cell[i, :]/np.sqrt(dot_prod_cell[i, i])
+        uvec_cell[i, :] = cell[i, :] / np.sqrt(dot_prod_cell[i, i])
         uvec_target_cell[i, :] = target_cell[i, :] / \
             np.sqrt(dot_prod_target_cell[i, i])
 
@@ -525,7 +527,7 @@ def rotate_cells(cell, target_cell):
     v[1, 2] = -v[0]
     v[2, 0] = -v[1]
     v[2, 1] = v[0]
-    R = np.eye(3) + v_cross + v_cross.dot(v_cross)/(1 + c)
+    R = np.eye(3) + v_cross + v_cross.dot(v_cross) / (1 + c)
     target_cell = R.dot(target_cell)
     return target_cell
 
@@ -649,7 +651,7 @@ def rate_bf_subsets(elems, bfs):
         List with dictionaries with the basis function values
     """
     score_and_comb = []
-    for comb in combinations(range(len(bfs)), r=len(elems)-1):
+    for comb in combinations(range(len(bfs)), r=len(elems) - 1):
         chosen = [{s: bfs[x][s] for s in elems} for x in comb]
         mat = bf2matrix(chosen)
         score = 0.0
@@ -713,6 +715,7 @@ def select_bf_subsets(basis_elems, bfs):
     return best_selection
 
 
+# pylint: disable=too-many-branches
 def cname_lt(cname1, cname2):
     """
     Compare two cluster names to check if the first cluster name is
@@ -737,7 +740,7 @@ def cname_lt(cname1, cname2):
 
     if prefix1 < prefix2:
         return True
-    elif prefix1 > prefix2:
+    if prefix1 > prefix2:
         return False
 
     # Case where prefixes are the same.
@@ -753,8 +756,7 @@ def cname_lt(cname1, cname2):
 
     if suffix1 < suffix2:
         return True
-    else:
-        return False
+    return False
 
 
 def aic(mse, num_features, num_data_points):
@@ -771,7 +773,7 @@ def aic(mse, num_features, num_data_points):
     num_data_points: int
         Number of data points
     """
-    return 2.0*num_features + num_data_points*np.log(mse)
+    return 2.0 * num_features + num_data_points * np.log(mse)
 
 
 def aicc(mse, num_features, num_data_points):
@@ -792,7 +794,7 @@ def aicc(mse, num_features, num_data_points):
         denum = 1.0
     else:
         denum = num_data_points - num_features - 1
-    corr = (2*num_features**2 + 2*num_features)/denum
+    corr = (2 * num_features**2 + 2 * num_features) / denum
     return aic(mse, num_features, num_data_points) + corr
 
 
@@ -810,7 +812,7 @@ def bic(mse, num_features, num_data_points):
     num_data_points: int
         Number of data points
     """
-    return np.log(num_data_points)*num_features + num_data_points*np.log(mse)
+    return np.log(num_data_points) * num_features + num_data_points * np.log(mse)
 
 
 def get_extension(fname):
@@ -867,7 +869,7 @@ def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
         else:
             dia.append(0)
 
-    sort_obj = [(s, d, n) for s, d, n in zip(sizes, dia, cf_names)]
+    sort_obj = list(zip(sizes, dia, cf_names))
     sort_obj.sort()
     return [s[-1] for s in sort_obj]
 
@@ -897,6 +899,7 @@ def get_ids(select_cond: List[tuple], db_name: str) -> List[int]:
 
 
 class SQLCursor(Protocol):
+
     def execute(self, sql: str, placeholder: Tuple[str]) -> None:
         pass
 
@@ -904,8 +907,7 @@ class SQLCursor(Protocol):
         pass
 
 
-def get_attribute(
-        ids: List[int], cur: SQLCursor, key: str, table: str) -> list:
+def get_attribute(ids: List[int], cur: SQLCursor, key: str, table: str) -> list:
     """
     Retrieve the value of the given key for the rows with the given ID of
     the database entry.
@@ -943,8 +945,7 @@ def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
     :param cur: SQL cursor
     :param table: Table to check
     """
-    known_tables = ['polynomial_cf', 'binary_linear_cf',
-                    'trigonometric_cf']
+    known_tables = ['polynomial_cf', 'binary_linear_cf', 'trigonometric_cf']
     if table not in known_tables:
         raise ValueError(f"Table has to be one of {known_tables}")
 

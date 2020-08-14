@@ -1,16 +1,18 @@
 """Class containing a manager for creating template atoms."""
 import numpy as np
 from itertools import product
-from random import shuffle
+from numpy.random import shuffle
 from ase.build import make_supercell
 from clease import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import CellFilter, AtomsFilter
 from clease.tools import all_integer_transform_matrices
 
+__all__ = ('TemplateAtoms',)
+
 
 class TemplateAtoms(object):
-    def __init__(self, prim_cell, supercell_factor=27, size=None,
-                 skew_threshold=40, filters=[]):
+
+    def __init__(self, prim_cell, supercell_factor=27, size=None, skew_threshold=40, filters=()):
         if size is None and supercell_factor is None:
             raise TypeError("Either size or supercell_factor needs to be "
                             "specified.\n size: list or numpy array.\n "
@@ -84,8 +86,7 @@ class TemplateAtoms(object):
         elif isinstance(f, CellFilter):
             self.cell_filters.remove(f)
         else:
-            raise TypeError('Only AtomsFilters and CellFilters '
-                            'can be removed')
+            raise TypeError('Only AtomsFilters and CellFilters can be removed')
 
     def remove_filters(self, filters):
         """Remove a list of filters."""
@@ -227,7 +228,7 @@ class TemplateAtoms(object):
         equiv_filter = EquivalentCellsFilter(cells)
         self.add_cell_filter(equiv_filter)
         ucell = self.prim_cell.get_cell()
-        for diag in product(range(1, self.supercell_factor+1), repeat=3):
+        for diag in product(range(1, self.supercell_factor + 1), repeat=3):
             if np.prod(diag) > self.supercell_factor:
                 continue
 
@@ -253,7 +254,7 @@ class TemplateAtoms(object):
 
         ucell = self.prim_cell.get_cell()
         max_attempts = 100000
-        exp_value = self.supercell_factor**(1.0/3.0)
+        exp_value = self.supercell_factor**(1.0 / 3.0)
         for _ in range(max_attempts):
             diag = np.random.poisson(lam=exp_value, size=3)
             while np.prod(diag) > self.supercell_factor or np.prod(diag) == 0:
@@ -262,8 +263,7 @@ class TemplateAtoms(object):
             off_diags = np.random.poisson(lam=1, size=3)
 
             # Check that off diagonals are smaller or equal to diagonal
-            if (off_diags[0] > diag[0] or off_diags[1] > diag[0] or
-               off_diags[2] > diag[1]):
+            if (off_diags[0] > diag[0] or off_diags[1] > diag[0] or off_diags[2] > diag[1]):
                 continue
 
             matrix = np.zeros((3, 3), dtype=int)

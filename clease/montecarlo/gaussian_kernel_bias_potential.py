@@ -31,8 +31,8 @@ class GaussianKernelBiasPotential(BiasPotential):
            the code expects to get the coordinate after the change,
            but the observer should not update its current value.
     """
-    def __init__(self, xmin=0.0, xmax=1.0, num_kernels=10, width=0.1,
-                 getter=None):
+
+    def __init__(self, xmin=0.0, xmax=1.0, num_kernels=10, width=0.1, getter=None):
         self.xmin = xmin
         self.xmax = xmax
         self.width = width
@@ -40,20 +40,19 @@ class GaussianKernelBiasPotential(BiasPotential):
         self.limit = 0.01
 
         self.pad = int(np.sqrt(-np.log(self.limit)) + 1)
-        self.num_kernels = num_kernels + 2*self.pad
+        self.num_kernels = num_kernels + 2 * self.pad
         self.coeff = np.zeros(self.num_kernels)
-        self.xmin_corrected = self.xmin - self.pad*width
-        self.xmax_corrected = self.xmax + self.pad*width
-        self.centers = np.linspace(self.xmin_corrected, self.xmax_corrected,
-                                   self.num_kernels)
+        self.xmin_corrected = self.xmin - self.pad * width
+        self.xmax_corrected = self.xmax + self.pad * width
+        self.centers = np.linspace(self.xmin_corrected, self.xmax_corrected, self.num_kernels)
         self.dx = (self.xmax_corrected - self.xmin_corrected) / \
             (self.num_kernels-1)
 
     def get_index(self, x):
-        return int((x-self.xmin_corrected)/self.dx)
+        return int((x - self.xmin_corrected) / self.dx)
 
     def get_x(self, indx):
-        return self.xmin_corrected + self.dx*indx
+        return self.xmin_corrected + self.dx * indx
 
     def inside_range(self, x):
         """
@@ -67,7 +66,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         Returns: int, int
             lower index, upper index
         """
-        delta = self.width*np.sqrt(-np.log(self.limit))
+        delta = self.width * np.sqrt(-np.log(self.limit))
         upper = x + delta
         lower = x - delta
         i_upper = self.get_index(upper)
@@ -77,12 +76,12 @@ class GaussianKernelBiasPotential(BiasPotential):
         return i_lower, i_upper
 
     def _gaussian(self, x, x0):
-        return np.exp(-((x-x0)/self.width)**2)
+        return np.exp(-((x - x0) / self.width)**2)
 
     def evaluate(self, x):
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high+1])
-        return np.sum(self.coeff[low:high+1]*w)
+        w = self._gaussian(x, self.centers[low:high + 1])
+        return np.sum(self.coeff[low:high + 1] * w)
 
     def __call__(self, system_changes):
         x = self.getter(system_changes, peak=True)
@@ -91,28 +90,28 @@ class GaussianKernelBiasPotential(BiasPotential):
     def local_update(self, x, dE):
         """Increase the local energy at x by an amount dE."""
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high+1])
+        w = self._gaussian(x, self.centers[low:high + 1])
 
         # Update the coefficient in such a way that the value at
         # point x is increased by dE and that the L2 norm of the
         # change in coefficient is minimised
-        self.coeff[low:high+1] += dE*w/np.sum(w**2)
+        self.coeff[low:high + 1] += dE * w / np.sum(w**2)
 
     def slope(self, x):
         """Evaluate slope."""
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high+1])
-        w *= -(x - self.centers[low:high+1])/self.width**2
-        return np.sum(self.coeff[low:high+1]*w)
+        w = self._gaussian(x, self.centers[low:high + 1])
+        w *= -(x - self.centers[low:high + 1]) / self.width**2
+        return np.sum(self.coeff[low:high + 1] * w)
 
     def ensure_zero_slope(self, x):
         """Change the coefficients such that the slope is zero at x."""
         low, high = self.inside_range(x)
-        c = self.centers[low:high+1]
-        w = self._gaussian(x, self.centers[low:high+1])
-        denom = (w*(x - c)/self.width**2)**2
-        lamb = self.slope(x)/np.sum(denom)
-        self.coeff[low:high+1] += lamb*(x - c)*w/self.width**2
+        c = self.centers[low:high + 1]
+        w = self._gaussian(x, self.centers[low:high + 1])
+        denom = (w * (x - c) / self.width**2)**2
+        lamb = self.slope(x) / np.sum(denom)
+        self.coeff[low:high + 1] += lamb * (x - c) * w / self.width**2
 
     def todict(self):
         return {

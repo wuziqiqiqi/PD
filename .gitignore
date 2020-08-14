@@ -4,12 +4,12 @@ PKG-INFO
 SOURCES.txt
 dependency_links.txt
 top_level.txt
-__pycache__/*
+__pycache__/
 settings.json
 clease/cython/clease_cxx.cpp
 *.gch
-clease.egg-info/*
-.vscode/*
+clease.egg-info/
+.vscode/
 *.so
 *.o
 gui_tests/*.txt
@@ -23,7 +23,6 @@ cxx/cython/clease_cxx.cpp
 *.coverage
 *.db
 concObsBack*.json
-.cleaseGUI/*
-gui_tests/.cleaseGUI/*
+.cleaseGUI/
 metadyn.json
 demo_save.json

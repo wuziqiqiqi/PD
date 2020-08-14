@@ -18,6 +18,7 @@ class CollectiveVariableConstraint(MCConstraint):
         MCObsrever that support peak keyword that returns the collective
         variable after the proposed move
     """
+
     def __init__(self, xmin=0.0, xmax=1.0, getter=None):
         self.xmin = xmin
         self.xmax = xmax

@@ -3,11 +3,12 @@
 from __future__ import division
 import time
 import numpy as np
+from numpy.random import choice
 from ase.units import kB
 from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
 from clease.montecarlo import BiasPotential
-from clease.montecarlo .swap_move_index_tracker import SwapMoveIndexTracker
+from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 from clease import _logger
 
 
@@ -23,7 +24,7 @@ class CanNotFindLegalMoveError(Exception):
     pass
 
 
-class Montecarlo(object):
+class Montecarlo:
     """Class for running Monte Carlo at a fixed composition (canonical).
 
     Parameters:
@@ -58,8 +59,8 @@ class Montecarlo(object):
         self.status_every_sec = 30
         self.atoms_tracker = SwapMoveIndexTracker()
         self.symbols = []
-        E0 = self.atoms.get_calculator().calculate(None, None, None)
-        self.atoms.get_calculator().clear_history()
+        E0 = self.atoms.calc.calculate(None, None, None)
+        self.atoms.calc.clear_history()
         self._build_atoms_list()
         self.current_energy = E0
         self.bias_energy = 0.0
@@ -82,8 +83,8 @@ class Montecarlo(object):
         self.selected_b = 0
         self.quit = False
 
-        self.filter = ExponentialFilter(min_time=0.2*len(self.atoms),
-                                        max_time=20*len(self.atoms),
+        self.filter = ExponentialFilter(min_time=0.2 * len(self.atoms),
+                                        max_time=20 * len(self.atoms),
                                         n_subfilters=10)
 
     def _probe_energy_bias(self, num_sweeps=2):
@@ -93,7 +94,7 @@ class Montecarlo(object):
         added to the total energy during post processing.
         """
         self.energy_bias = 0.0
-        num_steps = num_sweeps*len(self.atoms)
+        num_steps = num_sweeps * len(self.atoms)
         self.log(f"Probing energy bias using {num_steps} MC steps...")
         for _ in range(num_steps):
             E, _ = self._mc_step()
@@ -112,10 +113,10 @@ class Montecarlo(object):
         bias: float
             Energy bias
         """
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         eci = calc.eci
         c0_eci = eci['c0']
-        c0_eci -= bias/len(self.atoms)
+        c0_eci -= bias / len(self.atoms)
         eci['c0'] = c0_eci
 
         calc.update_eci(eci)
@@ -131,10 +132,10 @@ class Montecarlo(object):
         self.log('Bias subtracted from empty cluster...')
 
     def _undo_energy_bias_from_eci(self):
-        eci = self.atoms.get_calculator().eci
-        eci['c0'] += self.energy_bias/len(self.atoms)
-        self.atoms.get_calculator().update_eci(eci)
-        calc = self.atoms.get_calculator()
+        eci = self.atoms.calc.eci
+        eci['c0'] += self.energy_bias / len(self.atoms)
+        self.atoms.calc.update_eci(eci)
+        calc = self.atoms.calc
         self.current_energy = calc.calculate(None, None, None)
         self.log('Empty cluster ECI reset to original value...')
 
@@ -148,7 +149,7 @@ class Montecarlo(object):
         indices: list
             Indices where symb should be inserted
         """
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         for indx in indices:
             system_changes = (indx, self.atoms[indx].symbol, symb)
 
@@ -159,7 +160,7 @@ class Montecarlo(object):
         self._build_atoms_list()
         calc.clear_history()
 
-    def insert_symbol_random_places(self, symbol, num=1, swap_symbs=[]):
+    def insert_symbol_random_places(self, symbol, num=1, swap_symbs=()):
         """Insert random symbol.
 
         Parameters:
@@ -174,14 +175,13 @@ class Montecarlo(object):
             If given, will insert the replace symbol with sites having symbols
             in this list
         """
-        from random import choice
         if not swap_symbs:
             symbs = [atom.symbol for atom in self.atoms]
             swap_symbs = list(set(symbs))
         num_inserted = 0
         max_attempts = 10 * len(self.atoms)
 
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         attempts = 0
         while num_inserted < num and attempts < max_attempts:
             attempts += 1
@@ -209,7 +209,7 @@ class Montecarlo(object):
     def update_current_energy(self):
         """Enforce a new energy evaluation."""
         self.current_energy = \
-            self.atoms.get_calculator().calculate(None, None, None)
+            self.atoms.calc.calculate(None, None, None)
         self.bias_energy = 0.0
         for bias in self.bias_potentials:
             self.bias_energy += bias.calculate_from_scratch(self.atoms)
@@ -224,7 +224,7 @@ class Montecarlo(object):
             Symbols to insert. Has to have the same length as the
             attached atoms object.
         """
-        self.atoms.get_calculator().set_symbols(symbs)
+        self.atoms.calc.set_symbols(symbs)
         self._build_atoms_list()
         self.update_current_energy()
 
@@ -240,15 +240,13 @@ class Montecarlo(object):
 
         # Verify that there is at two elements with more that two symbols
         if len(count.keys()) < 2:
-            raise TooFewElementsError(
-                "There is only one element in the given atoms object!")
+            raise TooFewElementsError("There is only one element in the given atoms object!")
         n_elems_more_than_2 = 0
         for _, value in count.items():
             if value >= 2:
                 n_elems_more_than_2 += 1
         if n_elems_more_than_2 < 2:
-            raise TooFewElementsError(
-                "There is only one element that has more than one atom")
+            raise TooFewElementsError("There is only one element that has more than one atom")
 
     def log(self, msg, mode="info"):
         """Logs the message as info."""
@@ -330,8 +328,7 @@ class Montecarlo(object):
         """
         if not obs.interval_ok(interval):
             name = type(obs).__name__
-            raise ValueError(f"Invalid interval for {name}. Check docstring "
-                             f"of the observer.")
+            raise ValueError(f"Invalid interval for {name}. Check docstring of the observer.")
 
         self.observers.append((interval, obs))
 
@@ -362,7 +359,7 @@ class Montecarlo(object):
 
         start = time.time()
         prev = self.current_step
-        while(self.current_step < steps):
+        while (self.current_step < steps):
             E, _ = self._mc_step()
 
             self.mean_energy += E
@@ -439,8 +436,7 @@ class Montecarlo(object):
 
         rand_pos_a = self.atoms_tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.atoms_tracker.get_random_indx_of_symbol(symb_b)
-        system_changes = [(rand_pos_a, symb_a, symb_b),
-                          (rand_pos_b, symb_b, symb_a)]
+        system_changes = [(rand_pos_a, symb_a, symb_b), (rand_pos_b, symb_b, symb_a)]
         return system_changes
 
     def _accept(self, system_changes):
@@ -454,7 +450,7 @@ class Montecarlo(object):
         self.last_energies[0] = self.current_energy
 
         # NOTE: Calculate updates the system
-        calc = self.atoms.get_calculator()
+        calc = self.atoms.calc
         self.new_energy = calc.get_energy_given_change(system_changes)
 
         # NOTE: As this is called after calculate, the changes has
@@ -517,9 +513,9 @@ class Montecarlo(object):
                 self.atoms[indx].symbol = old_symb
 
         if (move_accepted):
-            self.atoms.get_calculator().clear_history()
+            self.atoms.calc.clear_history()
         else:
-            self.atoms.get_calculator().restore()
+            self.atoms.calc.restore()
 
         if (move_accepted):
             # Update the atom_indices

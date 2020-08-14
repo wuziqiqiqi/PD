@@ -23,29 +23,35 @@ class SettingsPage(Screen):
 
     def show_load_dialog(self):
         content = LoadDialog(load=self.load, cancel=self.dismiss_popup)
-        self._pop_up = Popup(title="Load structure DB", content=content,
-                             pos_hint={'right': 0.95, 'top': 0.95},
+        self._pop_up = Popup(title="Load structure DB",
+                             content=content,
+                             pos_hint={
+                                 'right': 0.95,
+                                 'top': 0.95
+                             },
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
     def to_dict(self):
-        return {'type': self.ids.typeSpinner.text,
-                'basis_function': self.ids.bfSpinner.text,
-                'cluster_size': self.ids.clusterSize.text,
-                'max_cluster_dia': self.ids.clusterDia.text,
-                'db_name': self.ids.dbNameInput.text,
-                'crystalstructure': self.ids.crystStructSpinner.text,
-                'aParameter': self.ids.aParameterInput.text,
-                'cParameter': self.ids.cParameterInput.text,
-                'uParameter': self.ids.uParameterInput.text,
-                'cellpar': self.ids.cellParInput.text,
-                'cell': self.ids.cellInput.text,
-                'basis': self.ids.crdBasisInput.text,
-                'spacegroup': self.ids.spInput.text,
-                'cell_size': self.ids.sizeInput.text,
-                'cell_mode_spinner': self.ids.sizeSpinner.text,
-                'supercell_factor': self.ids.scFactorInput.text,
-                'skew_threshold': self.ids.skewThresholdInput.text}
+        return {
+            'type': self.ids.typeSpinner.text,
+            'basis_function': self.ids.bfSpinner.text,
+            'cluster_size': self.ids.clusterSize.text,
+            'max_cluster_dia': self.ids.clusterDia.text,
+            'db_name': self.ids.dbNameInput.text,
+            'crystalstructure': self.ids.crystStructSpinner.text,
+            'aParameter': self.ids.aParameterInput.text,
+            'cParameter': self.ids.cParameterInput.text,
+            'uParameter': self.ids.uParameterInput.text,
+            'cellpar': self.ids.cellParInput.text,
+            'cell': self.ids.cellInput.text,
+            'basis': self.ids.crdBasisInput.text,
+            'spacegroup': self.ids.spInput.text,
+            'cell_size': self.ids.sizeInput.text,
+            'cell_mode_spinner': self.ids.sizeSpinner.text,
+            'supercell_factor': self.ids.scFactorInput.text,
+            'skew_threshold': self.ids.skewThresholdInput.text
+        }
 
     def from_dict(self, data):
         self.ids.typeSpinner.text = data['type']
@@ -343,8 +349,10 @@ class SettingsPage(Screen):
             basis_elements = conc_page.elements
             grouped_basis = conc_page.grouped_basis
             conc = Concentration(basis_elements=basis_elements,
-                                 A_lb=A_lb, b_lb=rhs_lb,
-                                 A_eq=A_eq, b_eq=rhs_eq,
+                                 A_lb=A_lb,
+                                 b_lb=rhs_lb,
+                                 A_eq=A_eq,
+                                 b_eq=rhs_eq,
                                  grouped_basis=grouped_basis)
 
             if self.check_user_input() != 0:
@@ -386,12 +394,16 @@ class SettingsPage(Screen):
                 else:
                     u = float(settingsPage['uParameter'])
                 kwargs = dict(
-                    crystalstructure=settingsPage['crystalstructure'], a=a,
-                    c=c, u=u,
-                    db_name=settingsPage['db_name'], concentration=conc,
+                    crystalstructure=settingsPage['crystalstructure'],
+                    a=a,
+                    c=c,
+                    u=u,
+                    db_name=settingsPage['db_name'],
+                    concentration=conc,
                     max_cluster_dia=max_cluster_dia,
                     max_cluster_size=int(settingsPage['cluster_size']),
-                    size=size, supercell_factor=supercell_factor,
+                    size=size,
+                    supercell_factor=supercell_factor,
                 )
                 msg = "Applying settingss to database..."
                 App.get_running_app().root.ids.status.text = msg
@@ -419,16 +431,18 @@ class SettingsPage(Screen):
                 sp = int(settingsPage['spacegroup'])
                 msg = "Applying settingss to database..."
                 App.get_running_app().root.ids.status.text = msg
-                kwargs = dict(
-                    basis=basis, cellpar=cellpar, cell=cell,
-                    max_cluster_dia=max_cluster_dia,
-                    max_cluster_size=int(settingsPage['cluster_size']),
-                    basis_function=settingsPage['basis_function'],
-                    size=size, supercell_factor=supercell_factor,
-                    skew_threshold=skew_threshold,
-                    concentration=conc, db_name=settingsPage['db_name'],
-                    spacegroup=sp
-                )
+                kwargs = dict(basis=basis,
+                              cellpar=cellpar,
+                              cell=cell,
+                              max_cluster_dia=max_cluster_dia,
+                              max_cluster_size=int(settingsPage['cluster_size']),
+                              basis_function=settingsPage['basis_function'],
+                              size=size,
+                              supercell_factor=supercell_factor,
+                              skew_threshold=skew_threshold,
+                              concentration=conc,
+                              db_name=settingsPage['db_name'],
+                              spacegroup=sp)
                 initializer.type = 'CECrystal'
                 initializer.kwargs = kwargs
                 Thread(target=initializer.initialize).start()

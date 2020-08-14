@@ -10,6 +10,7 @@ class FixedElement(MCConstraint):
     element: str
         Name of the element that is supposed to stay fixed
     """
+
     def __init__(self, element):
         self.element = element
 
