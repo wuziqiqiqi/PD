@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 from ase import Atoms
 from .cluster_fingerprint import ClusterFingerprint
 from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
@@ -133,7 +132,7 @@ class Cluster(object):
 
     def _order_equiv_sites(self, figure):
         """Sort equivalent sites."""
-        figure_cpy = deepcopy(figure)
+        figure_cpy = [x for x in figure]
         for eq_group in self.equiv_sites:
             equiv_indices = [figure[i] for i in eq_group]
             equiv_indices.sort()
