@@ -57,3 +57,14 @@ pages:
       - public
   only:
     - master
+
+python3_test_slow:
+  image: python:3.7
+  coverage: '/TOTAL\s+.*( \d+\%)/'
+  script:
+    - apt-get update -qy
+    - apt-get install -qy python3-dev python3-pip
+    - python3 --version
+    - python3 -m pip install .
+    - pytest --runslow tests/
+  when: manual

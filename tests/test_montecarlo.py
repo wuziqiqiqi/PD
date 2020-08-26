@@ -59,6 +59,49 @@ def get_rocksalt_mc_system(db_name):
     return atoms
 
 
+@pytest.mark.slow
+def test_run_heavy(db_name):
+    conc = Concentration(basis_elements=[['Au', 'Cu']])
+    settings = CEBulk(db_name=db_name,
+                      concentration=conc,
+                      crystalstructure='fcc',
+                      a=4.0,
+                      max_cluster_size=4)
+
+    atoms = settings.atoms.copy() * (3, 3, 3)
+    cf = CorrFunction(settings)
+    cf_scratch = cf.get_cf(settings.atoms)
+    eci = {k: 0.0 for k, v in cf_scratch.items()}
+
+    eci['c0'] = -1.0
+    eci['c2_d0000_0_00'] = -0.2
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
+
+    # Insert a few elements
+    for i in range(10):
+        atoms[i].symbol = 'Cu'
+
+    E = []
+    for T in [1000, 500, 100]:
+        mc = Montecarlo(atoms, T)
+        mc.run(steps=10000)
+        E.append(mc.get_thermodynamic_quantities()['energy'])
+
+    cf = CorrFunction(atoms.calc.settings)
+    cf_calc = atoms.calc.get_cf()
+    cf_scratch = cf.get_cf(atoms)
+
+    print(len(cf_scratch))
+
+    os.remove(db_name)
+    for k, v in cf_scratch.items():
+        assert v == pytest.approx(cf_calc[k])
+
+    # Make sure that the energies are decreasing by comparing
+    # the first and last
+    assert E[0] >= E[-1]
+
+
 def test_run(db_name):
     atoms = get_example_mc_system(db_name)
 
