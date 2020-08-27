@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy.random import choice
 from scipy.optimize import minimize
+from clease.tools import (remove_redundant_constraints, remove_redundant_equations)
 
 __all__ = ('Concentration',)
 
@@ -87,12 +88,11 @@ class Concentration:
         self.num_concs = len([x for sub in self.basis_elements for x in sub])
         self.fixed_element_constraint_added = False
 
-        num_usr_lb = 0
-        if A_lb is not None:
-            A_lb = np.array(A_lb)
-            num_usr_lb = A_lb.shape[0]
-        self.A_lb = np.zeros((self.num_concs, self.num_concs), dtype=int)
-        self.b_lb = np.zeros(self.num_concs, dtype=int)
+        if A_lb:
+            self.A_lb, self.b_lb = remove_redundant_constraints(np.array(A_lb), np.array(b_lb))
+        else:
+            self.A_lb = np.empty((0, self.num_concs))
+            self.b_lb = np.array([])
 
         num_usr_eq = 0
         if A_eq is not None:
@@ -113,35 +113,18 @@ class Concentration:
             start_col += len(basis)
             self.b_eq[i] = 1
 
-        # Ensure that we have only positive concentrations
-        for i in range(self.num_concs):
-            self.A_lb[i, i] = 1
-
         self._linked_basis = [i for i in range(len(self.basis_elements))]
         if num_usr_eq > 0:
             self.add_usr_defined_eq_constraints(A_eq, b_eq)
-
-        if num_usr_lb > 0:
-            self.add_usr_defined_ineq_constraints(A_lb, b_lb)
+        self._get_interbasis_relations()
 
     def __eq__(self, other):
         return np.allclose(self.A_eq, other.A_eq) and \
             np.allclose(self.b_eq, other.b_eq) and \
-            np.allclose(self.A_lb, other.A_lb) and \
-            np.allclose(self.b_lb, other.b_lb) and \
             self.basis_elements == other.basis_elements and \
-            self.grouped_basis == other.grouped_basis
-
-    def _remove_redundant_entries(self, A, b):
-        for row_num in range(A.shape[0] - 1, -1, -1):
-            for prev_row in range(row_num):
-                cond1 = np.allclose(A[row_num, :], A[prev_row, :])
-                cond2 = abs(b[row_num] - b[prev_row]) < 1E-9
-                if cond1 and cond2:
-                    A = np.delete(A, row_num, axis=0)
-                    b = np.delete(b, row_num)
-                    break
-        return A, b
+            self.grouped_basis == other.grouped_basis and \
+            np.allclose(self.A_lb, other.A_lb) and \
+            np.allclose(self.b_lb, other.b_lb)
 
     def _get_grouped_basis_elements(self):
         if self.grouped_basis is None:
@@ -211,8 +194,29 @@ class Concentration:
 
         self.A_eq = np.vstack((self.A_eq, A_eq))
         self.b_eq = np.append(self.b_eq, b_eq)
-        self.A_eq, self.b_eq = self._remove_redundant_entries(self.A_eq, self.b_eq)
+        self.A_eq, self.b_eq = remove_redundant_equations(self.A_eq, self.b_eq)
         self._get_interbasis_relations_for_given_matrix(self.A_eq)
+
+    def _check_ineq_constraints(self, A_lb, b_lb):
+        """
+        Checks the dimensions of the provided lower bound constraint.
+        """
+        if A_lb.ndim != 2:
+            raise InvalidConstraintError("A_lb has to be a 2D matrix!")
+
+        if b_lb.ndim != 1:
+            raise InvalidConstraintError("b_lb has to be a 1D vector!")
+
+        if A_lb.shape[1] != self.num_concs:
+            raise InvalidConstraintError(
+                f"The number of columns in A_lb has to match the number of "
+                f"concentration variables. Hence, A_lb needs to have "
+                f"{self.num_concs} columns")
+
+        if A_lb.shape[0] != len(b_lb):
+            raise InvalidConstraintError(
+                "The length of b_lb has to be the same as the number of rows "
+                "in A_lb.")
 
     def add_usr_defined_ineq_constraints(self, A_lb, b_lb):
         """Add the user defined constraints.
@@ -230,26 +234,12 @@ class Concentration:
         """
         A_lb = np.array(A_lb)
         b_lb = np.array(b_lb)
-        if len(A_lb.shape) != 2:
-            raise InvalidConstraintError("A_lb has to be a 2D matrix!")
-
-        if len(b_lb.shape) != 1:
-            raise InvalidConstraintError("b_lb has to be a 1D vector!")
-
-        if A_lb.shape[1] != self.num_concs:
-            raise InvalidConstraintError(
-                f"The number of columns in A_lb has to match the number of "
-                f"concentration variables. Hence, A_lb needs to have "
-                f"{self.num_concs} columns")
-
-        if A_lb.shape[0] != len(b_lb):
-            raise InvalidConstraintError(
-                "The length of b_lb has to be the same as the number of rows "
-                "in A_lb.")
+        self._check_ineq_constraints(A_lb, b_lb)
 
         self.A_lb = np.vstack((self.A_lb, A_lb))
         self.b_lb = np.append(self.b_lb, b_lb)
-        self.A_lb, self.b_lb = self._remove_redundant_entries(self.A_lb, self.b_lb)
+        self.A_lb, self.b_lb = remove_redundant_constraints(
+            self.A_lb, self.b_lb, self.A_eq, self.b_eq)
         self._get_interbasis_relations_for_given_matrix(self.A_lb)
 
     def set_conc_ranges(self, ranges):

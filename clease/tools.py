@@ -10,6 +10,7 @@ from numpy.random import sample, shuffle
 from ase.db import connect
 from ase.db.core import parse_selection
 from scipy.spatial import cKDTree as KDTree
+from scipy.optimize import linprog
 
 from .cleaselogger import _logger
 
@@ -960,3 +961,100 @@ def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
 
     # Calculate the intersection between all sets
     return set.intersection(*list(cf_names.values()))
+
+
+def constraint_is_redundant(A_lb: np.ndarray, b_lb: np.ndarray,
+                            c_lb: np.ndarray, d: float,
+                            A_eq: np.ndarray = None,
+                            b_eq: np.ndarray = None) -> bool:
+    """
+    The method considers the following system
+
+    min c.dot(x) for some arbitrary c
+
+    subject to
+
+    A_lb.dot(x) >= b_lb
+    A_eq.dot(x) = b_eq
+
+    If the additional constraint c_lb.dot(x) >= d is redundant, the method
+    returns True. The constraint specified by c_lb is redundant if the solution
+    to min c_lb.dot(x) subject to the constraint above satisfies
+    c_lb.dot(x) >= d. This method is know as the Linear Programming Method.
+
+    :param A_lb: Matrix specifying the lower bounds
+    :param b_lb: Vector specifying the right hand side of the lower bound
+        constraint.
+    :param c_lb: Vector specifying the additional in-equality constraint
+    :param d: Right hand side of the additional in-equality
+    :param A_eq: Matrix specifying the equality constraint. If None,
+        no equality constraints exist.
+    :param b_eq: Vector specifuing the right hand side of the equality
+        constraints. If None, no equality constraints exist
+    """
+    # Scipy uses upper bounds in stead of lower bounds, convert lower bounds
+    # to upper bounds by changing the sign
+    res = linprog(c_lb, A_ub=-A_lb, b_ub=-b_lb, A_eq=A_eq, b_eq=b_eq)
+    return c_lb@res.x >= d
+
+
+def remove_redundant_constraints(A_lb: np.ndarray, b_lb: np.ndarray,
+                                 A_eq: np.ndarray = None,
+                                 b_eq: np.ndarray = None
+                                 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Remove all redundant constraints from A_lb and b_lb.
+
+    min c.dot(x) for some arbitrary c
+
+    subject to
+
+    A_lb.dot(x) >= b_lb
+    A_eq.dot(x) = b_eq
+
+    :param A_lb: Matrix specifying the lower bounds
+    :param b_lb: Vector specifying the right hand side of the lower bound
+        constraint.
+    :param A_eq: Matrix specifying the equality constraint. If None,
+        no equality constraints exist.
+    :param b_eq: Vector specifuing the right hand side of the equality
+        constraints. If None, no equality constraints exist
+    :return:
+        A_lb, b_lb with only non-redundant constraints
+    """
+    redundant = []
+    perturb = 1
+    for i in range(A_lb.shape[0]):
+        c_lb = A_lb[i, :]
+        d = b_lb[i]
+
+        # Make the constraint under consideration more generous by lowering the bound
+        b_lb[i] -= perturb
+
+        if constraint_is_redundant(A_lb, b_lb, c_lb, d, A_eq, b_eq):
+            redundant.append(i)
+
+        # Set the constraint back to the original value
+        b_lb[i] += perturb
+    return np.delete(A_lb, redundant, axis=0), np.delete(b_lb, redundant)
+
+
+def remove_redundant_equations(A, b, tol=1e-6):
+    R_trimmed = []
+    indices = []
+
+    Q, R = np.linalg.qr(A.T)
+
+    k = 0
+    for i in range(0, R.shape[1]):
+        if abs(R[k, i]) > tol:
+            R_trimmed.append(R[:, i])
+            indices.append(i)
+            k += 1
+
+        if k == R.shape[0]:
+            break
+
+    R_trimmed = np.array(R_trimmed).T
+    A_trimmed = Q.dot(R_trimmed).T
+    return A_trimmed.copy(), b[indices]

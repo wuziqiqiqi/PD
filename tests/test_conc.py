@@ -147,12 +147,8 @@ class TestConc(unittest.TestCase):
         b_eq = np.array([1, 1, 1])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
-        A_lb_implicit = np.identity(5)
-        b_lb_implicit = np.zeros(5)
-        A_lb = np.array([[3, 0, 0, 0, 0], [-3, 0, 0, 0, 0], [0, 0, 0, 0, 3], [0, 0, 0, 0, -3]])
-        b_lb = np.array([0, -2, 0, -0.75])
-        A_lb = np.vstack((A_lb_implicit, A_lb))
-        b_lb = np.append(b_lb_implicit, b_lb)
+        A_lb = np.array([[-3, 0, 0, 0, 0], [0, 0, 0, 0, -3]])
+        b_lb = np.array([-2, -0.75])
         self.assertTrue(np.allclose(A_lb, conc.A_lb))
         self.assertTrue(np.allclose(b_lb, conc.b_lb))
 
@@ -162,17 +158,13 @@ class TestConc(unittest.TestCase):
         range = OrderedDict({"x": (0, 2)})
         conc = Concentration(basis_elements=basis_elements)
         conc.set_conc_formula_unit(formulas=formulas, variable_range=range)
-        A_eq = np.array([[1, 1, 1, 0, 0], [0, 0, 0, 1, 1], [0, 3, 0, 0, 0], [0, 0, 0, 3, 0],
-                         [0, 0, 0, 0, 3]])
-        b_eq = np.array([1, 1, 1, 2, 1])
+        A_eq = np.array([[1, 1, 1, 0, 0], [0, 0, 0, 1, 1], [0, 3, 0, 0, 0], [0, 0, 0, 3, 0]])
+        b_eq = np.array([1, 1, 1, 2])
+
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
-        A_lb_implicit = np.identity(5)
-        b_lb_implicit = np.zeros(5)
-        A_lb = np.array([[3, 0, 0, 0, 0], [-3, 0, 0, 0, 0]])
-        b_lb = np.array([0, -2])
-        A_lb = np.vstack((A_lb_implicit, A_lb))
-        b_lb = np.append(b_lb_implicit, b_lb)
+        A_lb = np.array([[-3, 0, 0, 0, 0]])
+        b_lb = np.array([-2])
         self.assertTrue(np.allclose(A_lb, conc.A_lb))
         self.assertTrue(np.allclose(b_lb, conc.b_lb))
 
@@ -186,12 +178,8 @@ class TestConc(unittest.TestCase):
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
-        A_lb_implicit = np.identity(3)
-        b_lb_implicit = np.zeros(3)
-        A_lb = np.array([[0, 0, 4], [0, 0, -4]])
-        b_lb = np.array([0, -1])
-        A_lb = np.vstack((A_lb_implicit, A_lb))
-        b_lb = np.append(b_lb_implicit, b_lb)
+        A_lb = np.array([[0, 0, -4]])
+        b_lb = np.array([-1])
         self.assertTrue(np.allclose(A_lb, conc.A_lb))
         self.assertTrue(np.allclose(b_lb, conc.b_lb))
 
@@ -205,12 +193,8 @@ class TestConc(unittest.TestCase):
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
-        A_lb_implicit = np.identity(3)
-        b_lb_implicit = np.zeros(3)
-        A_lb = np.array([[0, 2, 0], [0, -2, 0]])
-        b_lb = np.array([0, -1])
-        A_lb = np.vstack((A_lb_implicit, A_lb))
-        b_lb = np.append(b_lb_implicit, b_lb)
+        A_lb = np.array([[0, -2, 0]])
+        b_lb = np.array([-1])
         self.assertTrue(np.allclose(A_lb, conc.A_lb))
         self.assertTrue(np.allclose(b_lb, conc.b_lb))
 
@@ -224,12 +208,8 @@ class TestConc(unittest.TestCase):
         b_eq = np.array([1, 0])
         self.assertTrue(np.allclose(A_eq, conc.A_eq))
         self.assertTrue(np.allclose(b_eq, conc.b_eq))
-        A_lb_implicit = np.identity(4)
-        b_lb_implicit = np.zeros(4)
-        A_lb = np.array([[0, 0, 0, 3], [0, 0, 0, -3], [0, 3, 0, 0], [0, -3, 0, 0]])
-        b_lb = np.array([0, -1, 0, -1])
-        A_lb = np.vstack((A_lb_implicit, A_lb))
-        b_lb = np.append(b_lb_implicit, b_lb)
+        A_lb = np.array([[0, 0, 0, -3], [0, -3, 0, 0]])
+        b_lb = np.array([-1, -1])
         self.assertTrue(np.allclose(A_lb, conc.A_lb))
         self.assertTrue(np.allclose(b_lb, conc.b_lb))
 
@@ -276,10 +256,67 @@ class TestConc(unittest.TestCase):
         """
         conc1 = Concentration(basis_elements=[['Au', 'Cu']])
         conc2 = Concentration.from_dict(conc1.to_dict())
-        numpy.testing.assert_array_equal(conc1.A_eq, conc2.A_eq)
-        numpy.testing.assert_array_equal(conc1.A_lb, conc2.A_lb)
-        numpy.testing.assert_array_equal(conc1.b_eq, conc2.b_eq)
-        numpy.testing.assert_array_equal(conc1.b_lb, conc2.b_lb)
+        self.assertEqual(conc1, conc2)
+
+        # Also test if A_lb and b_lb is given
+        conc1 = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[1, 1]], b_lb=[0.2])
+        conc2 = Concentration.from_dict(conc1.to_dict())
+        self.assertEqual(conc1, conc2)
+
+    def test_MoS2(self):
+        conc = Concentration(basis_elements=[['S'], ['Mo', 'W']])
+        conc.set_conc_formula_unit(["S<2>", "Mo<1-x>W<x>"], variable_range={"x": (0, 1)})
+
+        # Addind S<2> should have no effect since it is already a requirement that
+        # the sublattice concentrations sum to 1
+        A_eq = [[1.0, 0.0, 0.0],
+                [0.0, 1.0, 1.0]]
+        b_eq = [1.0, 1.0]
+        self.assertTrue(np.allclose(A_eq, conc.A_eq))
+        self.assertTrue(np.allclose(b_eq, conc.b_eq))
+
+        # The inequality constraint specify is unnessecary so A_lb should still be empty
+        self.assertListEqual(conc.A_lb.tolist(), [])
+        self.assertListEqual(conc.b_lb.tolist(), [])
+
+    def test_MoScAl(self):
+        conc = Concentration(basis_elements=[['Mo', 'Sc'], ['Al'], ['B']])
+        conc.set_conc_formula_unit(formulas=["Mo<x>Sc<3-x>", "Al<1>", "B<2>"],
+                                   variable_range={"x": (0, 3)})
+
+        # None of the passed constraints will have an impact. Nothing should
+        # happen to the underlying equations
+        A_eq = [[1.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0]]
+        b_eq = [1.0, 1.0, 1.0]
+        self.assertTrue(np.allclose(A_eq, conc.A_eq))
+        self.assertTrue(np.allclose(b_eq, conc.b_eq))
+
+    def test_no_constraints(self):
+        tests = [
+            Concentration(basis_elements=[['Au', 'Cu']]),
+            Concentration(basis_elements=[['Au', 'Cu', 'X']]),
+            Concentration(basis_elements=[['Au', 'Cu'], ['X']]),
+            Concentration.from_dict(
+                Concentration(basis_elements=[['Au', 'Cu']]).to_dict()
+            )
+        ]
+
+        for test in tests:
+            rnd_conc = test.get_random_concentration()
+            self.assertTrue(np.all(rnd_conc >= 0.0))
+            self.assertTrue(np.all(rnd_conc <= 1.0))
+
+            for i in range(test.num_concs):
+                conc = test.get_conc_max_component(i)
+                self.assertTrue(np.all(conc >= 0.0))
+                self.assertTrue(np.all(conc <= 1.0))
+
+                conc = test.get_conc_min_component(i)
+                self.assertTrue(np.all(conc >= 0.0))
+                self.assertTrue(np.all(conc <= 1.0))
+
 
 
 if __name__ == '__main__':

@@ -8,7 +8,8 @@ from clease.tools import (min_distance_from_facet, factorize, all_integer_transf
                           species_chempot2eci, bf2matrix, rate_bf_subsets, select_bf_subsets,
                           cname_lt, singlets2conc, aic, aicc, bic, get_extension,
                           add_file_extension, equivalent_deco, sort_cf_names, split_dataset,
-                          common_cf_names)
+                          common_cf_names, constraint_is_redundant, remove_redundant_constraints,
+                          remove_redundant_equations)
 from clease.basis_function import Polynomial
 
 
@@ -475,3 +476,129 @@ def test_common_cf_names(db_name):
 
     expect_common = set(['c1_1', 'c3_d0000_0_000'])
     assert common == expect_common
+
+
+def test_constraint_is_redundant():
+    tests = [
+        {
+            'A_lb': np.array([[1.0, 1.0]]),
+            'b_lb': np.array([0.0]),
+            'A_eq': None,
+            'b_eq': None,
+            'c_lb': np.array([1.0, 1.0]),
+            'd': -0.1,
+            'expect': True
+        },
+        {
+            'A_lb': np.array([[1.0, 1.0]]),
+            'b_lb': np.array([0.0]),
+            'A_eq': None,
+            'b_eq': None,
+            'c_lb': np.array([1.0, 1.0]),
+            'd': 0.1,
+            'expect': False
+        },
+        {
+            'A_lb': np.array([[1.0, 1.0, 0.0]]),
+            'b_lb': np.array([0.0]),
+            'A_eq': np.array([[1.0, 0.0, -1.0]]),
+            'b_eq': np.array([0.0]),
+            'c_lb': np.array([1.0, 1.0, 0.0]),
+            'd': 0.1,
+            'expect': False
+        },
+    ]
+
+    for test in tests:
+        assert constraint_is_redundant(
+            test['A_lb'], test['b_lb'],  test['c_lb'], test['d'],
+            test['A_eq'], test['b_eq']
+        ) == test['expect']
+
+
+def test_remove_redundant_constraints():
+    # References:
+    #
+    # Paulraj et al.
+    # Paulraj, S., and P. Sumathi. "A comparative study of redundant constraints
+    # identification methods in linear programming problems." Mathematical Problems
+    # in Engineering 2010 (2010).
+    #
+    # Telgen
+    # Telgen, Jan. "Identifying redundant constraints and implicit equalities in
+    # systems of linear constraints." Management Science 29.10 (1983): 1209-1222.
+
+    tests = [
+        # Paulraj et al.: Example 2.2
+        {
+            'A_lb': np.array([[-2.0, -1.0],
+                              [-4.0, 0.0],
+                              [-1.0, -3.0],
+                              [-1.0, -2.0],
+                              [0.0, -1.0],
+                              [1.0, 1.0]]),
+            'b_lb': np.array([-8.0, -15.0, -9.0, -14.0, -4.0, -5.0]),
+            'A_lb_expect': np.array([[-2.0, -1.0],
+                                     [-4.0, 0.0],
+                                     [-1.0, -3.0]]),
+            'b_lb_expect': np.array([-8.0, -15.0, -9.0])
+        },
+        # Telgen
+        {
+            'A_lb': np.array([[-1.0, 1.0],
+                              [-2.0, -1.0],
+                              [-1.0, 0.0],
+                              [1.0, -2.0],
+                              [0.0, -2.0],
+                              [-1.0, -1.0]]),
+            'b_lb': np.array([-2.0, -7.0, -2.0, -4.0, -5.0, -4.0]),
+            'A_lb_expect': np.array([[-1.0, 0.0],
+                                     [1.0, -2.0],
+                                     [0.0, -2.0],
+                                     [-1.0, -1.0]]),
+            'b_lb_expect': np.array([-2.0, -4.0, -5.0, -4.0])
+        },
+    ]
+
+    for test in tests:
+        A, b = remove_redundant_constraints(test['A_lb'], test['b_lb'])
+        assert np.allclose(A, test['A_lb_expect'])
+        assert np.allclose(b, test['b_lb_expect'])
+
+
+def test_remove_redundant_equations():
+    tests = [
+        {
+            'A': np.array([[1.0, 1.0], [2.0, 2.0]]),
+            'b': np.array([1.0, 2.0]),
+            'A_expect': [[1.0, 1.0]],
+            'b_expect': [1.0]
+        },
+        {
+            'A': np.array([[1.0, 1.0, 0.3], [2.0, 2.0, 0.6]]),
+            'b': np.array([1.0, 2.0, 0.0]),
+            'A_expect': [[1.0, 1.0, 0.3]],
+            'b_expect': [1.0]
+        },
+        {
+            'A': np.array([[1.0, 2.0, 3.0],
+                           [4.0, 5.0, 6.0],
+                           [7.0, 8.0, 9.0]]),
+            'b': np.array([150.0, 300.0, 450.0]),
+            'A_expect': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+            'b_expect': [150.0, 300.0]
+        },
+         {
+            'A': np.array([[1.0, 1.0, 1.0],
+                           [2.0, 3.0, 4.0],
+                           [4.0, 3.0, 2.0]]),
+            'b': np.array([50.0, 158.0, 142.0]),
+            'A_expect': [[1.0, 1.0, 1.0], [2.0, 3.0, 4.0]],
+            'b_expect': [50.0, 158.0]
+        }
+    ]
+
+    for test in tests:
+        A, b = remove_redundant_equations(test['A'], test['b'])
+        assert np.allclose(A, test['A_expect'])
+        assert np.allclose(b, test['b_expect'])
