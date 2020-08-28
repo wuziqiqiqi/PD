@@ -1,8 +1,8 @@
 """Class containing a manager for setting up concentrations of species."""
+from collections import OrderedDict
 import numpy as np
 from numpy.random import choice
 from scipy.optimize import minimize
-from collections import OrderedDict
 
 __all__ = ('Concentration',)
 
@@ -722,7 +722,7 @@ class Concentration:
         """
         return [(0, 1) for _ in range(self.num_concs)]
 
-    def get_conc_min_component(self, comp):
+    def _get_conc_component(self, comp, objective_func, objective_jac_func):
         """Generate all end points of the composition domain."""
         if isinstance(comp, int):
             comp = [comp]
@@ -732,11 +732,11 @@ class Concentration:
         x0 = np.random.rand(self.num_concs)
 
         # Find the closest vector to x0 that satisfies all constraints
-        opt_res = minimize(objective_component_min,
+        opt_res = minimize(objective_func,
                            x0,
                            args=(comp,),
                            method="SLSQP",
-                           jac=obj_jac_component_min,
+                           jac=objective_jac_func,
                            constraints=constraints,
                            bounds=self.trivial_bounds)
 
@@ -745,30 +745,14 @@ class Concentration:
             msg = "Could not find valid concentration. Revise the constraints."
             raise InvalidConcentrationError(msg)
         return x
+
+    def get_conc_min_component(self, comp):
+        """Generate all end points of the composition domain."""
+        return self._get_conc_component(comp, objective_component_min, obj_jac_component_min)
 
     def get_conc_max_component(self, comp):
         """Generate all end points of the composition domain."""
-        if isinstance(comp, int):
-            # Create list with length one
-            comp = [comp]
-        comp = np.array(comp)
-        constraints = self._get_constraints()
-
-        x0 = np.random.rand(self.num_concs)
-
-        # Find the closest vector to x0 that satisfies all constraints
-        opt_res = minimize(objective_component_max,
-                           x0,
-                           args=(comp,),
-                           method="SLSQP",
-                           jac=obj_jac_component_max,
-                           constraints=constraints,
-                           bounds=self.trivial_bounds)
-        x = opt_res["x"]
-        if not self.is_valid_conc(x):
-            msg = "Could not find valid concentration. Revise the constraints."
-            raise InvalidConcentrationError(msg)
-        return x
+        return self._get_conc_component(comp, objective_component_max, obj_jac_component_max)
 
     def to_float_conc(self, num_atoms_in_basis, int_conc):
         """

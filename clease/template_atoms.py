@@ -1,6 +1,6 @@
 """Class containing a manager for creating template atoms."""
-import numpy as np
 from itertools import product
+import numpy as np
 from numpy.random import shuffle
 from ase.build import make_supercell
 from clease import SkewnessFilter, EquivalentCellsFilter
@@ -10,7 +10,7 @@ from clease.tools import all_integer_transform_matrices
 __all__ = ('TemplateAtoms',)
 
 
-class TemplateAtoms(object):
+class TemplateAtoms:
 
     def __init__(self, prim_cell, supercell_factor=27, size=None, skew_threshold=40, filters=()):
         if size is None and supercell_factor is None:
@@ -109,19 +109,16 @@ class TemplateAtoms(object):
             msg = "At least one of `atoms` or `cell` must be specified."
             raise ValueError(msg)
 
-        cell_valid = True
-        if cell is not None:
-            cell_valid = all([f(cell) for f in self.cell_filters])
-        elif atoms is not None:
+        if cell is None:
             cell = atoms.get_cell()
-            cell_valid = all([f(cell) for f in self.cell_filters])
+        cell_valid = all(f(cell) for f in self.cell_filters)
 
         if not cell_valid:
             return False
 
         atoms_valid = True
         if atoms is not None:
-            atoms_valid = all([f(atoms) for f in self.atoms_filters])
+            atoms_valid = all(f(atoms) for f in self.atoms_filters)
 
         return cell_valid and atoms_valid
 

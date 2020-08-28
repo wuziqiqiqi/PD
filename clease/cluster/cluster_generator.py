@@ -1,6 +1,6 @@
 from itertools import filterfalse, product
-import numpy as np
 from typing import List, Tuple, Dict, Set, Iterator, Sequence
+import numpy as np
 from ase import Atoms
 from ase.geometry import wrap_positions
 from .cluster_fingerprint import ClusterFingerprint
@@ -139,7 +139,7 @@ class ClusterGenerator:
         sites = set(map(tuple, sites))
         within_cutoff[tuple(x0)] = sites
         for s in sites:
-            nearby = [s1 for s1 in sites if self.eucledian_distance(s1, s) <= cutoff and s1 != s]
+            nearby = set(s1 for s1 in sites if s1 != s and self.eucledian_distance(s1, s) <= cutoff)
 
             within_cutoff[s] = nearby
         return within_cutoff
