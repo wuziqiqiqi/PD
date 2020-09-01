@@ -39,6 +39,18 @@ def db_name(tmpdir):
         pass
 
 
+@pytest.fixture
+def buffer_file(tmpdir):
+    name = tmpdir / 'temp_buffer.txt'
+    assert not name.exists()
+    yield str(name)
+
+    # Teardown
+    try:
+        name.remove()
+    except FileNotFoundError:
+        pass
+
 # This takes a few seconds to create every time, so we scope it to the module level
 # No modifications should be made to this DB though, as changes will propagate throughout the test
 @pytest.fixture(scope='module')

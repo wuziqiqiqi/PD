@@ -10,9 +10,11 @@ from clease.montecarlo.observers.energy_plot_updater import EnergyPlotUpdater
 from clease.montecarlo.observers.concentration_observer import ConcentrationObserver
 from clease.montecarlo.observers.multi_state_sgc_observer import (MultiStateSGCConcObserver,
                                                                   SGCState)
+from .entropy_prod_rate import *
 
-__all__ = [
-    "MCObserver", "SGCObserver", "CorrelationFunctionObserver", "Snapshot", "EnergyEvolution",
-    "LowestEnergyStructure", "DiffractionObserver", "EnergyPlotUpdater", "ConcentrationObserver",
-    "SiteOrderParameter", 'MultiStateSGCConcObserver', 'SGCState'
-]
+ADDITIONAL = ("MCObserver", "SGCObserver", "CorrelationFunctionObserver", "Snapshot",
+              "EnergyEvolution", "LowestEnergyStructure", "DiffractionObserver",
+              "EnergyPlotUpdater", "ConcentrationObserver", "SiteOrderParameter",
+              "MultiStateSGCConcObserver", "SGCState")
+
+__all__ = (ADDITIONAL + entropy_prod_rate.__all__)

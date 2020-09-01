@@ -5,6 +5,10 @@ from clease.montecarlo.gaussian_kernel_bias_potential import GaussianKernelBiasP
 from clease.montecarlo.binned_bias_potential import BinnedBiasPotential
 from clease.montecarlo.random_bias_with_memory import RandomBiasWithMemory
 from clease.montecarlo.metadynamics_sampler import MetaDynamicsSampler
+from .barrier_models import *
+from .kmc_events import *
+from .kinetic_monte_carlo import *
 
-__all__ = ('Montecarlo', 'SGCMonteCarlo', 'MetaDynamicsSampler', 'BinnedBiasPotential',
-           'BiasPotential', 'GaussianKernelBiasPotential', 'RandomBiasWithMemory')
+ADDITIONAL = ('Montecarlo', 'SGCMonteCarlo', 'MetaDynamicsSampler', 'BinnedBiasPotential',
+              'BiasPotential', 'GaussianKernelBiasPotential', 'RandomBiasWithMemory')
+__all__ = (ADDITIONAL + barrier_models.__all__ + kinetic_monte_carlo.__all__ + kmc_events.__all__)
