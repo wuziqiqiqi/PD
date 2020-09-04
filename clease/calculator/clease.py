@@ -156,6 +156,17 @@ class Clease(Calculator):
         self.results['energy'] = self.energy
         return self.energy
 
+    def check_state(self, atoms):
+        res = super().check_state(atoms)
+        syst_ch = self.indices_of_changed_atoms
+
+        if syst_ch and 'energy' not in res:
+            res.append('energy')
+        return res
+
+    def reset(self):
+        self.results = {}
+
     def calculate(self, atoms: Atoms, properties: Union[List[str], str],
                   system_changes: List[Tuple[int, str, str]]) -> float:
         """Calculate the energy of the passed Atoms object.
@@ -175,7 +186,6 @@ class Clease(Calculator):
             index 26 is swapped with an Al atom occupying the atomic index 12,
             system_change = [(26, Mg, Al), (12, Al, Mg)]
         """
-        Calculator.calculate(self, atoms)
         self.update_energy()
         self.energy = self.updater.get_energy()
         self.results['energy'] = self.energy

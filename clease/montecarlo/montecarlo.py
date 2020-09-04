@@ -63,8 +63,6 @@ class Montecarlo:
         self.atoms.calc.clear_history()
         self._build_atoms_list()
         self.current_energy = E0
-        self.bias_energy = 0.0
-        self.new_bias_energy = self.bias_energy
         self.new_energy = self.current_energy
 
         # Keep the energy of old and trial state
@@ -72,8 +70,6 @@ class Montecarlo:
         self.trial_move = []  # Last trial move performed
         self.mean_energy = Averager(ref_value=E0)
         self.energy_squared = Averager(ref_value=E0)
-        self.energy_bias = 0.0
-        self.update_energy_bias = True
 
         # Some member variables used to update the atom tracker, only relevant
         # for canonical MC
@@ -86,58 +82,6 @@ class Montecarlo:
         self.filter = ExponentialFilter(min_time=0.2 * len(self.atoms),
                                         max_time=20 * len(self.atoms),
                                         n_subfilters=10)
-
-    def _probe_energy_bias(self, num_sweeps=2):
-        """
-        Run MC steps to probe the energy bias. The bias
-        will be subtracted off the zeroth ECI and then
-        added to the total energy during post processing.
-        """
-        self.energy_bias = 0.0
-        num_steps = num_sweeps * len(self.atoms)
-        self.log(f"Probing energy bias using {num_steps} MC steps...")
-        for _ in range(num_steps):
-            E, _ = self._mc_step()
-            self.mean_energy += E
-            self.energy_squared += E**2
-
-        self.log(f"Energy after probing: {self.current_energy}")
-        self.energy_bias = self.current_energy
-        self._remove_bias_from_empty_eci(self.energy_bias)
-
-    def _remove_bias_from_empty_eci(self, bias):
-        """Remove the energy bias from the empty cluster's ECI.
-
-        Parameters:
-
-        bias: float
-            Energy bias
-        """
-        calc = self.atoms.calc
-        eci = calc.eci
-        c0_eci = eci['c0']
-        c0_eci -= bias / len(self.atoms)
-        eci['c0'] = c0_eci
-
-        calc.update_eci(eci)
-
-        # Force re-calculation of the energy
-        self.update_current_energy()
-        self.last_energies[0] = self.current_energy
-
-        if abs(self.current_energy) > 1E-6:
-            raise RuntimeError(f"Energy is not 0 after subtracting "
-                               f"the bias. Got {self.current_energy}")
-
-        self.log('Bias subtracted from empty cluster...')
-
-    def _undo_energy_bias_from_eci(self):
-        eci = self.atoms.calc.eci
-        eci['c0'] += self.energy_bias / len(self.atoms)
-        self.atoms.calc.update_eci(eci)
-        calc = self.atoms.calc
-        self.current_energy = calc.calculate(None, None, None)
-        self.log('Empty cluster ECI reset to original value...')
 
     def insert_symbol(self, symb, indices):
         """Insert symbols on a predefined set of indices.
@@ -208,12 +152,7 @@ class Montecarlo:
 
     def update_current_energy(self):
         """Enforce a new energy evaluation."""
-        self.current_energy = \
-            self.atoms.calc.calculate(None, None, None)
-        self.bias_energy = 0.0
-        for bias in self.bias_potentials:
-            self.bias_energy += bias.calculate_from_scratch(self.atoms)
-        self.current_energy += self.bias_energy
+        self.current_energy = self.atoms.get_potential_energy()
 
     def set_symbols(self, symbs):
         """Set the symbols of this Monte Carlo run.
@@ -350,13 +289,6 @@ class Montecarlo:
         # Add check that this is show
         self._mc_step()
 
-        # self.current_step gets updated in the _mc_step function
-        self.reset()
-
-        # Probe bias energy and remove bias
-        self._probe_energy_bias()
-        self.reset()
-
         start = time.time()
         prev = self.current_step
         while (self.current_step < steps):
@@ -380,9 +312,6 @@ class Montecarlo:
 
         self.log(f"Reached maximum number of steps ({steps} mc steps)")
 
-        # NOTE: Also update current_energy
-        self._undo_energy_bias_from_eci()
-
     @property
     def meta_info(self):
         """Return dict with meta info."""
@@ -401,7 +330,7 @@ class Montecarlo:
         """Compute thermodynamic quantities."""
         quantities = {}
         mean_energy = self.mean_energy.mean
-        quantities["energy"] = mean_energy + self.energy_bias
+        quantities["energy"] = mean_energy
         mean_sq = self.energy_squared.mean
         quantities["heat_capacity"] = \
             (mean_sq - mean_energy**2) / (kB * self.T**2)
@@ -426,14 +355,8 @@ class Montecarlo:
         Perform a trial move by swapping two atoms
 
         """
-        n = len(self.atoms)
-        self.rand_a = np.random.randint(0, n)
-        self.rand_b = np.random.randint(0, n)
-        symb_a = self.symbols[np.random.randint(0, len(self.symbols))]
-        symb_b = symb_a
-        while (symb_b == symb_a):
-            symb_b = self.symbols[np.random.randint(0, len(self.symbols))]
-
+        symb_a = choice(self.symbols)
+        symb_b = choice([s for s in self.symbols if s != symb_a])
         rand_pos_a = self.atoms_tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.atoms_tracker.get_random_indx_of_symbol(symb_b)
         system_changes = [(rand_pos_a, symb_a, symb_b), (rand_pos_b, symb_b, symb_a)]
@@ -455,10 +378,8 @@ class Montecarlo:
 
         # NOTE: As this is called after calculate, the changes has
         # already been introduced to the system
-        self.new_bias_energy = 0.0
         for bias in self.bias_potentials:
-            self.new_bias_energy += bias(system_changes)
-        self.new_energy += self.new_bias_energy
+            self.new_energy += bias(system_changes)
         self.last_energies[1] = self.new_energy
 
         # Standard Metropolis acceptance criteria
@@ -502,7 +423,6 @@ class Montecarlo:
 
         if (move_accepted):
             self.current_energy = self.new_energy
-            self.bias_energy = self.new_bias_energy
             self.num_accepted += 1
         else:
             # Reset the sytem back to original

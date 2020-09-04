@@ -1,5 +1,4 @@
-import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from clease.montecarlo import BinnedBiasPotential
 from clease.montecarlo import MetaDynamicsSampler
 from clease.montecarlo import SGCMonteCarlo
@@ -27,6 +26,7 @@ def test_ideal_mixture(tmpdir):
     fake_calc.get_energy_given_change = MagicMock(
         side_effect=lambda x: fake_get_energy_method(fake_calc, x))
     fake_calc.calculate = MagicMock(return_value=0.0)
+    fake_calc.get_potential_energy = MagicMock(return_value=0.0)
     fake_calc.atoms = atoms
     atoms.calc = fake_calc
 

@@ -1,6 +1,10 @@
 import os
 import pytest
 import numpy as np
+from pathlib import Path
+import json
+from ase.build import bulk
+from ase.geometry import get_layers
 from clease.calculator import attach_calculator
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
@@ -16,6 +20,14 @@ from clease.corr_func import CorrFunction
 
 # Set the random seed
 np.random.seed(0)
+
+almgsix_eci_file = Path(__file__).parent / 'almgsix_eci.json'
+
+
+@pytest.fixture
+def almgsix_eci():
+    with almgsix_eci_file.open() as file:
+        return json.load(file)
 
 
 def get_example_mc_system(db_name):
@@ -226,7 +238,7 @@ def test_lowest_energy_obs(db_name):
     mc.attach(energy_evol, interval=1)
 
     mc.run(steps=1000)
-    assert np.min(energy_evol.energies) == pytest.approx(low_en.lowest_energy + mc.energy_bias)
+    assert np.min(energy_evol.energies) == pytest.approx(low_en.lowest_energy)
 
 
 def test_diffraction_obs(db_name):
@@ -328,3 +340,54 @@ def test_fixed_element(db_name):
 
     si_after = [atom.index for atom in atoms if atom.symbol == 'Si']
     assert si_indices == si_after
+
+
+@pytest.mark.slow
+def test_gs_mgsi(db_name, almgsix_eci):
+    conc = Concentration(basis_elements=[['Al', 'Mg', 'Si', 'X']])
+    settings = CEBulk(conc, crystalstructure='fcc', a=4.05,
+                      size=[1, 1, 1], max_cluster_size=3,
+                      max_cluster_dia=[5.0, 5.0])
+    settings.basis_func_type = "binary_linear"
+
+    atoms = bulk('Al', a=4.05, cubic=True)*(2, 2, 2)
+    atoms = attach_calculator(settings, atoms, almgsix_eci)
+    expect = atoms.copy()
+    layers, _ = get_layers(expect, (1, 0, 0))
+    for i in range(len(layers)):
+        if layers[i] % 2 == 0:
+            expect[i].symbol = 'Si'
+        else:
+            expect[i].symbol = 'Mg'
+
+    for i in range(int(len(atoms)/2)):
+        atoms[i].symbol = 'Mg'
+        atoms[i+int(len(atoms)/2)].symbol = 'Si'
+
+    mc = Montecarlo(atoms, 1000)
+    print(mc.current_energy)
+    en_obs = EnergyEvolution(mc)
+    mc.attach(en_obs)
+    temps = [1000, 800, 600, 500, 400, 300, 200, 100]
+    for T in temps:
+        mc.T = T
+        mc.run(steps=100*len(atoms))
+
+    E_final = atoms.get_potential_energy()
+    atoms.numbers[:] = expect.numbers
+    E_expect = atoms.get_potential_energy()
+
+    cf = CorrFunction(settings)
+    cf_final = cf.get_cf(atoms)
+    cf_calc = atoms.calc.get_cf()
+
+    for k in cf_calc.keys():
+        assert cf_calc[k] == pytest.approx(cf_final[k], abs=1e-6)
+
+    # Check that the expected energy is as it should be
+    assert E_expect == pytest.approx(-108.67689884003414, abs=1e-6)
+
+    # Due to simulated annealing and some round-off issues in acceptance criteria
+    # the ground state may not be found within the specified amount of runs.
+    # We check only that the energy is between E_expect +- 1
+    assert E_final == pytest.approx(E_expect, abs=1.0)
