@@ -1,28 +1,50 @@
-python3_test:
-  image: python:3.7
+image: python:3.7
+
+before_script:
+  - pip install .
+  - python3 --version
+
+stages:
+  - Static Analysis
+  - Code Test
+  - Deploy
+
+flake8:
+  stage: Static Analysis
+  script:
+    - pip install flake8
+    - flake8 clease/
+
+pylint:
+  stage: Static Analysis
+  script:
+    - pip install pylint
+    - pylint --disable=all --enable=dangerous-default-value clease/
+
+# mypy:
+#   stage: Static Analysis
+#   allow_failure: true
+#   script:
+#     - pip install mypy
+#     - pwd
+#     - python3 -m mypy clease/
+
+pytests:
+  stage: Code Test
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
-    - apt-get update -qy
-    - apt-get install -qy python3-dev python3-pip
-    - python3 -m pip install coverage flake8 pylint
-    - flake8 clease/
-    - pylint --disable=all --enable=dangerous-default-value clease/
-    - python3 --version
-    - python3 -m pip install .
+    - pwd
+    - pip install coverage
     - coverage run --omit='tests/*' -m pytest tests/
     - coverage report
 
 gui_test:
-  image: python:3.7
+  stage: Code Test
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - apt-get update -qy
-    - apt-get install -qy python3-dev python3-pip
     - apt-get install -qy xvfb libmtdev1
-    - python3 --version
-    - python3 -m pip install mock
-    - python3 -m pip install coverage
-    - python3 -m pip install .
+    - pip install coverage
     - clease gui --setup
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
@@ -30,25 +52,20 @@ gui_test:
     - coverage report
 
 doctest:
-  image: python:3.7
+  stage: Code Test
   script:
     - apt-get update -qy
-    - apt-get install -qy python3-dev python3-pip
     - apt-get install -qy xvfb
-    - python3 --version
     - python3 -m pip install sphinx
     - python3 -m pip install sphinx_rtd_theme
-    - python3 -m pip install .
     - cd doc
     - make doctest
 
 pages:
+  stage: Deploy
   script:
-    - apt-get update -qy
-    - apt-get install -qy python3-dev python3-pip
     - python3 -m pip install sphinx
     - python3 -m pip install sphinx_rtd_theme
-    - python3 -m pip install .
     - cd doc
     - make html
     - mv build/html/ ../public/
@@ -59,11 +76,10 @@ pages:
     - master
 
 python3_test_slow:
+  stage: Code Test
   image: python:3.7
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
-    - apt-get update -qy
-    - apt-get install -qy python3-dev python3-pip
     - python3 --version
     - python3 -m pip install .
     - pytest --runslow tests/

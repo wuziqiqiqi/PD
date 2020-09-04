@@ -99,6 +99,8 @@ setup(
         'Deprecated',
         'pytest',
         'pytest-mock',
+        'mock',
+        # 'mypy',
     ],
     extras_require={
         'dev': (
