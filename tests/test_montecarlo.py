@@ -239,6 +239,7 @@ def test_lowest_energy_obs(db_name):
 
     mc.run(steps=1000)
     assert np.min(energy_evol.energies) == pytest.approx(low_en.lowest_energy)
+    assert low_en.emin_atoms.get_potential_energy() == pytest.approx(low_en.lowest_energy)
 
 
 def test_diffraction_obs(db_name):

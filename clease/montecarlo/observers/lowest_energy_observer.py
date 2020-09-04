@@ -1,4 +1,5 @@
 import numpy as np
+from ase.calculators.singlepoint import SinglePointCalculator
 from clease.montecarlo.observers import MCObserver
 from clease import _logger
 
@@ -28,6 +29,14 @@ class LowestEnergyStructure(MCObserver):
         self.lowest_energy_cf = None
         self.emin_atoms = None
 
+    @property
+    def calc(self):
+        return self.atoms.calc
+
+    @property
+    def energy(self):
+        return self.calc.results['energy']
+
     def __call__(self, system_changes):
         """
         Check if the current state has lower energy and store the current
@@ -37,21 +46,20 @@ class LowestEnergyStructure(MCObserver):
             System changes. See doc-string of
             `clease.montecarlo.observers.MCObserver`
         """
-        energy = self.atoms.calc.results['energy']
-        if self.emin_atoms is None:
-            calc = self.atoms.calc
-            self.lowest_energy_cf = calc.get_cf()
-            self.lowest_energy = energy
-            self.emin_atoms = self.atoms.copy()
-            return
 
-        if energy < self.lowest_energy:
-            dE = energy - self.lowest_energy
-            calc = self.atoms.calc
-            self.lowest_energy = energy
-            self.emin_atoms = self.atoms.copy()
-            self.lowest_energy_cf = calc.get_cf()
+        if self.emin_atoms is None or self.energy < self.lowest_energy:
+            self._update_emin()
             if self.verbose:
+                dE = self.energy - self.lowest_energy
                 msg = "Found new low energy structure. "
                 msg += f"New energy: {self.lowest_energy} eV. Change: {dE} eV"
                 _logger(msg)
+
+    def _update_emin(self):
+        self.lowest_energy_cf = self.calc.get_cf()
+        self.lowest_energy = self.energy
+
+        # Store emin atoms, and attach a cache calculator
+        self.emin_atoms = self.atoms.copy()
+        calc_cache = SinglePointCalculator(self.emin_atoms, energy=self.energy)
+        self.emin_atoms.calc = calc_cache
