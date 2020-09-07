@@ -1,8 +1,9 @@
+from typing import Dict
+from ase import Atoms
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease.calculator import Clease
-from ase import Atoms
-from typing import Dict
+from clease.tools import wrap_and_sort_by_position
 
 
 def attach_calculator(settings: ClusterExpansionSettings,
@@ -22,11 +23,13 @@ def attach_calculator(settings: ClusterExpansionSettings,
     template = settings.template_atoms.get_template_matching_atoms(atoms=atoms)
     settings.set_active_template(atoms=template)
 
-    atoms = settings.atoms.copy()
+    wrapped = wrap_and_sort_by_position(atoms.copy())
+    atoms_with_calc = settings.atoms.copy()
 
     calc = Clease(settings, eci=eci, init_cf=init_cf)
-    atoms.calc = calc
-    return atoms
+    atoms_with_calc.calc = calc
+    atoms_with_calc.symbols = wrapped.symbols
+    return atoms_with_calc
 
 
 def get_ce_energy(settings: ClusterExpansionSettings, atoms: Atoms, eci: Dict[str, float]) -> float:

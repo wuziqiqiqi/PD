@@ -396,3 +396,36 @@ def test_get_ce_energy(db_name):
     energy = get_ce_energy(settings, atoms, eci=generate_ex_eci(settings))
 
     assert isinstance(energy, float)
+
+
+def test_formula_after_attach(db_name):
+    settings, atoms = get_binary(db_name)
+    atoms = atoms * (2, 1, 1)
+    eci = {
+        'c0': 0.0,
+        'c1_0': 0.1,
+        'c2_d0000_0_00': 0.0,
+    }
+    atoms_with_calc = attach_calculator(settings, atoms, eci)
+
+    # First, get energy
+    assert atoms_with_calc.get_chemical_formula() == 'Au28Cu26'
+
+    # Consistency check
+    E1 = atoms_with_calc.get_potential_energy()
+
+    # Make sure that no calc was attached to the original object
+    assert atoms.calc is None
+
+    # Insert 1 Cu atom
+    assert atoms[0].symbol == 'Au'
+    atoms[0].symbol = 'Cu'
+
+    atoms_with_calc = attach_calculator(settings, atoms, eci)
+    assert atoms_with_calc.get_chemical_formula() == 'Au27Cu27'
+
+    assert E1 != pytest.approx(atoms_with_calc.get_potential_energy(), abs=0.01)
+
+    # Revert when the calculator is attached
+    atoms_with_calc[0].symbol = 'Au'
+    assert E1 == pytest.approx(atoms_with_calc.get_potential_energy(), abs=1e-6)
