@@ -1,19 +1,27 @@
 """Calculator for Cluster Expansion."""
 import sys
+import contextlib
+from typing import Dict, Optional, TextIO, Union, List, Tuple, Sequence
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater
-from typing import Dict, Optional, TextIO, Union, List, Tuple
 
 
 class MovedIgnoredAtomError(Exception):
     """Raised when ignored atoms is moved."""
-    pass
 
 
+# pylint: disable=too-few-public-methods
+class KeepChanges:
+
+    def __init__(self):
+        self.keep_changes = True
+
+
+# pylint: disable=too-many-instance-attributes
 class Clease(Calculator):
     """Class for calculating energy using CLEASE.
 
@@ -72,7 +80,6 @@ class Clease(Calculator):
                 logfile = open(logfile, 'a')
         self.logfile = logfile
 
-        self.energy = None
         # reference atoms for calculating the cf and energy for new atoms
         self.atoms = None
         self.symmetry_group = None
@@ -140,7 +147,9 @@ class Clease(Calculator):
         self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf, self.eci,
                                    self.settings.cluster_list)
 
-    def get_energy_given_change(self, system_changes: List[Tuple[int, str, str]]) -> float:
+    def get_energy_given_change(self,
+                                system_changes: List[Tuple[int, str, str]],
+                                keep_changes=False) -> float:
         """
         Calculate the energy when the change is known. No checking will be
         performed.
@@ -150,13 +159,15 @@ class Clease(Calculator):
             system_change = [(23, Mg, Al)]. If an Mg atom occupying the atomic
             index 26 is swapped with an Al atom occupying the atomic index 12,
             system_change = [(26, Mg, Al), (12, Al, Mg)]
+        :param keep_changes: Should the calculator revert to the state prior to
+            the system changes, or should the calculator stay in the new state
+            with the given system changes. Default: False
         """
-        self.update_cf(system_changes=system_changes)
-        self.energy = self.updater.get_energy()
-        self.results['energy'] = self.energy
-        return self.energy
+        with self.with_system_changes(system_changes) as keeper:
+            keeper.keep_changes = keep_changes
+            return self.energy
 
-    def check_state(self, atoms):
+    def check_state(self, atoms: Atoms, tol: float = 1e-15):
         res = super().check_state(atoms)
         syst_ch = self.indices_of_changed_atoms
 
@@ -167,6 +178,7 @@ class Clease(Calculator):
     def reset(self):
         self.results = {}
 
+    # pylint: disable=signature-differs
     def calculate(self, atoms: Atoms, properties: Union[List[str], str],
                   system_changes: List[Tuple[int, str, str]]) -> float:
         """Calculate the energy of the passed Atoms object.
@@ -188,7 +200,6 @@ class Clease(Calculator):
         """
         self.update_energy()
         self.energy = self.updater.get_energy()
-        self.results['energy'] = self.energy
         return self.energy
 
     def clear_history(self) -> None:
@@ -213,6 +224,14 @@ class Clease(Calculator):
         """Update correlation function and get new energy."""
         self.update_cf()
         self.energy = self.updater.get_energy()
+
+    @property
+    def energy(self):
+        return self.results.get('energy', None)
+
+    @energy.setter
+    def energy(self, value):
+        self.results['energy'] = value
 
     @property
     def indices_of_changed_atoms(self) -> List[int]:
@@ -254,7 +273,7 @@ class Clease(Calculator):
     def log(self) -> None:
         """Write energy to log file."""
         if self.logfile is None:
-            return True
+            return
         self.logfile.write(f"{self.energy}\n")
         self.logfile.flush()
 
@@ -270,10 +289,45 @@ class Clease(Calculator):
     def get_singlets(self) -> np.ndarray:
         return self.updater.get_singlets()
 
+    def get_energy(self) -> float:
+        self.energy = self.updater.get_energy()
+        return self.energy
+
     def _on_eci_changed(self):
         """
         Callback that is called after ECIs are changed. It is provided such
         that calculators inheriting from this class (and implementing this
         method) can be notified when the ECIs are changed.
         """
-        pass
+
+    @contextlib.contextmanager
+    def with_system_changes(self, system_changes: Sequence[Tuple[int, str, str]]):
+        """
+        : param system_changes: List of system changes. For example, if the
+            occupation of the atomic index 23 is changed from Mg to Al,
+            system_change = [(23, Mg, Al)]. If an Mg atom occupying the atomic
+            index 26 is swapped with an Al atom occupying the atomic index 12,
+            system_change = [(26, Mg, Al), (12, Al, Mg)]
+        """
+        keeper = KeepChanges()  # We need an object we can mutate to flag for cleanup
+        try:
+            self.reset()
+            # Apply the updates
+            self.update_cf(system_changes)
+            self.energy = self.updater.get_energy()
+            yield keeper
+        finally:
+            if keeper.keep_changes:
+                # Keep changes
+                self.clear_history()
+            else:
+                # Revert changes
+                inverted_changes = self._get_inverted_changes(system_changes)
+                self.restore()  # Also restores results
+                for idx, _, symb in inverted_changes:
+                    self.atoms.symbols[idx] = symb
+
+    @staticmethod
+    def _get_inverted_changes(system_changes):
+        """Invert system changes by doing old_symbs -> new_symbs"""
+        return [(val[0], val[2], val[1]) for val in system_changes]

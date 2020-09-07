@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Monte Carlo method for ase."""
-from __future__ import division
+import sys
+import datetime
 import time
 import numpy as np
 from numpy.random import choice
@@ -24,6 +25,7 @@ class CanNotFindLegalMoveError(Exception):
     pass
 
 
+# pylint: disable=too-many-instance-attributes
 class Montecarlo:
     """Class for running Monte Carlo at a fixed composition (canonical).
 
@@ -65,8 +67,6 @@ class Montecarlo:
         self.current_energy = E0
         self.new_energy = self.current_energy
 
-        # Keep the energy of old and trial state
-        self.last_energies = np.zeros(2)
         self.trial_move = []  # Last trial move performed
         self.mean_energy = Averager(ref_value=E0)
         self.energy_squared = Averager(ref_value=E0)
@@ -187,7 +187,8 @@ class Montecarlo:
         if n_elems_more_than_2 < 2:
             raise TooFewElementsError("There is only one element that has more than one atom")
 
-    def log(self, msg, mode="info"):
+    @staticmethod
+    def log(msg, mode="info"):
         """Logs the message as info."""
         allowed_modes = ["info", "warning"]
         if mode not in allowed_modes:
@@ -218,7 +219,6 @@ class Montecarlo:
         self.num_accepted = 0
         self.mean_energy.clear()
         self.energy_squared.clear()
-        self.corrtime_energies = []
 
     def _build_atoms_list(self):
         """
@@ -291,13 +291,13 @@ class Montecarlo:
 
         start = time.time()
         prev = self.current_step
-        while (self.current_step < steps):
+        while self.current_step < steps:
             E, _ = self._mc_step()
 
             self.mean_energy += E
             self.energy_squared += E**2
 
-            if (time.time() - start > self.status_every_sec):
+            if time.time() - start > self.status_every_sec:
                 ms_per_step = 1000.0 * self.status_every_sec / \
                     float(self.current_step - prev)
                 accept_rate = self.num_accepted / float(self.current_step)
@@ -315,8 +315,6 @@ class Montecarlo:
     @property
     def meta_info(self):
         """Return dict with meta info."""
-        import sys
-        import datetime
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         v_info = sys.version_info
@@ -362,33 +360,62 @@ class Montecarlo:
         system_changes = [(rand_pos_a, symb_a, symb_b), (rand_pos_b, symb_b, symb_a)]
         return system_changes
 
-    def _accept(self, system_changes):
-        """Return `True` if the trial step is accepted.
+    def _calculate_step(self, system_changes):
+        """Calculate energies given a step, and decide if we accept the step.
+
+        Returns boolean if system changes are accepted.
 
         Parameters:
 
         system_changes: list
             List with system changes
         """
-        self.last_energies[0] = self.current_energy
-
         # NOTE: Calculate updates the system
         calc = self.atoms.calc
-        self.new_energy = calc.get_energy_given_change(system_changes)
 
-        # NOTE: As this is called after calculate, the changes has
-        # already been introduced to the system
-        for bias in self.bias_potentials:
-            self.new_energy += bias(system_changes)
-        self.last_energies[1] = self.new_energy
+        with calc.with_system_changes(system_changes) as keeper:
+            self.new_energy = calc.get_energy()
 
+            # NOTE: As this is called after calculate, the changes has
+            # already been introduced to the system
+            for bias in self.bias_potentials:
+                self.new_energy += bias(system_changes)
+
+            accept = self._do_accept(self.current_energy, self.new_energy)
+
+            # Decide if we keep changes, or rollback
+            keeper.keep_changes = accept
+        return accept
+
+    def _do_accept(self, current_energy, new_energy):
+        """Decide if we accept a state, based on the energies.
+
+        Return a bool on whether the move was accepted.
+
+        Parameters:
+
+        :param current_energy: Energy of the current configuration
+        :param new_energy: Energy of the new configuration.
+        """
         # Standard Metropolis acceptance criteria
-        if (self.new_energy < self.current_energy):
+        if new_energy < current_energy:
             return True
         kT = self.T * kB
-        energy_diff = self.new_energy - self.current_energy
+        energy_diff = new_energy - current_energy
         probability = np.exp(-energy_diff / kT)
         return np.random.rand() <= probability
+
+    def _move_accepted(self, system_changes):
+        self.num_accepted += 1
+        self._update_tracker(system_changes)
+        self.current_energy = self.new_energy
+        return system_changes
+
+    # pylint: disable=no-self-use
+    def _move_rejected(self, system_changes):
+        # Move rejected, no changes are made
+        system_changes = [(change[0], change[1], change[1]) for change in system_changes]
+        return system_changes
 
     def count_atoms(self):
         """Count the number of each element."""
@@ -400,7 +427,6 @@ class Montecarlo:
     def _mc_step(self):
         """Make one Monte Carlo step by swithing two atoms."""
         self.current_step += 1
-        self.last_energies[0] = self.current_energy
 
         system_changes = self._get_trial_move()
         counter = 0
@@ -416,41 +442,18 @@ class Montecarlo:
             msg += "violate any of the constraints"
             raise CanNotFindLegalMoveError(msg)
 
-        move_accepted = self._accept(system_changes)
+        # Calculate step, and whether we accept it
+        move_accepted = self._calculate_step(system_changes)
 
-        # At this point the new energy is calculated in the _accept function
-        self.last_energies[1] = self.new_energy
-
-        if (move_accepted):
-            self.current_energy = self.new_energy
-            self.num_accepted += 1
-        else:
-            # Reset the sytem back to original
-            for change in system_changes:
-                indx = change[0]
-                old_symb = change[1]
-                assert (self.atoms[indx].symbol == change[2])
-                self.atoms[indx].symbol = old_symb
-
-        if (move_accepted):
-            self.atoms.calc.clear_history()
-        else:
-            self.atoms.calc.restore()
-
-        if (move_accepted):
-            # Update the atom_indices
-            self._update_tracker(system_changes)
-        else:
-            new_symb_changes = []
-            for change in system_changes:
-                new_symb_changes.append((change[0], change[1], change[1]))
-            system_changes = new_symb_changes
+        updater = self._move_accepted if move_accepted else self._move_rejected
+        system_changes = updater(system_changes)
 
         # Execute all observers
-        for entry in self.observers:
-            interval = entry[0]
-            if (self.current_step % interval == 0):
-                obs = entry[1]
-                obs(system_changes)
+        self.execute_observers(system_changes)
         self.filter.add(self.current_energy)
         return self.current_energy, move_accepted
+
+    def execute_observers(self, system_changes):
+        for interval, obs in self.observers:
+            if self.current_step % interval == 0:
+                obs(system_changes)

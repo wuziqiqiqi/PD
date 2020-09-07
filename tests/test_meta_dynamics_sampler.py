@@ -1,11 +1,12 @@
-from unittest.mock import MagicMock
-from clease.montecarlo import BinnedBiasPotential
-from clease.montecarlo import MetaDynamicsSampler
-from clease.montecarlo import SGCMonteCarlo
-from ase.build import bulk
 import json
 import os
 import numpy as np
+from ase.build import bulk
+from clease import CEBulk, Concentration
+from clease.calculator import attach_calculator
+from clease.montecarlo import BinnedBiasPotential
+from clease.montecarlo import MetaDynamicsSampler
+from clease.montecarlo import SGCMonteCarlo
 from clease.montecarlo.observers import ConcentrationObserver
 
 
@@ -19,16 +20,18 @@ def fake_get_energy_method(self, system_change):
     return 0.0
 
 
-def test_ideal_mixture(tmpdir):
+def test_ideal_mixture(tmpdir, db_name):
+    conc = Concentration(basis_elements=[['Au', 'Cu']])
+    settings = CEBulk(conc,
+                      a=3.9,
+                      db_name=db_name,
+                      max_cluster_size=2,
+                      max_cluster_dia=3.0,
+                      crystalstructure='fcc')
     show_plot = False
-    atoms = bulk('Au') * (3, 3, 3)
-    fake_calc = MagicMock()
-    fake_calc.get_energy_given_change = MagicMock(
-        side_effect=lambda x: fake_get_energy_method(fake_calc, x))
-    fake_calc.calculate = MagicMock(return_value=0.0)
-    fake_calc.get_potential_energy = MagicMock(return_value=0.0)
-    fake_calc.atoms = atoms
-    atoms.calc = fake_calc
+    atoms = bulk('Au', a=3.9) * (3, 3, 3)
+    eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.0}
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
     mc = SGCMonteCarlo(atoms, 600, symbols=['Au', 'Cu'])
     pot = BinnedBiasPotential(xmin=0.0,
@@ -47,6 +50,7 @@ def test_ideal_mixture(tmpdir):
     y -= y[0]
 
     if show_plot:
+        # pylint: disable=import-outside-toplevel
         from matplotlib import pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
@@ -63,4 +67,4 @@ def test_ideal_mixture(tmpdir):
     # test manually and set show_plot=True.
     conc_mx = data['betaG']['x'][np.argmax(y)]
     os.remove(fname)
-    assert conc_mx < 0.96 and conc_mx > 0.05
+    assert 0.05 < conc_mx < 0.96

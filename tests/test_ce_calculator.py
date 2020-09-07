@@ -1,7 +1,6 @@
 """Unit tests for the Clease calculator."""
 import os
 import time
-import unittest
 import pytest
 import numpy as np
 from numpy.random import randint, choice
@@ -333,11 +332,10 @@ def test_4body_attach(db_name):
     _ = attach_calculator(settings, atoms=atoms, eci=eci)
 
 
-def test_given_change_and_restore(db_name):
+def test_with_system_changes_context(db_name):
     settings, atoms = get_binary(db_name)
 
-    for atom in atoms:
-        atom.symbol = 'Au'
+    atoms.symbols = 'Au'
 
     calc = Clease(settings, eci=generate_ex_eci(settings))
     atoms.calc = calc
@@ -346,45 +344,47 @@ def test_given_change_and_restore(db_name):
 
     init_cf = cf.get_cf(atoms)
 
-    # Insert to Cu atoms
-    _ = atoms.calc.get_energy_given_change([(0, 'Au', 'Cu'), (1, 'Au', 'Cu')])
+    # Insert 2 Cu atoms
+    system_changes = [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')]
+    assert atoms.calc.energy is None
+    with atoms.calc.with_system_changes(system_changes) as keeper:
+        keeper.keep_changes = False  # Flag to revert
 
-    # We should have to Cu atoms now
-    num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
-    assert num_cu == 2
+        # We should have 2 Cu atoms now
+        num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
+        assert num_cu == 2
+        energy = atoms.get_potential_energy()
+        assert isinstance(energy, float)
+        assert init_cf != atoms.calc.get_cf()
+    # Check that everything is restored to the previous state
+    assert all(atoms.symbols == 'Au')  # Only Au atoms now
+    restored_cf = atoms.calc.get_cf()
 
-    cf_calc_two_inserts = atoms.calc.get_cf()
-    cf_scratch = cf.get_cf(atoms)
+    for k, v in init_cf.items():
+        assert v == pytest.approx(restored_cf[k])
 
-    for k, v in cf_calc_two_inserts.items():
-        assert v == pytest.approx(cf_scratch[k])
+    # Test that we correctly restore the energy after runs
+    energy = atoms.get_potential_energy()
+    assert atoms.calc.energy is not None
+    with atoms.calc.with_system_changes(system_changes) as keeper:
+        keeper.keep_changes = False  # Flag to revert
+        assert energy != atoms.get_potential_energy()
+    assert energy == pytest.approx(atoms.get_potential_energy())
 
-    atoms.calc.restore()
+    # Test we get the same energy after a rerun (same CF's)
+    assert not atoms.calc.calculation_required(atoms, ['energy'])
+    calc.reset()
+    assert atoms.calc.calculation_required(atoms, ['energy'])
+    assert energy == pytest.approx(atoms.get_potential_energy())
 
-    # Now we should be back to pure Au
-    num_au = sum(1 for atom in atoms if atom.symbol == 'Au')
-    assert num_au == len(atoms)
-
-    cf_calc = calc.get_cf()
-    for k, v in cf_calc.items():
-        assert v == pytest.approx(init_cf[k])
-
-    # Insert two atoms again
-    _ = atoms.calc.get_energy_given_change([(0, 'Au', 'Cu'), (1, 'Au', 'Cu')])
-
-    # Clear the history
-    atoms.calc.clear_history()
-
-    # Restore should now not have any effect
-    atoms.calc.restore()
-    cf_calc = calc.get_cf()
-
-    # Should still be two Cu atoms
-    num_cu = sum(1 for atom in atoms if atom.symbol == 'Cu')
-    assert num_cu == 2
-
-    for k, v in cf_calc_two_inserts.items():
-        assert v == pytest.approx(cf_calc[k])
+    # Test that we can keep changes
+    with atoms.calc.with_system_changes(system_changes) as keeper:
+        # Default is to keep changes. Check that we don't need to do a calculation
+        # since the energy is update when we enter the context
+        assert not atoms.calc.calculation_required(atoms, ['energy'])
+        energy = atoms.get_potential_energy()
+    calc.reset()
+    assert energy == pytest.approx(atoms.get_potential_energy())
 
 
 def test_get_ce_energy(db_name):
@@ -394,4 +394,5 @@ def test_get_ce_energy(db_name):
 
     # simple test to receive float energy value
     energy = get_ce_energy(settings, atoms, eci=generate_ex_eci(settings))
+
     assert isinstance(energy, float)
