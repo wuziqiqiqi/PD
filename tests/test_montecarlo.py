@@ -1,8 +1,8 @@
 import os
 import pytest
-import numpy as np
 from pathlib import Path
 import json
+import numpy as np
 from ase.build import bulk
 from ase.geometry import get_layers
 from clease.calculator import attach_calculator
@@ -13,8 +13,7 @@ from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.observers import DiffractionObserver
-from clease.montecarlo.constraints import ConstrainSwapByBasis
-from clease.montecarlo.constraints import FixedElement
+from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement, FixedIndices
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 
@@ -343,15 +342,60 @@ def test_fixed_element(db_name):
     assert si_indices == si_after
 
 
+def test_fixed_indices(db_name):
+    atoms = get_rocksalt_mc_system(db_name)
+
+    # Insert a few vacancies
+    num_X = 0
+    for atom in atoms:
+        if atom.symbol == 'Si':
+            atom.symbol = 'X'
+            num_X += 1
+
+        if num_X >= 20:
+            break
+
+    # Insert a few C
+    num_C = 0
+    for atom in atoms:
+        if atom.symbol == 'O':
+            atom.symbol = 'C'
+            num_C += 1
+
+        if num_C >= 20:
+            break
+
+    # Fix the first n atoms
+    n = 80
+    indices = np.arange(len(atoms))[:n]
+    fixed = FixedIndices(indices)
+
+    mc = Montecarlo(atoms, 10000)
+    mc.add_constraint(fixed)
+
+    syms_before = atoms.symbols[:n]
+    remainder_before = list(atoms.symbols[n:])
+    mc.run(steps=2000)
+
+    syms_after = atoms.symbols[:n]
+    remainder_after = list(atoms.symbols[n:])
+    assert all(syms_before == syms_after)
+    # Check that we didn't constrain the other symbols
+    assert remainder_before != remainder_after
+
+
 @pytest.mark.slow
 def test_gs_mgsi(db_name, almgsix_eci):
     conc = Concentration(basis_elements=[['Al', 'Mg', 'Si', 'X']])
-    settings = CEBulk(conc, crystalstructure='fcc', a=4.05,
-                      size=[1, 1, 1], max_cluster_size=3,
+    settings = CEBulk(conc,
+                      crystalstructure='fcc',
+                      a=4.05,
+                      size=[1, 1, 1],
+                      max_cluster_size=3,
                       max_cluster_dia=[5.0, 5.0])
     settings.basis_func_type = "binary_linear"
 
-    atoms = bulk('Al', a=4.05, cubic=True)*(2, 2, 2)
+    atoms = bulk('Al', a=4.05, cubic=True) * (2, 2, 2)
     atoms = attach_calculator(settings, atoms, almgsix_eci)
     expect = atoms.copy()
     layers, _ = get_layers(expect, (1, 0, 0))
@@ -361,9 +405,9 @@ def test_gs_mgsi(db_name, almgsix_eci):
         else:
             expect[i].symbol = 'Mg'
 
-    for i in range(int(len(atoms)/2)):
+    for i in range(int(len(atoms) / 2)):
         atoms[i].symbol = 'Mg'
-        atoms[i+int(len(atoms)/2)].symbol = 'Si'
+        atoms[i + int(len(atoms) / 2)].symbol = 'Si'
 
     mc = Montecarlo(atoms, 1000)
     print(mc.current_energy)
@@ -372,7 +416,7 @@ def test_gs_mgsi(db_name, almgsix_eci):
     temps = [1000, 800, 600, 500, 400, 300, 200, 100]
     for T in temps:
         mc.T = T
-        mc.run(steps=100*len(atoms))
+        mc.run(steps=100 * len(atoms))
 
     E_final = atoms.get_potential_energy()
     atoms.numbers[:] = expect.numbers

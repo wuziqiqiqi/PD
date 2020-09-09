@@ -1,10 +1,8 @@
-class MCConstraint(object):
+class MCConstraint:
     """
     Class for that prevents the MC sampler to run certain moves
     """
-
-    def __init__(self):
-        self.name = "GenericConstraint"
+    name = "GenericConstraint"
 
     def __call__(self, system_changes):
         """Return `True` if the trial move is valid.
