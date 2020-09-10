@@ -1,14 +1,16 @@
+from typing import Sequence
 import numpy as np
+from clease.tools import SystemChange
 
 
-class BiasPotential(object):
+class BiasPotential:
     """
     Potential that can be used to manipulate the states visited.
     If added to MC run, the value returned from this will be
     added to the energy.
     """
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         """Calculate the bias potential.
 
         Parameter
@@ -24,8 +26,8 @@ class BiasPotential(object):
            This functions is called right before MC sampling
            starts.
         """
-        pass
 
+    # pylint: disable=no-self-use,unused-argument
     def calculate_from_scratch(self, atoms):
         """Calculate the bias potential from scratch.
 
@@ -184,7 +186,7 @@ class PseudoBinaryFreeEnergyBias(SampledBiasPotential):
                             "PseudoBinaryConcInitializer!")
         self._conc_init = init
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         """Evaluate the bias potential.
 
         see :py:method:`cemc.mcmc.mc_observers_MCObserver.__call__`
@@ -249,7 +251,7 @@ class CovarianceBiasPotential(SampledBiasPotential):
     def cov_range(self, obj):
         self._cov_range = obj
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         """Get the value for the bias potential.
 
         Parameter:

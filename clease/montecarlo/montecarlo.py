@@ -4,12 +4,16 @@ import sys
 import datetime
 import time
 import logging
+from typing import Sequence, Tuple
 import numpy as np
 from numpy.random import choice
+from ase import Atoms
 from ase.units import kB
+from clease.tools import SystemChange
 from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
 from clease.montecarlo import BiasPotential
+from clease.montecarlo.observers import MCObserver
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
 logger = logging.getLogger(__name__)
@@ -40,7 +44,7 @@ class Montecarlo:
         Temperature of Monte Carlo simulation in Kelvin
     """
 
-    def __init__(self, atoms, temp):
+    def __init__(self, atoms: Atoms, temp: float):
         self.name = "MonteCarlo"
         self.atoms = atoms
         self.active_indices = list(range(len(atoms)))
@@ -85,7 +89,7 @@ class Montecarlo:
                                         max_time=20 * len(self.atoms),
                                         n_subfilters=10)
 
-    def insert_symbol(self, symb, indices):
+    def insert_symbol(self, symb: str, indices: Sequence[int]):
         """Insert symbols on a predefined set of indices.
 
         Parameters:
@@ -97,7 +101,9 @@ class Montecarlo:
         """
         calc = self.atoms.calc
         for indx in indices:
-            system_changes = (indx, self.atoms[indx].symbol, symb)
+            system_changes = SystemChange(index=indx,
+                                          old_symb=self.atoms[indx].symbol,
+                                          new_symb=symb)
 
             if not self._no_constraint_violations([system_changes]):
                 msg = ("The indices given results in an update "
@@ -108,18 +114,18 @@ class Montecarlo:
         self._build_atoms_list()
         calc.clear_history()
 
-    def insert_symbol_random_places(self, symbol, num=1, swap_symbs=()):
+    def insert_symbol_random_places(self, symbol: str, num: int = 1, swap_symbs: Tuple[str] = ()):
         """Insert random symbol.
 
         Parameters:
 
-        symbol: str
+        symbol:
             Symbol to insert
 
-        num: int
+        num:
             Number of sites to insert
 
-        swap_symbs: list
+        swap_symbs:
             If given, will insert the replace symbol with sites having symbols
             in this list
         """
@@ -143,7 +149,7 @@ class Montecarlo:
                 # until after all the atoms have been inserted
                 continue
 
-            system_changes = (indx, old_symb, symbol)
+            system_changes = SystemChange(index=indx, old_symb=old_symb, new_symb=symbol)
             if not self._no_constraint_violations([system_changes]):
                 continue
             calc.update_cf(system_changes)
@@ -158,12 +164,12 @@ class Montecarlo:
         """Enforce a new energy evaluation."""
         self.current_energy = self.atoms.get_potential_energy()
 
-    def set_symbols(self, symbs):
+    def set_symbols(self, symbs: Sequence[str]):
         """Set the symbols of this Monte Carlo run.
 
         Parameters:
 
-        symbs: list
+        symbs:
             Symbols to insert. Has to have the same length as the
             attached atoms object.
         """
@@ -191,7 +197,7 @@ class Montecarlo:
         if n_elems_more_than_2 < 2:
             raise TooFewElementsError("There is only one element that has more than one atom")
 
-    def _no_constraint_violations(self, system_changes):
+    def _no_constraint_violations(self, system_changes: Sequence[SystemChange]):
         """Check if the proposed moves violate any of the constraints.
 
         Parameters:
@@ -227,7 +233,7 @@ class Montecarlo:
         self.atoms_tracker.init_tracker(self.atoms)
         self.symbols = self.atoms_tracker.symbols
 
-    def _update_tracker(self, system_changes):
+    def _update_tracker(self, system_changes: Sequence[SystemChange]):
         """Update the atom tracker."""
         self.atoms_tracker.update_swap_move(system_changes)
 
@@ -241,19 +247,19 @@ class Montecarlo:
         """
         self.constraints.append(constraint)
 
-    def add_bias(self, potential):
+    def add_bias(self, potential: BiasPotential):
         """Add a new bias potential.
 
         Parameters:
 
-        potential: Bias potential
+        potential:
             Potential to be added
         """
         if not isinstance(potential, BiasPotential):
             raise TypeError("potential has to be of type BiasPotential")
         self.bias_potentials.append(potential)
 
-    def attach(self, obs, interval=1):
+    def attach(self, obs: MCObserver, interval: int = 1):
         """Attach observers to be called on a given MC step interval.
 
         Parameters:
@@ -270,7 +276,7 @@ class Montecarlo:
 
         self.observers.append((interval, obs))
 
-    def run(self, steps=100):
+    def run(self, steps: int = 100):
         """Run Monte Carlo simulation.
 
         Parameters:
@@ -355,11 +361,15 @@ class Montecarlo:
         symb_b = choice([s for s in self.symbols if s != symb_a])
         rand_pos_a = self.atoms_tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.atoms_tracker.get_random_indx_of_symbol(symb_b)
-        system_changes = [(rand_pos_a, symb_a, symb_b), (rand_pos_b, symb_b, symb_a)]
+        system_changes = [
+            SystemChange(index=rand_pos_a, old_symb=symb_a, new_symb=symb_b),
+            SystemChange(index=rand_pos_b, old_symb=symb_b, new_symb=symb_a)
+        ]
+
         logger.debug('Proposed system changes: %s', system_changes)
         return system_changes
 
-    def _calculate_step(self, system_changes):
+    def _calculate_step(self, system_changes: Sequence[SystemChange]):
         """Calculate energies given a step, and decide if we accept the step.
 
         Returns boolean if system changes are accepted.
@@ -389,7 +399,7 @@ class Montecarlo:
             keeper.keep_changes = accept
         return accept
 
-    def _do_accept(self, current_energy, new_energy):
+    def _do_accept(self, current_energy: float, new_energy: float) -> bool:
         """Decide if we accept a state, based on the energies.
 
         Return a bool on whether the move was accepted.
@@ -408,7 +418,7 @@ class Montecarlo:
         logger.debug('Calculated probability: %.3f', probability)
         return np.random.rand() <= probability
 
-    def _move_accepted(self, system_changes):
+    def _move_accepted(self, system_changes: Sequence[SystemChange]) -> Sequence[SystemChange]:
         logger.debug('Move accepted, updating things')
         self.num_accepted += 1
         self._update_tracker(system_changes)
@@ -416,10 +426,13 @@ class Montecarlo:
         return system_changes
 
     # pylint: disable=no-self-use
-    def _move_rejected(self, system_changes):
+    def _move_rejected(self, system_changes: Sequence[SystemChange]) -> Sequence[SystemChange]:
         logger.debug('Move rejected, undoing system changes: %s', system_changes)
         # Move rejected, no changes are made
-        system_changes = [(change[0], change[1], change[1]) for change in system_changes]
+        system_changes = [
+            SystemChange(index=change.index, old_symb=change.old_symb, new_symb=change.old_symb)
+            for change in system_changes
+        ]
         logger.debug('Reversed system changes: %s', system_changes)
         return system_changes
 
@@ -460,7 +473,7 @@ class Montecarlo:
         self.filter.add(self.current_energy)
         return self.current_energy, move_accepted
 
-    def execute_observers(self, system_changes):
+    def execute_observers(self, system_changes: Sequence[SystemChange]):
         for interval, obs in self.observers:
             if self.current_step % interval == 0:
                 logger.debug('Executing observer %s at step %d with interval %d.', obs.name,

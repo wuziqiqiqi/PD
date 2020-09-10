@@ -1,7 +1,10 @@
-from clease.montecarlo import BiasPotential
+from typing import Sequence
 import numpy as np
+from clease.tools import SystemChange
+from clease.montecarlo import BiasPotential
 
 
+# pylint: disable=too-many-instance-attributes
 class GaussianKernelBiasPotential(BiasPotential):
     """
     Bias potential represented by a sum of Gaussian kernels.
@@ -83,7 +86,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         w = self._gaussian(x, self.centers[low:high + 1])
         return np.sum(self.coeff[low:high + 1] * w)
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         x = self.getter(system_changes, peak=True)
         return self.evaluate(x)
 

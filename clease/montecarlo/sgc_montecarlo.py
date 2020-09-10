@@ -1,13 +1,17 @@
+from typing import Sequence, Tuple, Dict
+import numpy as np
+from ase import Atoms
+from ase.units import kB
+from clease.tools import SystemChange
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import SGCObserver
-import numpy as np
-from ase.units import kB
 
 
 class InvalidChemicalPotentialError(Exception):
     pass
 
 
+# pylint: disable=too-many-instance-attributes
 class SGCMonteCarlo(Montecarlo):
     """
     Class for running Monte Carlo in the Semi-Grand Canonical Ensebmle
@@ -27,7 +31,7 @@ class SGCMonteCarlo(Montecarlo):
         Possible symbols to be used in swaps
     """
 
-    def __init__(self, atoms, temp, symbols=()):
+    def __init__(self, atoms: Atoms, temp: float, symbols: Tuple[str] = ()):
         Montecarlo.__init__(self, atoms, temp)
 
         self.symbols = symbols
@@ -61,16 +65,15 @@ class SGCMonteCarlo(Montecarlo):
         new_symb = old_symb
         while new_symb == old_symb:
             new_symb = self.symbols[np.random.randint(low=0, high=len(self.symbols))]
-        system_changes = [(indx, old_symb, new_symb)]
+        system_changes = [SystemChange(index=indx, old_symb=old_symb, new_symb=new_symb)]
         return system_changes
 
     def _check_symbols(self):
         """
         Override because there are no restriction on the symbols here
         """
-        pass
 
-    def _update_tracker(self, system_changes):
+    def _update_tracker(self, system_changes: Sequence[SystemChange]):
         """
         Override the update of the atom tracker.
 
@@ -81,7 +84,6 @@ class SGCMonteCarlo(Montecarlo):
         system_changes: list
             Accepted system changes
         """
-        pass
 
     def reset(self):
         """
@@ -95,7 +97,7 @@ class SGCMonteCarlo(Montecarlo):
         return self._chemical_potential
 
     @chemical_potential.setter
-    def chemical_potential(self, chem_pot):
+    def chemical_potential(self, chem_pot: Dict[str, float]):
         eci = self.atoms.calc.eci
         if any([k not in eci.keys() for k in chem_pot.keys()]):
             msg = "A chemical potential not being trackted is added. Make "
@@ -111,7 +113,7 @@ class SGCMonteCarlo(Montecarlo):
             self._reset_eci_to_original(self.atoms.calc.eci)
         self._include_chemical_potential_in_eci(chem_pot, self.atoms.calc.eci)
 
-    def _include_chemical_potential_in_eci(self, chem_pot, eci):
+    def _include_chemical_potential_in_eci(self, chem_pot: Dict[str, float], eci: Dict[str, float]):
         """
         Including the chemical potentials in the ECIs
 
@@ -138,7 +140,7 @@ class SGCMonteCarlo(Montecarlo):
         self.current_energy = calc.calculate(None, None, None)
         return eci
 
-    def _reset_eci_to_original(self, eci_with_chem_pot):
+    def _reset_eci_to_original(self, eci_with_chem_pot: Dict[str, float]):
         """
         Resets the ECIs to their original value
 
@@ -157,7 +159,8 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.atoms.calc.eci)
 
-    def run(self, steps=10, chem_pot=None):
+    # pylint: disable=arguments-differ
+    def run(self, steps: int = 10, chem_pot: Dict[str, float] = None):
         """
         Run Monte Carlo simulation.
         See :py:meth:`cemc.mcmc.Montecarlo.runMC`
@@ -180,7 +183,7 @@ class SGCMonteCarlo(Montecarlo):
 
         Montecarlo.run(self, steps=steps)
 
-    def singlet2composition(self, avg_singlets):
+    def singlet2composition(self, avg_singlets: Dict[str, float]):
         """Convert singlets to composition."""
         bf = self.atoms.calc.settings.basis_functions
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
@@ -202,6 +205,7 @@ class SGCMonteCarlo(Montecarlo):
             res[name] = x[i]
         return res
 
+    # pylint: disable=arguments-differ
     def get_thermodynamic_quantities(self, reset_eci=True):
         """Compute thermodynamic quantities.
 
@@ -230,6 +234,7 @@ class SGCMonteCarlo(Montecarlo):
         quantities["n_mc_steps"] = self.averager.counter
 
         # Add singlets and chemical potential to the dictionary
+        # pylint: disable=consider-using-enumerate
         for i in range(len(singlets)):
             name = f"singlet_{self.chem_pot_names[i]}"
             quantities[name] = singlets[i]
@@ -245,6 +250,7 @@ class SGCMonteCarlo(Montecarlo):
         try:
             avg_conc = self.singlet2composition(singlets)
             quantities.update(avg_conc)
+        # pylint: disable=broad-except
         except Exception as exc:
             print("Could not find average singlets!")
             print(exc)

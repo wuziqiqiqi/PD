@@ -1,5 +1,7 @@
-from clease.montecarlo import BiasPotential
+from typing import Sequence
 import numpy as np
+from clease.tools import SystemChange
+from clease.montecarlo import BiasPotential
 
 
 class BinnedBiasPotential(BiasPotential):
@@ -71,7 +73,7 @@ class BinnedBiasPotential(BiasPotential):
                 0.5*fac*(x - x_left)*(x-x_center)*y_right
         return y
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         """Get the bias potential value after the system_change."""
         x = self.getter(system_changes, peak=True)
         return self.evaluate(x)

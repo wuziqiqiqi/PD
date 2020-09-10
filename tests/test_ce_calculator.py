@@ -7,7 +7,7 @@ from numpy.random import randint, choice
 from ase.build import bulk
 from ase.spacegroup import crystal
 
-from clease.tools import wrap_and_sort_by_position
+from clease.tools import wrap_and_sort_by_position, SystemChange
 from clease.settings import CEBulk, CECrystal
 from clease.corr_func import CorrFunction
 from clease.settings import Concentration
@@ -345,7 +345,10 @@ def test_with_system_changes_context(db_name):
     init_cf = cf.get_cf(atoms)
 
     # Insert 2 Cu atoms
-    system_changes = [(0, 'Au', 'Cu'), (1, 'Au', 'Cu')]
+    system_changes = [
+        SystemChange(index=0, old_symb='Au', new_symb='Cu'),
+        SystemChange(index=1, old_symb='Au', new_symb='Cu')
+    ]
     assert atoms.calc.energy is None
     with atoms.calc.with_system_changes(system_changes) as keeper:
         keeper.keep_changes = False  # Flag to revert

@@ -1,9 +1,10 @@
+# pylint: disable=too-many-lines
 """A collection of miscellaneous functions used for Cluster Expansion."""
 import re
 import logging
 from itertools import (permutations, combinations, product, filterfalse, chain)
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict, Set, Sequence
+from typing import List, Optional, Tuple, Dict, Set, Sequence, NamedTuple
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
 import numpy as np
@@ -1062,3 +1063,9 @@ def remove_redundant_equations(A, b, tol=1e-6):
     R_trimmed = np.array(R_trimmed).T
     A_trimmed = Q.dot(R_trimmed).T
     return A_trimmed.copy(), b[indices]
+
+
+class SystemChange(NamedTuple):
+    index: int
+    old_symb: str
+    new_symb: str

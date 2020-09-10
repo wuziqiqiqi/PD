@@ -7,7 +7,7 @@ from clease.corr_func import CorrFunction
 from clease.settings import CEBulk, Concentration
 from clease.calculator import Clease
 from clease.calculator import CleaseVolDep
-from clease.tools import wrap_and_sort_by_position
+from clease.tools import wrap_and_sort_by_position, SystemChange
 
 
 def get_random_eci(setting):
@@ -73,14 +73,14 @@ def test_consistency(db_name):
         atoms1.get_potential_energy()
         atoms2.get_potential_energy()
         for s in swaps:
-            change = [(s['idx'], atoms1[s['idx']].symbol, s['symbol'])]
+            change = [SystemChange(s['idx'], atoms1[s['idx']].symbol, s['symbol'])]
             atoms1[s['idx']].symbol = s['symbol']
             atoms2[s['idx']].symbol = s['symbol']
 
             if c == 'get_pot_en':
                 E1 = atoms1.get_potential_energy()
                 E2 = atoms2.get_potential_energy()
-            elif c == 'get_en_given_changet':
+            elif c == 'get_en_given_change':
                 E1 = calc1.get_energy_given_change(change)
                 E2 = calc2.get_energy_given_change(change)
             assert E1 == pytest.approx(E2)

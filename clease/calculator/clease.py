@@ -1,10 +1,11 @@
 """Calculator for Cluster Expansion."""
 import sys
 import contextlib
-from typing import Dict, Optional, TextIO, Union, List, Tuple, Sequence
+from typing import Dict, Optional, TextIO, Union, List, Sequence
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
+from clease.tools import SystemChange
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater
@@ -148,7 +149,7 @@ class Clease(Calculator):
                                    self.settings.cluster_list)
 
     def get_energy_given_change(self,
-                                system_changes: List[Tuple[int, str, str]],
+                                system_changes: Sequence[SystemChange],
                                 keep_changes=False) -> float:
         """
         Calculate the energy when the change is known. No checking will be
@@ -180,7 +181,7 @@ class Clease(Calculator):
 
     # pylint: disable=signature-differs
     def calculate(self, atoms: Atoms, properties: Union[List[str], str],
-                  system_changes: List[Tuple[int, str, str]]) -> float:
+                  system_changes: Sequence[SystemChange]) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
@@ -249,7 +250,7 @@ class Clease(Calculator):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
 
-    def update_cf(self, system_changes: Optional[List[Tuple[int, str, str]]] = None) -> None:
+    def update_cf(self, system_changes: Sequence[SystemChange] = None) -> None:
         """Update correlation function based on the reference value.
 
         :param system_changes: List of system changes. For example, if the
@@ -261,7 +262,10 @@ class Clease(Calculator):
         if system_changes is None:
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
-            system_changes = [(x, symbols[x], self.atoms[x].symbol) for x in swapped_indices]
+            system_changes = [
+                SystemChange(index=idx, old_symb=symbols[idx], new_symb=self.atoms[idx].symbol)
+                for idx in swapped_indices
+            ]
         for change in system_changes:
             self.updater.update_cf(change)
 
@@ -301,7 +305,7 @@ class Clease(Calculator):
         """
 
     @contextlib.contextmanager
-    def with_system_changes(self, system_changes: Sequence[Tuple[int, str, str]]):
+    def with_system_changes(self, system_changes: Sequence[SystemChange]):
         """
         : param system_changes: List of system changes. For example, if the
             occupation of the atomic index 23 is changed from Mg to Al,
@@ -328,6 +332,9 @@ class Clease(Calculator):
                     self.atoms.symbols[idx] = symb
 
     @staticmethod
-    def _get_inverted_changes(system_changes):
+    def _get_inverted_changes(system_changes: Sequence[SystemChange]):
         """Invert system changes by doing old_symbs -> new_symbs"""
-        return [(val[0], val[2], val[1]) for val in system_changes]
+        return [
+            SystemChange(index=change.index, old_symb=change.new_symb, new_symb=change.old_symb)
+            for change in system_changes
+        ]

@@ -1,8 +1,9 @@
+from typing import Dict, Optional, Iterable, Set, List, Union, Sequence
+from ase import Atoms
+from ase.calculators.calculator import Calculator
+from clease.tools import SystemChange
 from clease.settings import ClusterExpansionSettings
 from clease.calculator import Clease
-from ase.calculators.calculator import Calculator
-from typing import Dict, Optional, Iterable, Set, List, Union
-from ase import Atoms
 
 
 class CleaseVolDep(Clease):
@@ -196,23 +197,24 @@ class CleaseVolDep(Clease):
         vol = self.get_volume(cf)
         return -1.0 - vol * self._d3EdV3(cf, vol) / self._d2EdV2(cf, vol)
 
-    def get_energy_given_change(self, system_changes: Union[List[tuple], None]):
+    def get_energy_given_change(self, system_changes: Sequence[SystemChange], keep_changes=False):
         """
         Update correlation functions given the change
         """
-        self.update_cf(system_changes=system_changes)
-        cf = self.get_cf()
-        vol = self.get_volume(cf)
-        energy = sum(
-            self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**p
-            for k in cf.keys()
-            for p in range(self.max_power + 1))
-        self.energy = energy * len(self.atoms)
-        self.results['energy'] = self.energy
-        return self.energy
+        with self.with_system_changes(system_changes) as keeper:
+            keeper.keep_changes = keep_changes
+            cf = self.get_cf()
+            vol = self.get_volume(cf)
+            energy = sum(
+                self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**p
+                for k in cf.keys()
+                for p in range(self.max_power + 1))
+            self.energy = energy * len(self.atoms)
+            self.results['energy'] = self.energy
+            return self.energy
 
-    def calculate(self, atoms: Atoms, properties: List[str], system_changes: Union[List[tuple],
-                                                                                   None]) -> float:
+    def calculate(self, atoms: Atoms, properties: List[str],
+                  system_changes: Union[Sequence[SystemChange], None]) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
@@ -228,7 +230,8 @@ class CleaseVolDep(Clease):
             `clease.montecarlo.observers.MCObserver`
         """
         Calculator.calculate(self, atoms)
-        return self.get_energy_given_change(None)
+        self.update_cf()
+        return self.get_energy_given_change([], keep_changes=True)
 
     def _on_eci_changed(self):
         """
@@ -243,7 +246,7 @@ def unique_eci_names_no_vol(eci_names: Iterable[str]) -> Set[str]:
     """
     Return a set with the unique ECI names without any volume tag
     """
-    eci_no_vol = set([k.rpartition('_V')[0] for k in eci_names])
+    eci_no_vol = set(k.rpartition('_V')[0] for k in eci_names)
     return eci_no_vol
 
 
