@@ -1,12 +1,13 @@
 """Module for calculating correlation functions."""
+import logging
 from ase.atoms import Atoms
 from ase.db import connect
 
-from clease import _logger
 from clease.settings import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
 from clease_cxx import PyCEUpdater
 
+logger = logging.getLogger(__name__)
 __all__ = ('CorrFunction', 'ClusterNotTrackedError')
 
 
@@ -14,7 +15,7 @@ class ClusterNotTrackedError(Exception):
     pass
 
 
-class CorrFunction(object):
+class CorrFunction:
     """Calculate the correlation function.
 
     Parameters:
@@ -75,7 +76,7 @@ class CorrFunction(object):
         cf = updater.calculate_cf_from_scratch(atoms, cf_names)
         return cf
 
-    def reconfigure_db_entries(self, select_cond=None, verbose=True):
+    def reconfigure_db_entries(self, select_cond=None, verbose=False):
         """Reconfigure the correlation function values of the entries in DB.
 
         Parameters:
@@ -102,18 +103,23 @@ class CorrFunction(object):
         # get how many entries need to be reconfigured
         row_ids = [row.id for row in db.select(select)]
         num_reconf = len(row_ids)
+        msg = f"{num_reconf} entries will be reconfigured"
+        logger.info(msg)
         if verbose:
-            _logger(f"{num_reconf} entries will be reconfigured")
+            print(msg)
         for count, row_id in enumerate(row_ids):
 
+            msg = f"updating {count+1} of {num_reconf} entries"
             if verbose:
-                _logger(f"updating {count+1} of {num_reconf} entries", end="\r")
+                print(msg, end="\r")
+            logger.debug(msg)
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
             db.update(row_id, external_tables={tab_name: cf})
 
         if verbose:
-            _logger("\nreconfiguration completed")
+            print("\nreconfiguration completed")
+        logger.info('Reconfiguration complete')
 
     def reconfigure_inconsistent_cf_table_entries(self):
         """Find and correct inconsistent correlation functions in table."""
@@ -122,10 +128,11 @@ class CorrFunction(object):
         if len(inconsistent_ids) == 0:
             return True
 
+        logger.info('Reconfiguring correlation functions')
         for count, id in enumerate(inconsistent_ids):
-            _logger(f"updating {count+1} of {len(inconsistent_ids)} entries", end="\r")
+            logger.debug("Updating %s of %s entries (id %s)", count + 1, len(inconsistent_ids), id)
             self.reconfigure_db_entries(select_cond=[('id', '=', id)], verbose=False)
-        _logger("\nreconfiguration completed")
+        logger.info("Reconfiguration completed")
 
     def check_consistency_of_cf_table_entries(self):
         """Get IDs of the structures with inconsistent correlation functions.
@@ -144,12 +151,12 @@ class CorrFunction(object):
                 inconsistent_ids.append(row.id)
 
         if len(inconsistent_ids) > 0:
-            _logger(f"{len(inconsistent_ids)} inconsistent entries found in "
-                    f"'{tab_name}' table.")
+            logger.warning("%d inconsistent entries found in table %s", len(inconsistent_ids),
+                           tab_name)
             for id in inconsistent_ids:
-                _logger(f"  id: {id}, name: {db.get(id).name}")
+                logger.warning("  id: %s, name: %s", id, db.get(id).name)
         else:
-            _logger(f"'{tab_name}' table has no inconsistent entries.")
+            logger.info("'%s' table has no inconsistent entries.", tab_name)
         return inconsistent_ids
 
     def check_cell_size(self, atoms):

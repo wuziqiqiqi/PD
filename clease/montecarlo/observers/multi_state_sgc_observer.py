@@ -85,9 +85,11 @@ class MultiStateSGCConcObserver(MCObserver):
         Monte Carlo simulation
     """
 
+    name = "multi_state_sgc_conc_observer"
+
     def __init__(self, ref_state: SGCState, thermo_states: List[SGCState], calc: Clease):
+        super().__init__()
         self.thermo_states = thermo_states
-        self.name = "multi_state_sgc_conc_observer"
         self.calc = calc
         self.ref_state = ref_state
 

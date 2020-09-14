@@ -13,15 +13,16 @@ class CorrelationFunctionObserver(MCObserver):
         List with correlation functions to track.
         If None, all correlation functions are tracked.
     """
+    name = "CorrelationFunctionObserver"
 
     def __init__(self, calc, names=None):
+        super().__init__()
         current_cf = calc.get_cf()
         self.names = names
         if names is None:
             self.names = list(current_cf.keys())
         self.cf = {x: current_cf[x] for x in self.names}
         self.calc = calc
-        self.name = "CorrelationFunctionObserver"
         self.counter = 1
 
     def __call__(self, system_changes):

@@ -1,9 +1,11 @@
 import os
+import logging
 from numpy.random import shuffle, choice
 import numpy as np
-from clease import _logger
 from clease.tools import (aic, aicc, bic)
 from .regression import LinearRegression
+
+logger = logging.getLogger(__name__)
 
 workers = None
 
@@ -117,7 +119,7 @@ class GAFit:
 
     def _init_from_file(self):
         """Initialize the population from file."""
-        _logger(f"Initializing population from {self.fname}")
+        logger.info("Initializing population from %s", self.fname)
         individuals = []
         with open(self.fname, 'r') as infile:
             for line in infile:
@@ -317,11 +319,6 @@ class GAFit:
         std = np.std(self.individuals)
         return np.mean(std)
 
-    @staticmethod
-    def log(msg):
-        """Log messages."""
-        _logger(msg)
-
     @property
     def best_individual(self):
         best_indx = np.argmax(self.fitness)
@@ -354,7 +351,7 @@ class GAFit:
             for i in range(len(self.individuals)):
                 out.write(",".join(str(x) for x in self.index_of_selected_clusters(i)))
                 out.write("\n")
-        _logger(f"\nPopulation written to {self.fname}")
+        logger.info("Population written to %s.", self.fname)
 
     def plot_evolution(self):
         """Create a plot of the evolution."""
@@ -402,10 +399,9 @@ class GAFit:
             best3 = np.abs(np.sort(self.fitness)[::-1][:3])
             loocv_msg = ""
 
-            self.log(f"Generation: {gen}. Top 3 scores {best3[0]:.2e} "
-                     f"(-){best3[0] - best3[1]:.2e} (-)"
-                     f"{best3[0] - best3[2]:.2e} Num ECI: {num_eci}. "
-                     f"Pop. div: {diversity:.2f} {loocv_msg}")
+            logger.info(("Generation: %s. Top 3 scores %.2e (-)%.2e (-)%.2e."
+                         " Num ECI: %d. Pop. div: %.2f. %s"), gen, best3[0], best3[0] - best3[1],
+                        best3[0] - best3[2], num_eci, diversity, loocv_msg)
             self.mutate()
             self.create_new_generation()
             if abs(current_best - self.fitness[best_indx]) > min_change:
@@ -418,8 +414,8 @@ class GAFit:
                 self.save_population()
 
             if num_gen_without_change >= gen_without_change:
-                self.log(f"\nReached {gen_without_change} generations without "
-                         f"sufficient improvement.")
+                logger.info('Reached %d generations without sufficient improvement.',
+                            gen_without_change)
                 break
             gen += 1
 

@@ -5,7 +5,10 @@ import time
 
 class EnergyPlotUpdater(MCObserver):
 
+    name = "EnergyPlotUpdater"
+
     def __init__(self, energy_obs=None, graph=None, mean_plot=None):
+        super().__init__()
         self.energy_obs = energy_obs
         self.graph = graph
         self.mean_plot = mean_plot

@@ -4,6 +4,7 @@ import numpy as np
 from copy import deepcopy
 from functools import reduce
 from typing import List, Dict, Optional, Union
+import logging
 
 from numpy.random import shuffle
 
@@ -18,12 +19,13 @@ from clease.corr_func import CorrFunction
 from clease.montecarlo.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import (ProbeStructure, GSStructure, MetropolisTrajectory)
-from clease import _logger
 
 try:
     from math import gcd
 except ImportError:
     from fractions import gcd
+
+logger = logging.getLogger(__name__)
 
 max_attempt = 10
 max_fail = 10
@@ -115,9 +117,9 @@ class NewStructures:
             if not os.path.isfile('probe_structure-sigma_mu.npz'):
                 self._generate_sigma_mu(num_samples_var)
 
-        _logger(f"Generate {self.num_to_gen()} probe structures (generation: "
-                f"{self.gen},  struct_per_gen={self.struct_per_gen}, "
-                f"{self.num_in_gen()} present).")
+        logger.info(("Generate %s probe structures (generation: %s, "
+                     "struct_per_gen=%s, %s present)"), self.num_to_gen(), self.gen,
+                    self.struct_per_gen, self.num_in_gen())
 
         current_count = 0
         num_attempt = 0
@@ -132,7 +134,7 @@ class NewStructures:
 
             struct = self._get_struct_at_conc(conc_type='random')
 
-            _logger(f"Generating structure {current_count + 1} out of " f"{num_to_generate}.")
+            logger.info("Generating structure %s out of %s.", current_count + 1, num_to_generate)
             ps = ProbeStructure(self.settings, struct, num_to_generate, init_temp, final_temp,
                                 num_temp, num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
@@ -144,16 +146,17 @@ class NewStructures:
                 msg = "generated structure is already in DB.\n"
                 msg += "generating again... "
                 msg += f"{num_attempt + 1} out of {max_attempt} attempts."
-                _logger(msg)
+                logger.info(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
                     msg = "Could not generate probe structure in "
                     msg += f"{max_attempt} attempts."
+                    logger.error(msg)
                     raise MaxAttemptReachedError(msg)
             else:
                 num_attempt = 0
 
-            _logger("Probe structure generated.\n")
+            logger.info("Probe structure generated.")
             self.insert_structure(init_struct=probe_struct, cf=cf)
             current_count += 1
 
@@ -187,7 +190,7 @@ class NewStructures:
         """
 
         for i in range(self.num_to_gen()):
-            _logger(f"Generating ground-state structures: {i} of " f"{self.struct_per_gen}")
+            logger.info("Generating ground-state structures: %s of %s", i, self.struct_per_gen)
 
             self._generate_one_gs_structure_multiple_templates(
                 eci=eci,
@@ -237,7 +240,7 @@ class NewStructures:
         gs_structs = []
         cf_dicts = []
         for i, atoms in enumerate(templates):
-            _logger(f"Searching for GS in template {i} of {len(templates)}")
+            logger.info("Searching for GS in template %d of %d", i, len(templates))
             self.settings.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
@@ -316,7 +319,7 @@ class NewStructures:
         while current_count < num_to_generate:
             struct = structs[current_count].copy()
             self.settings.set_active_template(atoms=struct)
-            _logger(f"Generating structure {current_count + 1} out of " f"{num_to_generate}.")
+            logger.info("Generating structure %d out of %d.", current_count + 1, num_to_generate)
             es = GSStructure(self.settings, struct, self.struct_per_gen, init_temp, final_temp,
                              num_temp, num_steps_per_temp, eci)
             gs_struct, cf = es.generate()
@@ -326,18 +329,18 @@ class NewStructures:
                 msg = "generated structure is already in DB.\n"
                 msg += "generating again... "
                 msg += f"{num_attempt + 1} out of {max_attempt} attempts"
-                _logger(msg)
+                logger.info(msg)
                 num_attempt += 1
                 if num_attempt >= max_attempt:
-                    raise MaxAttemptReachedError(f"Could not generate ground-state structure in "
-                                                 f"{max_attempt} attempts.")
+                    msg = f'Could not generate ground-state structure in {max_attempt} attempts.'
+                    logger.error(msg)
+                    raise MaxAttemptReachedError(msg)
                 continue
             else:
                 num_attempt = 0
 
             min_energy = gs_struct.get_potential_energy()
-            msg = f"Structure with E = {min_energy:.3f} generated.\n"
-            _logger(msg)
+            logger.info("Structure with E = %.3f generated.", min_energy)
             self.insert_structure(init_struct=gs_struct, cf=cf)
             current_count += 1
 
@@ -351,10 +354,9 @@ class NewStructures:
             If None, a random template will be chosen.
             (different for each structure)
         """
-        _logger(f"Generating {self.num_to_gen()} random structures "
-                f"(generation: {self.gen}, "
-                f"struct_per_gen={self.struct_per_gen}, "
-                f"{self.num_in_gen()} present)")
+        logger.info(
+            ("Generating %d random structures (generation: %s, struct_per_gen=%d, %d present)."),
+            self.num_to_gen(), self.gen, self.struct_per_gen, self.num_in_gen())
 
         fail_counter = 0
         i = 0
@@ -362,15 +364,19 @@ class NewStructures:
         num_structs = self.num_to_gen()
         while i < num_structs and fail_counter < max_fail:
             if self.generate_one_random_structure(atoms=atoms):
-                _logger(f"Generated {i+1} random structures")
                 i += 1
                 fail_counter = 0
+                logger.debug("Generated %d random structures", i)
             else:
                 fail_counter += 1
+                logger.debug("Failed generating structure. Fail count: %d", fail_counter)
 
         if fail_counter >= max_fail:
-            RuntimeError(f"Could not find a structure that does not exist in "
-                         f"DB after {int(max_attempt * max_fail)} attempts.")
+            msg = ("Could not find a structure that does not exist in DB after "
+                   f"{int(max_attempt * max_fail)} attempts.")
+            logger.error(msg)
+            raise MaxAttemptReachedError(msg)
+        logger.info('Succesfully generated %d random structures.', self.num_in_gen())
 
     def generate_one_random_structure(self, atoms: Optional[Atoms] = None) -> bool:
         """
@@ -398,10 +404,11 @@ class NewStructures:
                 num_attempts += 1
 
         if not unique_structure_found:
-            _logger(f"Could not find a structure that does not already exist "
-                    f"in the DB within {max_attempt} attempts.")
+            logger.warning(("Could not find a structure that does not already exist "
+                            "in the DB within %d attempts."), max_attempt)
             return False
 
+        logger.debug('Found unique structure after %d attempts.', num_attempts)
         self.insert_structure(init_struct=new_atoms)
         return True
 
@@ -413,14 +420,14 @@ class NewStructures:
             struct = wrap_and_sort_by_position(atoms)
             if random_composition is False:
                 num_to_gen = 1
-                _logger("Generate 1 ground-state structure.")
+                logger.debug("Generate 1 ground-state structure.")
                 structs.append(struct)
             else:
                 msg = f"Generate {self.num_to_gen()} ground-state structures"
                 msg += f"(generation: {self.gen}, "
                 msg += f"struct_per_gen={self.struct_per_gen}, "
                 msg += f"{self.num_in_gen()} present)"
-                _logger(msg)
+                logger.info(msg)
                 self.settings.set_active_template(atoms=struct)
                 num_to_gen = self.num_to_gen()
                 concs = []
@@ -445,7 +452,7 @@ class NewStructures:
                     structs.append(self._random_struct_at_conc(num_insert))
 
         else:
-            _logger(f"Generate {len(atoms)} ground-state structures.")
+            logger.info("Generating %d ground-state structures.", len(atoms))
             if random_composition is False:
                 for struct in atoms:
                     structs.append(wrap_and_sort_by_position(struct))
@@ -486,8 +493,8 @@ class NewStructures:
     def generate_conc_extrema(self) -> None:
         """Generate initial pool of structures with max/min concentration."""
         from itertools import product
-        _logger("Generating one structure per concentration where the number "
-                "of an element is at max/min")
+        logger.info(("Generating one structure per concentration where the number "
+                     "of an element is at max/min"))
         indx_in_each_basis = []
         start = 0
         for basis in self.settings.concentration.basis_elements:
@@ -640,8 +647,8 @@ class NewStructures:
 
         formula_unit = self._get_formula_unit(init_struct)
         if self._exists_in_db(init_struct, formula_unit):
-            _logger("Supplied structure already exists in DB. "
-                    "The structure will not be inserted.")
+            logger.warning(
+                ("Supplied structure already exists in DB. The structure will not be inserted."))
             return
 
         kvp = self._get_kvp(init_struct, formula_unit)
@@ -684,10 +691,8 @@ class NewStructures:
         to_prim = True
         try:
             __import__('spglib')
-        except Exception:
-            msg = "Warning! Setting to_primitive=False because spglib "
-            msg += "is missing!"
-            _logger(msg)
+        except ImportError:
+            logger.warning("Setting 'to_primitive=False' because spglib is missing!")
             to_prim = False
 
         symmcheck = SymmetryEquivalenceCheck(angle_tol=1.0,
@@ -719,12 +724,15 @@ class NewStructures:
         kvp['queued'] = False
 
         suffixes = []
+        logger.debug('Connecting to %s', self.settings.db_name)
         with connect(self.settings.db_name) as db:
             cur = db.connection.cursor()
+            logger.debug("Selecting from db: formula_unit=%s", formula_unit)
             cur.execute("SELECT id FROM text_key_values WHERE key=? AND value=?",
                         ("formula_unit", formula_unit))
             ids = [i[0] for i in cur.fetchall()]
             for id in ids:
+                logger.debug('Selecting from db: name=%s', id)
                 cur.execute("SELECT value FROM text_key_values WHERE key=? AND id=?", ("name", id))
                 name = cur.fetchone()[0]
                 suffix = 0
@@ -820,19 +828,22 @@ class NewStructures:
         :param num_samples_var: number of samples to be used in determining
                                 signam and mu.
         """
-        _logger('===========================================================\n'
-                'Determining sigma and mu value for assessing mean variance.\n'
-                'May take a long time depending on the number of samples \n'
-                'specified in the *num_samples_var* argument.\n'
-                '===========================================================')
+        logger.info(('===========================================================\n'
+                     'Determining sigma and mu value for assessing mean variance.\n'
+                     'May take a long time depending on the number of samples \n'
+                     'specified in the *num_samples_var* argument, which is %d.\n'
+                     '==========================================================='),
+                    num_samples_var)
         count = 0
         cfm = np.zeros((num_samples_var, len(self.settings.all_cf_names)), dtype=float)
         while count < num_samples_var:
             atoms = self._get_struct_at_conc(conc_type='random')
-            cfm[count] = self.corrfunc.get_cf(atoms, 'array')
+            cfm[count] = self.corrfunc.get_cf(atoms)
             count += 1
-            _logger(f"sampling {count} ouf of {num_samples_var}")
+            logger.info("Sampling %d ouf of %d", count, num_samples_var)
 
         sigma = np.cov(cfm.T)
         mu = np.mean(cfm, axis=0)
-        np.savez('probe_structure-sigma_mu.npz', sigma=sigma, mu=mu)
+        fname = 'probe_structure-sigma_mu.npz'  # Should probably be a variable
+        np.savez(fname, sigma=sigma, mu=mu)
+        logger.debug('Saved sigma and mu in %s', fname)

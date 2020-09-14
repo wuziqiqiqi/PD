@@ -17,6 +17,7 @@ doc/build/*
 doc/*.db
 dist/*
 build/*
+logs/
 cxx/cython/clease_cxx.cpp
 *editor.txt
 *.log

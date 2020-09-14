@@ -1,16 +1,20 @@
-from clease.montecarlo.observers import MCObserver
+import logging
 import numpy as np
+from clease.montecarlo.observers import MCObserver
+
+logger = logging.getLogger(__name__)
 
 
 class EnergyEvolution(MCObserver):
     """Trace the evolution of energy."""
 
+    name = "EnergyEvolution"
+
     def __init__(self, mc, ignore_reset=False):
+        super().__init__()
         self.mc = mc
         self.energies = []
         self.mean_energies = []
-        MCObserver.__init__(self)
-        self.name = "EnergyEvolution"
         self.ignore_reset = ignore_reset
 
     def __call__(self, system_changes):
@@ -38,4 +42,4 @@ class EnergyEvolution(MCObserver):
         """
         full_fname = fname + '.csv'
         np.savetxt(full_fname, self.energies, delimiter=",")
-        print(f"Energy evolution data saved to {full_fname}")
+        logger.info("Energy evolution data saved to %s.", full_fname)

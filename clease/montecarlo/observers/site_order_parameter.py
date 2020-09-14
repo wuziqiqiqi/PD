@@ -14,7 +14,10 @@ class SiteOrderParameter(MCObserver):
         Atoms object use for Monte Carlo
     """
 
+    name = "SiteOrderParameter"
+
     def __init__(self, atoms):
+        super().__init__()
         self.atoms = atoms
         self.orig_nums = self.atoms.get_atomic_numbers()
         self.avg_num_changed = 0

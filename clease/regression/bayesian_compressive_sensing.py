@@ -1,11 +1,13 @@
 import time
 import json
+import logging
 from itertools import product
 import numpy as np
 from scipy.special import polygamma
 from scipy.optimize import brentq
-from clease import _logger, LogVerbosity
 from .regression import LinearRegression
+
+logger = logging.getLogger(__name__)
 
 __all__ = ('BayesianCompressiveSensing',)
 
@@ -292,9 +294,11 @@ class BayesianCompressiveSensing(LinearRegression):
         new_gammas = np.array([self.optimal_gamma(i) for i in range(len(self.gammas))])
 
         if np.all(new_gammas < 0.0):
-            _logger("Warning! Cannot determine which gamma to "
-                    "include. Trying random selection...")
-            return np.random.randint(0, high=(len(self.gammas)))
+            rand_gam = np.random.randint(0, high=(len(self.gammas)))
+            logger.warning(
+                "Cannot determine which gamma to include. Trying random selection, gamma=%.3f ...",
+                rand_gam)
+            return rand_gam
 
         new_gammas[new_gammas < 0.0] = 0.0
         current_likeli = self.log_likelihood_for_each_gamma(self.gammas)
@@ -308,10 +312,6 @@ class BayesianCompressiveSensing(LinearRegression):
         indx = self.selected
         pred = self.X[:, indx].dot(self.eci[indx])
         return np.sqrt(np.mean((pred - self.y)**2))
-
-    @staticmethod
-    def log(msg):
-        _logger(msg, verbose=LogVerbosity.INFO)
 
     @property
     def num_ecis(self):
@@ -337,7 +337,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Save the results from file."""
         with open(self.fname, 'w') as outfile:
             json.dump(self.to_dict(), outfile)
-        _logger(f"Backup data written to {self.fname}")
+        logger.info("Backup data written to %s", self.fname)
 
     @staticmethod
     def load(fname):
@@ -425,7 +425,7 @@ class BayesianCompressiveSensing(LinearRegression):
                 msg += f"Lamb: {self.lamb:.3E} "
                 msg += f"Shape lamb: {self.shape_lamb:.3E} "
                 msg += f"Noise: {np.sqrt(1.0/self.inv_variance):.3E}"
-                self.log(msg)
+                logger.info(msg)
                 now = time.time()
 
             iteration += 1

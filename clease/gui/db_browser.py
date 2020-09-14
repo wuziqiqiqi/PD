@@ -1,3 +1,4 @@
+import logging
 from kivy.uix.floatlayout import FloatLayout
 from kivy.properties import ObjectProperty, StringProperty
 from ase.db import connect
@@ -5,8 +6,9 @@ from ase.formula import Formula
 from copy import deepcopy
 from typing import Tuple, List, Dict
 import re
-from clease import _logger
 from ase.data import chemical_symbols
+
+logger = logging.getLogger(__name__)
 
 SelectCond = Tuple[List[dict], Dict[str, dict]]
 
@@ -153,7 +155,7 @@ class DbBrowser(FloatLayout):
             # Check that the reminding part is actually a known operator
             # Should protect against undesired injections
             if op not in known_op:
-                _logger(f"Unkown operator {cond}")
+                logger.warning(f"Unkown operator {cond}")
                 continue
 
             if key in system_cols:
@@ -175,12 +177,12 @@ class DbBrowser(FloatLayout):
                 prog = re.compile(r"formula=(\w+)")
                 m = prog.match(txt)
                 if m is None:
-                    _logger("Unsupported operation for formula")
+                    logger.warning("Unsupported operation for formula")
                 else:
                     formula = m.group(1)
             self.set_rows(system_conditions, kvp_conditions, formula=formula)
         except Exception as exc:
-            _logger(str(exc))
+            logger.exception(exc)
 
     def _count_kvps(self, cur) -> Dict[int, int]:
         """

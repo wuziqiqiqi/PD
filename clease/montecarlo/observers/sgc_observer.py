@@ -14,9 +14,10 @@ class SGCObserver(MCObserver):
         Clease calculator
     """
 
+    name = "SGCObersver"
+
     def __init__(self, calc):
-        super(SGCObserver, self).__init__()
-        self.name = "SGCObersver"
+        super().__init__()
         self.calc = calc
         E = calc.get_potential_energy()
         n_singlets = len(self.calc.get_singlets())

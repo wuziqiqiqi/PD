@@ -1,8 +1,10 @@
+import logging
 import numpy as np
 from scipy.optimize import minimize
 
-from clease import _logger
 from .regression import LinearRegression
+
+logger = logging.getLogger(__name__)
 
 __all__ = ('EigenDecomposition', 'GeneralizedRidgeRegression')
 
@@ -168,16 +170,16 @@ class GeneralizedRidgeRegression(LinearRegression):
         self.alpha = np.exp(res.x)
 
         if not res.success:
-            _logger("Failed to find optimal regularization parameters.")
-            _logger(res.message)
+            logger.warning("Failed to find optimal regularization parameters.")
+            logger.warning(res.message)
 
         # Sanity checks
         A = self._A(X, eigen, self.alpha)
         eff_num_params = np.trace(A)
         if eff_num_params < 0.0:
-            _logger("Warning! The effective number of parameters is negative. "
-                    "Try to change the initial guess for alpha.")
-        _logger(f"Best GCV: {np.sqrt(res.fun)}")
+            logger.warning(("Warning! The effective number of parameters is negative. "
+                            "Try to change the initial guess for alpha."))
+        logger.info('Best GCV: %.3f', np.sqrt(res.fun))
         coeff = self._coeff(X, y, eigen)
         self.opt_result = {
             'gcv': np.sqrt(res.fun),

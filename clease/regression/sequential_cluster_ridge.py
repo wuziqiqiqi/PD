@@ -1,6 +1,8 @@
+import logging
 import numpy as np
-from clease import _logger
 from .regression import LinearRegression, Tikhonov
+
+logger = logging.getLogger(__name__)
 
 __all__ = ('SequentialClusterRidge',)
 
@@ -49,13 +51,13 @@ class SequentialClusterRidge(LinearRegression):
         Prints a summary of the search
         """
         srt_idx = np.argsort(cvs)
-        _logger("--------------------------------------------")
-        _logger("       SUPPORT EXPANDING L2 SUMMARY         ")
-        _logger("--------------------------------------------")
+        print("--------------------------------------------")
+        print("       SUPPORT EXPANDING L2 SUMMARY         ")
+        print("--------------------------------------------")
         for i in range(20):
-            _logger(f"Num. coeff: {len(coeffs[srt_idx[i]]):9d} "
-                    f"CV: {cvs[srt_idx[i]]:9.3f} meV/atom")
-        _logger("--------------------------------------------")
+            print(f"Num. coeff: {len(coeffs[srt_idx[i]]):9d} "
+                  f"CV: {cvs[srt_idx[i]]:9.3f} meV/atom")
+        print("--------------------------------------------")
 
     def fit(self, X, y):
         """

@@ -1,5 +1,6 @@
 """A collection of miscellaneous functions used for Cluster Expansion."""
 import re
+import logging
 from itertools import (permutations, combinations, product, filterfalse, chain)
 from collections.abc import Iterable
 from typing import List, Optional, Tuple, Dict, Set, Sequence
@@ -12,7 +13,7 @@ from ase.db.core import parse_selection
 from scipy.spatial import cKDTree as KDTree
 from scipy.optimize import linprog
 
-from .cleaselogger import _logger
+logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-few-public-methods
@@ -192,7 +193,8 @@ def update_db(uid_initial=None,
     select_cond = [('name', '=', name), ('struct_type', '=', 'final')]
     exist = sum(1 for row in db.select(select_cond))
     if exist >= 1:
-        _logger(f"A structure with 'name'={name} and 'struct_type'=final already exits in DB")
+        logger.warning("A structure with 'name'=%s and 'struct_type'=final already exits in DB.",
+                       name)
         return
 
     # Write the final structure to database
@@ -963,8 +965,10 @@ def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
     return set.intersection(*list(cf_names.values()))
 
 
-def constraint_is_redundant(A_lb: np.ndarray, b_lb: np.ndarray,
-                            c_lb: np.ndarray, d: float,
+def constraint_is_redundant(A_lb: np.ndarray,
+                            b_lb: np.ndarray,
+                            c_lb: np.ndarray,
+                            d: float,
                             A_eq: np.ndarray = None,
                             b_eq: np.ndarray = None) -> bool:
     """
@@ -995,13 +999,13 @@ def constraint_is_redundant(A_lb: np.ndarray, b_lb: np.ndarray,
     # Scipy uses upper bounds in stead of lower bounds, convert lower bounds
     # to upper bounds by changing the sign
     res = linprog(c_lb, A_ub=-A_lb, b_ub=-b_lb, A_eq=A_eq, b_eq=b_eq)
-    return c_lb@res.x >= d
+    return c_lb @ res.x >= d
 
 
-def remove_redundant_constraints(A_lb: np.ndarray, b_lb: np.ndarray,
+def remove_redundant_constraints(A_lb: np.ndarray,
+                                 b_lb: np.ndarray,
                                  A_eq: np.ndarray = None,
-                                 b_eq: np.ndarray = None
-                                 ) -> Tuple[np.ndarray, np.ndarray]:
+                                 b_eq: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
     """
     Remove all redundant constraints from A_lb and b_lb.
 

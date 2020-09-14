@@ -1,15 +1,17 @@
 from typing import List, Sequence, Dict, Union, Callable, Tuple
 import time
+import logging
 
 import numpy as np
 from numpy.random import choice
 from scipy.linalg import solve_triangular
 
-from clease import _logger
 from clease.data_normalizer import DataNormalizer
 from clease.tools import split_dataset
 from .regression import LinearRegression
 from .constrained_ridge import ConstrainedRidge
+
+logger = logging.getLogger(__name__)
 
 __all__ = ('PhysicalRidge',)
 
@@ -334,8 +336,9 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
             best_param = param_dict
 
         if time.time() - last_print > 30:
-            _logger(f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
-                    f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
+            msg = (f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
+                   f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
+            logger.info(msg)
             last_print = time.time()
 
     cv_params = sorted(cv_params, key=lambda x: x[0])

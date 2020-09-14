@@ -1,10 +1,12 @@
-from clease import _logger
+import logging
 from ase.db import connect
 import numpy as np
 from clease.tools import add_file_extension, sort_cf_names, get_ids
 from typing import Tuple, List, Dict, Set, Optional, Callable
 import sqlite3
 from itertools import combinations_with_replacement as cwr
+
+logger = logging.getLogger(__name__)
 
 __all__ = ('InconsistentDataError', 'DataManager', 'CorrFuncEnergyDataManager',
            'CorrelationFunctionGetter', 'CorrFuncVolumeDataManager',
@@ -120,7 +122,7 @@ class DataManager(object):
         header = ",".join(self._feat_names) + f",{self._target_name}"
         data = np.hstack((self._X, np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
-        _logger(f"Dataset exported to {fname}")
+        logger.info("Dataset exported to %s", fname)
 
     def get_matching_names(self, pattern: str) -> List[str]:
         """

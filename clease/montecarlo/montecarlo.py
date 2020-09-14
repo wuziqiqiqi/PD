@@ -3,6 +3,7 @@
 import sys
 import datetime
 import time
+import logging
 import numpy as np
 from numpy.random import choice
 from ase.units import kB
@@ -10,7 +11,8 @@ from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
 from clease.montecarlo import BiasPotential
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
-from clease import _logger
+
+logger = logging.getLogger(__name__)
 
 
 class DidNotReachEquillibriumError(Exception):
@@ -98,8 +100,10 @@ class Montecarlo:
             system_changes = (indx, self.atoms[indx].symbol, symb)
 
             if not self._no_constraint_violations([system_changes]):
-                raise ValueError("The indices given results in an update "
-                                 "that violate one or more constraints!")
+                msg = ("The indices given results in an update "
+                       "that violate one or more constraints!")
+                logger.error(msg)
+                raise ValueError(msg)
             calc.update_cf(system_changes)
         self._build_atoms_list()
         calc.clear_history()
@@ -187,15 +191,6 @@ class Montecarlo:
         if n_elems_more_than_2 < 2:
             raise TooFewElementsError("There is only one element that has more than one atom")
 
-    @staticmethod
-    def log(msg, mode="info"):
-        """Logs the message as info."""
-        allowed_modes = ["info", "warning"]
-        if mode not in allowed_modes:
-            raise ValueError(f"Mode has to be one of {allowed_modes}")
-
-        _logger(msg)
-
     def _no_constraint_violations(self, system_changes):
         """Check if the proposed moves violate any of the constraints.
 
@@ -204,13 +199,17 @@ class Montecarlo:
         system_changes: list
             Changes of the proposed move
         """
+        logger.debug('Checking system change: %s', system_changes)
         for constraint in self.constraints:
             if not constraint(system_changes):
+                logger.debug('System change rejected by constraint %s', constraint.name)
                 return False
+        logger.debug('System change does not violate constraints.')
         return True
 
     def reset(self):
         """Reset all member variables to their original values."""
+        logger.debug('Resetting.')
         for _, obs in self.observers:
             obs.reset()
 
@@ -298,19 +297,18 @@ class Montecarlo:
             self.energy_squared += E**2
 
             if time.time() - start > self.status_every_sec:
-                ms_per_step = 1000.0 * self.status_every_sec / \
-                    float(self.current_step - prev)
-                accept_rate = self.num_accepted / float(self.current_step)
-                self.log(f"{self.current_step} of {steps} steps. "
-                         f"{ms_per_step:.2f} ms per step. Acceptance rate: "
-                         f"{accept_rate:.2f}")
+                ms_per_step = 1000.0 * self.status_every_sec / (self.current_step - prev)
+                accept_rate = self.num_accepted / self.current_step
+                logger.info("%d of %d steps. %.2f ms per step. Acceptance rate: %.2f",
+                            self.current_step, steps, ms_per_step, accept_rate)
                 prev = self.current_step
                 start = time.time()
 
             if self.quit:
+                logger.debug('Quit signal detected. Breaking.')
                 break
 
-        self.log(f"Reached maximum number of steps ({steps} mc steps)")
+        logger.info("Reached maximum number of steps (%d mc steps)", steps)
 
     @property
     def meta_info(self):
@@ -358,6 +356,7 @@ class Montecarlo:
         rand_pos_a = self.atoms_tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.atoms_tracker.get_random_indx_of_symbol(symb_b)
         system_changes = [(rand_pos_a, symb_a, symb_b), (rand_pos_b, symb_b, symb_a)]
+        logger.debug('Proposed system changes: %s', system_changes)
         return system_changes
 
     def _calculate_step(self, system_changes):
@@ -381,7 +380,10 @@ class Montecarlo:
             for bias in self.bias_potentials:
                 self.new_energy += bias(system_changes)
 
+            logger.debug('Current energy: %.3f eV, new energy: %.3f eV', self.current_energy,
+                         self.new_energy)
             accept = self._do_accept(self.current_energy, self.new_energy)
+            logger.debug('Change accepted? %s', accept)
 
             # Decide if we keep changes, or rollback
             keeper.keep_changes = accept
@@ -403,9 +405,11 @@ class Montecarlo:
         kT = self.T * kB
         energy_diff = new_energy - current_energy
         probability = np.exp(-energy_diff / kT)
+        logger.debug('Calculated probability: %.3f', probability)
         return np.random.rand() <= probability
 
     def _move_accepted(self, system_changes):
+        logger.debug('Move accepted, updating things')
         self.num_accepted += 1
         self._update_tracker(system_changes)
         self.current_energy = self.new_energy
@@ -413,8 +417,10 @@ class Montecarlo:
 
     # pylint: disable=no-self-use
     def _move_rejected(self, system_changes):
+        logger.debug('Move rejected, undoing system changes: %s', system_changes)
         # Move rejected, no changes are made
         system_changes = [(change[0], change[1], change[1]) for change in system_changes]
+        logger.debug('Reversed system changes: %s', system_changes)
         return system_changes
 
     def count_atoms(self):
@@ -440,6 +446,7 @@ class Montecarlo:
         if counter == self.max_allowed_constraint_pass_attempts:
             msg = "Did not manage to produce a trial move that does not "
             msg += "violate any of the constraints"
+            logger.error(msg)
             raise CanNotFindLegalMoveError(msg)
 
         # Calculate step, and whether we accept it
@@ -456,4 +463,6 @@ class Montecarlo:
     def execute_observers(self, system_changes):
         for interval, obs in self.observers:
             if self.current_step % interval == 0:
+                logger.debug('Executing observer %s at step %d with interval %d.', obs.name,
+                             self.current_step, interval)
                 obs(system_changes)

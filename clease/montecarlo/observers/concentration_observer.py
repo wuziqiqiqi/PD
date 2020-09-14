@@ -15,7 +15,10 @@ class ConcentrationObserver(MCObserver):
         The element that should be tracked
     """
 
+    name = "ConcentrationObserver"
+
     def __init__(self, atoms, element=None):
+        super().__init__()
         self.element = element
         self.n = len(atoms)
         self.init_conc = self.calculate_from_scratch(atoms)

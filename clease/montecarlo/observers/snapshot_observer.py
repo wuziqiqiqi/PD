@@ -14,9 +14,10 @@ class Snapshot(MCObserver):
         Instance of the atoms objected modofied by the MC object
     """
 
+    name = "Snapshot"
+
     def __init__(self, fname="snapshot", atoms=None):
-        super(Snapshot, self).__init__()
-        self.name = "Snapshot"
+        super().__init__()
         full_fname = fname + '.traj'
         if atoms is None:
             raise ValueError("No atoms object given!")

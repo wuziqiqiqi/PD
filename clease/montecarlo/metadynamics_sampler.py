@@ -1,10 +1,12 @@
 import time
-from clease import _logger
+import logging
 from clease.montecarlo.constraints import CollectiveVariableConstraint
 import json
 import numpy as np
 from ase.units import kB
 from copy import deepcopy
+
+logger = logging.getLogger(__name__)
 
 
 class NoneNotAcceptedError(Exception):
@@ -152,8 +154,8 @@ class MetaDynamicsSampler(object):
 
         sweep_no = 0
         counter = 0
-        _logger("Starting metadynamics sampling...")
-        _logger(f"Writing result to {self.fname} every {self.log_freq} sec")
+        logger.info("Starting metadynamics sampling...")
+        logger.info("Writing result to %s every %s sec", self.fname, self.log_freq)
         while not conv:
             counter += 1
             if time.time() - now > self.log_freq:
@@ -161,7 +163,7 @@ class MetaDynamicsSampler(object):
                 msg += f"Average visits: {self.progress_info['mean']:.2e}. "
                 msg += f"Min/avg: {self.progress_info['minval']:.2e} "
                 msg += f"x: {self.bias.getter(None):.2e}"
-                _logger(msg)
+                logger.info(msg)
                 self.save()
                 now = time.time()
 
@@ -174,7 +176,7 @@ class MetaDynamicsSampler(object):
 
             if max_sweeps is not None:
                 if sweep_no > max_sweeps:
-                    _logger('Reached max number of sweeps...')
+                    logger.info('Reached max number of sweeps...')
                     conv = True
 
             for obs, interval in self.observers:
@@ -184,7 +186,7 @@ class MetaDynamicsSampler(object):
             if self.quit:
                 break
 
-        _logger(f"Results from metadynamics sampling written to {self.fname}")
+        logger.info("Results from metadynamics sampling written to %s", self.fname)
         self.save()
 
     def save(self):

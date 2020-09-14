@@ -1,7 +1,6 @@
 # pylint: disable=undefined-variable
+import logging
 from deprecated import deprecated
-from .cleaselogger import _logger
-from .cleaselogger import *
 from .template_filters import *
 from .atoms_manager import *
 from .convexhull import *
@@ -25,6 +24,7 @@ from . import template_atoms
 from . import concentration
 
 __version__ = '0.10.0'
+logger = logging.getLogger(__name__)
 
 
 @deprecated(version='0.10.0', reason='import CEBulk from clease.settings instead')
@@ -43,9 +43,9 @@ def CESlab(*args, **kwargs):
 
 
 ADDITIONAL = ('settings', 'basis_function', 'corr_func', 'new_struct', 'NewStructures', 'cluster',
-              'tools', 'montecarlo', 'mp_logger', '_logger', 'template_atoms', 'CEBulk',
-              'CECrystal', 'CESlab', 'concentration')
+              'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk', 'CECrystal', 'CESlab',
+              'concentration')
 
-__all__ = (cleaselogger.__all__ + template_filters.__all__ + atoms_manager.__all__ +
-           concentration.__all__ + evaluate.__all__ + convexhull.__all__ + data_manager.__all__ +
-           structure_mapper.__all__ + svd.__all__ + regression_old.__all__ + ADDITIONAL)
+__all__ = (template_filters.__all__ + atoms_manager.__all__ + concentration.__all__ +
+           evaluate.__all__ + convexhull.__all__ + data_manager.__all__ + structure_mapper.__all__ +
+           svd.__all__ + regression_old.__all__ + ADDITIONAL)

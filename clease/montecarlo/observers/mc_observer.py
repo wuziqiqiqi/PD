@@ -2,11 +2,9 @@ from typing import List, Tuple
 from ase import Atoms
 
 
-class MCObserver(object):
+class MCObserver:
     """Base class for all MC observers."""
-
-    def __init__(self) -> None:
-        self.name = "GenericObserver"
+    name = "GenericObserver"
 
     def __call__(self, system_changes: List[Tuple[int, str, str]]):
         """

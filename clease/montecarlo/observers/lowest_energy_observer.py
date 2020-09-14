@@ -1,7 +1,9 @@
+import logging
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 from clease.montecarlo.observers import MCObserver
-from clease import _logger
+
+logger = logging.getLogger(__name__)
 
 
 class LowestEnergyStructure(MCObserver):
@@ -14,14 +16,14 @@ class LowestEnergyStructure(MCObserver):
         If `True`, progress messages will be printed
     """
 
-    def __init__(self, atoms, verbose=True):
+    name = "LowestEnergyStructure"
+
+    def __init__(self, atoms, verbose=False):
         super().__init__()
         self.atoms = atoms
         self.lowest_energy = np.inf
         self.lowest_energy_cf = None
         self.emin_atoms = None
-
-        self.name = "LowestEnergyStructure"
         self.verbose = verbose
 
     def reset(self):
@@ -49,11 +51,12 @@ class LowestEnergyStructure(MCObserver):
 
         if self.emin_atoms is None or self.energy < self.lowest_energy:
             self._update_emin()
+            dE = self.energy - self.lowest_energy
+            msg = "Found new low energy structure. "
+            msg += f"New energy: {self.lowest_energy} eV. Change: {dE} eV"
+            logger.info(msg)
             if self.verbose:
-                dE = self.energy - self.lowest_energy
-                msg = "Found new low energy structure. "
-                msg += f"New energy: {self.lowest_energy} eV. Change: {dE} eV"
-                _logger(msg)
+                print(msg)
 
     def _update_emin(self):
         self.lowest_energy_cf = self.calc.get_cf()

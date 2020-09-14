@@ -10,7 +10,6 @@ class DiffractionUpdater(object):
     """
 
     def __init__(self, atoms=None, k_vector=(), active_symbols=(), all_symbols=()):
-        MCObserver.__init__(self)
         self.orig_symbols = [atom.symbol for atom in atoms]
         self.k_vector = k_vector
         self.N = len(atoms)
@@ -99,7 +98,7 @@ class DiffractionObserver(MCObserver):
                  active_symbols=(),
                  all_symbols=(),
                  name="reflection1"):
-        MCObserver.__init__(self)
+        super().__init__()
         self.updater = \
             DiffractionUpdater(atoms=atoms, k_vector=k_vector,
                                active_symbols=active_symbols,

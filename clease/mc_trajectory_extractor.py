@@ -1,8 +1,10 @@
+import logging
 import numpy as np
-from clease import _logger
+
+logger = logging.getLogger(__name__)
 
 
-class MCTrajectoryExtractor(object):
+class MCTrajectoryExtractor:
     """
     Class that extracts structures that are related by two atoms swap from
     a list of atoms
@@ -96,8 +98,8 @@ class MCTrajectoryExtractor(object):
         ax.set_ylabel("Probability Density")
         mu = np.mean(dev)
         var = np.var(dev)
-        _logger(f"Mean dev. {mu} eV")
-        _logger(f"Standard deviation {np.sqrt(var)} eV")
+        logger.info("Mean dev. %.4f eV", mu)
+        logger.info("Standard deviation %.4f eV", np.sqrt(var))
 
         rng = bins[-1] - bins[0]
         x = np.linspace(bins[0] - 0.2 * rng, bins[-1] + 0.2 * rng, 100)

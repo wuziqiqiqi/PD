@@ -2,6 +2,7 @@
 import os
 import math
 import time
+import logging
 from copy import deepcopy
 import numpy as np
 from numpy.random import choice
@@ -11,12 +12,13 @@ from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
-from clease import _logger
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
 from clease.montecarlo.constraints import ConstrainSwapByBasis
 from clease.montecarlo.montecarlo import TooFewElementsError
 from ase.io.trajectory import TrajectoryReader
+
+logger = logging.getLogger(__name__)
 
 
 class StructureGenerator:
@@ -90,7 +92,7 @@ class StructureGenerator:
         # Number of integers for max counters
         len_num_steps = len(str(self.num_steps_per_temp))
         len_max_temp = len(str(N))
-        _logger(f"Generating log statements every {self.output_every} s")
+        logger.info("Generating log statements every %s s", self.output_every)
 
         for Ti, temp in enumerate(temps):
             self.temp = temp
@@ -101,16 +103,19 @@ class StructureGenerator:
 
                 if time.time() - now > self.output_every:
                     acc_rate = float(num_accepted) / count
-                    _logger(f"T Step: {Ti+1:>{len_max_temp}} of {N}, "
-                            # Print same len as max required
-                            f"Temp: {temp:>10.3f}, "
-                            # Print same len as max required
-                            f"MC Step: {count:>{len_num_steps}d} of "
-                            f"{self.num_steps_per_temp}, "
-                            f"Accept. rate: {acc_rate*100:.2f} %")
+                    msg = (
+                        f"T Step: {Ti+1:>{len_max_temp}} of {N}, "
+                        # Print same len as max required
+                        f"Temp: {temp:>10.3f}, "
+                        # Print same len as max required
+                        f"MC Step: {count:>{len_num_steps}d} of "
+                        f"{self.num_steps_per_temp}, "
+                        f"Accept. rate: {acc_rate*100:.2f} %")
+                    logger.info(msg)
                     now = time.time()
 
                 if choice([True, False]) and self.alter_composition:
+                    logger.debug('Change element type? %s', change_element)
                     # Change element Type
                     if change_element:
                         self._change_element_type()
@@ -118,8 +123,10 @@ class StructureGenerator:
                         continue
                 else:
                     indx = self._swap_two_atoms()
+                    logger.debug('Swapping indices %s', indx)
                     if self.atoms[indx[0]].symbol == \
                             self.atoms[indx[1]].symbol:
+                        logger.debug('Same symbols detected, skipping.')
                         continue
                 self.atoms.get_potential_energy()
 
@@ -158,7 +165,7 @@ class StructureGenerator:
                                   'in the inherited class.')
 
     def _determine_temps(self):
-        _logger("Temperature range not given. " "Determining the range automatically.")
+        logger.info("Temperature range not given. Determining the range automatically.")
         self._reset()
         count = 0
         max_count = 100
@@ -167,7 +174,7 @@ class StructureGenerator:
         self.temp = 10000000.0
         while count < max_count:
             if time.time() - now > self.output_every:
-                _logger(f"Progress ({100*count/max_count} %)")
+                logger.info("Progress (%.3f %%)", 100 * count / max_count)
                 now = time.time()
 
             if choice([True, False]) and self.alter_composition:
@@ -190,7 +197,7 @@ class StructureGenerator:
             self._accept()
         init_temp, final_temp = self._estimate_temp_range()
         self.temp = init_temp
-        _logger(f"init_temp= {init_temp}, final_temp= {final_temp}")
+        logger.info("init_temp=%s, final_temp=%s", init_temp, final_temp)
         return init_temp, final_temp
 
     def _swap_two_atoms(self):
@@ -269,10 +276,12 @@ class StructureGenerator:
         for k in final_cf:
             if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
                 msg = 'Correlation function changed after simulated annealing'
+                logger.error(msg)
 
                 # Print a summary of all basis functions (useful for debuggin)
+                logger.debug('Basis functions:')
                 for k in final_cf:
-                    _logger(f"{k}: {final_cf[k]} {self.cf_generated_structure[k]}")
+                    logger.debug('   %s: %s, %s', k, final_cf[k], self.cf_generated_structure[k])
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):
@@ -463,7 +472,7 @@ class GSStructure(StructureGenerator):
         temps = np.logspace(math.log10(self.init_temp), math.log10(self.final_temp), self.num_temp)
         try:
             for T in temps.tolist():
-                _logger(f"Current temperature: {T} K")
+                logger.info("Current temperature: %.3f K", T)
                 mc = Montecarlo(self.atoms, T)
                 mc.attach(low_en_obs)
                 mc.add_constraint(cnst)

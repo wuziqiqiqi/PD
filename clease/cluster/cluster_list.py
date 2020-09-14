@@ -1,10 +1,11 @@
 from itertools import product
 from copy import deepcopy
 from typing import List, Dict
+import logging
 
-from clease import _logger
 from clease.tools import flatten, dec_string, list2str
 
+logger = logging.getLogger(__name__)
 __all__ = ('ClusterList',)
 
 
@@ -112,7 +113,7 @@ class ClusterList(object):
 
         for c1, c2 in zip(self.clusters, other.clusters):
             if c1 != c2:
-                _logger(c1, c2)
+                logger.debug('Clusters not equal: %s and %s', c1, c2)
                 return False
         return True
 

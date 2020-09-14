@@ -2,7 +2,7 @@ import json
 import os
 import numpy as np
 from ase.build import bulk
-from clease import CEBulk, Concentration
+from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
 from clease.montecarlo import BinnedBiasPotential
 from clease.montecarlo import MetaDynamicsSampler
