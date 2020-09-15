@@ -1,28 +1,25 @@
+import numpy as np
 from clease.montecarlo import SSTEBarrier
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
-import numpy as np
+from clease.tools import SystemChange
 
 
 def test_loc_environ_barrier(db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu', 'X']])
-    settings = CEBulk(
-        conc, crystalstructure='fcc', size=[1, 1, 1],
-        max_cluster_size=2, max_cluster_dia=[3.0], db_name=db_name)
+    settings = CEBulk(conc,
+                      crystalstructure='fcc',
+                      size=[1, 1, 1],
+                      max_cluster_size=2,
+                      max_cluster_dia=[3.0],
+                      db_name=db_name)
 
-    eci = {
-        'c0': 0.0,
-        'c1_0': 0.0,
-        'c2_d0000_0_00': 0.0
-    }
+    eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.0}
 
-    atoms = settings.atoms.copy()*(4, 4, 4)
+    atoms = settings.atoms.copy() * (4, 4, 4)
     atoms = attach_calculator(settings, atoms, eci)
 
-    dilute_barriers = {
-        'Au': 0.5,
-        'Cu': 0.4
-    }
+    dilute_barriers = {'Au': 0.5, 'Cu': 0.4}
 
     barrier = SSTEBarrier(dilute_barriers)
 
@@ -38,7 +35,7 @@ def test_loc_environ_barrier(db_name):
     # Perform a swap
     other = 11
     s = atoms[other].symbol
-    barrier(atoms, [(10, 'X', s), (other, s, 'X')])
+    barrier(atoms, [SystemChange(10, 'X', s), SystemChange(other, s, 'X')])
 
     # Make sure that the atoms object remains unchanges by the barrier function
     assert np.all(init_numbers == atoms.numbers)
