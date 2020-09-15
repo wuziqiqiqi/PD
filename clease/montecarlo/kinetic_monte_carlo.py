@@ -1,5 +1,6 @@
 from typing import List, Tuple, Sequence
 import warnings
+import logging
 import time
 from ase import Atoms
 from ase.units import kB
@@ -7,9 +8,11 @@ import numpy as np
 from clease.montecarlo import BarrierModel
 from clease.montecarlo import KMCEventType
 from clease.montecarlo.observers import MCObserver
-from clease import _logger
+from clease.tools import SystemChange
 
 __all__ = ('KineticMonteCarlo',)
+
+logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -38,7 +41,7 @@ class KineticMonteCarlo:
     def __init__(self, atoms: Atoms, T: float, barrier: BarrierModel,
                  event_types: Sequence[KMCEventType]):
         self.atoms = atoms
-        self.kT = kB * T
+        self.T = T
         self.barrier = barrier
         self.event_types = event_types
         self.time = 0.0
@@ -46,6 +49,22 @@ class KineticMonteCarlo:
         self.observers = []
         self.log_interval = 30
         self.epr = None
+
+    def reset(self):
+        """
+        Reset the KMC class. All information stored as attributes of KMC and
+        in observers will be cleared.
+        """
+        self.time = 0.0
+        for _, obs in self.observers:
+            obs.reset()
+
+        if self.epr is not None:
+            self.epr.reset()
+
+    @property
+    def kT(self) -> float:
+        return kB * self.T
 
     def _update_epr(self, current: int, choice: int, swaps: List[int], cum_rates: np.ndarray):
         """
@@ -87,7 +106,10 @@ class KineticMonteCarlo:
 
     def _get_rate_from_swap(self, swap_idx: int, vac_idx: int) -> float:
         symb = self.atoms[swap_idx].symbol
-        system_change = [(vac_idx, 'X', symb), (swap_idx, symb, 'X')]
+        system_change = [
+            SystemChange(index=vac_idx, old_symb='X', new_symb=symb),
+            SystemChange(index=swap_idx, old_symb=symb, new_symb='X')
+        ]
         Ea = self.barrier(self.atoms, system_change)
         rate = self.attempt_freq * np.exp(-Ea / self.kT)
         if rate < 0.0:
@@ -116,7 +138,10 @@ class KineticMonteCarlo:
 
         # Apply step
         symb = self.atoms[choice].symbol
-        system_change = [(vac_idx, 'X', symb), (choice, symb, 'X')]
+        system_change = [
+            SystemChange(index=vac_idx, old_symb='X', new_symb=symb),
+            SystemChange(index=choice, old_symb=symb, new_symb='X')
+        ]
 
         # Trigger update
         self.atoms.calc.update_cf(system_change)
@@ -150,7 +175,7 @@ class KineticMonteCarlo:
         now = time.time()
         for i in range(num_steps):
             if self.log_interval is not False and time.time() - now > self.log_interval:
-                _logger(f"Step {i} of {num_steps}")
+                logger.info("Step %d of %d", i, num_steps)
                 now = time.time()
             vac_idx = self._mc_step(vac_idx, i)
 

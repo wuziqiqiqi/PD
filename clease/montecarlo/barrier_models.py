@@ -1,6 +1,7 @@
-from typing import List, Tuple, Dict
+from typing import Dict, Sequence
 from abc import ABCMeta
 from ase import Atoms
+from clease.tools import SystemChange
 
 __all__ = ('BarrierModel', 'SSTEBarrier')
 
@@ -11,7 +12,7 @@ class BarrierModel(metaclass=ABCMeta):
     Base barrier model class
     """
 
-    def __call__(self, atoms: Atoms, system_change: List[Tuple]) -> float:
+    def __call__(self, atoms: Atoms, system_change: Sequence[SystemChange]) -> float:
         raise NotImplementedError("__call__ must be implemented in derived classes")
 
 
@@ -37,32 +38,18 @@ class SSTEBarrier(BarrierModel):
         super().__init__()
         self.dilute_barrier = dilute_barrier
 
-    def __call__(self, atoms: Atoms, system_changes: List[Tuple[int, str, str]]) -> float:
+    def __call__(self, atoms: Atoms, system_changes: Sequence[SystemChange]) -> float:
         E1 = atoms.calc.updater.get_energy()
         E2 = atoms.calc.get_energy_given_change(system_changes)
 
         # Extract the jumping species. The system change should involve
         # a vacancy and another element. Thus, the jumping species is the
         # symbol in system_change that is not a vacancy
-        _, old_symb, new_symb = system_changes[0]
+        old_symb, new_symb = system_changes[0].old_symb, system_changes[0].new_symb
 
         # Confirm that one of the symbols is a vacancy
         assert old_symb == 'X' or new_symb == 'X'
 
         jumping_symb = old_symb if old_symb != 'X' else new_symb
         Ea = self.dilute_barrier[jumping_symb] + 0.5 * (E2 - E1)
-
-        # Undo changes
-        _reset_changes(atoms, system_changes)
         return Ea
-
-
-# Helper function for resettings changes
-def _reset_changes(atoms: Atoms, system_changes: List[Tuple[int, str, str]]):
-    for idx, old_symb, new_symb in system_changes:
-        # Make sure that a change actually was made
-        assert atoms[idx].symbol == new_symb
-        atoms[idx].symbol = old_symb
-
-    atoms.calc.restore()
-    atoms.calc.clear_history()

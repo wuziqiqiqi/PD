@@ -14,6 +14,7 @@ class BufferedArray:
     :param fname: Filename where the buffer will be written when full. If None,
         the buffer will not be flushed to file when full.
     """
+
     def __init__(self, size: int = 1000, fname: Union[str, Path] = None):
         self._buffer = np.zeros(size)
         self._next = 0
@@ -45,3 +46,10 @@ class BufferedArray:
         self._flush_if_full()
         self._buffer[self._next] = v
         self._next += 1
+
+    def clear(self):
+        """
+        Clear array
+        """
+        self._buffer[:] = 0
+        self._next = 0

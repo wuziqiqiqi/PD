@@ -1,6 +1,6 @@
-import numpy as np
 from typing import List, Union
 from pathlib import Path
+import numpy as np
 from .buffered_array import BufferedArray
 
 __all__ = ('EntropyProductionRate',)
@@ -29,23 +29,31 @@ class EntropyProductionRate:
         file.
     :param logfile: Filename of the file used when the buffer is flushed
     """
-    def __init__(self, buffer_length: int = 10000,
-                 logfile: Union[str, Path] = "epr.txt"):
+
+    def __init__(self, buffer_length: int = 10000, logfile: Union[str, Path] = "epr.txt"):
         self._buffer = BufferedArray(size=buffer_length, fname=logfile)
         self.prev_swap = -1
         self.prob_forw = 0.0
 
-    def _probabilty(self, choice: int, cumulative_rates: np.ndarray):
+    def reset(self):
+        """
+        Clear all information stored
+        """
+        self.prev_swap = -1
+        self.prob_forw = 0.0
+        self._buffer.clear()
+
+    @staticmethod
+    def _probabilty(choice: int, cumulative_rates: np.ndarray):
         """
         Calculate the probability of going from the current state to the
         chosen state.
         """
         if choice == 0:
             return cumulative_rates[0]
-        return cumulative_rates[choice] - cumulative_rates[choice-1]
+        return cumulative_rates[choice] - cumulative_rates[choice - 1]
 
-    def update(self, current: int, choice: int, cumulative_rates: np.ndarray,
-               swaps: List[int]):
+    def update(self, current: int, choice: int, cumulative_rates: np.ndarray, swaps: List[int]):
         """
         Update the buffer
 
@@ -64,7 +72,7 @@ class EntropyProductionRate:
         backward = swaps.index(self.prev_swap)
         prob_back = self._probabilty(backward, cumulative_rates)
         self.prev_swap = current
-        self._buffer.push(np.log(self.prob_forw/prob_back))
+        self._buffer.push(np.log(self.prob_forw / prob_back))
 
     def flush_buffer(self):
         self._buffer.flush()

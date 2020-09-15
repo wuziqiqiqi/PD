@@ -46,4 +46,7 @@ def test_kmc(db_name):
     with pytest.raises(ValueError):
         kmc.run(10, vac_idx - 1)
     kmc.run(10, vac_idx)
+
+    # Just run reset to confirm that this method runs without error
+    kmc.reset()
     os.remove(epr_file)
