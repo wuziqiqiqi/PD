@@ -11,6 +11,7 @@ from ase.db import connect
 from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import CorrFuncEnergyDataManager
 from typing import Optional, Dict, List
+from clease.cluster_coverage import ClusterCoverageChecker
 
 __all__ = ('Evaluate',)
 
@@ -1081,6 +1082,16 @@ class Evaluate:
             eci_by_size[size]["name"].append(name)
 
         return eci_by_size
+
+    def print_coverage_report(self, file=sys.stdout) -> None:
+        """
+        Prints a report of how large fraction of the possible variation in each
+        cluster is covered by the dataset
+
+        :param file: a file-like object (stream); defaults to the current sys.stdout.
+        """
+        cov_checker = ClusterCoverageChecker(self.settings, select_cond=self.select_cond)
+        cov_checker.print_report(file=file)
 
 
 def loocv_mp(args):

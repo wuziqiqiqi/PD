@@ -11,6 +11,7 @@ from .new_struct import NewStructures  # Promotion for convenience
 from .svd import *
 from .concentration import *
 from .regression_old import *
+from .cluster_coverage import *
 
 from . import cluster
 from . import new_struct
@@ -48,4 +49,4 @@ ADDITIONAL = ('settings', 'basis_function', 'corr_func', 'new_struct', 'NewStruc
 
 __all__ = (template_filters.__all__ + atoms_manager.__all__ + concentration.__all__ +
            evaluate.__all__ + convexhull.__all__ + data_manager.__all__ + structure_mapper.__all__ +
-           svd.__all__ + regression_old.__all__ + ADDITIONAL)
+           svd.__all__ + regression_old.__all__ + cluster_coverage.__all__ + ADDITIONAL)
