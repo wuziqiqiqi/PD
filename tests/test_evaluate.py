@@ -1,5 +1,6 @@
 import pytest
 import os
+import json
 import numpy as np
 from ase.calculators.emt import EMT
 from ase.db import connect
@@ -201,6 +202,42 @@ def test_get_energy_predict(bc_setting):
     true_list = evaluator.cf_matrix.dot(evaluator.eci)
     predict_list = evaluator.get_energy_predict()
     assert true_list.tolist() == predict_list.tolist()
+
+
+def test_save_eci(bc_setting, make_tempfile):
+    evaluator = Evaluate(settings=bc_setting)
+
+    # Save with extension
+    fname = make_tempfile('eci.json')
+    evaluator.save_eci(fname=fname)
+    assert os.path.isfile(fname)
+
+    # Save without extension
+    fname = make_tempfile('eci_no_ext')
+    evaluator.save_eci(fname=fname)
+    assert os.path.isfile(str(fname) + '.json')
+    # Extensionless file should not exist in any form
+    assert not os.path.exists(fname)
+
+
+def test_load_eci(bc_setting, make_tempfile):
+    evaluator = Evaluate(settings=bc_setting)
+
+    eci = evaluator.get_eci_dict()
+
+    assert len(eci) > 0
+
+    fname = make_tempfile('eci.json')
+    evaluator.save_eci(fname=fname)
+
+    # Load the ECI dict
+    with open(fname) as file:
+        eci_loaded = json.load(file)
+
+    assert eci.keys() == eci_loaded.keys()
+
+    for k, v in eci.items():
+        assert pytest.approx(v) == eci_loaded[k]
 
 
 def test_get_energy_predict(bc_setting):

@@ -1,17 +1,21 @@
 """Module that fits ECIs to energy data."""
 import os
 import sys
-import numpy as np
-import multiprocessing as mp
+import json
 import logging as lg
+import multiprocessing as mp
+from typing import Optional, Dict, List
+
+import numpy as np
+from ase.db import connect
+
 from clease.settings import ClusterExpansionSettings
 from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
-from ase.db import connect
 from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import CorrFuncEnergyDataManager
-from typing import Optional, Dict, List
 from clease.cluster_coverage import ClusterCoverageChecker
+from clease.tools import add_file_extension
 
 __all__ = ('Evaluate',)
 
@@ -276,7 +280,7 @@ class Evaluate:
 
         return dict(pairs)
 
-    def save_eci(self, fname='eci'):
+    def save_eci(self, fname='eci.json'):
         """
         Save a dictionary of cluster names and their corresponding ECI value
         in JSON file format.
@@ -284,10 +288,9 @@ class Evaluate:
         Parameters:
 
         fname: str
-            file name does not contain an extension (`.json`)
+            json filename. If no extension if given, .json is added
         """
-        import json
-        full_fname = fname + '.json'
+        full_fname = add_file_extension(fname, '.json')
         with open(full_fname, 'w') as outfile:
             json.dump(self.get_eci_dict(), outfile, indent=2, separators=(",", ": "))
 
