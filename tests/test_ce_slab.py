@@ -57,12 +57,12 @@ def test_add_vacuum_layers():
             assert atom.symbol == 'Al'
 
 
-def test_load(db_name, tmpdir):
+def test_load(db_name, make_tempfile):
     atoms = bulk('Al', a=4.05, cubic=True)
     conc = Concentration(basis_elements=[['Al', 'X']])
     settings = CESlab(atoms, (1, 1, 1), conc, db_name=db_name)
 
-    backup_file = str(tmpdir / 'test_save_ceslab.json')
+    backup_file = make_tempfile('test_save_ceslab.json')
     settings.save(backup_file)
 
     settings2 = settings_from_json(backup_file)
@@ -70,10 +70,6 @@ def test_load(db_name, tmpdir):
     assert settings.atoms == settings2.atoms
     assert settings.size == settings2.size
     assert settings.concentration == settings2.concentration
-    try:
-        os.remove(backup_file)
-    except OSError:
-        pass
 
 
 def test_remove_vacuum():

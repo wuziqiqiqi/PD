@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 from clease.montecarlo.observers import MCObserver
+from clease.tools import add_file_extension
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,11 @@ class EnergyEvolution(MCObserver):
             return
         self.energies = []
 
-    def save(self, fname: str = "energy_evolution") -> None:
+    def save(self, fname: str = "energy_evolution.csv") -> None:
         """Save the energy evolution in .csv file.
 
-        :param fname: File name without the extension (.csv)
+        :param fname: File name of .csv file. Adds extension if none is given.
         """
-        full_fname = fname + '.csv'
+        full_fname = add_file_extension(fname, '.csv')
         np.savetxt(full_fname, self.energies, delimiter=",")
         logger.info("Energy evolution data saved to %s.", full_fname)

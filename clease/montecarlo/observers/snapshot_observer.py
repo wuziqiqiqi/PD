@@ -1,4 +1,5 @@
 from clease.montecarlo.observers import MCObserver
+from clease.tools import add_file_extension
 from ase.io.trajectory import TrajectoryWriter
 
 
@@ -8,7 +9,7 @@ class Snapshot(MCObserver):
     Parameters:
 
     fname: str
-        Name of the trajectory file (without .traj extension)
+        Name of the trajectory file. Adds extension '.traj' if none is given.
 
     atoms: Atoms
         Instance of the atoms objected modofied by the MC object
@@ -16,9 +17,9 @@ class Snapshot(MCObserver):
 
     name = "Snapshot"
 
-    def __init__(self, fname="snapshot", atoms=None):
+    def __init__(self, fname="snapshot.traj", atoms=None):
         super().__init__()
-        full_fname = fname + '.traj'
+        full_fname = add_file_extension(fname, '.traj')
         if atoms is None:
             raise ValueError("No atoms object given!")
         self.atoms = atoms

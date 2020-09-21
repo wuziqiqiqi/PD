@@ -50,8 +50,8 @@ def bc_settings(db_name):
     return settings
 
 
-def test_init_from_file(bc_settings, tmpdir):
-    backup = str(tmpdir / "ga_test.csv")
+def test_init_from_file(bc_settings, make_tempfile):
+    backup = make_tempfile("ga_test.csv")
     evaluator = Evaluate(bc_settings)
     selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
     try:
@@ -63,7 +63,3 @@ def test_init_from_file(bc_settings, tmpdir):
     # Restart from file, this time data will be loaded
     selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
     assert np.allclose(individuals, selector.individuals)
-    try:
-        os.remove(backup)
-    except OSError:
-        pass

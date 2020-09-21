@@ -159,26 +159,28 @@ def test_corr_func_observer(db_name):
         assert 'cf_' + k in thermo.keys()
 
 
-def test_snapshot(db_name, tmpdir):
+def test_snapshot(db_name, make_tempfile):
     atoms = get_example_mc_system(db_name)
 
     atoms[0].symbol = 'Cu'
     atoms[1].symbol = 'Cu'
 
-    obs = Snapshot(fname=str(tmpdir / 'snapshot'), atoms=atoms)
+    fname = make_tempfile('snapshot.traj')
+    obs = Snapshot(fname=fname, atoms=atoms)
 
     mc = Montecarlo(atoms, 600)
     mc.attach(obs, interval=100)
     mc.run(steps=1000)
     assert len(obs.traj) == 10
-    try:
-        fname = tmpdir / 'snapshot.traj'
-        os.remove(fname)
-    except OSError:
-        pass
+
+    # Test extension-less
+    fname = make_tempfile('snapshot')
+    obs = Snapshot(fname=fname, atoms=atoms)
+    assert str(obs.fname) == fname + '.traj'
 
 
-def test_energy_evolution(db_name, tmpdir):
+def test_energy_evolution(db_name, make_tempfile):
+    print(db_name)
     atoms = get_example_mc_system(db_name)
     atoms[0].symbol = 'Cu'
     atoms[1].symbol = 'Cu'
@@ -189,17 +191,19 @@ def test_energy_evolution(db_name, tmpdir):
     mc.run(steps=1000)
 
     # Just confirm that the save function works
-    fname = 'energy_evol'
-    obs.save(fname=str(tmpdir / fname))
-    file = tmpdir / (fname + '.csv')
-    assert file.exists()
-    try:
-        file.remove()
-    except OSError:
-        pass
+    fname = make_tempfile("energy_evol.csv")
+    obs.save(fname=fname)
+    assert os.path.isfile(fname)
 
     # Check the number of energy values
     assert len(obs.energies) == 20
+
+    # Test extensionless, should default to .csv
+    fname_base = 'energy_evol_no_ext'
+    fname = make_tempfile(fname_base)
+    obs.save(fname=fname)
+    assert os.path.isfile(str(fname) + '.csv')
+    assert not os.path.isfile(fname)
 
 
 def test_site_order_parameter(db_name):

@@ -1,4 +1,3 @@
-import os
 import pytest
 from itertools import product
 import numpy as np
@@ -345,16 +344,16 @@ def test_bic():
     assert expect == pytest.approx(bic(mse, n_feat, n_data))
 
 
-def test_get_filename():
+def test_get_file_extension():
     tests = [{
         'fname': 'data.csv',
-        'expect': 'csv'
+        'expect': '.csv'
     }, {
         'fname': 'file',
         'expect': ''
     }, {
         'fname': 'double_ext.csv.json',
-        'expect': 'json'
+        'expect': '.json'
     }]
     for t in tests:
         ext = get_extension(t['fname'])
@@ -364,11 +363,11 @@ def test_get_filename():
 def test_add_proper_file_extension():
     tests = [{
         'fname': 'data.csv',
-        'ext': 'csv',
+        'ext': '.csv',
         'expect': 'data.csv',
     }, {
         'fname': 'data',
-        'ext': 'json',
+        'ext': '.json',
         'expect': 'data.json'
     }]
 
@@ -377,7 +376,7 @@ def test_add_proper_file_extension():
         assert fname == t['expect']
 
     with pytest.raises(ValueError):
-        add_file_extension('data.json', 'csv')
+        add_file_extension('data.json', '.csv')
 
 
 def test_sort_cf_names():
@@ -510,10 +509,8 @@ def test_constraint_is_redundant():
     ]
 
     for test in tests:
-        assert constraint_is_redundant(
-            test['A_lb'], test['b_lb'],  test['c_lb'], test['d'],
-            test['A_eq'], test['b_eq']
-        ) == test['expect']
+        assert constraint_is_redundant(test['A_lb'], test['b_lb'], test['c_lb'], test['d'],
+                                       test['A_eq'], test['b_eq']) == test['expect']
 
 
 def test_remove_redundant_constraints():
@@ -531,32 +528,27 @@ def test_remove_redundant_constraints():
     tests = [
         # Paulraj et al.: Example 2.2
         {
-            'A_lb': np.array([[-2.0, -1.0],
-                              [-4.0, 0.0],
-                              [-1.0, -3.0],
-                              [-1.0, -2.0],
-                              [0.0, -1.0],
-                              [1.0, 1.0]]),
-            'b_lb': np.array([-8.0, -15.0, -9.0, -14.0, -4.0, -5.0]),
-            'A_lb_expect': np.array([[-2.0, -1.0],
-                                     [-4.0, 0.0],
-                                     [-1.0, -3.0]]),
-            'b_lb_expect': np.array([-8.0, -15.0, -9.0])
+            'A_lb':
+                np.array([[-2.0, -1.0], [-4.0, 0.0], [-1.0, -3.0], [-1.0, -2.0], [0.0, -1.0],
+                          [1.0, 1.0]]),
+            'b_lb':
+                np.array([-8.0, -15.0, -9.0, -14.0, -4.0, -5.0]),
+            'A_lb_expect':
+                np.array([[-2.0, -1.0], [-4.0, 0.0], [-1.0, -3.0]]),
+            'b_lb_expect':
+                np.array([-8.0, -15.0, -9.0])
         },
         # Telgen
         {
-            'A_lb': np.array([[-1.0, 1.0],
-                              [-2.0, -1.0],
-                              [-1.0, 0.0],
-                              [1.0, -2.0],
-                              [0.0, -2.0],
-                              [-1.0, -1.0]]),
-            'b_lb': np.array([-2.0, -7.0, -2.0, -4.0, -5.0, -4.0]),
-            'A_lb_expect': np.array([[-1.0, 0.0],
-                                     [1.0, -2.0],
-                                     [0.0, -2.0],
-                                     [-1.0, -1.0]]),
-            'b_lb_expect': np.array([-2.0, -4.0, -5.0, -4.0])
+            'A_lb':
+                np.array([[-1.0, 1.0], [-2.0, -1.0], [-1.0, 0.0], [1.0, -2.0], [0.0, -2.0],
+                          [-1.0, -1.0]]),
+            'b_lb':
+                np.array([-2.0, -7.0, -2.0, -4.0, -5.0, -4.0]),
+            'A_lb_expect':
+                np.array([[-1.0, 0.0], [1.0, -2.0], [0.0, -2.0], [-1.0, -1.0]]),
+            'b_lb_expect':
+                np.array([-2.0, -4.0, -5.0, -4.0])
         },
     ]
 
@@ -567,36 +559,27 @@ def test_remove_redundant_constraints():
 
 
 def test_remove_redundant_equations():
-    tests = [
-        {
-            'A': np.array([[1.0, 1.0], [2.0, 2.0]]),
-            'b': np.array([1.0, 2.0]),
-            'A_expect': [[1.0, 1.0]],
-            'b_expect': [1.0]
-        },
-        {
-            'A': np.array([[1.0, 1.0, 0.3], [2.0, 2.0, 0.6]]),
-            'b': np.array([1.0, 2.0, 0.0]),
-            'A_expect': [[1.0, 1.0, 0.3]],
-            'b_expect': [1.0]
-        },
-        {
-            'A': np.array([[1.0, 2.0, 3.0],
-                           [4.0, 5.0, 6.0],
-                           [7.0, 8.0, 9.0]]),
-            'b': np.array([150.0, 300.0, 450.0]),
-            'A_expect': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
-            'b_expect': [150.0, 300.0]
-        },
-         {
-            'A': np.array([[1.0, 1.0, 1.0],
-                           [2.0, 3.0, 4.0],
-                           [4.0, 3.0, 2.0]]),
-            'b': np.array([50.0, 158.0, 142.0]),
-            'A_expect': [[1.0, 1.0, 1.0], [2.0, 3.0, 4.0]],
-            'b_expect': [50.0, 158.0]
-        }
-    ]
+    tests = [{
+        'A': np.array([[1.0, 1.0], [2.0, 2.0]]),
+        'b': np.array([1.0, 2.0]),
+        'A_expect': [[1.0, 1.0]],
+        'b_expect': [1.0]
+    }, {
+        'A': np.array([[1.0, 1.0, 0.3], [2.0, 2.0, 0.6]]),
+        'b': np.array([1.0, 2.0, 0.0]),
+        'A_expect': [[1.0, 1.0, 0.3]],
+        'b_expect': [1.0]
+    }, {
+        'A': np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]),
+        'b': np.array([150.0, 300.0, 450.0]),
+        'A_expect': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        'b_expect': [150.0, 300.0]
+    }, {
+        'A': np.array([[1.0, 1.0, 1.0], [2.0, 3.0, 4.0], [4.0, 3.0, 2.0]]),
+        'b': np.array([50.0, 158.0, 142.0]),
+        'A_expect': [[1.0, 1.0, 1.0], [2.0, 3.0, 4.0]],
+        'b_expect': [50.0, 158.0]
+    }]
 
     for test in tests:
         A, b = remove_redundant_equations(test['A'], test['b'])

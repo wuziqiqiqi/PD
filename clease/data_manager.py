@@ -118,7 +118,7 @@ class DataManager(object):
         """
         if self._X is None:
             return
-        fname = add_file_extension(fname, 'csv')
+        fname = add_file_extension(fname, '.csv')
         header = ",".join(self._feat_names) + f",{self._target_name}"
         data = np.hstack((self._X, np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
@@ -662,7 +662,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             for col in range(0, cf.shape[1]):
                 for power in range(self.order + 1):
                     bulk_mod_cf[:, counter] = vols * cf[bulk_mod_rows, col]
-                    bulk_mod_cf[:, counter] *= power * (power - 1) * vols**(power - 2)
+                    bulk_mod_cf[:, counter] *= power * \
+                        (power - 1) * vols**(power - 2)
                     counter += 1
 
             # Update the full design matrix as well as the target values
@@ -683,7 +684,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             for col in range(cf.shape[1]):
                 for power in range(self.order + 1):
                     # Double derivative of the energy
-                    dE2 = power * (power - 1) * cf[dBdP_rows, col] * vols**(power - 2)
+                    dE2 = power * (power - 1) * \
+                        cf[dBdP_rows, col] * vols**(power - 2)
 
                     # Third derivative of the energy
                     dE3 = power*(power-1)*(power-2)*cf[dBdP_rows, col] * \

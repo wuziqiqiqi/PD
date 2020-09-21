@@ -26,30 +26,47 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_slow)
 
 
-@pytest.fixture
-def db_name(tmpdir):
-    """Create a temporary database file"""
-    name = tmpdir / 'temp_db.db'
-    assert not name.exists()
-    yield str(name)
-    # Teardown
+def remove_file(name):
+    """Helper function for removing files"""
     try:
-        name.remove()
-    except OSError:
-        pass
-
-
-@pytest.fixture
-def buffer_file(tmpdir):
-    name = tmpdir / 'temp_buffer.txt'
-    assert not name.exists()
-    yield str(name)
-
-    # Teardown
-    try:
-        name.remove()
+        # Pytest path-objects raises a different error if the file
+        # does not exist, so we always just use os.remove
+        os.remove(name)
     except FileNotFoundError:
         pass
+
+
+@pytest.fixture
+def make_tempfile(tmpdir):
+    """Factory function for creating temporary files.
+    The file will be removed at teardown of the fixture. """
+
+    created_files = []  # Keep track of files which are created
+
+    def _make_tempfile(filename):
+        name = tmpdir / filename
+        assert not name.exists(), f'File {name} already exists.'
+        created_files.append(name)
+        return str(name)
+
+    yield _make_tempfile
+    # Teardown
+    for name in created_files:
+        # Note: The file does not necessarily exist, just because we created the filename
+        remove_file(name)
+        assert not name.exists(), f'File {name} still exists after teardown.'
+
+
+@pytest.fixture
+def db_name(make_tempfile):
+    """Create a temporary database file"""
+    yield make_tempfile('temp_db.db')
+
+
+@pytest.fixture
+def buffer_file(make_tempfile):
+    yield make_tempfile('temp_buffer.txt')
+
 
 # This takes a few seconds to create every time, so we scope it to the module level
 # No modifications should be made to this DB though, as changes will propagate throughout the test
@@ -69,15 +86,12 @@ def bc_setting(tmpdir_factory):
     newstruct = NewStructures(settings, struct_per_gen=3)
     newstruct.generate_initial_pool()
     calc = EMT()
-    database = connect(db_name)
 
-    for row in database.select([("converged", "=", False)]):
-        atoms = row.toatoms()
-        atoms.calc = calc
-        atoms.get_potential_energy()
-        update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
+    with connect(db_name) as database:
+        for row in database.select([("converged", "=", False)]):
+            atoms = row.toatoms()
+            atoms.calc = calc
+            atoms.get_potential_energy()
+            update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
     yield settings
-    try:
-        name.remove()
-    except OSError:
-        pass
+    remove_file(name)

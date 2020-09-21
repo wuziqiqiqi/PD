@@ -2,9 +2,10 @@
 """A collection of miscellaneous functions used for Cluster Expansion."""
 import re
 import logging
+from pathlib import Path
 from itertools import (permutations, combinations, product, filterfalse, chain)
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict, Set, Sequence, NamedTuple
+from typing import List, Optional, Tuple, Dict, Set, Sequence, NamedTuple, Union
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
 import numpy as np
@@ -819,7 +820,7 @@ def bic(mse, num_features, num_data_points):
     return np.log(num_data_points) * num_features + num_data_points * np.log(mse)
 
 
-def get_extension(fname):
+def get_extension(fname: Union[str, Path]) -> str:
     """
     Return the file extension of a filename
 
@@ -828,12 +829,10 @@ def get_extension(fname):
     fname: str
         Filename
     """
-    if fname.count('.') == 0:
-        return ''
-    return fname.rpartition('.')[-1]
+    return Path(fname).suffix
 
 
-def add_file_extension(fname: str, ext: str) -> str:
+def add_file_extension(fname: Union[str, Path], ext: str) -> str:
     """
     Adds the wanted file extension to a filename. If a file extension
     is already present and it matches the wanted file extension, nothing
@@ -841,14 +840,14 @@ def add_file_extension(fname: str, ext: str) -> str:
     no file extension exist the wanted extension is added
 
     :param fname: file name
-    :param ext: extension (without .) example (csv, txt, json)
+    :param ext: extension (with .) example (.csv, .txt, .json)
     """
-    if fname.endswith(ext):
-        return fname
-
-    current_ext = get_extension(fname)
+    fname = Path(fname)
+    current_ext = fname.suffix
+    if current_ext == ext:
+        return str(fname)
     if current_ext == '':
-        return fname + '.' + ext
+        return str(fname.with_suffix(ext))
     raise ValueError(f"Passed extenstion {current_ext} expected {ext}")
 
 

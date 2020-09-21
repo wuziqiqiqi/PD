@@ -18,7 +18,7 @@ def do_test_2(basis_function, db_name):
                       max_cluster_size=2,
                       db_name=db_name)
     #settings.basis_func_type = basis_function
-    #check_orthonormal(settings)
+    # check_orthonormal(settings)
 
 
 def do_test_3(basis_function, db_name):
@@ -93,7 +93,7 @@ def check_orthonormal(settings):
         sum_ = 0
         for key, _ in settings.spin_dict.items():
             sum_ += settings.basis_functions[c[0]][key] \
-                   * settings.basis_functions[c[1]][key]
+                * settings.basis_functions[c[1]][key]
         sum_ /= settings.num_unique_elements
         assert abs(sum_) < tol
 
@@ -101,7 +101,7 @@ def check_orthonormal(settings):
 def clean_db(db_name):
     try:
         os.remove(db_name)
-    except OSError:
+    except FileNotFoundError:
         pass
 
 
