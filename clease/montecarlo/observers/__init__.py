@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 from clease.montecarlo.observers.mc_observer import MCObserver
 from clease.montecarlo.observers.sgc_observer import SGCObserver
 from clease.montecarlo.observers.corr_func_observer import CorrelationFunctionObserver
@@ -11,10 +12,11 @@ from clease.montecarlo.observers.concentration_observer import ConcentrationObse
 from clease.montecarlo.observers.multi_state_sgc_observer import (MultiStateSGCConcObserver,
                                                                   SGCState)
 from .entropy_prod_rate import *
+from .acceptance_rate import *
 
 ADDITIONAL = ("MCObserver", "SGCObserver", "CorrelationFunctionObserver", "Snapshot",
               "EnergyEvolution", "LowestEnergyStructure", "DiffractionObserver",
               "EnergyPlotUpdater", "ConcentrationObserver", "SiteOrderParameter",
               "MultiStateSGCConcObserver", "SGCState")
 
-__all__ = (ADDITIONAL + entropy_prod_rate.__all__)
+__all__ = (ADDITIONAL + entropy_prod_rate.__all__ + acceptance_rate.__all__)

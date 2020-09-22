@@ -1,7 +1,7 @@
 import os
-import pytest
 from pathlib import Path
 import json
+import pytest
 import numpy as np
 from ase.build import bulk
 from ase.geometry import get_layers
@@ -12,10 +12,11 @@ from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
-from clease.montecarlo.observers import DiffractionObserver
+from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate
 from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement, FixedIndices
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
+from clease.tools import SystemChange
 
 # Set the random seed
 np.random.seed(0)
@@ -440,3 +441,35 @@ def test_gs_mgsi(db_name, almgsix_eci):
     # the ground state may not be found within the specified amount of runs.
     # We check only that the energy is between E_expect +- 1
     assert E_final == pytest.approx(E_expect, abs=1.0)
+
+
+def test_acceptance_rate(db_name):
+    acc_rate = AcceptanceRate()
+    assert acc_rate.rate == pytest.approx(0.0)
+
+    num_acc = 3
+    for _ in range(num_acc):
+        acc_rate([SystemChange(0, 'Al', 'Mg')])
+
+    assert acc_rate.rate == pytest.approx(1.0)
+
+    num_reject = 3
+    for _ in range(num_reject):
+        acc_rate([SystemChange(0, 'Al', 'Al')])
+    assert acc_rate.rate == pytest.approx(num_acc / (num_acc + num_reject))
+
+    # Try to use as observer in MC
+    atoms = get_example_mc_system(db_name)
+    atoms.symbols[:3] = 'Cu'
+
+    # Use very high temp to make sure that moves are accepted
+    mc = Montecarlo(atoms, 50000)
+    acc_rate.reset()
+    assert acc_rate.num_calls == 0
+    assert acc_rate.num_accept == 0
+    assert acc_rate.rate == pytest.approx(0.0)
+
+    mc.attach(acc_rate)
+    mc.run(steps=10)
+    assert acc_rate.num_accept > 0
+    assert acc_rate.num_calls > 0
