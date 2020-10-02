@@ -1,5 +1,4 @@
 """Test case for tha GAFit"""
-import os
 import pytest
 
 import numpy as np
@@ -14,7 +13,7 @@ from clease.tools import update_db
 
 
 @pytest.fixture
-def bc_settings(db_name):
+def ga_settings(db_name):
     basis_elements = [['Au', 'Cu']]
     concentration = Concentration(basis_elements=basis_elements)
     settings = CEBulk(crystalstructure='fcc',
@@ -38,21 +37,20 @@ def bc_settings(db_name):
 
     # Compute the energy of the structures
     calc = EMT()
-    database = connect(db_name)
-
-    # Write the atoms to the database
-    # for atoms, kvp in zip(all_atoms, key_value_pairs):
-    for row in database.select([("converged", "=", False)]):
-        atoms = row.toatoms()
-        atoms.calc = calc
-        atoms.get_potential_energy()
-        update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
+    with connect(db_name) as database:
+        # Write the atoms to the database
+        # for atoms, kvp in zip(all_atoms, key_value_pairs):
+        for row in database.select([("converged", "=", False)]):
+            atoms = row.toatoms()
+            atoms.calc = calc
+            atoms.get_potential_energy()
+            update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
     return settings
 
 
-def test_init_from_file(bc_settings, make_tempfile):
+def test_init_from_file(ga_settings, make_tempfile):
     backup = make_tempfile("ga_test.csv")
-    evaluator = Evaluate(bc_settings)
+    evaluator = Evaluate(ga_settings)
     selector = GAFit(evaluator.cf_matrix, evaluator.e_dft, fname=backup)
     try:
         selector.run(gen_without_change=3, save_interval=1)

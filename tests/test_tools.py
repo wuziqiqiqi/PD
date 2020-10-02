@@ -1,5 +1,5 @@
-import pytest
 from itertools import product
+import pytest
 import numpy as np
 from ase.build import bulk
 from ase.db import connect
@@ -176,156 +176,163 @@ def test_subset_selection():
         assert selection == test['expect']
 
 
-def test_sublattice_bf_selection():
-    tests = [
-        {
-            'bfs': Polynomial(['Li', 'O', 'X', 'V']).get_basis_functions(),
-            'basis_elems': [['Li', 'O'], ['X', 'V']]
-        },
-        {
-            'bfs': Polynomial(['Li', 'O', 'V']).get_basis_functions(),
-            'basis_elems': [['Li', 'O'], ['V', 'Li']]
-        },
-        {
-            'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
-            'basis_elems': [['Li', 'O', 'X'], ['V', 'Li']]
-        },
-        {
-            'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
-            'basis_elems': [['Li', 'O', 'X'], ['V', 'Li'], ['O', 'X']]
-        },
-        {
-            'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
-            'basis_elems': [['Li', 'O', 'X'], ['V', 'Li'], ['O', 'X'], ['V', 'O', 'X']]
-        },
-        {
-            'bfs': Polynomial(['Li', 'O', 'X']).get_basis_functions(),
-            'basis_elems': [['Li', 'O', 'X'], ['O', 'Li']]
-        },
-    ]
+@pytest.mark.parametrize('test', [
+    {
+        'bfs': Polynomial(['Li', 'O', 'X', 'V']).get_basis_functions(),
+        'basis_elems': [['Li', 'O'], ['X', 'V']]
+    },
+    {
+        'bfs': Polynomial(['Li', 'O', 'V']).get_basis_functions(),
+        'basis_elems': [['Li', 'O'], ['V', 'Li']]
+    },
+    {
+        'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
+        'basis_elems': [['Li', 'O', 'X'], ['V', 'Li']]
+    },
+    {
+        'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
+        'basis_elems': [['Li', 'O', 'X'], ['V', 'Li'], ['O', 'X']]
+    },
+    {
+        'bfs': Polynomial(['Li', 'O', 'V', 'X']).get_basis_functions(),
+        'basis_elems': [['Li', 'O', 'X'], ['V', 'Li'], ['O', 'X'], ['V', 'O', 'X']]
+    },
+    {
+        'bfs': Polynomial(['Li', 'O', 'X']).get_basis_functions(),
+        'basis_elems': [['Li', 'O', 'X'], ['O', 'Li']]
+    },
+])
+def test_sublattice_bf_selection(test):
 
-    for i, test in enumerate(tests):
-        selection = select_bf_subsets(test['basis_elems'], test['bfs'])
+    selection = select_bf_subsets(test['basis_elems'], test['bfs'])
 
-        # Confirm that all elements on each sublattice is distinguished
-        bfs = test['bfs']
-        for s, elems in zip(selection, test['basis_elems']):
-            assert len(s) == len(elems) - 1
-            distinguished = {}
-            for bf_indx in s:
-                for symb in product(elems, repeat=2):
-                    if symb[0] == symb[1]:
-                        continue
-                    key = '-'.join(sorted(symb))
-                    diff = bfs[bf_indx][symb[0]] - bfs[bf_indx][symb[1]]
+    # Confirm that all elements on each sublattice is distinguished
+    bfs = test['bfs']
+    for s, elems in zip(selection, test['basis_elems']):
+        assert len(s) == len(elems) - 1
+        distinguished = {}
+        for bf_indx in s:
+            for symb in product(elems, repeat=2):
+                if symb[0] == symb[1]:
+                    continue
+                key = '-'.join(sorted(symb))
+                diff = bfs[bf_indx][symb[0]] - bfs[bf_indx][symb[1]]
 
-                    disting = distinguished.get(key, False)
-                    distinguished[key] = disting or abs(diff) > 1e-4
+                disting = distinguished.get(key, False)
+                distinguished[key] = disting or abs(diff) > 1e-4
 
-            for k, v in distinguished.items():
-                assert v, f'{distinguished}'
-
-
-def test_cname_lt():
-    tests = [
-        {
-            'name1': 'c0',
-            'name2': 'c1',
-            'expect': True
-        },
-        {
-            'name1': 'c1',
-            'name2': 'c1',
-            'expect': False
-        },
-        {
-            'name1': 'c2_d0000_0',
-            'name2': 'c1_0',
-            'expect': False
-        },
-        {
-            'name1': 'c0',
-            'name2': 'c0',
-            'expect': False
-        },
-        {
-            'name1': 'c1_0',
-            'name2': 'c1_1',
-            'expect': True
-        },
-        {
-            'name1': 'c4_d0000_10',
-            'name2': 'c3_d9999_9',
-            'expect': False
-        },
-        {
-            'name1': 'c4_d0000_10',
-            'name2': 'c4_d0000_9',
-            'expect': False
-        },
-        {
-            'name1': 'c2_d0200_9',
-            'name2': 'c2_d0200_29',
-            'expect': True
-        },
-    ]
-
-    for t in tests:
-        assert cname_lt(t['name1'], t['name2']) == t['expect']
+        for v in distinguished.values():
+            assert v, f'{distinguished}'
 
 
-def test_singlet2conc():
-    tests = [{
-        'bf': [{
-            'Au': 1.0,
-            'Cu': -1.0
-        }],
-        'cf': np.array([[1.0], [-1.0], [0.0]]),
-        'expect': [{
-            'Au': 1.0,
-            'Cu': 0.0
-        }, {
-            'Au': 0.0,
-            'Cu': 1.0
-        }, {
-            'Au': 0.5,
-            'Cu': 0.5
-        }]
+@pytest.mark.parametrize('test', [
+    {
+        'name1': 'c0',
+        'name2': 'c1',
+        'expect': True
+    },
+    {
+        'name1': 'c1',
+        'name2': 'c1',
+        'expect': False
+    },
+    {
+        'name1': 'c2_d0000_0',
+        'name2': 'c1_0',
+        'expect': False
+    },
+    {
+        'name1': 'c0',
+        'name2': 'c0',
+        'expect': False
+    },
+    {
+        'name1': 'c1_0',
+        'name2': 'c1_1',
+        'expect': True
+    },
+    {
+        'name1': 'c4_d0000_10',
+        'name2': 'c3_d9999_9',
+        'expect': False
+    },
+    {
+        'name1': 'c4_d0000_10',
+        'name2': 'c4_d0000_9',
+        'expect': False
+    },
+    {
+        'name1': 'c2_d0200_9',
+        'name2': 'c2_d0200_29',
+        'expect': True
+    },
+])
+def test_cname_lt(test):
+    assert cname_lt(test['name1'], test['name2']) == test['expect']
+
+
+@pytest.mark.parametrize('test', [{
+    'bf': [{
+        'Au': 1.0,
+        'Cu': -1.0
+    }],
+    'cf': np.array([[1.0], [-1.0], [0.0]]),
+    'expect': [{
+        'Au': 1.0,
+        'Cu': 0.0
     }, {
-        'bf': [{
-            'Li': 1.0,
-            'O': 0.0,
-            'X': -1.0
-        }, {
-            'Li': 1.0,
-            'O': -1.0,
-            'X': 0.0
-        }],
-        'cf': np.array([[1.0, 1.0], [-0.5, -0.5]]),
-        'expect': [{
-            'Li': 1.0,
-            'O': 0.0,
-            'X': 0.0
-        }, {
-            'Li': 0.0,
-            'O': 0.5,
-            'X': 0.5
-        }]
+        'Au': 0.0,
+        'Cu': 1.0
+    }, {
+        'Au': 0.5,
+        'Cu': 0.5
     }]
-
-    for t in tests:
-        conc = singlets2conc(t['bf'], t['cf'])
-        assert len(conc) == len(t['expect'])
-        for item1, item2 in zip(conc, t['expect']):
-            assert item1 == item2
+}, {
+    'bf': [{
+        'Li': 1.0,
+        'O': 0.0,
+        'X': -1.0
+    }, {
+        'Li': 1.0,
+        'O': -1.0,
+        'X': 0.0
+    }],
+    'cf': np.array([[1.0, 1.0], [-0.5, -0.5]]),
+    'expect': [{
+        'Li': 1.0,
+        'O': 0.0,
+        'X': 0.0
+    }, {
+        'Li': 0.0,
+        'O': 0.5,
+        'X': 0.5
+    }]
+}])
+def test_singlet2conc(test):
+    conc = singlets2conc(test['bf'], test['cf'])
+    assert len(conc) == len(test['expect'])
+    for item1, item2 in zip(conc, test['expect']):
+        assert item1 == item2
 
 
 def test_aic():
     mse = 2.0
     n_feat = 3
     n_data = 5
-    expect = 6.0 + 5 * np.log(mse)
+
+    # expect = 2 * n_feat + n_data * np.log(mse)
+    expect = 9.465735902799727
     assert expect == pytest.approx(aic(mse, n_feat, n_data))
+
+    # Test with arrays and random data
+    N = 20
+    n_feat = np.random.choice(np.arange(1, 1000), size=N)
+    n_data = np.random.choice(np.arange(1, 1000), size=N)
+    mse = np.random.random(N) + 1e-6  # Add small constant to avoid 0
+
+    calculated = aic(mse, n_feat, n_data)
+    expect = 2 * n_feat + n_data * np.log(mse)
+    assert np.allclose(calculated, expect)
 
 
 def test_aicc():
@@ -337,46 +344,73 @@ def test_aicc():
 
 
 def test_bic():
+    # Test with a pre-calculated example
     mse = 2.0
     n_feat = 3
     n_data = 5
-    expect = 3.0 * np.log(5) + 5 * np.log(mse)
+    # expect = 3.0 * np.log(5) + 5 * np.log(mse)
+    expect = 8.294049640102028
     assert expect == pytest.approx(bic(mse, n_feat, n_data))
 
+    # Test with arrays and random data
+    N = 20
+    n_feat = np.random.choice(np.arange(1, 1000), size=N)
+    n_data = np.random.choice(np.arange(1, 1000), size=N)
+    mse = np.random.random(N) + 1e-6  # Add small constant to avoid 0
 
-def test_get_file_extension():
-    tests = [{
-        'fname': 'data.csv',
-        'expect': '.csv'
-    }, {
-        'fname': 'file',
-        'expect': ''
-    }, {
-        'fname': 'double_ext.csv.json',
-        'expect': '.json'
-    }]
-    for t in tests:
-        ext = get_extension(t['fname'])
-        assert ext == t['expect']
+    calculated = bic(mse, n_feat, n_data)
+    expect = np.log(n_data) * n_feat + n_data * np.log(mse)
+    assert np.allclose(calculated, expect)
 
 
-def test_add_proper_file_extension():
-    tests = [{
-        'fname': 'data.csv',
-        'ext': '.csv',
-        'expect': 'data.csv',
-    }, {
-        'fname': 'data',
-        'ext': '.json',
-        'expect': 'data.json'
-    }]
+@pytest.mark.parametrize('fname,expect', [
+    ('data.csv', '.csv'),
+    ('file', ''),
+    ('double_ext.csv.json', '.json'),
+])
+def test_get_file_extension(fname, expect):
+    assert get_extension(fname) == expect
 
-    for t in tests:
-        fname = add_file_extension(t['fname'], t['ext'])
-        assert fname == t['expect']
 
-    with pytest.raises(ValueError):
-        add_file_extension('data.json', '.csv')
+@pytest.mark.parametrize(
+    'test',
+    [
+        {
+            'fname': 'data.csv',
+            'ext': '.csv',
+            'expect': 'data.csv'
+        },
+        {
+            'fname': 'data',
+            'ext': '.json',
+            'expect': 'data.json'
+        },
+        # Some cases where we expect to fail
+        {
+            'fname': 'data.json',
+            'ext': '.csv',
+            'expect': None
+        },
+        {
+            'fname': 'data.json',
+            'ext': '',
+            'expect': None
+        },
+        {
+            'fname': '',
+            'ext': '.csv',
+            'expect': None
+        },
+    ])
+def test_add_proper_file_extension(test):
+    expect = test['expect']
+    if expect is None:
+        # We should raise
+        with pytest.raises(ValueError):
+            add_file_extension('data.json', '.csv')
+    else:
+        fname = add_file_extension(test['fname'], test['ext'])
+        assert fname == expect
 
 
 def test_sort_cf_names():
@@ -477,55 +511,43 @@ def test_common_cf_names(db_name):
     assert common == expect_common
 
 
-def test_constraint_is_redundant():
-    tests = [
-        {
-            'A_lb': np.array([[1.0, 1.0]]),
-            'b_lb': np.array([0.0]),
-            'A_eq': None,
-            'b_eq': None,
-            'c_lb': np.array([1.0, 1.0]),
-            'd': -0.1,
-            'expect': True
-        },
-        {
-            'A_lb': np.array([[1.0, 1.0]]),
-            'b_lb': np.array([0.0]),
-            'A_eq': None,
-            'b_eq': None,
-            'c_lb': np.array([1.0, 1.0]),
-            'd': 0.1,
-            'expect': False
-        },
-        {
-            'A_lb': np.array([[1.0, 1.0, 0.0]]),
-            'b_lb': np.array([0.0]),
-            'A_eq': np.array([[1.0, 0.0, -1.0]]),
-            'b_eq': np.array([0.0]),
-            'c_lb': np.array([1.0, 1.0, 0.0]),
-            'd': 0.1,
-            'expect': False
-        },
-    ]
-
-    for test in tests:
-        assert constraint_is_redundant(test['A_lb'], test['b_lb'], test['c_lb'], test['d'],
-                                       test['A_eq'], test['b_eq']) == test['expect']
+@pytest.mark.parametrize('test', [
+    {
+        'A_lb': np.array([[1.0, 1.0]]),
+        'b_lb': np.array([0.0]),
+        'A_eq': None,
+        'b_eq': None,
+        'c_lb': np.array([1.0, 1.0]),
+        'd': -0.1,
+        'expect': True
+    },
+    {
+        'A_lb': np.array([[1.0, 1.0]]),
+        'b_lb': np.array([0.0]),
+        'A_eq': None,
+        'b_eq': None,
+        'c_lb': np.array([1.0, 1.0]),
+        'd': 0.1,
+        'expect': False
+    },
+    {
+        'A_lb': np.array([[1.0, 1.0, 0.0]]),
+        'b_lb': np.array([0.0]),
+        'A_eq': np.array([[1.0, 0.0, -1.0]]),
+        'b_eq': np.array([0.0]),
+        'c_lb': np.array([1.0, 1.0, 0.0]),
+        'd': 0.1,
+        'expect': False
+    },
+])
+def test_constraint_is_redundant(test):
+    assert constraint_is_redundant(test['A_lb'], test['b_lb'], test['c_lb'], test['d'],
+                                   test['A_eq'], test['b_eq']) == test['expect']
 
 
-def test_remove_redundant_constraints():
-    # References:
-    #
-    # Paulraj et al.
-    # Paulraj, S., and P. Sumathi. "A comparative study of redundant constraints
-    # identification methods in linear programming problems." Mathematical Problems
-    # in Engineering 2010 (2010).
-    #
-    # Telgen
-    # Telgen, Jan. "Identifying redundant constraints and implicit equalities in
-    # systems of linear constraints." Management Science 29.10 (1983): 1209-1222.
-
-    tests = [
+@pytest.mark.parametrize(
+    'test',
+    [
         # Paulraj et al.: Example 2.2
         {
             'A_lb':
@@ -550,38 +572,46 @@ def test_remove_redundant_constraints():
             'b_lb_expect':
                 np.array([-2.0, -4.0, -5.0, -4.0])
         },
-    ]
+    ],
+    ids=['Paulraj', 'Telgen'])
+def test_remove_redundant_constraints(test):
+    # References:
+    #
+    # Paulraj et al.
+    # Paulraj, S., and P. Sumathi. "A comparative study of redundant constraints
+    # identification methods in linear programming problems." Mathematical Problems
+    # in Engineering 2010 (2010).
+    #
+    # Telgen
+    # Telgen, Jan. "Identifying redundant constraints and implicit equalities in
+    # systems of linear constraints." Management Science 29.10 (1983): 1209-1222.
+    A, b = remove_redundant_constraints(test['A_lb'], test['b_lb'])
+    assert np.allclose(A, test['A_lb_expect'])
+    assert np.allclose(b, test['b_lb_expect'])
 
-    for test in tests:
-        A, b = remove_redundant_constraints(test['A_lb'], test['b_lb'])
-        assert np.allclose(A, test['A_lb_expect'])
-        assert np.allclose(b, test['b_lb_expect'])
 
-
-def test_remove_redundant_equations():
-    tests = [{
-        'A': np.array([[1.0, 1.0], [2.0, 2.0]]),
-        'b': np.array([1.0, 2.0]),
-        'A_expect': [[1.0, 1.0]],
-        'b_expect': [1.0]
-    }, {
-        'A': np.array([[1.0, 1.0, 0.3], [2.0, 2.0, 0.6]]),
-        'b': np.array([1.0, 2.0, 0.0]),
-        'A_expect': [[1.0, 1.0, 0.3]],
-        'b_expect': [1.0]
-    }, {
-        'A': np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]),
-        'b': np.array([150.0, 300.0, 450.0]),
-        'A_expect': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
-        'b_expect': [150.0, 300.0]
-    }, {
-        'A': np.array([[1.0, 1.0, 1.0], [2.0, 3.0, 4.0], [4.0, 3.0, 2.0]]),
-        'b': np.array([50.0, 158.0, 142.0]),
-        'A_expect': [[1.0, 1.0, 1.0], [2.0, 3.0, 4.0]],
-        'b_expect': [50.0, 158.0]
-    }]
-
-    for test in tests:
-        A, b = remove_redundant_equations(test['A'], test['b'])
-        assert np.allclose(A, test['A_expect'])
-        assert np.allclose(b, test['b_expect'])
+@pytest.mark.parametrize('test', [{
+    'A': np.array([[1.0, 1.0], [2.0, 2.0]]),
+    'b': np.array([1.0, 2.0]),
+    'A_expect': [[1.0, 1.0]],
+    'b_expect': [1.0]
+}, {
+    'A': np.array([[1.0, 1.0, 0.3], [2.0, 2.0, 0.6]]),
+    'b': np.array([1.0, 2.0, 0.0]),
+    'A_expect': [[1.0, 1.0, 0.3]],
+    'b_expect': [1.0]
+}, {
+    'A': np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]),
+    'b': np.array([150.0, 300.0, 450.0]),
+    'A_expect': [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+    'b_expect': [150.0, 300.0]
+}, {
+    'A': np.array([[1.0, 1.0, 1.0], [2.0, 3.0, 4.0], [4.0, 3.0, 2.0]]),
+    'b': np.array([50.0, 158.0, 142.0]),
+    'A_expect': [[1.0, 1.0, 1.0], [2.0, 3.0, 4.0]],
+    'b_expect': [50.0, 158.0]
+}])
+def test_remove_redundant_equations(test):
+    A, b = remove_redundant_equations(test['A'], test['b'])
+    assert np.allclose(A, test['A_expect'])
+    assert np.allclose(b, test['b_expect'])

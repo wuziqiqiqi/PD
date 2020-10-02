@@ -1,6 +1,4 @@
 import pytest
-import os
-
 import numpy as np
 import ase
 from ase.build import bulk
@@ -12,29 +10,27 @@ from clease.settings import settings_from_json, Concentration
 pytestmark = pytest.mark.skipif(ase.__version__ < '3.19', reason="CESlab requires ASE > 3.19")
 
 
-def test_prim_cell_construction():
-    tests = [{
-        'cell': bulk('Al', a=4.05, cubic=True),
-        'miller': [1, 1, 1],
-        'expect_dist': 4.05 / np.sqrt(3.0)
-    }, {
-        'cell': bulk('Al', a=4.05, cubic=True),
-        'miller': [1, 1, 0],
-        'expect_dist': 4.05 / np.sqrt(2.0)
-    }, {
-        'cell': bulk('Fe', a=4.05, cubic=True),
-        'miller': [1, 1, 1],
-        'expect_dist': 4.05 / np.sqrt(3.0)
-    }, {
-        'cell': bulk('Fe', a=4.05, cubic=True),
-        'miller': [1, 1, 0],
-        'expect_dist': 4.05 / np.sqrt(2.0)
-    }]
-
-    for i, test in enumerate(tests):
-        prim = get_prim_slab_cell(test['cell'], test['miller'])
-        dist = prim.get_cell()[2, 2]
-        assert dist == pytest.approx(test['expect_dist'])
+@pytest.mark.parametrize('test', [{
+    'cell': bulk('Al', a=4.05, cubic=True),
+    'miller': [1, 1, 1],
+    'expect_dist': 4.05 / np.sqrt(3.0)
+}, {
+    'cell': bulk('Al', a=4.05, cubic=True),
+    'miller': [1, 1, 0],
+    'expect_dist': 4.05 / np.sqrt(2.0)
+}, {
+    'cell': bulk('Fe', a=4.05, cubic=True),
+    'miller': [1, 1, 1],
+    'expect_dist': 4.05 / np.sqrt(3.0)
+}, {
+    'cell': bulk('Fe', a=4.05, cubic=True),
+    'miller': [1, 1, 0],
+    'expect_dist': 4.05 / np.sqrt(2.0)
+}])
+def test_prim_cell_construction(test):
+    prim = get_prim_slab_cell(test['cell'], test['miller'])
+    dist = prim.get_cell()[2, 2]
+    assert dist == pytest.approx(test['expect_dist'])
 
 
 def test_add_vacuum_layers():

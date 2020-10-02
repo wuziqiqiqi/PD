@@ -320,17 +320,16 @@ class BayesianCompressiveSensing(LinearRegression):
     def to_dict(self):
         """Convert all parameters to a dictionary."""
         data = {}
-        data["inv_variance"] = self.inv_variance
-        data["gammas"] = self.gammas.tolist()
-        data["shape_var"] = self.shape_var
-        data["rate_var"] = self.rate_var
-        data["shape_lamb"] = self.shape_lamb
-        data["lamb"] = self.lamb
-        data["maxiter"] = self.maxiter
-        data["output_rate_sec"] = self.output_rate_sec
-        data["select_strategy"] = self.select_strategy
-        data["noise"] = self.noise
-        data["lamb_opt_start"] = self.lamb_opt_start
+
+        # Selection of vars we want to save
+        vars_to_save = ("inv_variance", 'gammas', 'shape_var', 'rate_var', 'shape_lamb', 'lamb',
+                        'maxiter', 'output_rate_sec', 'select_strategy', 'noise', 'lamb_opt_start')
+        for var in vars_to_save:
+            val = getattr(self, var)
+            if isinstance(val, np.ndarray):
+                val = val.tolist()
+            data[var] = val
+
         return data
 
     def save(self):
@@ -346,17 +345,9 @@ class BayesianCompressiveSensing(LinearRegression):
         with open(fname, 'r') as infile:
             data = json.load(infile)
 
-        bayes.inv_variance = data["inv_variance"]
-        bayes.gammas = np.array(data["gammas"])
-        bayes.shape_var = data["shape_var"]
-        bayes.rate_var = data["rate_var"]
-        bayes.shape_lamb = data["shape_lamb"]
-        bayes.lamb = data["lamb"]
-        bayes.maxiter = data["maxiter"]
-        bayes.output_rate_sec = data["output_rate_sec"]
-        bayes.select_strategy = data["select_strategy"]
-        bayes.noise = data["noise"]
-        bayes.lamb_opt_start = data["lamb_opt_start"]
+        for key, value in data.items():
+            if value is not None:
+                setattr(bayes, key, value)
         return bayes
 
     def __eq__(self, other):

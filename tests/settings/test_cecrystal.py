@@ -2,15 +2,15 @@
 import os
 import json
 from pathlib import Path
+import numpy as np
 import pytest
+from ase.db import connect
+from ase.spacegroup import crystal
 from clease.settings import CECrystal, settings_from_json, Concentration
 from clease.corr_func import CorrFunction
 from clease import NewStructures
 from clease.new_struct import MaxAttemptReachedError
 from clease.tools import wrap_and_sort_by_position
-from ase.db import connect
-from ase.spacegroup import crystal
-import numpy as np
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -20,17 +20,34 @@ tol = 1E-9
 ref_file = Path(__file__).parent / 'reference_corr_funcs_crystal.json'
 
 
+def update_cf(new_cf):
+    global ref_file
+    with ref_file.open('w') as file:
+        json.dump(new_cf, file, indent=2, separators=(',', ': '))
+
+
 @pytest.fixture
 def all_cf():
+    global ref_file
+    if not ref_file.exists():
+        update_cf({})
     with ref_file.open() as file:
         return json.load(file)
 
 
-def update_cf(new_cf):
-    if not ref_file.exists():
-        update_cf({})
-    with ref_file.open('w') as file:
-        json.dump(new_cf, file, indent=2, separators=(',', ': '))
+@pytest.fixture
+def check_cf(all_cf):
+    global update_reference_file
+
+    def _check_cf(cf, cf_key):
+        if update_reference_file:
+            all_cf[cf_key] = cf
+        for key in cf.keys():
+            assert cf[key] == pytest.approx(all_cf[cf_key][key])
+        if update_reference_file:
+            update_cf(all_cf)
+
+    return _check_cf
 
 
 def get_figures_of_family(settings, cname):
@@ -106,7 +123,7 @@ def test_spgroup_217(db_name, tmpdir, all_cf):
         update_cf(all_cf)
 
 
-def test_two_grouped_basis(db_name, all_cf):
+def test_two_grouped_basis(db_name, check_cf):
     # ---------------------------------- #
     # 2 grouped_basis                    #
     # ---------------------------------- #
@@ -144,16 +161,12 @@ def test_two_grouped_basis(db_name, all_cf):
         atoms[indx].symbol = "X"
     corr = CorrFunction(bsg)
     cf = corr.get_cf(atoms)
-    if update_reference_file:
-        all_cf["Li_X_V_O_F"] = cf
-    for key, v in cf.items():
-        assert v == pytest.approx(all_cf["Li_X_V_O_F"][key])
+    cf_key = "Li_X_V_O_F"
 
-    if update_reference_file:
-        update_cf(all_cf)
+    check_cf(cf, cf_key)
 
 
-def test_two_grouped_basis_probe_structure(db_name, all_cf):
+def test_two_grouped_basis_probe_structure(db_name, check_cf):
     # ---------------------------------- #
     # 2 grouped_basis                    #
     # ---------------------------------- #
@@ -186,10 +199,8 @@ def test_two_grouped_basis_probe_structure(db_name, all_cf):
         atoms[indx].symbol = "X"
     corr = CorrFunction(bsg)
     cf = corr.get_cf(atoms)
-    if update_reference_file:
-        all_cf["Ta_O_X_grouped"] = cf
-    for key in cf.keys():
-        assert cf[key] == pytest.approx(all_cf["Ta_O_X_grouped"][key]), key
+    cf_key = "Ta_O_X_grouped"
+    check_cf(cf, cf_key)
 
     try:
         ns = NewStructures(settings=bsg, struct_per_gen=2)
@@ -211,11 +222,8 @@ def test_two_grouped_basis_probe_structure(db_name, all_cf):
     except MaxAttemptReachedError as exc:
         print(str(exc))
 
-    if update_reference_file:
-        update_cf(all_cf)
 
-
-def test_two_grouped_basis_background_atoms_probe_structure(db_name, all_cf):
+def test_two_grouped_basis_background_atoms_probe_structure(db_name, check_cf):
     # ---------------------------------- #
     # 2 grouped_basis + background atoms #
     # ---------------------------------- #
@@ -257,11 +265,8 @@ def test_two_grouped_basis_background_atoms_probe_structure(db_name, all_cf):
             atoms[indx].symbol = "X"
         corr = CorrFunction(bsg)
         cf = corr.get_cf(atoms)
-        if update_reference_file:
-            all_cf["Ta_O_X_ungrouped"] = cf
-
-        for key in cf.keys():
-            assert cf[key] == pytest.approx(all_cf["Ta_O_X_ungrouped"][key])
+        cf_key = "Ta_O_X_ungrouped"
+        check_cf(cf, cf_key)
 
         db = connect(db_name)
         for row in db.select(struct_type='initial'):
@@ -272,9 +277,6 @@ def test_two_grouped_basis_background_atoms_probe_structure(db_name, all_cf):
 
     except MaxAttemptReachedError as exc:
         print(str(exc))
-
-    if update_reference_file:
-        update_cf(all_cf)
 
 
 def test_narrow_angle_crystal(db_name):
@@ -326,4 +328,3 @@ def test_bkg_symb_in_additional_basis(db_name):
     for bf in bfs:
         keys = sorted(list(bf.keys()))
         assert keys == ['Mg', 'Sn', 'X']
-    os.remove(db_name)

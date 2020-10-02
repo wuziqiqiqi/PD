@@ -13,98 +13,84 @@ from clease.data_manager import (FinalVolumeGetter, CorrelationFunctionGetterVol
 from clease.tools import update_db
 
 
-def create_db(db_name):
-    db = connect(db_name)
-    atoms = bulk('Au')
-    atoms2 = bulk('Au')
+@pytest.fixture
+def simple_db(db_name):
+    """Set up a simple database, fill it with some stuff and return the name.
+    The fixture takes care of teardown after the test."""
+    with connect(db_name) as db:
+        atoms = bulk('Au')
+        atoms2 = bulk('Au')
 
-    cf_func = {'c0': 0.0, 'c1_1': 1.0, 'c2_d0000_0_00': -1.0}
-    for i in range(10):
-        db.write(atoms,
-                 external_tables={'cf_func': cf_func},
-                 final_struct_id=2 * (i + 1),
-                 converged=1)
-        atoms2.calc = EMT()
-        atoms2.get_potential_energy()
-        db.write(atoms2)
-    return db
+        cf_func = {'c0': 0.0, 'c1_1': 1.0, 'c2_d0000_0_00': -1.0}
+        for i in range(10):
+            db.write(atoms,
+                     external_tables={'cf_func': cf_func},
+                     final_struct_id=2 * (i + 1),
+                     converged=1)
+            atoms2.calc = EMT()
+            atoms2.get_potential_energy()
+            db.write(atoms2)
+    return db_name
 
 
-def test_corr_final_energy(db_name, tmpdir):
+@pytest.mark.parametrize('manager_func,expect_header', [(
+    CorrFuncEnergyDataManager,
+    "# c0,c1_1,c2_d0000_0_00,E_DFT (eV/atom)",
+), (
+    CorrFuncVolumeDataManager,
+    "# c0,c1_1,c2_d0000_0_00,Volume (A^3)",
+)])
+def test_corr_final_energy(manager_func, expect_header, make_tempfile, simple_db):
     cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
 
-    tests = [{
-        'manager': CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names),
-        'expect_header': "# c0,c1_1,c2_d0000_0_00,E_DFT (eV/atom)\n",
-    }, {
-        'manager': CorrFuncVolumeDataManager(db_name, 'cf_func', cf_names),
-        'expect_header': "# c0,c1_1,c2_d0000_0_00,Volume (A^3)\n",
-    }]
+    manager = manager_func(simple_db, 'cf_func', cf_names)
 
-    for test in tests:
-        db = create_db(db_name)
-        manager = test['manager']
-        X, y = manager.get_data([('converged', '=', 1)])
+    X, y = manager.get_data([('converged', '=', 1)])
 
-        expect_X = np.zeros((10, 3))
-        expect_X[:, 0] = 0.0
-        expect_X[:, 1] = 1.0
-        expect_X[:, 2] = -1.0
-        assert np.allclose(X, expect_X)
-        assert manager.groups() == list(range(X.shape[0]))
+    expect_X = np.zeros((10, 3))
+    expect_X[:, 0] = 0.0
+    expect_X[:, 1] = 1.0
+    expect_X[:, 2] = -1.0
+    assert np.allclose(X, expect_X)
+    assert manager.groups() == list(range(X.shape[0]))
 
-        csvfile = str(tmpdir / 'dataset.csv')
-        manager.to_csv(csvfile)
+    csvfile = make_tempfile('dataset.csv')
+    manager.to_csv(csvfile)
 
-        expect_header = test['expect_header']
-        with open(csvfile, 'r') as f:
-            header = f.readline()
+    with open(csvfile, 'r') as f:
+        header = f.readline().strip()
 
-        assert header == expect_header
-        X_read = np.loadtxt(csvfile, delimiter=',')
-        os.remove(csvfile)
-        assert np.allclose(X, X_read[:, :-1])
-        assert np.allclose(y, X_read[:, -1])
+    assert header == expect_header
+    X_read = np.loadtxt(csvfile, delimiter=',')
+    assert np.allclose(X, X_read[:, :-1])
+    assert np.allclose(y, X_read[:, -1])
 
-        # Add an initial structure that is by mistake labeled as converged
-        db = connect(db_name)
+    # Add an initial structure that is by mistake labeled as converged
+    with connect(simple_db) as db:
         db.write(Atoms(), converged=True, external_tables={'cf_func': {k: 1.0 for k in cf_names}})
 
-        with pytest.raises(InconsistentDataError):
-            X, y = manager.get_data([('converged', '=', 1)])
-
-        os.remove(db_name)
+    with pytest.raises(InconsistentDataError):
+        X, y = manager.get_data([('converged', '=', 1)])
 
 
-def test_get_pattern(db_name):
-    create_db(db_name)
+@pytest.mark.parametrize('pattern,expect', [
+    ('c', ['c0', 'c1_1', 'c2_d0000_0_00']),
+    ('c0', ['c0']),
+    ('d00', ['c2_d0000_0_00']),
+    ('0', ['c0', 'c2_d0000_0_00']),
+])
+def test_get_pattern(pattern, expect, simple_db):
     cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
-    manager = CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names)
+    manager = CorrFuncEnergyDataManager(simple_db, 'cf_func', cf_names)
     manager.get_data([('converged', '=', 1)])
 
-    tests = [{
-        'pattern': 'c',
-        'expect': ['c0', 'c1_1', 'c2_d0000_0_00']
-    }, {
-        'pattern': 'c0',
-        'expect': ['c0']
-    }, {
-        'pattern': 'd00',
-        'expect': ['c2_d0000_0_00']
-    }, {
-        'pattern': '0',
-        'expect': ['c0', 'c2_d0000_0_00']
-    }]
-
-    for t in tests:
-        res = manager.get_matching_names(t['pattern'])
-        assert res == t['expect']
+    res = manager.get_matching_names(pattern)
+    assert res == expect
 
 
-def test_get_cols(db_name):
-    create_db(db_name)
+def test_get_cols(simple_db):
     cf_names = ['c0', 'c1_1', 'c2_d0000_0_00']
-    manager = CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names)
+    manager = CorrFuncEnergyDataManager(simple_db, 'cf_func', cf_names)
     X, _ = manager.get_data([('converged', '=', 1)])
 
     tests = [{
@@ -126,65 +112,69 @@ def test_get_cols(db_name):
         assert np.allclose(res, t['expect'])
 
 
-def test_consistent_order(db_name):
-    db = connect(db_name)
+@pytest.fixture
+def shuffled_db(db_name):
+    """
+    Initialized a database where the entries are shuffled for the 
+    'test_consistent_order' test.
+    """
+    with connect(db_name) as db:
+        init_struct_ids = []
+        for i in range(10):
+            atoms = bulk('Cu') * (3, 3, 3)
+            cf_func = {'c0': np.random.rand(), 'c1_1': np.random.rand()}
+            dbId = db.write(atoms,
+                            converged=True,
+                            name=f"structure{i}",
+                            external_tables={'cf_func': cf_func})
+            init_struct_ids.append(dbId)
 
-    init_struct_ids = []
-    for i in range(10):
-        atoms = bulk('Cu') * (3, 3, 3)
-        cf_func = {'c0': np.random.rand(), 'c1_1': np.random.rand()}
-        dbId = db.write(atoms,
-                        converged=True,
-                        name=f"structure{i}",
-                        external_tables={'cf_func': cf_func})
-        init_struct_ids.append(dbId)
+    # We need to re-open the connection, to flush the db cache
+    with connect(db_name) as db:
+        # Add final structures in a random order
+        shuffle(init_struct_ids)
+        for init_id in init_struct_ids:
+            atoms = db.get(id=init_id).toatoms()
+            calc = SinglePointCalculator(atoms, energy=np.random.rand())
+            atoms.calc = calc
+            update_db(uid_initial=init_id, final_struct=atoms, db_name=db_name)
 
-    # Add final structures in a random order
-    shuffle(init_struct_ids)
-    for init_id in init_struct_ids:
-        atoms = db.get(id=init_id).toatoms()
-        calc = SinglePointCalculator(atoms, energy=np.random.rand())
-        atoms.calc = calc
-        update_db(uid_initial=init_id, final_struct=atoms, db_name=db_name)
+        cf_names = list(cf_func.keys())
+    return db_name, cf_names
 
-    cf_names = list(cf_func.keys())
 
-    tests = [{
-        'manager': CorrFuncEnergyDataManager(db_name, 'cf_func', cf_names),
-        'target_col': 'energy'
-    }, {
-        'manager': CorrFuncVolumeDataManager(db_name, 'cf_func', cf_names),
-        'target_col': 'volume'
-    }, {
-        'manager': CorrFuncEnergyDataManager(db_name, 'cf_func', None),
-        'target_col': 'energy'
-    }, {
-        'manager': CorrFuncVolumeDataManager(db_name, 'cf_func', None),
-        'target_col': 'volume'
-    }]
+@pytest.mark.parametrize('manager_func,target_col', [
+    (CorrFuncEnergyDataManager, 'energy'),
+    (CorrFuncVolumeDataManager, 'volume'),
+])
+@pytest.mark.parametrize('use_cf_names', [True, False])
+def test_consistent_order(manager_func, target_col, use_cf_names, shuffled_db):
+    db_name, cf_names = shuffled_db
+    # Turn on/off telling the manager what the cf_names is
+    manager_cf_names = cf_names if use_cf_names else None
 
-    for test in tests:
-        query = [('converged', '=', 1)]
-        manager = test['manager']
-        X, y = manager.get_data(query)
+    manager = manager_func(db_name, 'cf_func', manager_cf_names)
 
-        # Extract via ASE calls
-        X_ase = []
-        y_ase = []
+    query = [('converged', '=', 1)]
+    X, y = manager.get_data(query)
+
+    # Extract via ASE calls
+    X_ase = []
+    y_ase = []
+    with connect(db_name) as db:
         for row in db.select(query):
             x_row = [row['cf_func'][n] for n in cf_names]
             X_ase.append(x_row)
 
             fid = row.final_struct_id
             final_row = db.get(id=fid)
-            y_ase.append(final_row[test['target_col']] / final_row.natoms)
+            y_ase.append(final_row[target_col] / final_row.natoms)
 
-        assert np.allclose(X_ase, X)
-        assert np.allclose(y, y_ase)
+    assert np.allclose(X_ase, X)
+    assert np.allclose(y, y_ase)
 
 
 def test_final_volume_getter(db_name):
-
     with connect(db_name) as db:
         expected_volumes = []
         for i in range(10):
@@ -296,36 +286,35 @@ def test_cf_vol_dep_eci(db_name):
     assert cf_getter.groups() == expect_groups
 
 
-def test_is_matrix_representable():
+@pytest.mark.parametrize('test', [{
+    'id_cf_names': {
+        1: ['abc', 'def', 'ghi'],
+        2: ['abc', 'def', 'ghi']
+    },
+    'matrix_repr': True,
+    'min_common': set(['abc', 'def', 'ghi'])
+}, {
+    'id_cf_names': {
+        1: ['abc', 'def', 'ghi'],
+        2: ['abc', 'def', 'ghj']
+    },
+    'matrix_repr': False,
+    'min_common': set(['abc', 'def'])
+}, {
+    'id_cf_names': {
+        1: ['abc', 'def', 'ghi'],
+        2: ['abc', 'ghi']
+    },
+    'matrix_repr': False,
+    'min_common': set(['abc', 'ghi'])
+}])
+def test_is_matrix_representable(test):
     getter = CorrelationFunctionGetter
-    tests = [{
-        'id_cf_names': {
-            1: ['abc', 'def', 'ghi'],
-            2: ['abc', 'def', 'ghi']
-        },
-        'matrix_repr': True,
-        'min_common': set(['abc', 'def', 'ghi'])
-    }, {
-        'id_cf_names': {
-            1: ['abc', 'def', 'ghi'],
-            2: ['abc', 'def', 'ghj']
-        },
-        'matrix_repr': False,
-        'min_common': set(['abc', 'def'])
-    }, {
-        'id_cf_names': {
-            1: ['abc', 'def', 'ghi'],
-            2: ['abc', 'ghi']
-        },
-        'matrix_repr': False,
-        'min_common': set(['abc', 'ghi'])
-    }]
 
-    for test in tests:
-        assert getter._is_matrix_representable(test['id_cf_names']) == test['matrix_repr']
+    assert getter._is_matrix_representable(test['id_cf_names']) == test['matrix_repr']
 
-        min_set = getter._minimum_common_cf_set(test['id_cf_names'])
-        assert min_set == test['min_common']
+    min_set = getter._minimum_common_cf_set(test['id_cf_names'])
+    assert min_set == test['min_common']
 
 
 def test_cf_second_order(db_name):
