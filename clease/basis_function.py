@@ -1,18 +1,19 @@
 """Module for setting up pseudospins and basis functions."""
-import numpy as np
+from abc import ABC, abstractmethod
 import math
+from typing import List, Dict, Optional, Sequence
+import numpy as np
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
-from typing import List, Dict, Optional
 
 __all__ = ('BasisFunction', 'Polynomial', 'Trigonometric', 'BinaryLinear')
 
 
-class BasisFunction(object):
+class BasisFunction(ABC):
     """Base class for all Basis Functions."""
 
-    def __init__(self, unique_elements: List[str]) -> None:
+    def __init__(self, unique_elements: Sequence[str]) -> None:
         self.name = "generic"
-        self._unique_elements = sorted(unique_elements)
+        self.unique_elements = unique_elements
         if self.num_unique_elements < 2:
             raise ValueError("Systems must have more than 1 type of element.")
 
@@ -28,7 +29,7 @@ class BasisFunction(object):
 
     @unique_elements.setter
     def unique_elements(self, elements):
-        self._unique_elements = sorted(elements)
+        self._unique_elements = sorted(set(elements))
 
     @property
     def num_unique_elements(self) -> int:
@@ -42,15 +43,15 @@ class BasisFunction(object):
     def basis_functions(self) -> List[Dict[str, float]]:
         return self.get_basis_functions()
 
+    @abstractmethod
     def get_spin_dict(self):
         """Get spin dictionary."""
-        raise NotImplementedError("get_spin_dict has to be implemented in derived classes!")
 
+    @abstractmethod
     def get_basis_functions(self):
         """Get basis function."""
-        raise NotImplementedError(("get_basis_functions has to be implemented "
-                                   "in derived classes!"))
 
+    # pylint: disable=no-self-use
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Customize the full cluster names. Default is to do nothing."""
         return full_cluster_name
@@ -127,10 +128,8 @@ class Trigonometric(BasisFunction):
                     bf[key] = -np.sin(var) + 0.
 
             # normalize the basis function
-            sum = 0
-            for key, value in self.spin_dict.items():
-                sum += bf[key] * bf[key]
-            normalization_factor = np.sqrt(self.num_unique_elements / sum)
+            sum_ = sum(bf[key] * bf[key] for key in self.spin_dict)
+            normalization_factor = np.sqrt(self.num_unique_elements / sum_)
 
             for key, value in bf.items():
                 bf[key] = value * normalization_factor

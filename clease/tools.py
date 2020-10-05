@@ -76,13 +76,6 @@ def wrap_and_sort_by_position(atoms):
     return atoms
 
 
-def shift(array):
-    ref = array[-1]
-    array[1:] = array[:-1]
-    array[0] = ref
-    return array
-
-
 def ndarray2list(data):
     """
     Convert nested lists of a combination of lists and numpy arrays

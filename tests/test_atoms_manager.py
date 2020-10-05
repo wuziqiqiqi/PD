@@ -1,7 +1,5 @@
 import pytest
 from ase.build import bulk
-from ase.spacegroup import crystal
-import numpy as np
 from clease.atoms_manager import AtomsManager
 
 
@@ -116,3 +114,22 @@ def test_raise_if_not_match():
     manager = AtomsManager(atoms)
     with pytest.raises(ValueError):
         manager.tag_indices_of_corresponding_atom(prim_cell)
+
+
+@pytest.mark.parametrize(
+    'atoms1,atoms2', [(bulk('Au') * (3, 3, 3), bulk('Au') * (4, 4, 4)),
+                      (bulk('Au') * (3, 3, 3), bulk('NaCl', crystalstructure='rocksalt', a=4.0)),
+                      (bulk('NaCl', crystalstructure='rocksalt',
+                            a=4.0), bulk('NaCl', crystalstructure='rocksalt', a=4.0) * (2, 2, 2))])
+def test_equality(atoms1, atoms2):
+    m1 = AtomsManager(atoms1)
+    m2 = AtomsManager(atoms2)
+
+    assert m1 != m2
+    assert m1 != atoms1
+    assert m1 == AtomsManager(atoms1)
+    assert m2 == AtomsManager(atoms2)
+    assert m2 != 'some_string'
+
+    m2.atoms = atoms1
+    assert m1 == m2

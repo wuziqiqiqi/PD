@@ -1,39 +1,13 @@
 from copy import deepcopy
 import pytest
 
-import numpy as np
-
-from clease.corr_func import CorrFunction
-from clease.settings import CEBulk, Concentration
 from clease.calculator import Clease
 from clease.calculator import CleaseVolDep
 from clease.tools import wrap_and_sort_by_position, SystemChange
 
 
-def get_random_eci(setting):
-    """
-    Return a set of random ECIs
-    """
-    cfs = CorrFunction(setting).get_cf(setting.atoms)
-    ecis = {k: np.random.rand() for k in cfs.keys()}
-    return ecis
-
-
-def get_LiVX(db_name):
-    basis_elements = [['Li', 'X', 'V'], ['X', 'Li', 'V']]
-    concentration = Concentration(basis_elements=basis_elements)
-    setting = CEBulk(crystalstructure='rocksalt',
-                     a=4.05,
-                     size=[3, 3, 3],
-                     concentration=concentration,
-                     db_name=db_name,
-                     max_cluster_size=3,
-                     max_cluster_dia=[4.0, 4.0])
-    return setting
-
-
-def test_consistency(db_name):
-    setting = get_LiVX(db_name)
+def test_consistency(get_random_eci, get_LiVX):
+    setting = get_LiVX()
 
     atoms1 = setting.atoms.copy()
     atoms2 = atoms1.copy()
@@ -86,8 +60,8 @@ def test_consistency(db_name):
             assert E1 == pytest.approx(E2)
 
 
-def test_vol_pressure_bulk_mod(db_name):
-    settings = get_LiVX(db_name)
+def test_vol_pressure_bulk_mod(get_random_eci, get_LiVX):
+    settings = get_LiVX()
     atoms = settings.atoms.copy()
     eci_keys = list(get_random_eci(settings).keys())[:2]
     eci = {
@@ -123,8 +97,8 @@ def test_vol_pressure_bulk_mod(db_name):
     assert dBdP == pytest.approx(-1.0)
 
 
-def test_update_eci(db_name):
-    settings = get_LiVX(db_name)
+def test_update_eci(get_random_eci, get_LiVX):
+    settings = get_LiVX()
     vol_coeff = get_random_eci(settings)
     eci_vol = {k + '_V1': v for k, v in vol_coeff.items()}
 

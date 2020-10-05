@@ -1,15 +1,16 @@
 import pytest
-from clease.basis_function import (BasisFunction, Polynomial, Trigonometric, BinaryLinear)
+from clease.basis_function import (Polynomial, Trigonometric, BinaryLinear)
+
+all_bfs = (Polynomial, Trigonometric, BinaryLinear)
+
+
+@pytest.fixture(params=all_bfs)
+def bf_fun(request):
+    """Fixture to run a test on all the avaialble basis functions"""
+    return request.param
 
 
 @pytest.mark.parametrize('test', [
-    {
-        'bf': BasisFunction(['Au', 'Cu', 'X']),
-        'expect': {
-            'name': 'generic',
-            'unique_elements': ['Au', 'Cu', 'X']
-        }
-    },
     {
         'bf': Polynomial(['Au', 'Cu', 'X']),
         'expect': {
@@ -64,3 +65,55 @@ def test_customize_full_cluster_name(test):
     for i in range(len(test['ans'])):
         name = bf.customize_full_cluster_name(test['full_name'][i])
         assert name == test['ans'][i]
+
+
+def test_num_unique_elements(bf_fun):
+    with pytest.raises(ValueError):
+        # Two of same symbols
+        bf_fun(['Au', 'Au'])
+    with pytest.raises(ValueError):
+        # Just 1 symbols
+        bf_fun(['Au'])
+
+    assert bf_fun(['Au', 'Ag']).num_unique_elements == 2
+    assert bf_fun(['Au', 'Au', 'Ag']).num_unique_elements == 2
+
+    # Test setting directly
+    bf = bf_fun(['Au', 'Ag'])
+    assert bf.num_unique_elements == 2
+    bf.unique_elements = ['Au', 'Au', 'Ag']
+    assert bf.num_unique_elements == 2
+    bf.unique_elements = ['Au', 'Ag', 'Cu']
+    assert bf.num_unique_elements == 3
+
+
+@pytest.mark.parametrize('bf_fun2', all_bfs)
+def test_equality(bf_fun, bf_fun2):
+    ele = ['Au', 'Ag']
+    bf1 = bf_fun(ele)
+    bf2 = bf_fun2(ele)
+
+    # We have same atoms
+    if isinstance(bf1, type(bf2)):
+        # Same type of BF
+        assert bf1 == bf2
+    else:
+        # Different type of BF
+        assert bf1 != bf2
+
+    # Different atoms, always unequal
+    bf2.unique_elements = ['Au', 'Zn']
+    assert bf1 != bf2
+
+    # Test some things it should never be equal to
+    assert bf1 != 'some_string'
+    assert bf1 != []
+    assert bf1 != None  # pylint: disable=singleton-comparison
+    assert bf1 not in [True, False]
+
+
+@pytest.mark.parametrize('must_implement', ['get_spin_dict', 'get_basis_functions'])
+def test_get_must_implements(bf_fun, must_implement):
+    """Check that subclasses implemented the necessary items."""
+    bf = bf_fun(['Au', 'Ag', 'Cu', 'C'])
+    getattr(bf, must_implement)()

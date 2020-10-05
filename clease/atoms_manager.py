@@ -1,6 +1,6 @@
+from typing import List, Sequence
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
-from typing import List, Sequence
 from ase import Atoms
 from ase.geometry import wrap_positions
 
@@ -21,7 +21,7 @@ class AtomsManager:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, AtomsManager):
-            return NotImplemented
+            return False
 
         return self.atoms == other.atoms
 
@@ -31,11 +31,8 @@ class AtomsManager:
         This method assumes that all atoms are tagged and the tags are in a
         continuous sequence starting from 0.
         """
-        tags = set()
-        for atom in self.atoms:
-            tags.add(atom.tag)
 
-        tags = sorted(list(tags))
+        tags = sorted(set(atom.tag for atom in self.atoms))
         ind_by_tag = [[] for _ in tags]
 
         for atom in self.atoms:
@@ -78,7 +75,7 @@ class AtomsManager:
 
         :param ignore: List of symbols to ignore in finding unique elements.
         """
-        all_unique = set([a.symbol for a in self.atoms])
+        all_unique = set(self.atoms.symbols)
         return list(all_unique - set(ignore))
 
     def single_element_sites(self, allowed_elements: List[List[str]]) -> List[int]:

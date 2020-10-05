@@ -68,14 +68,39 @@ def buffer_file(make_tempfile):
     yield make_tempfile('temp_buffer.txt')
 
 
+@pytest.fixture
+def make_conc():
+
+    def _make_conc(basis_elements, **kwargs):
+        return Concentration(basis_elements=basis_elements, **kwargs)
+
+    return _make_conc
+
+
+@pytest.fixture(scope='module')
+def make_module_tempfile(tmpdir_factory):
+    """Same fixture as make_tempfile, but scoped to the module level"""
+    created_files = []  # Keep track of files which are created
+
+    def _make_module_tempfile(filename, folder='evaluate'):
+        name = tmpdir_factory.mktemp(folder).join(filename)
+        assert not name.exists()
+        created_files.append(name)
+        return str(name)
+
+    yield _make_module_tempfile
+    for file in created_files:
+        remove_file(file)
+        assert not file.exists()
+
+
 # This takes a few seconds to create every time, so we scope it to the module level
 # No modifications should be made to this DB though, as changes will propagate throughout the test
+
+
 @pytest.fixture(scope='module')
-def bc_setting(tmpdir_factory):
-    name = tmpdir_factory.mktemp('evaluate').join('temp_db.db')
-    assert not name.exists()
-    db_name = str(name)
-    print(db_name)
+def bc_setting(make_module_tempfile):
+    db_name = make_module_tempfile('temp_db.db')
     basis_elements = [['Au', 'Cu']]
     conc = Concentration(basis_elements=basis_elements)
     settings = CEBulk(concentration=conc,
@@ -94,4 +119,3 @@ def bc_setting(tmpdir_factory):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
     yield settings
-    remove_file(name)

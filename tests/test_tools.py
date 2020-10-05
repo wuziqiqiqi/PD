@@ -9,6 +9,7 @@ from clease.tools import (min_distance_from_facet, factorize, all_integer_transf
                           add_file_extension, equivalent_deco, sort_cf_names, split_dataset,
                           common_cf_names, constraint_is_redundant, remove_redundant_constraints,
                           remove_redundant_equations)
+from clease import tools
 from clease.basis_function import Polynomial
 
 
@@ -58,6 +59,22 @@ def test_factorize():
 def test_all_int_matrices():
     arr = all_integer_transform_matrices(10)
     assert sum(1 for _ in arr) == 582
+
+
+@pytest.mark.parametrize(
+    'array,expect',
+    [
+        # Nested list
+        ([[1, 2, 3], [4, 5, 6]], [[1, 2, 3], [4, 5, 6]]),
+        # Nested ndarray
+        (np.array([[1, 2, 3], [4, 5, 6]]), [[1, 2, 3], [4, 5, 6]]),
+        # Flat ndarray
+        (np.array([1, 2, 3]), [1, 2, 3]),
+        # Partial list/ndarray, nested
+        ([[1, 2, 3], np.array([4, 5, 6])], [[1, 2, 3], [4, 5, 6]]),
+    ])
+def test_nested_array2list(array, expect):
+    assert tools.nested_array2list(array) == expect
 
 
 def test_species_chempot2eci():
