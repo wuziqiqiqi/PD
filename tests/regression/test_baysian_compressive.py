@@ -65,6 +65,7 @@ def test_fit_more_coeff(make_bayes):
     # Adjust some parameters
     bayes = make_bayes(noise=0.1, maxiter=1000)
 
+    np.random.seed(42)
     X = np.random.rand(30, 400)
     coeff = [6.0, -2.0, 5.0, 50.0, -30.0]
     indx = [0, 23, 19, 18, 11]

@@ -13,7 +13,8 @@ from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate
-from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement, FixedIndices
+from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
+from clease.montecarlo import RandomSwap
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.tools import SystemChange
@@ -296,9 +297,10 @@ def test_constrain_swap(db_name):
     orig_symbs = [atom.symbol for atom in atoms]
 
     cnst = ConstrainSwapByBasis(atoms, i_by_basis)
+    generator = RandomSwap(atoms)
+    generator.add_constraint(cnst)
 
-    mc = Montecarlo(atoms, 600)
-    mc.add_constraint(cnst)
+    mc = Montecarlo(atoms, 600, generator=generator)
     mc.run(steps=1000)
 
     # Confirm that swaps have been made
@@ -336,9 +338,10 @@ def test_fixed_element(db_name):
 
     # Let's say that all Si atoms should be fixed
     fixed_element = FixedElement('Si')
+    generator = RandomSwap(atoms)
+    generator.add_constraint(fixed_element)
 
-    mc = Montecarlo(atoms, 10000)
-    mc.add_constraint(fixed_element)
+    mc = Montecarlo(atoms, 10000, generator=generator)
 
     si_indices = [atom.index for atom in atoms if atom.symbol == 'Si']
     mc.run(steps=1000)
@@ -372,11 +375,10 @@ def test_fixed_indices(db_name):
 
     # Fix the first n atoms
     n = 80
-    indices = np.arange(len(atoms))[:n]
-    fixed = FixedIndices(indices)
+    indices = list(range(n, len(atoms)))
+    generator = RandomSwap(atoms, indices)
 
-    mc = Montecarlo(atoms, 10000)
-    mc.add_constraint(fixed)
+    mc = Montecarlo(atoms, 10000, generator=generator)
 
     syms_before = atoms.symbols[:n]
     remainder_before = list(atoms.symbols[n:])
@@ -390,6 +392,7 @@ def test_fixed_indices(db_name):
 
 
 @pytest.mark.slow
+# pylint: disable=redefined-outer-name
 def test_gs_mgsi(db_name, almgsix_eci):
     conc = Concentration(basis_elements=[['Al', 'Mg', 'Si', 'X']])
     settings = CEBulk(conc,
@@ -397,15 +400,16 @@ def test_gs_mgsi(db_name, almgsix_eci):
                       a=4.05,
                       size=[1, 1, 1],
                       max_cluster_size=3,
-                      max_cluster_dia=[5.0, 5.0])
+                      max_cluster_dia=[5.0, 5.0],
+                      db_name=db_name)
     settings.basis_func_type = "binary_linear"
 
     atoms = bulk('Al', a=4.05, cubic=True) * (2, 2, 2)
     atoms = attach_calculator(settings, atoms, almgsix_eci)
     expect = atoms.copy()
     layers, _ = get_layers(expect, (1, 0, 0))
-    for i in range(len(layers)):
-        if layers[i] % 2 == 0:
+    for i, layer in enumerate(layers):
+        if layer % 2 == 0:
             expect[i].symbol = 'Si'
         else:
             expect[i].symbol = 'Mg'

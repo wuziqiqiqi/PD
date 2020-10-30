@@ -1,10 +1,10 @@
-from typing import Sequence, Tuple, Dict
+from typing import Sequence, Dict
 import numpy as np
 from ase import Atoms
 from ase.units import kB
-from clease.tools import SystemChange
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import SGCObserver
+from clease.montecarlo.trial_move_generator import TrialMoveGenerator, RandomFlip
 
 
 class InvalidChemicalPotentialError(Exception):
@@ -17,27 +17,26 @@ class SGCMonteCarlo(Montecarlo):
     Class for running Monte Carlo in the Semi-Grand Canonical Ensebmle
     (i.e., fixed number of atoms, but varying composition)
 
-    See the docstring of `clease.montecarlo.Montecarlo`
+    See the docstring of :class:`clease.montecarlo.Montecarlo`
 
-    Parameters:
-
-    atoms: Atoms
-        Atoms object (with CLEASE calculator attached!)
-
-    temp: float
-        Temperature in kelvin
-
-    symbols: list
-        Possible symbols to be used in swaps
+    :param atoms: Atoms object (with CLEASE calculator attached!)
+    :param temp: Temperature in kelvin
+    :param symbols: Possible symbols to be used in swaps
+    :param generator: Generator that produces trial moves
     """
 
-    def __init__(self, atoms: Atoms, temp: float, symbols: Tuple[str] = ()):
-        Montecarlo.__init__(self, atoms, temp)
-
+    def __init__(self,
+                 atoms: Atoms,
+                 temp: float,
+                 symbols: Sequence[str] = (),
+                 generator: TrialMoveGenerator = None):
+        if generator is None:
+            if len(symbols) <= 1:
+                raise ValueError("At least 2 symbols have to be specified")
+            generator = RandomFlip(symbols, atoms)
+        super().__init__(atoms, temp, generator=generator)
         self.symbols = symbols
 
-        if len(self.symbols) <= 1:
-            raise ValueError("At least 2 symbols have to be specified")
         self.averager = SGCObserver(self.atoms.calc)
 
         self.chem_pots = []
@@ -57,32 +56,9 @@ class SGCMonteCarlo(Montecarlo):
         if not has_attached_obs:
             self.attach(self.averager)
 
-    def _get_trial_move(self):
-        """Generate a trial move by flipping the symbol of one atom."""
-        self.current_singlets = self.atoms.calc.get_singlets()
-        indx = np.random.randint(low=0, high=len(self.atoms))
-        old_symb = self.atoms[indx].symbol
-        new_symb = old_symb
-        while new_symb == old_symb:
-            new_symb = self.symbols[np.random.randint(low=0, high=len(self.symbols))]
-        system_changes = [SystemChange(index=indx, old_symb=old_symb, new_symb=new_symb)]
-        return system_changes
-
     def _check_symbols(self):
         """
         Override because there are no restriction on the symbols here
-        """
-
-    def _update_tracker(self, system_changes: Sequence[SystemChange]):
-        """
-        Override the update of the atom tracker.
-
-        The atom tracker is irrelevant in the semi grand canonical ensemble
-
-        Parameter:
-
-        system_changes: list
-            Accepted system changes
         """
 
     def reset(self):

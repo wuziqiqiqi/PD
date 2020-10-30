@@ -475,7 +475,7 @@ class GSStructure(StructureGenerator):
                 logger.info("Current temperature: %.3f K", T)
                 mc = Montecarlo(self.atoms, T)
                 mc.attach(low_en_obs)
-                mc.add_constraint(cnst)
+                mc.generator.add_constraint(cnst)
                 mc.run(steps=self.num_steps_per_temp)
             self.generated_structure = low_en_obs.emin_atoms
         except TooFewElementsError:
@@ -507,7 +507,7 @@ class MetropolisTrajectory(object):
         self.atoms.calc = calc
 
         mc = Montecarlo(self.atoms, 10000000)
-        mc.add_constraint(cnst)
+        mc.generator.add_constraint(cnst)
         fname = 'metropolis_traj'
         obs = Snapshot(fname=fname, atoms=self.atoms)
         mc.attach(obs, interval=1)

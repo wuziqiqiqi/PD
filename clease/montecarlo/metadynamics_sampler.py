@@ -1,10 +1,10 @@
 import time
 import logging
-from clease.montecarlo.constraints import CollectiveVariableConstraint
 import json
+from copy import deepcopy
 import numpy as np
 from ase.units import kB
-from copy import deepcopy
+from clease.montecarlo.constraints import CollectiveVariableConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,8 @@ class PeakNotAcceptedError(Exception):
     pass
 
 
-class MetaDynamicsSampler(object):
+# pylint: disable=too-many-instance-attributes
+class MetaDynamicsSampler:
     """
     Class for performing meta dynamics sampler
 
@@ -41,14 +42,14 @@ class MetaDynamicsSampler(object):
         Filename used to store the simulation state when finished
     """
 
-    def __init__(self, mc=None, bias=None, flat_limit=0.8, mod_factor=0.1, fname='metadyn.json'):
+    def __init__(self, mc, bias, flat_limit=0.8, mod_factor=0.1, fname='metadyn.json'):
         self.mc = mc
         self.bias = bias
         self.mc.add_bias(self.bias)
         cnst = CollectiveVariableConstraint(xmin=self.bias.xmin,
                                             xmax=self.bias.xmax,
                                             getter=self.bias.getter)
-        self.mc.add_constraint(cnst)
+        self.mc.generator.add_constraint(cnst)
         self.mc.update_current_energy()
         self.mc.attach(self.bias.getter, interval=1)
         self.visit_hist = deepcopy(bias)
@@ -63,18 +64,22 @@ class MetaDynamicsSampler(object):
 
     def _getter_accepts_none(self):
         """Return True if the getter accepts None."""
+        # TODO: Why is try-catch needed? Is it sufficient with ValueError?
         try:
             x = self.bias.getter(None)
             x = float(x)
+        # pylint: disable=broad-except
         except Exception:
             return False
         return True
 
     def _getter_accepts_peak(self):
         """Return True if the getter supports the peak keyword."""
+        # TODO: Why is try-catch needed? Is it sufficient with ValueError?
         try:
             x = self.bias.getter([], peak=True)
             x = float(x)
+        # pylint: disable=broad-except
         except Exception:
             return False
         return True
@@ -167,6 +172,7 @@ class MetaDynamicsSampler(object):
                 self.save()
                 now = time.time()
 
+            # pylint: disable=protected-access
             self.mc._mc_step()
             self.update()
             if self.visit_is_flat():

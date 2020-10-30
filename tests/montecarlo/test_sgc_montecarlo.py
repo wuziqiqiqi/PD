@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import numpy as np
 
@@ -10,6 +8,7 @@ from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.montecarlo.constraints import ConstrainElementInserts
 from clease.montecarlo.constraints import PairConstraint
+from clease.montecarlo import RandomFlip
 from clease.tools import species_chempot2eci
 
 
@@ -67,12 +66,13 @@ def test_constrain_inserts(db_name):
     eci['c2_d0000_0_00'] = -0.2
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
-    mc = SGCMonteCarlo(atoms, 100000, symbols=['Si', 'X', 'O', 'C'])
-
+    generator = RandomFlip(['Si', 'X', 'O', 'C'], atoms)
     elem_basis = [['Si', 'X'], ['O', 'C']]
     cnst = ConstrainElementInserts(atoms, settings.index_by_basis, elem_basis)
+    generator.add_constraint(cnst)
+    mc = SGCMonteCarlo(atoms, 100000, generator=generator)
+
     chem_pot = {'c1_0': 0.0, 'c1_1': -0.1, 'c1_2': 0.1}
-    mc.add_constraint(cnst)
     orig_symbols = [a.symbol for a in atoms]
     mc.run(steps=1000, chem_pot=chem_pot)
 
@@ -102,14 +102,16 @@ def test_pair_constraint(db_name):
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
-    mc = SGCMonteCarlo(atoms, 100000000, symbols=['Si', 'X'])
 
+    generator = RandomFlip(['Si', 'X'], atoms)
     cluster = settings.cluster_list.get_by_name("c2_d0000_0")[0]
     cnst = PairConstraint(['X', 'X'], cluster, settings.trans_matrix, atoms)
-    mc.add_constraint(cnst)
+    generator.add_constraint(cnst)
+
+    mc = SGCMonteCarlo(atoms, 100000000, generator=generator)
 
     nn_dist = a / np.sqrt(2.0)
-    for num in range(20):
+    for _ in range(20):
         mc.run(10, chem_pot={'c1_0': 0.0})
 
         X_idx = [atom.index for atom in atoms if atom.symbol == 'X']

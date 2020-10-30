@@ -103,7 +103,7 @@ very similar fashion as the observers. To fix one element
 
   from clease.montecarlo.constraints import FixedElement
   cnst = FixedElement('Cu')
-  mc.add_constraint(cnst)
+  mc.generator.add_constraint(cnst)
 
 Note, that the usage of a constraint in this system is a bit weird as it
 has only two elements. Hence, fixing one prevents any move from happening.
@@ -201,7 +201,7 @@ To use this constrain in our calculation
 .. code-block:: python
 
   cnst = FixedIndices()
-  mc.add_constraint(cnst)
+  mc.generator.add_constraint(cnst)
   mc.run(steps=1000)
 
 Sampling the SGC Ensemble

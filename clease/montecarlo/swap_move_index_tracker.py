@@ -1,3 +1,4 @@
+from typing import Sequence, List
 import numpy as np
 from numpy.random import choice
 
@@ -5,14 +6,17 @@ from numpy.random import choice
 class SwapMoveIndexTracker:
 
     def __init__(self):
-        self.symbols = []
         self.tracker = {}
         self.index_loc = None
         self._last_move = []
 
-    def _symbols_from_atoms(self, atoms):
-        symbs = [atom.symbol for atom in atoms]
-        return list(set(symbs))
+    @staticmethod
+    def _unique_symbols_from_atoms(atoms) -> List[str]:
+        return list(set(atoms.symbols))
+
+    @property
+    def symbols(self) -> List[str]:
+        return list(self.tracker.keys())
 
     def __repr__(self):
         str_repr = f"SwapMoveIndexTracker at {hex(id(self))}\n"
@@ -22,16 +26,30 @@ class SwapMoveIndexTracker:
 
     def init_tracker(self, atoms):
         """Initialize the tracker with the numbers."""
-        self.symbols = self._symbols_from_atoms(atoms)
+        symbols = self._unique_symbols_from_atoms(atoms)
 
         # Track indices of all symbols
-        self.tracker = {symb: [] for symb in self.symbols}
+        self.tracker = {symb: [] for symb in symbols}
 
         # Track the location in self.tracker of each index
         self.index_loc = np.zeros(len(atoms), dtype=int)
         for atom in atoms:
             self.tracker[atom.symbol].append(atom.index)
             self.index_loc[atom.index] = len(self.tracker[atom.symbol]) - 1
+
+    def filter_indices(self, include: Sequence[int]):
+        include_set = set(include)
+        for s, idx in self.tracker.items():
+            self.tracker[s] = list(set(idx).intersection(include_set))
+            for i, num in enumerate(self.tracker[s]):
+                self.index_loc[num] = i
+
+        # Remove empty items
+        self.tracker = {k: v for k, v in self.tracker.items() if v}
+
+        if len(self.tracker) < 2:
+            raise ValueError("After filtering there are less than two symbol type left. "
+                             "Must have at least two.")
 
     def move_already_updated(self, system_changes):
         """Return True if system_changes have already been taken into account.
