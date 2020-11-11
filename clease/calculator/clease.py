@@ -263,8 +263,10 @@ class Clease(Calculator):
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
             system_changes = [
-                SystemChange(index=idx, old_symb=symbols[idx], new_symb=self.atoms[idx].symbol)
-                for idx in swapped_indices
+                SystemChange(index=idx,
+                             old_symb=symbols[idx],
+                             new_symb=self.atoms[idx].symbol,
+                             name='internal_symbol_change') for idx in swapped_indices
             ]
         for change in system_changes:
             self.updater.update_cf(change)
@@ -328,13 +330,15 @@ class Clease(Calculator):
                 # Revert changes
                 inverted_changes = self._get_inverted_changes(system_changes)
                 self.restore()  # Also restores results
-                for idx, _, symb in inverted_changes:
+                for idx, _, symb, _ in inverted_changes:
                     self.atoms.symbols[idx] = symb
 
     @staticmethod
     def _get_inverted_changes(system_changes: Sequence[SystemChange]):
         """Invert system changes by doing old_symbs -> new_symbs"""
         return [
-            SystemChange(index=change.index, old_symb=change.new_symb, new_symb=change.old_symb)
-            for change in system_changes
+            SystemChange(index=change.index,
+                         old_symb=change.new_symb,
+                         new_symb=change.old_symb,
+                         name=change.name) for change in system_changes
         ]

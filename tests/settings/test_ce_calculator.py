@@ -346,8 +346,8 @@ def test_with_system_changes_context(db_name):
 
     # Insert 2 Cu atoms
     system_changes = [
-        SystemChange(index=0, old_symb='Au', new_symb='Cu'),
-        SystemChange(index=1, old_symb='Au', new_symb='Cu')
+        SystemChange(index=0, old_symb='Au', new_symb='Cu', name=''),
+        SystemChange(index=1, old_symb='Au', new_symb='Cu', name='')
     ]
     assert atoms.calc.energy is None
     with atoms.calc.with_system_changes(system_changes) as keeper:

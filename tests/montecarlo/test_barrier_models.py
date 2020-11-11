@@ -35,7 +35,7 @@ def test_loc_environ_barrier(db_name):
     # Perform a swap
     other = 11
     s = atoms[other].symbol
-    barrier(atoms, [SystemChange(10, 'X', s), SystemChange(other, s, 'X')])
+    barrier(atoms, [SystemChange(10, 'X', s, ''), SystemChange(other, s, 'X', '')])
 
     # Make sure that the atoms object remains unchanges by the barrier function
     assert np.all(init_numbers == atoms.numbers)

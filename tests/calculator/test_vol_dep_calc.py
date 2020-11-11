@@ -47,7 +47,7 @@ def test_consistency(get_random_eci, get_LiVX):
         atoms1.get_potential_energy()
         atoms2.get_potential_energy()
         for s in swaps:
-            change = [SystemChange(s['idx'], atoms1[s['idx']].symbol, s['symbol'])]
+            change = [SystemChange(s['idx'], atoms1[s['idx']].symbol, s['symbol'], '')]
             atoms1[s['idx']].symbol = s['symbol']
             atoms2[s['idx']].symbol = s['symbol']
 

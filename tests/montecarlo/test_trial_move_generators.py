@@ -1,6 +1,6 @@
 from ase.build import bulk
 import numpy as np
-from clease.montecarlo import RandomFlip, RandomSwap
+from clease.montecarlo import RandomFlip, RandomSwap, MixedSwapFlip
 
 
 def test_random_flip():
@@ -53,3 +53,47 @@ def test_random_swap():
             assert moves[0].old_symb == moves[1].new_symb
             assert moves[0].new_symb == moves[1].old_symb
             assert moves[0].index != moves[1].index
+
+
+def test_mixed_ensemble():
+    np.random.seed(42)
+    atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0) * (4, 4, 4)
+
+    # Cl sublattice should have fixed conc, Na sublattice should have
+    # fixed chemical potential
+    flip_idx = [atom.index for atom in atoms if atom.symbol == 'Na']
+    swap_idx = [atom.index for atom in atoms if atom.symbol == 'Cl']
+
+    # Insert some oxygen on the Cl sublattice
+    atoms.symbols[swap_idx[:6]] = 'O'
+
+    # Insert some vacancies on the Na sublattice
+    atoms.symbols[flip_idx[:6]] = 'X'
+
+    generator = MixedSwapFlip(atoms, swap_idx, flip_idx, ['Na', 'X'])
+
+    num_moves = 100
+    for _ in range(num_moves):
+        move = generator.get_trial_move()
+
+        # If the length of move is 2: Cl sublattice
+        if len(move) == 2:
+            idx1, old1, new1, name1 = move[0]
+            idx2, old2, new2, name2 = move[1]
+            assert idx1 != idx2
+            assert idx1 in swap_idx
+            assert idx2 in swap_idx
+            assert old1 == new2
+            assert old2 == new1
+            assert old1 in ['Cl', 'O']
+            assert old2 in ['Cl', 'O']
+            assert name1 == name2
+            assert generator.swapper.name_matches(move[0])
+        elif len(move) == 1:
+            assert move[0].index in flip_idx
+            assert move[0].old_symb != move[0].new_symb
+            assert move[0].old_symb in ['Na', 'X']
+            assert move[0].new_symb in ['Na', 'X']
+            assert generator.flipper.name_matches(move[0])
+        else:
+            raise RuntimeError("Generator produced move that is not swap and not a flip")

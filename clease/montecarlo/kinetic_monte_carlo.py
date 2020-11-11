@@ -107,8 +107,8 @@ class KineticMonteCarlo:
     def _get_rate_from_swap(self, swap_idx: int, vac_idx: int) -> float:
         symb = self.atoms[swap_idx].symbol
         system_change = [
-            SystemChange(index=vac_idx, old_symb='X', new_symb=symb),
-            SystemChange(index=swap_idx, old_symb=symb, new_symb='X')
+            SystemChange(index=vac_idx, old_symb='X', new_symb=symb, name='kmc_swap'),
+            SystemChange(index=swap_idx, old_symb=symb, new_symb='X', name='kmc_swap')
         ]
         Ea = self.barrier(self.atoms, system_change)
         rate = self.attempt_freq * np.exp(-Ea / self.kT)
@@ -139,8 +139,8 @@ class KineticMonteCarlo:
         # Apply step
         symb = self.atoms[choice].symbol
         system_change = [
-            SystemChange(index=vac_idx, old_symb='X', new_symb=symb),
-            SystemChange(index=choice, old_symb=symb, new_symb='X')
+            SystemChange(index=vac_idx, old_symb='X', new_symb=symb, name='kmc_swap'),
+            SystemChange(index=choice, old_symb=symb, new_symb='X', name='kmc_swap')
         ]
 
         # Trigger update

@@ -276,8 +276,10 @@ class Montecarlo:
 
         # Move rejected, no changes are made
         system_changes = [
-            SystemChange(index=change.index, old_symb=change.old_symb, new_symb=change.old_symb)
-            for change in system_changes
+            SystemChange(index=change.index,
+                         old_symb=change.old_symb,
+                         new_symb=change.old_symb,
+                         name=change.name) for change in system_changes
         ]
         logger.debug('Reversed system changes: %s', system_changes)
         return system_changes

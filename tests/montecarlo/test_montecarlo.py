@@ -14,7 +14,7 @@ from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
 from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate
 from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
-from clease.montecarlo import RandomSwap
+from clease.montecarlo import RandomSwap, MixedSwapFlip
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.tools import SystemChange
@@ -453,13 +453,13 @@ def test_acceptance_rate(db_name):
 
     num_acc = 3
     for _ in range(num_acc):
-        acc_rate([SystemChange(0, 'Al', 'Mg')])
+        acc_rate([SystemChange(0, 'Al', 'Mg', '')])
 
     assert acc_rate.rate == pytest.approx(1.0)
 
     num_reject = 3
     for _ in range(num_reject):
-        acc_rate([SystemChange(0, 'Al', 'Al')])
+        acc_rate([SystemChange(0, 'Al', 'Al', '')])
     assert acc_rate.rate == pytest.approx(num_acc / (num_acc + num_reject))
 
     # Try to use as observer in MC
@@ -477,3 +477,18 @@ def test_acceptance_rate(db_name):
     mc.run(steps=10)
     assert acc_rate.num_accept > 0
     assert acc_rate.num_calls > 0
+
+
+def test_mc_mixed_ensemble(db_name):
+    atoms = get_rocksalt_mc_system(db_name)
+    fixed_conc = [atom.index for atom in atoms if atom.symbol == 'Si']
+    fixed_chem_pot = [atom.index for atom in atoms if atom.symbol == 'O']
+    atoms.symbols[fixed_conc[:20]] = 'X'
+
+    generator = MixedSwapFlip(atoms, fixed_conc, fixed_chem_pot, ['O', 'C'])
+
+    mc = Montecarlo(atoms, 10000, generator=generator)
+    mc.run(2000)
+
+    assert all(s in ['Si', 'X'] for s in atoms.symbols[fixed_conc])
+    assert all(s in ['O', 'C'] for s in atoms.symbols[fixed_chem_pot])
