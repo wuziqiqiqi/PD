@@ -24,7 +24,7 @@ from . import tools
 from . import template_atoms
 from . import concentration
 
-__version__ = '0.10.0'
+__version__ = '0.10.1'
 logger = logging.getLogger(__name__)
 
 
