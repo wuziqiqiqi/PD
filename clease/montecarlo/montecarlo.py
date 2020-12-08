@@ -19,18 +19,6 @@ from clease.montecarlo.trial_move_generator import TrialMoveGenerator, RandomSwa
 logger = logging.getLogger(__name__)
 
 
-class DidNotReachEquillibriumError(Exception):
-    pass
-
-
-class TooFewElementsError(Exception):
-    pass
-
-
-class CanNotFindLegalMoveError(Exception):
-    pass
-
-
 # pylint: disable=too-many-instance-attributes
 class Montecarlo:
     """Class for running Monte Carlo at a fixed composition (canonical).
@@ -79,19 +67,6 @@ class Montecarlo:
         """Enforce a new energy evaluation."""
         self.current_energy = self.atoms.get_potential_energy()
 
-    def _check_symbols(self):
-        """Check that there is at least two different symbols."""
-        count = self.count_atoms()
-        # Verify that there is at two elements with more that two symbols
-        if len(count) < 2:
-            raise TooFewElementsError("There is only one element in the given atoms object!")
-        n_elems_more_than_2 = 0
-        for _, value in count.items():
-            if value >= 2:
-                n_elems_more_than_2 += 1
-        if n_elems_more_than_2 < 2:
-            raise TooFewElementsError("There is only one element that has more than one atom")
-
     def reset(self):
         """Reset all member variables to their original values."""
         logger.debug('Resetting.')
@@ -134,7 +109,6 @@ class Montecarlo:
         self.observers.append((interval, obs))
 
     def _initialize_run(self):
-        self._check_symbols()
         self.generator.initialize(self.atoms)
 
         self.update_current_energy()

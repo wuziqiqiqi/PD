@@ -1,25 +1,28 @@
 """Module for generating new structures for training."""
 import os
-import numpy as np
 from copy import deepcopy
 from functools import reduce
 from typing import List, Dict, Optional, Union
 import logging
+from itertools import product
 
+import numpy as np
 from numpy.random import shuffle
 
 from ase import Atoms
 from ase.io import read
 from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
+from ase.io.trajectory import TrajectoryReader
 
 import clease
 from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
 
-from clease.montecarlo.montecarlo import TooFewElementsError
+from clease.montecarlo import TooFewElementsError
 from clease.tools import wrap_and_sort_by_position, nested_list2str
 from clease.structure_generator import (ProbeStructure, GSStructure, MetropolisTrajectory)
+from clease.tools import count_atoms
 
 try:
     from math import gcd
@@ -136,8 +139,8 @@ class NewStructures:
             struct = self._get_struct_at_conc(conc_type='random')
 
             logger.info("Generating structure %s out of %s.", current_count + 1, num_to_generate)
-            ps = ProbeStructure(self.settings, struct, num_to_generate, init_temp, final_temp,
-                                num_temp, num_steps_per_temp, approx_mean_var)
+            ps = ProbeStructure(self.settings, struct, init_temp, final_temp, num_temp,
+                                num_steps_per_temp, approx_mean_var)
             probe_struct, cf = ps.generate()
 
             # Remove energy from result dictionary
@@ -245,8 +248,8 @@ class NewStructures:
             self.settings.set_active_template(atoms=atoms)
 
             struct = self._random_struct_at_conc(num_insert)
-            es = GSStructure(self.settings, struct, self.struct_per_gen, init_temp, final_temp,
-                             num_temp, num_steps_per_temp, eci)
+            es = GSStructure(self.settings, struct, init_temp, final_temp, num_temp,
+                             num_steps_per_temp, eci)
 
             gs_struct, cf_struct = es.generate()
             gs_structs.append(gs_struct)
@@ -321,8 +324,8 @@ class NewStructures:
             struct = structs[current_count].copy()
             self.settings.set_active_template(atoms=struct)
             logger.info("Generating structure %d out of %d.", current_count + 1, num_to_generate)
-            es = GSStructure(self.settings, struct, self.struct_per_gen, init_temp, final_temp,
-                             num_temp, num_steps_per_temp, eci)
+            es = GSStructure(self.settings, struct, init_temp, final_temp, num_temp,
+                             num_steps_per_temp, eci)
             gs_struct, cf = es.generate()
             formula_unit = self._get_formula_unit(gs_struct)
 
@@ -337,8 +340,8 @@ class NewStructures:
                     logger.error(msg)
                     raise MaxAttemptReachedError(msg)
                 continue
-            else:
-                num_attempt = 0
+
+            num_attempt = 0
 
             min_energy = gs_struct.get_potential_energy()
             logger.info("Structure with E = %.3f generated.", min_energy)
@@ -413,6 +416,7 @@ class NewStructures:
         self.insert_structure(init_struct=new_atoms)
         return True
 
+    # pylint: disable=too-many-branches
     def _set_initial_structures(self,
                                 atoms: Union[Atoms, List[Atoms]],
                                 random_composition: bool = False) -> List[Atoms]:
@@ -493,7 +497,6 @@ class NewStructures:
 
     def generate_conc_extrema(self) -> None:
         """Generate initial pool of structures with max/min concentration."""
-        from itertools import product
         logger.info(("Generating one structure per concentration where the number "
                      "of an element is at max/min"))
         indx_in_each_basis = []
@@ -577,8 +580,6 @@ class NewStructures:
             structure and tot is the total number of structures that should
             be inserted
         """
-        from ase.io.trajectory import TrajectoryReader
-        from clease.tools import count_atoms
         traj_in = TrajectoryReader(traj_init)
 
         if traj_final is None:
@@ -598,6 +599,7 @@ class NewStructures:
             # Check that composition (except vacancies matches)
             count_init = count_atoms(init)
             count_final = count_atoms(final)
+            # pylint: disable=consider-iterating-dictionary
             for k in count_final.keys():
                 if k not in count_init.keys():
                     raise ValueError("Final and initial structure contains " "different elements")
@@ -652,7 +654,7 @@ class NewStructures:
                 ("Supplied structure already exists in DB. The structure will not be inserted."))
             return
 
-        kvp = self._get_kvp(init_struct, formula_unit)
+        kvp = self._get_kvp(formula_unit)
 
         if name is not None:
             kvp['name'] = name
@@ -709,7 +711,7 @@ class NewStructures:
 
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
-    def _get_kvp(self, atoms: Atoms, formula_unit: str = None) -> Dict:
+    def _get_kvp(self, formula_unit: str = None) -> Dict:
         """
         Create a dictionary of key-value pairs and return it.
 
@@ -733,9 +735,10 @@ class NewStructures:
             cur.execute("SELECT id FROM text_key_values WHERE key=? AND value=?",
                         ("formula_unit", formula_unit))
             ids = [i[0] for i in cur.fetchall()]
-            for id in ids:
-                logger.debug('Selecting from db: name=%s', id)
-                cur.execute("SELECT value FROM text_key_values WHERE key=? AND id=?", ("name", id))
+            for row_id in ids:
+                logger.debug('Selecting from db: name=%s', row_id)
+                cur.execute("SELECT value FROM text_key_values WHERE key=? AND id=?",
+                            ("name", row_id))
                 name = cur.fetchone()[0]
                 suffix = 0
                 if "_" in name:
@@ -744,8 +747,8 @@ class NewStructures:
         suffixes.sort()
 
         suffix = len(suffixes)
-        for i in range(len(suffixes)):
-            if i != suffixes[i] and i not in suffixes:
+        for i, s in enumerate(suffixes):
+            if i != s and i not in suffixes:
                 suffix = i
                 break
 
@@ -770,6 +773,7 @@ class NewStructures:
                     new_count[symbol] += 1
             atom_count.append(new_count)
             all_nums += [v for k, v in new_count.items()]
+        # pylint: disable=unnecessary-lambda
         gcdp = reduce(lambda x, y: gcd(x, y), all_nums)
         fu = ""
         for i, count in enumerate(atom_count):
@@ -794,11 +798,12 @@ class NewStructures:
         atoms = self.settings.atoms.copy()
         current_conc = 0
         num_atoms_inserted = 0
-        for basis in range(len(rnd_indices)):
+
+        for basis, indices in enumerate(rnd_indices):
             current_indx = 0
             for symb in basis_elem[basis]:
                 for _ in range(num_atoms_to_insert[current_conc]):
-                    atoms[rnd_indices[basis][current_indx]].symbol = symb
+                    atoms[indices[current_indx]].symbol = symb
                     current_indx += 1
                     num_atoms_inserted += 1
                 current_conc += 1

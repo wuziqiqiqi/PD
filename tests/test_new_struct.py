@@ -195,7 +195,7 @@ def test_num_generated_structures(gs_mock, db_name):
     # correlation functions etc.
     def insert_struct_patch(cls, init_struct=None, final_struct=None, name=None, cf=None):
         atoms = bulk('Au')
-        kvp = cls._get_kvp(atoms, 'Au')
+        kvp = cls._get_kvp('Au')
         db = connect(db_name)
         if cf is None:
             db.write(atoms, kvp)
@@ -256,7 +256,7 @@ def test_unique_name(db_name):
     answer_list = ["Na1_Cl1_0", "Na1_Cl1_3", "Na1_Cl1_9", "Na1_Cl1_12", "Na1_Cl1_13"]
 
     for answer in answer_list:
-        kvp = new_struct._get_kvp(atoms, formula_unit='Na1_Cl1')
+        kvp = new_struct._get_kvp(formula_unit='Na1_Cl1')
         assert answer == kvp['name']
         assert 1 == kvp['gen']
         db.write(atoms, kvp)

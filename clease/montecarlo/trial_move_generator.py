@@ -6,9 +6,18 @@ from clease.montecarlo.constraints import MCConstraint
 from clease.tools import SystemChange
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
-__all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip')
+__all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError')
 
 DEFAULT_MAX_ATTEMPTS = 10000
+
+
+class TooFewElementsError(Exception):
+    """
+    Error that indicates that there are too few elements to perform a certain operation on
+    an atoms object. An example is a Monte Carlo step at fixed concentrations which consists
+    of swapping to atoms. If there are less than 2 different species in the Atoms object, it
+    makes no sense to swap two atoms (all energies are equal)
+    """
 
 
 class TrialMoveGenerator(ABC):
@@ -168,6 +177,10 @@ class RandomSwap(SingleTrialMoveGenerator):
         self.tracker.init_tracker(atoms)
         if self.indices:
             self.tracker.filter_indices(self.indices)
+
+        if self.tracker.num_symbols < 2:
+            raise TooFewElementsError("After filtering there are less than two symbol type left. "
+                                      "Must have at least two.")
 
     def get_single_trial_move(self) -> List[SystemChange]:
         """

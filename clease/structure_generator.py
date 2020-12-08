@@ -4,30 +4,33 @@ import math
 import time
 import logging
 from copy import deepcopy
+
 import numpy as np
 from numpy.random import choice
 from numpy.linalg import inv, pinv
+
 from ase.db import connect
+from ase.io.trajectory import TrajectoryReader
+
 from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
 from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
-from clease.montecarlo import Montecarlo
+from clease.montecarlo import Montecarlo, TooFewElementsError
 from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
 from clease.montecarlo.constraints import ConstrainSwapByBasis
-from clease.montecarlo.montecarlo import TooFewElementsError
-from ase.io.trajectory import TrajectoryReader
 
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
 class StructureGenerator:
     """Base class for generating new strctures."""
 
     def __init__(self,
                  settings,
                  atoms,
-                 struct_per_gen,
                  init_temp=None,
                  final_temp=None,
                  num_temp=5,
@@ -154,15 +157,10 @@ class StructureGenerator:
         self.cf_generated_structure = deepcopy(cf_dict)
 
     def _accept(self):
-        raise NotImplementedError('_accept should be implemented in the ' 'inherited class.')
+        pass
 
     def _estimate_temp_range(self):
-        raise NotImplementedError('_estimate_temp_range should be '
-                                  'implemented in the inherited class.')
-
-    def _optimal_structure(self):
-        raise NotImplementedError('_optimal_structure shoud be implemented '
-                                  'in the inherited class.')
+        return 1.0, 1e5
 
     def _determine_temps(self):
         logger.info("Temperature range not given. Determining the range automatically.")
@@ -280,8 +278,8 @@ class StructureGenerator:
 
                 # Print a summary of all basis functions (useful for debuggin)
                 logger.debug('Basis functions:')
-                for k in final_cf:
-                    logger.debug('   %s: %s, %s', k, final_cf[k], self.cf_generated_structure[k])
+                for k2 in final_cf:
+                    logger.debug('   %s: %s, %s', k2, final_cf[k2], self.cf_generated_structure[k2])
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):
@@ -295,6 +293,7 @@ class StructureGenerator:
         return cfm
 
 
+# pylint: disable=too-many-instance-attributes
 class ProbeStructure(StructureGenerator):
     """Generate probe structures.
 
@@ -307,9 +306,6 @@ class ProbeStructure(StructureGenerator):
 
     atoms: Atoms object
         initial structure to start the simulated annealing
-
-    struct_per_gen: int
-        number of structures to be generated per generation
 
     init_temp: int or float
         initial temperature (does not represent *physical* temperature)
@@ -340,15 +336,14 @@ class ProbeStructure(StructureGenerator):
     def __init__(self,
                  settings,
                  atoms,
-                 struct_per_gen,
                  init_temp=None,
                  final_temp=None,
                  num_temp=5,
                  num_steps_per_temp=1000,
                  approx_mean_var=False):
 
-        StructureGenerator.__init__(self, settings, atoms, struct_per_gen, init_temp, final_temp,
-                                    num_temp, num_steps_per_temp)
+        StructureGenerator.__init__(self, settings, atoms, init_temp, final_temp, num_temp,
+                                    num_steps_per_temp)
         self.o_cf = self.atoms.calc.cf
         self.o_cfm = np.vstack((self.cfm, self.o_cf))
         self.approx_mean_var = approx_mean_var
@@ -430,9 +425,6 @@ class GSStructure(StructureGenerator):
     atoms: Atoms object
         initial structure to start the simulated annealing
 
-    struct_per_gen: int
-        number of structures to be generated per generation
-
     init_temp: int or float
         initial temperature (does not represent *physical* temperature)
 
@@ -452,14 +444,13 @@ class GSStructure(StructureGenerator):
     def __init__(self,
                  settings,
                  atoms,
-                 struct_per_gen,
                  init_temp=2000,
                  final_temp=10,
                  num_temp=10,
                  num_steps_per_temp=100000,
                  eci=None):
-        StructureGenerator.__init__(self, settings, atoms, struct_per_gen, init_temp, final_temp,
-                                    num_temp, num_steps_per_temp)
+        StructureGenerator.__init__(self, settings, atoms, init_temp, final_temp, num_temp,
+                                    num_steps_per_temp)
         self.alter_composition = False
         self.eci = eci
         calc = Clease(self.settings, eci=eci)

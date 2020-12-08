@@ -1,6 +1,7 @@
+import pytest
 from ase.build import bulk
 import numpy as np
-from clease.montecarlo import RandomFlip, RandomSwap, MixedSwapFlip
+from clease.montecarlo import RandomFlip, RandomSwap, MixedSwapFlip, TooFewElementsError
 
 
 def test_random_flip():
@@ -28,6 +29,11 @@ def test_random_flip():
 def test_random_swap():
     np.random.seed(42)
     atoms = bulk('Au') * (4, 4, 4)
+
+    # Check that error is raised
+    with pytest.raises(TooFewElementsError):
+        swapper = RandomSwap(atoms)
+
     atoms.symbols[:4] = 'Cu'
     atoms.symbols[4:10] = 'X'
     unique_symbs = set(atoms.symbols)

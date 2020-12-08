@@ -18,6 +18,10 @@ class SwapMoveIndexTracker:
     def symbols(self) -> List[str]:
         return list(self.tracker.keys())
 
+    @property
+    def num_symbols(self) -> int:
+        return len(self.tracker)
+
     def __repr__(self):
         str_repr = f"SwapMoveIndexTracker at {hex(id(self))}\n"
         str_repr += f"Symbols tracked: {self.symbols}\n"
@@ -46,10 +50,6 @@ class SwapMoveIndexTracker:
 
         # Remove empty items
         self.tracker = {k: v for k, v in self.tracker.items() if v}
-
-        if len(self.tracker) < 2:
-            raise ValueError("After filtering there are less than two symbol type left. "
-                             "Must have at least two.")
 
     def move_already_updated(self, system_changes):
         """Return True if system_changes have already been taken into account.
