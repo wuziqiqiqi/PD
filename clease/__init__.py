@@ -1,6 +1,7 @@
 # pylint: disable=undefined-variable
 import logging
 from deprecated import deprecated
+from .version import *
 from .template_filters import *
 from .atoms_manager import *
 from .convexhull import *
@@ -23,8 +24,10 @@ from . import mp_logger
 from . import tools
 from . import template_atoms
 from . import concentration
+from . import db_util
+# Import this global, so it can be disabled with "clease.REQUIRE_COMPATIBLE_TABLE_VERISON = False"
+from .db_util import toggle_require_compatible_table_version
 
-__version__ = '0.10.1'
 logger = logging.getLogger(__name__)
 
 
@@ -45,8 +48,9 @@ def CESlab(*args, **kwargs):
 
 ADDITIONAL = ('settings', 'basis_function', 'corr_func', 'new_struct', 'NewStructures', 'cluster',
               'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk', 'CECrystal', 'CESlab',
-              'concentration')
+              'concentration', 'db_util', 'toggle_require_compatible_table_version')
 
-__all__ = (template_filters.__all__ + atoms_manager.__all__ + concentration.__all__ +
-           evaluate.__all__ + convexhull.__all__ + data_manager.__all__ + structure_mapper.__all__ +
-           svd.__all__ + regression_old.__all__ + cluster_coverage.__all__ + ADDITIONAL)
+__all__ = (version.__all__ + template_filters.__all__ + atoms_manager.__all__ +
+           concentration.__all__ + evaluate.__all__ + convexhull.__all__ + data_manager.__all__ +
+           structure_mapper.__all__ + svd.__all__ + regression_old.__all__ +
+           cluster_coverage.__all__) + ADDITIONAL

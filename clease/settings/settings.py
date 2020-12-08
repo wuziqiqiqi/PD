@@ -333,16 +333,16 @@ class ClusterExpansionSettings:
                 tag += 1
 
     def _store_prim_cell(self):
-        """Store unit cell to the database."""
-        db = connect(self.db_name)
-        shape = self.prim_cell.get_cell_lengths_and_angles()
-        for row in db.select(name='primitive_cell'):
-            uc_shape = row.toatoms().get_cell_lengths_and_angles()
-            if np.allclose(shape, uc_shape):
-                return row.id
+        """Store unit cell to the database. Returns the id of primitive cell in the database"""
+        with connect(self.db_name) as db:
+            shape = self.prim_cell.get_cell_lengths_and_angles()
+            for row in db.select(name='primitive_cell'):
+                uc_shape = row.toatoms().get_cell_lengths_and_angles()
+                if np.allclose(shape, uc_shape):
+                    return row.id
 
-        uid = db.write(self.prim_cell, name='primitive_cell')
-        return uid
+            uid = db.write(self.prim_cell, name='primitive_cell')
+        return uid  # Ensure connection is closed before returning
 
     def _get_prim_cell(self):
         raise NotImplementedError("This function has to be implemented in in derived classes.")

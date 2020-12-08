@@ -13,6 +13,7 @@ from ase.io import read
 from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
+import clease
 from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
 
@@ -660,7 +661,8 @@ class NewStructures:
         kvp['queued'] = False
         kvp['struct_type'] = 'initial'
         tab_name = self.corr_func_table_name
-        uid_init = self.db.write(init_struct, kvp, external_tables={tab_name: cf})
+        uid_init = clease.db_util.new_row_with_single_table(self.db, init_struct, tab_name, cf,
+                                                            **kvp)
 
         if final_struct is not None:
             if not isinstance(final_struct, Atoms):

@@ -3,6 +3,7 @@ import logging
 from ase.atoms import Atoms
 from ase.db import connect
 
+import clease
 from clease.settings import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
 from clease_cxx import PyCEUpdater
@@ -115,7 +116,7 @@ class CorrFunction:
             logger.debug(msg)
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
-            db.update(row_id, external_tables={tab_name: cf})
+            clease.db_util.update_table(db, row_id, tab_name, cf)
 
         if verbose:
             print("\nreconfiguration completed")

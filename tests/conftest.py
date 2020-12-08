@@ -34,6 +34,7 @@ def remove_file(name):
         os.remove(name)
     except FileNotFoundError:
         pass
+    assert not name.exists(), f'File {name} still exists after teardown.'
 
 
 @pytest.fixture
@@ -54,7 +55,6 @@ def make_tempfile(tmpdir):
     for name in created_files:
         # Note: The file does not necessarily exist, just because we created the filename
         remove_file(name)
-        assert not name.exists(), f'File {name} still exists after teardown.'
 
 
 @pytest.fixture

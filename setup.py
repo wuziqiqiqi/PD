@@ -1,7 +1,6 @@
 import os
-import re
-from setuptools import setup, find_packages, Extension
 from distutils.sysconfig import get_python_inc
+from setuptools import setup, find_packages, Extension
 
 
 def src_folder():
@@ -39,8 +38,10 @@ def build_ext(ext_module):
 
 
 # Get version number
-with open('clease/__init__.py') as fd:
-    version = re.search("__version__ = '(.*)'", fd.read()).group(1)
+about = {}
+with open('clease/version.py') as f:
+    exec(f.read(), about)
+version = about['__version__']
 
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()

@@ -1,10 +1,11 @@
 import logging
-from ase.db import connect
-import numpy as np
-from clease.tools import add_file_extension, sort_cf_names, get_ids
-from typing import Tuple, List, Dict, Set, Optional, Callable
+from typing import Tuple, List, Dict, Set, Optional, Callable, Sequence
 import sqlite3
 from itertools import combinations_with_replacement as cwr
+import numpy as np
+from ase.db import connect
+import clease
+from clease.tools import add_file_extension, sort_cf_names, get_ids
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ class InconsistentDataError(Exception):
     pass
 
 
-class DataManager(object):
+class DataManager:
     """
     DataManager is a class for extracting data from CLEASE databases to be
     used to fit ECIs
@@ -54,6 +55,7 @@ class DataManager(object):
 
         Example:
 
+        >>> import clease
         >>> from clease.data_manager import (
         ... CorrelationFunctionGetter, FinalStructEnergyGetter,
         ... DataManager)
@@ -62,8 +64,8 @@ class DataManager(object):
         >>> from ase.calculators.emt import EMT
         >>> db_name = 'somedb.db'
         >>> db = connect(db_name)  # Make sure that the DB exists
-        >>> db.write(Atoms('Cu'), external_tables={
-        ... 'polynomial_cf': {'c0': 1.0}}, final_struct_id=2, converged=True)
+        >>> clease.db_util.new_row_with_single_table(db, Atoms('Cu'),
+        ...  'polynomial_cf', {'c0': 1.0}, final_struct_id=2, converged=True)
         1
         >>> final = Atoms('Cu')
         >>> final.calc = EMT()
@@ -285,6 +287,7 @@ class CorrelationFunctionGetter:
         id_set = set(ids)
 
         with connect(self.db_name) as db:
+            self._check_version(db, *ids)
             cur = db.connection.cursor()
             cur.execute(sql)
 
@@ -356,6 +359,12 @@ class CorrelationFunctionGetter:
                 # Add the new to the list of cf names
                 self.cf_names.append(name)
         return cf_matrix
+
+    def _check_version(self, connection, *ids: Sequence[int]) -> None:
+        if clease.db_util.require_reconfigure_table(connection, self.tab_name, *ids):
+            raise clease.db_util.OutOfDateTable(
+                'An out of date correlation function table was found. '
+                'Please reconfigure your database, e.g. using "clease.reconfigure(settings)".')
 
 
 class FinalStructEnergyGetter(object):
