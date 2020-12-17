@@ -426,6 +426,10 @@ def test_fcc_binary_fixed_conc(make_conc, make_settings, mocker):
     ratio = num / 3.0
     assert ratio == pytest.approx(int(ratio))
 
+    assert settings.num_active_sublattices == 1
+    assert settings.atomic_concentration_ratio == 1.0
+    assert settings.ignored_species_and_conc == {}
+
 
 def test_rocksalt_conc_fixed_one_basis(make_conc, make_settings, mocker):
     mocker.patch('clease.settings.ClusterExpansionSettings.create_cluster_list_and_trans_matrix')
@@ -439,6 +443,81 @@ def test_rocksalt_conc_fixed_one_basis(make_conc, make_settings, mocker):
     num_O = sum(atoms.symbols == 'O')
     ratio = num_O / 5.0
     assert ratio == pytest.approx(int(ratio))
+
+    assert settings.num_active_sublattices == 2
+    assert settings.atomic_concentration_ratio == 1.0
+    assert settings.ignored_species_and_conc == {}
+
+
+def test_concentration_with_background(make_conc, make_settings):
+    """Test recovering concentrations with ignored sublattices"""
+
+    basis_elements = [['Ca'], ['O', 'F'], ['O', 'F']]
+    conc = make_conc(basis_elements, grouped_basis=[[0], [1, 2]])
+    settings = make_settings(conc,
+                             crystalstructure="fluorite",
+                             a=4.0,
+                             size=[2, 2, 2],
+                             max_cluster_size=3,
+                             max_cluster_dia=[4.01, 4.01])
+
+    assert settings.num_active_sublattices == 2
+    assert settings.atomic_concentration_ratio == 2 / 3
+    assert settings.ignored_species_and_conc == {'Ca': 1 / 3}
+
+    basis_elements = [['Na', 'Cl'], ['Na', 'Cl']]
+    conc = make_conc(basis_elements, grouped_basis=[[0, 1]])
+    settings = make_settings(conc,
+                             crystalstructure="rocksalt",
+                             a=4.0,
+                             size=[2, 2, 1],
+                             max_cluster_size=3,
+                             max_cluster_dia=[4.01, 4.01])
+
+    assert settings.num_active_sublattices == 2
+    assert settings.atomic_concentration_ratio == 1.0
+    assert settings.ignored_species_and_conc == {}
+
+    basis_elements = [['Au', 'Cu']]
+    conc = make_conc(basis_elements)
+    settings = make_settings(conc)
+
+    assert settings.num_active_sublattices == 1
+    assert settings.atomic_concentration_ratio == 1.0
+    assert settings.ignored_species_and_conc == {}
+
+    basis_elements = [['Zr', 'Ce'], ['O'], ['O']]
+    conc = make_conc(basis_elements, grouped_basis=[[0], [1, 2]])
+    settings = make_settings(conc,
+                             crystalstructure="fluorite",
+                             a=4.0,
+                             size=[2, 2, 3],
+                             max_cluster_size=2,
+                             max_cluster_dia=[4.01])
+
+    assert settings.num_active_sublattices == 1
+    assert settings.atomic_concentration_ratio == 1 / 3
+    assert settings.ignored_species_and_conc == {'O': 2 / 3}
+
+    # If the background atoms are included
+    settings.include_background_atoms = True
+    assert settings.num_active_sublattices == 3
+    assert settings.atomic_concentration_ratio == 1.0
+    assert settings.ignored_species_and_conc == {}
+
+    # Two non-identical background sublattices
+    basis_elements = [['Zr', 'Ce'], ['O'], ['S']]
+    conc = Concentration(basis_elements)
+    settings = make_settings(conc,
+                             crystalstructure="fluorite",
+                             a=4.0,
+                             size=[2, 2, 3],
+                             max_cluster_size=2,
+                             max_cluster_dia=[4.01])
+
+    assert settings.num_active_sublattices == 1
+    assert settings.atomic_concentration_ratio == 1 / 3
+    assert settings.ignored_species_and_conc == {'O': 1 / 3, 'S': 1 / 3}
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@ import os
 import pytest
 from ase.db import connect
 from ase.calculators.emt import EMT
+from ase.calculators.singlepoint import SinglePointCalculator
 from clease.settings import CEBulk, Concentration
 from clease import NewStructures
 from clease.tools import update_db

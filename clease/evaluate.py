@@ -162,6 +162,9 @@ class Evaluate:
 
     @property
     def concentrations(self):
+        """
+        The internal concentrations normalised against the 'active' sublattices
+        """
         singlet_cols = [i for i, n in enumerate(self.cf_names) if n.startswith('c1')]
         return singlets2conc(self.settings.basis_functions, self.cf_matrix[:, singlet_cols])
 
@@ -453,21 +456,51 @@ class Evaluate:
             cnv_hull = ConvexHull(self.settings.db_name, select_cond=self.select_cond)
             fig = cnv_hull.plot()
 
-            concs = {k: [] for k in cnv_hull._unique_elem}
-            for c in self.concentrations:
-                for k in concs.keys():
-                    concs[k].append(c.get(k, 0.0))
+            # `conc_per_frame` is the concentration with respect to the total number of atoms for
+            # each frame
+            conc_per_frame = self.atomic_concentrations
+
+            # `concs` is dictionary with the keys of species with value being the
+            # concentrations among the frames
+            concs = {key: [] for key in cnv_hull._unique_elem}
+            for frame_conc in conc_per_frame:
+                for key, value in concs.items():
+                    value.append(frame_conc.get(key, 0.0))
+
             form_en = [
-                cnv_hull.get_formation_energy(c, e)
-                for c, e in zip(self.concentrations, e_pred.tolist())
+                cnv_hull.get_formation_energy(c, e) for c, e in zip(conc_per_frame, e_pred.tolist())
             ]
             cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
+
             fig.suptitle("Convex hull DFT (o), CE (x)")
 
             if savefig:
                 fig.savefig(prefix + "_cnv_hull.png")
             else:
                 plt.show()
+
+    @property
+    def atomic_concentrations(self):
+        """
+        The actual atomic concentration (including background lattices) normalised against the
+        total number of atoms
+        """
+        conc_per_frame = []
+        conc_ratio = self.settings.atomic_concentration_ratio
+        ignored = self.settings.ignored_species_and_conc
+        for internal_conc in self.concentrations:
+            frame_conc = {}
+            # Internal concentrations need to be rescaled
+            for specie, cvalue in internal_conc.items():
+                frame_conc[specie] = cvalue * conc_ratio
+            # Include the ignored species
+            for specie, cvalue in ignored.items():
+                if specie in frame_conc:
+                    frame_conc[specie] += cvalue
+                else:
+                    frame_conc[specie] = cvalue
+            conc_per_frame.append(frame_conc)
+        return conc_per_frame
 
     def alpha_CV(self,
                  alpha_min=1E-7,

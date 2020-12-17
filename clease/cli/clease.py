@@ -8,7 +8,7 @@ from .db import db_cli
 # https://stackoverflow.com/questions/40769386/kivy-windows-unable-to-find-any-valuable-window-provider-at-all
 def install_gui_dependencies(args):
     import subprocess
-    subprocess.check_call(['pip', 'install', 'kivy'] + args)
+    subprocess.check_call(['pip', 'install', 'kivy>=1.11,<2'] + args)
 
     if os.name == 'nt':
         # Windows dependencies

@@ -263,7 +263,7 @@ class ConvexHull:
             x = np.array(concs[elems[i]])
             x /= self.conc_scale
 
-            ax.plot(x, energies * self.atoms_per_fu, marker, mfc=mfc)
+            ax.plot(x, np.asarray(energies) * self.atoms_per_fu, marker, mfc=mfc)
 
             if self.atoms_per_fu > 1:
                 unit = "eV/f.u."

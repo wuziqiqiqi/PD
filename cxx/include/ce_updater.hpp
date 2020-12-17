@@ -179,6 +179,10 @@ private:
   tracker_t *tracker{nullptr}; // Do not own this pointer
   std::vector< std::string > singlets;
 
+  // Cached number of non background sites
+  void count_non_bkg_sites();
+  int num_non_bkg_sites;
+
   /** Undos the latest changes keeping the tracker CE tracker updated */
   void undo_changes_tracker(int num_steps);
 

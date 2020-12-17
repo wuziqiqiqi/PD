@@ -190,6 +190,49 @@ class ClusterExpansionSettings:
     def basis_func_type(self):
         return self._basis_func_type
 
+    @property
+    def num_active_sublattices(self) -> int:
+        """Number of active sublattices"""
+        unique_no_bkg = self.unique_element_without_background()
+        active_sublattices = 0
+        for basis in self.concentration.orig_basis_elements:
+            if basis[0] in unique_no_bkg:
+                active_sublattices += 1
+        return active_sublattices
+
+    @property
+    def ignored_species_and_conc(self) -> Dict[str, float]:
+        """
+        Return the ignored species and their concentrations normalised to the total number
+        of atoms.
+        """
+        unique_no_bkg = self.unique_element_without_background()
+        orig_basis = self.concentration.orig_basis_elements
+        nsub_lattices = len(orig_basis)  # Number of sub-lattices
+        ignored = {}
+        for basis in orig_basis:
+            elem = basis[0]
+            if elem not in unique_no_bkg:
+                if len(basis) != 1:
+                    raise ValueError(("Ignored sublattice contains multiple elements -"
+                                      "this does not make any sense"))
+                if elem not in ignored:
+                    ignored[elem] = 1.0 / nsub_lattices
+                else:
+                    # This element is already on one of the ignored background here we
+                    # accumulate the concnetration
+                    ignored[elem] += 1.0 / nsub_lattices
+        return ignored
+
+    @property
+    def atomic_concentration_ratio(self) -> float:
+        """
+        Ratio between true concentration (normalised to atoms) and the internal concentration used.
+        For example, if one of the two basis is fully occupied, and hence ignored internally, the
+        internal concentration is half of the actual atomic concentration.
+        """
+        return self.num_active_sublattices / len(self.concentration.orig_basis_elements)
+
     @basis_func_type.setter
     def basis_func_type(self, bf_type):
         """
@@ -258,7 +301,7 @@ class ClusterExpansionSettings:
         return set(x[0] for x in self.basis_elements if len(x) == 1)
 
     def unique_element_without_background(self):
-        """Remove backgound elements."""
+        """Remove background elements."""
         if self.include_background_atoms:
             bg_sym = set()
         else:

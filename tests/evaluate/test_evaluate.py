@@ -2,7 +2,13 @@ import os
 import json
 import pytest
 import numpy as np
+from ase.calculators.singlepoint import SinglePointCalculator
+from ase.db import connect
+from ase.calculators.emt import EMT
+from clease.settings import CEBulk, Concentration
 from clease import Evaluate
+from clease import NewStructures
+from clease.tools import update_db
 
 
 @pytest.fixture
@@ -13,6 +19,67 @@ def make_eval(bc_setting):
         return evaluator
 
     return _make_eval
+
+
+@pytest.fixture
+def make_eval_with_bkg(bkg_ref_settings):
+
+    def _make_eval(**kwargs):
+        evaluator1 = Evaluate(settings=bkg_ref_settings[0], **kwargs)
+        evaluator2 = Evaluate(settings=bkg_ref_settings[1], **kwargs)
+        return evaluator1, evaluator2
+
+    return _make_eval
+
+
+@pytest.fixture
+def bkg_ref_settings(make_tempfile):
+    """
+    This fixture creates two equivalent settings, one has two sub-lattices with one of
+    them being the background (occupied by a single specie). The other settings contains 
+    the same structures as the first one but only has one sub-lattice (fcc). 
+ 
+    They should generate identical correlation functions if the background is simply ignored.
+    """
+    db_name_bkg = make_tempfile('temp_db_bkg_double.db')
+    basis_elements = [['Au', 'Cu'], ['Ag']]
+    conc = Concentration(basis_elements=basis_elements)
+    settings_bkg = CEBulk(concentration=conc,
+                          crystalstructure='rocksalt',
+                          a=4.05,
+                          size=[3, 3, 3],
+                          db_name=db_name_bkg)
+    newstruct = NewStructures(settings_bkg, struct_per_gen=3)
+    newstruct.generate_initial_pool()
+    calc = EMT()
+
+    with connect(db_name_bkg) as database:
+        for row in database.select([("converged", "=", False)]):
+            atoms = row.toatoms()
+            atoms.calc = calc
+            atoms.get_potential_energy()
+            update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name_bkg)
+
+    db_name_no_bkg = make_tempfile('temp_db_bkg_single.db')
+    basis_elements = [['Au', 'Cu']]
+    conc = Concentration(basis_elements=basis_elements)
+    settings_no_bkg = CEBulk(concentration=conc,
+                             crystalstructure='fcc',
+                             a=4.05,
+                             size=[3, 3, 3],
+                             db_name=db_name_no_bkg)
+    newstruct = NewStructures(settings_no_bkg, struct_per_gen=3)
+    with connect(db_name_bkg) as database:
+        for row in database.select(converged=True):
+            init_atoms = row.toatoms()
+            final_atoms = database.get(id=row.key_value_pairs['final_struct_id']).toatoms()
+            new_init_atoms = init_atoms[atoms.numbers != 47]
+            new_final_atoms = final_atoms[atoms.numbers != 47]
+            new_final_atoms.set_calculator(
+                SinglePointCalculator(new_final_atoms, energy=final_atoms.get_potential_energy()))
+            newstruct.insert_structure(new_init_atoms, new_final_atoms)
+
+    yield (settings_bkg, settings_no_bkg)
 
 
 def test_filter_cname_on_size(make_eval):
@@ -271,3 +338,23 @@ def test_get_eci_by_size(make_eval):
     assert name_list == predict_name
     assert eci_list == predict_eci
     assert distance_list == predict_distance
+
+
+def test_bkg_ignore_consistency(make_eval_with_bkg):
+    """
+    Test that ignoring background species is identical to not having
+    the sublattice in the first place.
+    """
+
+    evaluator_bkg, evaluator_no_bkg = make_eval_with_bkg()
+    # Here we test that the two cases generate same basis function and coefficient matrice
+    # e.g. the background is completely ignored
+    assert (evaluator_bkg.cf_matrix == evaluator_no_bkg.cf_matrix).all()
+    assert evaluator_bkg.settings.basis_functions == evaluator_no_bkg.settings.basis_functions
+
+    acon_bkg = evaluator_bkg.atomic_concentrations
+    acon_nobkg = evaluator_no_bkg.atomic_concentrations
+    for concs_bkg, concs_nobkg in zip(acon_bkg, acon_nobkg):
+        concs_bkg.pop('Ag')
+        # The atomic density with the background should be half of that with the background removed
+        assert {specie: conc * 2 for specie, conc in concs_bkg.items()} == concs_nobkg

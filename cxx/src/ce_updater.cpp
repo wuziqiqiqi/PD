@@ -88,6 +88,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
   read_background_indices(bkg_indx);
   Py_DECREF(bkg_indx);
 
+  count_non_bkg_sites();
   build_trans_symm_group(py_trans_symm_group);
   Py_DECREF(py_trans_symm_group);
 
@@ -357,7 +358,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
     if (name.find("c1") == 0)
     {
       int dec = bfs[0];
-      next_cf[i] = current_cf[i] + (basis_functions->get(dec, new_symb_id) - basis_functions->get(dec, old_symb_id))/symbols_with_id->size();
+      next_cf[i] = current_cf[i] + (basis_functions->get(dec, new_symb_id) - basis_functions->get(dec, old_symb_id))/num_non_bkg_sites;
       continue;
     }
 
@@ -579,6 +580,7 @@ CEUpdater* CEUpdater::copy() const
   obj->eci = eci;
   obj->cname_with_dec = cname_with_dec;
   obj->is_background_index = is_background_index;
+  obj->num_non_bkg_sites = num_non_bkg_sites;
   obj->history = new CFHistoryTracker(*history);
   obj->atoms = nullptr; // Left as nullptr by intention
   obj->tracker = tracker;
@@ -892,6 +894,16 @@ void CEUpdater::read_background_indices(PyObject *bkg_indices){
   }
 }
 
+void CEUpdater::count_non_bkg_sites(){
+  // Count and store the number of non-background sites
+  num_non_bkg_sites = 0;
+  for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
+    if (!is_background_index[atom_no] || !ignore_background_indices){
+      num_non_bkg_sites += 1;
+    }
+  }
+} 
+
 void CEUpdater::get_changes(const std::vector<std::string> &new_symbols, std::vector<unsigned int> &changed_sites) const{
   if (new_symbols.size() != symbols_with_id->size()){
     throw invalid_argument("Size of passed atoms does not match!");
@@ -932,12 +944,13 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
     {
       int dec = bfs[0];
       double new_value = 0.0;
+      // Normalise with respect to the actual number of atoms included
       for (unsigned int atom_no=0;atom_no<symbols_with_id->size();atom_no++){
         if (!is_background_index[atom_no] || !ignore_background_indices){
           new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
         }
       }
-      cf[name] = new_value/symbols_with_id->size();
+      cf[name] = new_value/num_non_bkg_sites;
       continue;
     }
 
