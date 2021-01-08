@@ -168,7 +168,7 @@ def test_snapshot(db_name, make_tempfile):
     atoms[1].symbol = 'Cu'
 
     fname = make_tempfile('snapshot.traj')
-    obs = Snapshot(fname=fname, atoms=atoms)
+    obs = Snapshot(atoms, fname=fname)
 
     mc = Montecarlo(atoms, 600)
     mc.attach(obs, interval=100)
@@ -177,7 +177,7 @@ def test_snapshot(db_name, make_tempfile):
 
     # Test extension-less
     fname = make_tempfile('snapshot')
-    obs = Snapshot(fname=fname, atoms=atoms)
+    obs = Snapshot(atoms, fname=fname)
     assert str(obs.fname) == fname + '.traj'
 
 

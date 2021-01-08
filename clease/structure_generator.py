@@ -509,7 +509,7 @@ class MetropolisTrajectory(object):
         mc = Montecarlo(self.atoms, 10000000)
         mc.generator.add_constraint(cnst)
         fname = 'metropolis_traj'
-        obs = Snapshot(fname=fname, atoms=self.atoms)
+        obs = Snapshot(self.atoms, fname=fname)
         mc.attach(obs, interval=1)
 
         mc.run(steps=self.num)

@@ -2,7 +2,6 @@ import os
 import pytest
 from ase.db import connect
 from ase.calculators.emt import EMT
-from ase.calculators.singlepoint import SinglePointCalculator
 from clease.settings import CEBulk, Concentration
 from clease import NewStructures
 from clease.tools import update_db
@@ -62,6 +61,12 @@ def make_tempfile(tmpdir):
 def db_name(make_tempfile):
     """Create a temporary database file"""
     yield make_tempfile('temp_db.db')
+
+
+@pytest.fixture
+def traj_file(make_tempfile):
+    """Create a temporary trajectory file"""
+    yield make_tempfile('temp_trajectory.traj')
 
 
 @pytest.fixture

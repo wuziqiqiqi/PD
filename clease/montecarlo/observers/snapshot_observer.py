@@ -1,32 +1,29 @@
+from typing import Sequence
+from ase.atoms import Atoms
+from ase.io.trajectory import TrajectoryWriter
+from clease.tools import SystemChange
 from clease.montecarlo.observers import MCObserver
 from clease.tools import add_file_extension
-from ase.io.trajectory import TrajectoryWriter
 
 
 class Snapshot(MCObserver):
     """Store a snapshot in a trajectory file.
 
-    Parameters:
-
-    fname: str
-        Name of the trajectory file. Adds extension '.traj' if none is given.
-
-    atoms: Atoms
-        Instance of the atoms objected modofied by the MC object
+    :param atoms: Instance of the atoms objected modofied by the MC object
+    :param fname: Name of the trajectory file. Adds extension '.traj' if none is given.
+    :param mode: IO mode used by the ASE TrajectoryWriter (must be w or a)
     """
 
     name = "Snapshot"
 
-    def __init__(self, fname="snapshot.traj", atoms=None):
+    def __init__(self, atoms: Atoms, fname: str = "snapshot.traj", mode: str = "w"):
         super().__init__()
         full_fname = add_file_extension(fname, '.traj')
-        if atoms is None:
-            raise ValueError("No atoms object given!")
         self.atoms = atoms
-        self.traj = TrajectoryWriter(full_fname, mode="w")
+        self.traj = TrajectoryWriter(full_fname, mode=mode)
         self.fname = full_fname
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: Sequence[SystemChange]):
         """Write a snapshot to a .traj file.
 
         Parameters:
@@ -36,6 +33,3 @@ class Snapshot(MCObserver):
             `clease.montecarlo.observers.MCObserver`
         """
         self.traj.write(self.atoms)
-
-    def reset(self):
-        self.traj = TrajectoryWriter(self.fname, mode="w")

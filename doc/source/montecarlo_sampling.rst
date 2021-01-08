@@ -84,7 +84,7 @@ them in a trajectory file.
 .. code-block:: python
 
   from clease.montecarlo.observers import Snapshot
-  snap = Snapshot(fname='snapshot', atoms=atoms)
+  snap = Snapshot(atoms, fname='snapshot')
   mc.attach(snap, interval=200)
   mc.run(steps=1000)
 
