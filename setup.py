@@ -92,7 +92,7 @@ setup(
         'Programming Language :: Python :: 3.8'
     ],
     install_requires=[
-        'ase>=3.19',
+        'ase>=3.20',
         'matplotlib',
         'spglib',
         'scikit-learn',
