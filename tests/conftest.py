@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
+
 import pytest
 import numpy as np
+import ase
 from ase.db import connect
 from ase.calculators.emt import EMT
 from clease.settings import CEBulk, Concentration
@@ -25,6 +28,18 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture(autouse=True)
+def auto_tmp_workdir(tmp_path):
+    """Fixture to automatically switch working directory of the test
+    to the tmp path.
+    Will automatically be used, so it does not need to be used explicitly
+    by the test.
+    """
+    path = Path(str(tmp_path))  # Normalize path
+    with ase.utils.workdir(path, mkdir=True):
+        yield
 
 
 def remove_file(name):
