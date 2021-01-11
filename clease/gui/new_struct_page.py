@@ -511,7 +511,7 @@ class NewStructPage(Screen):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
-    def to_dict(self):
+    def todict(self):
         return {
             'gen_number': self.ids.genNumberInput.text,
             'struct_per_gen': self.ids.structPerGenInput.text,

@@ -75,7 +75,7 @@ class TestMCMainPage(unittest.TestCase):
 
         page.ids.eciFileInput.text = 'Some file'
         page.ids.sizeInput.text = '5'
-        dct = page.to_dict()
+        dct = page.todict()
         self.assertEqual(num_fields, len(dct))
         page2 = MCMainPage()
         page2.from_dict(dct)

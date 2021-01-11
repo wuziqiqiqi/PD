@@ -179,7 +179,7 @@ class NewStructPageTest(unittest.TestCase):
         page.ids.templateAtomsInput.text = 'mytemplate.xyz'
         page.ids.newStructTypeSpinner.text = 'Random structure'
 
-        dct_rep = page.to_dict()
+        dct_rep = page.todict()
 
         expect = {
             'gen_number': '2',

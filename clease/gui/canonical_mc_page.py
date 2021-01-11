@@ -116,7 +116,7 @@ class CanonicalMCPage(Screen):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
-    def to_dict(self):
+    def todict(self):
         return {
             'temps': self.ids.tempInput.text,
             'concs': self.ids.concInput.text,

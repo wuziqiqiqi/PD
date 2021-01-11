@@ -2,15 +2,30 @@ import json
 
 from deprecated import deprecated
 from ase import Atoms
-from . import CEBulk, CECrystal, CESlab, Concentration
+from . import CEBulk, CECrystal, CESlab, Concentration, ClusterExpansionSettings
 from clease import basis_function as bf
 
 __all__ = ('settings_from_json', 'settingsFromJSON')
 
 
 def settings_from_json(fname):
+    """Initialize settings from JSON.
+
+    Exists due to compatibility. You should instead use
+    `ClusterExpansionSettings.load(fname)`
+
+    Parameters:
+
+    fname: str
+        JSON file where settings are stored
+    """
+    return ClusterExpansionSettings.load(fname)
+
+
+def old_settings_from_json(fname):
     """
     Initialise settings from JSON file.
+    Used for reading old json files from versions < 0.10.2
 
     Parameters:
 

@@ -317,7 +317,7 @@ class BayesianCompressiveSensing(LinearRegression):
     def num_ecis(self):
         return np.count_nonzero(self.gammas)
 
-    def to_dict(self):
+    def todict(self):
         """Convert all parameters to a dictionary."""
         data = {}
 
@@ -335,7 +335,7 @@ class BayesianCompressiveSensing(LinearRegression):
     def save(self):
         """Save the results from file."""
         with open(self.fname, 'w') as outfile:
-            json.dump(self.to_dict(), outfile)
+            json.dump(self.todict(), outfile)
         logger.info("Backup data written to %s", self.fname)
 
     @staticmethod

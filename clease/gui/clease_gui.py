@@ -132,15 +132,15 @@ class WindowFrame(StackLayout):
             fname = selection[0]
 
         data = {}
-        data['settings'] = self.ids.sm.get_screen('Settings').to_dict()
-        data['conc'] = self.ids.sm.get_screen('Concentration').to_dict()
-        data['new_struct'] = self.ids.sm.get_screen('NewStruct').to_dict()
-        data['job_exec'] = self.ids.sm.get_screen('JobExec').to_dict()
-        data['fit_page'] = self.ids.sm.get_screen('Fit').to_dict()
+        data['settings'] = self.ids.sm.get_screen('Settings').todict()
+        data['conc'] = self.ids.sm.get_screen('Concentration').todict()
+        data['new_struct'] = self.ids.sm.get_screen('NewStruct').todict()
+        data['job_exec'] = self.ids.sm.get_screen('JobExec').todict()
+        data['fit_page'] = self.ids.sm.get_screen('Fit').todict()
         mc_header = self.ids.sm.get_screen('MCHeader')
-        data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').to_dict()
-        data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').to_dict()
-        data['meta_dyn_page'] = mc_header.ids.sm.get_screen('MetaDynPage').to_dict()
+        data['mc_main'] = mc_header.ids.sm.get_screen('MCMainPage').todict()
+        data['canonical_mc'] = mc_header.ids.sm.get_screen('MC').todict()
+        data['meta_dyn_page'] = mc_header.ids.sm.get_screen('MetaDynPage').todict()
 
         with open(fname, 'w') as outfile:
             json.dump(data, outfile, separators=(',', ': '), indent=2)

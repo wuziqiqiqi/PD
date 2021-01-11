@@ -110,7 +110,7 @@ def test_spgroup_217(db_name, tmpdir, all_cf):
     bsg.save(fname)
     bsg_loaded = settings_from_json(fname)
     for k, v in bsg.__dict__.items():
-        if k in ['kwargs', 'size', 'atoms_mng', 'trans_matrix', 'cluster_list']:
+        if k in ['kwargs', 'size', 'template_atoms', 'atoms_mng', 'trans_matrix', 'cluster_list']:
             # Skip attributes not expected to be equal after load/save
             continue
         if isinstance(v, np.ndarray):

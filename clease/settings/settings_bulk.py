@@ -25,7 +25,8 @@ def CEBulk(concentration,
            supercell_factor=27,
            db_name='clease.db',
            max_cluster_size=4,
-           max_cluster_dia=(5.0, 5.0, 5.0)):
+           max_cluster_dia=(5.0, 5.0, 5.0),
+           **kwargs):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -71,6 +72,8 @@ def CEBulk(concentration,
     max_cluster_dia: list of int or float
         A list of int or float containing the maximum diameter of clusters
         (in Å)
+
+    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
     """
     structures = {
         'sc': 1,
@@ -98,7 +101,7 @@ def CEBulk(concentration,
     prim = wrap_and_sort_by_position(prim)
 
     settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
-                                        max_cluster_size, max_cluster_dia)
+                                        max_cluster_size, max_cluster_dia, **kwargs)
 
     settings.kwargs.update({
         'crystalstructure': crystalstructure,
@@ -121,7 +124,8 @@ def CECrystal(concentration,
               supercell_factor=27,
               db_name='clease.db',
               max_cluster_size=4,
-              max_cluster_dia=(5.0, 5.0, 5.0)):
+              max_cluster_dia=(5.0, 5.0, 5.0),
+              **kwargs):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
@@ -169,6 +173,8 @@ def CECrystal(concentration,
     max_cluster_dia: list of int or float
         A list of int or float containing the maximum diameter of clusters
         (in Å)
+
+    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
     """
 
     symbols = []
@@ -183,11 +189,12 @@ def CECrystal(concentration,
                    cellpar=cellpar,
                    ab_normal=ab_normal,
                    size=[1, 1, 1],
-                   primitive_cell=True)
+                   primitive_cell=True,
+                   **kwargs)
     prim = wrap_and_sort_by_position(prim)
 
     settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
-                                        max_cluster_size, max_cluster_dia)
+                                        max_cluster_size, max_cluster_dia, **kwargs)
     settings.kwargs.update({
         'basis': deepcopy(basis),
         'spacegroup': spacegroup,

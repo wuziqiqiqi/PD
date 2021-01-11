@@ -23,7 +23,7 @@ class TestJobExecPage(unittest.TestCase):
                 num_text_items += 1
                 item.text = 'Some_text'
 
-        dct = page.to_dict()
+        dct = page.todict()
         self.assertEqual(len(dct.keys()), num_text_items)
 
         page2 = JobExec()

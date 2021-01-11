@@ -32,7 +32,7 @@ class SettingsPage(Screen):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
-    def to_dict(self):
+    def todict(self):
         return {
             'type': self.ids.typeSpinner.text,
             'basis_function': self.ids.bfSpinner.text,
@@ -358,7 +358,7 @@ class SettingsPage(Screen):
             if self.check_user_input() != 0:
                 return
 
-            settingsPage = self.to_dict()
+            settingsPage = self.todict()
             supercell_factor = int(settingsPage['supercell_factor'])
             skew_threshold = int(settingsPage['skew_threshold'])
             size = None

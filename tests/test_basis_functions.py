@@ -117,3 +117,14 @@ def test_get_must_implements(bf_fun, must_implement):
     """Check that subclasses implemented the necessary items."""
     bf = bf_fun(['Au', 'Ag', 'Cu', 'C'])
     getattr(bf, must_implement)()
+
+
+def test_save_load_roundtrip(bf_fun, make_tempfile, compare_dict):
+    file = make_tempfile('bf.json')
+    bf = bf_fun(['Au', 'Ag', 'Cu'])
+    with open(file, 'w') as fd:
+        bf.save(fd)
+    with open(file) as fd:
+        bf_loaded = bf_fun.load(fd)
+    assert type(bf) is type(bf_loaded)
+    compare_dict(bf.todict(), bf_loaded.todict())

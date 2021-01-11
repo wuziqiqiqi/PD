@@ -599,3 +599,21 @@ def test_basis_func_type_errors(bf, au_cu_x_settings):
     settings = au_cu_x_settings  # Shorthand
     with pytest.raises(ValueError):
         settings.basis_func_type = bf
+
+
+@pytest.mark.parametrize('kwargs', [{}, {
+    'max_cluster_dia': np.array([3, 4, 5])
+}, {
+    'include_background_atoms': True,
+    'supercell_factor': 15
+}])
+def test_save_load_roundtrip(kwargs, make_conc, make_settings, make_tempfile, compare_dict):
+    file = make_tempfile('settings.json')
+    basis_elements = [['Au', 'Cu']]
+    conc = make_conc(basis_elements)
+    settings = make_settings(conc, **kwargs)
+
+    settings.save(file)
+    settings_loaded = ClusterExpansionSettings.load(file)
+
+    compare_dict(settings.todict(), settings_loaded.todict())

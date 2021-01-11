@@ -19,7 +19,7 @@ class TestCanonicalMCPage(unittest.TestCase):
                 item.text = 'Some random text'
                 num_fields += 1
 
-        dict_rep = page.to_dict()
+        dict_rep = page.todict()
         self.assertEqual(len(dict_rep), num_fields)
 
         page2 = CanonicalMCPage()

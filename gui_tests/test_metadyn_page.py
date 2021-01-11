@@ -82,7 +82,7 @@ class TestMetaDynPage(unittest.TestCase):
         page.ids.modInput.text = '0.02'
         page.ids.plotIntInput.text = '20'
 
-        dct = page.to_dict()
+        dct = page.todict()
         page2 = MetaDynPage()
         page2.from_dict(dct)
         self.assertEqual(page.ids.tempInput.text, page2.ids.tempInput.text)

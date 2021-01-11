@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from numpy.random import choice
 from scipy.optimize import minimize
+from clease.jsonio import jsonable
 from clease.tools import (remove_redundant_constraints, remove_redundant_equations)
 
 __all__ = ('Concentration',)
@@ -26,6 +27,8 @@ class InvalidConstraintError(Exception):
     pass
 
 
+# pylint: disable=too-many-instance-attributes
+@jsonable('concentration')
 class Concentration:
     """
     Specify concentration ranges of consituting elements for cluster
@@ -88,7 +91,7 @@ class Concentration:
         self.num_concs = len([x for sub in self.basis_elements for x in sub])
         self.fixed_element_constraint_added = False
 
-        if A_lb:
+        if A_lb is not None:
             self.A_lb, self.b_lb = remove_redundant_constraints(np.array(A_lb), np.array(b_lb))
         else:
             self.A_lb = np.empty((0, self.num_concs))
@@ -135,23 +138,23 @@ class Concentration:
             gr_basis_elements.append(self.orig_basis_elements[group[0]])
         return gr_basis_elements
 
-    def to_dict(self):
+    def todict(self) -> dict:
         """Return neescary information to store as JSON."""
         data = {
-            "A_eq": self.A_eq.tolist(),
-            "b_eq": self.b_eq.tolist(),
-            "A_lb": self.A_lb.tolist(),
-            "b_lb": self.b_lb.tolist(),
+            "A_eq": self.A_eq,
+            "b_eq": self.b_eq,
+            "A_lb": self.A_lb,
+            "b_lb": self.b_lb,
             "basis_elements": self.orig_basis_elements,
         }
         if self.grouped_basis is not None:
             data["grouped_basis"] = self.grouped_basis
         return data
 
-    @staticmethod
-    def from_dict(data):
+    @classmethod
+    def from_dict(cls, data):
         """Initialize data from dictionary."""
-        return Concentration(**data)
+        return cls(**data)
 
     def is_valid_conc(self, conc):
         """Check if the concentration is valid."""
@@ -238,8 +241,8 @@ class Concentration:
 
         self.A_lb = np.vstack((self.A_lb, A_lb))
         self.b_lb = np.append(self.b_lb, b_lb)
-        self.A_lb, self.b_lb = remove_redundant_constraints(
-            self.A_lb, self.b_lb, self.A_eq, self.b_eq)
+        self.A_lb, self.b_lb = remove_redundant_constraints(self.A_lb, self.b_lb, self.A_eq,
+                                                            self.b_eq)
         self._get_interbasis_relations_for_given_matrix(self.A_lb)
 
     def set_conc_ranges(self, ranges):

@@ -75,8 +75,8 @@ def bkg_ref_settings(make_tempfile):
             final_atoms = database.get(id=row.key_value_pairs['final_struct_id']).toatoms()
             new_init_atoms = init_atoms[atoms.numbers != 47]
             new_final_atoms = final_atoms[atoms.numbers != 47]
-            new_final_atoms.set_calculator(
-                SinglePointCalculator(new_final_atoms, energy=final_atoms.get_potential_energy()))
+            new_final_atoms.calc = SinglePointCalculator(new_final_atoms,
+                                                         energy=final_atoms.get_potential_energy())
             newstruct.insert_structure(new_init_atoms, new_final_atoms)
 
     yield (settings_bkg, settings_no_bkg)

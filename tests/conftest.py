@@ -1,5 +1,6 @@
 import os
 import pytest
+import numpy as np
 from ase.db import connect
 from ase.calculators.emt import EMT
 from clease.settings import CEBulk, Concentration
@@ -125,3 +126,28 @@ def bc_setting(make_module_tempfile):
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
     yield settings
+
+
+@pytest.fixture
+def compare_dict():
+    """Fixture for comparing dictionaries that should be equal."""
+
+    def _compare_dict(dct1, dct2):
+        assert isinstance(dct1, dict)
+        assert isinstance(dct2, dict)
+
+        assert dct1.keys() == dct2.keys()
+
+        for key in dct1:
+            val1 = dct1[key]
+            val2 = dct2[key]
+            assert type(val1) is type(val2)
+            if isinstance(val1, (np.ndarray)):
+                assert np.allclose(val1, val2)
+            elif isinstance(val1, dict):
+                # Recursively unpack the dictionary
+                _compare_dict(val1, val2)
+            else:
+                assert val1 == val2, type(val1)
+
+    return _compare_dict

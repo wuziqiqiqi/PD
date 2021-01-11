@@ -5,11 +5,14 @@ Cluster Expansion in different conditions.
 """
 from copy import deepcopy
 from typing import List, Dict, Optional, Union
+from distutils.version import LooseVersion
 
 import numpy as np
 from ase.db import connect
 from ase import Atoms
 
+import clease
+from clease.jsonio import jsonable
 from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
@@ -22,8 +25,21 @@ from . import Concentration
 __all__ = ('ClusterExpansionSettings',)
 
 
+@jsonable('ce_settings')
 class ClusterExpansionSettings:
     """Base class for all Cluster Expansion settings."""
+
+    # Keys which are important for saving/loading
+    ARG_KEYS = ('prim_cell', 'concentration')
+    KWARG_KEYS = ('size', 'supercell_factor', 'db_name', 'max_cluster_dia', 'max_cluster_size',
+                  'include_background_atoms', 'basis_func_type')
+
+    # Other keys we want to input back into the loaded object, but after initialization
+    OTHER_KEYS = (
+        'skew_threshold',
+        # kwargs is a bookkeeping variable, for compatibility.
+        # Just contains information about how the factory functions were called.
+        'kwargs')
 
     def __init__(self,
                  prim: Atoms,
@@ -32,15 +48,11 @@ class ClusterExpansionSettings:
                  supercell_factor: Optional[int] = 27,
                  db_name: str = 'clease.db',
                  max_cluster_size: int = 4,
-                 max_cluster_dia: Union[float, List[float]] = 5.0) -> None:
-        self.kwargs = {
-            'size': size,
-            'supercell_factor': supercell_factor,
-            'db_name': db_name,
-            'max_cluster_size': max_cluster_size,
-            'max_cluster_dia': deepcopy(max_cluster_dia)
-        }
-        self._include_background_atoms = False
+                 max_cluster_dia: Union[float, List[float]] = 5.0,
+                 include_background_atoms=False,
+                 basis_func_type='polynomial') -> None:
+
+        self._include_background_atoms = include_background_atoms
         self.trans_matrix = None
         self.concentration = self._get_concentration(concentration)
         self.cluster_list = ClusterList()
@@ -48,6 +60,7 @@ class ClusterExpansionSettings:
         self._check_first_elements()
         self.db_name = db_name
         self.size = to_3x3_matrix(size)
+        self.supercell_factor = supercell_factor
 
         self.prim_cell = prim
         self._tag_prim_cell()
@@ -73,11 +86,14 @@ class ClusterExpansionSettings:
 
         self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
-        unique_element_no_bkg = self.unique_element_without_background()
-        self._basis_func_type = Polynomial(unique_element_no_bkg)
+        self.basis_func_type = basis_func_type
 
         if len(self.basis_elements) != self.num_basis:
             raise ValueError("list of elements is needed for each basis")
+
+        # For storing the settings from the CLEASE factories.
+        # Just for bookkeeping
+        self.kwargs = {}
 
     @property
     def atoms(self) -> Atoms:
@@ -259,14 +275,6 @@ class ClusterExpansionSettings:
         else:
             raise ValueError("basis_function has to be an instance of BasisFunction or a string")
 
-    def to_dict(self) -> Dict:
-        return {
-            'kwargs': self.kwargs,
-            'include_background_atoms': self.include_background_atoms,
-            'skew_threshold': self.skew_threshold,
-            'basis_func_type': self.basis_func_type.todict()
-        }
-
     def _get_concentration(self, concentration):
         if isinstance(concentration, Concentration):
             conc = concentration
@@ -274,7 +282,6 @@ class ClusterExpansionSettings:
             conc = Concentration.from_dict(concentration)
         else:
             raise TypeError("concentration has to be either dict or instance of Concentration")
-        self.kwargs["concentration"] = conc.to_dict()
         return conc
 
     def prim_no_bkg(self):
@@ -457,19 +464,58 @@ class ClusterExpansionSettings:
         if len(set(first_elements)) != num_basis:
             raise ValueError("First element of different basis should not be the same.")
 
-    def save(self, filename):
-        """Write Setting object to a file in JSON format.
+    def todict(self) -> Dict:
+        """Return a dictionary representation of the settings class.
 
-        Parameters:
+        Example:
 
-        filename: str
-            Name of the file to store the necessary settings to initialize
-            the Cluster Expansion calculations.
+            >>> from clease.settings import CEBulk, Concentration
+            >>> conc = Concentration([['Au', 'Cu']])
+            >>> settings = CEBulk(conc, crystalstructure='fcc', a=4.1)
+            >>> dct = settings.todict()  # Get the dictionary representation
         """
+        vars_to_save = self.ARG_KEYS + self.KWARG_KEYS + self.OTHER_KEYS
+        dct = {'clease_version': clease.__version__}
+        for key in vars_to_save:
+            val = getattr(self, key)
+            dct[key] = val
+        return dct
 
-        import json
-        with open(filename, 'w') as outfile:
-            json.dump(self.to_dict(), outfile, indent=2)
+    @classmethod
+    def from_dict(cls, dct):
+        """Load a new ClusterExpansionSettings class from a dictionary representation.
+
+        Example:
+
+            >>> from clease.settings import CEBulk, Concentration, ClusterExpansionSettings
+            >>> conc = Concentration([['Au', 'Cu']])
+            >>> settings = CEBulk(conc, crystalstructure='fcc', a=4.1)
+            >>> dct = settings.todict()  # Get the dictionary representation
+            >>> # Remove the existing settings, perhaps due to being in a new environment
+            >>> del settings
+            >>> # Load in the settins from the dictionary representation
+            >>> settings = ClusterExpansionSettings.from_dict(dct)
+        """
+        dct = deepcopy(dct)
+        version = dct.pop('clease_version', None)
+        if version is None or LooseVersion(version) < LooseVersion('0.10.2'):
+            # For backwards compatibility
+            # pylint: disable=import-outside-toplevel
+            from clease.settings.utils import old_settings_from_json
+            return old_settings_from_json(dct)
+
+        # Get the args and kwargs we expect in our function signature
+        args = [dct.pop(key) for key in cls.ARG_KEYS]
+
+        # Should we allow for missing kwargs keys?
+        kwargs = {key: dct.pop(key) for key in cls.KWARG_KEYS}
+
+        settings = cls(*args, **kwargs)
+
+        # Populate the remaining keys
+        for key, value in dct.items():
+            setattr(settings, key, value)
+        return settings
 
 
 def to_3x3_matrix(size):

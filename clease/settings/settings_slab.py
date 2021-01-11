@@ -17,7 +17,8 @@ def CESlab(conventional_cell: Union[Atoms, str],
            max_cluster_size: Optional[int] = 4,
            max_cluster_dia: Optional[Tuple[float]] = (5.0, 5.0, 5.0),
            supercell_factor: Optional[int] = 27,
-           db_name: Optional[str] = 'clease.db') -> ClusterExpansionSettings:
+           db_name: Optional[str] = 'clease.db',
+           **kwargs) -> ClusterExpansionSettings:
     """
     :param conventional_cell:
         Bulk lattice structure. Note that the unit-cell
@@ -46,6 +47,8 @@ def CESlab(conventional_cell: Union[Atoms, str],
 
     :param db_name:
         Name of the database where structures should be placed
+
+    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
     """
 
     for b in concentration.basis_elements:
@@ -61,7 +64,8 @@ def CESlab(conventional_cell: Union[Atoms, str],
                                         max_cluster_dia=max_cluster_dia,
                                         max_cluster_size=max_cluster_size,
                                         supercell_factor=supercell_factor,
-                                        db_name=db_name)
+                                        db_name=db_name,
+                                        **kwargs)
 
     dict_rep = conventional_cell.todict()
     for k, v in dict_rep.items():
@@ -134,7 +138,7 @@ def remove_vacuum_layers(atoms: Atoms) -> Atoms:
         ASE Atoms object representing the slab with vacuum
     """
     atoms = atoms.copy()
-    tags, levels = get_layers(atoms, miller=(0, 0, 1))
+    tags, _ = get_layers(atoms, miller=(0, 0, 1))
     num_total_layers = np.amax(tags, axis=None) + 1
     vac_layers = []
 

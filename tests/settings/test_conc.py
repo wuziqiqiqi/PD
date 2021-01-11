@@ -244,7 +244,7 @@ def test_interlinked_basis(basis_elements, kwargs, expect, make_conc):
         # All use all 4
         dict(A_lb=[[1, 1]], b_lb=[0.2], A_eq=[[1, 1]], b_eq=[0.2])
     ])
-def test_concentration_dict_round_trip(kwargs):
+def test_concentration_dict_round_trip(kwargs, compare_dict):
     """
     Test that when a concentration object is converted to a dictionary and then used
     to instantiate a new concentration that these two are the same i.e. the round trip
@@ -252,7 +252,7 @@ def test_concentration_dict_round_trip(kwargs):
     """
     basis_elements = [['Au', 'Cu']]
     conc1 = Concentration(basis_elements=basis_elements, **kwargs)
-    conc2 = Concentration.from_dict(conc1.to_dict())
+    conc2 = Concentration.from_dict(conc1.todict())
     assert conc1 == conc2
 
 
@@ -289,7 +289,7 @@ def test_MoScAl(make_conc):
     Concentration(basis_elements=[['Au', 'Cu']]),
     Concentration(basis_elements=[['Au', 'Cu', 'X']]),
     Concentration(basis_elements=[['Au', 'Cu'], ['X']]),
-    Concentration.from_dict(Concentration(basis_elements=[['Au', 'Cu']]).to_dict())
+    Concentration.from_dict(Concentration(basis_elements=[['Au', 'Cu']]).todict())
 ])
 def test_no_constraints(conc):
     # Test getting some random concentrations
@@ -307,3 +307,17 @@ def test_no_constraints(conc):
         min_conc = conc.get_conc_min_component(i)
         assert np.all(min_conc >= 0.0)
         assert np.all(min_conc <= 1.0)
+
+
+@pytest.mark.parametrize('conc', [
+    Concentration(basis_elements=[['Au', 'Cu']]),
+    Concentration(basis_elements=[['Au', 'Cu', 'X']]),
+    Concentration(basis_elements=[['Au', 'Cu'], ['X']]),
+    Concentration(basis_elements=[['Li', 'Ru', 'X'], ['O', 'X']], A_eq=[[0, 3, 0, 0, 0]], b_eq=[1])
+])
+def test_save_load(conc, make_tempfile, compare_dict):
+    file = make_tempfile('conc.json')
+    conc.save(file)
+    conc2 = Concentration.load(file)
+    assert conc == conc2
+    compare_dict(conc.todict(), conc2.todict())

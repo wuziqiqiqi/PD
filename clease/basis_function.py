@@ -3,19 +3,24 @@ from abc import ABC, abstractmethod
 import math
 from typing import List, Dict, Optional, Sequence
 import numpy as np
+from clease.jsonio import jsonable
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
 
-__all__ = ('BasisFunction', 'Polynomial', 'Trigonometric', 'BinaryLinear')
+__all__ = ('BasisFunction', 'Polynomial', 'Trigonometric', 'BinaryLinear',
+           'basis_function_from_dict')
 
 
+@jsonable('basisfunction')
 class BasisFunction(ABC):
     """Base class for all Basis Functions."""
 
+    name = None
+
     def __init__(self, unique_elements: Sequence[str]) -> None:
-        self.name = "generic"
         self.unique_elements = unique_elements
         if self.num_unique_elements < 2:
             raise ValueError("Systems must have more than 1 type of element.")
+        assert self.name, "Need to set a name"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BasisFunction):
@@ -71,9 +76,7 @@ class Polynomial(BasisFunction):
     Physica A: Statistical Mechanics and Its Applications, 128(1-2), 334-350.
     """
 
-    def __init__(self, unique_elements: List[str]):
-        BasisFunction.__init__(self, unique_elements)
-        self.name = "polynomial"
+    name = "polynomial"
 
     def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
@@ -100,9 +103,7 @@ class Trigonometric(BasisFunction):
     266-278.
     """
 
-    def __init__(self, unique_elements: List[str]):
-        BasisFunction.__init__(self, unique_elements)
-        self.name = "trigonometric"
+    name = "trigonometric"
 
     def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
@@ -155,13 +156,14 @@ class BinaryLinear(BasisFunction):
     Journal of Phase Equilibria and Diffusion 37(1) 44-52.
     """
 
+    name = "binary_linear"
+
     def __init__(self, unique_elements: List[str], redundant_element: Optional[str] = "auto"):
+        super().__init__(unique_elements)
         if redundant_element == "auto":
             self.redundant_element = sorted(unique_elements)[0]
         else:
             self.redundant_element = redundant_element
-        BasisFunction.__init__(self, unique_elements)
-        self.name = "binary_linear"
 
     def get_spin_dict(self) -> Dict[str, int]:
         """Define pseudospins for all consistuting elements."""
@@ -212,6 +214,33 @@ class BinaryLinear(BasisFunction):
         """
         Creates a dictionary representation of the class
         """
-        dct_rep = BasisFunction.todict(self)
+        dct_rep = super().todict()
         dct_rep['redundant_element'] = self.redundant_element
         return dct_rep
+
+
+def basis_function_from_dict(dct: dict):
+    """Load a dictionary representation of a basis function.
+
+    Example:
+
+        >>> unique_elements = ['Au', 'Cu']
+        >>> for bf_func in (Polynomial, Trigonometric, BinaryLinear):
+        ...    bf = bf_func(unique_elements)
+        ...    dct = bf.todict()
+        ...    bf_loaded = basis_function_from_dict(dct)
+        ...    # Check that the loaded corresponds to the original
+        ...    assert type(bf) is type(bf_loaded)
+        ...    assert bf.todict() == bf_loaded.todict()
+        >>> # It should also work for the redundant element keyword
+        >>> bf = BinaryLinear(unique_elements, redundant_element='Au')
+        >>> dct = bf.todict()
+        >>> bf_loaded = basis_function_from_dict(dct)
+        >>> # Check that the loaded corresponds to the original
+        >>> assert bf.todict() == bf_loaded.todict()
+    """
+    basis_functions = {bf.name: bf for bf in (Polynomial, Trigonometric, BinaryLinear)}
+
+    name = dct.pop('name')
+
+    return basis_functions[name](**dct)

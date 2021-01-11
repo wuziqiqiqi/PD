@@ -40,7 +40,7 @@ class TestActionBar(unittest.TestCase):
         conc_usr_input.return_value = 0
 
         # Just verify that this method runs without raising errors. Currently
-        # it is up to each page to check that the to_dict method works properly
+        # it is up to each page to check that the todict method works properly
         fname = 'session_save.json'
         wf.current_session_file = fname
         wf.save_session_to_current_file()

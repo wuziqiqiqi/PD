@@ -83,8 +83,8 @@ def test_to_dict(bayes, bayes_initialized):
     vars_to_save = ("inv_variance", 'gammas', 'shape_var', 'rate_var', 'shape_lamb', 'lamb',
                     'maxiter', 'output_rate_sec', 'select_strategy', 'noise', 'lamb_opt_start')
 
-    dct1 = bayes.to_dict()
-    dct2 = bayes_initialized.to_dict()
+    dct1 = bayes.todict()
+    dct2 = bayes_initialized.todict()
     for var in vars_to_save:
         assert var in dct1
         assert var in dct2

@@ -25,6 +25,7 @@ from . import tools
 from . import template_atoms
 from . import concentration
 from . import db_util
+from . import jsonio
 # Import this global, so it can be disabled with "clease.REQUIRE_COMPATIBLE_TABLE_VERISON = False"
 from .db_util import toggle_require_compatible_table_version
 
@@ -46,9 +47,10 @@ def CESlab(*args, **kwargs):
     return settings.CESlab(*args, **kwargs)
 
 
-ADDITIONAL = ('settings', 'basis_function', 'corr_func', 'new_struct', 'NewStructures', 'cluster',
-              'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk', 'CECrystal', 'CESlab',
-              'concentration', 'db_util', 'toggle_require_compatible_table_version')
+ADDITIONAL = ('settings', 'basis_function', 'jsonio', 'corr_func', 'new_struct', 'NewStructures',
+              'cluster', 'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk',
+              'CECrystal', 'CESlab', 'concentration', 'db_util',
+              'toggle_require_compatible_table_version')
 
 __all__ = (version.__all__ + template_filters.__all__ + atoms_manager.__all__ +
            concentration.__all__ + evaluate.__all__ + convexhull.__all__ + data_manager.__all__ +

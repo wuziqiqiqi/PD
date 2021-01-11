@@ -83,7 +83,7 @@ class MCMainPage(Screen):
             self.eci_file = filename[0]
         self.dismiss_popup()
 
-    def to_dict(self):
+    def todict(self):
         return {'size': self.ids.sizeInput.text, 'eci_file': self.ids.eciFileInput.text}
 
     def from_dict(self, dct):

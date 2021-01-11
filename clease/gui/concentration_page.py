@@ -204,7 +204,7 @@ class ConcentrationPage(Screen):
         msg = "Applied Elements and Grouped basis fields."
         App.get_running_app().root.ids.status.text = msg
 
-    def to_dict(self):
+    def todict(self):
         A_lb, rhs_lb, A_eq, rhs_eq = self.get_constraint_matrices()
         data = {
             'elements': self.ids.elementInput.text,

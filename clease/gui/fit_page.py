@@ -516,7 +516,7 @@ class FitPage(Screen):
         self.update_energy_plot(self.e_dft, self.e_ce)
         self.update_eci_plot(self.eci)
 
-    def to_dict(self):
+    def todict(self):
         return {
             'eci_file': self.ids.eciFileInput.text,
             'db_select_cond': self.ids.dbSelectCondInput.text,

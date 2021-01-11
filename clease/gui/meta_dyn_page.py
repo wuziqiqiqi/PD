@@ -367,7 +367,7 @@ class MetaDynPage(Screen):
                                update_interval=update_int)
         Thread(target=runner.run).start()
 
-    def to_dict(self):
+    def todict(self):
         return {
             'temperature': self.ids.tempInput.text,
             'collective_var': self.ids.varSpinner.text,

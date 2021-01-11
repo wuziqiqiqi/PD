@@ -22,7 +22,7 @@ class JobExec(Screen):
                              size_hint=(0.9, 0.9))
         self._pop_up.open()
 
-    def to_dict(self):
+    def todict(self):
         """Return content as dict."""
         return {
             'cmd': self.ids.cmdInput.text,
