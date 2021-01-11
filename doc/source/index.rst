@@ -55,6 +55,7 @@ The use of CLEASE is best learned through tutorials:
    :maxdepth: 1
    :caption: Contents:
 
+   releasenotes
    ce_aucu
    metadynamics_sampling
    ce_aucu_gui_tutorial
