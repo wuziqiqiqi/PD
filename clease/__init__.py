@@ -8,14 +8,14 @@ from .convexhull import *
 from .data_manager import *
 from .structure_mapper import *
 from .evaluate import *
-from .new_struct import NewStructures  # Promotion for convenience
+from .structgen.new_struct import NewStructures  # Promotion for convenience
 from .svd import *
 from .concentration import *
 from .regression_old import *
 from .cluster_coverage import *
 
 from . import cluster
-from . import new_struct
+from . import structgen
 from . import corr_func
 from . import settings
 from . import basis_function
@@ -47,7 +47,7 @@ def CESlab(*args, **kwargs):
     return settings.CESlab(*args, **kwargs)
 
 
-ADDITIONAL = ('settings', 'basis_function', 'jsonio', 'corr_func', 'new_struct', 'NewStructures',
+ADDITIONAL = ('settings', 'basis_function', 'jsonio', 'corr_func', 'structgen', 'NewStructures',
               'cluster', 'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk',
               'CECrystal', 'CESlab', 'concentration', 'db_util',
               'toggle_require_compatible_table_version')

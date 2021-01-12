@@ -16,3 +16,6 @@ Git master branch
   :func:`save` and :func:`load` functions.
 
 * Tests now automatically run in the pytest temporary directory.
+
+* Moved ``new_struct`` and ``structure_generator`` into the ``structgen`` module.
+  These should now be imported from here, instead.

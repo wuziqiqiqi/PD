@@ -9,7 +9,7 @@ from ase.spacegroup import crystal
 from clease.settings import CECrystal, settings_from_json, Concentration
 from clease.corr_func import CorrFunction
 from clease import NewStructures
-from clease.new_struct import MaxAttemptReachedError
+from clease.structgen import MaxAttemptReachedError
 from clease.tools import wrap_and_sort_by_position
 
 # If this is True, the JSON file containing the correlation functions

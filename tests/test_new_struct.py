@@ -118,7 +118,7 @@ def test_determine_generation_number(db_name):
         assert gen == action['expect'], msg
 
 
-@patch('clease.new_struct.GSStructure')
+@patch('clease.structgen.new_struct.GSStructure')
 def test_num_generated_structures(gs_mock, db_name):
 
     conc = Concentration(basis_elements=[['Au', 'Cu']])

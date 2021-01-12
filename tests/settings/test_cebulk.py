@@ -19,7 +19,7 @@ from ase.build import bulk, make_supercell
 from clease.settings import CEBulk, settings_from_json, Concentration, ClusterExpansionSettings
 from clease import NewStructures, Evaluate
 from clease.corr_func import CorrFunction
-from clease.new_struct import MaxAttemptReachedError
+from clease.structgen import MaxAttemptReachedError
 from clease.tools import update_db
 from clease.basis_function import (Polynomial, Trigonometric, BinaryLinear)
 
