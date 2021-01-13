@@ -4,6 +4,7 @@ import math
 import time
 import logging
 from copy import deepcopy
+from abc import ABC, abstractmethod
 
 import numpy as np
 from numpy.random import choice
@@ -27,7 +28,7 @@ __all__ = ('StructureGenerator', 'GSStructure', 'MetropolisTrajectory', 'ProbeSt
 
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
-class StructureGenerator:
+class StructureGenerator(ABC):
     """Base class for generating new strctures."""
 
     def __init__(self,
@@ -38,7 +39,7 @@ class StructureGenerator:
                  num_temp=5,
                  num_steps_per_temp=10000):
         if not isinstance(settings, ClusterExpansionSettings):
-            raise TypeError("settings must be CEBulk or CECrystal " "object")
+            raise TypeError(f"Settings must be a ClusterExpansionSettings object, got {settings}")
 
         self.settings = settings
         self.trans_matrix = settings.trans_matrix
@@ -158,6 +159,7 @@ class StructureGenerator:
         cf_dict = self.atoms.calc.get_cf()
         self.cf_generated_structure = deepcopy(cf_dict)
 
+    @abstractmethod
     def _accept(self):
         pass
 
