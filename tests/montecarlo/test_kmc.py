@@ -1,7 +1,7 @@
 import os
 import pytest
 from clease.montecarlo.observers import CorrelationFunctionObserver, EntropyProductionRate
-from clease.montecarlo import KineticMonteCarlo, SSTEBarrier, NeighbourSwap
+from clease.montecarlo import KineticMonteCarlo, BEPBarrier, NeighbourSwap
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
 
@@ -22,7 +22,7 @@ def test_kmc(db_name):
 
     dilute_barriers = {'Au': 0.5, 'Cu': 0.4}
 
-    barrier = SSTEBarrier(dilute_barriers)
+    barrier = BEPBarrier(dilute_barriers)
 
     # Insert some Cu
     for i in range(4):

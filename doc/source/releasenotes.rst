@@ -7,6 +7,8 @@ Release notes
 Git master branch
 =================
 
+* `clease.montecarlo.SSTEBarrier` renamed to `clease.montecarlo.BEPBarrier`
+
 * Added release notes
 
 * Added the :mod:`clease.jsonio` module. This has been applied to the

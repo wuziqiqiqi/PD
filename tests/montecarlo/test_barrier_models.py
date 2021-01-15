@@ -1,5 +1,5 @@
 import numpy as np
-from clease.montecarlo import SSTEBarrier
+from clease.montecarlo import BEPBarrier
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
 from clease.tools import SystemChange
@@ -21,7 +21,7 @@ def test_loc_environ_barrier(db_name):
 
     dilute_barriers = {'Au': 0.5, 'Cu': 0.4}
 
-    barrier = SSTEBarrier(dilute_barriers)
+    barrier = BEPBarrier(dilute_barriers)
 
     # Insert some Cu
     for i in range(4):

@@ -3,7 +3,7 @@ from abc import ABCMeta
 from ase import Atoms
 from clease.tools import SystemChange
 
-__all__ = ('BarrierModel', 'SSTEBarrier')
+__all__ = ('BarrierModel', 'BEPBarrier')
 
 
 # pylint: disable=too-few-public-methods
@@ -17,26 +17,36 @@ class BarrierModel(metaclass=ABCMeta):
 
 
 # pylint: disable=too-few-public-methods
-class SSTEBarrier(BarrierModel):
+class BEPBarrier(BarrierModel):
     """
-    SSTE is short for Solid Solution Total Energy. It is a simple barrier
+    BEP barrier implements the Bell-Evans-Polanyi model. It is a simple barrier
     model where the barrier is modelled by the dilute barrier, corrected by
-    the change in total energy.
+    the change in total energy before and after the jump.
 
-    E_a = Q_s + (E_2 - E_1)/2
+    E_a = Q_s + alpha*(E_2 - E_1)
 
     where E_1 is the total energy of starting configuration and E_2 is the
     total energy of the end configuration. Q_s is a constant that depends
     on the species. If an isolated solute is diffusing in a host material
-    E_1 = E_2. Thus, Q_s represents the barrier of an isolated solute.
+    E_1 = E_2. Thus, Q_s represents the barrier of an isolated solute. References
+
+    [1] https://en.wikipedia.org/wiki/Bell%E2%80%93Evans%E2%80%93Polanyi_principle
+    [2] Andersen, M., Panosetti, C. and Reuter, K., 2019.
+        A practical guide to surface kinetic Monte Carlo simulations.
+        Frontiers in chemistry, 7, p.202. DOI: https://doi.org/10.3389/fchem.2019.00202
 
     :param dilute_barrier: Dictionary representing the dilute barrier for
         each species. Example {'Al': 0.05, 'Mg': 0.03}
+    :param alpha: Scalar quantity between 0 and 1 that characterises the position
+        of the transition state along the reaction coordinate. Default is 0.5.
+        Note as alpha is the same for all jumps, it must be viewed as
+        controlling the average barrier position.
     """
 
-    def __init__(self, dilute_barrier: Dict[str, float]):
+    def __init__(self, dilute_barrier: Dict[str, float], alpha: float = 0.5):
         super().__init__()
         self.dilute_barrier = dilute_barrier
+        self.alpha = alpha
 
     def __call__(self, atoms: Atoms, system_changes: Sequence[SystemChange]) -> float:
         E1 = atoms.calc.updater.get_energy()
@@ -51,5 +61,5 @@ class SSTEBarrier(BarrierModel):
         assert old_symb == 'X' or new_symb == 'X'
 
         jumping_symb = old_symb if old_symb != 'X' else new_symb
-        Ea = self.dilute_barrier[jumping_symb] + 0.5 * (E2 - E1)
+        Ea = self.dilute_barrier[jumping_symb] + self.alpha * (E2 - E1)
         return Ea
