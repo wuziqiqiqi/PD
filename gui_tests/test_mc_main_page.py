@@ -47,7 +47,7 @@ class TestMCMainPage(unittest.TestCase):
         page.ids.sizeInput.text = str(size)
         page.ids.sizeInput.dispatch('on_text_validate')
 
-        lengths_ang = atoms.get_cell_lengths_and_angles()
+        lengths_ang = atoms.cell.cellpar()
         length_str = page.mc_cell_lengths
         remove = ['a:', 'b:', 'c:', 'Å']
         for item in remove:

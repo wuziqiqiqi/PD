@@ -160,7 +160,7 @@ def test_fixed_vol(prim_cell):
     conventional = [4.05, 4.05, 4.05, 90, 90, 90]
     for atoms in templates:
         niggli_reduce(atoms)
-        lengths_ang = atoms.get_cell_lengths_and_angles()
+        lengths_ang = atoms.cell.cellpar()
         if np.allclose(lengths_ang, conventional):
             found_conventional = True
             break

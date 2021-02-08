@@ -385,9 +385,9 @@ class ClusterExpansionSettings:
     def _store_prim_cell(self):
         """Store unit cell to the database. Returns the id of primitive cell in the database"""
         with connect(self.db_name) as db:
-            shape = self.prim_cell.get_cell_lengths_and_angles()
+            shape = self.prim_cell.cell.cellpar()
             for row in db.select(name='primitive_cell'):
-                uc_shape = row.toatoms().get_cell_lengths_and_angles()
+                uc_shape = row.toatoms().cell.cellpar()
                 if np.allclose(shape, uc_shape):
                     return row.id
 

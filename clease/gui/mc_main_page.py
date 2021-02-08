@@ -55,7 +55,7 @@ class MCMainPage(Screen):
         if atoms is None:
             return
 
-        info = atoms.get_cell_lengths_and_angles()
+        info = atoms.cell.cellpar()
 
         length_str = f"a: {int(info[0])} Å b: {int(info[1])} Å "
         length_str += f"c: {int(info[1])} Å"
