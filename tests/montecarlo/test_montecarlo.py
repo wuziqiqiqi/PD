@@ -42,6 +42,9 @@ def get_example_mc_system(db_name):
                       size=[2, 2, 2])
 
     atoms = settings.atoms.copy() * (3, 3, 3)
+    # Insert a few different symbols
+    atoms.symbols = 'Au'
+    atoms.symbols[:10] = 'Cu'
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
@@ -118,10 +121,6 @@ def test_run_heavy(db_name):
 def test_run(db_name):
     atoms = get_example_mc_system(db_name)
 
-    # Insert a few elements
-    for i in range(10):
-        atoms[i].symbol = 'Cu'
-
     E = []
     for T in [1000, 500, 100]:
         mc = Montecarlo(atoms, T)
@@ -164,9 +163,6 @@ def test_corr_func_observer(db_name):
 def test_snapshot(db_name, make_tempfile):
     atoms = get_example_mc_system(db_name)
 
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
-
     fname = make_tempfile('snapshot.traj')
     obs = Snapshot(atoms, fname=fname)
 
@@ -184,8 +180,6 @@ def test_snapshot(db_name, make_tempfile):
 def test_energy_evolution(db_name, make_tempfile):
     print(db_name)
     atoms = get_example_mc_system(db_name)
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
 
     mc = Montecarlo(atoms, 600)
     obs = EnergyEvolution(mc)
@@ -211,9 +205,9 @@ def test_energy_evolution(db_name, make_tempfile):
 def test_site_order_parameter(db_name):
     atoms = get_example_mc_system(db_name)
 
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
-    atoms[2].symbol = 'Cu'
+    # Manually change some symbols
+    atoms.symbols = 'Au'
+    atoms.symbols[:3] = 'Cu'
 
     obs = SiteOrderParameter(atoms)
     mc = Montecarlo(atoms, 600)
@@ -464,7 +458,6 @@ def test_acceptance_rate(db_name):
 
     # Try to use as observer in MC
     atoms = get_example_mc_system(db_name)
-    atoms.symbols[:3] = 'Cu'
 
     # Use very high temp to make sure that moves are accepted
     mc = Montecarlo(atoms, 50000)
@@ -492,3 +485,19 @@ def test_mc_mixed_ensemble(db_name):
 
     assert all(s in ['Si', 'X'] for s in atoms.symbols[fixed_conc])
     assert all(s in ['O', 'C'] for s in atoms.symbols[fixed_chem_pot])
+
+
+def test_mc_reset_step_counter(db_name):
+    atoms = get_example_mc_system(db_name)
+    mc = Montecarlo(atoms, 200)
+
+    assert mc.current_step == 0
+    mc.run(5)
+    assert mc.current_step == 5
+    # If we didn't reset step counter,
+    # we couldn't be able to get a smaller step count
+    mc.run(3)
+    assert mc.current_step == 3
+    # pylint: disable=protected-access
+    mc._reset_internal_counters()
+    assert mc.current_step == 0

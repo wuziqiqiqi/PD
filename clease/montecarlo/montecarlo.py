@@ -74,10 +74,15 @@ class Montecarlo:
             obs.reset()
 
         self.filter.reset()
-        self.current_step = 0
-        self.num_accepted = 0
+        self._reset_internal_counters()
+
         self.mean_energy.clear()
         self.energy_squared.clear()
+
+    def _reset_internal_counters(self):
+        """Reset the step counters which are used internally"""
+        self.current_step = 0
+        self.num_accepted = 0
 
     def add_bias(self, potential: BiasPotential):
         """Add a new bias potential.
@@ -112,7 +117,8 @@ class Montecarlo:
         self.generator.initialize(self.atoms)
 
         self.update_current_energy()
-
+        # Reset the internal step counters
+        self._reset_internal_counters()
         # Atoms object should have attached calculator
         # Add check that this is show
         self._mc_step()
