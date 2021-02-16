@@ -21,3 +21,6 @@ Git master branch
 
 * Moved ``new_struct`` and ``structure_generator`` into the ``structgen`` module.
   These should now be imported from here, instead.
+
+* Fixed a bug, where the current step counter in the :class:`clease.montecarlo.Montecarlo` class
+  would not be reset upon starting a new run.
