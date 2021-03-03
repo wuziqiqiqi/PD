@@ -4,8 +4,8 @@
 Release notes
 =============
 
-Git master branch
-=================
+0.10.2
+=======
 
 * `clease.montecarlo.SSTEBarrier` renamed to `clease.montecarlo.BEPBarrier`
 
