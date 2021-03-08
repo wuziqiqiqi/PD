@@ -4,7 +4,7 @@ import math
 import time
 import logging
 from copy import deepcopy
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import numpy as np
 from numpy.random import choice
@@ -159,9 +159,9 @@ class StructureGenerator(ABC):
         cf_dict = self.atoms.calc.get_cf()
         self.cf_generated_structure = deepcopy(cf_dict)
 
-    @abstractmethod
-    def _accept(self):
-        pass
+    def _accept(self) -> bool:
+        """Determine if we accept the last change."""
+        return True
 
     def _estimate_temp_range(self):
         return 1.0, 1e5
