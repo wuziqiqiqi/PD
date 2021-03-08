@@ -632,3 +632,13 @@ def test_remove_redundant_equations(test):
     A, b = remove_redundant_equations(test['A'], test['b'])
     assert np.allclose(A, test['A_expect'])
     assert np.allclose(b, test['b_expect'])
+
+
+def test_cubicness():
+    atoms1 = bulk('Na', cubic=False)
+    c1 = tools.get_cubicness(atoms1)
+
+    atoms2 = bulk('Na', cubic=True)
+    c2 = tools.get_cubicness(atoms2)
+    assert c2 == pytest.approx(0)
+    assert c2 < c1

@@ -260,3 +260,57 @@ def test_unique_name(db_name):
         assert answer == kvp['name']
         assert 1 == kvp['gen']
         db.write(atoms, kvp)
+
+
+@pytest.fixture
+def new_struct_factory(db_name):
+
+    def _new_struct_factory(basis_elements, crystalstructure, **kwargs):
+        conc = Concentration(basis_elements=basis_elements)
+        settings = CEBulk(conc, crystalstructure=crystalstructure, db_name=db_name, **kwargs)
+        return NewStructures(settings)
+
+    return _new_struct_factory
+
+
+@pytest.mark.parametrize('crystalstructure', ['sc', 'fcc', 'bcc'])
+def test_make_conc_extrema_one_basis(crystalstructure, new_struct_factory):
+    basis_elements = [['Au', 'Ag']]
+    new_struct = new_struct_factory(basis_elements, crystalstructure, a=4)
+    db_name = new_struct.settings.db_name
+    con = connect(db_name)
+    # Ensure id's don't exist already
+    for i in (2, 3):
+        with pytest.raises(KeyError):
+            con.get(id=i)
+    new_struct.generate_conc_extrema()
+    # Select the extrema points
+    for i in (2, 3):
+        atoms = con.get(id=i).toatoms()
+        sym_set = set(atoms.symbols)
+        assert len(atoms) == 1
+        assert len(sym_set) == 1
+        assert sym_set.issubset({'Au', 'Ag'})
+
+
+def test_make_conc_extrema_two_basis(new_struct_factory):
+    basis_elements = [['Au', 'Ag'], ['Fe']]
+    crystalstructure = 'rocksalt'
+    new_struct = new_struct_factory(basis_elements, crystalstructure, a=4)
+
+    db_name = new_struct.settings.db_name
+    con = connect(db_name)
+    # Ensure id's don't exist already
+    for i in (2, 3):
+        with pytest.raises(KeyError):
+            con.get(id=i)
+    new_struct.generate_conc_extrema()
+    # Select the extrema points
+    for i in (2, 3):
+        atoms = con.get(id=i).toatoms()
+        sym_set = set(atoms.symbols)
+        # We should be able to make an extrema with just 2 elements
+        assert len(atoms) == 2
+        assert len(sym_set) == 2
+        assert 'Fe' in sym_set  # We only have 1 element in the second basis, always there
+        assert sym_set.issubset({'Au', 'Ag', 'Fe'})

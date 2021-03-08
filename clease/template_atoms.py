@@ -1,7 +1,10 @@
 """Class containing a manager for creating template atoms."""
 from itertools import product
+from typing import Iterator, List
+from contextlib import contextmanager
 import numpy as np
 from numpy.random import shuffle
+import ase
 from ase.build import make_supercell
 from clease import SkewnessFilter, EquivalentCellsFilter
 from clease.template_filters import CellFilter, AtomsFilter
@@ -191,28 +194,60 @@ class TemplateAtoms:
                          f"repeating of the unit cells. Scale factors found "
                          f"{size_factor}")
 
-    def get_all_templates(self):
+    def get_all_templates(self) -> List[ase.Atoms]:
         """Return a list with all templates."""
-        if self.size is not None:
-            return [self.get_template_with_given_size(self.size)]
+        return list(self.iterate_all_templates())
 
+    def iterate_all_templates(self, max_per_size: int = None) -> Iterator[ase.Atoms]:
+        """Get ass possible templates in an iterator.
+
+        :param max_per_size: Maximum number of iterations per size.
+            Optional. If None, then all sizes will be used.
+        """
+        if self.size is not None:
+            yield self.get_template_with_given_size(self.size)
+            return
+
+        for size in range(1, self.supercell_factor):
+            for ii, template in enumerate(self._iterate_templates_at_size(size)):
+                # Check if we limit the number of tempaltes per size
+                if max_per_size is not None and ii >= max_per_size:
+                    break
+                yield template
+
+    def _iterate_templates_at_size(self, size: int) -> Iterator[ase.Atoms]:
+        """Get all templates at a given size, i.e.
+        a size at a given supercell factor
+        """
         cells = []
-        templates = []
         equiv_filter = EquivalentCellsFilter(cells)
-        self.add_cell_filter(equiv_filter)
         ucell = self.prim_cell.get_cell()
-        for vol in range(1, self.supercell_factor):
-            matrices = all_integer_transform_matrices(vol)
-            for mat in matrices:
-                cell = mat.dot(ucell)
+
+        matrices = all_integer_transform_matrices(size)
+
+        for mat in matrices:
+            cell = mat.dot(ucell)
+            new_atoms_flag = False  # Did we create a new template?
+            with self.filter_context(equiv_filter):
                 if self.is_valid(cell=cell):
                     at = make_supercell(self.prim_cell, mat)
                     if self.is_valid(atoms=at):
                         at.info['size'] = mat.tolist()
                         cells.append(cell)
-                        templates.append(at)
-        self.remove_filter(equiv_filter)
-        return templates
+                        new_atoms_flag = True
+            # Ensure we remove the filter again, so it does not affect the
+            # global filters when processing these atoms outside
+            # of this function
+            if new_atoms_flag:
+                yield at
+
+    @contextmanager
+    def filter_context(self, custom_filter):
+        try:
+            self.add_cell_filter(custom_filter)
+            yield
+        finally:
+            self.remove_filter(custom_filter)
 
     def get_all_scaled_templates(self):
         """

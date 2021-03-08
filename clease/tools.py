@@ -10,6 +10,7 @@ from typing import Iterable as tIterable
 from typing_extensions import Protocol
 import numpy as np
 from numpy.random import sample, shuffle
+import ase
 from ase.db import connect
 from ase.db.core import parse_selection
 from scipy.spatial import cKDTree as KDTree
@@ -1055,6 +1056,19 @@ def remove_redundant_equations(A, b, tol=1e-6):
     R_trimmed = np.array(R_trimmed).T
     A_trimmed = Q.dot(R_trimmed).T
     return A_trimmed.copy(), b[indices]
+
+
+def get_cubicness(atoms: ase.Atoms) -> float:
+    """Get the 'cubicness' of an atoms object,
+    the closer to 0, the more cubic the cell is."""
+    cell = np.array(atoms.get_cell())
+    # Normalize the cell
+    cell /= atoms.get_volume()
+    # Get diag of cell, and broadcast back into (3x3)
+    diag = np.diag(np.diag(cell))
+    # Take absolute value, as determinants can be negative.
+    # We just need it to be as close to 0 as possible
+    return abs(np.linalg.det(cell - diag))
 
 
 class SystemChange(NamedTuple):

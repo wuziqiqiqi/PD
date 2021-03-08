@@ -333,7 +333,6 @@ class ClusterExpansionSettings:
 
     def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
-        self.size = template.info['size']
         self.atoms_mng.atoms = template
 
     def set_active_template(self, atoms=None):
@@ -419,11 +418,6 @@ class ClusterExpansionSettings:
             raise TypeError("max_cluster_dia is of wrong type, got: {}".format(
                 type(max_cluster_dia)))
         return mcd.round(decimals=3)
-
-    def _get_atoms(self):
-        """Create atoms with a user-specified size."""
-        atoms = self.prim_cell.copy() * self.size
-        return wrap_and_sort_by_position(atoms)
 
     def create_cluster_list_and_trans_matrix(self):
         at_cpy = self.atoms

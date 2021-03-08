@@ -4,6 +4,7 @@ import os
 import pytest
 import numpy as np
 from unittest.mock import patch
+import ase
 from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.build import niggli_reduce
@@ -100,8 +101,19 @@ def prim_cell():
     return bulk("Cu", a=4.05, crystalstructure='fcc')
 
 
-def test_fcc(prim_cell):
-    template_atoms = TemplateAtoms(prim_cell, supercell_factor=27, size=None, skew_threshold=4)
+@pytest.fixture
+def template_atoms_factory(prim_cell):
+
+    def _template_atoms_factory(**kwargs):
+        default_settings = {'supercell_factor': 27, 'size': None, 'skew_threshold': 4}
+        default_settings.update(**kwargs)
+        return TemplateAtoms(prim_cell, **default_settings)
+
+    return _template_atoms_factory
+
+
+def test_fcc(template_atoms_factory):
+    template_atoms = template_atoms_factory()
     templates = template_atoms.get_all_scaled_templates()
     ref = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 3], [2, 2, 4], [2, 2, 5], [2, 3, 3], [2, 3, 4],
            [3, 3, 3]]
@@ -150,9 +162,8 @@ def test_dist_filter():
     assert f(cell)
 
 
-def test_fixed_vol(prim_cell):
-    template_atoms = TemplateAtoms(prim_cell, supercell_factor=27, size=None, skew_threshold=4)
-
+def test_fixed_vol(template_atoms_factory):
+    template_atoms = template_atoms_factory()
     templates = template_atoms.get_fixed_volume_templates(num_prim_cells=4, num_templates=100)
 
     # Conform that the conventional cell is present
@@ -197,8 +208,8 @@ def test_fixed_vol_with_conc_constraint(mocker, db_name):
             assert len(templates) == 0
 
 
-def test_remove_atoms_filter(prim_cell):
-    template_atoms = TemplateAtoms(prim_cell, supercell_factor=3, size=None, skew_threshold=4)
+def test_remove_atoms_filter(template_atoms_factory):
+    template_atoms = template_atoms_factory(supercell_factor=3)
 
     f = NumAtomsFilter(16)
     template_atoms.add_atoms_filter(f)
@@ -207,8 +218,8 @@ def test_remove_atoms_filter(prim_cell):
     assert len(template_atoms.atoms_filters) == 0
 
 
-def test_remove_cell_filter(prim_cell):
-    template_atoms = TemplateAtoms(prim_cell, supercell_factor=3, size=None, skew_threshold=4)
+def test_remove_cell_filter(template_atoms_factory):
+    template_atoms = template_atoms_factory(supercell_factor=3)
 
     num_cell_filters = len(template_atoms.cell_filters)
     f = DummyCellFilter()
@@ -218,8 +229,8 @@ def test_remove_cell_filter(prim_cell):
     assert len(template_atoms.cell_filters) == num_cell_filters
 
 
-def test_set_skewness_threshold(prim_cell):
-    template_atoms = TemplateAtoms(prim_cell, skew_threshold=4)
+def test_set_skewness_threshold(template_atoms_factory):
+    template_atoms = template_atoms_factory()
 
     # Set the skewthreshold
     template_atoms.skew_threshold = 100
@@ -247,3 +258,38 @@ def test_cell_direction_filter(db_name):
     for temp in templates:
         _, _, a3 = temp.get_cell()
         assert np.allclose(a3[:2], [0.0, 0.0])
+
+
+def test_iterate_one_template(template_atoms_factory):
+    template_atoms = template_atoms_factory(supercell_factor=9)
+    iterator = template_atoms.iterate_all_templates(max_per_size=1)
+    # We should only ever have 1 size per template
+    atoms_prev = next(iterator)
+    count = 1
+    for atoms_new in iterator:
+        # Number of atoms should increase for each iteration
+        assert len(atoms_new) > len(atoms_prev)
+        count += 1
+        atoms_prev = atoms_new
+    # We won't necessarily get 1 template per size
+    assert count > 1
+    # This comes from checking the output.
+    # if the algorithm changes in the future, this _may_ change
+    # or if the settings in the test change
+    assert count == 4
+
+
+def test_iterate_all_templates(template_atoms_factory):
+    template_atoms = template_atoms_factory(supercell_factor=6)
+
+    count = 0
+    for atoms_new in template_atoms.iterate_all_templates():
+        assert isinstance(atoms_new, ase.Atoms)
+        count += 1
+    assert count > 1
+    # Check the explicit method
+    assert count == len(template_atoms.get_all_templates())
+    # This comes from checking the output.
+    # if the algorithm changes in the future, this _may_ change
+    # or if the settings in the test change
+    assert count == 3

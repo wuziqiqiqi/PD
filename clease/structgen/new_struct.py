@@ -37,6 +37,10 @@ max_fail = 10
 __all__ = ('NewStructures', 'MaxAttemptReachedError')
 
 
+class NotValidTemplateException(Exception):
+    """The template did not yield a valid atoms object"""
+
+
 class MaxAttemptReachedError(Exception):
     """Raised when number of try reaches 10."""
 
@@ -506,9 +510,20 @@ class NewStructures:
             start += len(basis)
 
         for indx in product(*indx_in_each_basis):
-            atoms = self._get_struct_at_conc(conc_type="max", index=indx)
-            atoms = wrap_and_sort_by_position(atoms)
-            self.insert_structure(init_struct=atoms)
+            # We only iterate 1 template per size, as any other template with the same size
+            # would only be able to accomodate the same concentrations,
+            # so we need to increase the size anyway in case of an error.
+            for template in self.settings.template_atoms.iterate_all_templates(max_per_size=1):
+                self.settings.set_active_template(template)
+                try:
+                    atoms = self._get_struct_at_conc(conc_type="max", index=indx)
+                except NotValidTemplateException:
+                    continue
+                atoms = wrap_and_sort_by_position(atoms)
+                self.insert_structure(init_struct=atoms)
+                break
+            else:
+                raise RuntimeError(f'Did not find a valid template for index {indx}')
 
     def generate_metropolis_trajectory(self,
                                        atoms: Optional[Atoms] = None,
@@ -561,6 +576,15 @@ class NewStructures:
         num_atoms_in_basis = [len(indices) for indices in self.settings.index_by_basis]
         num_to_insert = conc.conc_in_int(num_atoms_in_basis, x)
         atoms = self._random_struct_at_conc(num_to_insert)
+
+        if conc_type in ['min', 'max']:
+            # Check how close we got, and see if we got to an acceptable range
+            new_conc = conc.get_concentration_vector(self.settings.index_by_basis, atoms)
+            # check if we're close enough
+            # TODO: Allow a tolerance here
+            if not np.allclose(new_conc, x):
+                raise NotValidTemplateException(('Did not find an atoms with a '
+                                                 'satisfactory concentration.'))
 
         return atoms
 
@@ -756,7 +780,11 @@ class NewStructures:
         kvp['name'] = formula_unit + f"_{suffix}"
         kvp['formula_unit'] = formula_unit
         kvp['struct_type'] = 'initial'
-        kvp['size'] = nested_list2str(self.settings.size)
+        size = self.settings.size
+        if size is not None:
+            # We do not store the size if it is None
+            size = nested_list2str(self.settings.size)
+            kvp['size'] = size
         return kvp
 
     def _get_formula_unit(self, atoms: Atoms) -> str:
