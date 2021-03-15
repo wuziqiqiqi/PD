@@ -36,7 +36,13 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         rmin = -10
         rmax = 10
     linear_fit = np.arange(rmin - 10, rmax + 10, 1)
-    cv_name = evaluate.scoring_scheme.upper()
+    cv_name = evaluate.scoring_scheme.lower()
+
+    if cv_name == 'k-fold':
+        # Figure out the k
+        nsplits = evaluate.nsplits
+        cv_name = f'{nsplits}-fold CV'
+
     cv = evaluate.get_cv_score()
     rmse = evaluate.rmse() * 1000
 
@@ -48,7 +54,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     ax.axis([rmin, rmax, rmin, rmax])
     ax.text(0.95,
             0.01,
-            cv_name + f" = {cv:.3f} meV/atom \n"
+            cv_name + f" = {cv:.3f} meV/atom\n"
             f"RMSE = {rmse:.3f} meV/atom",
             verticalalignment='bottom',
             horizontalalignment='right',
@@ -138,7 +144,8 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
 
     for size in sizes:
         data = eci_by_size[size]
-        X = data["distance"]
+        # Add 1, as NN starts from 1 and not 0
+        X = np.array(data["distance"]) + 1
         Y = data["eci"]
         mrk = markers[size % len(markers)]
         line = ax.plot(X, Y, label=f"{size}-body", marker=mrk, mfc="none", ls="", markersize=8)

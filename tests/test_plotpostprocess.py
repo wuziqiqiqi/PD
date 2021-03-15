@@ -19,7 +19,7 @@ def test_plot_fit(bc_setting):
         np.ndarray.tolist(evaluator.e_dft)
 
     fig = plot_fit(evaluator, plot_args)
-    assert 'LOOCV' in fig.get_axes()[0].texts[0].get_text()
+    assert 'loocv' in fig.get_axes()[0].texts[0].get_text()
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
