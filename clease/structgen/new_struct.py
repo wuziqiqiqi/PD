@@ -425,7 +425,7 @@ class NewStructures:
                                 atoms: Union[Atoms, List[Atoms]],
                                 random_composition: bool = False) -> List[Atoms]:
         structs = []
-        if atoms is not list:
+        if isinstance(atoms, Atoms):
             struct = wrap_and_sort_by_position(atoms)
             if random_composition is False:
                 num_to_gen = 1
@@ -461,6 +461,7 @@ class NewStructures:
                     structs.append(self._random_struct_at_conc(num_insert))
 
         else:
+            # This is a list of atoms objects
             logger.info("Generating %d ground-state structures.", len(atoms))
             if random_composition is False:
                 for struct in atoms:
