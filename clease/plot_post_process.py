@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from clease import Evaluate
 from matplotlib.figure import Figure
+from clease import Evaluate, ConvexHull
 
 
 def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
@@ -198,4 +198,31 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
             horizontalalignment='left',
             transform=ax.transAxes,
             fontsize=10)
+    return fig
+
+
+def plot_convex_hull(evaluate: Evaluate) -> Figure:
+
+    e_pred = evaluate.get_energy_predict()
+
+    cnv_hull = ConvexHull(evaluate.settings.db_name, select_cond=evaluate.select_cond)
+    fig = cnv_hull.plot()  # Construct the figure object
+
+    # `conc_per_frame` is the concentration with respect to the total number of atoms for
+    # each frame
+    conc_per_frame = evaluate.atomic_concentrations
+
+    # `concs` is dictionary with the keys of species with value being the
+    # concentrations among the frames
+    # pylint: disable=protected-access
+    concs = {key: [] for key in cnv_hull._unique_elem}
+    for frame_conc in conc_per_frame:
+        for key, value in concs.items():
+            value.append(frame_conc.get(key, 0.0))
+
+    form_en = [cnv_hull.get_formation_energy(c, e) for c, e in zip(conc_per_frame, e_pred.tolist())]
+    cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
+
+    fig.suptitle("Convex hull DFT (o), CE (x)")
+
     return fig
