@@ -609,6 +609,11 @@ class Evaluate:
                 alphas.append(alpha)
                 logger.info(f"{alpha:.10f}\t {num_eci}\t {cv[i]:.10f}")
 
+        # add the cv scores
+        self._cv_scores = []
+        for alpha, cv_score in zip(alphas, cv):
+            self._cv_scores.append({'alpha': alpha, 'cv': cv_score})
+
         return alphas, cv
 
     def cv_for_alpha(self, alphas: List[float]) -> None:
