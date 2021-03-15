@@ -21,7 +21,6 @@ __all__ = ('Evaluate',)
 
 # Initialize a module-wide logger
 logger = lg.getLogger(__name__)
-logger.setLevel(lg.INFO)
 
 
 class Evaluate:
