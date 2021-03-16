@@ -104,6 +104,7 @@ setup(
         # 'mypy',
     ],
     extras_require={
+        'doc': ('sphinx', 'sphinx_rtd_theme'),
         'dev': (
             'pip',
             'pre-commit',
