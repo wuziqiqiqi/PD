@@ -4,36 +4,35 @@ from typing import List, Dict
 import logging
 
 from clease.tools import flatten, dec_string, list2str
+from .cluster_generator import ClusterGenerator
+from .cluster import Cluster
 
 logger = logging.getLogger(__name__)
 __all__ = ('ClusterList',)
 
 
-class ClusterList(object):
+# pylint: disable=too-many-public-methods
+class ClusterList:
 
     def __init__(self):
         self.clusters = []
-        self.index_by_name = {}
 
-    def append(self, cluster):
+    def append(self, cluster: Cluster):
         self.clusters.append(cluster)
-        idx = self.index_by_name.get(cluster.name, [])
-        idx.append(len(self.clusters) - 1)
-        self.index_by_name[cluster.name] = idx
 
     def clear(self):
         """Clear the content."""
         self.clusters = []
-        self.index_by_name = {}
 
     @property
-    def names(self):
-        return list(self.index_by_name.keys())
+    def names(self) -> List[str]:
+        """Get all names in the cluster list"""
+        return [cluster.name for cluster in self.clusters]
 
-    def get_by_name(self, name):
-        return [self.clusters[i] for i in self.index_by_name[name]]
+    def get_by_name(self, name) -> List[Cluster]:
+        return [cluster for cluster in self.clusters if cluster.name == name]
 
-    def get_by_name_and_group(self, name, group):
+    def get_by_name_and_group(self, name, group) -> Cluster:
         clusters = self.get_by_name(name)
         for c in clusters:
             if c.group == group:
@@ -41,12 +40,12 @@ class ClusterList(object):
         msg = f"There are no cluster named {name} and group {group}"
         raise ValueError(msg)
 
-    def get_by_size(self, size):
+    def get_by_size(self, size) -> List[Cluster]:
         # Return all clusters with a given size
         return [c for c in self.clusters if c.size == size]
 
     def max_size(self):
-        return max([c.size for c in self.clusters])
+        return max(c.size for c in self.clusters)
 
     def get_by_group(self, group):
         """Return all clusters in a given symmetry group."""
@@ -61,7 +60,7 @@ class ClusterList(object):
         return equiv
 
     @staticmethod
-    def get_cf_names(cluster, num_bf):
+    def get_cf_names(cluster: Cluster, num_bf):
         """Return all possible correlation function names.
 
         Parameters:
@@ -118,6 +117,7 @@ class ClusterList(object):
         return True
 
     def sort(self):
+        """Sort the internal cluster list"""
         self.clusters.sort()
 
     @property
@@ -160,20 +160,21 @@ class ClusterList(object):
             mult_factors[cluster.name] = current_factor
             norm[cluster.name] = current_norm
 
-        for k in mult_factors.keys():
+        for k in mult_factors:
             mult_factors[k] /= norm[k]
         return mult_factors
 
-    def get_subclusters(self, cluster):
+    def get_subclusters(self, cluster: Cluster):
         """Return all all subclusters of the passed cluster in the list."""
         return [c for c in self.clusters if c.is_subcluster(cluster)]
 
-    def get_figures(self, generator):
+    def get_figures(self, generator: ClusterGenerator):
         figures = []
-        self.clusters.sort()
-        used_names = set()
+        self.sort()
+        # We want to skip c0 and c1 anyways
+        used_names = {'c0', 'c1'}
         for cluster in self.clusters:
-            if (cluster.name == 'c0' or cluster.name == 'c1' or cluster.name in used_names):
+            if cluster.name in used_names:
                 continue
             figure = cluster.get_figure(generator)
 
@@ -228,9 +229,9 @@ class ClusterList(object):
         removed from the list, that might not be the case.
         """
         for s in range(2, self.max_size() + 1):
-            names = list(set([c.name for c in self.get_by_size(s)]))
+            names = list(set(c.name for c in self.get_by_size(s)))
             names.sort()
-            prefixes = list(set([n.rpartition('_')[0] for n in names]))
+            prefixes = list(set(n.rpartition('_')[0] for n in names))
             prefixes.sort()
             name_map = {}
 
@@ -244,7 +245,7 @@ class ClusterList(object):
 
             prefix_map = {}
             # Fix additional ID
-            for k in name_map.keys():
+            for k in name_map:
                 pref = k.rpartition('_')[0]
                 prefix_map[pref] = prefix_map.get(pref, []) + [k]
 
@@ -255,9 +256,9 @@ class ClusterList(object):
                     new_name = ''.join([x.rpartition('_')[0], '_', str(i)])
                     uid_map[x] = new_name
 
-                for k, v in uid_map.items():
-                    name_map[k] = ''.join(
-                        [name_map[k].rpartition('_')[0], '_',
-                         v.rpartition('_')[2]])
+                for k2, v2 in uid_map.items():
+                    name_map[k2] = ''.join(
+                        [name_map[k2].rpartition('_')[0], '_',
+                         v2.rpartition('_')[2]])
             for c in self.get_by_size(s):
                 c.name = name_map[c.name]

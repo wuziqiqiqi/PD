@@ -7,6 +7,10 @@ Release notes
 0.10.4
 =======
 
+* Fixed a bug with sorting the figures in ``ClusterList`` would cause a de-synchronization
+  of the indices, and crashing any further usage.
+
+
 0.10.3
 =======
 

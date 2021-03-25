@@ -1,12 +1,13 @@
 import numpy as np
 from ase import Atoms
-from .cluster_fingerprint import ClusterFingerprint
 from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
+from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ('Cluster',)
 
 
-class Cluster(object):
+# pylint: disable=too-many-instance-attributes
+class Cluster:
 
     def __init__(self,
                  name='c0',
@@ -102,7 +103,8 @@ class Cluster(object):
 
         return any(set(s1).issubset(s2) for s1 in self.indices for s2 in other.indices)
 
-    def get_figure(self, generator):
+    def get_figure(self, generator) -> Atoms:
+        """Get figure from a ClusterGenerator object"""
         if len(self.indices[0][0]) != 4:
             raise RuntimeError("This method requires that the cluster is "
                                "described based on its 4-vector and not index "
@@ -130,9 +132,9 @@ class Cluster(object):
         """Return a key representation of the figure."""
         return list2str(self._order_equiv_sites(figure))
 
-    def _order_equiv_sites(self, figure):
+    def _order_equiv_sites(self, figure) -> list:
         """Sort equivalent sites."""
-        figure_cpy = [x for x in figure]
+        figure_cpy = list(figure)
         for eq_group in self.equiv_sites:
             equiv_indices = [figure[i] for i in eq_group]
             equiv_indices.sort()
