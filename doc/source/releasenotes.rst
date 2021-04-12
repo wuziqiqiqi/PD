@@ -9,6 +9,7 @@ Release notes
 
 * Fixed a bug with sorting the figures in ``ClusterList`` would cause a de-synchronization
   of the indices, and crashing any further usage.
+* Now supports clusters of arbitrary size. Used to be limited to 2-, 3- and 4-body clusters.
 
 
 0.10.3

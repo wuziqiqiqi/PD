@@ -125,6 +125,26 @@ def test_max_cluster_dia(make_conc, make_settings):
     assert settings.max_cluster_dia.tolist() == out.tolist()
 
 
+@pytest.mark.parametrize('mcs', [2, 3, 4, 5, 6, 7])
+def test_max_cluster_size(mcs, make_conc, make_settings):
+    """Test that we can construct clusters of arbitrary size"""
+    basis = [['Au', 'Cu']]
+    conc = make_conc(basis)
+    mcd = (mcs + 1) * [0.]
+    mcd[-1] = 5.  # We are only interested in clusters of a certain size
+    settings = make_settings(conc, size=(3, 3, 3), max_cluster_size=mcs, max_cluster_dia=mcd)
+
+    max_found_size = max(cluster.size for cluster in settings.cluster_list.clusters)
+    # Verify we actually found clusters of the max cluster size
+    assert max_found_size == mcs
+
+    assert settings.max_cluster_size == mcs
+    atoms = settings.atoms.copy()
+    atoms.symbols[[0, 3]] = 'Cu'
+    # This used to fail, when we only supported up to 4-body clusters
+    calculate_cf(settings, atoms)
+
+
 def test_corrfunc_au_cu(make_conc, make_settings, check_cf):
     basis_elements = [['Au', 'Cu']]
     conc = make_conc(basis_elements)

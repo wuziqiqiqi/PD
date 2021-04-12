@@ -3,6 +3,7 @@
 cimport numpy as np  # Initialize the Numpy API
 np.import_array()
 include "pyce_updater.pyx"
+include "py_cluster.pyx"
 
 # Files that use the Numpy Array API are included here
 cdef extern from "ce_updater.cpp":
