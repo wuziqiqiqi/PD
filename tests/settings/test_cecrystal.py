@@ -2,6 +2,7 @@
 import os
 import json
 from pathlib import Path
+from collections import Counter
 import numpy as np
 import pytest
 from ase.db import connect
@@ -328,3 +329,51 @@ def test_bkg_symb_in_additional_basis(db_name):
     for bf in bfs:
         keys = sorted(list(bf.keys()))
         assert keys == ['Mg', 'Sn', 'X']
+
+
+def test_unequal_number_of_sites(make_conc, db_name):
+    """Test that we count inactive sublattices correctly
+    and the concentrations are correct when number of sites per sublattice
+    are uneven"""
+    cellpar = [3, 3, 7, 90, 90, 120]
+    basis = [(1 / 3, 2 / 3, 0.29615), (0.0, 0.0, 0.0), (0.0, 0.0, 1 / 2), (2 / 3, 1 / 3, 1 / 2)]
+    conc = make_conc(basis_elements=[['Na', 'Cl'], ['Fe'], ['O'], ['O']],
+                     grouped_basis=[(0,), (1,), (2, 3)])
+
+    conc.set_conc_formula_unit(formulas=['Na<x>Cl<6-x>', 'Fe<3>', 'O<6>'],
+                               variable_range={'x': (0, 6)})
+    settings = CECrystal(
+        concentration=conc,
+        spacegroup=187,
+        basis=basis,
+        cellpar=cellpar,  #lengths and angles of cell
+        max_cluster_dia=[5],  #2-, 3-, 4-step interaction length
+        supercell_factor=27,  #maximum cell iterations
+        db_name=db_name,
+        max_cluster_size=2,  #number of atoms in clusters
+    )
+
+    # Calculate concentrations from the original atoms object
+    atoms = settings.atoms
+    species_count = Counter(atoms.symbols)
+
+    tot = len(atoms)
+    species_conc = {k: v / tot for k, v in species_count.items()}
+
+    assert species_conc.get('Na', 0.0) + species_conc.get('Cl', 0.0) == pytest.approx(0.4)
+    assert species_conc['Fe'] == pytest.approx(0.2)
+    assert species_conc['O'] == pytest.approx(0.4)
+
+    # Verify settings gets the same concentrations
+    assert settings.get_active_sublattices() == [True, False, False]
+    assert settings.num_active_sublattices == 1
+    assert settings.get_sublattice_site_ratios() == pytest.approx([0.4, 0.2, 0.4])
+
+    # Check concentration of background/ignored species
+    ignored = settings.ignored_species_and_conc
+    expected = {'Fe': 0.2, 'O': 0.4}
+    assert ignored == expected
+    assert all(ignored[k] == pytest.approx(expected[k]) for k in expected)
+
+    # Concentration of active sites
+    assert settings.atomic_concentration_ratio == pytest.approx(0.4)

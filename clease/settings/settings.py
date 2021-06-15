@@ -206,15 +206,23 @@ class ClusterExpansionSettings:
     def basis_func_type(self):
         return self._basis_func_type
 
+    def get_sublattice_site_ratios(self) -> np.ndarray:
+        """Return the ratios of number of sites per (grouped) sublattice"""
+        # Number of sites per sublattice
+        sites_per_basis = np.array([len(basis) for basis in self.index_by_basis])
+        num_sites = sites_per_basis.sum()
+        return sites_per_basis / num_sites
+
     @property
     def num_active_sublattices(self) -> int:
         """Number of active sublattices"""
+        return sum(self.get_active_sublattices())
+
+    def get_active_sublattices(self) -> List[bool]:
+        """List of booleans indicating if a (grouped) sublattice is active"""
         unique_no_bkg = self.unique_element_without_background()
-        active_sublattices = 0
-        for basis in self.concentration.orig_basis_elements:
-            if basis[0] in unique_no_bkg:
-                active_sublattices += 1
-        return active_sublattices
+
+        return [basis[0] in unique_no_bkg for basis in self.concentration.basis_elements]
 
     @property
     def ignored_species_and_conc(self) -> Dict[str, float]:
@@ -223,21 +231,24 @@ class ClusterExpansionSettings:
         of atoms.
         """
         unique_no_bkg = self.unique_element_without_background()
-        orig_basis = self.concentration.orig_basis_elements
-        nsub_lattices = len(orig_basis)  # Number of sub-lattices
+        # Find the concentration within grouped sublattices
+        orig_basis = self.concentration.basis_elements
+        # Concentration of sites within each sublattice
+        ratios = self.get_sublattice_site_ratios()
+        assert len(orig_basis) == len(ratios)
         ignored = {}
-        for basis in orig_basis:
+        for ratio, basis in zip(ratios, orig_basis):
             elem = basis[0]
             if elem not in unique_no_bkg:
                 if len(basis) != 1:
                     raise ValueError(("Ignored sublattice contains multiple elements -"
                                       "this does not make any sense"))
                 if elem not in ignored:
-                    ignored[elem] = 1.0 / nsub_lattices
+                    ignored[elem] = ratio
                 else:
                     # This element is already on one of the ignored background here we
-                    # accumulate the concnetration
-                    ignored[elem] += 1.0 / nsub_lattices
+                    # accumulate the concentration
+                    ignored[elem] += ratio
         return ignored
 
     @property
@@ -247,7 +258,11 @@ class ClusterExpansionSettings:
         For example, if one of the two basis is fully occupied, and hence ignored internally, the
         internal concentration is half of the actual atomic concentration.
         """
-        return self.num_active_sublattices / len(self.concentration.orig_basis_elements)
+        ratios = self.get_sublattice_site_ratios()
+        # We only want to include active sublattices
+        active_sublatt = self.get_active_sublattices()
+        # Add up all ratios for the active sublattices
+        return ratios[active_sublatt].sum()
 
     @basis_func_type.setter
     def basis_func_type(self, bf_type):

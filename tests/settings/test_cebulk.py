@@ -481,7 +481,7 @@ def test_concentration_with_background(make_conc, make_settings):
                              max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
 
-    assert settings.num_active_sublattices == 2
+    assert settings.num_active_sublattices == 1
     assert settings.atomic_concentration_ratio == 2 / 3
     assert settings.ignored_species_and_conc == {'Ca': 1 / 3}
 
@@ -494,7 +494,7 @@ def test_concentration_with_background(make_conc, make_settings):
                              max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
 
-    assert settings.num_active_sublattices == 2
+    assert settings.num_active_sublattices == 1
     assert settings.atomic_concentration_ratio == 1.0
     assert settings.ignored_species_and_conc == {}
 
@@ -521,7 +521,7 @@ def test_concentration_with_background(make_conc, make_settings):
 
     # If the background atoms are included
     settings.include_background_atoms = True
-    assert settings.num_active_sublattices == 3
+    assert settings.num_active_sublattices == 2
     assert settings.atomic_concentration_ratio == 1.0
     assert settings.ignored_species_and_conc == {}
 
