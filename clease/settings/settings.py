@@ -3,6 +3,7 @@
 This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
+import logging
 from copy import deepcopy
 from typing import List, Dict, Optional, Union
 from distutils.version import LooseVersion
@@ -17,17 +18,20 @@ from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
 from clease.template_atoms import TemplateAtoms
 from clease import AtomsManager
-from clease.cluster import ClusterList, ClusterManager
+from clease.cluster import ClusterManager
 from clease.template_filters import ValidConcentrationFilter
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
 from . import Concentration
 
 __all__ = ('ClusterExpansionSettings',)
 
+logger = logging.getLogger(__name__)
+
 
 @jsonable('ce_settings')
 class ClusterExpansionSettings:
     """Base class for all Cluster Expansion settings."""
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     # Keys which are important for saving/loading
     ARG_KEYS = ('prim_cell', 'concentration')
@@ -52,10 +56,12 @@ class ClusterExpansionSettings:
                  include_background_atoms=False,
                  basis_func_type='polynomial') -> None:
 
-        self._include_background_atoms = include_background_atoms
-        self.trans_matrix = None
-        self.concentration = self._get_concentration(concentration)
-        self.cluster_list = ClusterList()
+        self._include_background_atoms = None
+        self._cluster_mng = None
+        self._trans_matrix = None
+        self._cluster_list = None
+        self.concentration = _get_concentration(concentration)
+
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self._check_first_elements()
         self.db_name = db_name
@@ -65,8 +71,6 @@ class ClusterExpansionSettings:
         self.prim_cell = prim
         self._tag_prim_cell()
         self._store_prim_cell()
-
-        self.cluster_mng = ClusterManager(self.prim_no_bkg())
 
         prim_mng = AtomsManager(prim)
         prim_ind_by_basis = prim_mng.index_by_symbol([x[0] for x in self.basis_elements])
@@ -82,11 +86,11 @@ class ClusterExpansionSettings:
 
         self.max_cluster_size = max_cluster_size
         self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
-        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
 
         self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
         self.basis_func_type = basis_func_type
+        self.include_background_atoms = include_background_atoms
 
         if len(self.basis_elements) != self.num_basis:
             raise ValueError("list of elements is needed for each basis")
@@ -143,6 +147,16 @@ class ClusterExpansionSettings:
         return bkg_indices
 
     @property
+    def cluster_mng(self):
+        if self._cluster_mng is None:
+            if self.include_background_atoms:
+                mng = ClusterManager(self.prim_cell)
+            else:
+                mng = ClusterManager(self.prim_no_bkg())
+            self._cluster_mng = mng
+        return self._cluster_mng
+
+    @property
     def include_background_atoms(self) -> bool:
         return self._include_background_atoms
 
@@ -151,13 +165,8 @@ class ClusterExpansionSettings:
         if value == self._include_background_atoms:
             return
         self._include_background_atoms = value
-        if self._include_background_atoms:
-            self.cluster_mng = ClusterManager(self.prim_cell)
-        else:
-            self.cluster_mng = ClusterManager(self.prim_no_bkg())
 
-        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
-        self.create_cluster_list_and_trans_matrix()
+        self.clear_cache()
         self.basis_func_type.unique_elements = \
             self.unique_element_without_background()
 
@@ -290,15 +299,6 @@ class ClusterExpansionSettings:
         else:
             raise ValueError("basis_function has to be an instance of BasisFunction or a string")
 
-    def _get_concentration(self, concentration):
-        if isinstance(concentration, Concentration):
-            conc = concentration
-        elif isinstance(concentration, dict):
-            conc = Concentration.from_dict(concentration)
-        else:
-            raise TypeError("concentration has to be either dict or instance of Concentration")
-        return conc
-
     def prim_no_bkg(self):
         """
         Return an instance of the primitive cell where the background indices
@@ -348,7 +348,9 @@ class ClusterExpansionSettings:
 
     def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
+        logger.debug('Preparing new template in settings')
         self.atoms_mng.atoms = template
+        self.clear_cache()
 
     def set_active_template(self, atoms=None):
         """Set a new template atoms object."""
@@ -368,7 +370,6 @@ class ClusterExpansionSettings:
                                  f"{atoms.get_positions()}\nGenerated template"
                                  f"\n{template.get_positions()}")
         self.prepare_new_active_template(template)
-        self.create_cluster_list_and_trans_matrix()
 
     def _tag_prim_cell(self):
         """
@@ -434,13 +435,41 @@ class ClusterExpansionSettings:
                 type(max_cluster_dia)))
         return mcd.round(decimals=3)
 
+    @property
+    def trans_matrix(self):
+        """Get the translation matrix, will be created upon request"""
+        if self._trans_matrix is None:
+            logger.debug('Triggered construction of trans matrix')
+            self.create_cluster_list_and_trans_matrix()
+        return self._trans_matrix
+
+    @property
+    def cluster_list(self):
+        """Get the cluster list, will be created upon request"""
+        if self._cluster_list is None:
+            # No cached cluster list, create it
+            logger.debug('Triggered construction of cluster list')
+            self.create_cluster_list_and_trans_matrix()
+        return self._cluster_list
+
+    def clear_cache(self) -> None:
+        """Clear the cached objects, due to a change e.g. in the template atoms"""
+        logger.debug('Clearing the cache')
+        self._cluster_mng = None
+        self._trans_matrix = None
+        self._cluster_list = None
+
     def create_cluster_list_and_trans_matrix(self):
-        at_cpy = self.atoms
-        self.cluster_list = self.cluster_mng.info_for_template(at_cpy)
-        self.trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
+        """Prepares the internal cache objects by calculating cluster related properties"""
+        logger.debug('Creating translation matrix and cluster list')
+        at_cpy = self.atoms.copy()
+        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
+        self._cluster_list = self.cluster_mng.info_for_template(at_cpy)
+        self._trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
 
     def view_clusters(self):
         """Display all clusters along with their names."""
+        # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
         figures = self.cluster_mng.get_figures()
@@ -460,6 +489,7 @@ class ClusterExpansionSettings:
         """
         Display all templates in the ASE GUi
         """
+        # pylint: disable=import-outside-toplevel
         from ase.visualize import view
         view(self.get_all_templates())
 
@@ -484,7 +514,7 @@ class ClusterExpansionSettings:
             >>> dct = settings.todict()  # Get the dictionary representation
         """
         vars_to_save = self.ARG_KEYS + self.KWARG_KEYS + self.OTHER_KEYS
-        dct = {'clease_version': clease.__version__}
+        dct = {'clease_version': clease.version.__version__}
         for key in vars_to_save:
             val = getattr(self, key)
             dct[key] = val
@@ -541,3 +571,14 @@ def to_3x3_matrix(size):
         return np.diag(size).tolist()
 
     raise ValueError(f"Cannot convert passed array {size} to 3x3 matrix")
+
+
+def _get_concentration(concentration: Union[Concentration, dict]) -> Concentration:
+    """Helper function to format the concentration"""
+    if isinstance(concentration, Concentration):
+        conc = concentration
+    elif isinstance(concentration, dict):
+        conc = Concentration.from_dict(concentration)
+    else:
+        raise TypeError("concentration has to be either dict or instance of Concentration")
+    return conc

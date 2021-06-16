@@ -111,13 +111,16 @@ def test_spgroup_217(db_name, tmpdir, all_cf):
     bsg.save(fname)
     bsg_loaded = settings_from_json(fname)
     for k, v in bsg.__dict__.items():
-        if k in ['kwargs', 'size', 'template_atoms', 'atoms_mng', 'trans_matrix', 'cluster_list']:
+        if k in [
+                'kwargs', 'size', 'template_atoms', 'atoms_mng', '_trans_matrix', '_cluster_list',
+                '_cluster_mng'
+        ]:
             # Skip attributes not expected to be equal after load/save
             continue
         if isinstance(v, np.ndarray):
             assert np.allclose(v, bsg_loaded.__dict__[k])
         else:
-            assert v == bsg_loaded.__dict__[k]
+            assert v == bsg_loaded.__dict__[k], k
     assert bsg.skew_threshold == bsg_loaded.skew_threshold
 
     if update_reference_file:

@@ -16,6 +16,7 @@ from .cluster_coverage import *
 from .logging_utils import *
 
 from . import datastructures
+from . import version
 from . import cluster
 from . import structgen
 from . import corr_func
@@ -50,9 +51,9 @@ def CESlab(*args, **kwargs):
     return settings.CESlab(*args, **kwargs)
 
 
-ADDITIONAL = ('settings', 'basis_function', 'jsonio', 'corr_func', 'structgen', 'NewStructures',
-              'cluster', 'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk',
-              'CECrystal', 'CESlab', 'concentration', 'db_util',
+ADDITIONAL = ('version', 'settings', 'basis_function', 'jsonio', 'corr_func', 'structgen',
+              'NewStructures', 'cluster', 'tools', 'montecarlo', 'mp_logger', 'template_atoms',
+              'CEBulk', 'CECrystal', 'CESlab', 'concentration', 'db_util',
               'toggle_require_compatible_table_version', 'logging_utils', 'datastructures')
 
 __all__ = (version.__all__ + template_filters.__all__ + atoms_manager.__all__ +

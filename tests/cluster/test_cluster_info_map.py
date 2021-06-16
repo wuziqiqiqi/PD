@@ -45,8 +45,8 @@ def test_fcc(db_name):
     cf1 = cf.get_cf(atoms_small)
 
     # Change the info to the mapped one
-    settings.cluster_list = map_info
-    settings.trans_matrix = map_tm
+    settings._cluster_list = map_info
+    settings._trans_matrix = map_tm
     cf2 = cf.get_cf(atoms_small)
 
     assert dict_amost_equal(cf1, cf2)
@@ -99,8 +99,8 @@ def test_TaXO(db_name):
     cf1 = cf.get_cf(atoms_small)
 
     # Change the info to the mapped one
-    bsg.cluster_list = map_info
-    bsg.trans_matrix = map_tm
+    bsg._cluster_list = map_info
+    bsg._trans_matrix = map_tm
     cf2 = cf.get_cf(atoms_small)
 
     assert dict_amost_equal(cf1, cf2)

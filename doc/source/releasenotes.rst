@@ -9,6 +9,8 @@ Release notes
 * Fixed a bug in the :class:`clease.convexhull.ConvexHull` where multiple end-points wouldn't always find the
   correct minimum energy structure for that end-point.
 * Added :class:`~clease.montecarlo.mc_evaluator.MCEvaluator`.
+* The settings class should now be much faster to construct, since the construction of the translation matrix and cluster list is defered until requested.
+
 
 0.10.5
 =======
