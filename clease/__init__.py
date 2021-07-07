@@ -13,6 +13,7 @@ from .svd import *
 from .concentration import *
 from .regression_old import *
 from .cluster_coverage import *
+from .logging_utils import *
 
 from . import cluster
 from . import structgen
@@ -26,6 +27,7 @@ from . import template_atoms
 from . import concentration
 from . import db_util
 from . import jsonio
+from . import logging_utils
 # Import this global, so it can be disabled with "clease.REQUIRE_COMPATIBLE_TABLE_VERISON = False"
 from .db_util import toggle_require_compatible_table_version
 
@@ -50,9 +52,9 @@ def CESlab(*args, **kwargs):
 ADDITIONAL = ('settings', 'basis_function', 'jsonio', 'corr_func', 'structgen', 'NewStructures',
               'cluster', 'tools', 'montecarlo', 'mp_logger', 'template_atoms', 'CEBulk',
               'CECrystal', 'CESlab', 'concentration', 'db_util',
-              'toggle_require_compatible_table_version')
+              'toggle_require_compatible_table_version', 'logging_utils')
 
 __all__ = (version.__all__ + template_filters.__all__ + atoms_manager.__all__ +
            concentration.__all__ + evaluate.__all__ + convexhull.__all__ + data_manager.__all__ +
            structure_mapper.__all__ + svd.__all__ + regression_old.__all__ +
-           cluster_coverage.__all__) + ADDITIONAL
+           cluster_coverage.__all__ + logging_utils.__all__) + ADDITIONAL
