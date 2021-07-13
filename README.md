@@ -13,11 +13,26 @@ CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that au
 # Installation
 Install the CLEASE code by executing
 ```
-pip install .
+pip install clease
 ```
-in the root folder of the project. If you are a developer you might want to install CLEASE by
+If you are a developer you might want to install CLEASE by executing the following command in the root folder of the project
 ```
 pip install -e .
+```
+In order to run the tests, the testing dependencies should be installed. They can be installed with the extra
+`test` option
+```
+pip install .[test]
+```
+There is an additional option for development purposes, `dev`, which contains some convenience packages.
+All of the extras options can be installed via the `all` option,
+i.e.
+```
+pip install .[all]
+```
+Note, that if you are using `zsh`, you need to [escape the argument](https://stackoverflow.com/a/30539963), e.g.
+```
+pip install '.[all]'
 ```
 
 # Graphical User Interface
@@ -28,9 +43,9 @@ pip install kivy
 pip install 'https://github.com/kivy-garden/graph/archive/master.zip'
 ```
 
-There is also a convenience command for doing these two steps
+There is also a convenience command for doing these two steps when installing CLEASE
 ```
-clease gui-setup
+pip install clease[gui]
 ```
 
 To launch a GUI simply type

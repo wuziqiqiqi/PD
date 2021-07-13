@@ -66,6 +66,37 @@ clease_cxx = Extension("clease_cxx",
                        extra_compile_args=extra_comp_args,
                        language="c++")
 
+# Extra packages required with certain aspects of CLEASE, which are not required
+# to run the base CLEASE package.
+EXTRAS_REQUIRE = {
+    # For building the documentation
+    'doc': ('sphinx', 'sphinx_rtd_theme'),
+    # For running the CLEASE test suite
+    'test': (
+        'pytest',
+        'pytest-mock',
+        'mock',
+    ),
+    # Extra nice-to-haves when developing CLEASE
+    'dev': (
+        'pip',
+        'pre-commit',
+        'ipython',
+        'twine',
+        'yapf',
+        'prospector',
+        'pylint',
+    ),
+    'gui': (
+        'kivy>=1.11,<2',
+        'kivy-garden.graph @ git+https://github.com/kivy-garden/graph.git@master#egg=kivy-garden.graph',
+    )
+}
+# Make an entry which installs all of the above in one go
+# Separate out "gui" from "all"
+EXTRAS_REQUIRE['all'] = tuple(
+    {package for key, tup in EXTRAS_REQUIRE.items() for package in tup if key != 'gui'})
+
 setup(
     name="clease",
     setup_requires=['cython', 'numpy'],
@@ -88,8 +119,10 @@ setup(
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
-        'Programming Language :: Python :: 3.6', 'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     install_requires=[
         'ase>=3.20',
@@ -98,27 +131,7 @@ setup(
         'scikit-learn',
         'typing_extensions',
         'Deprecated',
-        'pytest',
-        'pytest-mock',
-        'mock',
         # 'mypy',
     ],
-    extras_require={
-        'doc': ('sphinx', 'sphinx_rtd_theme'),
-        'dev': (
-            'pip',
-            'pre-commit',
-            'pytest>=4',
-            'pytest-mock',
-            'ipython',
-            'twine',
-            'yapf',
-            'prospector',
-            'pylint',
-        ),
-        'gui': (
-            'kivy>=1.11,<2',
-            'kivy-garden.graph @ git+https://github.com/kivy-garden/graph.git@master#egg=kivy-garden.graph'
-        )
-    },
+    extras_require=EXTRAS_REQUIRE,
 )

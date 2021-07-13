@@ -1,7 +1,6 @@
 image: python:3.7
 
 before_script:
-  - pip install .
   - python3 --version
 
 stages:
@@ -12,13 +11,13 @@ stages:
 flake8:
   stage: Static Analysis
   script:
-    - pip install flake8
+    - python3 -m pip install flake8
     - flake8 clease/
 
 pylint:
   stage: Static Analysis
   script:
-    - pip install pylint
+    - python3 -m pip install pylint
     - pylint --disable=all --enable=dangerous-default-value clease/
 
 # mypy:
@@ -34,7 +33,8 @@ pytests:
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - pwd
-    - pip install coverage
+    - python3 -m pip install coverage
+    - python3 -m pip install .[test]
     - coverage run --omit='tests/*' -m pytest tests/
     - coverage report
 
@@ -44,9 +44,9 @@ gui_test:
   script:
     - apt-get update -qy
     - apt-get install -qy xvfb libmtdev1
-    - pip install coverage
-#    - clease gui --setup
-    - pip install .[gui]
+    - python3 -m pip install coverage
+    #    - clease gui --setup
+    - python3 -m pip install .[gui]
     - export KIVY_GL_BACKEND=mock
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
     - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" coverage run --include='*/clease/gui/*' -m unittest discover gui_tests/
@@ -55,18 +55,16 @@ gui_test:
 doctest:
   stage: Code Test
   script:
+    - python3 -m pip install .[doc]
     - apt-get update -qy
     - apt-get install -qy xvfb
-    - python3 -m pip install sphinx
-    - python3 -m pip install sphinx_rtd_theme
     - cd doc
     - make doctest
 
 pages:
   stage: Deploy
   script:
-    - python3 -m pip install sphinx
-    - python3 -m pip install sphinx_rtd_theme
+    - python3 -m pip install .[doc]
     - cd doc
     - make html
     - mv build/html/ ../public/
@@ -82,6 +80,6 @@ python3_test_slow:
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - python3 --version
-    - python3 -m pip install .
+    - python3 -m pip install .[test]
     - pytest --runslow tests/
   when: manual
