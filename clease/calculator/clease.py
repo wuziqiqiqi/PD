@@ -1,11 +1,11 @@
 """Calculator for Cluster Expansion."""
 import sys
 import contextlib
-from typing import Dict, Optional, TextIO, Union, List, Sequence
+from typing import Dict, Optional, TextIO, Union, List
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from clease.datastructures import SystemChange
+from clease.datastructures import SystemChange, SystemChanges
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater
@@ -148,9 +148,7 @@ class Clease(Calculator):
         self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf, self.eci,
                                    self.settings.cluster_list)
 
-    def get_energy_given_change(self,
-                                system_changes: Sequence[SystemChange],
-                                keep_changes=False) -> float:
+    def get_energy_given_change(self, system_changes: SystemChanges, keep_changes=False) -> float:
         """
         Calculate the energy when the change is known. No checking will be
         performed.
@@ -181,7 +179,7 @@ class Clease(Calculator):
 
     # pylint: disable=signature-differs
     def calculate(self, atoms: Atoms, properties: Union[List[str], str],
-                  system_changes: Sequence[SystemChange]) -> float:
+                  system_changes: SystemChanges) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
@@ -250,7 +248,7 @@ class Clease(Calculator):
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
 
-    def update_cf(self, system_changes: Sequence[SystemChange] = None) -> None:
+    def update_cf(self, system_changes: SystemChanges = None) -> None:
         """Update correlation function based on the reference value.
 
         :param system_changes: List of system changes. For example, if the
@@ -307,7 +305,7 @@ class Clease(Calculator):
         """
 
     @contextlib.contextmanager
-    def with_system_changes(self, system_changes: Sequence[SystemChange]):
+    def with_system_changes(self, system_changes: SystemChanges):
         """
         : param system_changes: List of system changes. For example, if the
             occupation of the atomic index 23 is changed from Mg to Al,
@@ -317,28 +315,32 @@ class Clease(Calculator):
         """
         keeper = KeepChanges()  # We need an object we can mutate to flag for cleanup
         try:
-            self.reset()
             # Apply the updates
-            self.update_cf(system_changes)
-            self.energy = self.updater.get_energy()
+            self.apply_system_changes(system_changes)
             yield keeper
         finally:
             if keeper.keep_changes:
                 # Keep changes
-                self.clear_history()
+                self.keep_system_changes()
             else:
                 # Revert changes
-                inverted_changes = self._get_inverted_changes(system_changes)
-                self.restore()  # Also restores results
-                for idx, _, symb, _ in inverted_changes:
-                    self.atoms.symbols[idx] = symb
+                self.undo_system_changes(system_changes)
 
-    @staticmethod
-    def _get_inverted_changes(system_changes: Sequence[SystemChange]):
-        """Invert system changes by doing old_symbs -> new_symbs"""
-        return [
-            SystemChange(index=change.index,
-                         old_symb=change.new_symb,
-                         new_symb=change.old_symb,
-                         name=change.name) for change in system_changes
-        ]
+    def apply_system_changes(self, system_changes: SystemChanges) -> None:
+        """Apply a set of changes to the calculator, and evaluate the energy"""
+        self.reset()
+        # Apply the updates
+        self.update_cf(system_changes)
+        self.energy = self.updater.get_energy()
+
+    def undo_system_changes(self, system_changes: SystemChanges) -> None:
+        """Revert a set of changes. The changes passed in should be the original
+        sequence of system changes which were applied. Restores the original results."""
+        self.restore()  # Also restores results
+        for change in system_changes:
+            change.undo_change(self.atoms)
+
+    def keep_system_changes(self) -> None:
+        """A set of system changes are to be kept. Perform necessary actions to prepare
+        for a new evaluation."""
+        self.clear_history()

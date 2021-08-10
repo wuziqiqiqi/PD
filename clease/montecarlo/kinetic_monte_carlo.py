@@ -1,4 +1,4 @@
-from typing import List, Tuple, Sequence
+from typing import List, Tuple, Sequence, Union
 import warnings
 import logging
 import time
@@ -9,6 +9,8 @@ from clease.montecarlo import BarrierModel
 from clease.montecarlo import KMCEventType
 from clease.montecarlo.observers import MCObserver
 from clease.datastructures import SystemChange
+from clease.montecarlo.mc_evaluator import MCEvaluator
+from .base import BaseMC
 
 __all__ = ('KineticMonteCarlo',)
 
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-instance-attributes
-class KineticMonteCarlo:
+class KineticMonteCarlo(BaseMC):
     """
     Kinetic Monte Carlo using the residence time algorithm, which is a
     rejection free algorithm and is thus also efficient at low temperatures.
@@ -33,14 +35,24 @@ class KineticMonteCarlo:
         Physical Review B 59.21 (1999): 13681.
 
 
-    :param atoms: Atoms object where KMC should be executed
+    :param system: Either an ASE Atoms object
+        with an attached calculator, or a pre-initialized
+        :ckass:`~clease.montecarlo.mc_evaluator.MCEvaluator`
+        object.
     :param barrier: Model used to evaluate the barriers
     :param events: List of KMCEvents used to produce possible events
+    :param rng: NumPy RNG generator object to use for the random number generation.
+    :param evaluator: MCEvaluator object, used for customizing how to evaluate
+        the energies during an MC run.
     """
 
-    def __init__(self, atoms: Atoms, T: float, barrier: BarrierModel,
-                 event_types: Sequence[KMCEventType]):
-        self.atoms = atoms
+    def __init__(self,
+                 system: Union[Atoms, MCEvaluator],
+                 T: float,
+                 barrier: BarrierModel,
+                 event_types: Sequence[KMCEventType],
+                 rng: np.random.Generator = None):
+        super().__init__(system, rng=rng)
         self.T = T
         self.barrier = barrier
         self.event_types = event_types
@@ -101,8 +113,8 @@ class KineticMonteCarlo:
         ]
         if len(swaps) == 0:
             raise RuntimeError("No swaps are possible.")
-        rates = [self._get_rate_from_swap(swap, vac_idx) for swap in swaps]
-        return swaps, np.array(rates)
+        rates = np.array([self._get_rate_from_swap(swap, vac_idx) for swap in swaps])
+        return swaps, rates
 
     def _get_rate_from_swap(self, swap_idx: int, vac_idx: int) -> float:
         symb = self.atoms[swap_idx].symbol
@@ -110,7 +122,7 @@ class KineticMonteCarlo:
             SystemChange(index=vac_idx, old_symb='X', new_symb=symb, name='kmc_swap'),
             SystemChange(index=swap_idx, old_symb=symb, new_symb='X', name='kmc_swap')
         ]
-        Ea = self.barrier(self.atoms, system_change)
+        Ea = self.barrier(self.evaluator, system_change)
         rate = self.attempt_freq * np.exp(-Ea / self.kT)
         if rate < 0.0:
             warnings.warn("Negative rate encountered!")
@@ -129,7 +141,7 @@ class KineticMonteCarlo:
         rates *= tau
         cumulative_rates = np.cumsum(rates)
 
-        rnd = np.random.random()
+        rnd = self.rng.random()
 
         # Argmax returns the first occurence of True
         cum_indx = np.argmax(cumulative_rates > rnd)
@@ -143,9 +155,9 @@ class KineticMonteCarlo:
             SystemChange(index=choice, old_symb=symb, new_symb='X', name='kmc_swap')
         ]
 
-        # Trigger update
-        self.atoms.calc.update_cf(system_change)
-        self.atoms.calc.clear_history()
+        # Trigger update, apply changes to the system
+        self.evaluator.apply_system_changes(system_change, keep=True)
+
         self.time += tau
 
         for interval, obs in self.observers:
@@ -168,9 +180,10 @@ class KineticMonteCarlo:
             raise ValueError(f"Index {vac_idx} is not a vacancy. "
                              f"Symbol: {self.atoms[vac_idx].symbol}")
 
-        # Trigger one energy evaluation to make sure that CFs are in sync
-        self.atoms.get_potential_energy()
-        self.atoms.calc.clear_history()
+        # Ensure evaluator is in sync and up-to-date
+        # for the CE calculator: make sure that CFs are in sync
+        self.evaluator.get_energy()
+        self.evaluator.reset()
 
         now = time.time()
         for i in range(num_steps):

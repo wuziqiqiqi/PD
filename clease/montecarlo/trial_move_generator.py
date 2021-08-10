@@ -4,6 +4,7 @@ from ase import Atoms
 import numpy as np
 from clease.montecarlo.constraints import MCConstraint
 from clease.datastructures import SystemChange
+from clease.tools import make_rng_obj
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
 __all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError')
@@ -26,12 +27,14 @@ class TrialMoveGenerator(ABC):
 
     :param max_attempts: Maximum number of attempts to try to find a move that passes
         the constraints. If not constraints are added, this has no effect.
+    :param rng: NumPy RNG generator object to use for the random number generation.
     """
 
-    def __init__(self, max_attempts: int = DEFAULT_MAX_ATTEMPTS):
+    def __init__(self, max_attempts: int = DEFAULT_MAX_ATTEMPTS, rng: np.random.Generator = None):
         super().__init__()
         self._constraints = []
         self.max_attempts = max_attempts
+        self.rng = make_rng_obj(rng=rng)
 
     def initialize(self, atoms: Atoms) -> None:
         """
@@ -146,9 +149,9 @@ class RandomFlip(SingleTrialMoveGenerator):
             self.indices = indices
 
     def get_single_trial_move(self) -> List[SystemChange]:
-        pos = np.random.choice(self.indices)
+        pos = self.rng.choice(self.indices)
         old_symb = self.atoms[pos].symbol
-        new_symb = np.random.choice([s for s in self.symbols if s != old_symb])
+        new_symb = self.rng.choice([s for s in self.symbols if s != old_symb])
         return [
             SystemChange(index=pos, old_symb=old_symb, new_symb=new_symb, name=self.CHANGE_NAME)
         ]
@@ -166,7 +169,7 @@ class RandomSwap(SingleTrialMoveGenerator):
 
     def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
-        self.tracker = SwapMoveIndexTracker()
+        self.tracker = SwapMoveIndexTracker(rng=self.rng)
         self.indices = indices
         self.initialize(atoms)
 
@@ -186,8 +189,8 @@ class RandomSwap(SingleTrialMoveGenerator):
         """
         Create a swap move
         """
-        symb_a = np.random.choice(self.tracker.symbols)
-        symb_b = np.random.choice([s for s in self.tracker.symbols if s != symb_a])
+        symb_a = self.rng.choice(self.tracker.symbols)
+        symb_b = self.rng.choice([s for s in self.tracker.symbols if s != symb_a])
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [
@@ -227,8 +230,8 @@ class MixedSwapFlip(TrialMoveGenerator):
                  flip_prob: float = 0.5,
                  **kwargs) -> None:
         super().__init__(**kwargs)
-        self.swapper = RandomSwap(atoms, swap_indices)
-        self.flipper = RandomFlip(flip_symbols, atoms, flip_indices)
+        self.swapper = RandomSwap(atoms, swap_indices, rng=self.rng)
+        self.flipper = RandomFlip(flip_symbols, atoms, flip_indices, rng=self.rng)
         self.flip_prob = flip_prob
         self.initialize(atoms)
 
@@ -248,7 +251,7 @@ class MixedSwapFlip(TrialMoveGenerator):
         Produce a single trial move. Return a swap move with
         probability
         """
-        gen = np.random.choice(self.generators, p=[self.flip_prob, 1.0 - self.flip_prob])
+        gen = self.rng.choice(self.generators, p=[self.flip_prob, 1.0 - self.flip_prob])
         return gen.get_single_trial_move()
 
     def on_move_accepted(self, changes: Sequence[SystemChange]):

@@ -270,8 +270,9 @@ def split_dataset(X: np.ndarray,
     partitions = []
     num_validation = int(len(unique_groups) / nsplits)
 
-    if num_validation < 1:
-        num_validation = 1
+    # Must at least be 1
+    num_validation = max(num_validation, 1)
+
     for i in range(nsplits):
         start = i * num_validation
         end = (i + 1) * num_validation
@@ -1069,3 +1070,12 @@ def get_cubicness(atoms: ase.Atoms) -> float:
     # Take absolute value, as determinants can be negative.
     # We just need it to be as close to 0 as possible
     return abs(np.linalg.det(cell - diag))
+
+
+def make_rng_obj(rng: np.random.Generator = None) -> np.random.Generator:
+    """Make a new NumPy RNG object, unless otherwise specified.
+
+    :param rng: An optional RNG object.
+        If ``rng`` is ``None``, defaults to ``np.random.default_rng``.
+    """
+    return rng if rng else np.random.default_rng()

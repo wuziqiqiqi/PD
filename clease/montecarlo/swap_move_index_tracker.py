@@ -1,14 +1,15 @@
 from typing import Sequence, List
 import numpy as np
-from numpy.random import choice
+from clease.tools import make_rng_obj
 
 
 class SwapMoveIndexTracker:
 
-    def __init__(self):
+    def __init__(self, rng: np.random.Generator = None):
         self.tracker = {}
         self.index_loc = None
         self._last_move = []
+        self.rng = make_rng_obj(rng=rng)
 
     @staticmethod
     def _unique_symbols_from_atoms(atoms) -> List[str]:
@@ -98,5 +99,5 @@ class SwapMoveIndexTracker:
         self.update_swap_move(opposite_change)
         self._last_move = []
 
-    def get_random_indx_of_symbol(self, symbol):
-        return choice(self.tracker[symbol])
+    def get_random_indx_of_symbol(self, symbol: str) -> int:
+        return self.rng.choice(self.tracker[symbol])

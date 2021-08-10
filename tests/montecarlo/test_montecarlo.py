@@ -5,6 +5,7 @@ import pytest
 import numpy as np
 from ase.build import bulk
 from ase.geometry import get_layers
+import clease
 from clease.calculator import attach_calculator
 from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
@@ -18,11 +19,17 @@ from clease.montecarlo import RandomSwap, MixedSwapFlip
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.datastructures import SystemChange
+from clease.montecarlo.mc_evaluator import CEMCEvaluator
 
 # Set the random seed
 np.random.seed(0)
 
 almgsix_eci_file = Path(__file__).parent / 'almgsix_eci.json'
+
+
+@pytest.fixture
+def rng(make_rng):
+    return make_rng(5)
 
 
 @pytest.fixture
@@ -75,6 +82,11 @@ def get_rocksalt_mc_system(db_name):
     return atoms
 
 
+@pytest.fixture
+def example_system(db_name):
+    return get_rocksalt_mc_system(db_name)
+
+
 @pytest.mark.slow
 def test_run_heavy(db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu']])
@@ -118,35 +130,63 @@ def test_run_heavy(db_name):
     assert E[0] >= E[-1]
 
 
-def test_run(db_name):
+def test_run(db_name, rng):
     atoms = get_example_mc_system(db_name)
 
     E = []
     for T in [1000, 500, 100]:
-        mc = Montecarlo(atoms, T)
+        mc = Montecarlo(atoms, T, rng=rng)
         mc.run(steps=10000)
         E.append(mc.get_thermodynamic_quantities()['energy'])
+
+    assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
 
     cf = CorrFunction(atoms.calc.settings)
     cf_calc = atoms.calc.get_cf()
     cf_scratch = cf.get_cf(atoms)
 
-    os.remove(db_name)
     for k, v in cf_scratch.items():
         assert v == pytest.approx(cf_calc[k])
-
     # Make sure that the energies are decreasing by comparing
     # the first and last
     assert E[0] >= E[-1]
 
 
-def test_corr_func_observer(db_name):
+def test_mc_rng(db_name, make_rng):
+    """Test passing in an explicit rng object with same seeds
+    produce identical MC runs.
+
+    First two runs have same seed, final run is a different seed
+    """
+    atoms = get_example_mc_system(db_name)
+
+    # Grab a copy of the initial configuration
+    ini_syms = list(atoms.symbols)
+
+    energies = []
+
+    for seed in [8, 8, 9]:
+        # Reset the symbols, as they are mutated during an MC run
+        atoms.symbols = ini_syms
+
+        rng = make_rng(seed=seed)
+        mc = Montecarlo(atoms, 10000, rng=rng)
+        assert mc.rng is rng
+        assert mc.generator.rng is rng
+        mc.run(steps=50)
+        energies.append(mc.get_thermodynamic_quantities()['energy'])
+
+    assert pytest.approx(energies[0], energies[1])
+    assert abs(energies[1] - energies[2]) > 1e-3
+
+
+def test_corr_func_observer(db_name, rng):
     atoms = get_example_mc_system(db_name)
 
     atoms[0].symbol = 'Cu'
     atoms[1].symbol = 'Cu'
 
-    mc = Montecarlo(atoms, 600)
+    mc = Montecarlo(atoms, 600, rng=rng)
     obs = CorrelationFunctionObserver(atoms.calc)
     mc.attach(obs, interval=1)
     mc.run(steps=1000)
@@ -160,13 +200,13 @@ def test_corr_func_observer(db_name):
         assert 'cf_' + k in thermo.keys()
 
 
-def test_snapshot(db_name, make_tempfile):
+def test_snapshot(db_name, make_tempfile, rng):
     atoms = get_example_mc_system(db_name)
 
     fname = make_tempfile('snapshot.traj')
     obs = Snapshot(atoms, fname=fname)
 
-    mc = Montecarlo(atoms, 600)
+    mc = Montecarlo(atoms, 600, rng=rng)
     mc.attach(obs, interval=100)
     mc.run(steps=1000)
     assert len(obs.traj) == 10
@@ -177,11 +217,10 @@ def test_snapshot(db_name, make_tempfile):
     assert str(obs.fname) == fname + '.traj'
 
 
-def test_energy_evolution(db_name, make_tempfile):
-    print(db_name)
+def test_energy_evolution(db_name, make_tempfile, rng):
     atoms = get_example_mc_system(db_name)
 
-    mc = Montecarlo(atoms, 600)
+    mc = Montecarlo(atoms, 600, rng=rng)
     obs = EnergyEvolution(mc)
     mc.attach(obs, interval=50)
     mc.run(steps=1000)
@@ -501,3 +540,18 @@ def test_mc_reset_step_counter(db_name):
     # pylint: disable=protected-access
     mc._reset_internal_counters()
     assert mc.current_step == 0
+
+
+def test_evaluator(example_system):
+    atoms = example_system
+
+    # Test initializing with atoms object
+    mc = Montecarlo(atoms, 200)
+    assert mc.atoms is atoms
+    assert mc.atoms is mc.evaluator.atoms
+
+    # Test initializing with evaluator object
+    evaluator = CEMCEvaluator(atoms)
+    mc = Montecarlo(evaluator, 200)
+    assert mc.atoms is atoms
+    assert mc.evaluator is evaluator

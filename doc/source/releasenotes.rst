@@ -8,6 +8,7 @@ Release notes
 =======
 * Fixed a bug in the :class:`clease.convexhull.ConvexHull` where multiple end-points wouldn't always find the
   correct minimum energy structure for that end-point.
+* Added :class:`~clease.montecarlo.mc_evaluator.MCEvaluator`.
 
 0.10.5
 =======

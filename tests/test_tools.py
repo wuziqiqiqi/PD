@@ -13,6 +13,11 @@ from clease import tools
 from clease.basis_function import Polynomial
 
 
+@pytest.fixture
+def atoms():
+    return bulk('Al', crystalstructure='sc', a=4.0)
+
+
 def test_equivalent_deco():
     predict_result = [{
         'deco': [1, 2, 3, 4],

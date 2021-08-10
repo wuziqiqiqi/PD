@@ -1,18 +1,28 @@
-from typing import Dict, Sequence
-from abc import ABCMeta
+from typing import Dict, Union
+from abc import ABC, abstractmethod
 from ase import Atoms
-from clease.datastructures import SystemChange
+from clease.datastructures import SystemChanges
+from clease.montecarlo.mc_evaluator import MCEvaluator, construct_evaluator
 
 __all__ = ('BarrierModel', 'BEPBarrier')
 
 
 # pylint: disable=too-few-public-methods
-class BarrierModel(metaclass=ABCMeta):
-    """Base barrier model class
+class BarrierModel(ABC):
+    """
+    Base barrier model class
     """
 
-    def __call__(self, atoms: Atoms, system_change: Sequence[SystemChange]) -> float:
-        raise NotImplementedError("__call__ must be implemented in derived classes")
+    def __call__(self, system: Union[Atoms, MCEvaluator], system_changes: SystemChanges) -> float:
+        """Get the height of the barrier"""
+        # Ensure we have a valid evaluator object
+        evaluator = construct_evaluator(system)
+
+        return self.evaluate_barrier(evaluator, system_changes)
+
+    @abstractmethod
+    def evaluate_barrier(self, evaluator: MCEvaluator, system_changes: SystemChanges) -> float:
+        """Evaluate the height of the barrier"""
 
 
 # pylint: disable=too-few-public-methods
@@ -45,14 +55,19 @@ class BEPBarrier(BarrierModel):
         https://en.wikipedia.org/wiki/Bell%E2%80%93Evans%E2%80%93Polanyi_principle>
     """
 
-    def __init__(self, dilute_barrier: Dict[str, float], alpha: float = 0.5):
+    def __init__(
+        self,
+        dilute_barrier: Dict[str, float],
+        alpha: float = 0.5,
+    ):
         super().__init__()
         self.dilute_barrier = dilute_barrier
         self.alpha = alpha
 
-    def __call__(self, atoms: Atoms, system_changes: Sequence[SystemChange]) -> float:
-        E1 = atoms.calc.updater.get_energy()
-        E2 = atoms.calc.get_energy_given_change(system_changes)
+    def evaluate_barrier(self, evaluator: MCEvaluator, system_changes: SystemChanges) -> float:
+        E1 = evaluator.get_energy()
+        # Get the energy given a change, remember to undo the changes again.
+        E2 = evaluator.get_energy_given_change(system_changes)
 
         # Extract the jumping species. The system change should involve
         # a vacancy and another element. Thus, the jumping species is the

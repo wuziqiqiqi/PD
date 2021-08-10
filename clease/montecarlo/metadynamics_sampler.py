@@ -161,6 +161,7 @@ class MetaDynamicsSampler:
         counter = 0
         logger.info("Starting metadynamics sampling...")
         logger.info("Writing result to %s every %s sec", self.fname, self.log_freq)
+        self.mc.initialize_run()
         while not conv:
             counter += 1
             if time.time() - now > self.log_freq:

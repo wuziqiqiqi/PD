@@ -1,4 +1,4 @@
-class Averager(object):
+class Averager:
     """
     Class for robust averaging.
 
@@ -42,6 +42,9 @@ class Averager(object):
         other: Averager
             Another Averager object to be added
         """
+        if not isinstance(other, Averager):
+            raise NotImplementedError
+
         ratio = (other._ref_value / self._ref_value)
         new_obj = Averager(ref_value=self._ref_value)
         new_obj._mean = self._mean + other._mean * ratio

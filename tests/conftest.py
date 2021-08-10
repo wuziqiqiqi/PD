@@ -166,3 +166,12 @@ def compare_dict():
                 assert val1 == val2, type(val1)
 
     return _compare_dict
+
+
+@pytest.fixture
+def make_rng():
+
+    def _make_rng(seed=60):
+        return np.random.default_rng(seed=seed)
+
+    return _make_rng
