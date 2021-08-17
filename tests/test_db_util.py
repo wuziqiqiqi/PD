@@ -47,9 +47,8 @@ def test_cli_runs(db_name):
     for _ in range(10):
         db.write(bulk('Cu'), external_tables={'polynomial_cf': cf, 'trigonometric_cf': cf2})
 
-    cmds = [["clease", "db", "-h"], ["clease", "db", db_name, "--show", "tab"],
-            ["clease", "db", db_name, "--show", "names"],
-            ["clease", "db", db_name, "--show", "cf", "--id", "1"]]
+    cmds = [["clease", "db", "--help"], ["clease", "db", "tab", db_name],
+            ["clease", "db", "names", db_name], ["clease", "db", "cf", db_name, "1"]]
     for cmd in cmds:
         return_code = subprocess.call(cmd)
         assert return_code == 0

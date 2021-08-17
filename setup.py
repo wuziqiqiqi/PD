@@ -105,7 +105,6 @@ setup(
     author_email="jchang@dtu.dk, david.kleiven@ntnu.no, alexty@dtu.dk",
     long_description='CLuster Expansion in Atomistic Simulation Environment',
     url='https://gitlab.com/computationalmaterials/clease',
-    scripts=['bin/clease'],
     version=version,
     description="CLuster Expansion in Atomistic Simulation Environment",
     packages=find_packages(),
@@ -115,7 +114,7 @@ setup(
     package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
-    entry_points={'console_scripts': ['clease=clease.cli.clease:main']},
+    entry_points={'console_scripts': ['clease=clease.cli.main:clease_cli']},
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
@@ -131,6 +130,7 @@ setup(
         'scikit-learn',
         'typing_extensions',
         'Deprecated',
+        'click>=8.0.0',  # CLI things
         # 'mypy',
     ],
     extras_require=EXTRAS_REQUIRE,
