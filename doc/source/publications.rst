@@ -24,3 +24,7 @@ repository <https://gitlab.com/computationalmaterials/clease>`_.
 * Kleiven, D., Ødegård, O.L., Laasonen, K. and Akola, J., 2019.
     `Atomistic simulations of early stage clusters in AlMg alloys. <https://doi.org/10.1016/j.actamat.2018.12.050>`_
     *Acta Materialia*, 166, pp.484-492.
+
+* Tygesen, A.S., Chang, J.H., Vegge, T., García-Lastra, J.M., 2020.
+    `Computational framework for a systematic investigation of anionic redox process in Li-rich compounds. <https://doi.org/10.1038/s41524-020-0335-4>`_
+    *npj Computational Materials*, 6(1), [65].
