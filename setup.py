@@ -39,7 +39,7 @@ def build_ext(ext_module):
 
 # Get version number
 about = {}
-with open('clease/version.py') as f:
+with open(os.path.join('clease', 'version.py')) as f:
     exec(f.read(), about)
 version = about['__version__']
 

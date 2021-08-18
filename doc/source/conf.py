@@ -12,7 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -20,12 +20,22 @@
 
 project = 'CLEASE'
 copyright = '2019, J. H. Chang, D. Kleiven'
-author = 'J. H. Chang, D. Kleiven'
+author = 'J. H. Chang, D. Kleiven, A. S. Tygesen'
+
+# Get the version, we don't want to do an explicit CLEASE import here
+about = {}
+# Get the version.py file
+verisonpy = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'clease',
+                         'version.py')
+
+with open(verisonpy, 'r') as f:
+    exec(f.read(), about)
+clease_version = about['version_info']
 
 # The short X.Y version
-version = ''
+version = '.'.join(map(str, clease_version[:-1]))
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '.'.join(map(str, clease_version))
 
 # -- General configuration ---------------------------------------------------
 
@@ -130,7 +140,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'CLEASE.tex', 'CLEASE Documentation', 'J. H. Chang, D. Kleiven', 'manual'),
+    (master_doc, 'CLEASE.tex', 'CLEASE Documentation', author, 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------
