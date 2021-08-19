@@ -103,7 +103,7 @@ setup(
     ext_modules=build_ext(clease_cxx),
     author=['J. H. Chang', 'D. Kleiven', 'A. S. Tygesen'],
     author_email="jchang@dtu.dk, david.kleiven@ntnu.no, alexty@dtu.dk",
-    long_description='CLuster Expansion in Atomistic Simulation Environment',
+    long_description=open('README.md').read(),
     url='https://gitlab.com/computationalmaterials/clease',
     version=version,
     description="CLuster Expansion in Atomistic Simulation Environment",
@@ -113,6 +113,10 @@ setup(
     include_package_data=True,
     package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
+    project_urls={
+        'Documentation': 'https://clease.readthedocs.org/',
+        'Source': 'https://gitlab.com/computationalmaterials/clease/',
+    },
     keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
     entry_points={'console_scripts': ['clease=clease.cli.main:clease_cli']},
     classifiers=[
