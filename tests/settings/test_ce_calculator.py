@@ -7,7 +7,8 @@ from numpy.random import randint, choice
 from ase.build import bulk
 from ase.spacegroup import crystal
 
-from clease.tools import wrap_and_sort_by_position, SystemChange
+from clease.tools import wrap_and_sort_by_position
+from clease.datastructures import SystemChange
 from clease.settings import CEBulk, CECrystal
 from clease.corr_func import CorrFunction
 from clease.settings import Concentration

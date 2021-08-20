@@ -3,7 +3,7 @@ from abc import abstractmethod, ABC
 from ase import Atoms
 import numpy as np
 from clease.montecarlo.constraints import MCConstraint
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
 __all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError')

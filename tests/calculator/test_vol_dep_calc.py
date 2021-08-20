@@ -3,7 +3,8 @@ import pytest
 
 from clease.calculator import Clease
 from clease.calculator import CleaseVolDep
-from clease.tools import wrap_and_sort_by_position, SystemChange
+from clease.tools import wrap_and_sort_by_position
+from clease.datastructures import SystemChange
 
 
 def test_consistency(get_random_eci, get_LiVX):

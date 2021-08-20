@@ -9,7 +9,7 @@ from typing import Sequence
 import numpy as np
 from ase import Atoms
 from ase.units import kB
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.montecarlo.exponential_filter import ExponentialFilter
 from clease.montecarlo.averager import Averager
 from clease.montecarlo.bias_potential import BiasPotential

@@ -1,5 +1,5 @@
 from typing import Sequence, Dict
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.montecarlo.observers.mc_observer import MCObserver
 
 __all__ = ('AcceptanceRate',)

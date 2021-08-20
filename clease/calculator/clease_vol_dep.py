@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Iterable, Set, List, Union, Sequence
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.settings import ClusterExpansionSettings
 from clease.calculator import Clease
 

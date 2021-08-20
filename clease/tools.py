@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from itertools import (permutations, combinations, product, filterfalse, chain)
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict, Set, Sequence, NamedTuple, Union
+from typing import List, Optional, Tuple, Dict, Set, Sequence, Union
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
 import numpy as np
@@ -1069,10 +1069,3 @@ def get_cubicness(atoms: ase.Atoms) -> float:
     # Take absolute value, as determinants can be negative.
     # We just need it to be as close to 0 as possible
     return abs(np.linalg.det(cell - diag))
-
-
-class SystemChange(NamedTuple):
-    index: int
-    old_symb: str
-    new_symb: str
-    name: str

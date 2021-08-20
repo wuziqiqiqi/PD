@@ -1,7 +1,7 @@
 from typing import Sequence
 from ase.atoms import Atoms
 from ase.io.trajectory import TrajectoryWriter
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.montecarlo.observers import MCObserver
 from clease.tools import add_file_extension
 

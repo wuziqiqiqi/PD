@@ -1,7 +1,7 @@
 from typing import Dict, Sequence
 from abc import ABCMeta
 from ase import Atoms
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 
 __all__ = ('BarrierModel', 'BEPBarrier')
 

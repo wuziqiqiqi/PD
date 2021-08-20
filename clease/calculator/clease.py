@@ -5,7 +5,7 @@ from typing import Dict, Optional, TextIO, Union, List, Sequence
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease_cxx import PyCEUpdater

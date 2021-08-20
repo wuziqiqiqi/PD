@@ -2,7 +2,7 @@ import numpy as np
 from clease.montecarlo import BEPBarrier
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 
 
 def test_loc_environ_barrier(db_name):

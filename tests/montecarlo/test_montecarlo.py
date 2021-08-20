@@ -17,7 +17,7 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
 from clease.montecarlo import RandomSwap, MixedSwapFlip
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 
 # Set the random seed
 np.random.seed(0)

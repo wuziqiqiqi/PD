@@ -8,7 +8,7 @@ import numpy as np
 from clease.montecarlo import BarrierModel
 from clease.montecarlo import KMCEventType
 from clease.montecarlo.observers import MCObserver
-from clease.tools import SystemChange
+from clease.datastructures import SystemChange
 
 __all__ = ('KineticMonteCarlo',)
 
