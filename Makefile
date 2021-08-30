@@ -8,14 +8,10 @@ endif
 clean:
 	rm -rf dist/
 	rm -rf build/
+	rm -rf *.egg-info/
 	rm -rf __pycache__/
-	rm -rf clease/__pycache__/
-	rm -rf clease/calculator/__pycache___/
-	rm -rf clease/montecarlo/__pycache__/
-	rm -rf clease/montecarlo/observers/__pycache__/
-	rm -rf clease/montecarlo/constraints/__pycache__/
-	rm -rf clease/gui/__pycache__/
-	rm cxx/cython/clease_cxx.cpp
+	rm -rf */__pycache__/
+	rm -f cxx/cython/clease_cxx.cpp
 
 package:
 	$(COMMAND) setup.py sdist

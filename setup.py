@@ -80,6 +80,7 @@ EXTRAS_REQUIRE = {
     # Extra nice-to-haves when developing CLEASE
     'dev': (
         'pip',
+        'cython',
         'pre-commit',
         'ipython',
         'twine',
@@ -104,6 +105,7 @@ setup(
     author=['J. H. Chang', 'D. Kleiven', 'A. S. Tygesen'],
     author_email="jchang@dtu.dk, david.kleiven@ntnu.no, alexty@dtu.dk",
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     url='https://gitlab.com/computationalmaterials/clease',
     version=version,
     description="CLuster Expansion in Atomistic Simulation Environment",
