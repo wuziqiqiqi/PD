@@ -10,7 +10,7 @@ fail-under=10
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=CVS
+ignore=CVS, setup.py
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
@@ -141,7 +141,11 @@ disable=print-statement,
         comprehension-escape,
         invalid-name,
         missing-docstring,
-        unsubscriptable-object # Fails for numpy arrays
+        unsubscriptable-object, # Fails for numpy arrays
+        too-many-arguments,
+        too-many-locals,
+        too-many-instance-attributes,
+        invalid-name
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
