@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.10.6
+=======
+
 0.10.5
 =======
 * Added :func:`clease.logging_utils.log_stream` and :func:`clease.logging_utils.log_stream_context` functions to simplify printing the CLEASE logs to a file.

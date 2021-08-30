@@ -63,6 +63,7 @@ The use of CLEASE is best learned through tutorials:
    import_structures
    api_doc
    publications
+   acknowledgements
 
 
 

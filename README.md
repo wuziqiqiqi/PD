@@ -5,11 +5,6 @@
 
 CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that automates the cumbersome setup and construction procedure of cluster expansion (CE). It provides a comprehensive list of tools for specifying parameters for CE, generating training structures, fitting effective cluster interaction (ECI) values and running Monte Carlo simulations. A detailed description of the package can be found in the [documentation](https://clease.readthedocs.io/) and our [paper](https://doi.org/10.1088/1361-648X/ab1bbc).
 
-# Partners and Support
-![image1](doc/source/resources/image1.png)
-![image2](doc/source/resources/image2.png)
-![image3](doc/source/resources/image3.png)
-
 # Installation
 Install the CLEASE code by executing
 ```
