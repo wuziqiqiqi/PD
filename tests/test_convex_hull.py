@@ -1,11 +1,15 @@
-from __future__ import division
+import pytest
 from clease import ConvexHull
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.db import connect
 from ase.build import bulk
 import numpy as np
 import os
-import unittest
+
+
+@pytest.fixture
+def rng():
+    return np.random.default_rng(28)
 
 
 def test_binary(db_name):
@@ -84,3 +88,27 @@ def test_syst_with_one_fixed_comp(db_name):
     assert cnv_hull._unique_elem == ["Au", "Cu", "Zn"]
     # fig = cnv_hull.plot()
     # assert len(fig.get_axes()) == 1
+
+
+def test_system_multiple_endpoints(db_name, rng):
+    db = connect(db_name)
+    atoms_orig = bulk('Au') * (1, 1, 2)
+
+    # Create some atoms objects at each extremum,
+    # with vastly different energies
+    energies = -350 * rng.random(25)
+    mult = {'Au': 1, 'Zn': 2}
+    for en in energies:
+        for sym, m in mult.items():
+            atoms = atoms_orig.copy()
+            atoms.symbols = sym
+            calc = SinglePointCalculator(atoms, energy=en * m)
+            atoms.calc = calc
+            db.write(atoms, converged=True)
+
+    cnv_hull = ConvexHull(db_name, conc_ranges={"Au": (0, 1)})
+
+    end_points = cnv_hull.end_points
+    # Ensure the end-points correspond to the energy of the minimum energy structure
+    for sym, m in mult.items():
+        assert end_points[sym]['energy'] == pytest.approx(energies.min() * m / len(atoms_orig))

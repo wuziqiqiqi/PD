@@ -6,6 +6,8 @@ Release notes
 
 0.10.6
 =======
+* Fixed a bug in the :class:`clease.convexhull.ConvexHull` where multiple end-points wouldn't always find the
+  correct minimum energy structure for that end-point.
 
 0.10.5
 =======

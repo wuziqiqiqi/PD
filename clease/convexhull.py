@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
+import matplotlib.pyplot as plt
 from ase.db import connect
 
 __all__ = ('ConvexHull',)
@@ -89,37 +90,46 @@ class ConvexHull:
         The algorithm seeks one configuration that maximize
         the composition of each element in the database.
         """
+        # Initialize the end-point dictionaries
         end_points = {k: {} for k in self._unique_elem}
-        for k, v in end_points.items():
+        for v in end_points.values():
             for k2 in self._unique_elem:
                 v[f"{k2}_conc"] = 0.0
-            v["energy"] = 0.0
+            v["energy"] = np.infty
 
+        # Iterate through all rows, update
+        # by finding the lowest energy structure,
+        # which has the maximum amount of a given element
         for row in self.db.select(self.select_cond):
             if not self._include_row(row):
                 continue
-            count = row.count_atoms()
+            conc = row.count_atoms()
+            # Build the concentration dictionary for this row
             for k in self._unique_elem:
-                if k not in count.keys():
-                    count[k] = 0.0
+                if k not in conc:
+                    conc[k] = 0.0
                 else:
-                    count[k] /= row.natoms
-            for k, v in end_points.items():
-                if k not in count.keys():
-                    continue
+                    conc[k] /= row.natoms
 
+            # Find out if the structure is "better" for any of the
+            # end point elements
+            for element, v in end_points.items():
+                # Concentration of the current element to be maximized
+                own_conc = v[f"{element}_conc"]
                 # Check if the current structure
                 # is an endpoint
-                if count[k] > v[f"{k}_conc"]:
-                    f_id = row.get("final_struct_id", -1)
-                    if f_id >= 0:
-                        # New format where energy is in a separate entry
-                        v["energy"] = self.db.get(id=f_id).energy / row.natoms
-                    else:
-                        # Old format where the energy is stored in same entry
-                        v["energy"] = row.energy / row.natoms
-                    for k_count in count.keys():
-                        v[f"{k_count}_conc"] = count[k_count]
+                if conc[element] >= own_conc:
+                    energy = _get_row_energy(row, self.db)
+                    if conc[element] == own_conc and energy >= v['energy']:
+                        # We already have a record with the same concentration,
+                        # but a better (lower) energy
+                        continue
+                    # Either a higher concentration or a lower energy
+                    # update our current best
+                    v['energy'] = energy
+                    for elem, new_conc in conc.items():
+                        v[f"{elem}_conc"] = new_conc
+
         return end_points
 
     def _weighting_coefficients(self, end_points):
@@ -188,7 +198,7 @@ class ConvexHull:
 
         return np.array(energies), conc, ids
 
-    def get_convex_hull(self, conc_var=None):
+    def get_convex_hull(self, conc_var=None) -> SciConvexHull:
         """Return the convex hull.
 
         Parameters:
@@ -229,8 +239,7 @@ class ConvexHull:
 
     def plot(self, fig=None, concs=None, energies=None, marker="o", mfc="none"):
         """Plot formation energies."""
-        from matplotlib import pyplot as plt
-
+        # pylint: disable=too-many-branches
         # We only add the Convex Hull for the DFT
         # data
         add_cnv_hull = concs is None
@@ -276,6 +285,8 @@ class ConvexHull:
 
             if add_cnv_hull:
                 c_hull = self.get_convex_hull(conc_var=elems[i])
+                # pylint cannot inspect scipy C things, false positive
+                # pylint: disable=no-member
                 for simpl in c_hull.simplices:
                     if self._is_lower_conv_hull(simpl):
                         x_cnv = [x[simpl[0]], x[simpl[1]]]
@@ -289,11 +300,14 @@ class ConvexHull:
 
     def show_structures_on_convex_hull(self):
         """Show all entries on the convex hull."""
+        # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
 
         c_hull = self.get_convex_hull()
         indices = set()
+        # pylint cannot inspect scipy C things, false positive
+        # pylint: disable=no-member
         for simplex in c_hull.simplices:
             if self._is_lower_conv_hull(simplex):
                 indices = indices.union(simplex)
@@ -368,3 +382,12 @@ class ConvexHull:
             Total energy per atom
         """
         return tot_energy - sum(self.weights[k] * conc[k] for k in conc.keys())
+
+
+def _get_row_energy(row, con) -> float:
+    f_id = row.get("final_struct_id", -1)
+    if f_id >= 0:
+        # New format where energy is in a separate entry
+        return con.get(id=f_id).energy / row.natoms
+    # Old format where the energy is stored in same entry
+    return row.energy / row.natoms
