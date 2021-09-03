@@ -1,7 +1,7 @@
 # CLEASE
 | Python | GUI | Average | PyPI | Docs |
 | ------ | --- | ------- | ---- | ---- |
-| ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=pytests) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=gui_test) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg) | [![PyPI version](https://badge.fury.io/py/clease.svg)](https://badge.fury.io/py/clease) | [![Documentation Status](https://readthedocs.org/projects/clease/badge/?version=latest)](https://clease.readthedocs.io/en/latest/?badge=latest) |
+| ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=pytest:default) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg?job=gui_test) | ![coverage](https://gitlab.com/computationalmaterials/clease/badges/master/coverage.svg) | [![PyPI version](https://badge.fury.io/py/clease.svg)](https://badge.fury.io/py/clease) | [![Documentation Status](https://readthedocs.org/projects/clease/badge/?version=latest)](https://clease.readthedocs.io/en/latest/?badge=latest) |
 
 CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that automates the cumbersome setup and construction procedure of cluster expansion (CE). It provides a comprehensive list of tools for specifying parameters for CE, generating training structures, fitting effective cluster interaction (ECI) values and running Monte Carlo simulations. A detailed description of the package can be found in the [documentation](https://clease.readthedocs.io/) and our [paper](https://doi.org/10.1088/1361-648X/ab1bbc).
 
