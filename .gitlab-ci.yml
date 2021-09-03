@@ -1,4 +1,4 @@
-image: python:3.7
+image: python:latest
 
 before_script:
   - python3 --version
@@ -28,7 +28,7 @@ pylint:
 #     - pwd
 #     - python3 -m mypy clease/
 
-pytests:
+pytest:default:
   stage: Code Test
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
@@ -40,6 +40,7 @@ pytests:
 
 gui_test:
   stage: Code Test
+  image: python:3.7 # Requies at most python 3.7
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - apt-get update -qy
@@ -76,10 +77,31 @@ pages:
 
 python3_test_slow:
   stage: Code Test
-  image: python:3.7
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - python3 --version
     - python3 -m pip install .[test]
     - pytest --runslow tests/
+  when: manual
+
+.pytest_template: &pytest_definition
+  stage: Code Test
+  script:
+    - python3 -m pip install .[test]
+    - python3 -m pytest tests/
+
+# Some optional tests for older python versions
+pytest:py36:
+  image: python:3.6
+  <<: *pytest_definition
+  when: manual
+
+pytest:py37:
+  image: python:3.7
+  <<: *pytest_definition
+  when: manual
+
+pytest:py38:
+  image: python:3.8
+  <<: *pytest_definition
   when: manual
