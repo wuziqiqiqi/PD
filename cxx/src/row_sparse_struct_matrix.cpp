@@ -62,6 +62,11 @@ void RowSparseStructMatrix::set_size( unsigned int n_rows, unsigned int n_non_ze
 
 void RowSparseStructMatrix::set_lookup_values( const vector<int> &lut_values )
 {
+  if (lut_values.size() == 0) {
+    // Nothing to do (important to return early in this case since lut_values[0] is accessed later
+    return;
+  }
+
   if ( lut_values_set )
   {
     throw logic_error( "Cannot modify the allowed lookup values. This has already been done, and they can't be modified!" );

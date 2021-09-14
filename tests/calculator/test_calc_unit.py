@@ -116,3 +116,22 @@ def test_set_atoms(make_dummy_atoms):
     atoms[0].x += 0.01
     with pytest.raises(ValueError):
         calc.set_atoms(atoms)
+
+
+
+def test_only_empty_and_singlet(make_dummy_settings):
+    # Test added due to issue #265: seg fault
+    settings = make_dummy_settings(max_cluster_size=1, max_cluster_dia=())
+    eci = {'c0': 0.0, 'c1_0': 0.0}
+    calc = Clease(settings, eci)
+    atoms = settings.atoms.copy()
+
+    # This line produced segfault
+    atoms.calc = calc
+
+    # Add some assertions that confirms lengths of the cluster list
+    assert len(settings.cluster_list) == 2
+    
+    # Make sure that all cluster sizes are 0 or one
+    for cluster in settings.cluster_list:
+        assert cluster.size in (0, 1)

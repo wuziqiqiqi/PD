@@ -784,6 +784,10 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
 
   bool is_list = PyList_Check(py_trans_mat);
 
+  #ifdef PRINT_DEBUG
+    cout << "read_trans_matrix: Extracting unique indices" << endl;
+  #endif
+
   set<int> unique_indx;
   clusters.unique_indices(unique_indx);
   //get_unique_indx_in_clusters(unique_indx);
@@ -795,11 +799,20 @@ void CEUpdater::read_trans_matrix(PyObject* py_trans_mat)
   if (is_list)
   {
     unsigned int size = list_size(py_trans_mat);
+
+    #ifdef PRINT_DEBUG
+      cout << "read_trans_matrix: Updating size of trans_matrix" << endl;
+    #endif
+
     trans_matrix.set_size(size, unique_indx_vec.size(), max_indx);
+
+    #ifdef PRINT_DEBUG
+      cout << "read_trans_matrix: Setting lookup values in trans_matrix" << endl;
+    #endif
     trans_matrix.set_lookup_values(unique_indx_vec);
 
     #ifdef PRINT_DEBUG
-      cout << "Reading translation matrix from list of dictionaries\n";
+      cout << "read_trans_matrix: Reading translation matrix from list of dictionaries" << endl;
     #endif
     unsigned int n_elements_insterted = 0;
     for (unsigned int i=0;i<size;i++)
