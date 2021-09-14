@@ -52,7 +52,12 @@ class Concentration:
     grouped_basis: list (optional, only used when basis are grouped)
         Indices of basis_elements that are considered to be equivalent when
         specifying concentration (e.g., useful when two basis are shared by
-        the same set of elements and no distinctions are made between them)
+        the same set of elements and no distinctions are made between them).
+        As an example consider a structure with three sublattices A, B and C.
+        If sublattice A and C should be occupied by the same elements and B is
+        occupied by a different set of elements. We can group lattice A and C
+        by passing [(0, 2), (1,)].
+
 
     A_lb: list (optional, only used for linear algebra representation)
         A two-dimention matrix (or nested list) used to specify the lower
@@ -68,6 +73,17 @@ class Concentration:
     b_eq: list (optional, only used for linear algegra representation)
         A list used tp specify the equality condisitons of the concentration
         ranges.
+
+    Example I: Single sublattice
+
+    >>> conc = Concentration(basis_elements=[['Au', 'Cu']])
+
+    Example II: Two sublattices
+    >>> conc = Concentration(basis_elements=[['Au', 'Cu'], ['Au', 'Cu', 'X']])
+
+    Example III: Three sublattices where the first and third are grouped
+    >>> conc = Concentration(basis_elements=[['Au', 'Cu'], ['Au', 'Cu', 'X'], ['Au', 'Cu']],
+    ...                      grouped_basis=[(0, 2), (1,)])
     """
 
     def __init__(self,
