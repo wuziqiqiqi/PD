@@ -48,6 +48,12 @@ publication:
    __ https://doi.org/10.1088/1361-648X/ab1bbc
 
 
+.. note::
+   We also have a new GUI under development, `clease-gui <https://clease-gui.readthedocs.io>`_, which is run
+   within a jupyter notebook.
+   If you want, feel free to test it out and don't forget to
+   `report any issues <https://gitlab.com/computationalmaterials/clease-gui/-/issues>`_.
+
 The use of CLEASE is best learned through tutorials:
 
 
