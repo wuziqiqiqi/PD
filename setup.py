@@ -88,10 +88,7 @@ EXTRAS_REQUIRE = {
         'prospector',
         'pylint',
     ),
-    'gui': (
-        'kivy>=1.11,<2',
-        'kivy-garden.graph @ git+https://github.com/kivy-garden/graph.git@master#egg=kivy-garden.graph',
-    )
+    'gui': ('clease-gui',),
 }
 # Make an entry which installs all of the above in one go
 # Separate out "gui" from "all"
@@ -113,7 +110,6 @@ setup(
     download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v{0}/clease-v{0}.zip'.
     format(version),
     include_package_data=True,
-    package_data={'clease.gui': ['layout/*.kv', 'layout/*.png']},
     license='MPL-2.0',
     project_urls={
         'Documentation': 'https://clease.readthedocs.org/',

@@ -38,21 +38,6 @@ pytest:default:
     - coverage run --omit='tests/*' -m pytest tests/
     - coverage report
 
-gui_test:
-  stage: Code Test
-  image: python:3.7 # Requies at most python 3.7
-  coverage: '/TOTAL\s+.*( \d+\%)/'
-  script:
-    - apt-get update -qy
-    - apt-get install -qy xvfb libmtdev1
-    - python3 -m pip install coverage
-    #    - clease gui --setup
-    - python3 -m pip install .[gui]
-    - export KIVY_GL_BACKEND=mock
-    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" python3 gui_tests/test_gui.py
-    - xvfb-run --server-args="-screen 0 1280x720x24 -ac +extension GLX" coverage run --include='*/clease/gui/*' -m unittest discover gui_tests/
-    - coverage report
-
 doctest:
   stage: Code Test
   script:

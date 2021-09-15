@@ -28,12 +28,8 @@ A latest stable version of CLEASE can be installed using the following command
     pip install clease
 
 Most of the standard CE routines can be performed using the graphical user
-interface (GUI). All of the necessary dependencies for GUI can be installed
-by running
-
-.. code-block:: bash
-
-    clease gui-setup
+interface (GUI). The `CLEASE GUI <https://gitlab.com/computationalmaterials/clease-gui>`_
+is an app based on the jupyter notebook.
 
 Alternatively, you can install the latest development version of CLEASE by
 following the instructions in the `README <https://gitlab.com/computationalmaterials/clease/blob/master/README.md>`_ page.
@@ -64,7 +60,6 @@ The use of CLEASE is best learned through tutorials:
    releasenotes
    ce_aucu
    metadynamics_sampling
-   ce_aucu_gui_tutorial
    clease_cli
    import_structures
    api_doc
