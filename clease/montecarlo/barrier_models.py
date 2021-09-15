@@ -8,8 +8,7 @@ __all__ = ('BarrierModel', 'BEPBarrier')
 
 # pylint: disable=too-few-public-methods
 class BarrierModel(metaclass=ABCMeta):
-    """
-    Base barrier model class
+    """Base barrier model class
     """
 
     def __call__(self, atoms: Atoms, system_change: Sequence[SystemChange]) -> float:
@@ -28,12 +27,12 @@ class BEPBarrier(BarrierModel):
     where E_1 is the total energy of starting configuration and E_2 is the
     total energy of the end configuration. Q_s is a constant that depends
     on the species. If an isolated solute is diffusing in a host material
-    E_1 = E_2. Thus, Q_s represents the barrier of an isolated solute. References
+    E_1 = E_2. Thus, Q_s represents the barrier of an isolated solute. References:
 
-    [1] https://en.wikipedia.org/wiki/Bell%E2%80%93Evans%E2%80%93Polanyi_principle
-    [2] Andersen, M., Panosetti, C. and Reuter, K., 2019.
-        A practical guide to surface kinetic Monte Carlo simulations.
-        Frontiers in chemistry, 7, p.202. DOI: https://doi.org/10.3389/fchem.2019.00202
+    1. The `Bell-Evans-Polanyi`_ principle.
+    2. Andersen, M., Panosetti, C. and Reuter, K., 2019.
+       A practical guide to surface kinetic Monte Carlo simulations.
+       Frontiers in chemistry, 7, p.202. DOI: https://doi.org/10.3389/fchem.2019.00202
 
     :param dilute_barrier: Dictionary representing the dilute barrier for
         each species. Example {'Al': 0.05, 'Mg': 0.03}
@@ -41,6 +40,9 @@ class BEPBarrier(BarrierModel):
         of the transition state along the reaction coordinate. Default is 0.5.
         Note as alpha is the same for all jumps, it must be viewed as
         controlling the average barrier position.
+
+    .. _Bell-Evans-Polanyi:
+        https://en.wikipedia.org/wiki/Bell%E2%80%93Evans%E2%80%93Polanyi_principle>
     """
 
     def __init__(self, dilute_barrier: Dict[str, float], alpha: float = 0.5):

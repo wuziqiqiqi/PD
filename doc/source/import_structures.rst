@@ -10,6 +10,7 @@ feature can be used we generate an example dataset using ASE's EMT calculator an
 file.
 
 .. doctest::
+
     :options: +SKIP
     >>> from ase.calculators.emt import EMT
     >>> from ase.build import bulk
@@ -17,19 +18,20 @@ file.
     >>> writer_initial = TrajectoryWriter("initial.traj")
     >>> writer_final = TrajectoryWriter("final.traj")
     >>> for i in range(10):
-    ...     atoms = bulk("Au", a=3.9)*(3, 3, 3)
+    ...     atoms = bulk("Au", a=4.05)*(3, 3, 3)
     ...     writer_initial.write(atoms)
     ...     calc = EMT()
     ...     atoms.calc = calc
-    ...     atoms.get_potential_energy()
+    ...     en = atoms.get_potential_energy()
     ...     writer_final.write(atoms)
 
 
 Next, we want to import these data into CLEASE. First, we create the settings
 
 .. doctest::
+
     :options: +SKIP
-    >>> from clease NewStructures
+    >>> from clease.structgen import NewStructures
     >>> from clease.settings import CEBulk, Concentration
     >>> settings = CEBulk(
     ...     Concentration(basis_elements=[['Au', 'Cu']]), 
@@ -52,6 +54,7 @@ structure via a **SinglePointCalculator**. Furthermore, if you only have the ini
 you can perfectly fine just replace the final structure with a copy of the initial.
 
 .. testcleanup::
+
     import os
     os.remove("initial.traj")
     os.remove("final.traj")

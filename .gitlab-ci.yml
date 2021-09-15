@@ -45,7 +45,7 @@ doctest:
     - apt-get update -qy
     - apt-get install -qy xvfb
     - cd doc
-    - make doctest
+    - make doctest SPHINXOPTS="-W"
 
 pages:
   stage: Deploy

@@ -5,6 +5,7 @@
 
 .. _aucu_setting:
 .. module:: clease.settings
+  :noindex:
 
 Specify CE settings
 ===================
@@ -88,8 +89,3 @@ found in the following articles.
 One can alternatively use :class:`CECrystal` class to specify the unit cell of
 the system. :class:`CECrystal` takes a more general approach where the unit
 cell is specified based on its space group and the positions of unique sites.
-
-
-.. autoclass:: CEBulk
-.. autoclass:: CECrystal
-

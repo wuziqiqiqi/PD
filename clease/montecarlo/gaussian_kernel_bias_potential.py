@@ -11,31 +11,32 @@ class GaussianKernelBiasPotential(BiasPotential):
 
     Parameters:
 
-    xmin: float
-        Minimum coordinate value
+        xmin: float
+            Minimum coordinate value
 
-    xmax: float
-        Maximum coordinate value
+        xmax: float
+            Maximum coordinate value
 
-    num_kernels: int
-        Number of Gaussian kernels
+        num_kernels: int
+            Number of Gaussian kernels
 
-    width: float
-        Width of the kernel (=exp(-(x/width)**2)
+        width: float
+            Width of the kernel (=exp(-(x/width)**2)
 
-    getter: MCObserver
-        Observer that can return the coordinate value after a given MC step.
-        There are two requirements for the observer in addition to being a
-        subclass of MCObsers.
-        1. It needs to support None as an argument for the system changes.
-           In that case, the code expects that the current value of the
-           coordinate is returned
-        2. It needs to support peak=True/False keyword. If peak=True,
-           the code expects to get the coordinate after the change,
-           but the observer should not update its current value.
+        getter: MCObserver
+            Observer that can return the coordinate value after a given MC step.
+            There are two requirements for the observer in addition to being a
+            subclass of MCObsers.
+            1. It needs to support None as an argument for the system changes.
+            In that case, the code expects that the current value of the
+            coordinate is returned
+            2. It needs to support peak=True/False keyword. If peak=True,
+            the code expects to get the coordinate after the change,
+            but the observer should not update its current value.
     """
 
     def __init__(self, xmin=0.0, xmax=1.0, num_kernels=10, width=0.1, getter=None):
+
         self.xmin = xmin
         self.xmax = xmax
         self.width = width
@@ -63,8 +64,8 @@ class GaussianKernelBiasPotential(BiasPotential):
         more than 0.01 at position x
 
         Parameters
-        x: float
-            Position to be evaluated
+            x: float
+                Position to be evaluated
 
         Returns: int, int
             lower index, upper index

@@ -29,9 +29,6 @@
     atoms.get_potential_energy()
     update_db(uid_initial=row.id, final_struct=atoms, db_name="aucu.db")
 
-.. _aucu_evaluate:
-.. module:: clease.evaluate
-
 Evaluating the CE model
 =======================
 
@@ -79,5 +76,5 @@ for all structures that are not yet converged
   os.remove("aucu.db")
   os.remove("eci_l1.json")
 
-.. autoclass:: Evaluate
-   :members: set_fitting_scheme, plot_CV, plot_fit, plot_ECI, save_eci
+
+For more information, see :class:`~clease.evaluate.Evaluate`.

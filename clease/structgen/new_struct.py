@@ -105,10 +105,11 @@ class NewStructures:
         :param approx_mean_var: whether or not to use a spherical and
             isotropical distribution approximation scheme for determining the
             mean variance.
-            -'True': Assume a spherical and isotropical distribution of
+
+            -`True`: Assume a spherical and isotropical distribution of
                 structures in the configurational space. Corresponds to eq.4
                 in PRB 80, 165122 (2009)
-            -'False': Use sigma and mu of eq.3 in PRB 80, 165122 (2009)
+            -`False`: Use sigma and mu of eq.3 in PRB 80, 165122 (2009)
                 to characterize the distribution of structures in population.
                 Requires pre-sampling of random structures before generating
                 probe structures. sigma and mu are generated and stored in
@@ -293,31 +294,35 @@ class NewStructures:
         :param num_steps_per_temp: Number of steps in simulated annealing
         :param random_composition: Whether or not to fix the composition of the
             generated structure.
-            -*False* and atoms = Atoms object: One ground-state structure with
+
+            1. *False* and atoms = Atoms object: One ground-state structure with
                 matching size and composition of the supplied Atoms object is
                 generated
-            -*False* and atoms = list: The same number of ground-state
+            2. *False* and atoms = list: The same number of ground-state
                 structures that matches the length of the list is generated
-                Note 1: num_struct_per_gen is ignored and all of the generated
-                        structures have the same generation number
-                Note 2: each GS structure will have matching size and
-                        composition of the suplied Atoms objects
-            -*True* and atoms = Atoms object: GS structure(s) with a
+
+                * Note 1: num_struct_per_gen is ignored and all of the generated
+                    structures have the same generation number
+                * Note 2: each GS structure will have matching size and
+                    composition of the suplied Atoms objects
+            3. *True* and atoms = Atoms object: GS structure(s) with a
                 matching size of the Atoms object is generated at a random
                 composition (within the composition range specified in
                 Concentration class)
-                Note 1: This will generate GS structures until the number of
-                        structures with the current generation number equals
-                        num_struct_per_gen
-                Note 2: A check is performed to ensure that none of the newly
-                        generated GS structures have the same composition
-            -*True* and atoms = list: The same number of GS structures that
+
+                * Note 1: This will generate GS structures until the number of
+                    structures with the current generation number equals
+                    num_struct_per_gen
+                * Note 2: A check is performed to ensure that none of the newly
+                    generated GS structures have the same composition
+            4. *True* and atoms = list: The same number of GS structures that
                 matches the length of the list is generated
-                Note 1: num_struct_per_gen is ignored and all of the generated
+
+                * Note 1: num_struct_per_gen is ignored and all of the generated
                         structures have the same generation number
-                Note 2: each GS structure will have matching sizes of the
+                * Note 2: each GS structure will have matching sizes of the
                         supplied Atoms objects but with a random composition
-                Note 3: No check is performed to ensure that all new GS
+                * Note 3: No check is performed to ensure that all new GS
                         structures have unique composition
         """
         structs = self._set_initial_structures(atoms, random_composition)
@@ -625,8 +630,8 @@ class NewStructures:
             count_init = count_atoms(init)
             count_final = count_atoms(final)
             # pylint: disable=consider-iterating-dictionary
-            for k in count_final.keys():
-                if k not in count_init.keys():
+            for k in count_final:
+                if k not in count_init:
                     raise ValueError("Final and initial structure contains " "different elements")
 
                 if count_init[k] != count_final[k]:

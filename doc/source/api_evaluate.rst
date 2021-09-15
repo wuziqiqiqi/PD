@@ -1,5 +1,5 @@
 Fitting ECIs
 =============
 
-.. automodule:: clease
-    :members: Evaluate
+.. autoclass:: clease.evaluate.Evaluate
+    :members:
