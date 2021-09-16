@@ -4,12 +4,22 @@ Monte Carlo
 
 .. contents:: Table of Contents
 
+
 The Monte Carlo class
----------------------
+=====================
+
+The canonical Monte Carlo class has the following API:
 
 .. autoclass:: clease.montecarlo.montecarlo.Montecarlo
     :members:
 
+
+Additionally, the montecarlo class inherits from the
+:class:`~clease.montecarlo.base.BaseMC` class,
+which adds the following methods:
+
+.. autoclass:: clease.montecarlo.base.BaseMC
+    :members:
 
 Related Objects
 ---------------
