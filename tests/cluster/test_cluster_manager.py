@@ -117,3 +117,36 @@ def test_get_figures_multiple_times(cluster_mng):
     fig1 = cluster_mng.get_figures()
     fig2 = cluster_mng.get_figures()
     assert fig1 == fig2
+
+
+def test_cache(mocker, cluster_mng):
+    max_size = 3
+    max_cluster_dia = [0, 0, 5, 5]
+    mocker.spy(ClusterManager, '_prepare_new_build')
+    assert cluster_mng._prepare_new_build.call_count == 0
+    # No build has been performed yet, we should require a build
+    assert cluster_mng.requires_build(max_size, max_cluster_dia)
+    cluster_mng.build(max_size, max_cluster_dia)
+    len_orig = len(cluster_mng.clusters)
+    cluster_0 = cluster_mng.clusters[0]
+    # Ensure we called prepare_new_build, and we no longer require a build
+    assert cluster_mng._prepare_new_build.call_count == 1
+    assert not cluster_mng.requires_build(max_size, max_cluster_dia)
+
+    # Check we didn't perform a new build
+    cluster_mng.build(max_size, max_cluster_dia)
+    assert cluster_mng._prepare_new_build.call_count == 1
+    assert len(cluster_mng.clusters) == len_orig
+    # The first cluster must be the same object in memory, since
+    # we didn't do anything to the cluster list
+    assert cluster_0 is cluster_mng.clusters[0]
+
+    # Build using a new set of arguments
+    max_size = 4
+    max_cluster_dia.append(5)
+    assert cluster_mng.requires_build(max_size, max_cluster_dia)
+    cluster_mng.build(max_size, max_cluster_dia)
+    assert cluster_mng._prepare_new_build.call_count == 2
+    # The first cluster must be the same object in memory, since
+    # we didn't do anything to the cluster list
+    assert cluster_0 is not cluster_mng.clusters[0]

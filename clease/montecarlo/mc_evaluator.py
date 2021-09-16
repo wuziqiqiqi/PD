@@ -106,6 +106,9 @@ class CEMCEvaluator(MCEvaluator):
                              "when using CEMCEvaluator")
         super().__init__(atoms)
 
+    def get_energy(self, applied_changes: SystemChanges = None) -> float:
+        return self.atoms.calc.get_energy()
+
     # pylint: disable=no-self-use
     def reset(self) -> None:
         """Perform a reset on the evaluator and/or on the atoms"""
@@ -134,7 +137,7 @@ class CEMCEvaluator(MCEvaluator):
             atoms (Atoms): Atoms object to be mutated.
             system_changes (SystemChanges): Sequence of changes to be applied.
         """
-        self.atoms.calc.undo_system_changes(system_changes)
+        self.atoms.calc.undo_system_changes()
 
     def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare

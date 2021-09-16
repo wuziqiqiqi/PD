@@ -1,6 +1,5 @@
 from typing import Dict
 from ase import Atoms
-from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
 from clease.calculator import Clease
 from clease.tools import wrap_and_sort_by_position
@@ -17,8 +16,6 @@ def attach_calculator(settings: ClusterExpansionSettings,
     """
     if eci is None:
         eci = {}
-    cf_names = list(eci.keys())
-    init_cf = CorrFunction(settings).get_cf_by_names(settings.atoms, cf_names)
 
     template = settings.template_atoms.get_template_matching_atoms(atoms=atoms)
     settings.set_active_template(atoms=template)
@@ -26,9 +23,10 @@ def attach_calculator(settings: ClusterExpansionSettings,
     wrapped = wrap_and_sort_by_position(atoms.copy())
     atoms_with_calc = settings.atoms.copy()
 
-    calc = Clease(settings, eci=eci, init_cf=init_cf)
-    atoms_with_calc.calc = calc
+    calc = Clease(settings, eci=eci)
     atoms_with_calc.symbols = wrapped.symbols
+    atoms_with_calc.calc = calc
+
     return atoms_with_calc
 
 

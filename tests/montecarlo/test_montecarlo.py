@@ -140,13 +140,16 @@ def test_run(db_name, rng):
         E.append(mc.get_thermodynamic_quantities()['energy'])
 
     assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
+    assert mc.atoms is atoms
 
     cf = CorrFunction(atoms.calc.settings)
     cf_calc = atoms.calc.get_cf()
     cf_scratch = cf.get_cf(atoms)
 
+    assert cf_calc.keys() == cf_scratch.keys()
+
     for k, v in cf_scratch.items():
-        assert v == pytest.approx(cf_calc[k])
+        assert v == pytest.approx(cf_calc[k]), k
     # Make sure that the energies are decreasing by comparing
     # the first and last
     assert E[0] >= E[-1]

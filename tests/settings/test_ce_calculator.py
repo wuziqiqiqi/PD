@@ -119,7 +119,7 @@ def get_spacegroup(db_name):
                          concentration=concentration,
                          db_name=db_name,
                          max_cluster_size=3,
-                         max_cluster_dia=[5.0, 5.0])
+                         max_cluster_dia=[4.0, 4.0])
     settings.include_background_atoms = True
 
     atoms = crystal(symbols=['O', 'X', 'O', 'Ta'],

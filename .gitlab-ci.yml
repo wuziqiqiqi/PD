@@ -35,7 +35,7 @@ pytest:default:
     - pwd
     - python3 -m pip install coverage
     - python3 -m pip install .[test]
-    - coverage run --omit='tests/*' -m pytest tests/
+    - coverage run --omit='tests/*' -m pytest --durations=30 tests/
     - coverage report
 
 doctest:
@@ -73,7 +73,7 @@ python3_test_slow:
   stage: Code Test
   script:
     - python3 -m pip install .[test]
-    - python3 -m pytest tests/
+    - python3 -m pytest --durations=30 tests/
 
 # Some optional tests for older python versions
 pytest:py36:

@@ -50,7 +50,7 @@ class CorrFunction:
         cf_names = self.settings.all_cf_names
         return self.get_cf_by_names(atoms, cf_names)
 
-    def get_cf_by_names(self, atoms, cf_names, warm=False):
+    def get_cf_by_names(self, atoms, cf_names):
         """
         Calculate correlation functions of the specified clusters and return
         them in a dictionary format.

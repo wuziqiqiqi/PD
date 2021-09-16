@@ -217,7 +217,6 @@ class Clease(Calculator):
         """
         self.updater.undo_changes()
         self.energy = self.updater.get_energy()
-        self.results['energy'] = self.energy
 
     def update_energy(self) -> None:
         """Update correlation function and get new energy."""
@@ -324,7 +323,7 @@ class Clease(Calculator):
                 self.keep_system_changes()
             else:
                 # Revert changes
-                self.undo_system_changes(system_changes)
+                self.undo_system_changes()
 
     def apply_system_changes(self, system_changes: SystemChanges) -> None:
         """Apply a set of changes to the calculator, and evaluate the energy"""
@@ -333,12 +332,10 @@ class Clease(Calculator):
         self.update_cf(system_changes)
         self.energy = self.updater.get_energy()
 
-    def undo_system_changes(self, system_changes: SystemChanges) -> None:
+    def undo_system_changes(self) -> None:
         """Revert a set of changes. The changes passed in should be the original
         sequence of system changes which were applied. Restores the original results."""
         self.restore()  # Also restores results
-        for change in system_changes:
-            change.undo_change(self.atoms)
 
     def keep_system_changes(self) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare

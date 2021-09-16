@@ -25,10 +25,24 @@ class ClusterManager:
     def __init__(self, prim_cell):
         self.generator = ClusterGenerator(prim_cell)
         self.clusters = ClusterList()
+        self._cache = _CacheChecker()
 
     def __eq__(self, other):
         return self.clusters == other.clusters and \
             self.generator == other.generator
+
+    def _prepare_new_build(self, max_size, max_cluster_dia):
+        """Prepare for a new call to ``build``
+        """
+        # Update the cache
+        self._cache.set_cache(max_size, max_cluster_dia)
+        # Clear any old clusters
+        self.clusters.clear()
+
+    def requires_build(self, max_size, max_cluster_dia) -> bool:
+        """Check if the cluster manager requires a new build
+        for a given set of cluster diameters"""
+        return self._cache.requires_build(max_size, max_cluster_dia)
 
     def build(self, max_size=4, max_cluster_dia=4.0):
         """
@@ -42,6 +56,12 @@ class ClusterManager:
         max_cluster_dia: float
             Maximum distance between two atoms in a cluster
         """
+        # Check if we already built the clusters with these settings
+        if not self.requires_build(max_size, max_cluster_dia):
+            return
+        # We got a new set of settings, prepare to construct new clusters
+        self._prepare_new_build(max_size, max_cluster_dia)
+
         if isinstance(max_cluster_dia, float):
             max_cluster_dia = [max_cluster_dia for _ in range(max_size + 1)]
         num_lattices = range(len(self.generator.prim))
@@ -265,3 +285,29 @@ class ClusterManager:
 
             trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique], indices)))
         return trans_mat
+
+
+class _CacheChecker:
+    """Helper class to check if the
+    cluster manager has already been built
+    using a given set of settings.
+    """
+
+    def __init__(self):
+        self.max_size = None
+        self.max_cluster_dia = None
+
+    def requires_build(self, max_size: int, max_cluster_dia) -> bool:
+        """Check if a given set of 'max_size'
+        and 'max_cluster_dia' has previously been
+        used to build the clusters"""
+        if self.max_size is None or self.max_cluster_dia is None:
+            return True
+
+        # Check if the parameters match
+        return not (self.max_size == max_size and
+                    np.allclose(self.max_cluster_dia, max_cluster_dia))
+
+    def set_cache(self, max_size: int, max_cluster_dia):
+        self.max_size = max_size
+        self.max_cluster_dia = max_cluster_dia

@@ -165,6 +165,8 @@ class ClusterExpansionSettings:
         if value == self._include_background_atoms:
             return
         self._include_background_atoms = value
+        # We need to reset cluster manager
+        self._cluster_mng = None
 
         self.clear_cache()
         self.basis_func_type.unique_elements = \
@@ -455,7 +457,6 @@ class ClusterExpansionSettings:
     def clear_cache(self) -> None:
         """Clear the cached objects, due to a change e.g. in the template atoms"""
         logger.debug('Clearing the cache')
-        self._cluster_mng = None
         self._trans_matrix = None
         self._cluster_list = None
 

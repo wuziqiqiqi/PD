@@ -27,3 +27,5 @@ concObsBack*.json
 .cleaseGUI/
 metadyn.json
 demo_save.json
+# Profiling
+prof/
