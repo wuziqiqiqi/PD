@@ -10,6 +10,7 @@ Release notes
   correct minimum energy structure for that end-point.
 * Added :class:`~clease.montecarlo.mc_evaluator.MCEvaluator`.
 * The settings class should now be much faster to construct, since the construction of the translation matrix and cluster list is defered until requested.
+* The built in GUI (based on Kivy) has been removed, in favor of the new Jupyter based `clease-gui <https://clease-gui.readthedocs.io>`_ package.
 
 
 0.10.5
