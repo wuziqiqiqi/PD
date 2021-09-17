@@ -54,8 +54,7 @@ def test_attached_to_mc(db_name):
     settings = CEBulk(conc,
                       db_name=db_name,
                       a=4.05,
-                      max_cluster_size=2,
-                      max_cluster_dia=3.0,
+                      max_cluster_dia=[3.0],
                       crystalstructure='fcc',
                       size=[4, 4, 4])
 

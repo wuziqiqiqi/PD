@@ -7,7 +7,6 @@
                     supercell_factor=64,
                     concentration=conc,
                     db_name="aucu.db",
-                    max_cluster_size=4,
                     max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. _aucu_initial_pool:

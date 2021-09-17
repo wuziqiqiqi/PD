@@ -189,8 +189,7 @@ def test_fixed_vol_with_conc_constraint(mocker, db_name):
                       a=3.8,
                       size=[1, 1, 5],
                       db_name=db_name,
-                      max_cluster_size=2,
-                      max_cluster_dia=3.0,
+                      max_cluster_dia=[3.0],
                       concentration=conc,
                       supercell_factor=40)
     settings.skew_threshold = 100

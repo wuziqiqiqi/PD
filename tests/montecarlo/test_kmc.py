@@ -20,7 +20,6 @@ def example_system(db_name):
     settings = CEBulk(conc,
                       crystalstructure='fcc',
                       size=[1, 1, 1],
-                      max_cluster_size=2,
                       max_cluster_dia=[3.0],
                       db_name=db_name)
     return settings

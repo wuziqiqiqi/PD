@@ -209,9 +209,8 @@ def test_num_generated_structures(gs_mock, db_name):
         with patch.object(NewStructures, '_get_formula_unit', new=_get_formula_unit_patch):
             for i, f in enumerate(func):
                 settings = CEBulk(conc,
-                                  max_cluster_dia=3.0,
+                                  max_cluster_dia=[3.0],
                                   a=2.9,
-                                  max_cluster_size=2,
                                   crystalstructure='sc',
                                   db_name=db_name)
                 for j, test in enumerate(tests):

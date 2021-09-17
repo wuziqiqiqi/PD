@@ -34,8 +34,7 @@ def ga_settings(make_module_tempfile):
                       size=[2, 2, 2],
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_size=2,
-                      max_cluster_dia=[0, 0, 4.06])
+                      max_cluster_dia=[4.06])
 
     newstruct = NewStructures(settings, struct_per_gen=3)
     newstruct.generate_initial_pool()

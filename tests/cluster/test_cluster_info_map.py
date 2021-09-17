@@ -23,8 +23,7 @@ def test_fcc(db_name):
                       size=[6, 6, 6],
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_dia=[4.3, 4.3, 4.3],
-                      max_cluster_size=4)
+                      max_cluster_dia=[4.3, 4.3, 4.3])
 
     # Let's try to obtain cluster info for conventional cell
     atoms_small = bulk("Au", crystalstructure="fcc", cubic=True, a=4.05)
@@ -64,7 +63,6 @@ def test_TaXO(db_name):
                     size=[4, 4, 4],
                     concentration=concentration,
                     db_name=db_name,
-                    max_cluster_size=3,
                     max_cluster_dia=[3.0, 3.0])
 
     # Create a small cell

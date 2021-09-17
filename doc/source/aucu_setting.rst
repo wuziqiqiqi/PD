@@ -26,7 +26,6 @@ with a lattice constant of 3.8 Å
 ...                   supercell_factor=64,
 ...                   concentration=conc,
 ...                   db_name="aucu.db",
-...                   max_cluster_size=4,
 ...                   max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. testcleanup::
@@ -44,8 +43,8 @@ be set by passing a list of three integer values (e.g., [3, 3, 3] for a
 argument is specified to set a threshold on the maximum size of the supercell.
 
 The maximum size of clusters (i.e., number of atoms in a given cluster) and
-their maximum diameters are specified using ``max_cluster_size`` and
-``max_cluster_dia``, respectively. As empty and one-body clusters do not need
+their maximum diameters are specified using ``max_cluster_dia``.
+As empty and one-body clusters do not need
 diamters in specifying the clusters, maximum diameters of clusters starting
 from two-body clusters are specified in ``max_cluster_dia`` in ascending order.
 

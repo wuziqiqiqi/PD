@@ -19,7 +19,6 @@ def bc_settings(db_name):
                   size=[4, 4, 4],
                   concentration=concentration,
                   db_name=db_name,
-                  max_cluster_size=3,
                   max_cluster_dia=[5.73, 5.73])
 
 
@@ -52,7 +51,6 @@ def test_supercell_consistency(db_name):
                       size=[1, 1, 1],
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_size=3,
                       max_cluster_dia=[7.0, 4.0])
     atoms = settings.atoms.copy()
     cf = CorrFunction(settings)
@@ -73,7 +71,6 @@ def test_error_message_for_non_existent_cluster(db_name):
                       size=[1, 1, 1],
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_size=3,
                       max_cluster_dia=[7.0, 4.0])
     corr = CorrFunction(settings)
     atoms = settings.atoms

@@ -17,7 +17,6 @@ and the clusters
                     supercell_factor=27,
                     concentration=conc,
                     db_name="aucu.db",
-                    max_cluster_size=3,
                     max_cluster_dia=[6.0, 5.0])
 
 Next, we need to specify a set if ECIs. These can for instance be loaded

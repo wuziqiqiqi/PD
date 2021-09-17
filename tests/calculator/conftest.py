@@ -30,7 +30,6 @@ def get_LiVX(make_conc, db_name):
                                 size=[3, 3, 3],
                                 db_name=db_name,
                                 concentration=concentration,
-                                max_cluster_size=3,
                                 max_cluster_dia=[4.0, 4.0])
         default_settings.update(**kwargs)
         setting = CEBulk(**default_settings)
@@ -48,7 +47,6 @@ def make_dummy_settings(make_conc, db_name):
         default_settings = dict(crystalstructure='fcc',
                                 a=4.0,
                                 size=[1, 1, 1],
-                                max_cluster_size=2,
                                 max_cluster_dia=[4.0],
                                 db_name=db_name,
                                 concentration=concentration)

@@ -18,8 +18,7 @@ def test_formula_unit(db_name):
                       size=[2, 2, 3],
                       concentration=conc,
                       db_name=db_name,
-                      max_cluster_size=3,
-                      max_cluster_dia=4.)
+                      max_cluster_dia=[4.])
     newstruct = NewStructures(settings=settings)
 
     test = bulk(name='LiO', crystalstructure='rocksalt', a=4.0) * (2, 2, 3)

@@ -22,12 +22,7 @@ def fake_get_energy_method(self, system_change):
 
 def test_ideal_mixture(tmpdir, db_name):
     conc = Concentration(basis_elements=[['Au', 'Cu']])
-    settings = CEBulk(conc,
-                      a=3.9,
-                      db_name=db_name,
-                      max_cluster_size=2,
-                      max_cluster_dia=3.0,
-                      crystalstructure='fcc')
+    settings = CEBulk(conc, a=3.9, db_name=db_name, max_cluster_dia=[3.0], crystalstructure='fcc')
     show_plot = False
     atoms = bulk('Au', a=3.9) * (3, 3, 3)
     eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.0}

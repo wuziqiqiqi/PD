@@ -14,7 +14,6 @@ def settings(db_name):
                       concentration=conc,
                       crystalstructure='fcc',
                       a=4.0,
-                      max_cluster_size=2,
                       max_cluster_dia=[4.0],
                       size=[1, 1, 1])
     return settings

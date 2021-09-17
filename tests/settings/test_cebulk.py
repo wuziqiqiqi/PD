@@ -81,11 +81,7 @@ def make_settings(db_name):
 
     def _make_settings(conc, **kwargs):
         assert isinstance(conc, Concentration)
-        defaults = dict(crystalstructure='fcc',
-                        a=4.05,
-                        db_name=db_name,
-                        max_cluster_size=2,
-                        max_cluster_dia=5.0)
+        defaults = dict(crystalstructure='fcc', a=4.05, db_name=db_name, max_cluster_dia=[5.0])
         defaults.update(**kwargs)
         return CEBulk(conc, **defaults)
 
@@ -106,23 +102,23 @@ def test_load_from_db(make_conc, make_settings):
 
 
 def test_max_cluster_dia(make_conc, make_settings):
+    from clease.settings.settings import _format_max_cluster_dia
     basis_elements = [['Au', 'Cu']]
     conc = make_conc(basis_elements)
     mcd = [4.3, 4.3, 4.3]
     mcd_orig = mcd.copy()
-    settings = make_settings(conc, max_cluster_dia=mcd, max_cluster_size=4)
+    settings = make_settings(conc, max_cluster_dia=mcd)
 
     # Ensure max cluster dia has not been mutated
     assert not mcd is mcd_orig
     assert mcd == mcd_orig
 
     # Explicitly test format_max_cluster dia, ensure no mutation still
-    out = settings._format_max_cluster_dia(mcd)
+    out = _format_max_cluster_dia(mcd)
     assert mcd == mcd_orig
     assert isinstance(out, np.ndarray)
-    assert not isinstance(mcd, type(out))
-    assert isinstance(settings.max_cluster_dia, type(out))
-    assert settings.max_cluster_dia.tolist() == out.tolist()
+    assert isinstance(settings.max_cluster_dia, np.ndarray)
+    assert np.array_equal(settings.max_cluster_dia, out)
 
 
 @pytest.mark.parametrize('mcs', [2, 3, 4, 5, 6, 7])
@@ -130,15 +126,16 @@ def test_max_cluster_size(mcs, make_conc, make_settings):
     """Test that we can construct clusters of arbitrary size"""
     basis = [['Au', 'Cu']]
     conc = make_conc(basis)
-    mcd = (mcs + 1) * [0.]
+    # max_cluster_dia has length 1 shorter than max_cluster_size
+    mcd = (mcs - 1) * [0.]
     mcd[-1] = 5.  # We are only interested in clusters of a certain size
-    settings = make_settings(conc, size=(3, 3, 3), max_cluster_size=mcs, max_cluster_dia=mcd)
+    settings = make_settings(conc, size=(3, 3, 3), max_cluster_dia=mcd)
+    assert settings.max_cluster_size == mcs
 
     max_found_size = max(cluster.size for cluster in settings.cluster_list.clusters)
     # Verify we actually found clusters of the max cluster size
     assert max_found_size == mcs
 
-    assert settings.max_cluster_size == mcs
     atoms = settings.atoms.copy()
     atoms.symbols[[0, 3]] = 'Cu'
     # This used to fail, when we only supported up to 4-body clusters
@@ -149,10 +146,7 @@ def test_corrfunc_au_cu(make_conc, make_settings, check_cf):
     basis_elements = [['Au', 'Cu']]
     conc = make_conc(basis_elements)
     conc = Concentration(basis_elements=basis_elements)
-    settings = make_settings(conc,
-                             size=[3, 3, 3],
-                             max_cluster_dia=[4.3, 4.3, 4.3],
-                             max_cluster_size=4)
+    settings = make_settings(conc, size=[3, 3, 3], max_cluster_dia=[4.3, 4.3, 4.3])
 
     atoms = settings.atoms.copy()
     atoms.symbols[[0, 3]] = 'Cu'
@@ -170,7 +164,6 @@ def test_corrfunc_li_v_x_o(make_conc, make_settings, check_cf):
                              crystalstructure="rocksalt",
                              a=4.0,
                              size=[2, 2, 1],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
     atoms = settings.atoms.copy()
     Li_ind = [atom.index for atom in atoms if atom.symbol == 'Li']
@@ -190,7 +183,6 @@ def test_corrfunc_nacl(make_conc, make_settings, check_cf):
                              crystalstructure="rocksalt",
                              a=4.0,
                              size=[2, 2, 1],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
     atoms = settings.atoms.copy()
     atoms[1].symbol = 'Cl'
@@ -208,7 +200,6 @@ def test_corrfunc_ca_o_f(make_conc, make_settings, check_cf):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 2],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
     atoms = settings.atoms.copy()
     O_ind = [atom.index for atom in atoms if atom.symbol == 'O']
@@ -227,10 +218,7 @@ def test_binary_system(make_conc, make_settings, make_tempfile):
     """
     basis_elements = [['Au', 'Cu']]
     conc = make_conc(basis_elements)
-    settings = make_settings(conc,
-                             size=[3, 3, 3],
-                             max_cluster_dia=[4.3, 4.3, 4.3],
-                             max_cluster_size=4)
+    settings = make_settings(conc, size=[3, 3, 3], max_cluster_dia=[4.3, 4.3, 4.3])
     db_name = settings.db_name
 
     newstruct = NewStructures(settings, struct_per_gen=3)
@@ -308,7 +296,6 @@ def test_initial_pool(make_conc, make_settings):
                              crystalstructure="rocksalt",
                              a=4.0,
                              size=[2, 2, 1],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.0, 4.0])
     ns = NewStructures(settings, struct_per_gen=2)
     ns.generate_initial_pool()
@@ -365,7 +352,6 @@ def test_2grouped_basis_probe(make_conc, make_settings):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 3],
-                             max_cluster_size=2,
                              max_cluster_dia=[4.01])
     settings.include_background_atoms = True
     fam_figures = get_figures_of_family(settings, "c2_d0005_0")
@@ -410,7 +396,6 @@ def test_2grouped_basis_bckgrnd_probe(make_conc, make_settings):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 2],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
     assert settings.num_basis == 2
     assert len(settings.index_by_basis) == 2
@@ -478,7 +463,6 @@ def test_concentration_with_background(make_conc, make_settings):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 2],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
 
     assert settings.num_active_sublattices == 1
@@ -491,7 +475,6 @@ def test_concentration_with_background(make_conc, make_settings):
                              crystalstructure="rocksalt",
                              a=4.0,
                              size=[2, 2, 1],
-                             max_cluster_size=3,
                              max_cluster_dia=[4.01, 4.01])
 
     assert settings.num_active_sublattices == 1
@@ -512,7 +495,6 @@ def test_concentration_with_background(make_conc, make_settings):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 3],
-                             max_cluster_size=2,
                              max_cluster_dia=[4.01])
 
     assert settings.num_active_sublattices == 1
@@ -532,7 +514,6 @@ def test_concentration_with_background(make_conc, make_settings):
                              crystalstructure="fluorite",
                              a=4.0,
                              size=[2, 2, 3],
-                             max_cluster_size=2,
                              max_cluster_dia=[4.01])
 
     assert settings.num_active_sublattices == 1

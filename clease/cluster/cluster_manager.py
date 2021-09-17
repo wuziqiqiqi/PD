@@ -1,3 +1,4 @@
+from typing import Sequence
 from itertools import product, chain
 from copy import deepcopy
 import numpy as np
@@ -31,41 +32,36 @@ class ClusterManager:
         return self.clusters == other.clusters and \
             self.generator == other.generator
 
-    def _prepare_new_build(self, max_size, max_cluster_dia):
+    def _prepare_new_build(self, max_cluster_dia):
         """Prepare for a new call to ``build``
         """
         # Update the cache
-        self._cache.set_cache(max_size, max_cluster_dia)
+        self._cache.set_cache(max_cluster_dia)
         # Clear any old clusters
         self.clusters.clear()
 
-    def requires_build(self, max_size, max_cluster_dia) -> bool:
+    def requires_build(self, max_cluster_dia: Sequence[float]) -> bool:
         """Check if the cluster manager requires a new build
         for a given set of cluster diameters"""
-        return self._cache.requires_build(max_size, max_cluster_dia)
+        return self._cache.requires_build(max_cluster_dia)
 
-    def build(self, max_size=4, max_cluster_dia=4.0):
+    def build(self, max_cluster_dia: Sequence[float]) -> None:
         """
         Construct all clusters.
 
         Parameters:
 
-        max_size: int
-            Maximum number of atoms in a cluster
-
-        max_cluster_dia: float
-            Maximum distance between two atoms in a cluster
+        max_cluster_dia: sequence of floats
+            Maximum distance between two atoms in a cluster,
+            for each cluster body. The diameters start at 2-body clusters
         """
         # Check if we already built the clusters with these settings
-        if not self.requires_build(max_size, max_cluster_dia):
+        if not self.requires_build(max_cluster_dia):
             return
         # We got a new set of settings, prepare to construct new clusters
-        self._prepare_new_build(max_size, max_cluster_dia)
+        self._prepare_new_build(max_cluster_dia)
 
-        if isinstance(max_cluster_dia, float):
-            max_cluster_dia = [max_cluster_dia for _ in range(max_size + 1)]
         num_lattices = range(len(self.generator.prim))
-        cluster_size = range(2, max_size + 1)
         all_fps = []
         names = []
         all_clusters = []
@@ -73,8 +69,9 @@ class ClusterManager:
         lattices = []
         diameters = []
         sizes = []
-        for latt, s in product(num_lattices, cluster_size):
-            clusters, fps = self.generator.generate(s, max_cluster_dia[s], ref_lattice=latt)
+        for latt, (indx, diameter) in product(num_lattices, enumerate(max_cluster_dia)):
+            cluster_size = indx + 2  # Size of cluster, start with 2-body at index 0
+            clusters, fps = self.generator.generate(cluster_size, diameter, ref_lattice=latt)
 
             eq_sites = []
             for c in clusters:
@@ -84,7 +81,7 @@ class ClusterManager:
             all_clusters += clusters
             all_eq_sites += eq_sites
             lattices += [latt] * len(clusters)
-            sizes += [s] * len(clusters)
+            sizes += [cluster_size] * len(clusters)
             diameters += [2 * np.sqrt(fp[0]) for fp in fps]
 
         names = self._get_names(all_fps)
@@ -122,7 +119,8 @@ class ClusterManager:
                         equiv_sites=[],
                         trans_symm_group=i))
 
-    def _get_names(self, all_fps):
+    @staticmethod
+    def _get_names(all_fps):
         """
         Give a consistent name to all clusters
 
@@ -136,7 +134,7 @@ class ClusterManager:
         # where names where per by size
         # names = name_clusters(all_fps)
 
-        sizes = set([size(fp) for fp in all_fps])
+        sizes = set(size(fp) for fp in all_fps)
         names = [None for _ in all_fps]
         for s in sizes:
             fps = []
@@ -161,7 +159,7 @@ class ClusterManager:
         """
         ref_indices = []
         for i in range(len(self.generator.prim)):
-            d, i = kdtree.query(self.generator.cartesian([0, 0, 0, i]))
+            _, i = kdtree.query(self.generator.cartesian([0, 0, 0, i]))
             ref_indices.append(i)
         return ref_indices
 
@@ -294,20 +292,20 @@ class _CacheChecker:
     """
 
     def __init__(self):
-        self.max_size = None
         self.max_cluster_dia = None
 
-    def requires_build(self, max_size: int, max_cluster_dia) -> bool:
+    def requires_build(self, max_cluster_dia: Sequence[float]) -> bool:
         """Check if a given set of 'max_size'
         and 'max_cluster_dia' has previously been
         used to build the clusters"""
-        if self.max_size is None or self.max_cluster_dia is None:
+        # We don't have anything cached yet
+        if self.max_cluster_dia is None:
             return True
 
         # Check if the parameters match
-        return not (self.max_size == max_size and
-                    np.allclose(self.max_cluster_dia, max_cluster_dia))
+        return not np.array_equal(self.max_cluster_dia, max_cluster_dia)
 
-    def set_cache(self, max_size: int, max_cluster_dia):
-        self.max_size = max_size
-        self.max_cluster_dia = max_cluster_dia
+    def set_cache(self, max_cluster_dia: Sequence[float]):
+        # Ensure we set a copy, so no external
+        # mutations affect the cache
+        self.max_cluster_dia = deepcopy(max_cluster_dia)

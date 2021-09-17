@@ -44,7 +44,7 @@ def test_orthonormal(bf, basis_elements, db_name, make_conc):
                       a=4.05,
                       size=[3, 3, 3],
                       concentration=concentration,
-                      max_cluster_size=2,
+                      max_cluster_dia=[5],
                       db_name=db_name)
     settings.basis_func_type = bf
     check_orthonormal(settings)

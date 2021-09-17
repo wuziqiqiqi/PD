@@ -32,7 +32,6 @@ def get_binary(db_name):
                          size=[3, 3, 3],
                          concentration=concentration,
                          db_name=db_name,
-                         max_cluster_size=3,
                          max_cluster_dia=[5.0, 5.0])
 
     atoms = bulk("Au", crystalstructure="fcc", a=4.05)
@@ -52,8 +51,7 @@ def get_ternary(db_name):
                          size=[3, 3, 3],
                          concentration=concentration,
                          db_name=db_name,
-                         max_cluster_dia=[5.0, 5.0],
-                         max_cluster_size=3)
+                         max_cluster_dia=[5.0, 5.0])
 
     atoms = bulk("Au", crystalstructure="fcc", a=4.05)
     atoms = atoms * (3, 3, 3)
@@ -73,7 +71,6 @@ def get_rocksalt(db_name):
                       size=[3, 3, 3],
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_size=3,
                       max_cluster_dia=[7.0, 7.0])
 
     atoms = bulk("LiO", crystalstructure="rocksalt", a=4.05)
@@ -95,7 +92,6 @@ def rocksalt_with_self_interaction(size, db_name):
                       size=size,
                       concentration=concentration,
                       db_name=db_name,
-                      max_cluster_size=3,
                       max_cluster_dia=[7.0, 4.0])
     settings.basis_func_type = 'trigonometric'
     atoms = settings.atoms.copy()
@@ -118,7 +114,6 @@ def get_spacegroup(db_name):
                          size=size,
                          concentration=concentration,
                          db_name=db_name,
-                         max_cluster_size=3,
                          max_cluster_dia=[4.0, 4.0])
     settings.include_background_atoms = True
 
@@ -320,7 +315,6 @@ def test_4body_attach(db_name):
                       size=[2, 2, 2],
                       concentration=conc,
                       db_name=db_name,
-                      max_cluster_size=4,
                       max_cluster_dia=[6.0, 5.0, 5.0])
 
     cf = CorrFunction(settings).get_cf(settings.atoms)

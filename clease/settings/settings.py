@@ -5,9 +5,10 @@ Cluster Expansion in different conditions.
 """
 import logging
 from copy import deepcopy
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Sequence
 from distutils.version import LooseVersion
 
+from deprecated import deprecated
 import numpy as np
 from ase.db import connect
 from ase import Atoms
@@ -30,12 +31,47 @@ logger = logging.getLogger(__name__)
 
 @jsonable('ce_settings')
 class ClusterExpansionSettings:
-    """Base class for all Cluster Expansion settings."""
+    """Base class for all Cluster Expansion settings.
+
+    Args:
+        prim (Atoms): The primitive atoms object.
+
+        concentration (Union[Concentration, dict]): Concentration object or
+            dictionary specifying the basis elements and
+            concentration range of constituting species.
+
+        size (List[int] | None, optional): Size of the supercell
+            (e.g., [2, 2, 2] for 2x2x2 cell).
+            ``supercell_factor`` is ignored if both ``size`` and ``supercell_factor``
+            are specified. Defaults to None.
+
+        supercell_factor (int, optional): Maximum multipilicity factor for
+            limiting the size of supercell created from the primitive cell.
+            ``supercell_factor`` is ignored if
+            both `size` and `supercell_factor` are specified. Defaults to 27.
+
+        db_name (str, optional): Name of the database file. Defaults to ``'clease.db'``.
+
+        max_cluster_size (int | None, optional): Deprecated. Specifies the maximum cluster
+            body size. Defaults to None. A DeprecationWarning will be raised,
+            if this value is not None.
+
+        max_cluster_dia (Sequence[float], optional): A list of int or float containing the
+            maximum diameter of clusters (in Å). Defaults to ``(5., 5., 5.)``, i.e.
+            a 5 Å cutoff for 2-, 3-, and 4-body clusters.
+
+        include_background_atoms (bool, optional): Whether background elements are to
+            be included. An element is considered to be a background element,
+            if there is only 1 possible species which be ever be placed in a given basis.
+            Defaults to False.
+
+        basis_func_type (str, optional): Type of basis function to use. Defaults to 'polynomial'.
+    """
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     # Keys which are important for saving/loading
     ARG_KEYS = ('prim_cell', 'concentration')
-    KWARG_KEYS = ('size', 'supercell_factor', 'db_name', 'max_cluster_dia', 'max_cluster_size',
+    KWARG_KEYS = ('size', 'supercell_factor', 'db_name', 'max_cluster_dia',
                   'include_background_atoms', 'basis_func_type')
 
     # Other keys we want to input back into the loaded object, but after initialization
@@ -45,16 +81,19 @@ class ClusterExpansionSettings:
         # Just contains information about how the factory functions were called.
         'kwargs')
 
-    def __init__(self,
-                 prim: Atoms,
-                 concentration: Concentration,
-                 size: Optional[int] = None,
-                 supercell_factor: Optional[int] = 27,
-                 db_name: str = 'clease.db',
-                 max_cluster_size: int = 4,
-                 max_cluster_dia: Union[float, List[float]] = 5.0,
-                 include_background_atoms=False,
-                 basis_func_type='polynomial') -> None:
+    def __init__(
+            self,
+            prim: Atoms,
+            concentration: Union[Concentration, dict],
+            size: Optional[List[int]] = None,
+            supercell_factor: int = 27,
+            db_name: str = 'clease.db',
+            # max_cluster_size is only here for deprecation purposes
+            # if it is not None, the user has manually specified a value
+            max_cluster_size=None,
+            max_cluster_dia: Sequence[float] = (5., 5., 5.),
+            include_background_atoms=False,
+            basis_func_type='polynomial') -> None:
 
         self._include_background_atoms = None
         self._cluster_mng = None
@@ -84,8 +123,8 @@ class ClusterExpansionSettings:
 
         self.atoms_mng = AtomsManager(None)
 
-        self.max_cluster_size = max_cluster_size
-        self.max_cluster_dia = self._format_max_cluster_dia(max_cluster_dia)
+        self.max_cluster_dia = _format_max_cluster_dia(max_cluster_dia,
+                                                       max_cluster_size=max_cluster_size)
 
         self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
@@ -102,6 +141,10 @@ class ClusterExpansionSettings:
     @property
     def atoms(self) -> Atoms:
         return self.atoms_mng.atoms
+
+    @property
+    def max_cluster_size(self):
+        return len(self.max_cluster_dia) + 1
 
     @property
     def all_elements(self) -> List[str]:
@@ -414,29 +457,6 @@ class ClusterExpansionSettings:
     def _get_prim_cell(self):
         raise NotImplementedError("This function has to be implemented in in derived classes.")
 
-    def _format_max_cluster_dia(self, max_cluster_dia):
-        """Get max_cluster_dia in numpy array form"""
-        # max_cluster_dia is list or array
-        if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
-            # Length should be either max_cluster_size+1 or max_cluster_size-1
-            mcd = np.array(max_cluster_dia, dtype=float)
-            if len(max_cluster_dia) == self.max_cluster_size + 1:
-                for i in range(2):
-                    mcd[i] = 0.
-            elif len(max_cluster_dia) == self.max_cluster_size - 1:
-                mcd = np.insert(mcd, 0, [0., 0.])
-            else:
-                raise ValueError("Invalid length for max_cluster_dia.")
-        # max_cluster_dia is int or float
-        elif isinstance(max_cluster_dia, (int, float)):
-            mcd = np.ones(self.max_cluster_size - 1, dtype=float) * max_cluster_dia
-            mcd = np.insert(mcd, 0, [0., 0.])
-        # Case for *None* or something else
-        else:
-            raise TypeError("max_cluster_dia is of wrong type, got: {}".format(
-                type(max_cluster_dia)))
-        return mcd.round(decimals=3)
-
     @property
     def trans_matrix(self):
         """Get the translation matrix, will be created upon request"""
@@ -464,7 +484,7 @@ class ClusterExpansionSettings:
         """Prepares the internal cache objects by calculating cluster related properties"""
         logger.debug('Creating translation matrix and cluster list')
         at_cpy = self.atoms.copy()
-        self.cluster_mng.build(max_size=self.max_cluster_size, max_cluster_dia=self.max_cluster_dia)
+        self.cluster_mng.build(self.max_cluster_dia)
         self._cluster_list = self.cluster_mng.info_for_template(at_cpy)
         self._trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
 
@@ -583,3 +603,52 @@ def _get_concentration(concentration: Union[Concentration, dict]) -> Concentrati
     else:
         raise TypeError("concentration has to be either dict or instance of Concentration")
     return conc
+
+
+def _format_max_cluster_dia(max_cluster_dia, max_cluster_size=None):
+    """Formatter of max_cluster_dia."""
+    if max_cluster_size is None and not isinstance(max_cluster_dia, (int, float)):
+        # Assume max_cluster_dia is sequence[float], and user didn't specify any
+        # (now deprecated) max_cluster sizes.
+        return np.array(max_cluster_dia)
+    return _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size)
+
+
+def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
+
+    # User specified an old version of MCS and MCD
+    dep_msg = """
+    max_cluser_size should no longer be specfied explicitly,
+    and max_cluster_dia should no longer be an int or float.
+
+    Specify cluster sizes with max_cluster_dia as an array-like instead.
+    Got max_cluster_size '{}' and max_cluster_dia '{}'. Try instead
+    to use max_cluster_dia as an array, e.g. max_cluster_dia=[5., 5., 5.]
+    for 2-, 3- and 4-body clusters of cutoff 5 Å.
+    """.format(max_cluster_size, max_cluster_dia)
+
+    @deprecated(version='0.10.6', reason=dep_msg)
+    def _formatter():
+        # max_cluster_dia is list or array
+        if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
+            # Length should be either max_cluster_size+1 or max_cluster_size-1
+            mcd = np.array(max_cluster_dia, dtype=float)
+            if len(max_cluster_dia) == max_cluster_size + 1:
+                # Remove the first two entries, assume they are 0- and 1-body diameters
+                mcd = mcd[2:]
+            elif len(max_cluster_dia) == max_cluster_size - 1:
+                # Assume max_cluster_dia contains 2+ body clusters
+                pass
+            else:
+                raise ValueError("Invalid length for max_cluster_dia.")
+        elif isinstance(max_cluster_dia, (int, float)):
+            if max_cluster_size is None:
+                raise ValueError('Received no max_cluster_size, but a float for max_cluster_dia')
+            mcd = np.ones(max_cluster_size - 1, dtype=float) * max_cluster_dia
+        # Case for *None* or something else
+        else:
+            raise TypeError("max_cluster_dia is of wrong type, got: {}".format(
+                type(max_cluster_dia)))
+        return mcd.round(decimals=3)
+
+    return _formatter()

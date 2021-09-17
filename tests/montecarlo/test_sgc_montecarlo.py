@@ -18,7 +18,6 @@ def test_run(db_name):
                       concentration=conc,
                       crystalstructure='fcc',
                       a=4.0,
-                      max_cluster_size=3,
                       max_cluster_dia=[5.0, 4.1],
                       size=[2, 2, 2])
 
@@ -54,7 +53,6 @@ def test_constrain_inserts(db_name):
                       concentration=conc,
                       crystalstructure='rocksalt',
                       a=4.0,
-                      max_cluster_size=3,
                       max_cluster_dia=[2.51, 3.0],
                       size=[2, 2, 2])
     atoms = settings.atoms.copy() * (3, 3, 3)
@@ -93,7 +91,6 @@ def test_pair_constraint(db_name):
                       concentration=conc,
                       crystalstructure='fcc',
                       a=a,
-                      max_cluster_size=3,
                       max_cluster_dia=[3.9, 3.0],
                       size=[2, 2, 2])
 
@@ -130,8 +127,7 @@ def test_multi_state_sgc_obs(db_name):
                       a=4.0,
                       crystalstructure='sc',
                       db_name=db_name,
-                      max_cluster_size=2,
-                      max_cluster_dia=4.01,
+                      max_cluster_dia=[4.01],
                       size=[4, 4, 4])
     atoms = settings.atoms.copy()
     eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.1}

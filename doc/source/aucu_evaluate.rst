@@ -14,7 +14,6 @@
                     supercell_factor=64,
                     concentration=conc,
                     db_name="aucu.db",
-                    max_cluster_size=4,
                     max_cluster_dia=[6.0, 4.5, 4.5])
 
   ns = NewStructures(settings, generation_number=0, struct_per_gen=10)

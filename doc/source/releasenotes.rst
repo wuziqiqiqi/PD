@@ -11,6 +11,11 @@ Release notes
 * Added :class:`~clease.montecarlo.mc_evaluator.MCEvaluator`.
 * The settings class should now be much faster to construct, since the construction of the translation matrix and cluster list is defered until requested.
 * The built in GUI (based on Kivy) has been removed, in favor of the new Jupyter based `clease-gui <https://clease-gui.readthedocs.io>`_ package.
+* Deprecated the use of ``max_cluster_size`` for specifying clusters in :class:`~clease.settings.ClusterExpansionSettings`.
+  Clusters should now be specified only though ``max_cluster_dia``,
+  where the size of the cluster is infered from the length of the list. The index 0 corresponds to 2-body clusters, index 1 to 3-body etc.,
+  i.e. ``max_cluster_dia = [5, 4, 3]`` would result in clusters of up to diameter 5 Å for 2-body clisters, 4 Å for 3-body and
+  3 Å for 4-body.
 
 
 0.10.5

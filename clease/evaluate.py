@@ -39,10 +39,6 @@ class Evaluate:
         "struct_type='initial'".
 
     max_cluster_size: int
-        Maximum number of atoms in the cluster to include in the fit.
-        If this is None then all clusters in the DB are included.
-
-    max_cluster_size: int
         maximum number of atoms in the cluster to include in the fit.
         If ``None``, no restriction on the number of atoms will be imposed.
 
@@ -980,13 +976,19 @@ class Evaluate:
         sphere.
 
         :param max_dia: list of float
-            Diameter of the cirscumscribed sphere for each size
+            Diameter of the cirscumscribed sphere for each size.
+            Note: Index 0 corresponds to the diameter of 2-body clusters,
+            index 1 to 3-body, etc.
         """
         filtered_names = []
+        # Note: max_dia is a list starting from 2-body
+        max_size_expected = len(max_dia) + 1
         for name in self.cf_names:
             size = int(name[1])
-            if size >= len(max_dia):
-                raise ValueError("Inconsistent length of max_dia")
+            if size > max_size_expected:
+                raise ValueError(
+                    "Inconsistent length of max_dia, size: {}, expected at most: {}".format(
+                        size, max_size_expected))
             elif size in [0, 1]:
                 filtered_names.append(name)
                 continue
@@ -995,7 +997,9 @@ class Evaluate:
             cluster = self.settings.cluster_list.get_by_name(prefix)[0]
             dia = cluster.diameter
 
-            if dia < max_dia[size]:
+            # Index of size in the max_dia array
+            size_index = size - 2
+            if dia < max_dia[size_index]:
                 filtered_names.append(name)
         return filtered_names
 
@@ -1154,5 +1158,5 @@ def loocv_mp(args):
     elif evaluator.scoring_scheme == "k-fold":
         cv = evaluator.k_fold_cv()
     num_eci = len(np.nonzero(evaluator.get_eci())[0])
-    logger.info(f"{alpha:.10f}\t {num_eci}\t {cv:.10f}")
+    logger.info("%.10f\t %d\t %.10f", alpha, num_eci, cv)
     return cv

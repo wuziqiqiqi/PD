@@ -3,11 +3,12 @@
 Cluster Expansion can be peformed on bulk material using either CEBulk
 or CECrystal class.
 """
+from copy import deepcopy
+
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
 from .settings import ClusterExpansionSettings
-from copy import deepcopy
 
 __all__ = (
     'CEBulk',
@@ -15,65 +16,34 @@ __all__ = (
 )
 
 
-def CEBulk(concentration,
-           crystalstructure='sc',
-           a=None,
-           c=None,
-           covera=None,
-           u=None,
-           size=None,
-           supercell_factor=27,
-           db_name='clease.db',
-           max_cluster_size=4,
-           max_cluster_dia=(5.0, 5.0, 5.0),
-           **kwargs):
+def CEBulk(concentration, crystalstructure='sc', a=None, c=None, covera=None, u=None, **kwargs):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
 
     Parameters:
 
-    concentration: Concentration object or dict
-        Concentration object or dictionary specifying the basis elements and
-        concentration range of constituting species
+        concentration (Union[Concentration, dict]):
+            Concentration object or dictionary specifying the basis elements and
+            concentration range of constituting species
 
-    crystalstructure: str
-        Must be one of sc, fcc, bcc, hcp, diamond, zincblende, rocksalt,
-        cesiumchloride, fluorite or wurtzite.
+        crystalstructure (str):
+            Must be one of sc, fcc, bcc, hcp, diamond, zincblende, rocksalt,
+            cesiumchloride, fluorite or wurtzite.
 
-    a: float
-        Lattice constant.
+        a (float):
+            Lattice constant.
 
-    c: float
-        Lattice constant.
+        c (float):
+            Lattice constant.
 
-    covera: float
-        c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
+        covera (float):
+            c/a ratio used for hcp.  Default is ideal ratio: sqrt(8/3).
 
-    u: float
-        Internal coordinate for Wurtzite structure.
+        u (float):
+            Internal coordinate for Wurtzite structure.
 
-    size: list
-        Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
-        `supercell_factor` is ignored if both `size` and `supercell_factor`
-        are specified.
-
-    supercell_factor: int
-        Maximum multipilicity factor for limiting the size of supercell
-        created from the primitive cell. `supercell_factor` is ignored if
-        both `size` and `supercell_factor` are specified.
-
-    db_name: str
-        Name of the database file
-
-    max_cluster_size: int
-        Maximum size (number of atoms in a cluster)
-
-    max_cluster_dia: list of int or float
-        A list of int or float containing the maximum diameter of clusters
-        (in Å)
-
-    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
+    For more kwargs, see docstring of :class:`clease.settings.ClusterExpansionSettings`.
     """
     structures = {
         'sc': 1,
@@ -100,8 +70,7 @@ def CEBulk(concentration,
     prim = bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)
 
-    settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
-                                        max_cluster_size, max_cluster_dia, **kwargs)
+    settings = ClusterExpansionSettings(prim, concentration, **kwargs)
 
     settings.kwargs.update({
         'crystalstructure': crystalstructure,
@@ -120,61 +89,43 @@ def CECrystal(concentration,
               cell=None,
               cellpar=None,
               ab_normal=(0, 0, 1),
-              size=None,
-              supercell_factor=27,
-              db_name='clease.db',
-              max_cluster_size=4,
-              max_cluster_dia=(5.0, 5.0, 5.0),
+              crystal_kwargs=None,
               **kwargs):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
 
-    concentration: Concentration object or dict
-        Concentration object or dictionary specifying the basis elements and
-        concentration range of constituting species
+        concentration (Union[Concentration, dict]):
+            Concentration object or dictionary specifying the basis elements and
+            concentration range of constituting species
 
-    spacegroup: int | string | Spacegroup instance
-        Space group given either as its number in International Tables
-        or as its Hermann-Mauguin symbol.
+        spacegroup (int | string | Spacegroup instance):
+            Space group given either as its number in International Tables
+            or as its Hermann-Mauguin symbol.
 
-    basis: list of scaled coordinates
-        Positions of the unique sites corresponding to symbols given
-        either as scaled positions or through an atoms instance.
+        basis (List[float]):
+            List of scaled coordinates.
+            Positions of the unique sites corresponding to symbols given
+            either as scaled positions or through an atoms instance.
 
-    cell: 3x3 matrix
-        Unit cell vectors.
+        cell (3x3 matrix):
+            Unit cell vectors.
 
-    cellpar: [a, b, c, alpha, beta, gamma]
-        Cell parameters with angles in degree. Is not used when `cell`
-        is given.
+        cellpar ([a, b, c, alpha, beta, gamma]):
+            Cell parameters with angles in degree. Is not used when `cell`
+            is given.
 
-    ab_normal: vector
-        Is used to define the orientation of the unit cell relative
-        to the Cartesian system when `cell` is not given. It is the
-        normal vector of the plane spanned by a and b.
+        ab_normal (vector):
+            Is used to define the orientation of the unit cell relative
+            to the Cartesian system when `cell` is not given. It is the
+            normal vector of the plane spanned by a and b.
 
-    size: list
-        Size of the supercell (e.g., [2, 2, 2] for 2x2x2 cell).
-        `supercell_factor` is ignored if both `size` and `supercell_factor`
-        are specified.
+        crystal_kwargs (dict | None):
+            Extra kwargs to be passed into the ase.spacegroup.crystal
+            function. Nothing additional is added if None.
+            Defaults to None.
 
-    supercell_factor: int
-        Maximum multipilicity factor for limiting the size of supercell
-        created from the primitive cell. `supercell_factor` is ignored if
-        both `size` and `supercell_factor` are specified.
-
-    db_name: str
-        name of the database file
-
-    max_cluster_size: int
-        maximum size (number of atoms in a cluster)
-
-    max_cluster_dia: list of int or float
-        A list of int or float containing the maximum diameter of clusters
-        (in Å)
-
-    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
+    For more kwargs, see docstring of :class:`clease.settings.ClusterExpansionSettings`.
     """
 
     symbols = []
@@ -182,6 +133,7 @@ def CECrystal(concentration,
     for x in range(num_basis):
         symbols.append(concentration.orig_basis_elements[x][0])
 
+    crystal_kwargs = crystal_kwargs or {}
     prim = crystal(symbols=symbols,
                    basis=basis,
                    spacegroup=spacegroup,
@@ -190,11 +142,10 @@ def CECrystal(concentration,
                    ab_normal=ab_normal,
                    size=[1, 1, 1],
                    primitive_cell=True,
-                   **kwargs)
+                   **crystal_kwargs)
     prim = wrap_and_sort_by_position(prim)
 
-    settings = ClusterExpansionSettings(prim, concentration, size, supercell_factor, db_name,
-                                        max_cluster_size, max_cluster_dia, **kwargs)
+    settings = ClusterExpansionSettings(prim, concentration, **kwargs)
     settings.kwargs.update({
         'basis': deepcopy(basis),
         'spacegroup': spacegroup,

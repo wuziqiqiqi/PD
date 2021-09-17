@@ -78,7 +78,6 @@ def test_spgroup_217(db_name, tmpdir, all_cf):
                     spacegroup=217,
                     basis=basis,
                     cellpar=cellpar,
-                    max_cluster_size=3,
                     db_name=db_name,
                     size=[1, 1, 1],
                     max_cluster_dia=[3.5, 3.5])
@@ -143,7 +142,6 @@ def test_two_grouped_basis(db_name, check_cf):
                     cellpar=cellpar,
                     size=[1, 1, 1],
                     db_name=db_name,
-                    max_cluster_size=3,
                     max_cluster_dia=[2.5, 2.5])
     assert bsg.unique_elements == ['F', 'Li', 'O', 'V', 'X']
     assert bsg.spin_dict == {'F': 2.0, 'Li': -2.0, 'O': 1.0, 'V': -1.0, 'X': 0}
@@ -187,7 +185,6 @@ def test_two_grouped_basis_probe_structure(db_name, check_cf):
                     cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                     size=[1, 2, 2],
                     db_name=db_name,
-                    max_cluster_size=3,
                     max_cluster_dia=[3.0, 3.0])
     bsg.include_background_atoms = True
 
@@ -244,7 +241,6 @@ def test_two_grouped_basis_background_atoms_probe_structure(db_name, check_cf):
                     cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
                     size=[2, 2, 3],
                     db_name=db_name,
-                    max_cluster_size=3,
                     max_cluster_dia=[3.0, 3.0])
 
     assert bsg.unique_elements == ['O', 'Ta', 'X']
@@ -296,7 +292,6 @@ def test_narrow_angle_crystal(db_name):
                     cellpar=[4.0, 4.0, 4.0, 50.0, 40.0, 15.0],
                     db_name=db_name,
                     size=[2, 2, 1],
-                    max_cluster_size=3,
                     max_cluster_dia=[1.05, 1.05])
     bsg.skew_threshold = 10000
 
@@ -324,8 +319,7 @@ def test_bkg_symb_in_additional_basis(db_name):
                          size=[(-1, 1, 1), (1, -1, 1), (1, 1, -1)],
                          supercell_factor=1,
                          db_name=db_name,
-                         max_cluster_size=2,
-                         max_cluster_dia=5.0)
+                         max_cluster_dia=[5.0])
     bfs = settings.basis_functions
     assert len(bfs) == 2
 
@@ -353,7 +347,6 @@ def test_unequal_number_of_sites(make_conc, db_name):
         max_cluster_dia=[5],  #2-, 3-, 4-step interaction length
         supercell_factor=27,  #maximum cell iterations
         db_name=db_name,
-        max_cluster_size=2,  #number of atoms in clusters
     )
 
     # Calculate concentrations from the original atoms object

@@ -1,4 +1,4 @@
-from typing import Union, Tuple, Optional
+from typing import Union, Tuple, Optional, Sequence
 import numpy as np
 from ase import Atoms
 from ase.build import surface, make_supercell
@@ -13,13 +13,10 @@ __all__ = ('CESlab',)
 def CESlab(conventional_cell: Union[Atoms, str],
            miller: Tuple[int],
            concentration: Concentration,
-           size: Optional[Tuple[int]] = (1, 1, 1),
-           max_cluster_size: Optional[int] = 4,
-           max_cluster_dia: Optional[Tuple[float]] = (5.0, 5.0, 5.0),
-           supercell_factor: Optional[int] = 27,
-           db_name: Optional[str] = 'clease.db',
+           size: Optional[Sequence[int]] = (1, 1, 1),
            **kwargs) -> ClusterExpansionSettings:
     """
+
     :param conventional_cell:
         Bulk lattice structure. Note that the unit-cell
         must be the conventional cell - not the primitive cell. One can also
@@ -36,19 +33,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
         Size of the simulations cell. The third number represents the number of
         layers. The two first are repetitions of the in-plane unit vectors
 
-    :param max_cluster_size:
-        Maximum number of atoms in cluster
-
-    :param max_cluster_dia:
-        Maximum cluster diameters
-
-    :param supercell_factor:
-        Maximum number of unit cells that can be used to create a supercell
-
-    :param db_name:
-        Name of the database where structures should be placed
-
-    For more kwargs, see the documentation of :class:`clease.settings.ClusterExpansionSettings`.
+    For more kwargs, see docstring of :class:`clease.settings.ClusterExpansionSettings`.
     """
 
     for b in concentration.basis_elements:
@@ -58,14 +43,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
     prim = get_prim_slab_cell(conventional_cell, miller)
 
     # Slab should always have one cell vector along the z-axis
-    settings = ClusterExpansionSettings(prim,
-                                        concentration,
-                                        size=size,
-                                        max_cluster_dia=max_cluster_dia,
-                                        max_cluster_size=max_cluster_size,
-                                        supercell_factor=supercell_factor,
-                                        db_name=db_name,
-                                        **kwargs)
+    settings = ClusterExpansionSettings(prim, concentration, size=size, **kwargs)
 
     dict_rep = conventional_cell.todict()
     for k, v in dict_rep.items():

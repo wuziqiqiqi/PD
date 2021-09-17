@@ -41,7 +41,6 @@ def get_example_mc_system(db_name):
                       concentration=conc,
                       crystalstructure='fcc',
                       a=4.0,
-                      max_cluster_size=3,
                       max_cluster_dia=[5.0, 4.1],
                       size=[2, 2, 2])
 
@@ -65,7 +64,6 @@ def get_rocksalt_mc_system(db_name):
                       concentration=conc,
                       crystalstructure='rocksalt',
                       a=4.0,
-                      max_cluster_size=3,
                       max_cluster_dia=[2.51, 3.0],
                       size=[2, 2, 2])
     atoms = settings.atoms.copy() * (3, 3, 3)
@@ -90,7 +88,7 @@ def test_run_heavy(db_name):
                       concentration=conc,
                       crystalstructure='fcc',
                       a=4.0,
-                      max_cluster_size=4)
+                      max_cluster_dia=[5, 5, 5])
 
     atoms = settings.atoms.copy() * (3, 3, 3)
     cf = CorrFunction(settings)
@@ -460,7 +458,6 @@ def test_gs_mgsi(db_name, almgsix_eci):
                       crystalstructure='fcc',
                       a=4.05,
                       size=[1, 1, 1],
-                      max_cluster_size=3,
                       max_cluster_dia=[5.0, 5.0],
                       db_name=db_name)
     settings.basis_func_type = "binary_linear"

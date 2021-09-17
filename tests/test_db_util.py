@@ -130,11 +130,7 @@ def test_decode_meta_key(key, expected):
 @pytest.fixture
 def fast_settings(db_name):
     conc = Concentration([['Au', 'Cu']])
-    defaults = dict(crystalstructure='fcc',
-                    a=4.05,
-                    db_name=db_name,
-                    max_cluster_size=2,
-                    max_cluster_dia=3.0)
+    defaults = dict(crystalstructure='fcc', a=4.05, db_name=db_name, max_cluster_dia=[3.0])
     settings = CEBulk(conc, **defaults)
     newstruct = NewStructures(settings, struct_per_gen=3)
     newstruct.generate_initial_pool()
