@@ -1,17 +1,24 @@
+from copy import deepcopy
 import pytest
 from ase.build import bulk
 import numpy as np
-from clease.montecarlo import RandomFlip, RandomSwap, MixedSwapFlip, TooFewElementsError
+from scipy.stats import binom_test
+from clease.montecarlo import (RandomFlip, RandomSwap, MixedSwapFlip, TooFewElementsError,
+                               RandomFlipWithinBasis)
 
 
-def test_random_flip():
-    np.random.seed(42)
+@pytest.fixture
+def rng(make_rng):
+    return make_rng(8)
+
+
+def test_random_flip(rng):
     atoms = bulk('Au') * (4, 4, 4)
     symbs = ['Au', 'Cu', 'X']
 
     all_indices = [None, [0, 4, 7, 32, 40]]
     for indices in all_indices:
-        flipper = RandomFlip(symbs, atoms, indices=indices)
+        flipper = RandomFlip(symbs, atoms, indices=indices, rng=rng)
         allowed_indices = indices
         if allowed_indices is None:
             allowed_indices = list(range(len(atoms)))
@@ -26,8 +33,7 @@ def test_random_flip():
             assert move[0].index in allowed_indices
 
 
-def test_random_swap():
-    np.random.seed(42)
+def test_random_swap(rng):
     atoms = bulk('Au') * (4, 4, 4)
 
     # Check that error is raised
@@ -40,7 +46,7 @@ def test_random_swap():
 
     all_indices = [None, [0, 4, 7, 32, 40]]
     for indices in all_indices:
-        swapper = RandomSwap(atoms, indices=indices)
+        swapper = RandomSwap(atoms, indices=indices, rng=rng)
         allowed_indices = indices
         if allowed_indices is None:
             allowed_indices = list(range(len(atoms)))
@@ -61,8 +67,7 @@ def test_random_swap():
             assert moves[0].index != moves[1].index
 
 
-def test_mixed_ensemble():
-    np.random.seed(42)
+def test_mixed_ensemble(rng):
     atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0) * (4, 4, 4)
 
     # Cl sublattice should have fixed conc, Na sublattice should have
@@ -76,7 +81,7 @@ def test_mixed_ensemble():
     # Insert some vacancies on the Na sublattice
     atoms.symbols[flip_idx[:6]] = 'X'
 
-    generator = MixedSwapFlip(atoms, swap_idx, flip_idx, ['Na', 'X'])
+    generator = MixedSwapFlip(atoms, swap_idx, flip_idx, ['Na', 'X'], rng=rng)
 
     num_moves = 100
     for _ in range(num_moves):
@@ -103,3 +108,52 @@ def test_mixed_ensemble():
             assert generator.flipper.name_matches(move[0])
         else:
             raise RuntimeError("Generator produced move that is not swap and not a flip")
+
+
+def test_random_flip_within_basis(rng):
+    atoms = bulk("NaCl", crystalstructure="rocksalt", a=4.0)*(3, 3, 3)
+    basis1 = [a.index for a in atoms if a.symbol == "Na"]
+    basis2 = [a.index for a in atoms if a.symbol == "Cl"]
+
+    basis = [basis1, basis2]
+    symbs = [["Na", "X"], ["Cl", "O"]]
+
+    # Check wrong length of symbols
+    with pytest.raises(ValueError):
+        RandomFlipWithinBasis([["Na", "X"]], atoms, basis)
+
+    # Check non-unique symbols
+    with pytest.raises(ValueError):
+        RandomFlipWithinBasis([["Na", "X", "Na"], ["Na", "X"]], atoms, basis)
+
+    # Check for index in two basis
+    with pytest.raises(ValueError):
+        basis2_cpy = deepcopy(basis2)
+        basis2_cpy[2] = basis1[0]
+        RandomFlipWithinBasis(symbs, atoms, [basis1, basis2_cpy])
+
+    # Check index two times in the same basis
+    with pytest.raises(ValueError):
+        basis2_cpy = deepcopy(basis2)
+        basis2_cpy[2] = basis2_cpy[0]
+        RandomFlipWithinBasis(symbs, atoms, [basis1, basis2_cpy])
+
+    flipper = RandomFlipWithinBasis(symbs, atoms, basis, rng=rng)
+    num = 1000
+    basis_count = [0, 0]
+
+    # Test we get exactly half of the atoms in a flipper
+    assert all(len(f.indices) == len(atoms)//2 for f in flipper._flippers)
+    assert all(len(f.symbols) == 2 for f in flipper._flippers)
+
+    for _ in range(num):
+        change = flipper.get_single_trial_move()[0]
+        chosen_basis = 0 if change.index in basis1 else 1
+        assert change.index in basis[chosen_basis]
+        basis_count[chosen_basis] += 1
+        assert change.new_symb in symbs[chosen_basis]
+        assert change.old_symb in symbs[chosen_basis]
+
+    # Check that the p-value for the null hypothesis (prob of selecting a basis is 0.5) is
+    # larger than 0.95
+    assert binom_test(basis_count, p=0.5, n=num) > 0.95

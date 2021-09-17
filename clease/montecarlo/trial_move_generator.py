@@ -4,10 +4,11 @@ from ase import Atoms
 import numpy as np
 from clease.montecarlo.constraints import MCConstraint
 from clease.datastructures import SystemChange
-from clease.tools import make_rng_obj
+from clease.tools import flatten, make_rng_obj
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
-__all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError')
+__all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError',
+           'RandomFlipWithinBasis')
 
 DEFAULT_MAX_ATTEMPTS = 10000
 
@@ -271,3 +272,67 @@ class MixedSwapFlip(TrialMoveGenerator):
             gen_changes = gen.made_changes(changes)
             if gen_changes:
                 gen.on_move_rejected(gen_changes)
+
+
+class RandomFlipWithinBasis(SingleTrialMoveGenerator):
+    """
+    Produce trial moves consisting of flips within each basis. Each basis
+    is defined by a list of indices.
+
+    Args:
+        symbols: Sequence allowed symbols in each basis
+        atoms: Atoms object to be used in the simulation for which the trial
+            moves are produced
+        indices: Sequence of sets of indices where each set specify the indices
+            of a basis. Note len(symbols) == len(indices)
+
+    Example:
+
+    Create a generator for a rocksalt structure with two basis
+
+    >>> from ase.build import bulk
+    >>> from clease.montecarlo import RandomFlipWithinBasis
+    >>> atoms = bulk("LiO", crystalstructure="rocksalt", a=3.9)*(3, 3, 3)
+    >>> basis1 = [a.index for a in atoms if a.symbol == "Li"]
+    >>> basis2 = [a.index for a in atoms if a.symbol == "O"]
+    >>> generator = RandomFlipWithinBasis([["Li", "X"], ["O", "V"]], atoms, [basis1, basis2])
+    """
+
+    CHANGE_NAME = 'flip_within_basis_move'
+
+    def __init__(self, symbols: Sequence[Sequence[str]], atoms: Atoms,
+                 indices: Sequence[Sequence[int]] = None, **kwargs):
+        super().__init__(**kwargs)
+
+        if len(symbols) != len(indices):
+            raise ValueError("Possible symbols must be specified for all basis.")
+
+        if not _symbols_in_basis_are_unique(symbols):
+            raise ValueError("Symbols within each basis must be unique")
+
+        if not _index_occur_only_once(indices):
+            raise ValueError("Each index can only occur in one basis and only once in each basis.")
+
+        self._flippers = [RandomFlip(s, atoms, i, rng=self.rng) for s, i in zip(symbols, indices)]
+
+    def get_single_trial_move(self) -> Sequence[SystemChange]:
+        """
+        Produce a trial move by choosing a random flipper
+        """
+        flipper = self.rng.choice(self._flippers)
+        return flipper.get_single_trial_move()
+
+
+def _symbols_in_basis_are_unique(nested_seq: Sequence[Sequence[str]]) -> bool:
+    """
+    Check if all items in the sub-lists are unique.
+    """
+    for sub in nested_seq:
+        if len(sub) != len(set(sub)):
+            return False
+    return True
+
+
+def _index_occur_only_once(nested_seq: Sequence[Sequence[int]]) -> bool:
+    flattened = flatten(nested_seq)
+    return len(flattened) == len(set(flattened))

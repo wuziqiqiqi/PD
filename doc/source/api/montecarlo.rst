@@ -31,3 +31,4 @@ Below are some related objects, which may be useful in your Monte Carlo endeavou
     ./mc_constraints
     ./mc_observers
     ./mc_evaluator
+    ./trial_move_generators
