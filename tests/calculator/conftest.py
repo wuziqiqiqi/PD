@@ -1,18 +1,18 @@
+import random
 import pytest
 from clease.corr_func import CorrFunction
 from clease.settings import CEBulk
 
 
 @pytest.fixture
-def get_random_eci(make_rng):
+def get_random_eci():
     """
     Return a set of random ECIs
     """
-    rng = make_rng()
 
     def _get_random_eci(setting):
         cfs = CorrFunction(setting).get_cf(setting.atoms)
-        ecis = {k: rng.random() for k in cfs.keys()}
+        ecis = {k: random.random() for k in cfs.keys()}
         return ecis
 
     return _get_random_eci

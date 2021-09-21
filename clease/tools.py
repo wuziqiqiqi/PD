@@ -1070,12 +1070,3 @@ def get_cubicness(atoms: ase.Atoms) -> float:
     # Take absolute value, as determinants can be negative.
     # We just need it to be as close to 0 as possible
     return abs(np.linalg.det(cell - diag))
-
-
-def make_rng_obj(rng: np.random.Generator = None) -> np.random.Generator:
-    """Make a new NumPy RNG object, unless otherwise specified.
-
-    :param rng: An optional RNG object.
-        If ``rng`` is ``None``, defaults to ``np.random.default_rng``.
-    """
-    return rng if rng else np.random.default_rng()

@@ -9,11 +9,6 @@ from clease.montecarlo.mc_evaluator import MCEvaluator
 
 
 @pytest.fixture
-def rng(make_rng):
-    return make_rng(44)
-
-
-@pytest.fixture
 def barrier():
     dilute_barriers = {'Au': 0.5, 'Cu': 0.4}
     return BEPBarrier(dilute_barriers)
@@ -39,7 +34,7 @@ def atoms(example_system):
     return ats
 
 
-def test_kmc(atoms, example_system, barrier, rng):
+def test_kmc(atoms, example_system, barrier):
     settings = example_system
     eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.0}
 
@@ -52,7 +47,7 @@ def test_kmc(atoms, example_system, barrier, rng):
         assert len(l) == 12
 
     T = 300
-    kmc = KineticMonteCarlo(atoms, T, barrier, [neighbor], rng=rng)
+    kmc = KineticMonteCarlo(atoms, T, barrier, [neighbor])
     obs = CorrelationFunctionObserver(atoms.calc)
     kmc.attach(obs, 2)
 
@@ -69,7 +64,7 @@ def test_kmc(atoms, example_system, barrier, rng):
     os.remove(epr_file)
 
 
-def test_kmc_emt(atoms, rng, barrier):
+def test_kmc_emt(atoms, barrier):
     """Perform a KMC using an EMT calculator"""
 
     class EMTEvaluator(MCEvaluator):
@@ -89,7 +84,7 @@ def test_kmc_emt(atoms, rng, barrier):
     neighbor = NeighbourSwap(atoms, 3.0)
     orig_symbols = list(atoms.symbols)
 
-    kmc = KineticMonteCarlo(evaluator, 300, barrier, [neighbor], rng=rng)
+    kmc = KineticMonteCarlo(evaluator, 300, barrier, [neighbor])
 
     # Check we can evaluate rates
     swaps, rates = kmc._rates(vac_idx)

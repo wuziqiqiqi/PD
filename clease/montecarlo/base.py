@@ -1,8 +1,6 @@
 from typing import Union
 from abc import ABC
 from ase import Atoms
-import numpy as np
-import clease
 from .mc_evaluator import MCEvaluator, construct_evaluator
 
 __all__ = ('BaseMC',)
@@ -17,20 +15,14 @@ class BaseMC(ABC):
             with an attached calculator, or a pre-initialized
             :class:`~clease.montecarlo.mc_evaluator.MCEvaluator`
             object.
-        rng (np.random.Generator, optional): NumPy Generator object to be used
-            for the random sampling. If none is specified, the NumPy default_rng
-            is used. Defaults to None.
     """
 
     def __init__(
         self,
         system: Union[Atoms, MCEvaluator],
-        rng: np.random.Generator = None,
     ):
 
         self.evaluator = system
-        # Use the rng object provided by the user, otherwise create a new one.
-        self.rng = clease.tools.make_rng_obj(rng=rng)
 
     @property
     def evaluator(self) -> MCEvaluator:

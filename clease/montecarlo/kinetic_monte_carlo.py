@@ -2,6 +2,7 @@ from typing import List, Tuple, Sequence, Union
 import warnings
 import logging
 import time
+import random
 from ase import Atoms
 from ase.units import kB
 import numpy as np
@@ -41,18 +42,13 @@ class KineticMonteCarlo(BaseMC):
         object.
     :param barrier: Model used to evaluate the barriers
     :param events: List of KMCEvents used to produce possible events
-    :param rng: NumPy RNG generator object to use for the random number generation.
     :param evaluator: MCEvaluator object, used for customizing how to evaluate
         the energies during an MC run.
     """
 
-    def __init__(self,
-                 system: Union[Atoms, MCEvaluator],
-                 T: float,
-                 barrier: BarrierModel,
-                 event_types: Sequence[KMCEventType],
-                 rng: np.random.Generator = None):
-        super().__init__(system, rng=rng)
+    def __init__(self, system: Union[Atoms, MCEvaluator], T: float, barrier: BarrierModel,
+                 event_types: Sequence[KMCEventType]):
+        super().__init__(system)
         self.T = T
         self.barrier = barrier
         self.event_types = event_types
@@ -141,7 +137,7 @@ class KineticMonteCarlo(BaseMC):
         rates *= tau
         cumulative_rates = np.cumsum(rates)
 
-        rnd = self.rng.random()
+        rnd = random.random()
 
         # Argmax returns the first occurence of True
         cum_indx = np.argmax(cumulative_rates > rnd)

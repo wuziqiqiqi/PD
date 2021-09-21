@@ -1,10 +1,10 @@
 from typing import Sequence, List, Set, Tuple
+import random
 from abc import abstractmethod, ABC
 from ase import Atoms
-import numpy as np
 from clease.montecarlo.constraints import MCConstraint
 from clease.datastructures import SystemChange
-from clease.tools import flatten, make_rng_obj
+from clease.tools import flatten
 from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
 
 __all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError',
@@ -28,14 +28,12 @@ class TrialMoveGenerator(ABC):
 
     :param max_attempts: Maximum number of attempts to try to find a move that passes
         the constraints. If not constraints are added, this has no effect.
-    :param rng: NumPy RNG generator object to use for the random number generation.
     """
 
-    def __init__(self, max_attempts: int = DEFAULT_MAX_ATTEMPTS, rng: np.random.Generator = None):
+    def __init__(self, max_attempts: int = DEFAULT_MAX_ATTEMPTS):
         super().__init__()
         self._constraints = []
         self.max_attempts = max_attempts
-        self.rng = make_rng_obj(rng=rng)
 
     def initialize(self, atoms: Atoms) -> None:
         """
@@ -150,9 +148,9 @@ class RandomFlip(SingleTrialMoveGenerator):
             self.indices = indices
 
     def get_single_trial_move(self) -> List[SystemChange]:
-        pos = self.rng.choice(self.indices)
+        pos = random.choice(self.indices)
         old_symb = self.atoms[pos].symbol
-        new_symb = self.rng.choice([s for s in self.symbols if s != old_symb])
+        new_symb = random.choice([s for s in self.symbols if s != old_symb])
         return [
             SystemChange(index=pos, old_symb=old_symb, new_symb=new_symb, name=self.CHANGE_NAME)
         ]
@@ -170,7 +168,7 @@ class RandomSwap(SingleTrialMoveGenerator):
 
     def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
-        self.tracker = SwapMoveIndexTracker(rng=self.rng)
+        self.tracker = SwapMoveIndexTracker()
         self.indices = indices
         self.initialize(atoms)
 
@@ -190,8 +188,8 @@ class RandomSwap(SingleTrialMoveGenerator):
         """
         Create a swap move
         """
-        symb_a = self.rng.choice(self.tracker.symbols)
-        symb_b = self.rng.choice([s for s in self.tracker.symbols if s != symb_a])
+        symb_a = random.choice(self.tracker.symbols)
+        symb_b = random.choice([s for s in self.tracker.symbols if s != symb_a])
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [
@@ -231,14 +229,19 @@ class MixedSwapFlip(TrialMoveGenerator):
                  flip_prob: float = 0.5,
                  **kwargs) -> None:
         super().__init__(**kwargs)
-        self.swapper = RandomSwap(atoms, swap_indices, rng=self.rng)
-        self.flipper = RandomFlip(flip_symbols, atoms, flip_indices, rng=self.rng)
+        self.swapper = RandomSwap(atoms, swap_indices)
+        self.flipper = RandomFlip(flip_symbols, atoms, flip_indices)
         self.flip_prob = flip_prob
         self.initialize(atoms)
 
     @property
     def generators(self) -> Tuple[SingleTrialMoveGenerator]:
         return (self.flipper, self.swapper)
+
+    @property
+    def weights(self) -> Tuple[float]:
+        """The probability weights for each generator"""
+        return (self.flip_prob, 1.0 - self.flip_prob)
 
     def initialize(self, atoms: Atoms) -> None:
         """
@@ -252,7 +255,7 @@ class MixedSwapFlip(TrialMoveGenerator):
         Produce a single trial move. Return a swap move with
         probability
         """
-        gen = self.rng.choice(self.generators, p=[self.flip_prob, 1.0 - self.flip_prob])
+        gen = random.choices(self.generators, weights=self.weights, k=1)[0]
         return gen.get_single_trial_move()
 
     def on_move_accepted(self, changes: Sequence[SystemChange]):
@@ -300,8 +303,11 @@ class RandomFlipWithinBasis(SingleTrialMoveGenerator):
 
     CHANGE_NAME = 'flip_within_basis_move'
 
-    def __init__(self, symbols: Sequence[Sequence[str]], atoms: Atoms,
-                 indices: Sequence[Sequence[int]] = None, **kwargs):
+    def __init__(self,
+                 symbols: Sequence[Sequence[str]],
+                 atoms: Atoms,
+                 indices: Sequence[Sequence[int]] = None,
+                 **kwargs):
         super().__init__(**kwargs)
 
         if len(symbols) != len(indices):
@@ -313,13 +319,13 @@ class RandomFlipWithinBasis(SingleTrialMoveGenerator):
         if not _index_occur_only_once(indices):
             raise ValueError("Each index can only occur in one basis and only once in each basis.")
 
-        self._flippers = [RandomFlip(s, atoms, i, rng=self.rng) for s, i in zip(symbols, indices)]
+        self._flippers = [RandomFlip(s, atoms, i) for s, i in zip(symbols, indices)]
 
     def get_single_trial_move(self) -> Sequence[SystemChange]:
         """
         Produce a trial move by choosing a random flipper
         """
-        flipper = self.rng.choice(self._flippers)
+        flipper = random.choice(self._flippers)
         return flipper.get_single_trial_move()
 
 

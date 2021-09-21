@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import random
 
 import pytest
 import numpy as np
@@ -169,9 +170,18 @@ def compare_dict():
 
 
 @pytest.fixture
-def make_rng():
+def set_rng():
+    """Fixture to set the seed of random number generators"""
 
-    def _make_rng(seed=60):
-        return np.random.default_rng(seed=seed)
+    def _set_rng(seed=42):
+        random.seed(seed)
 
-    return _make_rng
+    return _set_rng
+
+
+@pytest.fixture(autouse=True)
+def default_seed(set_rng):
+    """
+    Automatically set the random seed before a test.
+    """
+    set_rng()

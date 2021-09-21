@@ -4,6 +4,7 @@ import sys
 import datetime
 import time
 import logging
+import random
 from collections import Counter
 import numpy as np
 from ase import Atoms
@@ -34,23 +35,19 @@ class Montecarlo(BaseMC):
         generator (TrialMoveGenerator, optional): A
             :class:`~clease.montecarlo.trial_move_generator.TrialMoveGenerator`
             object that produces trial moves. Defaults to None.
-        rng (numpy.random.Generator, optional): NumPy RNG generator object to use
-            for the random number generation. Defaults to None.
     """
     NAME = "MonteCarlo"
 
     def __init__(self,
                  system: Union[Atoms, MCEvaluator],
                  temp: float,
-                 generator: TrialMoveGenerator = None,
-                 rng: np.random.Generator = None):
+                 generator: TrialMoveGenerator = None):
 
-        super().__init__(system, rng=rng)
+        super().__init__(system)
         self.T = temp
 
         if generator is None:
-            # If rng is None, RandomSwap will create its own rng object.
-            self.generator = RandomSwap(self.atoms, rng=rng)
+            self.generator = RandomSwap(self.atoms)
         else:
             self.generator = generator
 
@@ -282,7 +279,7 @@ class Montecarlo(BaseMC):
         probability = np.exp(-energy_diff / kT)
         logger.debug('Energy difference: %.3e. Calculated probability: %.3f', energy_diff,
                      probability)
-        return self.rng.random() <= probability
+        return random.random() <= probability
 
     def _move_accepted(self, system_changes: SystemChanges) -> SystemChanges:
         logger.debug('Move accepted, updating things')

@@ -1,24 +1,20 @@
 from copy import deepcopy
+from collections import Counter
 import pytest
 from ase.build import bulk
 import numpy as np
-from scipy.stats import binom_test
+from scipy import stats
 from clease.montecarlo import (RandomFlip, RandomSwap, MixedSwapFlip, TooFewElementsError,
                                RandomFlipWithinBasis)
 
 
-@pytest.fixture
-def rng(make_rng):
-    return make_rng(8)
-
-
-def test_random_flip(rng):
+def test_random_flip():
     atoms = bulk('Au') * (4, 4, 4)
     symbs = ['Au', 'Cu', 'X']
 
     all_indices = [None, [0, 4, 7, 32, 40]]
     for indices in all_indices:
-        flipper = RandomFlip(symbs, atoms, indices=indices, rng=rng)
+        flipper = RandomFlip(symbs, atoms, indices=indices)
         allowed_indices = indices
         if allowed_indices is None:
             allowed_indices = list(range(len(atoms)))
@@ -33,7 +29,7 @@ def test_random_flip(rng):
             assert move[0].index in allowed_indices
 
 
-def test_random_swap(rng):
+def test_random_swap():
     atoms = bulk('Au') * (4, 4, 4)
 
     # Check that error is raised
@@ -46,7 +42,7 @@ def test_random_swap(rng):
 
     all_indices = [None, [0, 4, 7, 32, 40]]
     for indices in all_indices:
-        swapper = RandomSwap(atoms, indices=indices, rng=rng)
+        swapper = RandomSwap(atoms, indices=indices)
         allowed_indices = indices
         if allowed_indices is None:
             allowed_indices = list(range(len(atoms)))
@@ -67,7 +63,7 @@ def test_random_swap(rng):
             assert moves[0].index != moves[1].index
 
 
-def test_mixed_ensemble(rng):
+def test_mixed_ensemble():
     atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0) * (4, 4, 4)
 
     # Cl sublattice should have fixed conc, Na sublattice should have
@@ -81,7 +77,7 @@ def test_mixed_ensemble(rng):
     # Insert some vacancies on the Na sublattice
     atoms.symbols[flip_idx[:6]] = 'X'
 
-    generator = MixedSwapFlip(atoms, swap_idx, flip_idx, ['Na', 'X'], rng=rng)
+    generator = MixedSwapFlip(atoms, swap_idx, flip_idx, ['Na', 'X'])
 
     num_moves = 100
     for _ in range(num_moves):
@@ -110,8 +106,8 @@ def test_mixed_ensemble(rng):
             raise RuntimeError("Generator produced move that is not swap and not a flip")
 
 
-def test_random_flip_within_basis(rng):
-    atoms = bulk("NaCl", crystalstructure="rocksalt", a=4.0)*(3, 3, 3)
+def test_random_flip_within_basis():
+    atoms = bulk("NaCl", crystalstructure="rocksalt", a=4.0) * (3, 3, 3)
     basis1 = [a.index for a in atoms if a.symbol == "Na"]
     basis2 = [a.index for a in atoms if a.symbol == "Cl"]
 
@@ -138,12 +134,12 @@ def test_random_flip_within_basis(rng):
         basis2_cpy[2] = basis2_cpy[0]
         RandomFlipWithinBasis(symbs, atoms, [basis1, basis2_cpy])
 
-    flipper = RandomFlipWithinBasis(symbs, atoms, basis, rng=rng)
+    flipper = RandomFlipWithinBasis(symbs, atoms, basis)
     num = 1000
     basis_count = [0, 0]
 
     # Test we get exactly half of the atoms in a flipper
-    assert all(len(f.indices) == len(atoms)//2 for f in flipper._flippers)
+    assert all(len(f.indices) == len(atoms) // 2 for f in flipper._flippers)
     assert all(len(f.symbols) == 2 for f in flipper._flippers)
 
     for _ in range(num):
@@ -155,5 +151,36 @@ def test_random_flip_within_basis(rng):
         assert change.old_symb in symbs[chosen_basis]
 
     # Check that the p-value for the null hypothesis (prob of selecting a basis is 0.5) is
-    # larger than 0.95
-    assert binom_test(basis_count, p=0.5, n=num) > 0.95
+    # larger than 0.05, i.e. we do not reject the null hypothesis.
+    # if p < 0.05, it would be unlikely the basis count was chosen with equal probability.
+    pval = stats.binom_test(basis_count, p=0.5)
+    assert pval > 0.05, basis_count
+
+
+@pytest.mark.parametrize('flip_prob', [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1])
+def test_mixed_swap_probability(flip_prob):
+    """Test the flip_prob properly affects the ratio of flip moves and swap moves"""
+
+    atoms = bulk('NaCl', crystalstructure='rocksalt', a=4.0, cubic=True) * (4, 4, 4)
+    # Let all atoms be allowed to flip and swap. We only care about the distribution
+    # of flips and swaps.
+    N = len(atoms)
+    generator = MixedSwapFlip(atoms, range(N), range(N), ['Na', 'Cl'], flip_prob=flip_prob)
+
+    def get_move_type():
+        """Helper function, get a random move, and return the type of move"""
+        changes = generator.get_single_trial_move()
+        return changes[0].name
+
+    num = 10_000
+    c = Counter(get_move_type() for _ in range(num))
+
+    # We can have 1 move type if flip_prob = 0 or 1
+    # otherwise we should have 2
+    assert 1 <= len(c) <= 2
+    # A "flip_move" is the "success" case in the binom_test, it needs to be first
+    counts = [c['flip_move'], c['swap_move']]
+
+    # See comment in test_random_flip_within_basis for discussion on p-values
+    pval = stats.binom_test(counts, p=flip_prob)
+    assert pval > 0.05

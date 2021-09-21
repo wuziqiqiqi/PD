@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import json
+import random
+from collections import defaultdict
 import pytest
 import numpy as np
 from ase.build import bulk
@@ -28,11 +30,6 @@ almgsix_eci_file = Path(__file__).parent / 'almgsix_eci.json'
 
 
 @pytest.fixture
-def rng(make_rng):
-    return make_rng(5)
-
-
-@pytest.fixture
 def almgsix_eci():
     with almgsix_eci_file.open() as file:
         return json.load(file)
@@ -55,9 +52,9 @@ def get_example_mc_system(db_name):
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
-
-    eci['c0'] = -1.0
-    eci['c2_d0000_0_00'] = -0.2
+    eci['c0'] = 1.0
+    eci['c2_d0000_0_00'] = 2.5
+    eci['c3_d0000_0_000'] = 3.5
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
@@ -75,9 +72,8 @@ def get_rocksalt_mc_system(db_name):
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
-
     eci['c0'] = -1.0
-    eci['c2_d0000_0_00'] = -0.2
+    eci['c2_d0000_0_00'] = -2.5
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
@@ -112,7 +108,7 @@ def test_run_heavy(db_name):
     E = []
     for T in [1000, 500, 100]:
         mc = Montecarlo(atoms, T)
-        mc.run(steps=10000)
+        mc.run(steps=10_000)
         E.append(mc.get_thermodynamic_quantities()['energy'])
 
     cf = CorrFunction(atoms.calc.settings)
@@ -130,13 +126,13 @@ def test_run_heavy(db_name):
     assert E[0] >= E[-1]
 
 
-def test_run(db_name, rng):
+def test_run(db_name):
     atoms = get_example_mc_system(db_name)
 
     E = []
     for T in [1000, 500, 100]:
-        mc = Montecarlo(atoms, T, rng=rng)
-        mc.run(steps=10000)
+        mc = Montecarlo(atoms, T)
+        mc.run(steps=1000)
         E.append(mc.get_thermodynamic_quantities()['energy'])
 
     assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
@@ -155,7 +151,7 @@ def test_run(db_name, rng):
     assert E[0] >= E[-1]
 
 
-def test_mc_rng(db_name, make_rng):
+def test_mc_rng(db_name, set_rng):
     """Test passing in an explicit rng object with same seeds
     produce identical MC runs.
 
@@ -166,36 +162,65 @@ def test_mc_rng(db_name, make_rng):
     # Grab a copy of the initial configuration
     ini_syms = list(atoms.symbols)
 
-    energies = []
+    energies = defaultdict(list)
+    state_before = defaultdict(list)
+    state_after = defaultdict(list)
 
-    for seed in [8, 8, 9]:
+    seeds = [8, 9, 9, 10, 42, 10, 42, 8, 8, 42, 10, 10]
+
+    start_energies = []
+    for seed in seeds:
+        set_rng(seed)
+        # Get the state of random before we start
+        state_before[seed].append(random.getstate())
+
         # Reset the symbols, as they are mutated during an MC run
         atoms.symbols = ini_syms
+        # Resync the calculator
+        start_energies.append(atoms.get_potential_energy())
 
-        rng = make_rng(seed=seed)
-        mc = Montecarlo(atoms, 10000, rng=rng)
-        assert mc.rng is rng
-        assert mc.generator.rng is rng
-        mc.run(steps=50)
-        energies.append(mc.get_thermodynamic_quantities()['energy'])
+        mc = Montecarlo(atoms, 200_000)
+        mc.run(steps=500)
+        # Get the state after we're done, so we can compare
+        state_after[seed].append(random.getstate())
+        energies[seed].append(mc.get_thermodynamic_quantities()['energy'])
 
-    assert pytest.approx(energies[0], energies[1])
-    assert abs(energies[1] - energies[2]) > 1e-3
+    # Test the energies after resetting are identical
+    assert np.array(start_energies) == pytest.approx(start_energies[0])
+
+    # Check that the random states before and after MC are identical
+    # when we start from the same seed
+    for ii, state_dict in enumerate((state_before, state_after)):
+        for seed in seeds:
+            values = state_dict[seed]
+            state0 = values[0]
+            assert all(state == state0 for state in values), (ii, seed)
+
+    for seed, en in energies.items():
+        # Check all values are identical
+        assert np.array(en) == pytest.approx(en[0]), energies
+        # Check that all values starting with other seeds are sufficiently different
+        for seed2, en2 in energies.items():
+            if seed == seed2:
+                continue
+            # We already checked each entry in the energies are equivalent,
+            # so just check the first elements are different between different seeds
+            assert abs(en[0] - en2[0]) > 1e-3
 
 
-def test_corr_func_observer(db_name, rng):
+def test_corr_func_observer(db_name):
     atoms = get_example_mc_system(db_name)
 
     atoms[0].symbol = 'Cu'
     atoms[1].symbol = 'Cu'
 
-    mc = Montecarlo(atoms, 600, rng=rng)
+    mc = Montecarlo(atoms, 600)
     obs = CorrelationFunctionObserver(atoms.calc)
     mc.attach(obs, interval=1)
-    mc.run(steps=1000)
+    mc.run(steps=500)
     thermo = mc.get_thermodynamic_quantities()
     _ = obs.get_averages()
-    assert obs.counter == 1001
+    assert obs.counter == 501
 
     cf_keys = atoms.calc.get_cf().keys()
 
@@ -203,13 +228,13 @@ def test_corr_func_observer(db_name, rng):
         assert 'cf_' + k in thermo.keys()
 
 
-def test_snapshot(db_name, make_tempfile, rng):
+def test_snapshot(db_name, make_tempfile):
     atoms = get_example_mc_system(db_name)
 
     fname = make_tempfile('snapshot.traj')
     obs = Snapshot(atoms, fname=fname)
 
-    mc = Montecarlo(atoms, 600, rng=rng)
+    mc = Montecarlo(atoms, 600)
     mc.attach(obs, interval=100)
     mc.run(steps=1000)
     assert len(obs.traj) == 10
@@ -220,10 +245,10 @@ def test_snapshot(db_name, make_tempfile, rng):
     assert str(obs.fname) == fname + '.traj'
 
 
-def test_energy_evolution(db_name, make_tempfile, rng):
+def test_energy_evolution(db_name, make_tempfile):
     atoms = get_example_mc_system(db_name)
 
-    mc = Montecarlo(atoms, 600, rng=rng)
+    mc = Montecarlo(atoms, 600)
     obs = EnergyEvolution(mc)
     mc.attach(obs, interval=50)
     mc.run(steps=1000)
