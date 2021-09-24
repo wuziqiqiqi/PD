@@ -133,6 +133,7 @@ setup(
         'typing_extensions',
         'Deprecated',
         'click>=8.0.0',  # CLI things
+        'attrs',
         # 'mypy',
     ],
     extras_require=EXTRAS_REQUIRE,
