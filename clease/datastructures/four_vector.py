@@ -36,6 +36,11 @@ class FourVector:
         return np.array([self.ix, self.iy, self.iz]) + \
             prim.get_scaled_positions()[self.sublattice, :]
 
+    def to_tuple(self) -> Tuple[int]:
+        """Get the tuple representation of the four-vector
+        """
+        return attr.astuple(self)
+
 
 class _Box(NamedTuple):
     """

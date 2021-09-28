@@ -34,7 +34,7 @@ def get_npy_include_folder():
 
 def build_ext(ext_module):
     from Cython.Build import cythonize
-    return cythonize(ext_module)
+    return cythonize(ext_module, compiler_directives={"language_level": "3"})
 
 
 # Get version number
@@ -48,8 +48,15 @@ cxx_inc_folder = include_folder()
 cython_folder = get_cython_folder()
 
 src_files = [
-    'cf_history_tracker.cpp', 'additional_tools.cpp', 'cluster.cpp', 'row_sparse_struct_matrix.cpp',
-    'named_array.cpp', 'symbols_with_numbers.cpp', 'basis_function.cpp', 'cluster_list.cpp'
+    'cf_history_tracker.cpp',
+    'additional_tools.cpp',
+    'cluster.cpp',
+    'row_sparse_struct_matrix.cpp',
+    'named_array.cpp',
+    'symbols_with_numbers.cpp',
+    'basis_function.cpp',
+    'cluster_list.cpp',
+    'atoms.cpp',
 ]
 
 src_files = [cxx_src_folder + x for x in src_files]
