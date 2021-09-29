@@ -44,9 +44,9 @@ git rebase -i master
 
 7. Force push the final squashed commit
 ```
-git push -f origin
+git push --force-with-lease origin
 ```
 
-This recipe is based on the (wprig-project)[https://github.com/wprig/wprig/wiki/How-to-squash-commits]
+This recipe is based on the [wprig-project](https://github.com/wprig/wprig/wiki/How-to-squash-commits).
 
 We encourage you to take part in the development, so don't hessitate to open MRs. CLEASE team will support you in the process of getting your ideas included in CLEASE!
