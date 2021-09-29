@@ -47,7 +47,10 @@ void Atoms::parse_four_vectors(PyObject *py_list)
         iy = int_attr_from_py_object(py_four_vec, "iy");
         iz = int_attr_from_py_object(py_four_vec, "iz");
         sublattice = int_attr_from_py_object(py_four_vec, "sublattice");
-        four_vectors.push_back({ix, iy, iz, sublattice});
+
+        // Use emplace_back to avoid a copy. Create the four-vector directly
+        // inside the vector object.
+        four_vectors.emplace_back(ix, iy, iz, sublattice);
     }
     Py_DECREF(seq);
 }
@@ -75,8 +78,7 @@ void Atoms::parse_max_lattice()
 
 unsigned int Atoms::num_atoms() const
 {
-    int n = PySequence_Length(this->atoms);
-    return n;
+    return PySequence_Length(this->atoms);
 }
 
 PyObject *Atoms::get_atom(const int index) const

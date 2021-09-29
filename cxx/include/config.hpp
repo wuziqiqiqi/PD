@@ -3,4 +3,7 @@
 
 //#define PRINT_DEBUG
 
+// Configuration for extra noisy debugging statements
+//#define PRINT_DEBUG_EXTRA
+
 #endif
