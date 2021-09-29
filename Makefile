@@ -21,7 +21,7 @@ clean:
 
 # Prepare for publishing, clean all pycache etc.
 veryclean:
-	make clean_build
+	make clean
 	rm -rf dist/
 	rm -rf *.egg-info/
 	rm -rf __pycache__/
