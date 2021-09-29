@@ -7,9 +7,19 @@ CLuster Expansion in Atomic Simulation Environment (CLEASE) is a package that au
 
 # Installation
 Install the CLEASE code by executing
-```
+```sh
 pip install clease
 ```
+
+Alternative, CLEASE is also available through anaconda on [conda](https://conda.io) via [conda-forge](https://conda-forge.org/).
+We recommend installing CLEASE via conda on windows machines in order to simplify compilations, as pip tends to have
+a hard time compiling the C++ code. Install into your conda environment:
+```sh
+conda install -c conda-forge clease
+```
+
+## Development
+
 If you are a developer you might want to install CLEASE by executing the following command in the root folder of the project
 ```
 pip install -e .
