@@ -255,6 +255,8 @@ class Clease(Calculator):
             system_change = [(23, Mg, Al)]. If an Mg atom occupying the atomic
             index 26 is swapped with an Al atom occupying the atomic index 12,
             system_change = [(26, Mg, Al), (12, Al, Mg)]
+            If system_changes is None, the correlation functions are recalculated.
+            Default: None.
         """
         if system_changes is None:
             swapped_indices = self.indices_of_changed_atoms

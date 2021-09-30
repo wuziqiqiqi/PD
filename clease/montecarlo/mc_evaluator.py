@@ -95,6 +95,9 @@ class MCEvaluator:
         self.undo_system_changes(system_changes)
         return energy
 
+    def synchronize(self) -> None:
+        """Ensure the calculator and atoms objects are synchronized."""
+
 
 class CEMCEvaluator(MCEvaluator):
     """MC Evaluator to be used with the CLEASE CE Calculator.
@@ -156,6 +159,11 @@ class CEMCEvaluator(MCEvaluator):
             call to :meth:`~clease.montecarlo.mc_evaluator.MCEvaluator.get_energy`.
         """
         return self.atoms.calc.get_energy_given_change(system_changes)
+
+    def synchronize(self) -> None:
+        """Ensure the calculator and atoms objects are synchronized."""
+        # Recalculate the CF
+        self.atoms.calc.update_cf()
 
 
 def _make_mc_evaluator_from_atoms(atoms: Atoms) -> MCEvaluator:

@@ -146,6 +146,9 @@ class Montecarlo(BaseMC):
         logger.debug('Initializing run')
         self.generator.initialize(self.atoms)
 
+        # Ensure the evaluator is properly synchronized.
+        self.evaluator.synchronize()
+
         # Initialize/update relevant energy quantities
         self._initialize_energies()
 

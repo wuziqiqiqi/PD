@@ -115,7 +115,6 @@ def test_run_heavy(db_name):
 
     print(len(cf_scratch))
 
-    os.remove(db_name)
     for k, v in cf_scratch.items():
         assert v == pytest.approx(cf_calc[k])
 
