@@ -8,10 +8,10 @@
 using namespace std;
 
 Atoms::Atoms(PyObject *py_atoms, PyObject *py_four_vectors)
+    : atoms(py_atoms)
 {
     // Atoms object represented in the 4-vector space
     // Parse objects from Python format to native
-    this->atoms = py_atoms;
 #ifdef PRINT_DEBUG
     cout << "Found " << this->num_atoms() << " atoms." << endl;
 #endif

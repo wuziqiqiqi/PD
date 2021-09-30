@@ -263,14 +263,8 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
     for (unsigned int j = 0; j < n_memb; j++)
     {
       int trans_index = trans_matrix(ref_indx, indices[j]);
-      if (trans_index == ref_indx)
-      {
-        sp_temp *= basis_functions->get(dec[j], ref_id);
-      }
-      else
-      {
-        sp_temp *= basis_functions->get(dec[j], symbols_with_id->id(trans_index));
-      }
+      int id = (trans_index == ref_indx) ? ref_id : symbols_with_id->id(trans_index);
+      sp_temp *= basis_functions->get(dec[j], id);
     }
     sp += sp_temp * dup_factors[i];
   }
