@@ -21,7 +21,7 @@ public:
     const std::vector<FourVector> &get_four_vectors() const;
     // Convert a 4-vector into its 1d array index
     int get_1d_index(const FourVector &v) const;
-    unsigned int num_atoms() const;
+    Py_ssize_t num_atoms() const;
 
     void apply_change(const SymbolChange &single_change); // Mutate the internal atoms object, by applying a change
     void apply_change(PyObject *single_change);           // Apply SystemChange object from CLEASE
@@ -38,9 +38,9 @@ private:
     Remember: This creates a new reference,
     which must be Py_DECREF'ed when no longer in use.
     */
-    PyObject *get_atom(const int index) const;
+    PyObject *get_atom(const Py_ssize_t index) const;
     // Set the symbol of index i to a new symbol value.
-    void set_symbol(const std::string symb_str, const int index);
+    void set_symbol(const std::string &symb_str, const Py_ssize_t index);
 
     // Inititialization and updating
     void parse_four_vectors(PyObject *py_list);

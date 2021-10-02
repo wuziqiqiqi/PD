@@ -115,7 +115,6 @@ void py_change2swap_move(PyObject *all_changes, swap_move &symb_changes)
   unsigned int size = list_size(all_changes);
   for (unsigned int i = 0; i < size; i++)
   {
-
     symb_changes[i] = py_tuple_to_symbol_change(PyList_GetItem(all_changes, i));
   }
 }

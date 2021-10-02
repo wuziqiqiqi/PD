@@ -977,7 +977,6 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
     string dec_str = name.substr(pos + 1);
 
     double sp = 0.0;
-    double cf_temp = 0.0;
     double count = 0;
     for (unsigned int atom_no = 0; atom_no < symbols_with_id->size(); atom_no++)
     {

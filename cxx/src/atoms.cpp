@@ -16,20 +16,20 @@ Atoms::Atoms(PyObject *py_atoms, PyObject *py_four_vectors)
     cout << "Found " << this->num_atoms() << " atoms." << endl;
 #endif
     parse_four_vectors(py_four_vectors);
-    parse_max_lattice();
 }
 
-void Atoms::parse_four_vectors(PyObject *py_list)
+void Atoms::parse_four_vectors(PyObject *py_four_vectors)
 {
 
 #ifdef PRINT_DEBUG
     cout << "Parsing four-vectors in Atoms" << endl;
 #endif
-    // (N, 4) object list, where N is the number of atoms
+    // Sequence of length N, where N is the number of atoms
+    // containing FourVector Objects
     // PySequence_Fast (new reference)
-    PyObject *seq = PySequence_Fast(py_list, "Four-vectors must be iterable.");
+    PyObject *seq = PySequence_Fast(py_four_vectors, "Four-vectors must be iterable.");
 
-    int N = PySequence_Fast_GET_SIZE(seq);
+    Py_ssize_t N = PySequence_Fast_GET_SIZE(seq);
 #ifdef PRINT_DEBUG
     cout << "Found " << N << " four-vectors." << endl;
 #endif
@@ -41,18 +41,18 @@ void Atoms::parse_four_vectors(PyObject *py_list)
         // Get each python FourVector object (borrowed reference)
         PyObject *py_four_vec = PySequence_Fast_GET_ITEM(seq, i);
         // Parse the 4-vector
-        int ix, iy, iz, sublattice;
-
-        ix = int_attr_from_py_object(py_four_vec, "ix");
-        iy = int_attr_from_py_object(py_four_vec, "iy");
-        iz = int_attr_from_py_object(py_four_vec, "iz");
-        sublattice = int_attr_from_py_object(py_four_vec, "sublattice");
+        int ix = int_attr_from_py_object(py_four_vec, "ix");
+        int iy = int_attr_from_py_object(py_four_vec, "iy");
+        int iz = int_attr_from_py_object(py_four_vec, "iz");
+        int sublattice = int_attr_from_py_object(py_four_vec, "sublattice");
 
         // Use emplace_back to avoid a copy. Create the four-vector directly
         // inside the vector object.
         four_vectors.emplace_back(ix, iy, iz, sublattice);
     }
     Py_DECREF(seq);
+    // Update the lattice information.
+    parse_max_lattice();
 }
 
 // Find Nx, Ny, Nz and Ns
@@ -68,7 +68,7 @@ void Atoms::parse_max_lattice()
         Nz = (fv.iz > Nz) ? fv.iz : Nz;
         Ns = (fv.sublattice > Ns) ? fv.sublattice : Ns;
     }
-    // Number of sublattices/repitiions is 1 greater than the max index,
+    // Number of sublattices/repitions is 1 greater than the max index,
     // since we start from 0.
     Ns++;
     Nx++;
@@ -76,24 +76,24 @@ void Atoms::parse_max_lattice()
     Nz++;
 }
 
-unsigned int Atoms::num_atoms() const
+Py_ssize_t Atoms::num_atoms() const
 {
     return PySequence_Length(this->atoms);
 }
 
-PyObject *Atoms::get_atom(const int index) const
+PyObject *Atoms::get_atom(const Py_ssize_t index) const
 {
     return PySequence_GetItem(this->atoms, index);
 }
 
 std::vector<int> Atoms::get_numbers() const
 {
-    int num_atoms = this->num_atoms();
+    Py_ssize_t num_atoms = this->num_atoms();
 
     std::vector<int> numbers;
     numbers.reserve(num_atoms);
 
-    for (int i = 0; i < num_atoms; i++)
+    for (int i = 0; i < num_atoms; ++i)
     {
         // Get atom number i (new reference).
         PyObject *atom = this->get_atom(i);
@@ -160,7 +160,7 @@ void Atoms::undo_change(const SymbolChange &single_change)
     this->set_symbol(single_change.old_symb, single_change.indx);
 }
 
-void Atoms::set_symbol(const string symb_str, const int index)
+void Atoms::set_symbol(const string &symb_str, const Py_ssize_t index)
 {
     PyObject *py_str = string2py(symb_str.c_str());
     PyObject *atom = this->get_atom(index);
