@@ -14,10 +14,11 @@ def cluster():
                       size=3,
                       diameter=5.4,
                       fingerprint=true_fp,
-                      ref_indx=0,
-                      indices=true_indices,
+                      figures=(),
                       equiv_sites=true_equiv_sites,
-                      trans_symm_group=0)
+                      indices=true_indices,
+                      ref_indx=0,
+                      group=0)
     return cluster
 
 

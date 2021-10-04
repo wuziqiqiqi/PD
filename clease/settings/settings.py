@@ -5,7 +5,7 @@ Cluster Expansion in different conditions.
 """
 import logging
 from copy import deepcopy
-from typing import List, Dict, Optional, Union, Sequence
+from typing import List, Dict, Optional, Union, Sequence, Set
 from distutils.version import LooseVersion
 
 from deprecated import deprecated
@@ -107,8 +107,8 @@ class ClusterExpansionSettings:
         self.size = to_3x3_matrix(size)
         self.supercell_factor = supercell_factor
 
-        self.prim_cell = prim
-        self._tag_prim_cell()
+        self.prim_cell = prim.copy()
+        self._order_and_tag_prim_cell()
         self._store_prim_cell()
 
         prim_mng = AtomsManager(prim)
@@ -192,11 +192,10 @@ class ClusterExpansionSettings:
     @property
     def cluster_mng(self):
         if self._cluster_mng is None:
-            if self.include_background_atoms:
-                mng = ClusterManager(self.prim_cell)
-            else:
-                mng = ClusterManager(self.prim_no_bkg())
-            self._cluster_mng = mng
+            kwargs = {}
+            if not self.include_background_atoms:
+                kwargs['background_syms'] = self.get_bg_syms()
+            self._cluster_mng = ClusterManager(self.prim_cell, **kwargs)
         return self._cluster_mng
 
     @property
@@ -344,24 +343,7 @@ class ClusterExpansionSettings:
         else:
             raise ValueError("basis_function has to be an instance of BasisFunction or a string")
 
-    def prim_no_bkg(self):
-        """
-        Return an instance of the primitive cell where the background indices
-        has been removed
-        """
-        prim = self.prim_cell.copy()
-        bg_syms = self.get_bg_syms()
-        delete = []
-        for atom in prim:
-            if atom.symbol in bg_syms:
-                delete.append(atom.index)
-
-        delete.sort(reverse=True)
-        for i in delete:
-            del prim[i]
-        return prim
-
-    def get_bg_syms(self):
+    def get_bg_syms(self) -> Set[str]:
         """
         Return the symbols in the basis where there is only one element
         """
@@ -416,7 +398,7 @@ class ClusterExpansionSettings:
                                  f"\n{template.get_positions()}")
         self.prepare_new_active_template(template)
 
-    def _tag_prim_cell(self):
+    def _order_and_tag_prim_cell(self):
         """
         Add a tag to all the atoms in the unit cell to track the sublattice.
         Tags are added such that that the lowest tags corresponds to "active"
@@ -426,6 +408,8 @@ class ClusterExpansionSettings:
         only one species. The tags 0, 1, 2 will then be assigned to the three
         sublattices that can be occupied by more than one species, and the two
         remaining lattices will get the tag 3, 4.
+
+        Re-orders the primitive cell in accordance to the order of the tags.
         """
         bg_sym = self.get_bg_syms()
         tag = 0
@@ -441,6 +425,10 @@ class ClusterExpansionSettings:
             if atom.symbol in bg_sym:
                 atom.tag = tag
                 tag += 1
+
+        # Rearange primitive cell in order of the tags.
+        sorted_indx = np.argsort([atom.tag for atom in self.prim_cell])
+        self.prim_cell = self.prim_cell[sorted_indx]
 
     def _store_prim_cell(self):
         """Store unit cell to the database. Returns the id of primitive cell in the database"""
@@ -576,6 +564,33 @@ class ClusterExpansionSettings:
         for key, value in dct.items():
             setattr(settings, key, value)
         return settings
+
+    def clusters_table(self) -> str:
+        """String with information about the clusters"""
+        mult_dict = self.multiplicity_factor
+
+        columns = ['Index', 'Cluster Name', 'Size', 'Group', 'Radius', 'Figures', 'Multiplicity']
+
+        fmt = '| {:<5} | {:<12} | {:<4} | {:<5} | {:<6} | {:<7} | {:<12} |'
+        header = fmt.format(*columns)
+        rule = '-' * len(header)  # Horizontal line of -----
+        lines = [rule, header, rule]
+
+        for ii, cluster in enumerate(self.cluster_list.clusters):
+            name = cluster.name
+            size = f'{cluster.size:d}'.center(4, ' ')
+            mult = f'{int(mult_dict[name]):d}'.center(12, ' ')
+            radius = f'{cluster.diameter / 2:2.4f}'
+            n_figures = f'{len(cluster.four_vector_figures)}'.center(7)
+            group = f'{cluster.group:d}'.center(5)
+            index_s = f'{ii:d}'.center(5)
+
+            s = fmt.format(index_s, name, size, group, radius, n_figures, mult)
+            lines.append(s)
+
+        lines.append(rule)
+
+        return '\n'.join(lines)
 
 
 def to_3x3_matrix(size):

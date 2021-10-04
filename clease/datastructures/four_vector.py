@@ -1,3 +1,4 @@
+import copy
 from collections import Counter
 from itertools import product
 from typing import NamedTuple, Tuple, List
@@ -11,21 +12,42 @@ import attr
 __all__ = ('FourVector', 'construct_four_vectors')
 
 
-@attr.s(frozen=True, eq=True)
+def _int_converter(x):
+    """Allow for NumPy integer types (convert to regular int)"""
+    if isinstance(x, np.integer):
+        return int(x)
+    return x
+
+
+@attr.s(frozen=True, order=True)
 class FourVector:
-    ix: int = attr.ib(validator=attr.validators.instance_of(int))
-    iy: int = attr.ib(validator=attr.validators.instance_of(int))
-    iz: int = attr.ib(validator=attr.validators.instance_of(int))
-    sublattice: int = attr.ib(validator=attr.validators.instance_of(int))
+    """Container for a vector in 4-vector space, i.e. a vector of [ix, iy, iz, sublattice].
+    Represents the position of a site in terms of the number of repitions of the primitive atoms,
+    as well as which sublattice it belongs to in that cell.
+    """
+    ix: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
+    iy: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
+    iz: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
+    sublattice: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
 
-    def to_cartesian(self, prim: Atoms) -> np.ndarray:
-        """
-        Convert the four vector into cartesian coordinates
+    def to_cartesian(self, prim: Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
+        """Convert the four vector into cartesian coordinates
 
-        :param prim: Primitive cell that defines the lattice
+        Args:
+            prim (Atoms): Primitive Atoms object that defines the lattice
+
+            transposed_cell (np.ndarray, optional): The transposed cell matrix.
+             Can be passed to avoid re-calculating this property, e.g. if getting
+            cartesian coordinates for multiple FourVector objects simultaniously.
+            If cellT is None, it is calculated from the primitive atoms object.
+            Defaults to None.
+
+        Returns:
+            np.ndarray: The cartesian coordinate representation of the FourVector.
         """
-        cell = prim.get_cell()
-        return cell.T.dot([self.ix, self.iy, self.iz]) + prim[self.sublattice].position
+        if transposed_cell is None:
+            transposed_cell = prim.get_cell().T
+        return np.dot(transposed_cell, self.xyz_array) + prim[self.sublattice].position
 
     def to_scaled(self, prim: Atoms) -> np.ndarray:
         """
@@ -33,13 +55,42 @@ class FourVector:
 
         :param prim: Primitive cell that defines the lattice
         """
-        return np.array([self.ix, self.iy, self.iz]) + \
-            prim.get_scaled_positions()[self.sublattice, :]
+        return self.xyz_array + prim.get_scaled_positions()[self.sublattice, :]
+
+    @property
+    def xyz_array(self) -> np.ndarray:
+        """Return the [ix, iy, iz] component of the four-vector as a NumPy array."""
+        return np.array([self.ix, self.iy, self.iz])
 
     def to_tuple(self) -> Tuple[int]:
         """Get the tuple representation of the four-vector
         """
         return attr.astuple(self)
+
+    def copy(self) -> 'FourVector':
+        """Create a copy of the FourVector instance."""
+        return copy.copy(self)
+
+    def shift_xyz(self, other: 'FourVector') -> 'FourVector':
+        """Shift a this vector by another FourVector instance.
+        Only translates the x, y, and z values, the sublattice remains the original,
+        *so be mindful of the order*, i.e. a.shift_xyz(b) is not the same as b.shift_xyz(a).
+
+        Example:
+
+        >>> from clease.datastructures.four_vector import FourVector
+        >>> a = FourVector(0, 0, 0, 0)
+        >>> b = FourVector(1, 0, 0, 1)
+        >>> a.shift_xyz(b)
+        FourVector(ix=1, iy=0, iz=0, sublattice=0)
+        >>> b.shift_xyz(a)
+        FourVector(ix=1, iy=0, iz=0, sublattice=1)
+        """
+        if not isinstance(other, FourVector):
+            raise NotImplementedError(f'Shift must be by another FourVector, got {type(other)}')
+
+        return FourVector(self.ix + other.ix, self.iy + other.iy, self.iz + other.iz,
+                          self.sublattice)
 
 
 class _Box(NamedTuple):

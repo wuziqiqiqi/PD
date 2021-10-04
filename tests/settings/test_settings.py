@@ -1,6 +1,6 @@
 import pytest
 from ase.build import bulk
-from clease.settings import CEBulk, Concentration, ClusterExpansionSettings
+from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
 from clease.cluster import ClusterManager
 from clease.calculator import Clease
 from clease.tools import wrap_and_sort_by_position
@@ -24,25 +24,49 @@ def atoms():
     return ats
 
 
+def make_au_cu_settings(db_name, **kwargs):
+    a = 3.8  # Lattice parameter
+    basis_elements = [["Au", "Cu"]]
+    concentration = Concentration(basis_elements=basis_elements)
+    params = dict(crystalstructure="fcc",
+                  a=a,
+                  size=[3, 3, 3],
+                  concentration=concentration,
+                  db_name=db_name,
+                  max_cluster_dia=[5.0, 5.0])
+    params.update(kwargs)
+
+    settings = CEBulk(**params)
+    return settings
+
+
 @pytest.fixture
 def make_settings(db_name):
 
     def _make_settings(**kwargs):
-        a = 3.8  # Lattice parameter
-        basis_elements = [["Au", "Cu"]]
-        concentration = Concentration(basis_elements=basis_elements)
-        params = dict(crystalstructure="fcc",
-                      a=a,
-                      size=[3, 3, 3],
-                      concentration=concentration,
-                      db_name=db_name,
-                      max_cluster_dia=[5.0, 5.0])
-        params.update(kwargs)
-
-        settings = CEBulk(**params)
-        return settings
+        return make_au_cu_settings(db_name, **kwargs)
 
     return _make_settings
+
+
+def make_TaO(db_name, background=True):
+    basis = [(0., 0., 0.), (0.3894, 0.1405, 0.), (0.201, 0.3461, 0.5), (0.2244, 0.3821, 0.)]
+    spacegroup = 55
+    cellpar = [6.25, 7.4, 3.83, 90, 90, 90]
+    size = [2, 2, 2]
+    basis_elements = [['O', 'X'], ['O', 'X'], ['O', 'X'], ['Ta']]
+    grouped_basis = [[0, 1, 2], [3]]
+    concentration = Concentration(basis_elements=basis_elements, grouped_basis=grouped_basis)
+
+    settings = CECrystal(basis=basis,
+                         spacegroup=spacegroup,
+                         cellpar=cellpar,
+                         size=size,
+                         concentration=concentration,
+                         db_name=db_name,
+                         max_cluster_dia=[4.0, 4.0])
+    settings.include_background_atoms = background
+    return settings
 
 
 @pytest.fixture
@@ -51,9 +75,41 @@ def settings_and_atoms(atoms, make_settings):
     return make_settings(), atoms
 
 
+@pytest.mark.parametrize('settings_maker', [
+    make_au_cu_settings,
+    lambda db_name: make_TaO(db_name, background=True),
+    lambda db_name: make_TaO(db_name, background=False),
+])
+def test_prim_ordering(db_name, settings_maker):
+    settings = settings_maker(db_name)
+    assert all(a.index == a.tag for a in settings.prim_cell)
+    # Check all tags are in order
+    tags = [a.tag for a in settings.prim_cell]
+    assert tags == sorted(tags)
+
+    # Check the generator primitive cell is also in order
+    prim = settings.cluster_mng.generator.prim
+    assert all(a.index == a.tag for a in prim)
+
+
+def test_TaO_no_bkg(db_name):
+    """The TaO settings with backgrounds has Ta as background element.
+    Test the manager in the settings properly finds that."""
+    settings = make_TaO(db_name, background=False)
+
+    gen_prim = settings.cluster_mng.generator.prim
+    prim = settings.prim_cell
+
+    assert len(prim) == 14
+    assert len(gen_prim) == 10
+    for atom in prim:
+        is_bkg = atom.symbol == 'Ta'
+        assert settings.cluster_mng.is_background_atom(atom) == is_bkg
+
+
 def test_get_figures_settings(settings_and_atoms, dummy_eci):
     """Regression test, see issue #263.
-    
+
     After getting figures from the settings' cluster manager,
     attaching a calculator would result in a RuntimeError.
     """

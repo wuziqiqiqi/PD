@@ -35,10 +35,7 @@ def make_wrapped_nacl():
     return atoms
 
 
-@pytest.mark.parametrize('inputs', [(0.5, 1, 1, 1),
-                                    (1, 0.5, 1, 1),
-                                    (1, 1, 0.5, 1),
-                                    (1, 1, 1, 0.5)])
+@pytest.mark.parametrize('inputs', [(0.5, 1, 1, 1), (1, 0.5, 1, 1), (1, 1, 0.5, 1), (1, 1, 1, 0.5)])
 def test_invalid_constructor(inputs):
     with pytest.raises(TypeError):
         FourVector(*inputs)
@@ -203,3 +200,26 @@ def test_random_spacegroup_four_vector():
 }])
 def test_to_scaled_src(test):
     assert np.allclose(test['fv'].to_scaled(test['prim']), test['expect'])
+
+
+def test_shift_xyz():
+    fv1 = FourVector(0, 0, 0, 0)
+    fv2 = FourVector(1, 0, 0, 1)
+
+    res1 = fv1.shift_xyz(fv2)
+    # We created new FourVector instances
+    assert res1 is not fv1
+    assert res1 is not fv2
+    res2 = fv2.shift_xyz(fv1)
+
+    # Ordering on the sublattice matters.
+    assert res1 == FourVector(1, 0, 0, 0)
+    assert res2 == FourVector(1, 0, 0, 1)
+
+
+def test_shift_notimplemented():
+    fv = FourVector(0, 0, 0, 0)
+    with pytest.raises(NotImplementedError):
+        fv.shift_xyz((0, 0, 0, 1))
+    with pytest.raises(NotImplementedError):
+        fv.shift_xyz([0, 0, 0, 1])

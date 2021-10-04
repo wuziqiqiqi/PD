@@ -1,6 +1,8 @@
+from collections import Counter
 import pytest
 from ase.build import bulk
 from clease.cluster import ClusterManager
+from clease.datastructures.four_vector import FourVector
 from clease.tools import wrap_and_sort_by_position
 import numpy as np
 
@@ -11,8 +13,22 @@ def bulk_al():
 
 
 @pytest.fixture
-def cluster_mng(bulk_al):
-    return ClusterManager(bulk_al)
+def nacl():
+    return bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+
+
+@pytest.fixture
+def make_cluster_mng():
+
+    def _make_cluster_mng(atoms, **kwargs):
+        return ClusterManager(atoms, **kwargs)
+
+    return _make_cluster_mng
+
+
+@pytest.fixture
+def cluster_mng(bulk_al, make_cluster_mng):
+    return make_cluster_mng(bulk_al)
 
 
 def trans_matrix_matches(tm, template):
@@ -76,28 +92,28 @@ def test_lut():
     tests = [{
         'atoms': prim,
         'expect': {
-            (0, 0, 0, 0): 0,
-            (0, 0, 0, 1): 1
+            FourVector(0, 0, 0, 0): 0,
+            FourVector(0, 0, 0, 1): 1
         }
     }, {
         'atoms': wrap_and_sort_by_position(prim * (2, 2, 2)),
         'expect': {
-            (0, 0, 0, 0): 0,
-            (0, 0, 0, 1): 4,
-            (0, 1, 0, 0): 2,
-            (0, 1, 0, 1): 9,
-            (0, 0, 1, 0): 3,
-            (0, 0, 1, 1): 10,
-            (0, 1, 1, 0): 8,
-            (0, 1, 1, 1): 14,
-            (1, 0, 0, 0): 1,
-            (1, 0, 0, 1): 7,
-            (1, 0, 1, 0): 6,
-            (1, 0, 1, 1): 13,
-            (1, 1, 0, 0): 5,
-            (1, 1, 0, 1): 12,
-            (1, 1, 1, 0): 11,
-            (1, 1, 1, 1): 15
+            FourVector(0, 0, 0, 0): 0,
+            FourVector(0, 0, 0, 1): 4,
+            FourVector(0, 1, 0, 0): 2,
+            FourVector(0, 1, 0, 1): 9,
+            FourVector(0, 0, 1, 0): 3,
+            FourVector(0, 0, 1, 1): 10,
+            FourVector(0, 1, 1, 0): 8,
+            FourVector(0, 1, 1, 1): 14,
+            FourVector(1, 0, 0, 0): 1,
+            FourVector(1, 0, 0, 1): 7,
+            FourVector(1, 0, 1, 0): 6,
+            FourVector(1, 0, 1, 1): 13,
+            FourVector(1, 1, 0, 0): 5,
+            FourVector(1, 1, 0, 1): 12,
+            FourVector(1, 1, 1, 0): 11,
+            FourVector(1, 1, 1, 1): 15
         }
     }]
 
@@ -156,3 +172,57 @@ def test_cache(mocker, cluster_mng, max_cluster_dia):
     # The first cluster must be the same object in memory, since
     # we didn't do anything to the cluster list
     assert cluster_0 is not cluster_mng.clusters[0]
+
+
+@pytest.mark.parametrize('background_syms, expect', [
+    (None, {'Na', 'Cl'}),
+    ({'Na'}, {'Cl'}),
+    ({'Cl'}, {'Na'}),
+])
+def test_background_manager_background(nacl, make_cluster_mng, background_syms, expect):
+    """Test that we properly filter the background symbols in the primitive."""
+    mng = make_cluster_mng(nacl, background_syms=background_syms)
+    assert set(mng.prim.symbols) == expect
+
+
+def test_no_mutation(nacl, make_cluster_mng):
+    """Test we don't mutate the input atoms"""
+    atoms = nacl
+    atoms_orig = atoms.copy()
+    mng = make_cluster_mng(atoms=atoms, background_syms={'Na'})
+    # Test we filtered the primtive
+    assert len(mng.prim) == 1
+    assert set(mng.prim.symbols) == {'Cl'}
+    # Test we didn't alter the atoms we inserted in the cluster manager
+    assert atoms == atoms_orig
+    assert set(atoms.symbols) == {'Na', 'Cl'}
+
+
+def test_is_background(nacl, make_cluster_mng):
+    mng = make_cluster_mng(nacl, background_syms={'Na'})
+
+    atoms = nacl * (4, 4, 4)
+    assert set(atoms.symbols) == {'Na', 'Cl'}
+    for atom in atoms:
+        expect = atom.symbol == 'Na'
+        assert mng.is_background_atom(atom) == expect
+
+
+@pytest.mark.parametrize('max_cluster_dia, max_body_size', [
+    ([], 1),
+    ([4.0], 2),
+    ([4.0, 4.0], 3),
+])
+def test_build_empty(nacl, make_cluster_mng, max_cluster_dia, max_body_size):
+    mng = make_cluster_mng(nacl)
+
+    mng.build(max_cluster_dia=max_cluster_dia)
+
+    counts = Counter(cluster.size for cluster in mng.clusters)
+    print(counts)
+
+    # We should have 1 empty and 2 singlets (2 sublattices)
+    assert counts[0] == 1
+    assert counts[1] == 2
+    # Check we find the maximum size is the expected
+    assert max(counts.keys()) == max_body_size

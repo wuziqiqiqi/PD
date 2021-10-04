@@ -1,5 +1,5 @@
 from itertools import product
-from copy import deepcopy
+import copy
 from typing import List, Dict
 import logging
 
@@ -15,14 +15,18 @@ __all__ = ('ClusterList',)
 class ClusterList:
 
     def __init__(self):
-        self.clusters = []
+        self._clusters = []
+
+    @property
+    def clusters(self) -> List[Cluster]:
+        return self._clusters
 
     def append(self, cluster: Cluster):
         self.clusters.append(cluster)
 
     def clear(self):
         """Clear the content."""
-        self.clusters = []
+        self.clusters.clear()
 
     @property
     def names(self) -> List[str]:
@@ -120,9 +124,13 @@ class ClusterList:
         """Sort the internal cluster list"""
         self.clusters.sort()
 
-    @property
-    def dtype(self):
-        return 'ClusterList'
+    def get_sorted_list(self) -> 'ClusterList':
+        """Get a new instance of the ClusterList which is sorted.
+        Note that the new instance is only a shallow copy, so the internal cluster objects
+        are the same."""
+        new_list = copy.copy(self)
+        new_list.sort()
+        return new_list
 
     def tolist(self):
         return self.clusters
@@ -153,8 +161,7 @@ class ClusterList:
         for cluster in self.clusters:
             current_factor = mult_factors.get(cluster.name, 0)
             current_norm = norm.get(cluster.name, 0)
-            current_factor += \
-                len(cluster.indices)*num_sites_per_group[cluster.group]
+            current_factor += len(cluster.indices) * num_sites_per_group[cluster.group]
             current_norm += num_sites_per_group[cluster.group]
 
             mult_factors[cluster.name] = current_factor
@@ -176,7 +183,7 @@ class ClusterList:
         for cluster in self.clusters:
             if cluster.name in used_names:
                 continue
-            figure = cluster.get_figure(generator)
+            figure = cluster.get_figure(generator.prim)
 
             figure.info = {'name': cluster.name}
             used_names.add(cluster.name)
@@ -217,8 +224,7 @@ class ClusterList:
         for ref in set(figure):
             group = symm_groups[ref]
             cluster = self.get_by_name_and_group(c_name, group)
-            corr_figure = \
-                cluster.corresponding_figure(ref, figure, trans_matrix)
+            corr_figure = cluster.corresponding_figure(ref, figure, trans_matrix)
             corr_fig_key = list2str(corr_figure)
             tot_num += occ_count[cluster.group][corr_fig_key]
         return tot_num
@@ -237,7 +243,7 @@ class ClusterList:
 
             for n in names:
                 # Fix distance string
-                new_name = deepcopy(n)
+                new_name = copy.deepcopy(n)
                 prefix = n.rpartition('_')[0]
                 new_dist = f"{prefixes.index(prefix):04d}"
                 new_name = ''.join([new_name[:4], new_dist, new_name[8:]])

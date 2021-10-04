@@ -1,8 +1,11 @@
-from typing import Sequence
-from itertools import product, chain
+from typing import Sequence, Set, Dict, List
+from itertools import product
 from copy import deepcopy
 import numpy as np
+import ase
 from ase.geometry import wrap_positions
+
+from clease.datastructures import FourVector, Figure
 
 from .cluster_fingerprint import ClusterFingerprint
 from .cluster import Cluster
@@ -23,10 +26,44 @@ class ClusterManager:
         Primitive cell
     """
 
-    def __init__(self, prim_cell):
-        self.generator = ClusterGenerator(prim_cell)
+    def __init__(self, prim_cell: ase.Atoms, background_syms: Set[str] = None):
+        self._background_syms = background_syms or set()
+
+        primitive_filtered = self._filter_background(prim_cell)
+
+        self.generator = ClusterGenerator(primitive_filtered)
         self.clusters = ClusterList()
         self._cache = _CacheChecker()
+
+    @property
+    def prim(self) -> ase.Atoms:
+        """The primitive cell.
+        Note, that background atoms have been removed from this atoms object."""
+        return self.generator.prim
+
+    @property
+    def background_syms(self) -> Set[str]:
+        """The symbols which are considered background."""
+        return self._background_syms
+
+    def _filter_background(self, atoms: ase.Atoms) -> ase.Atoms:
+        """Filter the background atoms from an ASE Atoms object.
+
+        Returns a copy of the original atoms object.
+        """
+        atoms = atoms.copy()
+
+        # Find the indices we need to delete
+        # If no background atoms are present, this will do nothing.
+        delete = [atom.index for atom in atoms if self.is_background_atom(atom)]
+        delete.sort(reverse=True)
+        for i in delete:
+            del atoms[i]
+        return atoms
+
+    def is_background_atom(self, atom: ase.Atom) -> bool:
+        """Check whether an atom is a background atom."""
+        return atom.symbol in self.background_syms
 
     def __eq__(self, other):
         return self.clusters == other.clusters and \
@@ -61,10 +98,13 @@ class ClusterManager:
         # We got a new set of settings, prepare to construct new clusters
         self._prepare_new_build(max_cluster_dia)
 
-        num_lattices = range(len(self.generator.prim))
+        # Number of lattices from 0 to N, where N
+        # is the number of atoms in the primitive,
+        # possibly without the background atoms.
+        num_lattices = range(len(self.prim))
         all_fps = []
         names = []
-        all_clusters = []
+        all_clusters = []  # type: List[List[Figure]]
         all_eq_sites = []
         lattices = []
         diameters = []
@@ -74,8 +114,8 @@ class ClusterManager:
             clusters, fps = self.generator.generate(cluster_size, diameter, ref_lattice=latt)
 
             eq_sites = []
-            for c in clusters:
-                eq_sites.append(self.generator.equivalent_sites(c[0]))
+            for figure in clusters:
+                eq_sites.append(self.generator.equivalent_sites(figure[0]))
 
             all_fps += fps
             all_clusters += clusters
@@ -92,32 +132,33 @@ class ClusterManager:
                               size=s,
                               diameter=d,
                               fingerprint=fp,
-                              ref_indx=-1,
-                              indices=c,
+                              figures=c,
                               equiv_sites=eq,
-                              trans_symm_group=l)
+                              group=l)
             self.clusters.append(cluster)
 
-        # Add singlets and empty
-        for i in range(len(self.generator.prim)):
+        # Add singlets
+        for i in range(len(self.prim)):
             self.clusters.append(
                 Cluster(name='c1',
                         size=1,
                         diameter=0.0,
                         fingerprint=ClusterFingerprint([1.0]),
-                        ref_indx=-1,
-                        indices=[[[0, 0, 0, i]]],
+                        figures=[Figure([FourVector(0, 0, 0, i)])],
                         equiv_sites=[],
-                        trans_symm_group=i))
-            self.clusters.append(
-                Cluster('c0',
-                        size=0,
-                        diameter=0.0,
-                        fingerprint=ClusterFingerprint([0.0]),
-                        ref_indx=-1,
-                        indices=[],
-                        equiv_sites=[],
-                        trans_symm_group=i))
+                        group=i))
+        # Add empty
+        self.clusters.append(
+            Cluster(name='c0',
+                    size=0,
+                    diameter=0.0,
+                    fingerprint=ClusterFingerprint([0.0]),
+                    figures=[],
+                    equiv_sites=[],
+                    group=0))
+        # Put the clusters in order of size. Has no practical effect,
+        # but it looks nicer upon inspection.
+        self.clusters.sort()
 
     @staticmethod
     def _get_names(all_fps):
@@ -148,22 +189,7 @@ class ClusterManager:
                 names[i] = n
         return names
 
-    def _ref_indices(self, kdtree):
-        """
-        Return all reference indices
-
-        Parameters:
-
-        kdtree: KDTree or cKDTree
-            A KDtree representation of all atomic positions
-        """
-        ref_indices = []
-        for i in range(len(self.generator.prim)):
-            _, i = kdtree.query(self.generator.cartesian([0, 0, 0, i]))
-            ref_indices.append(i)
-        return ref_indices
-
-    def info_for_template(self, template):
+    def info_for_template(self, template: ase.Atoms) -> ClusterList:
         """
         Specialise the cluster information to a template
 
@@ -174,7 +200,7 @@ class ClusterManager:
         """
         unique = self.unique_four_vectors()
         lut = self.fourvec_to_indx(template, unique)
-        ref_indices = [lut[(0, 0, 0, i)] for i in range(self.generator.num_sub_lattices)]
+        ref_indices = [lut[FourVector(0, 0, 0, i)] for i in range(self.generator.num_sub_lattices)]
 
         cluster_int = deepcopy(self.clusters)
         for cluster in cluster_int:
@@ -185,22 +211,24 @@ class ClusterManager:
                 cluster.ref_indx = int(ref_indices[cluster.group])
                 cluster.indices = []
             else:
-                cluster.indices = self.generator.to_atom_index(cluster.indices, lut)
+                cluster.indices = self.generator.to_atom_index(cluster, lut)
                 cluster.ref_indx = int(ref_indices[cluster.group])
         return cluster_int
 
-    def unique_four_vectors(self):
+    def unique_four_vectors(self) -> Set[FourVector]:
         """
-        Return a list with all unique 4-vectors consituting
-        the clusters
+        Return a list with all unique 4-vectors which are
+        represented in any figure in all of the clusters.
         """
+        # We utilize that FourVector objects are hashable,
+        # and therefore can be filtered using a set()
         unique = set()
-        for c in self.clusters:
-            if c.size == 0:
+        for cluster in self.clusters:
+            if cluster.size == 0:
                 continue
-            flat = list(chain(*c.indices))
-            indices = list(map(tuple, flat))
-            unique.update(indices)
+            for figure in cluster.figures:
+                for fv in figure.components:
+                    unique.add(fv)
         return unique
 
     def get_figures(self):
@@ -209,7 +237,7 @@ class ClusterManager:
         """
         return self.clusters.get_figures(self.generator)
 
-    def create_four_vector_lut(self, template):
+    def create_four_vector_lut(self, template: ase.Atoms) -> Dict[FourVector, int]:
         """
         Construct a lookup table (LUT) for the index in template given the
         wrapped vector
@@ -219,21 +247,24 @@ class ClusterManager:
         template: Atoms
             Atoms object to use when creating the lookup table (LUT)
         """
-        lut = {}
+        lut = dict()
         pos = template.get_positions().copy()
         for i in range(pos.shape[0]):
-            if template[i].tag >= self.generator.num_sub_lattices:
+            if self.is_background_atom(template[i]):
+                # No need to make a lookup for a background atom
                 continue
-            vec = self.generator.get_four_vector(pos[i, :], template[i].tag)
-            lut[tuple(vec)] = i
+            vec = self.generator.to_four_vector(pos[i, :], template[i].tag)
+            lut[vec] = i
         return lut
 
-    def fourvec_to_indx(self, template, unique):
+    def fourvec_to_indx(self, template: ase.Atoms,
+                        unique: Sequence[FourVector]) -> Dict[FourVector, int]:
+        """Translate a set of unique FourVectors into their corresponding index
+        in a template atoms object."""
         cell = template.get_cell()
         pos = np.zeros((len(unique), 3))
-        for i, u in enumerate(unique):
-            cart_u = self.generator.cartesian(u)
-            pos[i, :] = cart_u
+        for i, fv in enumerate(unique):
+            pos[i, :] = fv.to_cartesian(self.prim)
 
         pos = wrap_positions(pos, cell)
         unique_indices = []
@@ -242,46 +273,59 @@ class ClusterManager:
             unique_indices.append(np.argmin(diff_sq))
         return dict(zip(unique, unique_indices))
 
-    def translation_matrix(self, template):
+    def translation_matrix(self, template: ase.Atoms) -> List[Dict[int, int]]:
         """
-        Construct the translation matrix
+        Construct the translation matrix.
+
+        The translation matrix translates a given atomic index to
+        the corresponding atomic site if we started from index 0.
 
         Parameter:
 
         template: ase.Atoms
             Atoms object representing the simulation cell
         """
-        trans_mat = []
-        unique = self.unique_four_vectors()
+        trans_mat = []  # The final translation matrix list
         cell = template.get_cell()
 
-        unique_indx = self.fourvec_to_indx(template, unique)
+        # Get the unique four-vectors which are present in all of our clusters.
+        unique = self.unique_four_vectors()
 
         lut = self.create_four_vector_lut(template)
-        indices = [0 for _ in range(len(unique))]
         cartesian = np.zeros((len(unique), 3))
 
-        # Make a copy of the positions to avoid atoms being translated
-        tmp_pos = template.get_positions().copy()
-        unique_npy = np.array(list(unique))
-        translated_unique = np.zeros_like(unique_npy)
+        # Map the un-translated unique 4-vectors to their index
+        unique_indx_lut = self.fourvec_to_indx(template, unique)
+        # call int() to convert from NumPy integer to python integer
+        unique_index = [int(unique_indx_lut[u]) for u in unique]
+
         for atom in template:
-            if atom.tag >= self.generator.num_sub_lattices:
+            if self.is_background_atom(atom):
+                # This atom is considered a background, it has no mapping
                 trans_mat.append({})
                 continue
 
-            vec = self.generator.get_four_vector(tmp_pos[atom.index, :], atom.tag)
+            # Translate the atom into its four-vector representation
+            vec = self.generator.to_four_vector(atom.position, sublattice=atom.tag)
 
-            translated_unique[:, :3] = unique_npy[:, :3] + vec[:3]
-            translated_unique[:, 3] = unique_npy[:, 3]
-            cartesian = self.generator.cartesian(translated_unique)
+            # Translate the (x, y, z) components of the unique four-vectors
+            # by this atom's (x, y, z) four-vector component
+            translated_unique = [u.shift_xyz(vec) for u in unique]
+
+            # Find the new Cartesian coordinates of the translated FourVectors,
+            # and wrap them back into the cell
+            cartesian = self.generator.to_cartesian(*translated_unique)
             cartesian = wrap_positions(cartesian, cell)
 
-            four_vecs = self.generator.get_four_vector(cartesian, translated_unique[:, 3])
-            N = four_vecs.shape[0]
-            indices = [lut[tuple(four_vecs[i, :])] for i in range(N)]
+            # Re-translate the wrapped-Cartesian coordinates of the unique four-vectors
+            # into a four-vector representation (with a generator expression)
+            four_vecs = (self.generator.to_four_vector(cart, fv.sublattice)
+                         for cart, fv in zip(cartesian, translated_unique))
 
-            trans_mat.append(dict(zip([int(unique_indx[u]) for u in unique], indices)))
+            # Get the index of the translated four-vector
+            indices = [lut[fv] for fv in four_vecs]
+
+            trans_mat.append(dict(zip(unique_index, indices)))
         return trans_mat
 
 

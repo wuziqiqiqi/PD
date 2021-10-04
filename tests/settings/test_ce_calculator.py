@@ -1,6 +1,8 @@
 """Unit tests for the Clease calculator."""
 import os
 import time
+from pathlib import Path
+import json
 import pytest
 import numpy as np
 from numpy.random import randint, choice
@@ -13,6 +15,32 @@ from clease.settings import CEBulk, CECrystal
 from clease.corr_func import CorrFunction
 from clease.settings import Concentration
 from clease.calculator import Clease, attach_calculator, get_ce_energy
+
+# Only change this to override the reference trans matrices
+UPDATE_TRANS_MATRIX = False
+
+
+@pytest.fixture
+def save_trans_matrix(references_path):
+
+    def _save_trans_matrix(filename, tm):
+        with open(references_path / filename, 'w') as file:
+            json.dump(tm, file)
+
+    return _save_trans_matrix
+
+
+@pytest.fixture
+def load_trans_matrix(references_path):
+
+    def _load_trans_matrix(filename):
+        with open(references_path / filename) as file:
+            loaded = json.load(file)
+        # Convert keys to integers, not strings
+        tm = [{int(k): v for k, v in dct.items()} for dct in loaded]
+        return tm
+
+    return _load_trans_matrix
 
 
 def generate_ex_eci(settings):
@@ -39,7 +67,9 @@ def get_binary(db_name):
     for i in range(int(len(atoms) / 2)):
         atoms[i].symbol = "Au"
         atoms[-i - 1].symbol = "Cu"
-    return bc_settings, wrap_and_sort_by_position(atoms)
+    atoms = wrap_and_sort_by_position(atoms)
+    bc_settings.set_active_template(atoms=atoms)
+    return bc_settings, atoms
 
 
 def get_ternary(db_name):
@@ -59,7 +89,9 @@ def get_ternary(db_name):
         atoms[3 * i].symbol = "Au"
         atoms[3 * i + 1].symbol = "Cu"
         atoms[3 * i + 2].symbol = "Zn"
-    return bc_settings, wrap_and_sort_by_position(atoms)
+    atoms = wrap_and_sort_by_position(atoms)
+    bc_settings.set_active_template(atoms=atoms)
+    return bc_settings, atoms
 
 
 def get_rocksalt(db_name):
@@ -81,7 +113,9 @@ def get_rocksalt(db_name):
             atoms[Li_indx[i]].symbol = 'V'
         else:
             atoms[Li_indx[i]].symbol = 'X'
-    return settings, wrap_and_sort_by_position(atoms)
+    atoms = wrap_and_sort_by_position(atoms)
+    settings.set_active_template(atoms=atoms)
+    return settings, atoms
 
 
 def rocksalt_with_self_interaction(size, db_name):
@@ -95,6 +129,7 @@ def rocksalt_with_self_interaction(size, db_name):
                       max_cluster_dia=[7.0, 4.0])
     settings.basis_func_type = 'trigonometric'
     atoms = settings.atoms.copy()
+    settings.set_active_template(atoms=atoms)
     return settings, atoms
 
 
@@ -123,9 +158,11 @@ def get_spacegroup(db_name):
                     cell=None,
                     cellpar=cellpar,
                     ab_normal=(0, 0, 1),
+                    primitive_cell=True,
                     size=size)
-
-    return settings, wrap_and_sort_by_position(atoms)
+    atoms = wrap_and_sort_by_position(atoms)
+    settings.set_active_template(atoms=atoms)
+    return settings, atoms
 
 
 def do_test_update_correlation_functions(settings, atoms, n_trial_configs=20, fixed=()):
@@ -134,6 +171,7 @@ def do_test_update_correlation_functions(settings, atoms, n_trial_configs=20, fi
     The comparison is done by check that each CF in the Clease
     calculator is the same as the ones obtained by direct calculation.
     """
+    settings.set_active_template(atoms=atoms)
     cf = CorrFunction(settings)
 
     eci = generate_ex_eci(settings)
@@ -270,6 +308,40 @@ def test_update_corr_func_spacegroup(db_name):
     print('spacegroup')
     sp_settings, sp_atoms = get_spacegroup(db_name)
     do_test_update_correlation_functions(sp_settings, sp_atoms, n_trial_configs=5, fixed=['Ta'])
+
+
+@pytest.mark.parametrize('settings_maker', [
+    lambda db_name: rocksalt_with_self_interaction([1, 2, 3], db_name),
+    get_spacegroup,
+])
+def test_trans_matrix(db_name, settings_maker):
+    settings, atoms = settings_maker(db_name)
+    settings.set_active_template(atoms=atoms)
+    tm = settings.trans_matrix
+
+    assert len(tm) == len(atoms)
+
+    for k, v in tm[0].items():
+        assert k == v
+
+
+@pytest.mark.parametrize('filename, settings_maker', [
+    ('binary_trans_matrix.json', get_binary),
+    ('ternary_trans_matrix.json', get_ternary),
+    ('spacegroup_trans_matrix.json', get_spacegroup),
+])
+def test_saved_spacegroup_trans_matrix(db_name, filename, settings_maker, save_trans_matrix,
+                                       load_trans_matrix):
+    """Test that we receive the same trans matrix mapping as against
+    a previously known state."""
+    settings, atoms = settings_maker(db_name)
+    tm = settings.trans_matrix
+    if UPDATE_TRANS_MATRIX:
+        # Update the compare trans matrix?
+        save_trans_matrix(filename, tm)
+
+    tm_loaded = load_trans_matrix(filename)
+    assert tm_loaded == pytest.approx(tm)
 
 
 def test_init_large_cell(db_name):

@@ -1,99 +1,71 @@
+from typing import Sequence, Dict, Any, List
+from functools import total_ordering
 import numpy as np
 from ase import Atoms
-from clease.tools import equivalent_deco, nested_array2list, list2str, cname_lt
+import attr
+from clease.datastructures import Figure
+from clease.tools import equivalent_deco, list2str
 from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ('Cluster',)
 
 
 # pylint: disable=too-many-instance-attributes
+@total_ordering
+@attr.s(order=False, eq=False)
 class Cluster:
+    """A Cluster class, which collects multiple symmetry equivalent Figure objects,
+    and related properties."""
 
-    def __init__(self,
-                 name='c0',
-                 size=0,
-                 diameter=0.0,
-                 fingerprint=None,
-                 ref_indx=0,
-                 indices=(),
-                 equiv_sites=(),
-                 trans_symm_group=0):
-        self.name = name
-        self.size = size
-        self.diameter = diameter
-        self.fp = fingerprint
-        self.ref_indx = ref_indx
-        self.indices = indices
-        self.equiv_sites = equiv_sites
-        self.group = trans_symm_group
-        self.info = {}
+    name: str = attr.ib()
+    size: int = attr.ib()
+    diameter: float = attr.ib()
+    fingerprint: ClusterFingerprint = attr.ib(
+        validator=attr.validators.instance_of(ClusterFingerprint))
+    figures: Sequence[Figure] = attr.ib()
+    equiv_sites: Sequence[Sequence[int]] = attr.ib()
+    group: int = attr.ib()
 
-    def __lt__(self, other):
-        """Comparison operator."""
-        fp_lt = self.fp < other.fp
-        if fp_lt:
-            assert cname_lt(self.name, other.name) is True
-        else:
-            assert cname_lt(self.name, other.name) is False
-        return fp_lt
+    info: Dict[str, Any] = attr.ib(default=attr.Factory(dict))
+    # "indices" are the integer index representation of the Figures.
+    # therefore, "indices" and "ref_indx" depend on the currently active template,
+    # and are subject to mutation.
+    indices: Sequence[Sequence[int]] = attr.ib(default=None)
+    ref_indx: int = attr.ib(default=None)
 
-    def __eq__(self, other):
-        """Equality operator."""
-        fp_equal = self.fp == other.fp
-        if fp_equal:
-            assert self.name == other.name
-        return fp_equal
+    @figures.validator
+    def _validate_figures(self, attribute, value):
+        """Verify that we have the correct type in the "figures" field."""
+        # pylint: disable=unused-argument, no-self-use
+        for ii, v in enumerate(value):
+            if not isinstance(v, Figure):
+                raise TypeError(f'All values must Figure type, got {value} '
+                                f'of type {type(v)} in index {ii}.')
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
+    @property
+    def fp(self) -> ClusterFingerprint:
+        """Alias for fingerprint, for compatibility."""
+        return self.fingerprint
+
+    def __lt__(self, other: 'Cluster') -> bool:
+        """Less-than comparison operator."""
+        if not isinstance(other, Cluster):
+            return NotImplemented
+        return self.fingerprint < other.fingerprint
+
+    def __eq__(self, other: 'Cluster') -> bool:
+        """Equals comparison operator."""
+        if not isinstance(other, Cluster):
+            return NotImplemented
+        return self.fingerprint == other.fingerprint
 
     def equiv_deco(self, deco):
         return equivalent_deco(deco, self.equiv_sites)
 
-    def todict(self):
-        """Return a dictionary representation."""
-        return {
-            'indices': self.indices,
-            'size': self.size,
-            'symm': self.group,
-            'diameter': self.diameter,
-            'name': self.name,
-            'fingerprint': self.fp.todict(),
-            'ref_indx': self.ref_indx,
-            'equiv_sites': self.equiv_sites,
-            'info': self.info
-        }
+    def todict(self) -> Dict[str, Any]:
+        return attr.asdict(self)
 
-    def from_dict(self, data):
-        self.indices = data['indices']
-        self.size = data['size']
-        self.group = data['symm']
-        self.diameter = data['diameter']
-        self.name = data['name']
-
-        if isinstance(data['fingerprint'], ClusterFingerprint):
-            self.fp = data['fingerprint']
-        elif isinstance(data['fingerprint'], dict):
-            self.fp = ClusterFingerprint.load(data['fingerprint'])
-        else:
-            raise ValueError('Fingerprint has to be either instance of '
-                             'ClusterFingerprint or a dictionary')
-
-        self.ref_indx = data['ref_indx']
-        self.equiv_sites = data['equiv_sites']
-        self.info = data['info']
-
-    @staticmethod
-    def load(data):
-        cluster = Cluster(None, None, None, None, None, None, None, None)
-        fp = ClusterFingerprint.load(data['fingerprint'])
-        data['fingerprint'] = fp
-        data['indices'] = nested_array2list(data['indices'])
-        data['equiv_sites'] = nested_array2list(data['equiv_sites'])
-        cluster.from_dict(data)
-        return cluster
-
-    def is_subcluster(self, other):
+    def is_subcluster(self, other) -> bool:
         """Check if the passed cluster is a subcluster of the current."""
         if len(self.indices) == 0:
             return True
@@ -103,37 +75,20 @@ class Cluster:
 
         return any(set(s1).issubset(s2) for s1 in self.indices for s2 in other.indices)
 
-    def get_figure(self, generator) -> Atoms:
+    def get_figure(self, primitive: Atoms, index: int = 0) -> Atoms:
         """Get figure from a ClusterGenerator object"""
-        if len(self.indices[0][0]) != 4:
-            raise RuntimeError("This method requires that the cluster is "
-                               "described based on its 4-vector and not index "
-                               "in the ASE atoms")
-
-        positions = np.array([generator.cartesian(x) for x in self.indices[0]])
+        figure_four_vec = self.figures[index]
+        positions = np.array([fv.to_cartesian(primitive) for fv in figure_four_vec])
         positions -= np.mean(positions, axis=0)
-        sublat_symb = {at.tag: at.symbol for at in generator.prim}
-        symbols = [sublat_symb[x[3]] for x in self.indices[0]]
+        symbols = [primitive[fv.sublattice] for fv in figure_four_vec]
         return Atoms(symbols, positions=positions)
 
-    def __str__(self):
-        str_rep = f"Name: {self.name}\n"
-        str_rep += f"Diameter: {self.diameter}\n"
-        str_rep += f"Size: {self.size}\n"
-        str_rep += f"Ref. indx: {self.ref_indx}\n"
-        str_rep += f"Trans. symm group: {self.group}\n"
-        str_rep += f"Indices: {self.indices}\n"
-        str_rep += f"Equiv. sites: {self.equiv_sites}\n"
-        str_rep += f"Fingerprint: {self.fp}\n"
-        str_rep += f"Information: {self.info}\n"
-        return str_rep
-
-    def get_figure_key(self, figure):
-        """Return a key representation of the figure."""
+    def get_figure_key(self, figure: Sequence[int]) -> str:
+        """Return a key representation of the figure (in index representation)."""
         return list2str(self._order_equiv_sites(figure))
 
-    def _order_equiv_sites(self, figure) -> list:
-        """Sort equivalent sites."""
+    def _order_equiv_sites(self, figure: Sequence[int]) -> List[int]:
+        """Sort equivalent sites of a figure in index representation."""
         figure_cpy = list(figure)
         for eq_group in self.equiv_sites:
             equiv_indices = [figure[i] for i in eq_group]
@@ -143,8 +98,8 @@ class Cluster:
         return figure_cpy
 
     @property
-    def num_fig_occurences(self):
-        """Number of currences for each figures."""
+    def num_fig_occurences(self) -> Dict[str, int]:
+        """Number of ocurrences for each figures."""
         occ_count = {}
         for figure in self.indices:
             key = self.get_figure_key(figure)
@@ -152,7 +107,8 @@ class Cluster:
             occ_count[key] = current_num + 1
         return occ_count
 
-    def corresponding_figure(self, ref_indx, target_figure, trans_matrix):
+    def corresponding_figure(self, ref_indx: int, target_figure: Sequence[int],
+                             trans_matrix: List[Dict[int, int]]):
         """Find figures that correspond to another reference index.
 
         Parameters:
@@ -160,13 +116,14 @@ class Cluster:
         ref_indx: int
             reference index
 
-        taget_figres: list of indices
+        target_figure: list of indices
             list of atomic indices that constitute the original figure before
             translating
 
         trans_matrix: list of dicts
             translation matrix
         """
+        target_figure = self._order_equiv_sites(target_figure)
         for figure in self.indices:
             translated_figure = [trans_matrix[ref_indx][x] for x in figure]
             translated_figure = self._order_equiv_sites(translated_figure)
@@ -178,3 +135,7 @@ class Cluster:
 
     def get_all_figure_keys(self):
         return [self.get_figure_key(fig) for fig in self.indices]
+
+    @property
+    def multiplicity(self) -> int:
+        return len(self.figures)

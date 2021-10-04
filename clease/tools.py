@@ -131,6 +131,13 @@ def flatten(x):
     return [x]
 
 
+def flatten_iter(x):
+    """Flatten an iterable as a generator"""
+    if isinstance(x, Iterable):
+        return (a for i in x for a in flatten_iter(i))
+    return [x]
+
+
 def nested_array2list(array):
     """Convert a nested array/tuple to a nested list."""
     if isinstance(array, np.ndarray):

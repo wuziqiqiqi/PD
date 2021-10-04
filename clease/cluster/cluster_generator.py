@@ -1,8 +1,10 @@
 from itertools import filterfalse, product
-from typing import List, Tuple, Dict, Set, Iterator, Sequence
+from typing import List, Tuple, Dict, Set, Iterator, Iterable
 import numpy as np
 from ase import Atoms
 from ase.geometry import wrap_positions
+from clease.datastructures import FourVector, Figure
+from .cluster import Cluster
 from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ('ClusterGenerator', 'SitesWithinCutoff')
@@ -16,53 +18,63 @@ class ClusterGenerator:
 
     def __init__(self, prim_cell: Atoms) -> None:
         self.with_cutoff = SitesWithinCutoff(self)
+        # Initialize some variables which are updated when setting "prim".
+        self.prim_cell_T = None
+        self.prim_cell_invT = None
+
         self.prim = prim_cell
-        self.shifts = np.zeros((len(prim_cell), 3))
-        pos = self.prim.get_positions()
-        for i, atom in enumerate(prim_cell):
-            self.shifts[atom.tag, :] = pos[i, :]
-        self.prim_cell_invT = np.linalg.inv(self.prim.get_cell().T)
 
-    def __eq__(self, other):
-        return np.allclose(self.shifts, other.shifts) and \
-            np.allclose(self.prim_cell_invT, other.prim_cell_invT)
+    @property
+    def prim(self) -> Atoms:
+        return self._prim
 
-    def eucledian_distance_vec(self, x1: Sequence[int], x2: Sequence[int]) -> np.ndarray:
+    @prim.setter
+    def prim(self, other: Atoms) -> None:
+        if not isinstance(other, Atoms):
+            raise TypeError("prim must be an Atoms object")
+        self._prim = other
+        # Get the transposed cell as a contiguous array
+        self.prim_cell_T = np.array(other.get_cell().T)
+        self.prim_cell_invT = np.linalg.inv(self.prim_cell_T)
+
+    def __eq__(self, other: 'ClusterGenerator') -> bool:
+        if not isinstance(other, ClusterGenerator):
+            return NotImplemented
+
+        return np.allclose(self.prim_cell_invT, other.prim_cell_invT) and self.prim == other.prim
+
+    def eucledian_distance_vec(self, x1: FourVector, x2: FourVector) -> np.ndarray:
         """
-        Eucledian distance between to vectors
+        Eucledian distance between to FourVectors in cartesian coordinates.
 
         :param x1: First vector
         :param x2: Second vector
         """
-        cellT = self.prim.get_cell().T
-        euc1 = cellT.dot(x1[:3]) + self.shifts[x1[3], :]
-        euc2 = cellT.dot(x2[:3]) + self.shifts[x2[3], :]
+
+        euc1 = x1.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+        euc2 = x2.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
         return euc2 - euc1
 
-    def cartesian(self, x: np.ndarray) -> np.ndarray:
-        cellT = self.prim.get_cell().T
-        if isinstance(x, np.ndarray) and len(x.shape) == 2:
-            return cellT.dot(x[:, :3].T).T + self.shifts[x[:, 3]]
-        return cellT.dot(x[:3]) + self.shifts[x[3]]
+    def to_four_vector(self, cartesian: np.ndarray, sublattice: int = None) -> FourVector:
+        """Translate a position in Cartesian coordinates to its FourVector"""
+        if not cartesian.ndim == 1:
+            # XXX: This could instead return a List[FourVector] if we pass a 2d
+            # set of coordinates.
+            raise ValueError('Can only translate 1 position at a time.')
 
-    def get_four_vector(self, pos: np.ndarray, lattice: int) -> np.ndarray:
-        """Return the four vector of an atom."""
-        pos -= self.shifts[lattice]
+        if sublattice is None:
+            sublattice = self.get_lattice(cartesian)
+        cartesian = cartesian - self.prim.positions[sublattice, :]
 
-        if isinstance(pos, np.ndarray) and len(pos.shape) == 2:
-            assert len(lattice) == pos.shape[0]
-            int_pos = self.prim_cell_invT.dot(pos.T)
-            int_pos = np.round(int_pos).astype(int)
-            return np.vstack((int_pos, lattice)).T
+        int_pos = np.round(self.prim_cell_invT.dot(cartesian)).astype(int)
+        return FourVector(*int_pos, sublattice)
 
-        if lattice is None:
-            lattice = self.get_lattice(pos)
-
-        int_pos = self.prim_cell_invT.dot(pos)
-        four_vec = np.zeros(4, dtype=int)
-        four_vec[:3] = np.round(int_pos).astype(int)
-        four_vec[3] = lattice
-        return four_vec
+    def to_cartesian(self, *four_vectors: FourVector) -> np.ndarray:
+        """Convert one or more FourVectors into their Cartesian coordinates."""
+        pos = np.zeros((len(four_vectors), 3))
+        for ii, fv in enumerate(four_vectors):
+            pos[ii, :] = fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+        return pos
 
     def get_lattice(self, pos: np.ndarray) -> int:
         """
@@ -70,14 +82,15 @@ class ClusterGenerator:
 
         :param pos: array of length 3 Cartesian position
         """
+        shifts = self.prim.get_positions()
         reshaped = np.reshape(pos, (1, 3))
         wrapped = wrap_positions(reshaped, self.prim.get_cell())
-        diff_sq = np.sum((wrapped[0, :] - self.shifts)**2, axis=1)
+        diff_sq = np.sum((wrapped[0, :] - shifts)**2, axis=1)
         return np.argmin(diff_sq)
 
-    def eucledian_distance(self, x1: Sequence[int], x2: Sequence[int]) -> float:
+    def eucledian_distance(self, x1: FourVector, x2: FourVector) -> float:
         d = self.eucledian_distance_vec(x1, x2)
-        return np.sqrt(np.sum(d**2))
+        return np.linalg.norm(d, ord=2)
 
     @property
     def shortest_diag(self) -> float:
@@ -97,21 +110,21 @@ class ClusterGenerator:
     def num_sub_lattices(self) -> int:
         return len(self.prim)
 
-    def sites_within_cutoff(self, cutoff: float, x0: Tuple[int] = (0, 0, 0, 0)) -> filterfalse:
+    def sites_within_cutoff(self, cutoff: float, x0: FourVector) -> Iterable[FourVector]:
         min_diag = self.shortest_diag
         max_int = int(cutoff / min_diag) + 1
 
-        def filter_func(x: int) -> bool:
-            d = self.eucledian_distance(x0, x)
+        def filter_func(fv: FourVector) -> bool:
+            d = self.eucledian_distance(x0, fv)
             return d > cutoff or d < 1E-5
 
-        sites = filterfalse(
-            filter_func,
-            product(range(-max_int, max_int + 1), range(-max_int, max_int + 1),
-                    range(-max_int, max_int + 1), range(self.num_sub_lattices)))
-        return sites
+        all_sites = product(range(-max_int, max_int + 1), range(-max_int, max_int + 1),
+                            range(-max_int, max_int + 1), range(self.num_sub_lattices))
 
-    def get_fp(self, X: List[np.ndarray]) -> ClusterFingerprint:
+        return filterfalse(filter_func, (FourVector(*site) for site in all_sites))
+
+    @staticmethod
+    def get_fp(X: List[np.ndarray]) -> ClusterFingerprint:
         """
         Generate finger print given a position matrix
         """
@@ -126,106 +139,81 @@ class ClusterGenerator:
         N = X.shape[0]
         assert len(off_diag) == N * (N - 1) / 2
         inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
-        fp = ClusterFingerprint(list(inner))
+        fp = ClusterFingerprint(fp=list(inner))
         return fp
 
-    def prepare_within_cutoff(self,
-                              cutoff: float,
-                              lattice: int) \
-            -> Dict[Tuple[int], Set[Tuple[int]]]:
+    def prepare_within_cutoff(self, cutoff: float,
+                              lattice: int) -> Dict[FourVector, Set[FourVector]]:
+
         within_cutoff = {}
-        x0 = [0, 0, 0, lattice]
+        x0 = FourVector(0, 0, 0, lattice)
         sites = self.with_cutoff.get(cutoff, lattice)
-        sites = set(map(tuple, sites))
-        within_cutoff[tuple(x0)] = sites
+        sites = set(sites)
+        within_cutoff[x0] = sites
         for s in sites:
             nearby = set(s1 for s1 in sites if s1 != s and self.eucledian_distance(s1, s) <= cutoff)
 
             within_cutoff[s] = nearby
         return within_cutoff
 
-    def site_iterator(self, within_cutoff: Dict, size: int,
-                      ref_lattice: int) -> Iterator[Tuple[int]]:
-        """
-        Return an iterator of all combinations of sites within a cutoff
-
-        :param within_cutoff: Dictionary returned by `prepare_within_cutoff`
-
-        :param size: Cluster size
-
-        :param ref_lattice: Reference lattice
-        """
-        x0 = (0, 0, 0, ref_lattice)
-
-        def recursive_yield(remaining, current):
-            if len(current) == size - 1:
-                yield current
-            else:
-                for next_item in remaining:
-                    # Avoid double counting
-                    if any(next_item <= v for v in current):
-                        continue
-                    rem = set.intersection(remaining, within_cutoff[next_item])
-                    yield from recursive_yield(rem, current + [next_item])
-
-        for v in within_cutoff[x0]:
-            rem = within_cutoff[x0].intersection(within_cutoff[v])
-            yield from recursive_yield(rem, [v])
-
     def generate(self,
                  size: int,
                  cutoff: float,
-                 ref_lattice: int = 0) \
-            -> Tuple[List[List[int]], List[ClusterFingerprint]]:
+                 ref_lattice: int = 0) -> Tuple[List[List[Figure]], List[ClusterFingerprint]]:
         clusters = []
         all_fps = []
-        v0 = [0, 0, 0, ref_lattice]
-        x0 = np.array(self.cartesian(v0))
+        v0 = FourVector(0, 0, 0, ref_lattice)
+
         cutoff_lut = self.prepare_within_cutoff(cutoff, ref_lattice)
-        for comb in self.site_iterator(cutoff_lut, size, ref_lattice):
-            X = [x0] + [self.cartesian(v) for v in comb]
+        for comb in site_iterator(cutoff_lut, size, ref_lattice):
+
+            new_figure = Figure([v0.copy()] + comb)
+            # The entries in the figure must be ordered, due to equiv_sites
+            # TODO: This ordereding should not be necessary.
+            new_figure = self._order_by_internal_distances(new_figure)
+
+            X = [
+                fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+                for fv in new_figure.components
+            ]
             fp = self.get_fp(X)
-            new_item = [v0] + [list(x) for x in comb]
 
             # Find the group
             try:
                 group = all_fps.index(fp)
-                clusters[group].append(new_item)
+                clusters[group].append(new_figure)
             except ValueError:
                 # Does not exist, create a new group
-                clusters.append([new_item])
+                clusters.append([new_figure])
                 all_fps.append(fp)
 
-        # Order the indices by internal indices
-        for cluster in clusters:
-            for i, f in enumerate(cluster):
-                ordered_f = self._order_by_internal_distances(f)
-                cluster[i] = ordered_f
         return clusters, all_fps
 
-    def _get_internal_distances(self, figure: List[List[int]]) -> List[List[float]]:
+    def _get_internal_distances(self, figure: Figure) -> List[List[float]]:
         """
         Return all the internal distances of a figure
         """
         dists = []
-        for x0 in figure:
-            d = []
-            for x1 in figure:
+        for x0 in figure.components:
+            tmp_dist = []
+            for x1 in figure.components:
                 dist = self.eucledian_distance(x0, x1)
-                dist = dist.round(decimals=6)
-                d.append(dist.tolist())
-            dists.append(sorted(d, reverse=True))
+                # float() to ensure we're not working on a NumPy floating number
+                dist = round(float(dist), 6)
+                tmp_dist.append(dist)
+            dists.append(sorted(tmp_dist, reverse=True))
         return dists
 
     def _order_by_internal_distances(self,
-                                     figure: List[List[int]]) \
-            -> List[List[int]]:
-        """Order the indices by internal distances."""
+                                     figure: Figure) \
+            -> Figure:
+        """Order the Figure by internal distances. Returns a new instance of the Figure."""
         dists = self._get_internal_distances(figure)
-        zipped = sorted(list(zip(dists, figure)), reverse=True)
-        return [x[1] for x in zipped]
+        fvs = figure.components
+        zipped = sorted(list(zip(dists, fvs)), reverse=True)
+        return Figure((x[1] for x in zipped))
 
-    def to_atom_index(self, cluster: List[int], lut: Dict) -> List[List[int]]:
+    def to_atom_index(self, cluster: Cluster, lut: Dict[FourVector, int]) -> List[List[int]]:
         """
         Convert the integer vector representation to an atomic index
 
@@ -235,15 +223,16 @@ class ClusterGenerator:
 
         :param lut: Look up table for 4-vectors to indices
         """
-        return [[lut[tuple(ivec)] for ivec in fig] for fig in cluster]
+        return [[lut[fv] for fv in fig.components] for fig in cluster.figures]
 
-    def equivalent_sites(self, figure: List[List[int]]) -> List[List[int]]:
+    def equivalent_sites(self, figure: Figure) -> List[List[int]]:
         """Find the equivalent sites of a figure."""
         dists = self._get_internal_distances(figure)
         equiv_sites = []
-        for i in range(len(dists)):
+        for i, d1 in enumerate(dists):
             for j in range(i + 1, len(dists)):
-                if np.allclose(dists[i], dists[j]):
+                d2 = dists[j]
+                if np.allclose(d1, d2):
                     equiv_sites.append((i, j))
 
         # Merge pairs into groups
@@ -258,7 +247,7 @@ class ClusterGenerator:
                 merged.append(set(equiv))
         return [list(x) for x in merged]
 
-    def get_max_distance(self, figure: List[List[int]]):
+    def get_max_distance(self, figure: Figure):
         """Return the maximum distance of a figure."""
         internal_dists = self._get_internal_distances(figure)
         max_dists = [x[0] for x in internal_dists]
@@ -289,7 +278,36 @@ class SitesWithinCutoff:
         Return sites within the cutoff
         """
         if self.must_generate(cutoff, ref_lattice):
-            sites = self.generator.sites_within_cutoff(cutoff, [0, 0, 0, ref_lattice])
+            sites = self.generator.sites_within_cutoff(cutoff, FourVector(0, 0, 0, ref_lattice))
             self.pre_calc[ref_lattice] = list(sites)
             self.cutoff = cutoff
         return self.pre_calc[ref_lattice]
+
+
+def site_iterator(within_cutoff: Dict[FourVector, Set[FourVector]], size: int,
+                  ref_lattice: int) -> Iterator[List[FourVector]]:
+    """
+    Return an iterator of all combinations of sites within a cutoff
+
+    :param within_cutoff: Dictionary returned by `prepare_within_cutoff`
+
+    :param size: Cluster size
+
+    :param ref_lattice: Reference lattice
+    """
+    x0 = FourVector(0, 0, 0, ref_lattice)
+
+    def recursive_yield(remaining, current):
+        if len(current) == size - 1:
+            yield current
+        else:
+            for next_item in remaining:
+                # Avoid double counting
+                if any(next_item <= v for v in current):
+                    continue
+                rem = set.intersection(remaining, within_cutoff[next_item])
+                yield from recursive_yield(rem, current + [next_item])
+
+    for v in within_cutoff[x0]:
+        rem = within_cutoff[x0].intersection(within_cutoff[v])
+        yield from recursive_yield(rem, [v])

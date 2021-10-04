@@ -1,8 +1,5 @@
-from typing import List, Sequence
-import numpy as np
-from scipy.spatial import cKDTree as KDTree
+from typing import List, Sequence, Optional
 from ase import Atoms
-from ase.geometry import wrap_positions
 
 __all__ = ('AtomsManager',)
 
@@ -16,12 +13,23 @@ class AtomsManager:
     :param atoms: ASE Atoms object
     """
 
-    def __init__(self, atoms: Atoms) -> None:
+    def __init__(self, atoms: Atoms = None) -> None:
         self.atoms = atoms
 
-    def __eq__(self, other: object) -> bool:
+    @property
+    def atoms(self) -> Atoms:
+        return self._atoms
+
+    @atoms.setter
+    def atoms(self, other: Optional[Atoms]) -> None:
+        if other is not None and not isinstance(other, Atoms):
+            raise TypeError(('Trying to set atoms with a non-atoms object. '
+                             f'Expected atoms, got {type(other)}'))
+        self._atoms = other
+
+    def __eq__(self, other: 'AtomsManager') -> bool:
         if not isinstance(other, AtomsManager):
-            return False
+            return NotImplemented
 
         return self.atoms == other.atoms
 
@@ -41,7 +49,6 @@ class AtomsManager:
 
     def index_by_symbol(self, symbols: List) -> List[List[int]]:
         """Group atomic indices by its atomic symbols.
-
 
         Example:
 
@@ -101,22 +108,3 @@ class AtomsManager:
             if atom.symbol in single_site_symb:
                 single_sites.append(atom.index)
         return single_sites
-
-    def tag_indices_of_corresponding_atom(self, ref_atoms: Atoms) -> None:
-        """
-        Tag `self.atoms` with the indices of its corresponding atom (equivalent
-        position) in `ref_atoms` when the positions are wrapped.
-
-        :param ref_atoms: ASE Atoms object
-        """
-        pos = self.atoms.get_positions()
-        wrapped_pos = wrap_positions(pos, ref_atoms.get_cell())
-        tree = KDTree(ref_atoms.get_positions())
-
-        dists, indices = tree.query(wrapped_pos)
-
-        if not np.allclose(dists, 0.0):
-            raise ValueError("Not all sites has a corresponding atom in the passed Atoms object")
-
-        for atom, tag in zip(self.atoms, indices.tolist()):
-            atom.tag = tag
