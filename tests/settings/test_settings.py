@@ -181,3 +181,10 @@ def test_deprecated(make_settings, kwargs):
     They shouldn't fail, just raise a deprecation warning."""
     with pytest.warns(DeprecationWarning):
         make_settings(**kwargs)
+
+
+def test_cluster_table(make_settings):
+    settings = make_settings()
+    res = settings.clusters_table()
+    assert isinstance(res, str)
+    print(res)

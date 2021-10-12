@@ -581,7 +581,7 @@ class ClusterExpansionSettings:
             size = f'{cluster.size:d}'.center(4, ' ')
             mult = f'{int(mult_dict[name]):d}'.center(12, ' ')
             radius = f'{cluster.diameter / 2:2.4f}'
-            n_figures = f'{len(cluster.four_vector_figures)}'.center(7)
+            n_figures = f'{len(cluster.figures)}'.center(7)
             group = f'{cluster.group:d}'.center(5)
             index_s = f'{ii:d}'.center(5)
 
