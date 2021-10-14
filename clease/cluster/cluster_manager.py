@@ -102,39 +102,35 @@ class ClusterManager:
         # is the number of atoms in the primitive,
         # possibly without the background atoms.
         num_lattices = range(len(self.prim))
-        all_fps = []
-        names = []
-        all_clusters = []  # type: List[List[Figure]]
-        all_eq_sites = []
+        all_fps: List[ClusterFingerprint] = []
+        all_figures: List[List[Figure]] = []
         lattices = []
-        diameters = []
-        sizes = []
-        for latt, (indx, diameter) in product(num_lattices, enumerate(max_cluster_dia)):
-            cluster_size = indx + 2  # Size of cluster, start with 2-body at index 0
-            clusters, fps = self.generator.generate(cluster_size, diameter, ref_lattice=latt)
 
-            eq_sites = []
-            for figure in clusters:
-                eq_sites.append(self.generator.equivalent_sites(figure[0]))
+        for ref_lattice, (indx, diameter) in product(num_lattices, enumerate(max_cluster_dia)):
+            cluster_size = indx + 2  # Size of cluster, start with 2-body at index 0
+            figures, fps = self.generator.generate(cluster_size, diameter, ref_lattice)
 
             all_fps += fps
-            all_clusters += clusters
-            all_eq_sites += eq_sites
-            lattices += [latt] * len(clusters)
-            sizes += [cluster_size] * len(clusters)
-            diameters += [2 * np.sqrt(fp[0]) for fp in fps]
+            all_figures += figures
+            lattices += [ref_lattice] * len(figures)
 
         names = self._get_names(all_fps)
         # Transfer to the cluster list
-        zipped = zip(names, sizes, diameters, all_fps, all_clusters, all_eq_sites, lattices)
-        for n, s, d, fp, c, eq, l in zipped:
-            cluster = Cluster(name=n,
-                              size=s,
-                              diameter=d,
+        for figures, fp, name, ref_lattice in zip(all_figures, all_fps, names, lattices):
+            # All figures are of the same size
+            cluster_size = figures[0].size
+            # Calculate the diameter from the first Figure, since they are all
+            # geometrically equivalent, and thus have the same diameter.
+            diameter = figures[0].get_diameter(self.prim)
+            eq_sites = self.generator.equivalent_sites(figures[0])
+
+            cluster = Cluster(name=name,
+                              size=cluster_size,
+                              diameter=diameter,
                               fingerprint=fp,
-                              figures=c,
-                              equiv_sites=eq,
-                              group=l)
+                              figures=figures,
+                              equiv_sites=eq_sites,
+                              group=ref_lattice)
             self.clusters.append(cluster)
 
         # Add singlets

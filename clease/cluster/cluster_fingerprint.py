@@ -1,40 +1,56 @@
-from typing import Sequence
+from typing import Any, Iterable
 from functools import total_ordering
-import json
+import numpy as np
 import attr
 
 __all__ = ('ClusterFingerprint',)
 
 
+def _fingerprint_converter(x: Any) -> Any:
+    if isinstance(x, np.ndarray):
+        return x
+    if isinstance(x, Iterable):
+        x = np.array(x)
+    return x
+
+
 @total_ordering
 @attr.s(eq=False, order=False)
 class ClusterFingerprint:
+    """Container for a Cluster Fingerprint."""
 
-    fp: Sequence[float] = attr.ib()
+    fp: np.ndarray = attr.ib(converter=_fingerprint_converter,
+                             validator=attr.validators.instance_of(np.ndarray))
     tol: float = attr.ib(default=1e-9)
 
-    def __lt__(self, other):
-        if len(self.fp) < len(other.fp):
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, ClusterFingerprint):
+            return NotImplemented
+
+        self_len = len(self.fp)
+        other_len = len(other.fp)
+
+        if self_len < other_len:
             return True
-        if len(self.fp) > len(other.fp):
+        if self_len > other_len:
             return False
 
-        for x, y in zip(self.fp, other.fp):
-            diff = x - y
-            if diff < -self.tol:
+        diff = self.fp - other.fp
+        for value in diff:
+            if value < -self.tol:
                 return True
-            if diff > self.tol:
+            if value > self.tol:
                 return False
+
         return False
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ClusterFingerprint):
+            return NotImplemented
+
         if len(self.fp) != len(other.fp):
             return False
-
-        for x, y in zip(self.fp, other.fp):
-            if abs(x - y) > self.tol:
-                return False
-        return True
+        return np.allclose(self.fp, other.fp, atol=self.tol)
 
     def __getitem__(self, i):
         return self.fp[i]
@@ -42,8 +58,9 @@ class ClusterFingerprint:
     def __len__(self):
         return len(self.fp)
 
-    def __str__(self):
-        return json.dumps(self.todict())
-
-    def todict(self):
-        return {'tol': self.tol, 'fp': self.fp}
+    @fp.validator
+    def _validate_fp(self, attribute, value) -> None:
+        """The Fingerprint must be a 1d array."""
+        # pylint: disable=unused-argument, no-self-use
+        if not value.ndim == 1:
+            raise ValueError(f"Fingerprint must be a 1d array, got {value.ndim}")

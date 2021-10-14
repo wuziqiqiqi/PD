@@ -42,7 +42,7 @@ def test_sites_cutoff_bcc():
 def test_generate_pairs_fcc():
     atoms = bulk('Al', a=4.05)
     generator = ClusterGenerator(atoms)
-    clusters, fps = generator.generate(2, 5.0, ref_lattice=0)
+    clusters, fps = generator.generate(2, 5.0, 0)
     assert len(clusters) == 3
     assert len(fps) == 3
 
@@ -52,13 +52,13 @@ def test_equivalent_sites():
     generator = ClusterGenerator(atoms)
 
     # Test pairs
-    clusters, fps = generator.generate(2, 6.0)
+    clusters, fps = generator.generate(2, 6.0, 0)
     for c in clusters:
         equiv = generator.equivalent_sites(c[0])
         assert equiv == [[0, 1]]
 
     # Test a triplet
-    clusters, fps = generator.generate(3, 3.0)
+    clusters, fps = generator.generate(3, 3.5, 0)
 
     # For the smalles triplet all sites should be equivalent
     equiv = generator.equivalent_sites(clusters[0][0])
@@ -113,3 +113,23 @@ def test_get_max_distance(test):
 
     generator = ClusterGenerator(atoms)
     assert pytest.approx(test['result']) == round(generator.get_max_distance(test['input']), 4)
+
+
+def test_cutoff():
+    """Rocksalt used to find clusters which were slightly larger than the diameter.
+    Test that all diameters are less-than or equal to the maximum expected diameter"""
+    atoms = bulk("NaCl", "rocksalt", a=5.0)
+    gen = ClusterGenerator(atoms)
+    max_diameter = 5.0
+    for size in [2, 3, 4, 5]:
+        for ref_lattice in range(len(atoms)):
+            clusters, _ = gen.generate(size, max_diameter, ref_lattice)
+            for group in clusters:
+                # Also test that all diameters are equal to the same diameter
+                # in the same group
+                fig0_dia = group[0].get_diameter(atoms)
+                for figure in group:
+                    assert isinstance(figure, Figure)
+                    fig_dia = figure.get_diameter(atoms)
+                    assert fig_dia <= max_diameter
+                    assert fig_dia == pytest.approx(fig0_dia)

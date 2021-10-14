@@ -1,4 +1,5 @@
-from itertools import filterfalse, product
+from itertools import product
+import functools
 from typing import List, Tuple, Dict, Set, Iterator, Iterable
 import numpy as np
 from ase import Atoms
@@ -18,10 +19,6 @@ class ClusterGenerator:
 
     def __init__(self, prim_cell: Atoms) -> None:
         self.with_cutoff = SitesWithinCutoff(self)
-        # Initialize some variables which are updated when setting "prim".
-        self.prim_cell_T = None
-        self.prim_cell_invT = None
-
         self.prim = prim_cell
 
     @property
@@ -37,7 +34,7 @@ class ClusterGenerator:
         self.prim_cell_T = np.array(other.get_cell().T)
         self.prim_cell_invT = np.linalg.inv(self.prim_cell_T)
 
-    def __eq__(self, other: 'ClusterGenerator') -> bool:
+    def __eq__(self, other) -> bool:
         if not isinstance(other, ClusterGenerator):
             return NotImplemented
 
@@ -66,8 +63,8 @@ class ClusterGenerator:
             sublattice = self.get_lattice(cartesian)
         cartesian = cartesian - self.prim.positions[sublattice, :]
 
-        int_pos = np.round(self.prim_cell_invT.dot(cartesian)).astype(int)
-        return FourVector(*int_pos, sublattice)
+        ix, iy, iz = np.round(self.prim_cell_invT.dot(cartesian)).astype(int)
+        return FourVector(ix, iy, iz, sublattice)
 
     def to_cartesian(self, *four_vectors: FourVector) -> np.ndarray:
         """Convert one or more FourVectors into their Cartesian coordinates."""
@@ -86,7 +83,7 @@ class ClusterGenerator:
         reshaped = np.reshape(pos, (1, 3))
         wrapped = wrap_positions(reshaped, self.prim.get_cell())
         diff_sq = np.sum((wrapped[0, :] - shifts)**2, axis=1)
-        return np.argmin(diff_sq)
+        return int(np.argmin(diff_sq))
 
     def eucledian_distance(self, x1: FourVector, x2: FourVector) -> float:
         d = self.eucledian_distance_vec(x1, x2)
@@ -101,9 +98,10 @@ class ClusterGenerator:
                 continue
 
             diag = cellT.dot(w)
-            length = np.sqrt(np.sum(diag**2))
+            length: float = np.sqrt(np.sum(diag**2))
             if shortest is None or length < shortest:
                 shortest = length
+        assert shortest is not None
         return shortest
 
     @property
@@ -116,39 +114,35 @@ class ClusterGenerator:
 
         def filter_func(fv: FourVector) -> bool:
             d = self.eucledian_distance(x0, fv)
-            return d > cutoff or d < 1E-5
+            return 1E-5 < d < cutoff
 
         all_sites = product(range(-max_int, max_int + 1), range(-max_int, max_int + 1),
                             range(-max_int, max_int + 1), range(self.num_sub_lattices))
 
-        return filterfalse(filter_func, (FourVector(*site) for site in all_sites))
+        return filter(filter_func, (FourVector(*site) for site in all_sites))
 
-    @staticmethod
-    def get_fp(X: List[np.ndarray]) -> ClusterFingerprint:
+    def get_fp(self, figure: Figure) -> ClusterFingerprint:
+        """Generate finger print for a Figure object.
+
+        Args:
+            figure (Figure): The figure to find the finger print from.
+
+        Returns:
+            ClusterFingerprint: The finger print of the cluster.
         """
-        Generate finger print given a position matrix
-        """
-        X = np.array(X)
-        com = np.mean(X, axis=0)
-        X -= com
-        X = X.dot(X.T)
-        diag = np.diagonal(X)
-        off_diag = []
-        for i in range(1, X.shape[0]):
-            off_diag += np.diagonal(X, offset=i).tolist()
-        N = X.shape[0]
-        assert len(off_diag) == N * (N - 1) / 2
-        inner = np.array(sorted(diag, reverse=True) + sorted(off_diag))
-        fp = ClusterFingerprint(fp=list(inner))
-        return fp
+        X = figure.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+        return positions_to_fingerprint(X)
 
     def prepare_within_cutoff(self, cutoff: float,
                               lattice: int) -> Dict[FourVector, Set[FourVector]]:
+        """Prepare all sites which are within the cutoff sphere. Note, this only prepares sites
+        which are pair-wise within the cutoff, and does not consider the distance to the
+        center-of-mass. This needs to be checked for the individual figure which is created from
+        these sites."""
 
         within_cutoff = {}
         x0 = FourVector(0, 0, 0, lattice)
-        sites = self.with_cutoff.get(cutoff, lattice)
-        sites = set(sites)
+        sites = set(self.with_cutoff.get(cutoff, lattice))
         within_cutoff[x0] = sites
         for s in sites:
             nearby = set(s1 for s1 in sites if s1 != s and self.eucledian_distance(s1, s) <= cutoff)
@@ -156,27 +150,60 @@ class ClusterGenerator:
             within_cutoff[s] = nearby
         return within_cutoff
 
-    def generate(self,
-                 size: int,
-                 cutoff: float,
-                 ref_lattice: int = 0) -> Tuple[List[List[Figure]], List[ClusterFingerprint]]:
-        clusters = []
-        all_fps = []
-        v0 = FourVector(0, 0, 0, ref_lattice)
+    def figure_iterator(self, size: int, cutoff: float, ref_lattice: int) -> Iterator[Figure]:
+        """Iterate all possible figures of a given size, cutoff radius, and reference lattice.
+        All figures are guaranteed to have a radius smaller than the cutoff radius.
+
+        Args:
+            size (int): Size of the clusters to be generated, e.g. 2 for 2-body clusters.
+            cutoff (float): Cutoff sphere from the center of mass of the cluster.
+            ref_lattice (int, optional): Site which clusters are generated from. Any cluster
+            always contains this site.
+
+        Yields:
+            Iterator[Figure]: Iterable with all acceptable figures.
+        """
+
+        def is_figure_ok(figure: Figure, cutoff: float) -> bool:
+            """Does the figure obey the cutoff radius?
+            The diameter can be larger than the maximum distance between two atoms
+            in the cluster, and so the site_iterator can prepare clusters with too large
+            diameters.
+
+            Returns:
+                bool: The diameter of the cluster is within the cutoff
+            """
+            return figure.get_diameter(self.prim, transposed_cell=self.prim_cell_T) < cutoff
 
         cutoff_lut = self.prepare_within_cutoff(cutoff, ref_lattice)
-        for comb in site_iterator(cutoff_lut, size, ref_lattice):
+        # Function which filters figures based on the cutoff diameter from the center of mass
+        filter_func = functools.partial(is_figure_ok, cutoff=cutoff)
+        return filter(filter_func, site_iterator(cutoff_lut, size, ref_lattice))
 
-            new_figure = Figure([v0.copy()] + comb)
+    def generate(self, size: int, cutoff: float,
+                 ref_lattice: int) -> Tuple[List[List[Figure]], List[ClusterFingerprint]]:
+        """Generate all possible figures of a given size, are within a given cutoff radius
+        (from the center of mass of the figure), and from a reference lattice.
+
+        Args:
+            size (int): Size of the clusters to be generated, e.g. 2 for 2-body clusters.
+            cutoff (float): Cutoff sphere from the center of mass of the cluster.
+            ref_lattice (int, optional): Site which clusters are generated from. Any cluster
+            always contains this site.
+
+        Returns:
+            List[List[Figure]], List[ClusterFingerprint]: The collection of figures and
+                their corresponding fingerprints.
+        """
+        clusters: List[List[Figure]] = []
+        all_fps: List[ClusterFingerprint] = []
+
+        for new_figure in self.figure_iterator(size, cutoff, ref_lattice):
             # The entries in the figure must be ordered, due to equiv_sites
             # TODO: This ordereding should not be necessary.
             new_figure = self._order_by_internal_distances(new_figure)
 
-            X = [
-                fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
-                for fv in new_figure.components
-            ]
-            fp = self.get_fp(X)
+            fp = self.get_fp(new_figure)
 
             # Find the group
             try:
@@ -236,7 +263,7 @@ class ClusterGenerator:
                     equiv_sites.append((i, j))
 
         # Merge pairs into groups
-        merged = []
+        merged: List[Set[int]] = []
         for equiv in equiv_sites:
             found_group = False
             for m in merged:
@@ -263,7 +290,8 @@ class SitesWithinCutoff:
     def __init__(self, generator: ClusterGenerator) -> None:
         self.generator = generator
         self.cutoff = 0.0
-        self.pre_calc = {}
+        # Dictionary mapping a ref lattice to a list of four-vectors
+        self.pre_calc: Dict[int, List[FourVector]] = {}
 
     def must_generate(self, cutoff: float, ref_lattice: int) -> bool:
         """
@@ -273,7 +301,7 @@ class SitesWithinCutoff:
             return True
         return ref_lattice not in self.pre_calc.keys()
 
-    def get(self, cutoff: float, ref_lattice: int) -> Dict[int, List[Tuple[int]]]:
+    def get(self, cutoff: float, ref_lattice: int) -> List[FourVector]:
         """
         Return sites within the cutoff
         """
@@ -285,7 +313,7 @@ class SitesWithinCutoff:
 
 
 def site_iterator(within_cutoff: Dict[FourVector, Set[FourVector]], size: int,
-                  ref_lattice: int) -> Iterator[List[FourVector]]:
+                  ref_lattice: int) -> Iterator[Figure]:
     """
     Return an iterator of all combinations of sites within a cutoff
 
@@ -299,7 +327,10 @@ def site_iterator(within_cutoff: Dict[FourVector, Set[FourVector]], size: int,
 
     def recursive_yield(remaining, current):
         if len(current) == size - 1:
-            yield current
+            # This is the full Figure object
+            components = [x0] + current
+            fig = Figure(components)
+            yield fig
         else:
             for next_item in remaining:
                 # Avoid double counting
@@ -311,3 +342,33 @@ def site_iterator(within_cutoff: Dict[FourVector, Set[FourVector]], size: int,
     for v in within_cutoff[x0]:
         rem = within_cutoff[x0].intersection(within_cutoff[v])
         yield from recursive_yield(rem, [v])
+
+
+def positions_to_fingerprint(X: np.ndarray) -> ClusterFingerprint:
+    """
+    Generate finger print given a position matrix
+    """
+    # Center around the center of mass
+    X = np.array(X)
+    com = np.mean(X, axis=0)
+    X -= com
+    X = X.dot(X.T)
+    # The positions squared
+    diag_positions = np.diagonal(X)
+
+    N = X.shape[0]
+    # Put all the upper triangle off-diagonals into a 1D array one after another,
+    # [off_diag1, off_diag2, ...]
+    off_diag_len = N * (N - 1) // 2
+    off_diag = np.zeros(off_diag_len)
+    offset = 0
+    for i in range(1, N):
+        diag = np.diagonal(X, offset=i)
+        off_diag[offset:(len(diag) + offset)] = diag
+        offset += len(diag)
+    # Sort positions, such that the largest position is first
+    diag_positions = np.sort(diag_positions)[::-1]
+    off_diag = np.sort(off_diag)
+    # Append the off-diagonal elements after the diagonal, into a 1D array
+    inner = np.append(diag_positions, off_diag)
+    return ClusterFingerprint(fp=inner)

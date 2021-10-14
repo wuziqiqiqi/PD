@@ -128,7 +128,14 @@ def test_max_cluster_size(mcs, make_conc, make_settings):
     conc = make_conc(basis)
     # max_cluster_dia has length 1 shorter than max_cluster_size
     mcd = (mcs - 1) * [0.]
-    mcd[-1] = 5.  # We are only interested in clusters of a certain size
+
+    # We need to increase the diameter for 7-body slightly otherwise no clusters fit
+    # within the cutoff radius.
+    diameter = 5.
+    if mcs > 6:
+        diameter += 0.5
+
+    mcd[-1] = diameter  # We are only interested in clusters of a certain size
     settings = make_settings(conc, size=(3, 3, 3), max_cluster_dia=mcd)
     assert settings.max_cluster_size == mcs
 

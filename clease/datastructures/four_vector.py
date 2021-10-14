@@ -38,9 +38,9 @@ class FourVector:
 
             transposed_cell (np.ndarray, optional): The transposed cell matrix.
              Can be passed to avoid re-calculating this property, e.g. if getting
-            cartesian coordinates for multiple FourVector objects simultaniously.
-            If cellT is None, it is calculated from the primitive atoms object.
-            Defaults to None.
+             cartesian coordinates for multiple FourVector objects simultaniously.
+             If transposed_cell is None, it is calculated from the primitive atoms object.
+             Defaults to None.
 
         Returns:
             np.ndarray: The cartesian coordinate representation of the FourVector.

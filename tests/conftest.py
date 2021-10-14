@@ -129,6 +129,7 @@ def bc_setting(make_module_tempfile):
     settings = CEBulk(concentration=conc,
                       crystalstructure='fcc',
                       a=4.05,
+                      max_cluster_dia=[5, 5, 5],
                       size=[3, 3, 3],
                       db_name=db_name)
     newstruct = NewStructures(settings, struct_per_gen=3)

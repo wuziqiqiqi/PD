@@ -213,21 +213,13 @@ def test_alpha_cv(make_eval):
 
 
 def test_cname_circum_dia(make_eval):
-    inputs = {
-        "cf_name": [
-            'c0', 'c1', 'c2_d0001_0_0', 'c3_d0002_0_0', 'c4_d0001_0_0', 'c4_d0002_0_0',
-            'c4_d0004_0_0'
-        ],
-        "true": ['c0', 'c1', 'c2_d0001_0_0', 'c4_d0001_0_0', 'c4_d0002_0_0']
-    }
-
     evaluator = make_eval()
-    settings = evaluator.settings
-    evaluator.cf_names = inputs['cf_name']
 
-    true_list = evaluator._filter_cname_circum_dia(settings.max_cluster_dia)
+    true_list = evaluator._filter_cname_circum_dia([4, 5, 4])
 
-    assert inputs['true'] == true_list
+    assert true_list == [
+        'c0', 'c1_0', 'c2_d0000_0_00', 'c3_d0000_0_000', 'c3_d0001_0_000', 'c4_d0000_0_0000'
+    ]
 
 
 def test_cv_for_alpha(make_eval):

@@ -1,4 +1,5 @@
 import pytest
+from ase.build import bulk
 import numpy as np
 from clease.datastructures import FourVector, Figure
 
@@ -8,6 +9,11 @@ def figure():
     fv1 = FourVector(0, 0, 0, 0)
     fv2 = FourVector(0, 0, 0, 1)
     return Figure({fv1, fv2})
+
+
+@pytest.fixture
+def prim():
+    return bulk('NaCl', crystalstructure='rocksalt', a=4.0)
 
 
 def test_initialization():
@@ -65,3 +71,47 @@ def test_no_ordering(figure):
     # We have no ordering
     with pytest.raises(TypeError):
         figure < figure
+
+
+def test_get_diameter(prim):
+
+    def d(vec):
+        """Helper function get the length of a vector"""
+        return np.linalg.norm(vec)
+
+    x, y, z = prim.get_cell()
+    # Some safety checks that prim is as we expect
+    assert d(x) == pytest.approx(d(y))
+    assert len(prim) == 2
+
+    # Pre-make a couple of FourVectors
+    fv1 = FourVector(0, 0, 0, 0)
+    fv2 = FourVector(0, 0, 0, 1)
+    fv3 = FourVector(1, 0, 0, 0)
+
+    # Binary should have the diameter the distance between the atoms
+    dist = np.linalg.norm(prim[0].position - prim[1].position)
+    assert Figure([fv1, fv2]).get_diameter(prim) == pytest.approx(dist)
+    # 1 shift along the x vector
+    assert Figure([fv1, fv3]).get_diameter(prim) == pytest.approx(d(x))
+    fig = Figure([fv1, FourVector(1, 1, 0, 0)])
+    assert fig.get_diameter(prim) == pytest.approx(d(x + y))
+    fig = Figure([fv1, FourVector(3, 4, 1, 0)])
+    assert fig.get_diameter(prim) == pytest.approx(d(3 * x + 4 * y + z))
+
+    # Compare against some pre-calculated values for 3-body figures
+    fig = Figure([fv1, fv2, fv3])
+    assert fig.get_diameter(prim) == pytest.approx(4.0)
+
+    fig = Figure([fv1, fv3, FourVector(3, 4, 1, 0)])
+    assert fig.get_diameter(prim) == pytest.approx(23.776739333502675)
+
+    # Square surrounding (0, 0) in the (x, y) plane.
+    fig = Figure([
+        FourVector(-1, 0, 0, 0),
+        FourVector(1, 0, 0, 0),
+        FourVector(0, -1, 0, 0),
+        FourVector(0, 1, 0, 0)
+    ])
+    assert fig.get_diameter(prim) == pytest.approx(d(x) * 2)
+    assert fig.get_diameter(prim) == pytest.approx(d(y) * 2)
