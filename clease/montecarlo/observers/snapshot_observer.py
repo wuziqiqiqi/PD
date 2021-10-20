@@ -33,3 +33,7 @@ class Snapshot(MCObserver):
             `clease.montecarlo.observers.MCObserver`
         """
         self.traj.write(self.atoms)
+
+    def close(self):
+        """Close the trajectory file."""
+        self.traj.close()

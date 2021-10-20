@@ -1,0 +1,31 @@
+image:
+  - Visual Studio 2019 # Windows
+  - macOS
+# We skip running an ubuntu image, since we already test linux on the GitLab CI
+
+install:
+  # Windows only
+  - cmd: "SET PYTHON=C:\\Python38-x64"
+  - cmd: "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+  # Nix only
+  - sh: "source ~/venv3.8/bin/activate"
+  # Common Python install commands
+  - "python --version"
+  - "python -m pip install wheel"
+  - "python -m pip install .[test]"
+
+build: off
+
+# Avoid making the appveyor tests twice for open MR's
+skip_branch_with_pr: true
+
+test_script:
+  - "python -m pytest tests/"
+
+after_test:
+  # Build wheels
+  - "python -m pip wheel -w dist --no-deps ."
+
+artifacts:
+  # Built wheels are in the dist directory
+  - path: dist/*

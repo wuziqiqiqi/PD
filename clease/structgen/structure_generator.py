@@ -511,6 +511,8 @@ class MetropolisTrajectory:
 
         reader = TrajectoryReader(obs.fname)
         all_atoms = [a for a in reader]
+        reader.close()
+        obs.close()
         os.remove(obs.fname)
         return all_atoms
 
