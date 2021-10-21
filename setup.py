@@ -92,9 +92,11 @@ EXTRAS_REQUIRE = {
         'ipython',
         'twine',
         'yapf',
-        'prospector',
         'pylint',
         'pyclean>=2.0.0',  # For removing __pycache__ and .pyc files
+        'tox~=3.24.0',
+        'pytest-cov',
+        'build',
     ),
     'gui': ('clease-gui',),
 }

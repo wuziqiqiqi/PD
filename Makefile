@@ -28,7 +28,7 @@ veryclean:
 	pyclean -v .
 
 package:
-	$(COMMAND) setup.py sdist
+	$(COMMAND) -m build
 
 check:
 	twine check dist/*

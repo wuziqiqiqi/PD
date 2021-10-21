@@ -3,6 +3,7 @@ image: python:3.9
 
 before_script:
   - python3 --version
+  - python3 -m pip install tox
 
 stages:
   - Static Analysis
@@ -12,8 +13,7 @@ stages:
 flake8:
   stage: Static Analysis
   script:
-    - python3 -m pip install flake8
-    - flake8 clease/
+    - tox -e flake8
 
 pylint:
   stage: Static Analysis
@@ -34,10 +34,7 @@ pytest:default:
   coverage: '/TOTAL\s+.*( \d+\%)/'
   script:
     - pwd
-    - python3 -m pip install coverage
-    - python3 -m pip install .[test]
-    - coverage run --omit='tests/*' -m pytest --durations=30 tests/
-    - coverage report
+    - tox -e cov
 
 doctest:
   stage: Code Test
@@ -61,33 +58,30 @@ pages:
   only:
     - master
 
-python3_test_slow:
+.test_template: &manual_test
   stage: Code Test
-  coverage: '/TOTAL\s+.*( \d+\%)/'
-  script:
-    - python3 --version
-    - python3 -m pip install .[test]
-    - pytest --runslow tests/
   when: manual
 
-.pytest_template: &pytest_definition
-  stage: Code Test
+python3_test_slow:
   script:
-    - python3 -m pip install .[test]
-    - python3 -m pytest --durations=30 tests/
+    - tox -e current -- --runslow --durations=30 tests/
+  <<: *manual_test
 
 # Some optional tests for older python versions
 pytest:py36:
   image: python:3.6
-  <<: *pytest_definition
-  when: manual
+  <<: *manual_test
+  script:
+    - tox -e py36
 
 pytest:py37:
   image: python:3.7
-  <<: *pytest_definition
-  when: manual
+  <<: *manual_test
+  script:
+    - tox -e py37
 
 pytest:py38:
   image: python:3.8
-  <<: *pytest_definition
-  when: manual
+  <<: *manual_test
+  script:
+    - tox -e py38
