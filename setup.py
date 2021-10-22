@@ -104,7 +104,6 @@ EXTRAS_REQUIRE['all'] = tuple(
 
 setup(
     name="clease",
-    setup_requires=['cython', 'numpy'],
     ext_modules=build_ext(clease_cxx),
     author=['J. H. Chang', 'D. Kleiven', 'A. S. Tygesen'],
     author_email="jchang@dtu.dk, david.kleiven@ntnu.no, alexty@dtu.dk",
@@ -134,6 +133,8 @@ setup(
     ],
     install_requires=[
         'ase>=3.20',
+        'numpy',
+        'cython',
         'matplotlib',
         'spglib',
         'scikit-learn',
