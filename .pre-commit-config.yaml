@@ -9,7 +9,7 @@ repos:
       - id: end-of-file-fixer  # Ensure we have newline at end of file
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 4.0.1
     hooks:
       - id: flake8
 
