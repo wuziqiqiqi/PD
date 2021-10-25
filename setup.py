@@ -94,6 +94,7 @@ EXTRAS_REQUIRE = {
         'yapf',
         'prospector',
         'pylint',
+        'pyclean>=2.0.0',  # For removing __pycache__ and .pyc files
     ),
     'gui': ('clease-gui',),
 }

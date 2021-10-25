@@ -20,12 +20,12 @@ clean:
 	rm -f cxx/cython/clease_cxx.cpp
 
 # Prepare for publishing, clean all pycache etc.
+# Pyclean removes the __pycache__ and *.pyc files.
 veryclean:
 	make clean
 	rm -rf dist/
 	rm -rf *.egg-info/
-	rm -rf __pycache__/
-	rm -rf */__pycache__/
+	pyclean -v .
 
 package:
 	$(COMMAND) setup.py sdist
