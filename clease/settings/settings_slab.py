@@ -4,8 +4,8 @@ from ase import Atoms
 from ase.build import surface, make_supercell
 from ase.geometry import get_layers
 
+from .concentration import Concentration
 from .settings import ClusterExpansionSettings
-from . import Concentration
 
 __all__ = ('CESlab',)
 

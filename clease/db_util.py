@@ -134,8 +134,7 @@ def _make_meta_for_table(**kwargs) -> _TABLE:
 def _check_key(key, delim=MetaTableKeys.ENCODE_DELIMITER) -> None:
     """Ensure that a key does not contain the delimiter used for encoding"""
     if delim in key:
-        raise InvalidMetaKey('Encoding delimiter "{}" cannot be present in key, got {}'.format(
-            delim, key))
+        raise InvalidMetaKey(f'Encoding delimiter "{delim}" cannot be present in key, got: {key}')
 
 
 def encode_meta_key(table_name, key, delim=MetaTableKeys.ENCODE_DELIMITER):
@@ -171,7 +170,7 @@ def decode_meta_key(key, delim=MetaTableKeys.ENCODE_DELIMITER):
         Defaults to '__'.
     """
     if delim not in key:
-        raise InvalidMetaKey('Key "{}" does not contain delimiter {}'.format(key, delim))
+        raise InvalidMetaKey(f'Key "{key}" does not contain delimiter {delim}')
     table_name, table_key = key.split(delim)
     return table_name, table_key
 
@@ -224,8 +223,8 @@ def new_row_with_many_tables(ase_connection: _CONNECTION, atoms, table_names: Se
     """
     if not len(table_names) == len(tables):
         raise ValueError(
-            ('Number of table names should match number of tables. Got {} table names, '
-             'but {} tables.').format(len(table_names), len(tables)))
+            (f'Number of table names should match number of tables. Got {len(table_names)} '
+             f'table names, but {len(tables)} tables.'))
 
     metatable = {}
     for table_name in table_names:

@@ -4,7 +4,7 @@ import sqlite3
 from itertools import combinations_with_replacement as cwr
 import numpy as np
 from ase.db import connect
-import clease
+from clease import db_util
 from clease.tools import add_file_extension, sort_cf_names, get_ids
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ __all__ = ('InconsistentDataError', 'DataManager', 'CorrFuncEnergyDataManager',
 
 
 class InconsistentDataError(Exception):
-    pass
+    """Data is inconsistent"""
 
 
 class DataManager:
@@ -181,7 +181,7 @@ class CorrFuncEnergyDataManager(DataManager):
                  tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
-        DataManager.__init__(self, db_name)
+        super().__init__(db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
         self.order = order
@@ -194,6 +194,7 @@ class CorrFuncEnergyDataManager(DataManager):
         :param select_cond: List with select conditions for the database
             (e.g. [('converged', '=', True)])
         """
+        # pylint: disable=arguments-differ
         return DataManager.get_data(
             self, select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
@@ -317,7 +318,7 @@ class CorrelationFunctionGetter:
             raise InconsistentDataError(msg)
 
         if self.cf_names is None:
-            self.cf_names = set([v for item in id_cf_names.values() for v in item])
+            self.cf_names = set(v for item in id_cf_names.values() for v in item)
             self.cf_names = list(self.cf_names)
             self.cf_names = sort_cf_names(self.cf_names)
 
@@ -361,13 +362,13 @@ class CorrelationFunctionGetter:
         return cf_matrix
 
     def _check_version(self, connection, *ids: Sequence[int]) -> None:
-        if clease.db_util.require_reconfigure_table(connection, self.tab_name, *ids):
-            raise clease.db_util.OutOfDateTable(
+        if db_util.require_reconfigure_table(connection, self.tab_name, *ids):
+            raise db_util.OutOfDateTable(
                 'An out of date correlation function table was found. '
                 'Please reconfigure your database, e.g. using "clease.reconfigure(settings)".')
 
 
-class FinalStructEnergyGetter(object):
+class FinalStructEnergyGetter:
     """
     FinalStructEnergyGetter is a callable class that returns the final energy
     (typically after structure relaxation) corresponding to the passed
@@ -425,7 +426,7 @@ class FinalStructEnergyGetter(object):
         return energies
 
 
-class FinalVolumeGetter(object):
+class FinalVolumeGetter:
     """
     Class that extracts the final volume per atom of the relaxed structure
 
@@ -510,7 +511,7 @@ class CorrFuncVolumeDataManager(DataManager):
                  tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
-        DataManager.__init__(self, db_name)
+        super().__init__(db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
         self.order = order
@@ -526,6 +527,7 @@ class CorrFuncVolumeDataManager(DataManager):
             List with select conditions for the database
             (e.g. [('converged', '=', True)])
         """
+        # pylint: disable=arguments-differ
         return DataManager.get_data(
             self, select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
@@ -585,14 +587,12 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
                  order: Optional[int] = 0,
                  properties: Tuple[str] = ('energy', 'pressure'),
                  cf_order: int = 1) -> None:
-        self.db_name = db_name
+        super().__init__(db_name)
         self.tab_name = tab_name
         self.order = order
         self.cf_names = cf_names
         self.properties = properties
         self.cf_order = cf_order
-        self._X = None
-        self._y = None
         self._groups = []
 
     def build(self, ids: List[int]) -> np.ndarray:
@@ -602,6 +602,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         :param ids: List of ids to take into account
         """
+        # pylint: disable=too-many-statements, too-many-locals
         cf_getter = CorrelationFunctionGetter(self.db_name,
                                               self.tab_name,
                                               self.cf_names,
@@ -659,7 +660,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         # Add bulk modulus data. B = V*d^2E/dV^2
         if 'bulk_mod' in self.properties:
             bulk_mod = self._extract_key(set(ids), 'bulk_mod')
-            bulk_mod_rows = [id_row[k] for k in bulk_mod.keys()]
+            bulk_mod_rows = [id_row[key] for key in bulk_mod]
             bulk_mod_cf = np.zeros((len(bulk_mod), cf_vol_dep.shape[1]))
 
             counter = 0
@@ -684,7 +685,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         # Add the pressure derivative of the bulk modulus (dB/dP)
         if 'dBdP' in self.properties:
             dBdP = self._extract_key(set(ids), 'dBdP')
-            dBdP_rows = [id_row[k] for k in dBdP.keys()]
+            dBdP_rows = [id_row[key] for key in dBdP]
             dBdP_cf = np.zeros((len(dBdP), cf_vol_dep.shape[1]))
             dBdP = np.array(list(dBdP.values()))
 
@@ -747,6 +748,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             target vector will be extracted for rows matching the passed
             condition.
         """
+        # pylint: disable=arguments-differ
         ids = get_ids(select_cond, self.db_name)
 
         self.build(ids)

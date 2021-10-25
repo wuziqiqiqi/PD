@@ -47,4 +47,4 @@ class SVD:
         """
         Return True if matrices are stored in the attributes
         """
-        return (self._U is not None and self._Vh is not None and self._S is not None)
+        return self._U is not None and self._Vh is not None and self._S is not None

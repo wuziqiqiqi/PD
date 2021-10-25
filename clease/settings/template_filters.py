@@ -1,34 +1,39 @@
+from abc import ABC, abstractmethod
 from itertools import product, permutations, combinations
 import numpy as np
+from ase import Atoms
+from .concentration import (Concentration, IntConversionNotConsistentError,
+                            InvalidConcentrationError, InvalidConstraintError)
 
 __all__ = ('SkewnessFilter', 'EquivalentCellsFilter', 'ValidConcentrationFilter',
            'DistanceBetweenFacetsFilter', 'VolumeToSurfaceRatioFilter', 'CellVectorDirectionFilter',
            'AngleFilter')
 
 
-class AtomsFilter(object):
+class AtomsFilter(ABC):
     """
     Base class for all template filters that requires a full Atoms object in
     order to decide the validity of the template.
     """
 
-    def __call__(self, atoms):
+    @abstractmethod
+    def __call__(self, atoms: Atoms) -> bool:
         """
         The call method has to be implemented in derived classes.
         It accepts an atoms object or a cell object and returns `True` if the
         templates is valid and False if the templates is not valid.
         """
-        raise NotImplementedError("Has to be implemented in derived classes.")
 
 
-class CellFilter(object):
+class CellFilter(ABC):
     """
     Base class for all template filters that only require knowledge of the
     cell vectors in order to decide if the template is valid or not.
     """
 
-    def __call__(self, cell):
-        raise NotImplementedError("Has to be implemented in derived classes.")
+    @abstractmethod
+    def __call__(self, cell: np.ndarray) -> bool:
+        """Check if a given cell obeys the filter"""
 
 
 class SkewnessFilter(CellFilter):
@@ -46,6 +51,7 @@ class SkewnessFilter(CellFilter):
 
     def _get_max_min_diag_ratio(self, cell):
         """Return the ratio between the maximum and the minimum diagonal."""
+        # pylint: disable=no-self-use
         diag_lengths = []
         for w in product([-1, 0, 1], repeat=3):
             if np.allclose(w, 0):
@@ -72,6 +78,7 @@ class EquivalentCellsFilter(CellFilter):
         self.cell_list = cell_list
 
     def _is_unitary(self, matrix):
+        # pylint: disable=no-self-use
         return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
 
     def _are_equivalent(self, cell1, cell2):
@@ -104,7 +111,7 @@ class ValidConcentrationFilter(AtomsFilter):
         Instance of `ClusterExpansionSettings`
     """
 
-    def __init__(self, concentration, index_by_basis):
+    def __init__(self, concentration: Concentration, index_by_basis):
         self.concentration = concentration
         self.index_by_basis = index_by_basis
 
@@ -124,7 +131,7 @@ class ValidConcentrationFilter(AtomsFilter):
             x_from_int = conc.to_float_conc(nib, x_int)
             if not conc.is_valid_conc(x_from_int):
                 return False
-        except Exception:
+        except (InvalidConcentrationError, InvalidConstraintError, IntConversionNotConsistentError):
             valid = False
         return valid
 
@@ -135,6 +142,7 @@ class DistanceBetweenFacetsFilter(CellFilter):
         self.ratio = ratio
 
     def _distance_between_facets(self, cell, span):
+        # pylint: disable=no-self-use
         v1 = cell[span[0], :]
         v2 = cell[span[1], :]
         normal = np.cross(v1, v2)

@@ -2,6 +2,7 @@ import os
 import logging
 from numpy.random import shuffle, choice
 import numpy as np
+from matplotlib import pyplot as plt
 from clease.tools import (aic, aicc, bic)
 from .regression import LinearRegression
 
@@ -13,7 +14,7 @@ __all__ = ('SaturatedPopulationError', 'GAFit')
 
 
 class SaturatedPopulationError(Exception):
-    pass
+    """A given population is saturated"""
 
 
 # pylint: disable=too-many-instance-attributes
@@ -189,6 +190,7 @@ class GAFit:
 
     def create_new_generation(self):
         """Create a new generation."""
+        # pylint: disable=too-many-statements
         new_generation = []
         srt_indx = np.argsort(self.fitness)[::-1]
 
@@ -227,7 +229,7 @@ class GAFit:
 
         max_attempts = 100 * self.pop_size
         # Create new generation by mergin existing
-        for i in range(num_inserted, int(self.pop_size / 2) + 1):
+        for _ in range(num_inserted, int(self.pop_size / 2) + 1):
             rand_num = np.random.rand()
             p1 = np.argmax(cumulative_sum > rand_num)
             p2 = p1
@@ -287,7 +289,7 @@ class GAFit:
         """Introduce mutations."""
         avg_f = np.mean(np.abs(self.fitness))
         best_indx = np.argmax(self.fitness)
-        for i in range(len(self.individuals)):
+        for i in range(len(self.individuals)):  # pylint: disable=consider-using-enumerate
             if i == best_indx:
                 # Do not mutate the best individual
                 continue
@@ -299,8 +301,7 @@ class GAFit:
             if abs(self.fitness[i]) > avg_f:
                 mut_prob *= abs(self.fitness[i]) / avg_f
 
-            if mut_prob > 1.0:
-                mut_prob = 1.0
+            mut_prob = min(mut_prob, 1.0)
 
             ind = self.individuals[i].copy()
             mutated = False
@@ -355,7 +356,6 @@ class GAFit:
 
     def plot_evolution(self):
         """Create a plot of the evolution."""
-        from matplotlib import pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(self.statistics["best_score"], label="best")

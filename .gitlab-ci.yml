@@ -18,8 +18,7 @@ flake8:
 pylint:
   stage: Static Analysis
   script:
-    - python3 -m pip install pylint
-    - pylint --disable=all --enable=dangerous-default-value clease/
+    - tox -e pylint
 
 # mypy:
 #   stage: Static Analysis

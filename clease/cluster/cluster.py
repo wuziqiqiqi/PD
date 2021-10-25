@@ -10,7 +10,6 @@ from .cluster_fingerprint import ClusterFingerprint
 __all__ = ('Cluster',)
 
 
-# pylint: disable=too-many-instance-attributes
 @total_ordering
 @attr.s(order=False, eq=False)
 class Cluster:

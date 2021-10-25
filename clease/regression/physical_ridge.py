@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 __all__ = ('PhysicalRidge',)
 
 
-# pylint: disable=too-many-instance-attributes
 class PhysicalRidge(LinearRegression):
     """
     Physical Ridge is a special ridge regression scheme that enforces a
@@ -177,8 +176,11 @@ class PhysicalRidge(LinearRegression):
 
         X_fit, y_fit = self.fit_data(X, y)
 
-        size_decay = np.array([self.size_decay(x) for x in self.sizes])
-        dia_decay = np.array([self.dia_decay(x) for x in self.diameters])
+        size_decay_func = self.size_decay
+        dia_decay_func = self.dia_decay
+
+        size_decay = np.array([size_decay_func(x) for x in self.sizes])
+        dia_decay = np.array([dia_decay_func(x) for x in self.diameters])
 
         penalty = self.lamb_size * size_decay + self.lamb_dia * dia_decay
         if len(penalty) == X_fit.shape[1] + 1:
@@ -288,6 +290,7 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
     :param groups: Grouping information for X and y matrix. See docstring
         of `clease.tools.split_dataset` for furhter information.
     """
+    # pylint: disable=too-many-locals
     best_param = None
     best_cv = 0.0
     best_mse = 0.0

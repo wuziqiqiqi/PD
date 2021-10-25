@@ -1,8 +1,8 @@
-from clease.montecarlo.observers import MCObserver
 import numpy as np
+from .mc_observer import MCObserver
 
 
-class DiffractionUpdater(object):
+class DiffractionUpdater:
     """
     Utility class for all objects that require tracing of Fourier reflection.
     See docstring of DiffractionObserver for explanation of the arguments.

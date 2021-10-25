@@ -2,6 +2,7 @@
 from typing import Union, Optional, List
 import numpy as np
 from numpy.linalg import pinv
+from sklearn.linear_model import Lasso as skLasso
 from clease.data_normalizer import DataNormalizer
 
 __all__ = ('LinearRegression', 'Tikhonov', 'Lasso')
@@ -16,10 +17,6 @@ class LinearRegression:
     @property
     def weight_matrix(self):
         return self._weight_matrix
-
-    @weight_matrix.setter
-    def weight_matrix(self, matrix):
-        self._weight_matrix = matrix
 
     def _ensure_weight_matrix_consistency(self, data: np.ndarray) -> None:
         """Raise an error if the dimensions of the
@@ -62,9 +59,11 @@ class LinearRegression:
         return V.dot(np.diag(diag)).dot(V.T)
 
     def get_instance_array(self) -> List[object]:
+        # pylint: disable=no-self-use
         return [LinearRegression()]
 
     def is_scalar(self):
+        # pylint: disable=no-self-use
         return False
 
     @staticmethod
@@ -171,6 +170,7 @@ class Tikhonov(LinearRegression):
                            alpha_max: float,
                            num_alpha: int = 10,
                            scale: Optional[str] = 'log') -> List[object]:
+        # pylint: disable=arguments-differ
         if scale == 'log':
             alpha = np.logspace(np.log10(alpha_min),
                                 np.log10(alpha_max),
@@ -201,7 +201,6 @@ class Lasso(LinearRegression):
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on LASSO regularizeation."""
-        from sklearn.linear_model import Lasso as skLasso
         lasso = skLasso(alpha=self.alpha,
                         fit_intercept=False,
                         copy_X=True,
@@ -214,15 +213,12 @@ class Lasso(LinearRegression):
     def weight_matrix(self):
         return LinearRegression.weight_matrix(self)
 
-    @weight_matrix.setter
-    def weight_matrix(self, X):  # pragma: no cover
-        raise NotImplementedError("Currently Lasso does not support data weighting.")
-
     @staticmethod
     def get_instance_array(alpha_min: float,
                            alpha_max: float,
                            num_alpha: int = 10,
                            scale: str = 'log') -> List[object]:
+        # pylint: disable=arguments-differ
         if scale == 'log':
             alpha = np.logspace(np.log10(alpha_min),
                                 np.log10(alpha_max),

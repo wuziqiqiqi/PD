@@ -10,9 +10,9 @@ from clease.structgen import new_struct
 MSG = 'Import {} from clease.structgen.new_struct instead'
 DEP_VERSION = '0.10.2'  # Deprecation version
 
-MODULE_DEP_MSG = ("""
-The clease.new_struct module has been moved as of version {}.
-Please use the clease.structgen.new_struct module instead""".format(DEP_VERSION))
+MODULE_DEP_MSG = f"""
+The clease.new_struct module has been moved as of version {DEP_VERSION}.
+Please use the clease.structgen.new_struct module instead"""
 
 # Print the message on import
 warn(MODULE_DEP_MSG, np.VisibleDeprecationWarning)

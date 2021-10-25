@@ -2,8 +2,11 @@ import json
 
 from deprecated import deprecated
 from ase import Atoms
-from . import CEBulk, CECrystal, CESlab, Concentration, ClusterExpansionSettings
 from clease import basis_function as bf
+from .concentration import Concentration
+from .settings import ClusterExpansionSettings
+from .settings_bulk import CEBulk, CECrystal
+from .settings_slab import CESlab
 
 __all__ = ('settings_from_json', 'settingsFromJSON')
 
@@ -19,7 +22,7 @@ def settings_from_json(fname):
     fname: str
         JSON file where settings are stored
     """
-    return ClusterExpansionSettings.load(fname)
+    return ClusterExpansionSettings.load(fname)  # pylint: disable=no-member
 
 
 def old_settings_from_json(fname):

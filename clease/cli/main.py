@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import click
-import clease
+from clease.version import __version__
 
 
 @click.group()
-@click.version_option(clease.__version__)
+@click.version_option(__version__)
 def clease_cli():
     """The main CLEASE CLI"""

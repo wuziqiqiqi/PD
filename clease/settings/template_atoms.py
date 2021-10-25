@@ -5,10 +5,10 @@ from contextlib import contextmanager
 import numpy as np
 from numpy.random import shuffle
 import ase
+from ase.build.tools import niggli_reduce_cell
 from ase.build import make_supercell
-from clease import SkewnessFilter, EquivalentCellsFilter
-from clease.template_filters import CellFilter, AtomsFilter
 from clease.tools import all_integer_transform_matrices
+from .template_filters import CellFilter, AtomsFilter, SkewnessFilter, EquivalentCellsFilter
 
 __all__ = ('TemplateAtoms',)
 
@@ -321,7 +321,6 @@ class TemplateAtoms:
 
     def get_fixed_volume_templates(self, num_prim_cells=10, num_templates=10):
         # Set up a filter that listens to the templates with fixed volume
-        from ase.build.tools import niggli_reduce_cell
         cells = []
         transform_matrices = []
 

@@ -6,7 +6,6 @@ from ase.neighborlist import neighbor_list
 __all__ = ('KMCEventType', 'NeighbourSwap')
 
 
-# pylint: disable=too-few-public-methods
 class KMCEventType(metaclass=ABCMeta):
 
     @property
@@ -17,7 +16,6 @@ class KMCEventType(metaclass=ABCMeta):
         raise NotImplementedError(f"get_swaps has not been implemented for class {self.name}")
 
 
-# pylint: disable=too-few-public-methods
 class NeighbourSwap(KMCEventType):
     """
     KMC event that provides swaps between neighbours

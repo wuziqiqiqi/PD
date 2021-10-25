@@ -19,7 +19,6 @@ from scipy.optimize import linprog
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class ApproxEqualityList:
     """
     Wrapper around a list which implements a new comparison operator. If two
@@ -245,8 +244,20 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
     return np.array(distances[1:])
 
 
-def reconfigure(settings, **kwargs):
-    from clease.corr_func import CorrFunction  # pylint: disable=import-outside-toplevel
+def reconfigure(settings, **kwargs) -> None:
+    """Reconfigure the correlation functions for a settings object.
+
+    Args:
+        settings (ClusterExpansionSettings):
+            Instance of a cluster expansion settings object.
+    """
+    # pylint: disable=import-outside-toplevel, cyclic-import
+    from clease.corr_func import CorrFunction
+    from clease.settings import ClusterExpansionSettings
+    # Note, we cannot import ClusterExpansionSettings for typing,
+    # otherwise we get cyclic imports.
+    if not isinstance(settings, ClusterExpansionSettings):
+        raise TypeError(f"settings must be of type ClusterExpansionSettings, got {type(settings)}")
     CorrFunction(settings).reconfigure_db_entries(**kwargs)
 
 
@@ -722,7 +733,6 @@ def select_bf_subsets(basis_elems, bfs):
     return best_selection
 
 
-# pylint: disable=too-many-branches
 def cname_lt(cname1, cname2):
     """
     Compare two cluster names to check if the first cluster name is

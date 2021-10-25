@@ -1,5 +1,5 @@
-import numpy as np
 from typing import Tuple
+import numpy as np
 
 
 class DataNormalizer:
@@ -40,8 +40,7 @@ class DataNormalizer:
             raise ValueError(f"DataNormalizer: The following columns has a "
                              f"constant value:\n{self.constant_cols(X)}\n"
                              f"Please remove these.")
-        else:
-            self.stdX[self.stdX < tol] = 1.0
+        self.stdX[self.stdX < tol] = 1.0
         X_norm = (X - self.meanX) / self.stdX
         return X_norm, y_shifted
 
@@ -58,6 +57,7 @@ class DataNormalizer:
             Columns with a standard deviation smaller than this value are
             considered to be constant
         """
+        # pylint: disable=no-self-use
         std = np.std(X, axis=0, ddof=1)
         return np.argwhere(std < tol)[:, 0]
 
@@ -74,6 +74,7 @@ class DataNormalizer:
             Columns with a standard deviation larger than this value are
             considered to be varying
         """
+        # pylint: disable=no-self-use
         std = np.std(X, axis=0, ddof=1)
         return np.argwhere(std >= tol)[:, 0]
 

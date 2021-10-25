@@ -1,5 +1,5 @@
 from deprecated import deprecated
-from clease import settings
+from . import settings
 
 __all__ = ('Concentration',)
 

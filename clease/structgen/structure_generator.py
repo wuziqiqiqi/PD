@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 __all__ = ('StructureGenerator', 'GSStructure', 'MetropolisTrajectory', 'ProbeStructure')
 
 
-# pylint: disable=too-few-public-methods
 # pylint: disable=too-many-instance-attributes
 class StructureGenerator(ABC):
     """Base class for generating new strctures."""
@@ -161,9 +160,11 @@ class StructureGenerator(ABC):
 
     def _accept(self) -> bool:
         """Determine if we accept the last change."""
+        # pylint: disable=no-self-use
         return True
 
     def _estimate_temp_range(self):
+        # pylint: disable=no-self-use
         return 1.0, 1e5
 
     def _determine_temps(self):
@@ -297,7 +298,6 @@ class StructureGenerator(ABC):
         return cfm
 
 
-# pylint: disable=too-many-instance-attributes
 class ProbeStructure(StructureGenerator):
     """Generate probe structures.
 
@@ -510,7 +510,7 @@ class MetropolisTrajectory:
         mc.run(steps=self.num)
 
         reader = TrajectoryReader(obs.fname)
-        all_atoms = [a for a in reader]
+        all_atoms = list(reader)
         reader.close()
         obs.close()
         os.remove(obs.fname)

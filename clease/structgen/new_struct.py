@@ -15,7 +15,7 @@ from ase.db import connect
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 from ase.io.trajectory import TrajectoryReader
 
-import clease
+from clease import db_util
 from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
 
@@ -629,12 +629,11 @@ class NewStructures:
             # Check that composition (except vacancies matches)
             count_init = count_atoms(init)
             count_final = count_atoms(final)
-            # pylint: disable=consider-iterating-dictionary
-            for k in count_final:
-                if k not in count_init:
+            for key, value in count_final.items():
+                if key not in count_init:
                     raise ValueError("Final and initial structure contains " "different elements")
 
-                if count_init[k] != count_final[k]:
+                if count_init[key] != value:
                     raise ValueError("Final and initial structure has "
                                      "different number of each species")
 
@@ -693,8 +692,7 @@ class NewStructures:
         kvp['queued'] = False
         kvp['struct_type'] = 'initial'
         tab_name = self.corr_func_table_name
-        uid_init = clease.db_util.new_row_with_single_table(self.db, init_struct, tab_name, cf,
-                                                            **kvp)
+        uid_init = db_util.new_row_with_single_table(self.db, init_struct, tab_name, cf, **kvp)
 
         if final_struct is not None:
             if not isinstance(final_struct, Atoms):

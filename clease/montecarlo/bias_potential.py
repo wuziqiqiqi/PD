@@ -1,5 +1,8 @@
+# pylint: skip-file
+# XXX: Some funny imports here. This file needs to be cleaned up some
 from typing import Sequence
 import numpy as np
+from scipy.interpolate import interp1d
 from clease.datastructures import SystemChange
 
 
@@ -85,7 +88,6 @@ class SampledBiasPotential(BiasPotential):
     """
 
     def __init__(self, reac_crd=(), free_eng=()):
-        from scipy.interpolate import interp1d
         self.reac_crd = np.array(reac_crd)
         self.free_eng = np.array(free_eng)
         self.bias_interp = interp1d(self.reac_crd, self.free_eng, fill_value="extrapolate")
@@ -132,7 +134,6 @@ class SampledBiasPotential(BiasPotential):
         other: BiasPotential
             The other potential
         """
-        from scipy.interpolate import interp1d
         self.free_eng += other.get(self.reac_crd)
         self.bias_interp = interp1d(self.reac_crd, self.free_eng, fill_value="extrapolate")
         return self

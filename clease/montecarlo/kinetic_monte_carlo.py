@@ -6,19 +6,18 @@ import random
 from ase import Atoms
 from ase.units import kB
 import numpy as np
-from clease.montecarlo import BarrierModel
-from clease.montecarlo import KMCEventType
-from clease.montecarlo.observers import MCObserver
 from clease.datastructures import SystemChange
-from clease.montecarlo.mc_evaluator import MCEvaluator
+from .mc_evaluator import MCEvaluator
 from .base import BaseMC
+from .barrier_models import BarrierModel
+from .kmc_events import KMCEventType
+from .observers import MCObserver
 
 __all__ = ('KineticMonteCarlo',)
 
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes
 class KineticMonteCarlo(BaseMC):
     """
     Kinetic Monte Carlo using the residence time algorithm, which is a

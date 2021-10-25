@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from matplotlib import pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class MCTrajectoryExtractor:
         Check if the second atom can be obtained by swapping two
         atoms
         """
+        # pylint: disable=no-self-use
         if len(atoms1) != len(atoms2):
             return False
 
@@ -60,6 +62,7 @@ class MCTrajectoryExtractor:
             List of energies from for instance DFT. Should be total energy, not
             normalised per atom.
         """
+        # pylint: disable=no-self-use
         dev = []
         for s in swaps:
             dE_pred = e_pred[s[0]] - e_pred[s[1]]
@@ -82,13 +85,13 @@ class MCTrajectoryExtractor:
         var: float
             Variance
         """
+        # pylint: disable=no-self-use
         return np.exp(-(x - mu)**2 / (2 * var)) / np.sqrt(2 * np.pi * var)
 
     def plot_swap_deviation(self, dev):
         """
         Creates a plot with the distribution of the deviations
         """
-        from matplotlib import pyplot as plt
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         hist, bins = np.histogram(np.array(dev), bins='auto')

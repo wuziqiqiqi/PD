@@ -1,8 +1,8 @@
 from typing import Dict
 from ase import Atoms
 from clease.settings import ClusterExpansionSettings
-from clease.calculator import Clease
 from clease.tools import wrap_and_sort_by_position
+from .clease import Clease
 
 
 def attach_calculator(settings: ClusterExpansionSettings,

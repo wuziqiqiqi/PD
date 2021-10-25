@@ -1,4 +1,3 @@
-from __future__ import division
 import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
 import matplotlib.pyplot as plt
@@ -35,6 +34,8 @@ class ConvexHull:
         gold concentrations in the range 0 to 0.5 this argument would
         be {"Au": (0, 0.5)}.
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(self,
                  db_name,

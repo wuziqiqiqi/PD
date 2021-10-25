@@ -250,6 +250,7 @@ class ClusterGenerator:
 
         :param lut: Look up table for 4-vectors to indices
         """
+        # pylint: disable=no-self-use
         return [[lut[fv] for fv in fig.components] for fig in cluster.figures]
 
     def equivalent_sites(self, figure: Figure) -> List[List[int]]:

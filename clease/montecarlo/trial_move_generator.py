@@ -2,10 +2,10 @@ from typing import Sequence, List, Set, Tuple
 import random
 from abc import abstractmethod, ABC
 from ase import Atoms
-from clease.montecarlo.constraints import MCConstraint
 from clease.datastructures import SystemChange
 from clease.tools import flatten
-from clease.montecarlo.swap_move_index_tracker import SwapMoveIndexTracker
+from .constraints import MCConstraint
+from .swap_move_index_tracker import SwapMoveIndexTracker
 
 __all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError',
            'RandomFlipWithinBasis')

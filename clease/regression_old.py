@@ -1,5 +1,5 @@
 """Module for defining deprecated regression class imports"""
-# pylint: disable=too-few-public-methods
+# pylint: skip-file
 from deprecated import deprecated
 from clease import regression
 

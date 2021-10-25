@@ -1,4 +1,4 @@
-from clease.montecarlo.constraints import MCConstraint
+from .mc_constraint import MCConstraint
 
 
 class PairConstraint(MCConstraint):

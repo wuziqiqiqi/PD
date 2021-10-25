@@ -1,4 +1,5 @@
-from clease.montecarlo.constraints import MCConstraint
+from clease.datastructures.system_changes import SystemChanges
+from .mc_constraint import MCConstraint
 
 
 class FixedElement(MCConstraint):
@@ -14,8 +15,8 @@ class FixedElement(MCConstraint):
     def __init__(self, element):
         self.element = element
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges):
         for change in system_changes:
-            if change[1] == self.element or change[2] == self.element:
+            if self.element in (change.old_symb, change.new_symb):
                 return False
         return True

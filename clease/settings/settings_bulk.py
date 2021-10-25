@@ -8,6 +8,7 @@ from copy import deepcopy
 from ase.build import bulk
 from ase.spacegroup import crystal
 from clease.tools import wrap_and_sort_by_position
+from .concentration import Concentration
 from .settings import ClusterExpansionSettings
 
 __all__ = (
@@ -16,7 +17,13 @@ __all__ = (
 )
 
 
-def CEBulk(concentration, crystalstructure='sc', a=None, c=None, covera=None, u=None, **kwargs):
+def CEBulk(concentration: Concentration,
+           crystalstructure='sc',
+           a=None,
+           c=None,
+           covera=None,
+           u=None,
+           **kwargs):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -83,7 +90,7 @@ def CEBulk(concentration, crystalstructure='sc', a=None, c=None, covera=None, u=
     return settings
 
 
-def CECrystal(concentration,
+def CECrystal(concentration: Concentration,
               spacegroup=1,
               basis=None,
               cell=None,

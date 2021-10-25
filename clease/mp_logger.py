@@ -33,11 +33,9 @@ class MultiprocessHandler(lg.Handler):
             try:
                 record = self.queue.get()
                 self._handler.emit(record)
-            except (KeyboardInterrupt, SystemExit):
-                raise
             except EOFError:
                 break
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-except
                 print("An unexpected exception occured during logging.")
                 print(str(exc))
 
@@ -49,9 +47,7 @@ class MultiprocessHandler(lg.Handler):
         """Emit record."""
         try:
             self.send(record)
-        except (KeyboardInterrupt, SystemExit):
-            raise
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             self.handleError(record)
 
     def close(self):

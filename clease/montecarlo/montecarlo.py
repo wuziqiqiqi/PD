@@ -9,15 +9,15 @@ from collections import Counter
 import numpy as np
 from ase import Atoms
 from ase.units import kB
-import clease
+from clease.version import __version__
 from clease.datastructures import SystemChange, SystemChanges
-from clease.montecarlo.mc_evaluator import MCEvaluator
-from clease.montecarlo.exponential_filter import ExponentialFilter
-from clease.montecarlo.averager import Averager
-from clease.montecarlo.bias_potential import BiasPotential
-from clease.montecarlo.observers import MCObserver
-from clease.montecarlo.trial_move_generator import TrialMoveGenerator, RandomSwap
+from .mc_evaluator import MCEvaluator
 from .base import BaseMC
+from .exponential_filter import ExponentialFilter
+from .averager import Averager
+from .bias_potential import BiasPotential
+from .observers import MCObserver
+from .trial_move_generator import TrialMoveGenerator, RandomSwap
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +198,7 @@ class Montecarlo(BaseMC):
         """Return dict with meta info."""
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        clease_version = clease.version.__version__
+        clease_version = __version__
         v_info = sys.version_info
         meta_info = {
             "timestamp": st,
@@ -291,7 +291,6 @@ class Montecarlo(BaseMC):
         self.current_energy = self.new_energy
         return system_changes
 
-    # pylint: disable=no-self-use
     def _move_rejected(self, system_changes: SystemChanges) -> SystemChanges:
         logger.debug('Move rejected, undoing system changes: %s', system_changes)
         self.generator.on_move_rejected(system_changes)

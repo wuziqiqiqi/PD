@@ -1,5 +1,5 @@
-from clease.montecarlo.constraints import MCConstraint
 import numpy as np
+from .mc_constraint import MCConstraint
 
 
 class ConstrainElementInserts(MCConstraint):
@@ -32,7 +32,7 @@ class ConstrainElementInserts(MCConstraint):
                 self.basis[x] = i
 
         num_basis = len(element_by_basis)
-        unique_elem = set([x for item in element_by_basis for x in item])
+        unique_elem = set(x for item in element_by_basis for x in item)
         self.element_allowed = {x: np.zeros(num_basis, dtype=np.uint8) for x in unique_elem}
 
         # Initialize the element lookup

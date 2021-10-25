@@ -1,7 +1,8 @@
+# pylint: disable=import-outside-toplevel
 from matplotlib import pyplot as plt
 
 
-class InteractivePlot(object):
+class InteractivePlot:
     """Class for creating an interactive plot with annotations
 
     Parameters:
@@ -34,7 +35,7 @@ class InteractivePlot(object):
         self.active_line_index = 0
 
         for i, line in enumerate(self.lines):
-            x, y = line.get_data()
+            x, _ = line.get_data()
             if len(x) != len(self.annotations[i]):
                 msg = f"Annotations for line {i} "
                 msg += f"has length {len(self.annotations[i])} "

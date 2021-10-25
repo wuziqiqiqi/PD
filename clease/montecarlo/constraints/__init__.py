@@ -6,7 +6,7 @@ from .collective_variable_constraint import CollectiveVariableConstraint
 from .pair_constraint import PairConstraint
 from .fixed_indices import FixedIndices
 
-__all__ = [
+__all__ = (
     "MCConstraint",
     "ConstrainSwapByBasis",
     "ConstrainElementInserts",
@@ -14,4 +14,4 @@ __all__ = [
     "CollectiveVariableConstraint",
     "PairConstraint",
     "FixedIndices",
-]
+)

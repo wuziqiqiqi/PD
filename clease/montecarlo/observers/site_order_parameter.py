@@ -1,5 +1,5 @@
-from clease.montecarlo.observers import MCObserver
 import numpy as np
+from .mc_observer import MCObserver
 
 
 class SiteOrderParameter(MCObserver):
@@ -77,8 +77,7 @@ class SiteOrderParameter(MCObserver):
 
         # If variance is close to zero it can in some cases by
         # slightly negative. Add a safety check for this
-        if var < 0.0:
-            var = 0.0
+        var = max(var, 0.0)
         return {"site_order_average": average, "site_order_std": np.sqrt(var)}
 
     def interval_ok(self, interval):

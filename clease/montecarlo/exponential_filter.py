@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 
-class ExponentialFilter(object):
+class ExponentialFilter:
 
     def __init__(self, min_time=1, max_time=10, n_subfilters=2, dt=1):
         self.min_time = min_time

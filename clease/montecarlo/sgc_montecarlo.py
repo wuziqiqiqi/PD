@@ -2,9 +2,9 @@ from typing import Sequence, Dict
 import numpy as np
 from ase import Atoms
 from ase.units import kB
-from clease.montecarlo import Montecarlo
-from clease.montecarlo.observers import SGCObserver
-from clease.montecarlo.trial_move_generator import TrialMoveGenerator, RandomFlip
+from .observers import SGCObserver
+from .montecarlo import Montecarlo
+from .trial_move_generator import TrialMoveGenerator, RandomFlip
 
 
 class InvalidChemicalPotentialError(Exception):
@@ -65,7 +65,7 @@ class SGCMonteCarlo(Montecarlo):
         """
         Reset the simulation object
         """
-        super(SGCMonteCarlo, self).reset()
+        super().reset()
         self.averager.reset()
 
     @property
@@ -75,7 +75,7 @@ class SGCMonteCarlo(Montecarlo):
     @chemical_potential.setter
     def chemical_potential(self, chem_pot: Dict[str, float]):
         eci = self.atoms.calc.eci
-        if any([k not in eci.keys() for k in chem_pot.keys()]):
+        if any(key not in eci for key in chem_pot):
             msg = "A chemical potential not being trackted is added. Make "
             msg += "sure that all the following keys are in the ECIs before "
             msg += "they are passed to the calculator: "
@@ -203,8 +203,8 @@ class SGCMonteCarlo(Montecarlo):
 
         quantities["energy"] = self.averager.energy.mean
         natoms = len(self.atoms)
-        for i in range(len(self.chem_pots)):
-            quantities["energy"] += self.chem_pots[i] * singlets[i] * natoms
+        for i, chem_pot in enumerate(self.chem_pots):
+            quantities["energy"] += chem_pot * singlets[i] * natoms
 
         quantities["temperature"] = self.T
         quantities["n_mc_steps"] = self.averager.counter

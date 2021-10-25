@@ -1,7 +1,7 @@
 from typing import Sequence
 import numpy as np
 from clease.datastructures import SystemChange
-from clease.montecarlo import BiasPotential
+from .bias_potential import BiasPotential
 
 
 # pylint: disable=too-many-instance-attributes

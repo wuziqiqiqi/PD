@@ -1,23 +1,20 @@
 """Test suite for TemplateAtoms."""
-import os
-
 import pytest
 import numpy as np
-from unittest.mock import patch
 import ase
 from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.build import niggli_reduce
 from ase.db import connect
-from clease import ValidConcentrationFilter
 from clease.settings import CEBulk, Concentration
-from clease.template_atoms import TemplateAtoms
-from clease.template_filters import (AtomsFilter, CellFilter, SkewnessFilter,
-                                     DistanceBetweenFacetsFilter, CellVectorDirectionFilter)
+from clease.settings.template_atoms import TemplateAtoms
+from clease.settings.template_filters import (AtomsFilter, CellFilter, SkewnessFilter,
+                                              DistanceBetweenFacetsFilter,
+                                              CellVectorDirectionFilter, ValidConcentrationFilter)
 from clease.tools import wrap_and_sort_by_position
 
 
-class SettingsPlaceHolder(object):
+class SettingsPlaceHolder:
     """
     Dummy object that simply holds the few variables needed for the test.
     Only purpose of this is to make the test fast

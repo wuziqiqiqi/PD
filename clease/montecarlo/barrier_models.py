@@ -7,7 +7,6 @@ from clease.montecarlo.mc_evaluator import MCEvaluator, construct_evaluator
 __all__ = ('BarrierModel', 'BEPBarrier')
 
 
-# pylint: disable=too-few-public-methods
 class BarrierModel(ABC):
     """
     Base barrier model class
@@ -25,7 +24,6 @@ class BarrierModel(ABC):
         """Evaluate the height of the barrier"""
 
 
-# pylint: disable=too-few-public-methods
 class BEPBarrier(BarrierModel):
     """
     BEP barrier implements the Bell-Evans-Polanyi model. It is a simple barrier

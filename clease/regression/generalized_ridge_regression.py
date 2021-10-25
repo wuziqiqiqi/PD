@@ -128,13 +128,14 @@ class GeneralizedRidgeRegression(LinearRegression):
         :param y: Target values of length N
         :param eigen: EigenDecomposition of X^TX
         """
-        grad = np.zeros(len(alpha))
+        num_alpha = len(alpha)
+        grad = np.zeros(num_alpha)
         A = self._A(X, eigen, alpha)
         dev = y - A.dot(y)
         mse = np.mean(dev**2)
         N = len(y)
         denum = (1.0 - np.trace(A) / N)
-        for i in range(len(grad)):
+        for i in range(num_alpha):
             gradA = self._grad_A(X, eigen, alpha, i)
             new_grad = -2.0 * np.sum(np.outer(dev, y) * gradA) / (N * denum**2)
 

@@ -1,4 +1,4 @@
-from clease.montecarlo.constraints import MCConstraint
+from .mc_constraint import MCConstraint
 
 
 class CollectiveVariableConstraint(MCConstraint):
@@ -26,4 +26,4 @@ class CollectiveVariableConstraint(MCConstraint):
 
     def __call__(self, system_change):
         x = self.getter(system_change, peak=True)
-        return x >= self.xmin and x < self.xmax
+        return self.xmin <= x < self.xmax

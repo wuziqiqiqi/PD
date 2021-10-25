@@ -5,6 +5,7 @@ from itertools import product
 import numpy as np
 from scipy.special import polygamma
 from scipy.optimize import brentq
+from matplotlib import pyplot as plt
 from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,8 @@ class BayesianCompressiveSensing(LinearRegression):
         to avoid singular matrices
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(self,
                  shape_var=0.5,
                  rate_var=0.5,
@@ -84,6 +87,7 @@ class BayesianCompressiveSensing(LinearRegression):
                  noise=0.1,
                  init_lamb=0.0,
                  penalty=1E-8):
+        # pylint: disable=too-many-arguments
         super().__init__()
 
         # Paramters
@@ -393,6 +397,8 @@ class BayesianCompressiveSensing(LinearRegression):
         y: np.ndarray
             Array of length N with the energies
         """
+        # pylint: disable=too-many-branches, too-many-statements
+        # XXX: Needs some cleaning
         allowed_strategies = ["random", "max_increase"]
 
         if self.select_strategy not in allowed_strategies:
@@ -467,7 +473,6 @@ class BayesianCompressiveSensing(LinearRegression):
     def show_shape_parameter(self):
         """Show a plot of the transient equation for the optimal
             shape parameter for lambda."""
-        from matplotlib import pyplot as plt
         x = np.logspace(-10, 10)
 
         fig = plt.figure()
@@ -480,10 +485,6 @@ class BayesianCompressiveSensing(LinearRegression):
     @property
     def weight_matrix(self):
         return LinearRegression.weight_matrix(self)
-
-    @weight_matrix.setter
-    def weight_matrix(self, X):
-        raise NotImplementedError("Currently Lasso does not support data weighting.")
 
 
 def shape_parameter_equation(x, lamb):

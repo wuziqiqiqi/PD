@@ -1,6 +1,6 @@
 import pytest
 from ase.build import bulk
-from clease.atoms_manager import AtomsManager
+from clease.settings.atoms_manager import AtomsManager
 
 
 def test_binary():

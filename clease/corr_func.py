@@ -3,17 +3,17 @@ import logging
 from ase.atoms import Atoms
 from ase.db import connect
 
-import clease
-from clease.settings import ClusterExpansionSettings
-from clease.tools import wrap_and_sort_by_position
 from clease_cxx import PyCEUpdater
+from .settings import ClusterExpansionSettings
+from .tools import wrap_and_sort_by_position
+from . import db_util
 
 logger = logging.getLogger(__name__)
 __all__ = ('CorrFunction', 'ClusterNotTrackedError')
 
 
 class ClusterNotTrackedError(Exception):
-    pass
+    """A cluster is not being tracked"""
 
 
 class CorrFunction:
@@ -31,7 +31,7 @@ class CorrFunction:
         specify the number of cores to use for parallelization.
     """
 
-    def __init__(self, settings, parallel=False, num_core="all"):
+    def __init__(self, settings):
         if not isinstance(settings, ClusterExpansionSettings):
             raise TypeError("setting must be CEBulk or CECrystal " "object")
         self.settings = settings
@@ -116,7 +116,7 @@ class CorrFunction:
             logger.debug(msg)
             atoms = wrap_and_sort_by_position(db.get(id=row_id).toatoms())
             cf = self.get_cf(atoms)
-            clease.db_util.update_table(db, row_id, tab_name, cf)
+            db_util.update_table(db, row_id, tab_name, cf)
 
         if verbose:
             print("\nreconfiguration completed")
@@ -127,12 +127,13 @@ class CorrFunction:
         inconsistent_ids = self.check_consistency_of_cf_table_entries()
 
         if len(inconsistent_ids) == 0:
-            return True
+            return
 
         logger.info('Reconfiguring correlation functions')
-        for count, id in enumerate(inconsistent_ids):
-            logger.debug("Updating %s of %s entries (id %s)", count + 1, len(inconsistent_ids), id)
-            self.reconfigure_db_entries(select_cond=[('id', '=', id)], verbose=False)
+        for count, bad_id in enumerate(inconsistent_ids):
+            logger.debug("Updating %s of %s entries (id %s)", count + 1, len(inconsistent_ids),
+                         bad_id)
+            self.reconfigure_db_entries(select_cond=[('id', '=', bad_id)], verbose=False)
         logger.info("Reconfiguration completed")
 
     def check_consistency_of_cf_table_entries(self):
@@ -154,8 +155,8 @@ class CorrFunction:
         if len(inconsistent_ids) > 0:
             logger.warning("%d inconsistent entries found in table %s", len(inconsistent_ids),
                            tab_name)
-            for id in inconsistent_ids:
-                logger.warning("  id: %s, name: %s", id, db.get(id).name)
+            for bad_id in inconsistent_ids:
+                logger.warning("  id: %s, name: %s", bad_id, db.get(bad_id).name)
         else:
             logger.info("'%s' table has no inconsistent entries.", tab_name)
         return inconsistent_ids

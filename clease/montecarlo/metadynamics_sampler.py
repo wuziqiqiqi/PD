@@ -4,7 +4,7 @@ import json
 from copy import deepcopy
 import numpy as np
 from ase.units import kB
-from clease.montecarlo.constraints import CollectiveVariableConstraint
+from .constraints import CollectiveVariableConstraint
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,6 @@ class PeakNotAcceptedError(Exception):
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 class MetaDynamicsSampler:
     """
     Class for performing meta dynamics sampler

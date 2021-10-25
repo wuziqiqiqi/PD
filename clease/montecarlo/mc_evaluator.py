@@ -1,8 +1,8 @@
 from typing import Union
 import logging
 from ase import Atoms
-import clease
 from clease.datastructures import SystemChanges
+from clease.calculator import Clease
 
 __all__ = ('MCEvaluator', 'CEMCEvaluator', 'construct_evaluator')
 
@@ -104,7 +104,7 @@ class CEMCEvaluator(MCEvaluator):
     Assumes the attached calculator is a Clease Calculator"""
 
     def __init__(self, atoms: Atoms):
-        if not isinstance(atoms.calc, clease.calculator.Clease):
+        if not isinstance(atoms.calc, Clease):
             raise ValueError("Clease calculator must be attached to the atoms object "
                              "when using CEMCEvaluator")
         super().__init__(atoms)
@@ -112,7 +112,6 @@ class CEMCEvaluator(MCEvaluator):
     def get_energy(self, applied_changes: SystemChanges = None) -> float:
         return self.atoms.calc.get_energy()
 
-    # pylint: disable=no-self-use
     def reset(self) -> None:
         """Perform a reset on the evaluator and/or on the atoms"""
         self.atoms.calc.clear_history()
@@ -170,11 +169,10 @@ def _make_mc_evaluator_from_atoms(atoms: Atoms) -> MCEvaluator:
     """Construct a new MC Evaluator based on the calculator object attached to the Atoms object.
 
     Raises a ``RuntimeError`` is the Atoms object has no calculator."""
-
     calc = atoms.calc
     if calc is None:
         raise RuntimeError('Atoms object must have a calculator object.')
-    if isinstance(calc, clease.calculator.Clease):
+    if isinstance(calc, Clease):
         # Return the MC Evaluator specialized for the CLEASE calculator
         logger.debug('Constructed a new CE MC Evaluator.')
         return CEMCEvaluator(atoms)

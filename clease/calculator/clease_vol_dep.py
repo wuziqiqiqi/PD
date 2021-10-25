@@ -3,7 +3,7 @@ from ase import Atoms
 from ase.calculators.calculator import Calculator
 from clease.datastructures import SystemChange
 from clease.settings import ClusterExpansionSettings
-from clease.calculator import Clease
+from .clease import Clease
 
 
 class CleaseVolDep(Clease):

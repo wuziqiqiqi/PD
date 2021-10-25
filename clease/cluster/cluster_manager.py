@@ -92,6 +92,7 @@ class ClusterManager:
             Maximum distance between two atoms in a cluster,
             for each cluster body. The diameters start at 2-body clusters
         """
+        # pylint: disable=too-many-locals
         # Check if we already built the clusters with these settings
         if not self.requires_build(max_cluster_dia):
             return
@@ -243,7 +244,7 @@ class ClusterManager:
         template: Atoms
             Atoms object to use when creating the lookup table (LUT)
         """
-        lut = dict()
+        lut = {}
         pos = template.get_positions().copy()
         for i in range(pos.shape[0]):
             if self.is_background_atom(template[i]):

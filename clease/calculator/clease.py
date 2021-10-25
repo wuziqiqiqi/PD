@@ -5,17 +5,16 @@ from typing import Dict, Optional, TextIO, Union, List
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
+from clease_cxx import PyCEUpdater
 from clease.datastructures import SystemChange, SystemChanges
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
-from clease_cxx import PyCEUpdater
 
 
 class MovedIgnoredAtomError(Exception):
     """Raised when ignored atoms is moved."""
 
 
-# pylint: disable=too-few-public-methods
 class KeepChanges:
 
     def __init__(self):
@@ -78,6 +77,7 @@ class Clease(Calculator):
             if logfile == '-':
                 logfile = sys.stdout
             else:
+                # pylint: disable=consider-using-with
                 logfile = open(logfile, 'a')
         self.logfile = logfile
 

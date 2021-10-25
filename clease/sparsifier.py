@@ -1,10 +1,13 @@
 from typing import List, Tuple
+
+import numpy as np
+from matplotlib import pyplot as plt
+
 from clease.regression import LinearRegression
 from clease.tools import aicc
-import numpy as np
 
 
-class Sparsifier(object):
+class Sparsifier:
     """
     Sparsifier can be used to remove coefficicients that has very low values.
     """
@@ -62,7 +65,7 @@ class Sparsifier(object):
         min_num_features = 2
         removed = []
         X_masked = X.copy()
-        for i in range(X.shape[1] - min_num_features + 1):
+        for _ in range(X.shape[1] - min_num_features + 1):
             mask = [j for j in range(X.shape[1]) if j not in removed]
             X_masked = X[:, mask]
             coeff = fitter.fit(X_masked, y)
@@ -91,7 +94,6 @@ class Sparsifier(object):
         Returns: pyplot.Figure
             Figure object used to plot
         """
-        from matplotlib import pyplot as plt
         if not self._aicc:
             raise RuntimeError("Nothing to plot. Call sparsify first.")
 

@@ -1,5 +1,5 @@
-from clease.montecarlo import BiasPotential
 import numpy as np
+from .bias_potential import BiasPotential
 
 
 class RandomBiasWithMemory(BiasPotential):

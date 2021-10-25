@@ -1,14 +1,14 @@
-from ase.atoms import Atoms, Cell
+from typing import Tuple
 import spglib
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-from typing import Tuple
+from ase.atoms import Atoms, Cell
 from ase.geometry import find_mic
 
 __all__ = ('TransformInfo', 'StructureMapper')
 
 
-class TransformInfo(object):
+class TransformInfo:
     """
     Class for holding information about snap transformation
     """
@@ -22,7 +22,7 @@ class TransformInfo(object):
         return {'displacements': list(self.displacements), 'strain': list(self.strain)}
 
 
-class StructureMapper(object):
+class StructureMapper:
     """
     Class that refines a relaxed structure to a corresponding "ideal"
     lattice.
@@ -69,6 +69,7 @@ class StructureMapper(object):
         :param cell1: First cell
         :param cell2: Second cell
         """
+        # pylint: disable=no-self-use
         P = cell2.dot(np.linalg.inv(cell1))
         return 0.5 * (P.T.dot(P) - np.eye(3))
 
@@ -90,9 +91,9 @@ class StructureMapper(object):
         distances = np.zeros((len(atoms), len(template)))
         cell = template.get_cell()
         all_dist_vec = []
-        for i in range(len(atoms)):
-            for j in range(len(template)):
-                d = template[j].position - atoms[i].position
+        for atom in atoms:
+            for atom_template in template:
+                d = atom_template.position - atom.position
                 all_dist_vec.append(d)
         distVec, micDist = find_mic(all_dist_vec, cell)
         distances = micDist.reshape((len(atoms), len(template)))

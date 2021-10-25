@@ -1,8 +1,8 @@
-import numpy as np
 from typing import Dict, List
+import numpy as np
 
 
-class GramSchmidtMonimial(object):
+class GramSchmidtMonimial:
     """
     Class generates an orthogonal basis for an arbitrary number of
     elements.
@@ -59,7 +59,8 @@ class GramSchmidtMonimial(object):
         symbols = sorted(symbols)
         bf_list = []
         for bf in self.bf_values[1:]:
-            bf_list.append({s: v for s, v in zip(symbols, bf)})
+            bf_list.append(dict(zip(symbols, bf)))
+
         return bf_list
 
     def build(self):
@@ -79,9 +80,10 @@ class GramSchmidtMonimial(object):
         self.bf_values.append([1.0 for i in range(len(self.values))])
 
         # Loop over all basis functions
-        for bf1 in range(1, len(self.values)):
+        num_values = len(self.values)
+        for bf1 in range(1, num_values):
             new_bf_values = []
-            for i in range(len(self.values)):
+            for i in range(num_values):
                 new_bf_values.append(self.evaluate_monomial_basis_function(bf1, self.values[i]))
                 for bf2 in range(bf1):
                     new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2) \
@@ -91,7 +93,7 @@ class GramSchmidtMonimial(object):
 
             # Normalize
             bf_norm = self.norm(bf1)
-            for i in range(len(self.values)):
+            for i in range(num_values):
                 self.bf_values[bf1][i] /= bf_norm
 
     def dot(self, bf1: int, bf2: int) -> float:
@@ -128,9 +130,9 @@ class GramSchmidtMonimial(object):
             Integer specifying the orthonormal basis function
         """
         dot_prod = 0.0
-        for i in range(len(self.values)):
-            dot_prod += self.evaluate_monomial_basis_function(
-                monomial, self.values[i]) * self.bf_values[bf][i]
+        for i, value in enumerate(self.values):
+            dot_prod += (self.evaluate_monomial_basis_function(monomial, value) *
+                         self.bf_values[bf][i])
         return dot_prod / len(self.values)
 
     def norm(self, bf: List[float]) -> float:
@@ -171,4 +173,5 @@ class GramSchmidtMonimial(object):
         value:
             Value to be raised to the given power
         """
+        # pylint: disable=no-self-use
         return value**power

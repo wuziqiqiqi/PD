@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
-from clease.montecarlo.observers import MCObserver
+from .mc_observer import MCObserver
 
 logger = logging.getLogger(__name__)
 

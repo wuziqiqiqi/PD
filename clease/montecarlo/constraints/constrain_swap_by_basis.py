@@ -1,5 +1,5 @@
-from clease.montecarlo.constraints import MCConstraint
 import numpy as np
+from .mc_constraint import MCConstraint
 
 
 class ConstrainSwapByBasis(MCConstraint):

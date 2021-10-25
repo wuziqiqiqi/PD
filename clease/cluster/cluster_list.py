@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 __all__ = ('ClusterList',)
 
 
-# pylint: disable=too-many-public-methods
 class ClusterList:
 
     def __init__(self):

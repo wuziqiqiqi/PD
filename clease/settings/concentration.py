@@ -1,7 +1,7 @@
 """Class containing a manager for setting up concentrations of species."""
 from collections import OrderedDict
+from random import choice
 import numpy as np
-from numpy.random import choice
 from scipy.optimize import minimize
 from clease.jsonio import jsonable
 from clease.tools import (remove_redundant_constraints, remove_redundant_equations)
@@ -14,17 +14,14 @@ class IntConversionNotConsistentError(Exception):
     Exception raised if equality constraints are not satisfied when
     converted to integers.
     """
-    pass
 
 
 class InvalidConcentrationError(Exception):
     """Exception raised when no valid concentration could be found."""
-    pass
 
 
 class InvalidConstraintError(Exception):
     """Exception raised when user provides invalid constraints."""
-    pass
 
 
 # pylint: disable=too-many-instance-attributes
@@ -132,7 +129,7 @@ class Concentration:
             start_col += len(basis)
             self.b_eq[i] = 1
 
-        self._linked_basis = [i for i in range(len(self.basis_elements))]
+        self._linked_basis = list(range(len(self.basis_elements)))
         if num_usr_eq > 0:
             self.add_usr_defined_eq_constraints(A_eq, b_eq)
         self._get_interbasis_relations()
@@ -303,6 +300,7 @@ class Concentration:
 
     def _get_integers(self, string, variable_range=None):
         """Extract all the integers from a string."""
+        # pylint: disable=no-self-use,too-many-branches
         if variable_range is None:
             variable_symbols = []
         else:
@@ -314,7 +312,7 @@ class Concentration:
         active_sign = 1
         while current_indx < len(string):
             connected_to_symbol = False
-            if string[current_indx] in signs.keys():
+            if string[current_indx] in signs:
                 active_sign = signs[string[current_indx]]
             elif string[current_indx] == "<":
                 active_sign = 1
@@ -354,7 +352,7 @@ class Concentration:
         # Ensure valid chemical formula
         for _, value in sum_of_variable_coeff.items():
             if value != 0:
-                raise ValueError(f"Invalid formula! {string} " f"{sum_of_variable_coeff}")
+                raise ValueError(f"Invalid formula! {string} {sum_of_variable_coeff}")
         return integers
 
     def _num_atoms_in_basis(self, formulas, variable_range):
@@ -382,6 +380,7 @@ class Concentration:
             key is a string, and the value should be int or float
             e.g., {"x": (0, 2), "y": (0, 0.7)}, {'x': (0., 1.)}
         """
+        # pylint: disable=too-many-branches
         if formulas is None or variable_range is None:
             raise InvalidConstraintError("formula and variable range has to" " be provided!")
 
@@ -458,8 +457,9 @@ class Concentration:
         self._f_u_neq(variable_range, reference_elements, formulas)
 
     def _num_elements_with_var(self, variable_range, element_conc):
-        # count how many elements have their concentration specified with
-        # the passed variable.
+        """count how many elements have their concentration specified with
+        the passed variable."""
+        # pylint: disable=no-self-use
         num_elements_with_variable = {k: 0 for k in variable_range.keys()}
         for var in variable_range.keys():
             for basis_elem in element_conc:
@@ -500,6 +500,7 @@ class Concentration:
 
     def _reference_elements(self, element_conc, variables):
         """Return the reference element for each variable."""
+        # pylint: disable=no-self-use
         # reference element is the one that has its concentration specified
         # with a clean representation (e.g., <x> or <y>)
         ref_elem = {}
@@ -514,6 +515,7 @@ class Concentration:
 
     def _get_basis_containg_variable(self, formulas, variable_symbol):
         """Return index of the basis containing the passed varyable symbol."""
+        # pylint: disable=no-self-use
         for basis, formula in enumerate(formulas):
             if variable_symbol in formula:
                 return basis
@@ -543,6 +545,7 @@ class Concentration:
         string: str
             string of the following form 3x, 10y, 3z etc.
         """
+        # pylint: disable=no-self-use
         if not string[0].isdigit():
             return 1
 
@@ -570,7 +573,7 @@ class Concentration:
                     elements.append(split2[1])
                     math.append(split2[0])
             if elements != self.basis_elements[basis_num]:
-                raise ValueError("elements in 'formulas' and 'basis_elements' " "should match.")
+                raise ValueError("elements in 'formulas' and 'basis_elements' should match.")
             element_variable.append(OrderedDict(zip(elements, math)))
         return element_variable
 
@@ -683,7 +686,7 @@ class Concentration:
         return x
 
     def _get_interbasis_relations(self):
-        self._linked_basis = [i for i in range(len(self.basis_elements))]
+        self._linked_basis = list(range(len(self.basis_elements)))
         self._get_interbasis_relations_for_given_matrix(self.A_eq)
         self._get_interbasis_relations_for_given_matrix(self.A_lb)
 
@@ -929,6 +932,7 @@ def equality_constraint(x, vec, rhs):
 
 def eq_jac(x, vec, rhs):
     """Jacobian of the equalitu constraint equation."""
+    # pylint: disable=unused-argument
     return vec
 
 
@@ -940,4 +944,5 @@ def inequality_constraint(x, vec, rhs):
 
 def ineq_jac(x, vec, rhs):
     """Jacobian of the inequality constraint equations."""
+    # pylint: disable=unused-argument
     return vec

@@ -1,4 +1,5 @@
 """Module that fits ECIs to energy data."""
+# pylint: skip-file
 import os
 import sys
 import json

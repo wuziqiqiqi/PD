@@ -1,6 +1,6 @@
-from clease.montecarlo.observers import MCObserver
 import numpy as np
 from clease.montecarlo.averager import Averager
+from .mc_observer import MCObserver
 
 
 class SGCObserver(MCObserver):

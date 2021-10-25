@@ -10,14 +10,12 @@ from clease.structgen import structure_generator
 MSG = 'Import {} from clease.structgen.structure_generator instead'
 DEP_VERSION = '0.10.2'  # Deprecation version
 
-MODULE_DEP_MSG = ("""
-The clease.new_struct module has been moved as of version {}.
-Please use the clease.structgen.structure_generator module instead""".format(DEP_VERSION))
+MODULE_DEP_MSG = f"""
+The clease.new_struct module has been moved as of version {DEP_VERSION}.
+Please use the clease.structgen.structure_generator module instead"""
 
 # Print the message on import
 warn(MODULE_DEP_MSG, np.VisibleDeprecationWarning)
-
-# pylint: disable=too-few-public-methods
 
 
 @deprecated(version=DEP_VERSION, reason=MSG.format('StructureGenerator'))

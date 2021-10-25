@@ -16,14 +16,13 @@ class MCObserver:
             index 26 is swapped with an Al atom occupying the atomic index 12,
             system_change = [(26, Mg, Al), (12, Al, Mg)]
         """
-        pass
 
     def reset(self) -> None:
         """Reset all values of the MC observer"""
-        pass
 
     def get_averages(self) -> dict:
         """Return averages in the form of a dictionary."""
+        # pylint: disable=no-self-use
         return {}
 
     def calculate_from_scratch(self, atoms: Atoms) -> None:
@@ -31,7 +30,6 @@ class MCObserver:
         Method for calculating the tracked value from scratch
         (i.e. without using fast update methods)
         """
-        pass
 
     def interval_ok(self, interval: int) -> bool:
         """
@@ -41,4 +39,5 @@ class MCObserver:
         :param interval: Interval controlling how often a MC observer will be
             called.
         """
+        # pylint: disable=no-self-use, unused-argument
         return True

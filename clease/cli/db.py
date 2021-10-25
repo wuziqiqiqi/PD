@@ -26,7 +26,7 @@ def names(db_name):
 def cf(db_name, db_id):
     try:
         show_cf(db_name, db_id)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
         click.echo(f'An error occurred: {exc}')
 
 
@@ -38,12 +38,12 @@ def show_cf_tables(db_name: str):
 
 def show_cf_names(db_name: str):
     table = get_cf_tables(db_name)[0]
-    names = sorted(get_all_cf_names(db_name, table))
+    cf_names = sorted(get_all_cf_names(db_name, table))
     click.echo("Tracked correlation functions")
 
     line = ""
     char_per_line = 110
-    for name in names:
+    for name in cf_names:
         if len(line) + len(name) > char_per_line:
             click.echo(line)
             line = ""

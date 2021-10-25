@@ -13,16 +13,16 @@ import numpy as np
 from ase.db import connect
 from ase import Atoms
 
-import clease
+from clease.version import __version__
 from clease.jsonio import jsonable
 from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
-from clease.template_atoms import TemplateAtoms
-from clease import AtomsManager
 from clease.cluster import ClusterManager
-from clease.template_filters import ValidConcentrationFilter
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
-from . import Concentration
+from .concentration import Concentration
+from .template_filters import ValidConcentrationFilter
+from .template_atoms import TemplateAtoms
+from .atoms_manager import AtomsManager
 
 __all__ = ('ClusterExpansionSettings',)
 
@@ -523,7 +523,7 @@ class ClusterExpansionSettings:
             >>> dct = settings.todict()  # Get the dictionary representation
         """
         vars_to_save = self.ARG_KEYS + self.KWARG_KEYS + self.OTHER_KEYS
-        dct = {'clease_version': clease.version.__version__}
+        dct = {'clease_version': __version__}
         for key in vars_to_save:
             val = getattr(self, key)
             dct[key] = val
@@ -548,8 +548,8 @@ class ClusterExpansionSettings:
         version = dct.pop('clease_version', None)
         if version is None or LooseVersion(version) < LooseVersion('0.10.2'):
             # For backwards compatibility
-            # pylint: disable=import-outside-toplevel
-            from clease.settings.utils import old_settings_from_json
+            # pylint: disable=import-outside-toplevel, cyclic-import
+            from .utils import old_settings_from_json
             return old_settings_from_json(dct)
 
         # Get the args and kwargs we expect in our function signature
@@ -632,15 +632,15 @@ def _format_max_cluster_dia(max_cluster_dia, max_cluster_size=None):
 def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
 
     # User specified an old version of MCS and MCD
-    dep_msg = """
+    dep_msg = f"""
     max_cluser_size should no longer be specfied explicitly,
     and max_cluster_dia should no longer be an int or float.
 
     Specify cluster sizes with max_cluster_dia as an array-like instead.
-    Got max_cluster_size '{}' and max_cluster_dia '{}'. Try instead
-    to use max_cluster_dia as an array, e.g. max_cluster_dia=[5., 5., 5.]
+    Got max_cluster_size '{max_cluster_size}' and max_cluster_dia '{max_cluster_dia}'.
+    Try instead to use max_cluster_dia as an array, e.g. max_cluster_dia=[5., 5., 5.]
     for 2-, 3- and 4-body clusters of cutoff 5 Å.
-    """.format(max_cluster_size, max_cluster_dia)
+    """
 
     @deprecated(version='0.10.6', reason=dep_msg)
     def _formatter():
@@ -662,8 +662,7 @@ def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
             mcd = np.ones(max_cluster_size - 1, dtype=float) * max_cluster_dia
         # Case for *None* or something else
         else:
-            raise TypeError("max_cluster_dia is of wrong type, got: {}".format(
-                type(max_cluster_dia)))
+            raise TypeError(f"max_cluster_dia is of wrong type, got: {type(max_cluster_dia)}")
         return mcd.round(decimals=3)
 
     return _formatter()

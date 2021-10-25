@@ -1,4 +1,4 @@
-from clease.montecarlo.observers import MCObserver
+from .mc_observer import MCObserver
 
 
 class ConcentrationObserver(MCObserver):

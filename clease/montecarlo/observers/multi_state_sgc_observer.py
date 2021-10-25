@@ -1,8 +1,8 @@
 from typing import List, Dict, Tuple
 from ase.units import kB
 import numpy as np
-from clease.montecarlo.observers import MCObserver
 from clease.calculator import Clease
+from .mc_observer import MCObserver
 
 
 class SGCState:
