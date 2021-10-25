@@ -1,5 +1,18 @@
 # yet another python formatter
 repos:
+
+  - repo: git://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+      - id: check-yaml
+      - id: trailing-whitespace  # Remove trailing whitespaces
+      - id: end-of-file-fixer  # Ensure we have newline at end of file
+
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.9
+    hooks:
+      - id: flake8
+
   - repo: local
     hooks:
       # yapf = yet another python formatter
@@ -23,8 +36,3 @@ repos:
         language: system
         types: [python]
         exclude: *exclude_files
-
-  - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v1.1.1
-    hooks:
-      - id: check-yaml
