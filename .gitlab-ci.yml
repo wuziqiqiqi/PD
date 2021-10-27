@@ -85,3 +85,31 @@ pytest:py38:
   <<: *manual_test
   script:
     - tox -e py38
+
+# Build as many linux wheels as we can. Only to be triggered manually.
+# This takes a while, and performs no uploads to PyPI, only to gitlab.
+linux_wheels:
+  # Based on https://cibuildwheel.readthedocs.io/en/stable/setup/#gitlab-ci
+  stage: Deploy
+  when: manual
+  image: python:3.8
+  # make a docker daemon available for cibuildwheel to use
+  services:
+    - name: docker:dind
+      entrypoint: ["env", "-u", "DOCKER_HOST"]
+      command: ["dockerd-entrypoint.sh"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+    # See https://github.com/docker-library/docker/pull/166
+    DOCKER_TLS_CERTDIR: ""
+    # Only build CPython 3.6-3.9, no PyPy, only manylinux
+    CIBW_BUILD: cp{36,37,38,39}-manylinux*
+  script:
+    - curl -sSL https://get.docker.com/ | sh
+    - python -m pip install cibuildwheel==2.2.2
+    - cibuildwheel --output-dir wheelhouse
+  artifacts:
+    paths:
+      - wheelhouse/
+    expire_in: 2 weeks
