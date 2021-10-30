@@ -145,6 +145,7 @@ setup(
         'Deprecated',
         'click>=8.0.0',  # CLI things
         'attrs',
+        'scipy>=1.5.0',  # Last version which allows python 3.6
         # 'mypy',
     ],
     extras_require=EXTRAS_REQUIRE,
