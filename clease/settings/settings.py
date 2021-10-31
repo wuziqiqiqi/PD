@@ -5,7 +5,7 @@ Cluster Expansion in different conditions.
 """
 import logging
 from copy import deepcopy
-from typing import List, Dict, Optional, Union, Sequence, Set
+from typing import List, Dict, Optional, Union, Sequence, Set, Any
 from distutils.version import LooseVersion
 
 from deprecated import deprecated
@@ -543,7 +543,7 @@ class ClusterExpansionSettings:
         return dct
 
     @classmethod
-    def from_dict(cls, dct):
+    def from_dict(cls, dct: Dict[str, Any]) -> 'ClusterExpansionSettings':
         """Load a new ClusterExpansionSettings class from a dictionary representation.
 
         Example:
@@ -571,11 +571,20 @@ class ClusterExpansionSettings:
         # Should we allow for missing kwargs keys?
         kwargs = {key: dct.pop(key) for key in cls.KWARG_KEYS}
 
+        if 'max_cluster_size' in dct:
+            # For compatibility, since it's no longer in KWARG_KEYS
+            kwargs['max_cluster_size'] = dct.pop('max_cluster_size')
+
         settings = cls(*args, **kwargs)
 
-        # Populate the remaining keys
-        for key, value in dct.items():
+        for key in cls.OTHER_KEYS:
+            # Populate "other" keys, which aren't *args or **kwargs
+            value = dct.pop(key)
             setattr(settings, key, value)
+
+        if dct:
+            # We have some unexpected left-overs
+            logger.warning('Unused items from dictionary: %s', dct)
         return settings
 
     def clusters_table(self) -> str:

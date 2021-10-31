@@ -92,7 +92,6 @@ class ClusterManager:
             Maximum distance between two atoms in a cluster,
             for each cluster body. The diameters start at 2-body clusters
         """
-        # pylint: disable=too-many-locals
         # Check if we already built the clusters with these settings
         if not self.requires_build(max_cluster_dia):
             return
