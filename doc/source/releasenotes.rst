@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.10.7
+=======
+
 0.10.6
 =======
 * Fixed a bug in the :class:`clease.convexhull.ConvexHull` where multiple end-points wouldn't always find the
@@ -37,7 +40,7 @@ Release notes
 * Added convex hull plot, :func:`clease.plot_post_process.plot_convex_hull`
 * Fixed a bug in :meth:`clease.structgen.NewStructures.generate_gs_structures` where passing multiple atoms objects was failing
 * Structure generation of pure elements should now be using the smallest possible cell.
-* Alpha and CV values are now stored in the :class:`clease.evaluate.Evaluate` class after running 
+* Alpha and CV values are now stored in the :class:`clease.evaluate.Evaluate` class after running
   the :meth:`clease.evaluate.Evaluate.alpha_CV` function.
 * Added `doc` as an ``extras_require`` in ``setup.py``.
 * Other minor bugfixes
@@ -50,7 +53,7 @@ Release notes
 * Added release notes
 
 * Added the :mod:`clease.jsonio` module. This has been applied to the
-  :class:`clease.settings.ClusterExpansionSettings`, 
+  :class:`clease.settings.ClusterExpansionSettings`,
   :class:`clease.settings.Concentration` and
   :class:`clease.basis_function.BasisFunction` classes, providing them with
   :func:`save` and :func:`load` functions.
