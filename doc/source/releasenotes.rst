@@ -12,6 +12,7 @@ Release notes
   :meth:`~clease.settings.ClusterExpansionSettings.ensure_clusters_exist` can be used to ensure that the
   ``cluster_list`` and ``trans_matrix`` are constructed, but will not cause a reconstruction if they
   are cached.
+* Fixed a deprecation warning of ``normalize=True`` in sklearn's ``Lasso`` method.
 
 0.10.6
 =======
