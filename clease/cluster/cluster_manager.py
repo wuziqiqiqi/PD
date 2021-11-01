@@ -228,7 +228,7 @@ class ClusterManager:
                     unique.add(fv)
         return unique
 
-    def get_figures(self):
+    def get_figures(self) -> List[ase.Atoms]:
         """
         Return a list of atoms object representing the clusters
         """

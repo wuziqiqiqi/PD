@@ -3,6 +3,8 @@ import copy
 from typing import List, Dict
 import logging
 
+from ase import Atoms
+
 from clease.tools import flatten, dec_string, list2str
 from .cluster_generator import ClusterGenerator
 from .cluster import Cluster
@@ -174,8 +176,9 @@ class ClusterList:
         """Return all all subclusters of the passed cluster in the list."""
         return [c for c in self.clusters if c.is_subcluster(cluster)]
 
-    def get_figures(self, generator: ClusterGenerator):
-        figures = []
+    def get_figures(self, generator: ClusterGenerator) -> List[Atoms]:
+        """Get the figures (in their ASE Atoms object representation)"""
+        figures: List[Atoms] = []
         self.sort()
         # We want to skip c0 and c1 anyways
         used_names = {'c0', 'c1'}

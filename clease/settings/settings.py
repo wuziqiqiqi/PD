@@ -448,18 +448,13 @@ class ClusterExpansionSettings:
     @property
     def trans_matrix(self):
         """Get the translation matrix, will be created upon request"""
-        if self._trans_matrix is None:
-            logger.debug('Triggered construction of trans matrix')
-            self.create_cluster_list_and_trans_matrix()
+        self.ensure_clusters_exist()
         return self._trans_matrix
 
     @property
     def cluster_list(self):
         """Get the cluster list, will be created upon request"""
-        if self._cluster_list is None:
-            # No cached cluster list, create it
-            logger.debug('Triggered construction of cluster list')
-            self.create_cluster_list_and_trans_matrix()
+        self.ensure_clusters_exist()
         return self._cluster_list
 
     def clear_cache(self) -> None:
@@ -476,17 +471,35 @@ class ClusterExpansionSettings:
         self._cluster_list = self.cluster_mng.info_for_template(at_cpy)
         self._trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
 
-    def view_clusters(self):
+    def view_clusters(self) -> None:
         """Display all clusters along with their names."""
         # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
-        figures = self.cluster_mng.get_figures()
+        figures = self.get_all_figures_as_atoms()
         images = Images()
         images.initialize(figures)
         gui = GUI(images, expr='')
         gui.show_name = True
         gui.run()
+
+    def get_all_figures_as_atoms(self) -> List[Atoms]:
+        """Get the list of all possible figures, in their
+        ASE Atoms representation."""
+        self.ensure_clusters_exist()
+        return self.cluster_mng.get_figures()
+
+    def ensure_clusters_exist(self) -> None:
+        """Ensure the cluster list and trans matrix has been populated.
+        They are not calculated upon creaton of the settings instance,
+        for performance reasons. They will be constructed if required.
+        Nothing is done if the cache exists."""
+        if self._cluster_list is None or self._trans_matrix is None:
+            logger.debug('Triggered construction of clusters')
+            self.create_cluster_list_and_trans_matrix()
+            # It should not be possible for them to be None after this call.
+            assert self._cluster_list is not None
+            assert self._trans_matrix is not None
 
     def get_all_templates(self):
         """

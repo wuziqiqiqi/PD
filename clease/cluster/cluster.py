@@ -77,9 +77,9 @@ class Cluster:
     def get_figure(self, primitive: Atoms, index: int = 0) -> Atoms:
         """Get figure from a ClusterGenerator object"""
         figure_four_vec = self.figures[index]
-        positions = np.array([fv.to_cartesian(primitive) for fv in figure_four_vec])
+        positions = np.array([fv.to_cartesian(primitive) for fv in figure_four_vec.components])
         positions -= np.mean(positions, axis=0)
-        symbols = [primitive[fv.sublattice] for fv in figure_four_vec]
+        symbols = [primitive[fv.sublattice] for fv in figure_four_vec.components]
         return Atoms(symbols, positions=positions)
 
     def get_figure_key(self, figure: Sequence[int]) -> str:

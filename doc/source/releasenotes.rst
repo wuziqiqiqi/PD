@@ -6,6 +6,12 @@ Release notes
 
 0.10.7
 =======
+* Fixed :meth:`~clease.settings.ClusterExpansionSettings.view_clusters`, which broke in 0.10.6.
+* Adds :meth:`~clease.settings.ClusterExpansionSettings.ensure_clusters_exist` and
+  :meth:`~clease.settings.ClusterExpansionSettings.get_all_figures_as_atoms`.
+  :meth:`~clease.settings.ClusterExpansionSettings.ensure_clusters_exist` can be used to ensure that the
+  ``cluster_list`` and ``trans_matrix`` are constructed, but will not cause a reconstruction if they
+  are cached.
 
 0.10.6
 =======

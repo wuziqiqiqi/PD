@@ -1,4 +1,6 @@
+import copy
 import pytest
+from ase import Atoms
 from ase.build import bulk
 from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
 from clease.cluster import ClusterManager
@@ -188,3 +190,24 @@ def test_cluster_table(make_settings):
     res = settings.clusters_table()
     assert isinstance(res, str)
     print(res)
+
+
+def test_ensure_clusters_exist(make_settings):
+    settings = make_settings()
+    # No cluster list should exist yet
+    assert settings._cluster_list is None
+    settings.ensure_clusters_exist()
+    # We should've now triggered the cluster list creation
+    assert settings._cluster_list is not None
+    # Ensure a subsequential call has no effect
+    lst = settings._cluster_list
+    cpy = copy.deepcopy(lst)
+    settings.ensure_clusters_exist()
+    assert settings._cluster_list is lst
+    assert lst == cpy
+
+
+def test_get_all_figures(make_settings):
+    settings = make_settings()
+    figures = settings.get_all_figures_as_atoms()
+    assert all(isinstance(atoms, Atoms) for atoms in figures)
