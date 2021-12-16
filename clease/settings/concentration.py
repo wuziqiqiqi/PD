@@ -508,7 +508,7 @@ class Concentration:
             col = 0
             for basis_elem in element_conc:
                 for k, v in basis_elem.items():
-                    if v == variable and v not in ref_elem.keys():
+                    if v == variable and v not in ref_elem:
                         ref_elem[variable] = {"symbol": k, "col": col}
                     col += 1
         return ref_elem

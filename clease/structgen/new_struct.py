@@ -799,7 +799,7 @@ class NewStructures:
             new_count = {}
             for indx in group:
                 symbol = atoms[indx].symbol
-                if symbol not in new_count.keys():
+                if symbol not in new_count:
                     new_count[symbol] = 1
                 else:
                     new_count[symbol] += 1

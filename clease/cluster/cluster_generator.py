@@ -300,7 +300,7 @@ class SitesWithinCutoff:
         """
         if abs(cutoff - self.cutoff) > 1e-10:
             return True
-        return ref_lattice not in self.pre_calc.keys()
+        return ref_lattice not in self.pre_calc
 
     def get(self, cutoff: float, ref_lattice: int) -> List[FourVector]:
         """
