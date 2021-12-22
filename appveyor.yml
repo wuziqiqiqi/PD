@@ -11,17 +11,16 @@ install:
   - sh: "source ~/venv3.8/bin/activate"
   # Common Python install commands
   - "python --version"
-  - "python -m pip install wheel"
-  - "python -m pip install .[test]"
+  - "python -m pip install build tox"
 
 build: off
 
 test_script:
-  - "python -m pytest tests/"
+  - "tox -e current"
 
 after_test:
   # Build wheels
-  - "python -m pip wheel -w dist --no-deps ."
+  - "python -m build --wheel"
 
 artifacts:
   # Built wheels are in the dist directory

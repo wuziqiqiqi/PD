@@ -1,6 +1,6 @@
 import os
 from distutils.sysconfig import get_python_inc
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, Extension
 
 
 def src_folder():
@@ -36,12 +36,6 @@ def build_ext(ext_module):
     from Cython.Build import cythonize
     return cythonize(ext_module, compiler_directives={"language_level": "3"})
 
-
-# Get version number
-about = {}
-with open(os.path.join('clease', 'version.py')) as f:
-    exec(f.read(), about)
-version = about['__version__']
 
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
@@ -106,47 +100,6 @@ EXTRAS_REQUIRE['all'] = tuple(
     {package for key, tup in EXTRAS_REQUIRE.items() for package in tup if key != 'gui'})
 
 setup(
-    name="clease",
     ext_modules=build_ext(clease_cxx),
-    author=['J. H. Chang', 'D. Kleiven', 'A. S. Tygesen'],
-    author_email="jchang@dtu.dk, david.kleiven@ntnu.no, alexty@dtu.dk",
-    long_description=open('README.md').read(),
-    long_description_content_type='text/markdown',
-    url='https://gitlab.com/computationalmaterials/clease',
-    version=version,
-    description="CLuster Expansion in Atomistic Simulation Environment",
-    packages=find_packages(),
-    download_url='https://gitlab.com/computationalmaterials/clease/-/archive/v{0}/clease-v{0}.zip'.
-    format(version),
-    include_package_data=True,
-    license='MPL-2.0',
-    project_urls={
-        'Documentation': 'https://clease.readthedocs.org/',
-        'Source': 'https://gitlab.com/computationalmaterials/clease/',
-    },
-    keywords=['Cluster Expansion', 'Monte Carlo', 'Computational materials', 'Materials research'],
-    entry_points={'console_scripts': ['clease=clease.cli.main:clease_cli']},
-    classifiers=[
-        'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-    ],
-    install_requires=[
-        'ase>=3.20',
-        'numpy',
-        'cython',
-        'matplotlib',
-        'spglib',
-        'scikit-learn',
-        'typing_extensions',
-        'Deprecated',
-        'click>=8.0.0',  # CLI things
-        'attrs',
-        'scipy>=1.5.0',  # Last version which allows python 3.6
-        # 'mypy',
-    ],
     extras_require=EXTRAS_REQUIRE,
 )

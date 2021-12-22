@@ -24,18 +24,18 @@ author = 'J. H. Chang, D. Kleiven, A. S. Tygesen'
 
 # Get the version, we don't want to do an explicit CLEASE import here
 about = {}
-# Get the version.py file
-verisonpy = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'clease',
-                         'version.py')
 
-with open(verisonpy, 'r') as f:
-    exec(f.read(), about)
-clease_version = about['version_info']
+CLEASE_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'clease')
+# Get the _version.txt file
+with open(os.path.join(CLEASE_ROOT, '_version.txt'), 'r') as f:
+    clease_version = f.readline().strip()
+
+version_split = clease_version.split('.')
 
 # The short X.Y version
-version = '.'.join(map(str, clease_version[:-1]))
+version = '.'.join(version_split[:2])
 # The full version, including alpha/beta/rc tags
-release = '.'.join(map(str, clease_version))
+release = clease_version
 
 # -- General configuration ---------------------------------------------------
 

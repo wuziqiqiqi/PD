@@ -1,4 +1,5 @@
 global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv *.png pyproject.toml
+include clease/_version.txt
 
 setup.py:
 
