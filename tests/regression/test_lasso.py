@@ -21,7 +21,7 @@ from clease.regression import Lasso
     'Y': [10, 31, 12]
 }])
 def test_fit(data):
-    sk_lasso = sklearn.linear_model.Lasso(alpha=1, fit_intercept=True, copy_X=True, max_iter=1e6)
+    sk_lasso = sklearn.linear_model.Lasso(alpha=1, fit_intercept=False, copy_X=True, max_iter=1e6)
     cl_lasso = Lasso(alpha=1)
 
     sk_lasso.fit(data['X'], data['Y'])

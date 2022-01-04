@@ -68,7 +68,7 @@ class LinearRegression:
 
     @staticmethod
     def get_scalar_parameter():  # pragma: no cover
-        raise ValueError("Fitting scheme is not described by a scalar " "parameter!")
+        raise ValueError("Fitting scheme is not described by a scalar parameter!")
 
     @property
     def support_fast_loocv(self):
@@ -201,7 +201,7 @@ class Lasso(LinearRegression):
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on LASSO regularizeation."""
-        lasso = skLasso(alpha=self.alpha, copy_X=True, max_iter=1e6)
+        lasso = skLasso(alpha=self.alpha, fit_intercept=False, copy_X=True, max_iter=1e6)
         lasso.fit(X, y)
         return lasso.coef_
 
