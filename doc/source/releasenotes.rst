@@ -13,6 +13,7 @@ Release notes
   ``cluster_list`` and ``trans_matrix`` are constructed, but will not cause a reconstruction if they
   are cached.
 * Fixed a deprecation warning of ``normalize=True`` in sklearn's ``Lasso`` method.
+* Added a benchmarking suite in the tests directory.
 
 0.10.6
 =======
