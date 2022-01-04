@@ -77,6 +77,10 @@ EXTRAS_REQUIRE = {
         'pytest',
         'pytest-mock',
         'mock',
+        # Get the histrogram extras, for making nice histogram plots
+        # with pytest-benchmark
+        'pytest-benchmark[histogram]>=3.4.1',
+        'tox>=3.24.0',
     ),
     # Extra nice-to-haves when developing CLEASE
     'dev': (
@@ -88,7 +92,6 @@ EXTRAS_REQUIRE = {
         'yapf',
         'pylint',
         'pyclean>=2.0.0',  # For removing __pycache__ and .pyc files
-        'tox~=3.24.0',
         'pytest-cov',
         'build',
     ),

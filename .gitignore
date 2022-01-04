@@ -30,3 +30,4 @@ demo_save.json
 # Profiling
 prof/
 .tox/
+.benchmarks/

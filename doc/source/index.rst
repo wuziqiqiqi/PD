@@ -36,7 +36,7 @@ Installation can also be done through `conda`_ via the `conda-forge <https://con
 project:
 
 .. code-block:: bash
-   
+
    conda install -c conda-forge clease
 
 .. note::
@@ -85,6 +85,7 @@ The use of CLEASE is best learned through tutorials:
    clease_cli
    import_structures
    api_doc
+   benchmarking
    publications
    acknowledgements
 
