@@ -10,7 +10,7 @@
                     max_cluster_dia=[6.0, 4.5, 4.5])
 
 .. _aucu_initial_pool:
-.. module:: clease.new_struct
+.. module:: clease.structgen.new_struct
 
 
 Generating initial structures
@@ -26,7 +26,7 @@ CE model are generated using :class:`NewStructures` class, which contains
 several methods for generating structures. The initial pool of structures is
 generated using :meth:`generate_initial_pool` method as
 
->>> from clease import NewStructures
+>>> from clease.structgen import NewStructures
 >>> ns = NewStructures(settings, generation_number=0, struct_per_gen=10)
 >>> ns.generate_initial_pool()
 
@@ -74,7 +74,7 @@ As we have generated only two structures for training, we can generate more
 random structures using :meth:`generate_random_structures` method by altering
 the above script with
 
->>> from clease import NewStructures
+>>> from clease.structgen import NewStructures
 >>> ns = NewStructures(settings, generation_number=0,
 ...                    struct_per_gen=10)
 >>> ns.generate_random_structures()

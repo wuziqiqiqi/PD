@@ -1,6 +1,5 @@
 import json
 
-from deprecated import deprecated
 from ase import Atoms
 from clease import basis_function as bf
 from .concentration import Concentration
@@ -8,7 +7,7 @@ from .settings import ClusterExpansionSettings
 from .settings_bulk import CEBulk, CECrystal
 from .settings_slab import CESlab
 
-__all__ = ("settings_from_json", "settingsFromJSON")
+__all__ = ("settings_from_json",)
 
 
 def settings_from_json(fname):
@@ -65,8 +64,3 @@ def old_settings_from_json(fname):
     elif name == "binary_linear":
         settings.basis_func_type = bf.BinaryLinear(**bf_dict)
     return settings
-
-
-@deprecated(version="0.10.0", reason='You should use "settings_from_json" instead')
-def settingsFromJSON(fname):
-    return settings_from_json(fname)

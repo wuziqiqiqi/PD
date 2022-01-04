@@ -1,5 +1,5 @@
 .. _aucu_concentration:
-.. module:: clease.concentration
+.. module:: clease.settings.concentration
 
 Specify the concentration ranges of species
 ===========================================
@@ -84,7 +84,7 @@ specified using ``A_lb`` and ``b_lb`` arguments as
 >>> from clease.settings import Concentration
 >>> conc = Concentration(basis_elements=[['Au', 'Cu']], A_lb=[[2, 0]], b_lb=[1])
 
-A list of many examples on how linear systems equations can be used, is found 
+A list of many examples on how linear systems equations can be used, is found
 :doc:`here </linsys_examples>`.
 
 The second method is to specify the concentration range using formula unit
@@ -111,4 +111,3 @@ constrained to :math:`0 \leq x \leq 0.5`.
 
 .. autoclass:: Concentration
   :members: set_conc_formula_unit, set_conc_ranges
-

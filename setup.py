@@ -104,10 +104,7 @@ EXTRAS_REQUIRE = {
     "gui": ("clease-gui",),
 }
 # Make an entry which installs all of the above in one go
-# Separate out "gui" from "all"
-EXTRAS_REQUIRE["all"] = tuple(
-    {package for key, tup in EXTRAS_REQUIRE.items() for package in tup if key != "gui"}
-)
+EXTRAS_REQUIRE["all"] = tuple({package for key, tup in EXTRAS_REQUIRE.items() for package in tup})
 
 setup(
     ext_modules=build_ext(clease_cxx),

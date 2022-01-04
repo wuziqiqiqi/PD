@@ -154,9 +154,8 @@ def test_random_spacegroup_four_vector():
 
         # Transformation matrix
         P = rng.integers(1, 3, size=(3, 3))
-        P[1, 0] = P[2, 0] = P[
-            2, 1
-        ] = 0  # Set elements below diagonal to zero (avoid issues with singular)
+        # Set elements below diagonal to zero (avoid issues with singular)
+        P[1, 0] = P[2, 0] = P[2, 1] = 0
 
         supercell = make_supercell(prim, P)
 

@@ -1,13 +1,13 @@
 """Test case for the multiprocessing logger."""
+import pytest
 import multiprocessing as mp
 from clease.mp_logger import MultiprocessHandler
 import logging as lg
 import os
-import unittest
 
 if __name__ != "__main__":
     msg = "Pickle error when file is not top level module"
-    raise unittest.SkipTest(msg)
+    pytest.skip(msg, allow_module_level=True)
 
 log_file = "mp_logger_test.txt"
 logger = lg.getLogger(__name__)

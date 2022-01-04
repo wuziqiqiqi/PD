@@ -1,5 +1,4 @@
-#image: python:latest
-image: python:3.9
+image: python:latest
 
 before_script:
   - python3 --version
@@ -60,12 +59,6 @@ python3_test_slow:
   <<: *manual_test
 
 # Some optional tests for older python versions
-pytest:py36:
-  image: python:3.6
-  <<: *manual_test
-  script:
-    - tox -e py36
-
 pytest:py37:
   image: python:3.7
   <<: *manual_test
@@ -77,6 +70,12 @@ pytest:py38:
   <<: *manual_test
   script:
     - tox -e py38
+
+pytest:py39:
+  image: python:3.9
+  <<: *manual_test
+  script:
+    - tox -e py39
 
 # Build as many linux wheels as we can. Only to be triggered manually.
 # This takes a while, and performs no uploads to PyPI, only to gitlab.
@@ -95,8 +94,8 @@ linux_wheels:
     DOCKER_DRIVER: overlay2
     # See https://github.com/docker-library/docker/pull/166
     DOCKER_TLS_CERTDIR: ""
-    # Only build CPython 3.6-3.9, no PyPy, only manylinux
-    CIBW_BUILD: cp{36,37,38,39}-manylinux*
+    # Only build CPython 3.7-3.10, no PyPy, only manylinux
+    CIBW_BUILD: cp{37,38,39,310}-manylinux*
   script:
     - curl -sSL https://get.docker.com/ | sh
     - python -m pip install cibuildwheel==2.3.1

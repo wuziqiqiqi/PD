@@ -1,5 +1,5 @@
 Structure Generation
 =====================
 
-.. automodule:: clease
+.. automodule:: clease.structgen
     :members: NewStructures

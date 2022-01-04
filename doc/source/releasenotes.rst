@@ -6,6 +6,8 @@ Release notes
 
 0.11.0
 =======
+* Python 3.7+ is now required.
+* Removed old deprecated functions and classes.
 
 0.10.9
 =======
