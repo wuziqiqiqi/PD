@@ -1,5 +1,9 @@
 # pylint: disable=import-outside-toplevel
+from tkinter import TclError
 from matplotlib import pyplot as plt
+from ase.db import connect
+from ase.gui.gui import GUI
+from ase.gui.images import Images
 
 
 class InteractivePlot:
@@ -81,32 +85,26 @@ class InteractivePlot:
 class ShowStructureOnClick(InteractivePlot):
 
     def __init__(self, fig, ax, lines, names, db_name):
-        from ase.gui.gui import GUI
-        from ase.gui.images import Images
         self.db_name = db_name
         self.active_images = Images()
-        self.gui = GUI(self.active_images)
-        # self.gui.run()
+        # Uninitilized GUI. We don't create this until we click,
+        # since we otherwise just open a new empty GUI window.
+        self.gui = None
         fig.canvas.mpl_connect("button_press_event", self.on_click)
-        InteractivePlot.__init__(self, fig, ax, lines, names)
+        super().__init__(fig, ax, lines, names)
 
     def on_click(self, event):
-        from ase.db import connect
-        from ase.gui.gui import GUI
-        try:
-            from tkinter import TclError
-        except ImportError:
-            # Python 2
-            from Tkinter import TclError
 
         if event.inaxes != self.ax:
             return
 
         if event.button == 1:
-            try:
-                self.gui.exit()
-            except TclError:
-                pass
+            if self.gui is not None:
+                # Try to close the existing GUI, if we already opened one
+                try:
+                    self.gui.exit()
+                except TclError:
+                    pass
             db = connect(self.db_name)
             atoms = []
 
@@ -121,5 +119,6 @@ class ShowStructureOnClick(InteractivePlot):
             for row in db.select(name=name):
                 atoms.append(row.toatoms())
             self.active_images.initialize(atoms)
+            # Create a new GUI instance and run it
             self.gui = GUI(self.active_images)
             self.gui.run()

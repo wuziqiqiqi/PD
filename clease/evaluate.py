@@ -133,7 +133,7 @@ class Evaluate:
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
 
-        ids = get_ids(select_cond, settings.db_name)
+        ids = get_ids(self.select_cond, settings.db_name)
         with connect(settings.db_name) as db:
             cur = db.connection.cursor()
             self.names = get_attribute(ids, cur, "name", "text_key_values")
@@ -177,7 +177,7 @@ class Evaluate:
             fitting_scheme = fitting_scheme.lower()
             self.scheme_string = fitting_scheme
             if fitting_scheme not in allowed_fitting_schemes:
-                raise ValueError(f"Fitting scheme has to be one of " f"{allowed_fitting_schemes}")
+                raise ValueError(f"Fitting scheme has to be one of {allowed_fitting_schemes}")
             if fitting_scheme in ["ridge", "tikhonov", "l2"]:
                 from clease.regression import Tikhonov
                 self.scheme = Tikhonov(alpha=alpha)
@@ -293,7 +293,7 @@ class Evaluate:
         with open(full_fname, 'w') as outfile:
             json.dump(self.get_eci_dict(), outfile, indent=2, separators=(",", ": "))
 
-    def plot_fit(self, interactive=True, savefig=False, fname=None, show_hull=True):
+    def plot_fit(self, interactive=False, savefig=False, fname=None, show_hull=True):
         """Plot calculated (DFT) and predicted energies for a given alpha.
 
         Paramters:
@@ -469,11 +469,21 @@ class Evaluate:
             cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
 
             fig.suptitle("Convex hull DFT (o), CE (x)")
+            ax_list = fig.axes
+            ax_cnv = ax_list[0]
+            if interactive:
+                lines = ax_cnv.get_lines()
+                # lines[0] => DFT points
+                # lines[3] => CE points
+                data_points = (lines[0], lines[3])
 
-            if savefig:
-                fig.savefig(prefix + "_cnv_hull.png")
+                annotations = [self.names, self.names]
+                ShowStructureOnClick(fig, ax_cnv, data_points, annotations, db_name)
             else:
-                plt.show()
+                if savefig:
+                    fig.savefig(prefix + "_cnv_hull.png")
+                else:
+                    plt.show()
 
     @property
     def atomic_concentrations(self):
