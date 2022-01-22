@@ -17,7 +17,7 @@ from clease.mp_logger import MultiprocessHandler
 from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
-from clease.tools import add_file_extension
+from clease.tools import add_file_extension, sort_cf_names
 
 __all__ = ("Evaluate",)
 
@@ -104,9 +104,9 @@ class Evaluate:
         self.settings = settings
         self.prop = prop
         if cf_names is None:
-            self.cf_names = sorted(self.settings.all_cf_names)
+            self.cf_names = sort_cf_names(self.settings.all_cf_names)
         else:
-            self.cf_names = sorted(cf_names)
+            self.cf_names = sort_cf_names(cf_names)
         self.num_elements = settings.num_elements
         self.scoring_scheme = scoring_scheme
 

@@ -1,5 +1,6 @@
 import logging
 from typing import Tuple, List, Dict, Set, Optional, Sequence
+from collections import defaultdict
 import sqlite3
 from abc import ABC, abstractmethod
 from itertools import combinations_with_replacement as cwr
@@ -374,8 +375,9 @@ class CorrelationFunctionGetter(FeatureGetter):
         :param ids: Database IDs of initial structures
         """
         sql = f"SELECT * FROM {self.tab_name}"
-        id_cf_values = {}
-        id_cf_names = {}
+        # Format: {id1: {name1: cf_value1, name2: cf_value2, ...}, ...}
+        # Use defaultdict, so we don't have to manually instantiate each sub-dict.
+        id_cf_dct = defaultdict(dict)
 
         id_set = set(ids)
 
@@ -390,14 +392,10 @@ class CorrelationFunctionGetter(FeatureGetter):
             # a monotone sequence of ints
             for name, value, db_id in cur.fetchall():
                 if db_id in id_set and self._extract_cf_name(name):
-                    cur_row = id_cf_values.get(db_id, [])
-                    names = id_cf_names.get(db_id, [])
+                    id_cf_dct[db_id][name] = value
 
-                    cur_row.append(value)
-                    names.append(name)
-
-                    id_cf_values[db_id] = cur_row
-                    id_cf_names[db_id] = names
+        # Dictionary of just the names belonging to each ID
+        id_cf_names = {i: list(v.keys()) for i, v in id_cf_dct.items()}
 
         if not self._is_matrix_representable(id_cf_names):
             min_set = self._minimum_common_cf_set(id_cf_names)
@@ -410,24 +408,20 @@ class CorrelationFunctionGetter(FeatureGetter):
             raise InconsistentDataError(msg)
 
         if self.cf_names is None:
-            self.cf_names = set(v for item in id_cf_names.values() for v in item)
-            self.cf_names = list(self.cf_names)
-            self.cf_names = sort_cf_names(self.cf_names)
+            # No pre-existing CF names list was provided,
+            # so we construct it from what was in the DB
+            tmp = list(set(v for item in id_cf_names.values() for v in item))
+            self.cf_names = sort_cf_names(tmp)
 
-        # Make sure that all the rows are ordered in the same way
-        cf_name_col = {n: i for i, n in enumerate(self.cf_names)}
-
-        cf_matrix = np.zeros((len(id_cf_values), len(cf_name_col)))
-        row = 0
+        cf_matrix = np.zeros((len(id_cf_dct), len(self.cf_names)))
 
         # Convert the correlation function dictionary to a numpy 2D array
         # such that is can be passed to a fitting algorithm
         for row, db_id in enumerate(ids):
-            cf_values = id_cf_values[db_id]
-            cf_names = id_cf_names[db_id]
-            cols = [cf_name_col[name] for name in cf_names]
-            cf_matrix[row, :] = np.array(cf_values)[cols]
-            row += 1
+            cf_dct = id_cf_dct[db_id]
+            # Retreive all of the CF values by name, and insert into matrix
+            # Ensures ordering is preserved. Missing values are set to 0.
+            cf_matrix[row, :] = [cf_dct.get(name, 0.0) for name in self.cf_names]
 
         if self.order > 1:
             cf_matrix = self._include_higher_order(cf_matrix)
