@@ -238,4 +238,4 @@ def test_meta(fast_settings):
         assert tab_name.endswith('_cf')
         assert db_util.MetaTableKeys.TIME in table
         assert db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION in table
-        assert table[db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION] == clease.__version__
+        assert table[db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION] == str(clease.__version__)

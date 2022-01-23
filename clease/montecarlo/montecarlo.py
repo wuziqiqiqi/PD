@@ -198,7 +198,7 @@ class Montecarlo(BaseMC):
         """Return dict with meta info."""
         ts = time.time()
         st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        clease_version = __version__
+        clease_version = str(__version__)
         v_info = sys.version_info
         meta_info = {
             "timestamp": st,

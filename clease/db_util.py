@@ -2,7 +2,7 @@ import logging
 from collections import defaultdict
 from typing import List, Dict, Set, Sequence, Union
 from datetime import datetime
-from distutils.version import LooseVersion
+from packaging.version import parse, Version
 import numpy as np
 import ase
 from ase.db import connect
@@ -109,8 +109,8 @@ def require_reconfigure_table(ase_connection: _CONNECTION, table_name: str, *ids
             # Configured prior to 0.10.1
             # or not a CLEASE database
             return True
-        vers = LooseVersion(value)
-        if vers < LooseVersion('0.10.1'):
+        vers = parse(value)
+        if vers < Version('0.10.1'):
             # 0.10.1 introduced a change, requiring a reconfigure
             return True
     return False  # We're up-to-date
@@ -122,7 +122,7 @@ def _make_meta_for_table(**kwargs) -> _TABLE:
 
     meta = {}
     now = datetime.now().strftime('%H:%M:%S %d-%m-%Y')  # Store a timestamp of the config
-    version = __version__
+    version = str(__version__)
     meta.update({
         MetaTableKeys.TIME: now,
         MetaTableKeys.CLEASE_CONFIGURE_VERSION: version,

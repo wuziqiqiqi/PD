@@ -11,6 +11,9 @@ Release notes
 * No longer opens an extra unnecessary GUI window with interactive plots.
 * Fixed a bug with the fingerprint grouping, where the relative tolerance would reduce the
   numerical sensitivity too much.
+* Now uses the ``packaging`` package for managing version numbers
+  and comparisons. Removes usage of the deprecated distutils version comparisons.
+
 
 0.10.7
 =======

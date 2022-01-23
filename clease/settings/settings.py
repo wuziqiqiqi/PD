@@ -6,7 +6,7 @@ Cluster Expansion in different conditions.
 import logging
 from copy import deepcopy
 from typing import List, Dict, Optional, Union, Sequence, Set, Any
-from distutils.version import LooseVersion
+from packaging.version import Version, parse
 
 from deprecated import deprecated
 import numpy as np
@@ -536,7 +536,7 @@ class ClusterExpansionSettings:
             >>> dct = settings.todict()  # Get the dictionary representation
         """
         vars_to_save = self.ARG_KEYS + self.KWARG_KEYS + self.OTHER_KEYS
-        dct = {'clease_version': __version__}
+        dct = {'clease_version': str(__version__)}
         for key in vars_to_save:
             val = getattr(self, key)
             dct[key] = val
@@ -559,7 +559,7 @@ class ClusterExpansionSettings:
         """
         dct = deepcopy(dct)
         version = dct.pop('clease_version', None)
-        if version is None or LooseVersion(version) < LooseVersion('0.10.2'):
+        if version is None or parse(version) < Version('0.10.2'):
             # For backwards compatibility
             # pylint: disable=import-outside-toplevel, cyclic-import
             from .utils import old_settings_from_json
