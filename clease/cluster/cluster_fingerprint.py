@@ -50,7 +50,9 @@ class ClusterFingerprint:
 
         if len(self.fp) != len(other.fp):
             return False
-        return np.allclose(self.fp, other.fp, atol=self.tol)
+        # We disable rtol, as it is otherwise messing with the numerical
+        # accuracy we're trying to achieve.
+        return np.allclose(self.fp, other.fp, atol=self.tol, rtol=0)
 
     def __getitem__(self, i):
         return self.fp[i]

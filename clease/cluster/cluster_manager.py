@@ -157,7 +157,7 @@ class ClusterManager:
         self.clusters.sort()
 
     @staticmethod
-    def _get_names(all_fps):
+    def _get_names(all_fps: Sequence[ClusterFingerprint]):
         """
         Give a consistent name to all clusters
 
@@ -171,7 +171,7 @@ class ClusterManager:
         # where names where per by size
         # names = name_clusters(all_fps)
 
-        sizes = set(size(fp) for fp in all_fps)
+        sizes = sorted(set(size(fp) for fp in all_fps))
         names = [None for _ in all_fps]
         for s in sizes:
             fps = []
