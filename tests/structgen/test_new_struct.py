@@ -264,10 +264,13 @@ def test_unique_name(db_name):
 @pytest.fixture
 def new_struct_factory(db_name):
 
-    def _new_struct_factory(basis_elements, crystalstructure, **kwargs):
+    def _new_struct_factory(basis_elements,
+                            crystalstructure,
+                            check_db=True,
+                            **kwargs) -> NewStructures:
         conc = Concentration(basis_elements=basis_elements)
         settings = CEBulk(conc, crystalstructure=crystalstructure, db_name=db_name, **kwargs)
-        return NewStructures(settings)
+        return NewStructures(settings, check_db=check_db)
 
     return _new_struct_factory
 
@@ -313,3 +316,20 @@ def test_make_conc_extrema_two_basis(new_struct_factory):
         assert len(sym_set) == 2
         assert 'Fe' in sym_set  # We only have 1 element in the second basis, always there
         assert sym_set.issubset({'Au', 'Ag', 'Fe'})
+
+
+def test_check_db(new_struct_factory):
+    """Test we can circumvent the DB check"""
+    basis_elements = [["Au", "Ag"]]
+    crystalstructure = "fcc"
+    new_struct: NewStructures = new_struct_factory(basis_elements,
+                                                   crystalstructure,
+                                                   a=4,
+                                                   check_db=True)
+    settings = new_struct.settings
+    atoms = settings.prim_cell * (2, 2, 2)
+    assert not new_struct._exists_in_db(atoms)
+    new_struct.insert_structure(atoms)
+    assert new_struct._exists_in_db(atoms)
+    new_struct.check_db = False
+    assert not new_struct._exists_in_db(atoms)

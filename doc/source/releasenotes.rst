@@ -12,6 +12,7 @@ Release notes
   can be used to get arbitrary properties stored as key-value pairs in the database.
   Use the ``prop`` keyword in the :class:`~clease.evaluate.Evaluate` class to use
   this feature.
+* Added the ``check_db`` keyword to :class:`~clease.structgen.new_struct.NewStructures`
 
 0.10.8
 =======

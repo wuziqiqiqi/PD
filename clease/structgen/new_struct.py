@@ -55,12 +55,18 @@ class NewStructures:
         generated structure
 
     :param struct_per_gen: Number of structures to generate per generation
+
+    :check_db: Should a new structure which is being inserted into the database be checked
+        against pre-existing structures? Should only be disabled if you know what you are doing.
+        Default is ``True``.
     """
 
     def __init__(self,
                  settings: ClusterExpansionSettings,
                  generation_number: int = None,
-                 struct_per_gen: int = 5) -> None:
+                 struct_per_gen: int = 5,
+                 check_db: bool = True) -> None:
+        self.check_db = check_db
         self.settings = settings
         self.db = connect(settings.db_name)
         self.corrfunc = CorrFunction(self.settings)
@@ -631,7 +637,8 @@ class NewStructures:
             count_final = count_atoms(final)
             for key, value in count_final.items():
                 if key not in count_init:
-                    raise ValueError("Final and initial structure contains " "different elements")
+                    raise ValueError("Final and initial structure contains "
+                                     "different elements")
 
                 if count_init[key] != value:
                     raise ValueError("Final and initial structure has "
@@ -716,6 +723,9 @@ class NewStructures:
             in DB.
         :formula_unit: Reduced formula unit of the passed Atoms object
         """
+        if not self.check_db:
+            # No comparison was requested, so short-circuit the symmetry check
+            return False
         cond = [('name', '!=', 'template'), ('name', '!=', 'primitive_cell')]
         if formula_unit is not None:
             cond.append(("formula_unit", "=", formula_unit))
