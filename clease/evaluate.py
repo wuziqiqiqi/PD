@@ -14,7 +14,7 @@ from clease.settings import ClusterExpansionSettings
 from clease.regression import LinearRegression
 from clease.mp_logger import MultiprocessHandler
 from clease.tools import singlets2conc, get_ids, get_attribute
-from clease.data_manager import CorrFuncEnergyDataManager
+from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
 from clease.tools import add_file_extension
 
@@ -30,30 +30,34 @@ class Evaluate:
 
     :param settings: ClusterExpansionSettings object
 
-    cf_names: list
+    :param prop: str
+        User defined property for the fit. The property should exist in
+        database as key-value pairs. Default is ``energy``.
+
+    :param cf_names: list
         Names of clusters to include in the evalutation.
         If None, all of the possible clusters are included.
 
-    select_cond: tuple or list of tuples (optional)
+    :param select_cond: tuple or list of tuples (optional)
         Custom selection condition specified by user.
         Default only includes "converged=True" and
         "struct_type='initial'".
 
-    max_cluster_size: int
+    :param max_cluster_size: int
         maximum number of atoms in the cluster to include in the fit.
         If ``None``, no restriction on the number of atoms will be imposed.
 
-    max_cluster_dia: float or int
+    :param max_cluster_dia: float or int
         maximum diameter of the cluster (in angstrom) to include in the fit.
         If ``None``, no restriction on the diameter. Note that this diameter of
         the circumscribed sphere, which is slightly different from the meaning
         of max_cluster_dia in `ClusterExpansionSettings` where it refers to the
         the maximum internal distance between any of the atoms in the cluster.
 
-    scoring_scheme: str
+    :param scoring_scheme: str
         should be one of 'loocv', 'loocv_fast' or 'k-fold'
 
-    min_weight: float
+    :param min_weight: float
         Weight given to the data point furthest away from any structure on the
         convex hull. An exponential weighting function is used and the decay
         rate is calculated as
@@ -63,11 +67,11 @@ class Evaluate:
         where sim_measure is a similarity measure used to asses how different
         the structure is from structures on the convex hull.
 
-    nsplits: int
+    :param nsplits: int
         Number of splits to use when partitioning the dataset into
         training and validation data. Only used when scoring_scheme='k-fold'
 
-    num_repetitions: int
+    :param num_repetitions: int
         Number of repetitions used to use when calculating k-fold cross
         validation. The partitioning is repeated num_repetitions times
         and the resulting value is the average of the k-fold cross
@@ -76,6 +80,7 @@ class Evaluate:
 
     def __init__(self,
                  settings,
+                 prop="energy",
                  cf_names=None,
                  select_cond=None,
                  parallel=False,
@@ -94,6 +99,7 @@ class Evaluate:
             raise TypeError(msg)
 
         self.settings = settings
+        self.prop = prop
         if cf_names is None:
             self.cf_names = sorted(self.settings.all_cf_names)
         else:
@@ -129,7 +135,7 @@ class Evaluate:
         # TODO: At a later stage we might want to pass the data manager as an
         # argument since Evaluate does not depend on the details on how the
         # data was optained
-        self.dm = CorrFuncEnergyDataManager(settings.db_name, tab_name, self.cf_names)
+        self.dm = make_corr_func_data_manager(self.prop, settings.db_name, tab_name, self.cf_names)
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
 

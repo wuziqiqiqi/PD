@@ -1,5 +1,4 @@
 import pytest
-import os
 import numpy as np
 from numpy.random import shuffle
 from ase.db import connect
@@ -9,8 +8,7 @@ from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 import clease
 from clease import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
-from clease.data_manager import (FinalVolumeGetter, CorrelationFunctionGetterVolDepECI,
-                                 InconsistentDataError, CorrelationFunctionGetter)
+import clease.data_manager as dm
 from clease.tools import update_db
 
 
@@ -69,7 +67,7 @@ def test_corr_final_energy(manager_func, expect_header, make_tempfile, simple_db
         cf = {k: 1.0 for k in cf_names}
         clease.db_util.new_row_with_single_table(db, Atoms(), 'cf_func', cf, converged=True)
 
-    with pytest.raises(InconsistentDataError):
+    with pytest.raises(dm.InconsistentDataError):
         X, y = manager.get_data([('converged', '=', 1)])
 
 
@@ -115,7 +113,7 @@ def test_get_cols(simple_db):
 @pytest.fixture
 def shuffled_db(db_name):
     """
-    Initialized a database where the entries are shuffled for the 
+    Initialized a database where the entries are shuffled for the
     'test_consistent_order' test.
     """
     with connect(db_name) as db:
@@ -183,9 +181,9 @@ def test_final_volume_getter(db_name):
             N = len(init_struct)
             expected_volumes.append(final_struct.get_volume() / N)
 
-    final_vol_getter = FinalVolumeGetter(db_name)
+    final_vol_getter = dm.FinalVolumeGetter(db_name)
     ids = list(range(1, 21, 2))
-    volumes = final_vol_getter(ids)
+    volumes = final_vol_getter.get_property(ids)
     assert np.allclose(expected_volumes, volumes)
 
 
@@ -212,10 +210,10 @@ def test_cf_vol_dep_eci(db_name):
             volumes.append(final_struct.get_volume() / len(final_struct))
             db.write(final_struct)
 
-    cf_getter = CorrelationFunctionGetterVolDepECI(db_name,
-                                                   'cf', ['c0', 'c1_1'],
-                                                   order=2,
-                                                   properties=['energy', 'pressure'])
+    cf_getter = dm.CorrelationFunctionGetterVolDepECI(db_name,
+                                                      'cf', ['c0', 'c1_1'],
+                                                      order=2,
+                                                      properties=['energy', 'pressure'])
 
     X, y = cf_getter.get_data([('converged', '=', 1)])
 
@@ -310,7 +308,7 @@ def test_cf_vol_dep_eci(db_name):
     'min_common': set(['abc', 'ghi'])
 }])
 def test_is_matrix_representable(test):
-    getter = CorrelationFunctionGetter
+    getter = dm.CorrelationFunctionGetter
 
     assert getter._is_matrix_representable(test['id_cf_names']) == test['matrix_repr']
 
@@ -339,8 +337,8 @@ def test_cf_second_order(db_name):
                                                        struct_type='initial')
         ids.append(uid)
 
-    getter = CorrelationFunctionGetter(db_name, 'polynomial_cf', order=2)
-    X = getter(ids)
+    getter = dm.CorrelationFunctionGetter(db_name, 'polynomial_cf', order=2)
+    X = getter.get_property(ids)
     expect = np.array([[1.0, 1.0, 2.0, 1.0, 2.0, 4.0], [1.0, 2.0, 4.0, 4.0, 8.0, 16.0]])
     assert np.allclose(X, expect)
 
@@ -365,6 +363,28 @@ def test_cf_reconfig_required(db_name):
         uid = db.write(Atoms(), external_tables={'polynomial_cf': cf}, struct_type='initial')
         ids.append(uid)
 
-    getter = CorrelationFunctionGetter(db_name, 'polynomial_cf', order=2)
+    getter = dm.CorrelationFunctionGetter(db_name, 'polynomial_cf', order=2)
     with pytest.raises(clease.db_util.OutOfDateTable):
-        X = getter(ids)
+        getter.get_property(ids)
+
+
+@pytest.mark.parametrize('prop, data', [
+    ('my_custom_key', [100, 150, 175.21]),
+    ('something_else', [200, 300, 400, 1, 2]),
+])
+def test_get_prop_getter(db_name, prop, data):
+    db = connect(db_name)
+    ids = []
+    # Build the dataset - an initial which points to a final.
+    # the "final" holds the actual property
+    for val in data:
+        kwargs = {prop: val}
+        # Write the "final" with the desired property
+        uid = db.write(Atoms(), **kwargs)
+        # Write the "initial" which points to the final
+        uid = db.write(Atoms(), final_struct_id=uid)
+        ids.append(uid)  # Collect the "initial" ids
+
+    getter = dm.FinalStructPropertyGetter(db_name, prop)
+    X = getter.get_property(ids)
+    assert pytest.approx(X) == data

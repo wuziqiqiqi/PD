@@ -8,6 +8,10 @@ Release notes
 =======
 * Now caches the CF names if requesting every CF name.
   Chops off some of the computation time during a full reconfigure.
+* Introduces a new :class:`~clease.data_manager.FinalStructPropertyGetter`, which
+  can be used to get arbitrary properties stored as key-value pairs in the database.
+  Use the ``prop`` keyword in the :class:`~clease.evaluate.Evaluate` class to use
+  this feature.
 
 0.10.8
 =======
@@ -18,7 +22,6 @@ Release notes
   numerical sensitivity too much.
 * Now uses the ``packaging`` package for managing version numbers
   and comparisons. Removes usage of the deprecated distutils version comparisons.
-
 
 0.10.7
 =======

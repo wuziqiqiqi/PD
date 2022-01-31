@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import random
+import copy
+import shutil
 
 import pytest
 import numpy as np
@@ -122,8 +124,8 @@ def make_module_tempfile(tmpdir_factory):
 
 
 @pytest.fixture(scope='module')
-def bc_setting(make_module_tempfile):
-    db_name = make_module_tempfile('temp_db.db')
+def module_bc_setting(make_module_tempfile):
+    db_name = make_module_tempfile('module_temp_db.db')
     basis_elements = [['Au', 'Cu']]
     conc = Concentration(basis_elements=basis_elements)
     settings = CEBulk(concentration=conc,
@@ -142,7 +144,21 @@ def bc_setting(make_module_tempfile):
             atoms.calc = calc
             atoms.get_potential_energy()
             update_db(uid_initial=row.id, final_struct=atoms, db_name=db_name)
-    yield settings
+    return settings
+
+
+@pytest.fixture()
+def bc_setting(make_tempfile, module_bc_setting):
+    """A default test setup with AuCu. Makes a copy of the module-wide
+    fixture."""
+    settings = copy.deepcopy(module_bc_setting)
+    session_temp_db = make_tempfile("session_temp_db.db")
+    settings.db_name = session_temp_db
+
+    # Make a copy of the old database, so we do not alter the original
+    # but the test is allowed to alter this database however it sees fit.
+    shutil.copyfile(module_bc_setting.db_name, session_temp_db)
+    return settings
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import os
 import json
+import random
 import pytest
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
@@ -36,9 +37,9 @@ def make_eval_with_bkg(bkg_ref_settings):
 def bkg_ref_settings(make_tempfile):
     """
     This fixture creates two equivalent settings, one has two sub-lattices with one of
-    them being the background (occupied by a single specie). The other settings contains 
-    the same structures as the first one but only has one sub-lattice (fcc). 
- 
+    them being the background (occupied by a single specie). The other settings contains
+    the same structures as the first one but only has one sub-lattice (fcc).
+
     They should generate identical correlation functions if the background is simply ignored.
     """
     db_name_bkg = make_tempfile('temp_db_bkg_double.db')
@@ -350,3 +351,21 @@ def test_bkg_ignore_consistency(make_eval_with_bkg):
         concs_bkg.pop('Ag')
         # The atomic density with the background should be half of that with the background removed
         assert {specie: conc * 2 for specie, conc in concs_bkg.items()} == concs_nobkg
+
+
+def test_custom_prop(bc_setting):
+    # Make a database, with some noise in as a custom property
+    # we want to fit
+    db_name = bc_setting.db_name
+    con = connect(db_name)
+    expected = []
+    for row in con.select(struct_type="final"):
+        value = random.random()
+        con.update(row.id, dummy=value)
+        expected.append(value)
+    assert len(expected) > 0  # we should've found some structures
+    # Test we can make the evaluate class
+    eva = Evaluate(bc_setting, prop="dummy")
+
+    # Currently, the "property" is just "e_dft"
+    assert eva.e_dft == pytest.approx(expected)

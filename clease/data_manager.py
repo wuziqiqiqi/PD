@@ -1,6 +1,7 @@
 import logging
-from typing import Tuple, List, Dict, Set, Optional, Callable, Sequence
+from typing import Tuple, List, Dict, Set, Optional, Sequence
 import sqlite3
+from abc import ABC, abstractmethod
 from itertools import combinations_with_replacement as cwr
 import numpy as np
 from ase.db import connect
@@ -11,14 +12,48 @@ logger = logging.getLogger(__name__)
 
 __all__ = ('InconsistentDataError', 'DataManager', 'CorrFuncEnergyDataManager',
            'CorrelationFunctionGetter', 'CorrFuncVolumeDataManager',
-           'CorrelationFunctionGetterVolDepECI')
+           'CorrelationFunctionGetterVolDepECI', 'FinalStructPropertyGetter',
+           'make_corr_func_data_manager')
 
 
 class InconsistentDataError(Exception):
     """Data is inconsistent"""
 
 
-class DataManager:
+class PropertyGetter(ABC):
+    """Base class for getting a property from the database"""
+
+    def __init__(self, db_name: str):
+        self.db_name = db_name
+
+    @abstractmethod
+    def get_property(self, ids: Sequence[int]) -> np.ndarray:
+        """Return the properties of all structures which matches the criteria"""
+
+    def connect(self, **kwargs):
+        """Return an ASE connection to the database"""
+        return connect(self.db_name, **kwargs)
+
+
+class FeatureGetter(PropertyGetter, ABC):
+    """A base class for getting features, e.g. correlation functions"""
+
+    @property
+    @abstractmethod
+    def names(self) -> Sequence[str]:
+        """Return a name for each feature"""
+
+
+class TargetGetter(PropertyGetter, ABC):
+    """A base class for getting targets, e.g. energy per atom"""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Return the name of the target property"""
+
+
+class DataManager(ABC):
     """
     DataManager is a class for extracting data from CLEASE databases to be
     used to fit ECIs
@@ -33,8 +68,14 @@ class DataManager:
         self._feat_names = None
         self._target_name = None
 
-    def get_data(self, select_cond: List[tuple], feature_getter: Callable[[List[int]], np.ndarray],
-                 target_getter: Callable[[List[int]], np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
+    @abstractmethod
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Return the design matrix X and the target data y
+        """
+
+    def _get_data_from_getters(self, select_cond: List[tuple], feature_getter: FeatureGetter,
+                               target_getter: TargetGetter) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix X and the target data y
 
@@ -42,16 +83,10 @@ class DataManager:
             (e.g. [('converged', '='' True)])
 
         :param feature_getter:
-            Callable object that returns design matrix. It
-            also needs a method get_feature_names that returns a name of
-            each feature. The passed instance should take a list of IDs
-            as input argument and return a numpy array corresponding to
-            the design matrix
+            Instance of a FeatureGetter object that returns design matrix.
 
         :param target_getter:
-            Callable object that extracts the target value. The __call__
-            method takes a list of ids in the database and return a numpy
-            array with the target values (e.g. energy per atom)
+            Instance of a TargetGetter object that extracts the target value (e.g. energy per atom)
 
         Example:
 
@@ -84,8 +119,8 @@ class DataManager:
         ids = get_ids(select_cond, self.db_name)
 
         # Extract design matrix and the target values
-        cfm = feature_getter(ids)
-        target = target_getter(ids)
+        cfm = feature_getter.get_property(ids)
+        target = target_getter.get_property(ids)
 
         self._X = np.array(cfm, dtype=float)
         self._y = np.array(target)
@@ -195,13 +230,60 @@ class CorrFuncEnergyDataManager(DataManager):
             (e.g. [('converged', '=', True)])
         """
         # pylint: disable=arguments-differ
-        return DataManager.get_data(
-            self, select_cond,
+        return self._get_data_from_getters(
+            select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
             FinalStructEnergyGetter(self.db_name))
 
 
-class CorrelationFunctionGetter:
+class CorrFuncPropertyDataManager(DataManager):
+    """
+    CorrFuncFinalEnergyDataManager is a convenience class provided
+    to handle the standard case where the features are correlation functions
+    and the target is the user defined property (eg: bandgap, distortion etc)
+    which is in the databse as key-value-pair.
+
+    :param db_name: Name of the database being passed
+
+    :param cf_names: List with the correlation function names to extract
+
+    :param tab_name: Name of the table where the correlation functions are
+        stored
+
+    :param order: Order of the correlation function. Default 1.
+
+    :prop: User given property
+    """
+
+    def __init__(
+        self,
+        prop: str,
+        db_name: str,
+        tab_name: str,
+        cf_names: Optional[List[str]] = None,
+        order: int = 1,
+    ) -> None:
+        super().__init__(db_name)
+        self.tab_name = tab_name
+        self.cf_names = cf_names
+        self.order = order
+        self.prop = prop
+
+    def get_data(self, select_cond: List[tuple]) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Return X and y, where X is the design matrix containing correlation
+        functions and y is the DFT energy per atom.
+
+        :param select_cond: List with select conditions for the database
+            (e.g. [('converged', '=', True)])
+        """
+        return self._get_data_from_getters(
+            select_cond,
+            CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
+            FinalStructPropertyGetter(self.db_name, self.prop))
+
+
+class CorrelationFunctionGetter(FeatureGetter):
     """
     CorrelationFunctionGetter is a class that extracts
     the correlation functions from an AtomsRow object
@@ -223,9 +305,9 @@ class CorrelationFunctionGetter:
                  tab_name: str,
                  cf_names: Optional[List[str]] = None,
                  order: int = 1) -> None:
-        self.db_name = db_name
-        self.cf_names = cf_names
+        super().__init__(db_name)
         self.tab_name = tab_name
+        self.cf_names = cf_names
         self.order = order
 
     @property
@@ -270,7 +352,7 @@ class CorrelationFunctionGetter:
             common_cf = common_cf.intersection(v)
         return common_cf
 
-    def __call__(self, ids: List[int]) -> np.ndarray:
+    def get_property(self, ids: Sequence[int]) -> np.ndarray:
         """
         Extracts the design matrix associated with the database IDs. The first
         row in the matrix corresponds to the first item in ids, the second row
@@ -287,7 +369,7 @@ class CorrelationFunctionGetter:
 
         id_set = set(ids)
 
-        with connect(self.db_name) as db:
+        with self.connect() as db:
             self._check_version(db, *ids)
             cur = db.connection.cursor()
             cur.execute(sql)
@@ -368,7 +450,7 @@ class CorrelationFunctionGetter:
                 'Please reconfigure your database, e.g. using "clease.reconfigure(settings)".')
 
 
-class FinalStructEnergyGetter:
+class FinalStructEnergyGetter(TargetGetter):
     """
     FinalStructEnergyGetter is a callable class that returns the final energy
     (typically after structure relaxation) corresponding to the passed
@@ -377,14 +459,11 @@ class FinalStructEnergyGetter:
     :param db_name: Name of the database
     """
 
-    def __init__(self, db_name: str) -> None:
-        self.db_name = db_name
-
     @property
     def name(self):
         return "E_DFT (eV/atom)"
 
-    def __call__(self, ids: List[int]) -> np.ndarray:
+    def get_property(self, ids: Sequence[int]) -> np.ndarray:
         """
         Extract the final energy of the ids passed. In the returned array, the
         first energy corresponds to the first item in ids, the second energy
@@ -398,7 +477,7 @@ class FinalStructEnergyGetter:
         # Map beetween the initial structure and the index in the id list
         init_struct_idx = {idx: i for i, idx in enumerate(ids)}
 
-        with connect(self.db_name) as db:
+        with self.connect() as db:
             cur = db.connection.cursor()
             cur.execute(sql)
             final_struct_ids = []
@@ -426,21 +505,73 @@ class FinalStructEnergyGetter:
         return energies
 
 
-class FinalVolumeGetter:
+class FinalStructPropertyGetter(TargetGetter):
+    """
+    FinalStructPropertyGetter is a class that returns the user defined property
+    value corresponding to the passed AtomsRow object.
+    The user defined property should be located in the *final* atoms row.
+
+    :param db_name: Name of the database
+    """
+
+    def __init__(self, db_name: str, prop: str) -> None:
+        super().__init__(db_name)
+        self.prop = prop
+
+    @property
+    def name(self):
+        return f"Property: {self.prop}"
+
+    def get_property(self, ids: Sequence[int]) -> np.ndarray:
+        """
+        Extract the property of the ids passed.
+
+        :param ids: Database ids of initial structures
+        """
+        sql = "SELECT value, id FROM number_key_values "
+        sql += "WHERE key='final_struct_id'"
+        id_set = set(ids)
+        # Map beetween the initial structure and the index in the id list
+        init_struct_idx = {idx: i for i, idx in enumerate(ids)}
+
+        with self.connect() as db:
+            cur = db.connection.cursor()
+            cur.execute(sql)
+            final_struct_ids = []
+
+            # Map the between final struct id and initial struct id
+            init_struct_ids = {}
+            for final_id, init_id in cur.fetchall():
+                if init_id in id_set:
+                    final_struct_ids.append(final_id)
+                    init_struct_ids[final_id] = init_id
+
+            final_struct_ids = set(final_struct_ids)
+            sql = f"SELECT id, value FROM number_key_values WHERE key='{self.prop}'"
+            cur.execute(sql)
+            prop_values = np.zeros(len(final_struct_ids))
+
+            # Populate the property array
+            for final_id, prop_value in cur.fetchall():
+                if final_id in final_struct_ids:
+                    init_id = init_struct_ids[final_id]
+                    idx = init_struct_idx[init_id]
+                    prop_values[idx] = prop_value
+        return prop_values
+
+
+class FinalVolumeGetter(TargetGetter):
     """
     Class that extracts the final volume per atom of the relaxed structure
 
     :param db_name: Name of the database
     """
 
-    def __init__(self, db_name: str) -> None:
-        self.db_name = db_name
-
     @property
     def name(self):
         return "Volume (A^3)"
 
-    def __call__(self, ids: List[int]) -> np.ndarray:
+    def get_property(self, ids: Sequence[int]) -> np.ndarray:
         """
         Extracts the final volume of the ids passed. In the returned array,
         the first volume corresponds to the first item in ids, the second
@@ -454,7 +585,7 @@ class FinalVolumeGetter:
 
         init_ids = {}
         id_idx = {db_id: i for i, db_id in enumerate(ids)}
-        with connect(self.db_name) as db:
+        with self.connect() as db:
             cur = db.connection.cursor()
             cur.execute(query)
             final_struct_ids = []
@@ -528,8 +659,8 @@ class CorrFuncVolumeDataManager(DataManager):
             (e.g. [('converged', '=', True)])
         """
         # pylint: disable=arguments-differ
-        return DataManager.get_data(
-            self, select_cond,
+        return self._get_data_from_getters(
+            select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
             FinalVolumeGetter(self.db_name))
 
@@ -607,13 +738,13 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
                                               self.tab_name,
                                               self.cf_names,
                                               order=self.cf_order)
-        cf = cf_getter(ids)
+        cf = cf_getter.get_property(ids)
 
         volume_getter = FinalVolumeGetter(self.db_name)
-        volumes = volume_getter(ids)
+        volumes = volume_getter.get_property(ids)
 
         energy_getter = FinalStructEnergyGetter(self.db_name)
-        energies = energy_getter(ids)
+        energies = energy_getter.get_property(ids)
 
         target_values = [energies]
         target_val_names = ['energy']
@@ -748,9 +879,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             target vector will be extracted for rows matching the passed
             condition.
         """
-        # pylint: disable=arguments-differ
         ids = get_ids(select_cond, self.db_name)
-
         self.build(ids)
         return self._X, self._y
 
@@ -759,3 +888,12 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         Return the group of each rows.
         """
         return self._groups
+
+
+def make_corr_func_data_manager(prop: str, db_name: str, tab_name: str, cf_names: Sequence[str],
+                                **kwargs) -> DataManager:
+    """Helper function for creating a correlation function data manager"""
+    if prop.lower() == "energy":
+        return CorrFuncEnergyDataManager(db_name, tab_name, cf_names, **kwargs)
+    # Assume it's a property data manager
+    return CorrFuncPropertyDataManager(prop, db_name, tab_name, cf_names, **kwargs)
