@@ -17,17 +17,25 @@ class ClusterList:
 
     def __init__(self):
         self._clusters = []
+        # Format of the names cache: {num_bf: names}
+        self._all_cf_name_cache: Dict[int, List[str]] = {}
 
     @property
     def clusters(self) -> List[Cluster]:
         return self._clusters
 
-    def append(self, cluster: Cluster):
+    def append(self, cluster: Cluster) -> None:
         self.clusters.append(cluster)
+        self.clear_cache()
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the content."""
         self.clusters.clear()
+        self.clear_cache()
+
+    def clear_cache(self) -> None:
+        """Clear any cached results."""
+        self._all_cf_name_cache.clear()
 
     @property
     def names(self) -> List[str]:
@@ -91,13 +99,27 @@ class ClusterList:
 
         :param num_bf: Number of basis functions
         """
+        if num_bf in self._all_cf_name_cache:
+            # Finding all the CF names can be rather expensive, so
+            # we use cached results if possible
+            logger.debug("Found a cached result for all cf names for %s num bf", num_bf)
+            return self._all_cf_name_cache[num_bf]
+        # We havn't cached this name list yet, so we need to build it
+        logger.debug("Building all CF names for %s num bf", num_bf)
+        all_cf = self._build_all_cf_names(num_bf)
+        self._all_cf_name_cache[num_bf] = all_cf
+        return all_cf
+
+    def _build_all_cf_names(self, num_bf: int) -> List[str]:
+        if not isinstance(num_bf, int):
+            raise TypeError(f"Number of basis functions must be integer, got {num_bf}")
         all_cf_names = []
         for cluster in self.clusters:
             if cluster.name == 'c0':
                 all_cf_names.append('c0')
             else:
                 all_cf_names += self.get_cf_names(cluster, num_bf)
-        return sorted(list(set(all_cf_names)))
+        return sorted(set(all_cf_names))
 
     def __len__(self) -> int:
         return len(self.clusters)
@@ -124,12 +146,13 @@ class ClusterList:
     def sort(self):
         """Sort the internal cluster list"""
         self.clusters.sort()
+        # We clear this cache, as the ordering has changed, and hence also potentially
+        # the ordering of the cached results.
+        self.clear_cache()
 
     def get_sorted_list(self) -> 'ClusterList':
-        """Get a new instance of the ClusterList which is sorted.
-        Note that the new instance is only a shallow copy, so the internal cluster objects
-        are the same."""
-        new_list = copy.copy(self)
+        """Get a new instance of the ClusterList which is sorted."""
+        new_list = copy.deepcopy(self)
         new_list.sort()
         return new_list
 

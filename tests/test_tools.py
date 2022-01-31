@@ -18,27 +18,23 @@ def atoms():
     return bulk('Al', crystalstructure='sc', a=4.0)
 
 
-def test_equivalent_deco():
-    predict_result = [{
-        'deco': [1, 2, 3, 4],
-        'equiv_site': [[0, 1, 2]],
-        'result': [[1, 2, 3, 4], [1, 3, 2, 4], [2, 1, 3, 4], [2, 3, 1, 4], [3, 1, 2, 4],
-                   [3, 2, 1, 4]]
-    }, {
-        'deco': [1, 2, 3, 4],
-        'equiv_site': [[0, 3]],
-        'result': [[1, 2, 3, 4], [4, 2, 3, 1]],
-    }, {
-        'deco': [1, 2, 3, 4],
-        'equiv_site': [],
-        'result': [[1, 2, 3, 4]]
-    }]
-    method_result = []
-    for dict_list in predict_result:
-        method_result.append(equivalent_deco(dict_list['deco'], dict_list['equiv_site']))
-
-    for count, result_method in enumerate(method_result):
-        assert predict_result[count]['result'] == result_method
+@pytest.mark.parametrize('test', [{
+    'deco': [1, 2, 3, 4],
+    'equiv_site': [[0, 1, 2]],
+    'result': [[1, 2, 3, 4], [1, 3, 2, 4], [2, 1, 3, 4], [2, 3, 1, 4], [3, 1, 2, 4], [3, 2, 1, 4]]
+}, {
+    'deco': [1, 2, 3, 4],
+    'equiv_site': [[0, 3]],
+    'result': [[1, 2, 3, 4], [4, 2, 3, 1]],
+}, {
+    'deco': [1, 2, 3, 4],
+    'equiv_site': [],
+    'result': [[1, 2, 3, 4]]
+}])
+def test_equivalent_deco(test):
+    deco = test["deco"]
+    equiv_site = test["equiv_site"]
+    assert test["result"] == equivalent_deco(deco, equiv_site)
 
 
 def test_min_distance_from_facet():
