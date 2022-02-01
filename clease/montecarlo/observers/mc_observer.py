@@ -4,6 +4,7 @@ from ase import Atoms
 
 class MCObserver:
     """Base class for all MC observers."""
+
     name = "GenericObserver"
 
     def __call__(self, system_changes: List[Tuple[int, str, str]]):

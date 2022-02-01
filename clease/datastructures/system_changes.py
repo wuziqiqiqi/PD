@@ -2,7 +2,7 @@ from typing import NamedTuple, Sequence
 import typing
 import ase
 
-__all__ = ('SystemChange', 'SystemChanges')
+__all__ = ("SystemChange", "SystemChanges")
 
 
 class SystemChange(NamedTuple):
@@ -32,9 +32,16 @@ class SystemChange(NamedTuple):
 SystemChanges = Sequence[SystemChange]
 
 
-def get_inverted_changes(system_changes: SystemChanges) -> typing.Iterator[SystemChange]:
+def get_inverted_changes(
+    system_changes: SystemChanges,
+) -> typing.Iterator[SystemChange]:
     """Invert system changes by doing old_symbs -> new_symbs."""
-    yield from (SystemChange(index=change.index,
-                             old_symb=change.new_symb,
-                             new_symb=change.old_symb,
-                             name=change.name) for change in system_changes)
+    yield from (
+        SystemChange(
+            index=change.index,
+            old_symb=change.new_symb,
+            new_symb=change.old_symb,
+            name=change.name,
+        )
+        for change in system_changes
+    )

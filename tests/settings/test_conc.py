@@ -11,7 +11,7 @@ from clease.settings.concentration import InvalidConstraintError
 def testconc(make_conc):
     """Special test concentration, with a particular set of basis elements,
     for convenience"""
-    basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
+    basis_elements = [["Li", "Ru", "X"], ["O", "X"]]
 
     def _testconc(**kwargs):
         return make_conc(basis_elements, **kwargs)
@@ -45,7 +45,7 @@ def test_full_range(testconc):
 
 
 @pytest.mark.parametrize(
-    'A,b',
+    "A,b",
     [
         # Different length for A_eq and b_eq
         ([[1, 0, 0, 0, 1], [2, 3, 0, 1, 0]], [0]),
@@ -53,15 +53,16 @@ def test_full_range(testconc):
         ([[1, 1]], [0]),
         ([1, 0, 0, 0, 0], [0]),
         # Wrong dimension on the b vector
-        ([[1, 0, 0, 0, 0]], [[0, 1]])
-    ])
+        ([[1, 0, 0, 0, 0]], [[0, 1]]),
+    ],
+)
 def test_add_usr_constraints_exceptions(A, b, testconc):
     with pytest.raises(InvalidConstraintError):
         testconc().add_usr_defined_eq_constraints(A, b)
 
 
 @pytest.mark.parametrize(
-    'ranges',
+    "ranges",
     [
         # Wrong number of basis
         [[(0, 1), (0, 3)]],
@@ -70,30 +71,25 @@ def test_add_usr_constraints_exceptions(A, b, testconc):
         # Wrong bounds
         [[(0, 1), (0, 0.5), (-0.5, 2.1)], [(0, 1), (0, 1)]],
         # Wrong number of bounds
-        [[(0, 1), (0, 0.5), (0, 1, 0.5)], [(0, 1), (0, 1)]]
-    ])
+        [[(0, 1), (0, 0.5), (0, 1, 0.5)], [(0, 1), (0, 1)]],
+    ],
+)
 def test_set_conc_ranges_exceptions(ranges, testconc):
     with pytest.raises(InvalidConstraintError):
         testconc().set_conc_ranges(ranges)
 
 
 @pytest.mark.parametrize(
-    'kwargs',
+    "kwargs",
     [
         # Formula not passed
-        {
-            "variable_range": (0, 1)
-        },
+        {"variable_range": (0, 1)},
         # Variable range not passed
-        {
-            'formulas': []
-        },
+        {"formulas": []},
         # Wrong number of formulas
-        {
-            'formulas': [],
-            'variable_range': (0, 1)
-        }
-    ])
+        {"formulas": [], "variable_range": (0, 1)},
+    ],
+)
 def test_set_conc_formula_unit_exceptions(kwargs, testconc):
     """Test various cases which should raise InvalidConstraintError"""
     with pytest.raises(InvalidConstraintError):
@@ -101,12 +97,12 @@ def test_set_conc_formula_unit_exceptions(kwargs, testconc):
 
 
 def test_fixed_composition(make_conc):
-    basis_elements = [['Li', 'Ru'], ['O', 'X']]
+    basis_elements = [["Li", "Ru"], ["O", "X"]]
     A_eq = [[0, 3, 0, 0], [0, 0, 0, 2]]
     b_eq = [1, 1]
     conc = make_conc(basis_elements, A_eq=A_eq, b_eq=b_eq)
     rand = conc.get_random_concentration()
-    assert np.allclose(rand, np.array([2. / 3, 1. / 3, 0.5, 0.5]))
+    assert np.allclose(rand, np.array([2.0 / 3, 1.0 / 3, 0.5, 0.5]))
 
 
 def test_fix_Ru_composition(testconc):
@@ -124,7 +120,7 @@ def test_fix_Ru_composition(testconc):
 
 def test_conc_range(testconc):
     conc = testconc()
-    ranges = [[(0, 1), (1. / 3, 1. / 3), (0, 1)], [(2. / 3, 1), (0, 1)]]
+    ranges = [[(0, 1), (1.0 / 3, 1.0 / 3), (0, 1)], [(2.0 / 3, 1), (0, 1)]]
     conc.set_conc_ranges(ranges)
     rand = conc.get_random_concentration()
     sum1 = np.sum(rand[:3])
@@ -132,7 +128,7 @@ def test_conc_range(testconc):
     sum2 = np.sum(rand[3:])
     assert sum2 == approx(1)
     assert rand[1] == approx(1 / 3)
-    assert rand[3] > 2. / 3
+    assert rand[3] > 2.0 / 3
 
 
 def test_formula_unit1(testconc):
@@ -143,7 +139,7 @@ def test_formula_unit1(testconc):
 
 
 def test_formula_unit2(do_test_formulas):
-    basis_elements = [['Li', 'Ru', 'X'], ['O', 'X']]
+    basis_elements = [["Li", "Ru", "X"], ["O", "X"]]
     formulas = ["Li<x>Ru<1>X<2-x>", "O<3-y>X<y>"]
     variable_range = OrderedDict()
     variable_range["x"] = (0, 2)
@@ -159,7 +155,7 @@ def test_formula_unit2(do_test_formulas):
 
 
 def test_formula_unit3(do_test_formulas):
-    basis_elements = [['Li', 'V', 'X'], ['O', 'F']]
+    basis_elements = [["Li", "V", "X"], ["O", "F"]]
     formulas = ["Li<x>V<1>X<2-x>", "O<2>F<1>"]
     variable_range = OrderedDict({"x": (0, 2)})
 
@@ -173,8 +169,8 @@ def test_formula_unit3(do_test_formulas):
 
 
 def test_formula_unit4(do_test_formulas):
-    basis_elements = [['Al', 'Mg', 'Si']]
-    formulas = ['Al<4-4x>Mg<3x>Si<x>']
+    basis_elements = [["Al", "Mg", "Si"]]
+    formulas = ["Al<4-4x>Mg<3x>Si<x>"]
     variable_range = OrderedDict({"x": (0, 1)})
 
     A_eq = np.array([[1, 1, 1], [0, 1, -3]])
@@ -186,8 +182,8 @@ def test_formula_unit4(do_test_formulas):
 
 
 def test_formula_unit5(do_test_formulas):
-    basis_elements = [['Al', 'Mg', 'Si']]
-    formulas = ['Al<2-2x>Mg<x>Si<x>']
+    basis_elements = [["Al", "Mg", "Si"]]
+    formulas = ["Al<2-2x>Mg<x>Si<x>"]
     variable_range = OrderedDict({"x": (0, 1)})
     A_eq = np.array([[1, 1, 1], [0, -1, 1]])
     b_eq = np.array([1, 0])
@@ -199,8 +195,8 @@ def test_formula_unit5(do_test_formulas):
 
 
 def test_formula_unit6(do_test_formulas):
-    basis_elements = [['Al', 'Mg', 'Si', 'X']]
-    formulas = ['Al<3-x-2y>Mg<y>Si<y>X<x>']
+    basis_elements = [["Al", "Mg", "Si", "X"]]
+    formulas = ["Al<3-x-2y>Mg<y>Si<y>X<x>"]
     variable_range = {"x": (0, 1), "y": (0, 1)}
     A_eq = np.array([[1, 1, 1, 1], [0, -1, 1, 0]])
     b_eq = np.array([1, 0])
@@ -212,19 +208,35 @@ def test_formula_unit6(do_test_formulas):
 
 
 @pytest.mark.parametrize(
-    'basis_elements,kwargs,expect',
-    [([["Al", "Mg", "Si"], ["X", "O"], ["Ta", "Se"]
-      ], dict(
-          A_eq=[[1, 0, 0, -1, 0, 0, 0]],
-          b_eq=[0],
-          A_lb=[[0, 0, 1, 0, 0, -1, 0]],
-          b_lb=[0],
-      ), 1),
-     ([["Al", "Mg", "Si"], ["X", "O"], ["Ta", "Se"]], dict(A_lb=[[1, 0, 0, 1, 0, -1, 0]],
-                                                           b_lb=[0]), 1),
-     ([["Al", "Mg"], ["X", "O"], ["Ta", "Se"], ["Ta", "O"]],
-      dict(A_eq=[[1, 0, 0, 0, -1, 0, 0, 0]], b_eq=[0], A_lb=[[0, 0, 1, 0, 0, 0, 0, -1]],
-           b_lb=[0]), 2)])
+    "basis_elements,kwargs,expect",
+    [
+        (
+            [["Al", "Mg", "Si"], ["X", "O"], ["Ta", "Se"]],
+            dict(
+                A_eq=[[1, 0, 0, -1, 0, 0, 0]],
+                b_eq=[0],
+                A_lb=[[0, 0, 1, 0, 0, -1, 0]],
+                b_lb=[0],
+            ),
+            1,
+        ),
+        (
+            [["Al", "Mg", "Si"], ["X", "O"], ["Ta", "Se"]],
+            dict(A_lb=[[1, 0, 0, 1, 0, -1, 0]], b_lb=[0]),
+            1,
+        ),
+        (
+            [["Al", "Mg"], ["X", "O"], ["Ta", "Se"], ["Ta", "O"]],
+            dict(
+                A_eq=[[1, 0, 0, 0, -1, 0, 0, 0]],
+                b_eq=[0],
+                A_lb=[[0, 0, 1, 0, 0, 0, 0, -1]],
+                b_lb=[0],
+            ),
+            2,
+        ),
+    ],
+)
 def test_interlinked_basis(basis_elements, kwargs, expect, make_conc):
     conc = make_conc(basis_elements, **kwargs)
     linked = conc._linked_basis
@@ -233,7 +245,7 @@ def test_interlinked_basis(basis_elements, kwargs, expect, make_conc):
 
 
 @pytest.mark.parametrize(
-    'kwargs',
+    "kwargs",
     [
         # No kwargs
         dict(),
@@ -242,22 +254,23 @@ def test_interlinked_basis(basis_elements, kwargs, expect, make_conc):
         # Just A_eq and b_eq
         dict(A_eq=[[1, 1]], b_eq=[0.2]),
         # All use all 4
-        dict(A_lb=[[1, 1]], b_lb=[0.2], A_eq=[[1, 1]], b_eq=[0.2])
-    ])
+        dict(A_lb=[[1, 1]], b_lb=[0.2], A_eq=[[1, 1]], b_eq=[0.2]),
+    ],
+)
 def test_concentration_dict_round_trip(kwargs, compare_dict):
     """
     Test that when a concentration object is converted to a dictionary and then used
     to instantiate a new concentration that these two are the same i.e. the round trip
     conc1 -> dict -> conc2: conc1 == conc2
     """
-    basis_elements = [['Au', 'Cu']]
+    basis_elements = [["Au", "Cu"]]
     conc1 = Concentration(basis_elements=basis_elements, **kwargs)
     conc2 = Concentration.from_dict(conc1.todict())
     assert conc1 == conc2
 
 
 def test_MoS2(make_conc):
-    conc = make_conc([['S'], ['Mo', 'W']])
+    conc = make_conc([["S"], ["Mo", "W"]])
     conc.set_conc_formula_unit(["S<2>", "Mo<1-x>W<x>"], variable_range={"x": (0, 1)})
 
     # Addind S<2> should have no effect since it is already a requirement that
@@ -273,9 +286,10 @@ def test_MoS2(make_conc):
 
 
 def test_MoScAl(make_conc):
-    conc = make_conc([['Mo', 'Sc'], ['Al'], ['B']])
-    conc.set_conc_formula_unit(formulas=["Mo<x>Sc<3-x>", "Al<1>", "B<2>"],
-                               variable_range={"x": (0, 3)})
+    conc = make_conc([["Mo", "Sc"], ["Al"], ["B"]])
+    conc.set_conc_formula_unit(
+        formulas=["Mo<x>Sc<3-x>", "Al<1>", "B<2>"], variable_range={"x": (0, 3)}
+    )
 
     # None of the passed constraints will have an impact. Nothing should
     # happen to the underlying equations
@@ -285,12 +299,15 @@ def test_MoScAl(make_conc):
     assert np.allclose(b_eq, conc.b_eq)
 
 
-@pytest.mark.parametrize('conc', [
-    Concentration(basis_elements=[['Au', 'Cu']]),
-    Concentration(basis_elements=[['Au', 'Cu', 'X']]),
-    Concentration(basis_elements=[['Au', 'Cu'], ['X']]),
-    Concentration.from_dict(Concentration(basis_elements=[['Au', 'Cu']]).todict())
-])
+@pytest.mark.parametrize(
+    "conc",
+    [
+        Concentration(basis_elements=[["Au", "Cu"]]),
+        Concentration(basis_elements=[["Au", "Cu", "X"]]),
+        Concentration(basis_elements=[["Au", "Cu"], ["X"]]),
+        Concentration.from_dict(Concentration(basis_elements=[["Au", "Cu"]]).todict()),
+    ],
+)
 def test_no_constraints(conc):
     # Test getting some random concentrations
     for _ in range(40):
@@ -309,14 +326,21 @@ def test_no_constraints(conc):
         assert np.all(min_conc <= 1.0)
 
 
-@pytest.mark.parametrize('conc', [
-    Concentration(basis_elements=[['Au', 'Cu']]),
-    Concentration(basis_elements=[['Au', 'Cu', 'X']]),
-    Concentration(basis_elements=[['Au', 'Cu'], ['X']]),
-    Concentration(basis_elements=[['Li', 'Ru', 'X'], ['O', 'X']], A_eq=[[0, 3, 0, 0, 0]], b_eq=[1])
-])
+@pytest.mark.parametrize(
+    "conc",
+    [
+        Concentration(basis_elements=[["Au", "Cu"]]),
+        Concentration(basis_elements=[["Au", "Cu", "X"]]),
+        Concentration(basis_elements=[["Au", "Cu"], ["X"]]),
+        Concentration(
+            basis_elements=[["Li", "Ru", "X"], ["O", "X"]],
+            A_eq=[[0, 3, 0, 0, 0]],
+            b_eq=[1],
+        ),
+    ],
+)
 def test_save_load(conc, make_tempfile, compare_dict):
-    file = make_tempfile('conc.json')
+    file = make_tempfile("conc.json")
     conc.save(file)
     conc2 = Concentration.load(file)
     assert conc == conc2

@@ -67,42 +67,32 @@ def test_complicated_singular(x, y):
     linreg.precision_matrix(X)
 
 
-@pytest.mark.parametrize('reg_func', (Lasso, Tikhonov))
-@pytest.mark.parametrize('test', [
-    {
-        'alpha_min': 0.2,
-        'alpha_max': 0.5,
-        'num_alpha': 5,
-        'scale': 'log'
-    },
-    {
-        'alpha_min': 1,
-        'alpha_max': 5,
-        'num_alpha': 10,
-        'scale': 'log'
-    },
-    {
-        'alpha_min': 2,
-        'alpha_max': 4,
-        'num_alpha': 4,
-        'scale': 'etc'
-    },
-])
+@pytest.mark.parametrize("reg_func", (Lasso, Tikhonov))
+@pytest.mark.parametrize(
+    "test",
+    [
+        {"alpha_min": 0.2, "alpha_max": 0.5, "num_alpha": 5, "scale": "log"},
+        {"alpha_min": 1, "alpha_max": 5, "num_alpha": 10, "scale": "log"},
+        {"alpha_min": 2, "alpha_max": 4, "num_alpha": 4, "scale": "etc"},
+    ],
+)
 def test_get_instance_array(reg_func, test):
     reg = reg_func()
-    if test['scale'] == 'log':
-        true_alpha = np.logspace(np.log10(test['alpha_min']),
-                                 np.log10(test['alpha_max']),
-                                 test['num_alpha'],
-                                 endpoint=True)
+    if test["scale"] == "log":
+        true_alpha = np.logspace(
+            np.log10(test["alpha_min"]),
+            np.log10(test["alpha_max"]),
+            test["num_alpha"],
+            endpoint=True,
+        )
     else:
-        true_alpha = np.linspace(test['alpha_min'],
-                                 test['alpha_max'],
-                                 int(test['num_alpha']),
-                                 endpoint=True)
+        true_alpha = np.linspace(
+            test["alpha_min"], test["alpha_max"], int(test["num_alpha"]), endpoint=True
+        )
 
-    instance_array = reg.get_instance_array(test['alpha_min'], test['alpha_max'], test['num_alpha'],
-                                            test['scale'])
+    instance_array = reg.get_instance_array(
+        test["alpha_min"], test["alpha_max"], test["num_alpha"], test["scale"]
+    )
     predict_alpha = np.array([i.alpha for i in instance_array])
 
     assert predict_alpha.shape == true_alpha.shape

@@ -10,15 +10,17 @@ def cluster():
     true_fp = ClusterFingerprint([4.5, 4.3, 2.4, -1.0, -3.4, -1.0])
     true_indices = [[0, 3, 3], [1, 0, 5]]
     true_equiv_sites = [[0, 1]]
-    cluster = Cluster(name='c3_d0001_0',
-                      size=3,
-                      diameter=5.4,
-                      fingerprint=true_fp,
-                      figures=(),
-                      equiv_sites=true_equiv_sites,
-                      indices=true_indices,
-                      ref_indx=0,
-                      group=0)
+    cluster = Cluster(
+        name="c3_d0001_0",
+        size=3,
+        diameter=5.4,
+        fingerprint=true_fp,
+        figures=(),
+        equiv_sites=true_equiv_sites,
+        indices=true_indices,
+        ref_indx=0,
+        group=0,
+    )
     return cluster
 
 
@@ -32,7 +34,7 @@ def test_get_size(cluster):
     assert exp_size == cpp_size
 
 
-@pytest.mark.parametrize('n_basis', [2, 3, 4, 5, 6])
+@pytest.mark.parametrize("n_basis", [2, 3, 4, 5, 6])
 def test_get_all_decoration_numbers(n_basis, cluster):
     """Test calculating all decoration numbers in the C++ Cluster class"""
     cpp_cluster = CppCluster(cluster)

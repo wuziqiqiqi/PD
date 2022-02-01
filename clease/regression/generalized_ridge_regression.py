@@ -6,11 +6,10 @@ from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('EigenDecomposition', 'GeneralizedRidgeRegression')
+__all__ = ("EigenDecomposition", "GeneralizedRidgeRegression")
 
 
 class EigenDecomposition:
-
     def __init__(self) -> None:
         self.eigvals = None
         self.eigvec = None
@@ -68,8 +67,14 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         return np.linalg.multi_dot(
-            [X, eigen.eigvec,
-             np.diag(1.0 / (eigen.eigvals + N * alpha)), eigen.eigvec.T, X.T])
+            [
+                X,
+                eigen.eigvec,
+                np.diag(1.0 / (eigen.eigvals + N * alpha)),
+                eigen.eigvec.T,
+                X.T,
+            ]
+        )
 
     def _coeff(self, X: np.ndarray, y: np.ndarray, eigen: EigenDecomposition) -> np.ndarray:
         """
@@ -81,12 +86,19 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         return np.linalg.multi_dot(
-            [eigen.eigvec,
-             np.diag(1.0 / (eigen.eigvals + N * self.alpha)), eigen.eigvec.T, X.T, y])
+            [
+                eigen.eigvec,
+                np.diag(1.0 / (eigen.eigvals + N * self.alpha)),
+                eigen.eigvec.T,
+                X.T,
+                y,
+            ]
+        )
 
     @staticmethod
-    def _grad_A(X: np.ndarray, eigen: EigenDecomposition, alpha: np.ndarray,
-                component: int) -> np.ndarray:
+    def _grad_A(
+        X: np.ndarray, eigen: EigenDecomposition, alpha: np.ndarray, component: int
+    ) -> np.ndarray:
         """
         Return a matrix representing the gradient of the A matrix.
         See the `_A` method.
@@ -99,11 +111,12 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         N = X.shape[0]
         XdotP = np.dot(X, eigen.eigvec[:, component])
-        weight = N / (eigen.eigvals[component] + N * alpha[component])**2
+        weight = N / (eigen.eigvals[component] + N * alpha[component]) ** 2
         return -np.outer(XdotP, XdotP.T) * weight
 
-    def _gcv_squared(self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray,
-                     eigen: EigenDecomposition) -> float:
+    def _gcv_squared(
+        self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray, eigen: EigenDecomposition
+    ) -> float:
         """
         Return the generalized CV score of a fit
 
@@ -114,12 +127,13 @@ class GeneralizedRidgeRegression(LinearRegression):
         """
         A = self._A(X, eigen, alpha)
         N = len(y)
-        mse = np.mean((y - A.dot(y))**2)
-        denum = (1.0 - np.trace(A) / N)**2
+        mse = np.mean((y - A.dot(y)) ** 2)
+        denum = (1.0 - np.trace(A) / N) ** 2
         return mse / denum
 
-    def _grad_gcv_squared(self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray,
-                          eigen: EigenDecomposition) -> np.ndarray:
+    def _grad_gcv_squared(
+        self, alpha: np.ndarray, X: np.ndarray, y: np.ndarray, eigen: EigenDecomposition
+    ) -> np.ndarray:
         """
         Return the gradient of the squared generalized CV score.
 
@@ -134,7 +148,7 @@ class GeneralizedRidgeRegression(LinearRegression):
         dev = y - A.dot(y)
         mse = np.mean(dev**2)
         N = len(y)
-        denum = (1.0 - np.trace(A) / N)
+        denum = 1.0 - np.trace(A) / N
         for i in range(num_alpha):
             gradA = self._grad_A(X, eigen, alpha, i)
             new_grad = -2.0 * np.sum(np.outer(dev, y) * gradA) / (N * denum**2)
@@ -178,14 +192,18 @@ class GeneralizedRidgeRegression(LinearRegression):
         A = self._A(X, eigen, self.alpha)
         eff_num_params = np.trace(A)
         if eff_num_params < 0.0:
-            logger.warning(("Warning! The effective number of parameters is negative. "
-                            "Try to change the initial guess for alpha."))
-        logger.info('Best GCV: %.3f', np.sqrt(res.fun))
+            logger.warning(
+                (
+                    "Warning! The effective number of parameters is negative. "
+                    "Try to change the initial guess for alpha."
+                )
+            )
+        logger.info("Best GCV: %.3f", np.sqrt(res.fun))
         coeff = self._coeff(X, y, eigen)
         self.opt_result = {
-            'gcv': np.sqrt(res.fun),
-            'scipy_opt_res': res,
-            'gcv_dev': (y - X.dot(coeff)) / (1.0 - eff_num_params / X.shape[0]),
-            'press_dev': (y - X.dot(coeff)) / (1.0 - np.diag(A))
+            "gcv": np.sqrt(res.fun),
+            "scipy_opt_res": res,
+            "gcv_dev": (y - X.dot(coeff)) / (1.0 - eff_num_params / X.shape[0]),
+            "press_dev": (y - X.dot(coeff)) / (1.0 - np.diag(A)),
         }
         return coeff

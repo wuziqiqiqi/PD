@@ -5,14 +5,13 @@ from numpy.linalg import pinv
 from sklearn.linear_model import Lasso as skLasso
 from clease.data_normalizer import DataNormalizer
 
-__all__ = ('LinearRegression', 'Tikhonov', 'Lasso')
+__all__ = ("LinearRegression", "Tikhonov", "Lasso")
 
 
 class LinearRegression:
-
     def __init__(self) -> None:
         self._weight_matrix = None
-        self.tol = 1E-8
+        self.tol = 1e-8
 
     @property
     def weight_matrix(self):
@@ -26,9 +25,11 @@ class LinearRegression:
         """
         if self._weight_matrix is not None:
             if self._weight_matrix.shape[1] != len(data):
-                raise ValueError(f"The provided weight matrix needs to have "
-                                 f"dimension {len(data)}x{len(data)}, "
-                                 f"{self._weight_matrix.shape} given")
+                raise ValueError(
+                    f"The provided weight matrix needs to have "
+                    f"dimension {len(data)}x{len(data)}, "
+                    f"{self._weight_matrix.shape} given"
+                )
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit a linear model by performing ordinary least squares
@@ -55,7 +56,7 @@ class LinearRegression:
         V = V_h.T
         diag = np.zeros_like(D)
         mask = np.abs(D) > self.tol
-        diag[mask] = 1.0 / D[mask]**2
+        diag[mask] = 1.0 / D[mask] ** 2
         return V.dot(np.diag(diag)).dot(V.T)
 
     def get_instance_array(self) -> List[object]:
@@ -95,10 +96,12 @@ class Tikhonov(LinearRegression):
     :param normalize: If True each feature will be normalized to before fitting
     """
 
-    def __init__(self,
-                 alpha: Union[float, np.ndarray] = 1E-5,
-                 penalize_bias_term: bool = False,
-                 normalize: bool = True) -> None:
+    def __init__(
+        self,
+        alpha: Union[float, np.ndarray] = 1e-5,
+        penalize_bias_term: bool = False,
+        normalize: bool = True,
+    ) -> None:
         super().__init__()
         self.alpha = alpha
         self.penalize_bias_term = penalize_bias_term
@@ -156,8 +159,9 @@ class Tikhonov(LinearRegression):
         tikhonov = self._get_tikhonov_matrix(num_features)
 
         if tikhonov.shape != (num_features, num_features):
-            raise ValueError("The dimensions of Tikhonov matrix do not match "
-                             "the number of clusters!")
+            raise ValueError(
+                "The dimensions of Tikhonov matrix do not match " "the number of clusters!"
+            )
 
         W = self.weight_matrix
         if W is None:
@@ -166,16 +170,17 @@ class Tikhonov(LinearRegression):
         return precision
 
     @staticmethod
-    def get_instance_array(alpha_min: float,
-                           alpha_max: float,
-                           num_alpha: int = 10,
-                           scale: Optional[str] = 'log') -> List[object]:
+    def get_instance_array(
+        alpha_min: float,
+        alpha_max: float,
+        num_alpha: int = 10,
+        scale: Optional[str] = "log",
+    ) -> List[object]:
         # pylint: disable=arguments-differ
-        if scale == 'log':
-            alpha = np.logspace(np.log10(alpha_min),
-                                np.log10(alpha_max),
-                                int(num_alpha),
-                                endpoint=True)
+        if scale == "log":
+            alpha = np.logspace(
+                np.log10(alpha_min), np.log10(alpha_max), int(num_alpha), endpoint=True
+            )
         else:
             alpha = np.linspace(alpha_min, alpha_max, int(num_alpha), endpoint=True)
         return [Tikhonov(alpha=a) for a in alpha]
@@ -195,7 +200,7 @@ class Lasso(LinearRegression):
     :param alpha: regularization coefficient
     """
 
-    def __init__(self, alpha: float = 1E-5) -> None:
+    def __init__(self, alpha: float = 1e-5) -> None:
         super().__init__()
         self.alpha = alpha
 
@@ -210,16 +215,14 @@ class Lasso(LinearRegression):
         return LinearRegression.weight_matrix(self)
 
     @staticmethod
-    def get_instance_array(alpha_min: float,
-                           alpha_max: float,
-                           num_alpha: int = 10,
-                           scale: str = 'log') -> List[object]:
+    def get_instance_array(
+        alpha_min: float, alpha_max: float, num_alpha: int = 10, scale: str = "log"
+    ) -> List[object]:
         # pylint: disable=arguments-differ
-        if scale == 'log':
-            alpha = np.logspace(np.log10(alpha_min),
-                                np.log10(alpha_max),
-                                int(num_alpha),
-                                endpoint=True)
+        if scale == "log":
+            alpha = np.logspace(
+                np.log10(alpha_min), np.log10(alpha_max), int(num_alpha), endpoint=True
+            )
         else:
             alpha = np.linspace(alpha_min, alpha_max, int(num_alpha), endpoint=True)
         return [Lasso(alpha=a) for a in alpha]

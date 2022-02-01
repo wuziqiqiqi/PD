@@ -13,7 +13,7 @@ from .barrier_models import BarrierModel
 from .kmc_events import KMCEventType
 from .observers import MCObserver
 
-__all__ = ('KineticMonteCarlo',)
+__all__ = ("KineticMonteCarlo",)
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,13 @@ class KineticMonteCarlo(BaseMC):
         the energies during an MC run.
     """
 
-    def __init__(self, system: Union[Atoms, MCEvaluator], T: float, barrier: BarrierModel,
-                 event_types: Sequence[KMCEventType]):
+    def __init__(
+        self,
+        system: Union[Atoms, MCEvaluator],
+        T: float,
+        barrier: BarrierModel,
+        event_types: Sequence[KMCEventType],
+    ):
         super().__init__(system)
         self.T = T
         self.barrier = barrier
@@ -114,8 +119,8 @@ class KineticMonteCarlo(BaseMC):
     def _get_rate_from_swap(self, swap_idx: int, vac_idx: int) -> float:
         symb = self.atoms[swap_idx].symbol
         system_change = [
-            SystemChange(index=vac_idx, old_symb='X', new_symb=symb, name='kmc_swap'),
-            SystemChange(index=swap_idx, old_symb=symb, new_symb='X', name='kmc_swap')
+            SystemChange(index=vac_idx, old_symb="X", new_symb=symb, name="kmc_swap"),
+            SystemChange(index=swap_idx, old_symb=symb, new_symb="X", name="kmc_swap"),
         ]
         Ea = self.barrier(self.evaluator, system_change)
         rate = self.attempt_freq * np.exp(-Ea / self.kT)
@@ -146,8 +151,8 @@ class KineticMonteCarlo(BaseMC):
         # Apply step
         symb = self.atoms[choice].symbol
         system_change = [
-            SystemChange(index=vac_idx, old_symb='X', new_symb=symb, name='kmc_swap'),
-            SystemChange(index=choice, old_symb=symb, new_symb='X', name='kmc_swap')
+            SystemChange(index=vac_idx, old_symb="X", new_symb=symb, name="kmc_swap"),
+            SystemChange(index=choice, old_symb=symb, new_symb="X", name="kmc_swap"),
         ]
 
         # Trigger update, apply changes to the system
@@ -171,9 +176,10 @@ class KineticMonteCarlo(BaseMC):
         :param vac_idx: Index where the moving vacancy is located
         """
 
-        if self.atoms[vac_idx].symbol != 'X':
-            raise ValueError(f"Index {vac_idx} is not a vacancy. "
-                             f"Symbol: {self.atoms[vac_idx].symbol}")
+        if self.atoms[vac_idx].symbol != "X":
+            raise ValueError(
+                f"Index {vac_idx} is not a vacancy. " f"Symbol: {self.atoms[vac_idx].symbol}"
+            )
 
         # Ensure evaluator is in sync and up-to-date
         # for the CE calculator: make sure that CFs are in sync

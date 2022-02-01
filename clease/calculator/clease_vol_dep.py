@@ -75,18 +75,21 @@ class CleaseVolDep(Clease):
         they are calculated from scratch when an atoms object is attached.
     """
 
-    def __init__(self,
-                 settings: ClusterExpansionSettings,
-                 eci: Dict[str, float],
-                 vol_coeff: Dict[str, float],
-                 init_cf: Optional[Dict[str, float]] = None):
+    def __init__(
+        self,
+        settings: ClusterExpansionSettings,
+        eci: Dict[str, float],
+        vol_coeff: Dict[str, float],
+        init_cf: Optional[Dict[str, float]] = None,
+    ):
 
         if not eci_format_ok(eci.keys()):
             raise ValueError(f"Invalid format of ECI names. Got\n{eci.keys()}")
 
         if not vol_coeff_format_ok(vol_coeff.keys()):
-            raise ValueError("Invalid format of volume coefficient names. "
-                             f"Got\n{vol_coeff.keys()}")
+            raise ValueError(
+                "Invalid format of volume coefficient names. " f"Got\n{vol_coeff.keys()}"
+            )
 
         cf_to_track = unique_eci_names_no_vol(eci.keys())
         cf_to_track = cf_to_track.union(set(vol_coeff.keys()))
@@ -98,8 +101,8 @@ class CleaseVolDep(Clease):
 
         # Transfer the volume independent part to the parent calculator
         for k, v in eci.items():
-            if k.endswith('V0'):
-                key = k.rpartition('_V0')[0]
+            if k.endswith("V0"):
+                key = k.rpartition("_V0")[0]
                 eci_track[key] = v
 
         Clease.__init__(self, settings, eci_track, init_cf=init_cf)
@@ -119,8 +122,8 @@ class CleaseVolDep(Clease):
             self.update_cf(None)
             cf = self.get_cf()
         vol = sum(self.vol_coeff[k] * cf[k] for k in self.vol_coeff)
-        self.results['volume_per_atom'] = vol
-        self.results['volume'] = vol * len(self.atoms)
+        self.results["volume_per_atom"] = vol
+        self.results["volume"] = vol * len(self.atoms)
         return vol
 
     def get_pressure(self, cf: Optional[Dict[str, float]] = None) -> float:
@@ -136,10 +139,12 @@ class CleaseVolDep(Clease):
             cf = self.get_cf()
 
         vol = self.get_volume(cf)
-        P = sum(p * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**(p - 1)
-                for k in cf.keys()
-                for p in range(1, self.max_power + 1))
-        self.results['pressure'] = P
+        P = sum(
+            p * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol ** (p - 1)
+            for k in cf.keys()
+            for p in range(1, self.max_power + 1)
+        )
+        self.results["pressure"] = P
         return P
 
     def get_bulk_modulus(self, cf: Optional[Dict[str, float]] = None) -> float:
@@ -156,7 +161,7 @@ class CleaseVolDep(Clease):
 
         vol = self.get_volume(cf)
         B = vol * self._d2EdV2(cf, vol)
-        self.results['bulk_mod'] = B
+        self.results["bulk_mod"] = B
         return B
 
     def _d2EdV2(self, cf: Dict[str, float], vol: float) -> float:
@@ -167,9 +172,11 @@ class CleaseVolDep(Clease):
         :param cf: Correlation functions
         :param vol: Volume
         """
-        return sum(p * (p - 1) * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**(p - 2)
-                   for k in cf.keys()
-                   for p in range(2, self.max_power + 1))
+        return sum(
+            p * (p - 1) * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol ** (p - 2)
+            for k in cf.keys()
+            for p in range(2, self.max_power + 1)
+        )
 
     def _d3EdV3(self, cf: Dict[str, float], vol: float) -> float:
         """
@@ -179,8 +186,16 @@ class CleaseVolDep(Clease):
         :param cf: Correlation functions
         :param vol: Volume
         """
-        return sum(p * (p - 1) * (p - 2) * self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] *
-                   vol**(p - 3) for k in cf.keys() for p in range(3, self.max_power + 1))
+        return sum(
+            p
+            * (p - 1)
+            * (p - 2)
+            * self.eci_with_vol.get(k + f"_V{p}", 0.0)
+            * cf[k]
+            * vol ** (p - 3)
+            for k in cf.keys()
+            for p in range(3, self.max_power + 1)
+        )
 
     def get_dBdP(self, cf: Dict[str, float] = None) -> float:
         """
@@ -208,13 +223,18 @@ class CleaseVolDep(Clease):
             energy = sum(
                 self.eci_with_vol.get(k + f"_V{p}", 0.0) * cf[k] * vol**p
                 for k in cf.keys()
-                for p in range(self.max_power + 1))
+                for p in range(self.max_power + 1)
+            )
             self.energy = energy * len(self.atoms)
-            self.results['energy'] = self.energy
+            self.results["energy"] = self.energy
             return self.energy
 
-    def calculate(self, atoms: Atoms, properties: List[str],
-                  system_changes: Union[Sequence[SystemChange], None]) -> float:
+    def calculate(
+        self,
+        atoms: Atoms,
+        properties: List[str],
+        system_changes: Union[Sequence[SystemChange], None],
+    ) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
@@ -238,7 +258,7 @@ class CleaseVolDep(Clease):
         Callback triggered by the parent class when the ECIs are changed.
         """
         for k, v in self.eci.items():
-            vol_dep_key = k + '_V0'
+            vol_dep_key = k + "_V0"
             self.eci_with_vol[vol_dep_key] = v
 
 
@@ -246,7 +266,7 @@ def unique_eci_names_no_vol(eci_names: Iterable[str]) -> Set[str]:
     """
     Return a set with the unique ECI names without any volume tag
     """
-    eci_no_vol = set(k.rpartition('_V')[0] for k in eci_names)
+    eci_no_vol = set(k.rpartition("_V")[0] for k in eci_names)
     return eci_no_vol
 
 
@@ -255,7 +275,7 @@ def eci_format_ok(eci_names: Iterable[str]) -> bool:
     Check that all ECIs are formatted correctly.
     """
     for name in eci_names:
-        valid = name.startswith('c') and '_V' in name
+        valid = name.startswith("c") and "_V" in name
         if not valid:
             return False
     return True
@@ -266,7 +286,7 @@ def vol_coeff_format_ok(vol_coeff_names: Iterable[str]) -> bool:
     Check that the volume coefficients are valid
     """
     for name in vol_coeff_names:
-        valid = name.startswith('c') and '_V' not in name
+        valid = name.startswith("c") and "_V" not in name
         if not valid:
             return False
     return True

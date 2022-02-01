@@ -2,7 +2,7 @@ from typing import Tuple
 import numpy as np
 from .regression import LinearRegression
 
-__all__ = ('ConstrainedRidge',)
+__all__ = ("ConstrainedRidge",)
 
 
 class ConstrainedRidge(LinearRegression):
@@ -32,8 +32,8 @@ class ConstrainedRidge(LinearRegression):
         :param c: Right hand side of the linear system of equations
         """
         self._constraint = {
-            'A': A,
-            'c': c,
+            "A": A,
+            "c": c,
         }
 
     def kkt_system(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
@@ -58,11 +58,11 @@ class ConstrainedRidge(LinearRegression):
         if self._constraint is None:
             return X.T.dot(X) + self.alpha, X.T.dot(y)
 
-        A = self._constraint['A']
+        A = self._constraint["A"]
         zero = np.zeros((A.shape[0], A.shape[0]))
         matrix = np.block([[2.0 * X.T.dot(X) + self.alpha, A.T], [A, zero]])
         rhs = 2.0 * X.T.dot(y)
-        rhs_constraint = self._constraint['c']
+        rhs_constraint = self._constraint["c"]
         return matrix, np.concatenate((rhs, rhs_constraint))
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
@@ -78,4 +78,4 @@ class ConstrainedRidge(LinearRegression):
         """
         matrix, rhs = self.kkt_system(X, y)
         coeff = np.linalg.solve(matrix, rhs)
-        return coeff[:X.shape[1]]
+        return coeff[: X.shape[1]]

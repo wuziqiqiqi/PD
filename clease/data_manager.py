@@ -10,10 +10,16 @@ from clease.tools import add_file_extension, sort_cf_names, get_ids
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('InconsistentDataError', 'DataManager', 'CorrFuncEnergyDataManager',
-           'CorrelationFunctionGetter', 'CorrFuncVolumeDataManager',
-           'CorrelationFunctionGetterVolDepECI', 'FinalStructPropertyGetter',
-           'make_corr_func_data_manager')
+__all__ = (
+    "InconsistentDataError",
+    "DataManager",
+    "CorrFuncEnergyDataManager",
+    "CorrelationFunctionGetter",
+    "CorrFuncVolumeDataManager",
+    "CorrelationFunctionGetterVolDepECI",
+    "FinalStructPropertyGetter",
+    "make_corr_func_data_manager",
+)
 
 
 class InconsistentDataError(Exception):
@@ -74,8 +80,9 @@ class DataManager(ABC):
         Return the design matrix X and the target data y
         """
 
-    def _get_data_from_getters(self, select_cond: List[tuple], feature_getter: FeatureGetter,
-                               target_getter: TargetGetter) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_data_from_getters(
+        self, select_cond: List[tuple], feature_getter: FeatureGetter, target_getter: TargetGetter
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Return the design matrix X and the target data y
 
@@ -130,12 +137,14 @@ class DataManager(ABC):
         nrows = self._X.shape[0]
         num_data = len(self._y)
         if nrows != num_data:
-            raise InconsistentDataError(f"Num. rows in deisgn matrix {nrows}."
-                                        f"Num. data points {num_data}\n"
-                                        "This is normally caused by a non-converged structure "
-                                        "being extracted from database. Check that all structures"
-                                        "extracted from DB using your query has a corresponding"
-                                        "final structure.")
+            raise InconsistentDataError(
+                f"Num. rows in deisgn matrix {nrows}."
+                f"Num. data points {num_data}\n"
+                "This is normally caused by a non-converged structure "
+                "being extracted from database. Check that all structures"
+                "extracted from DB using your query has a corresponding"
+                "final structure."
+            )
         return self._X, self._y
 
     def to_csv(self, fname: str):
@@ -155,7 +164,7 @@ class DataManager(ABC):
         """
         if self._X is None:
             return
-        fname = add_file_extension(fname, '.csv')
+        fname = add_file_extension(fname, ".csv")
         header = ",".join(self._feat_names) + f",{self._target_name}"
         data = np.hstack((self._X, np.reshape(self._y, (len(self._y), -1))))
         np.savetxt(fname, data, delimiter=",", header=header)
@@ -211,11 +220,13 @@ class CorrFuncEnergyDataManager(DataManager):
     :param order: Order of the correlation function. Default 1.
     """
 
-    def __init__(self,
-                 db_name: str,
-                 tab_name: str,
-                 cf_names: Optional[List[str]] = None,
-                 order: int = 1) -> None:
+    def __init__(
+        self,
+        db_name: str,
+        tab_name: str,
+        cf_names: Optional[List[str]] = None,
+        order: int = 1,
+    ) -> None:
         super().__init__(db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -233,7 +244,8 @@ class CorrFuncEnergyDataManager(DataManager):
         return self._get_data_from_getters(
             select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
-            FinalStructEnergyGetter(self.db_name))
+            FinalStructEnergyGetter(self.db_name),
+        )
 
 
 class CorrFuncPropertyDataManager(DataManager):
@@ -280,7 +292,8 @@ class CorrFuncPropertyDataManager(DataManager):
         return self._get_data_from_getters(
             select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
-            FinalStructPropertyGetter(self.db_name, self.prop))
+            FinalStructPropertyGetter(self.db_name, self.prop),
+        )
 
 
 class CorrelationFunctionGetter(FeatureGetter):
@@ -300,11 +313,9 @@ class CorrelationFunctionGetter(FeatureGetter):
     :param order: Order of the correlation function. Default is 1.
     """
 
-    def __init__(self,
-                 db_name: str,
-                 tab_name: str,
-                 cf_names: Optional[List[str]] = None,
-                 order: int = 1) -> None:
+    def __init__(
+        self, db_name: str, tab_name: str, cf_names: Optional[List[str]] = None, order: int = 1
+    ) -> None:
         super().__init__(db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -437,7 +448,7 @@ class CorrelationFunctionGetter(FeatureGetter):
                 for i in comb:
                     X[:, 0] *= cf_matrix[:, i]
                 cf_matrix = np.hstack((cf_matrix, X))
-                name = '*'.join(self.cf_names[i] for i in comb)
+                name = "*".join(self.cf_names[i] for i in comb)
 
                 # Add the new to the list of cf names
                 self.cf_names.append(name)
@@ -446,8 +457,9 @@ class CorrelationFunctionGetter(FeatureGetter):
     def _check_version(self, connection, *ids: Sequence[int]) -> None:
         if db_util.require_reconfigure_table(connection, self.tab_name, *ids):
             raise db_util.OutOfDateTable(
-                'An out of date correlation function table was found. '
-                'Please reconfigure your database, e.g. using "clease.reconfigure(settings)".')
+                "An out of date correlation function table was found. "
+                'Please reconfigure your database, e.g. using "clease.reconfigure(settings)".'
+            )
 
 
 class FinalStructEnergyGetter(TargetGetter):
@@ -602,7 +614,7 @@ class FinalVolumeGetter(TargetGetter):
             num_atoms = extract_num_atoms(cur, id_set)
 
             final_struct_ids = set(final_struct_ids)
-            query = 'SELECT id, volume FROM systems'
+            query = "SELECT id, volume FROM systems"
             cur.execute(query)
             volumes = np.zeros(len(init_ids))
 
@@ -637,11 +649,13 @@ class CorrFuncVolumeDataManager(DataManager):
     :param order: Order of the correlation functions. Default 1.
     """
 
-    def __init__(self,
-                 db_name: str,
-                 tab_name: str,
-                 cf_names: Optional[List[str]] = None,
-                 order: int = 1) -> None:
+    def __init__(
+        self,
+        db_name: str,
+        tab_name: str,
+        cf_names: Optional[List[str]] = None,
+        order: int = 1,
+    ) -> None:
         super().__init__(db_name)
         self.tab_name = tab_name
         self.cf_names = cf_names
@@ -662,7 +676,8 @@ class CorrFuncVolumeDataManager(DataManager):
         return self._get_data_from_getters(
             select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
-            FinalVolumeGetter(self.db_name))
+            FinalVolumeGetter(self.db_name),
+        )
 
 
 def extract_num_atoms(cur: sqlite3.Cursor, ids: Set[int]) -> Dict[int, int]:
@@ -711,13 +726,15 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         in the correlation function. Default is 1.
     """
 
-    def __init__(self,
-                 db_name: str,
-                 tab_name: str,
-                 cf_names: List[str],
-                 order: Optional[int] = 0,
-                 properties: Tuple[str] = ('energy', 'pressure'),
-                 cf_order: int = 1) -> None:
+    def __init__(
+        self,
+        db_name: str,
+        tab_name: str,
+        cf_names: List[str],
+        order: Optional[int] = 0,
+        properties: Tuple[str] = ("energy", "pressure"),
+        cf_order: int = 1,
+    ) -> None:
         super().__init__(db_name)
         self.tab_name = tab_name
         self.order = order
@@ -734,10 +751,9 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         :param ids: List of ids to take into account
         """
         # pylint: disable=too-many-statements, too-many-locals
-        cf_getter = CorrelationFunctionGetter(self.db_name,
-                                              self.tab_name,
-                                              self.cf_names,
-                                              order=self.cf_order)
+        cf_getter = CorrelationFunctionGetter(
+            self.db_name, self.tab_name, self.cf_names, order=self.cf_order
+        )
         cf = cf_getter.get_property(ids)
 
         volume_getter = FinalVolumeGetter(self.db_name)
@@ -747,7 +763,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         energies = energy_getter.get_property(ids)
 
         target_values = [energies]
-        target_val_names = ['energy']
+        target_val_names = ["energy"]
 
         cf_vol_dep = np.zeros((cf.shape[0], (self.order + 1) * cf.shape[1]))
         counter = 0
@@ -764,7 +780,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
                 self._feat_names.append(cf_getter.names[col] + f"_V{power}")
 
         # Add pressure data. P = dE/dV = 0 (we assume relaxed structures)
-        if 'pressure' in self.properties:
+        if "pressure" in self.properties:
             pressure_cf = np.zeros_like(cf_vol_dep)
             counter = 0
 
@@ -774,13 +790,13 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             # to be zero
             for col in range(0, cf.shape[1]):
                 for p in range(self.order + 1):
-                    pressure_cf[:, counter] = p * cf[:, col] * volumes**(p - 1)
+                    pressure_cf[:, counter] = p * cf[:, col] * volumes ** (p - 1)
                     counter += 1
 
             # Update the full design matrix and the target values
             cf_vol_dep = np.vstack((cf_vol_dep, pressure_cf))
             target_values.append(np.zeros(pressure_cf.shape[0]))
-            target_val_names.append('pressure')
+            target_val_names.append("pressure")
 
             # All data points have a pressure, the groups just repeats
             # themselves
@@ -789,8 +805,8 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         id_row = {db_id: i for i, db_id in enumerate(ids)}
 
         # Add bulk modulus data. B = V*d^2E/dV^2
-        if 'bulk_mod' in self.properties:
-            bulk_mod = self._extract_key(set(ids), 'bulk_mod')
+        if "bulk_mod" in self.properties:
+            bulk_mod = self._extract_key(set(ids), "bulk_mod")
             bulk_mod_rows = [id_row[key] for key in bulk_mod]
             bulk_mod_cf = np.zeros((len(bulk_mod), cf_vol_dep.shape[1]))
 
@@ -803,19 +819,18 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             for col in range(0, cf.shape[1]):
                 for power in range(self.order + 1):
                     bulk_mod_cf[:, counter] = vols * cf[bulk_mod_rows, col]
-                    bulk_mod_cf[:, counter] *= power * \
-                        (power - 1) * vols**(power - 2)
+                    bulk_mod_cf[:, counter] *= power * (power - 1) * vols ** (power - 2)
                     counter += 1
 
             # Update the full design matrix as well as the target values
             cf_vol_dep = np.vstack((cf_vol_dep, bulk_mod_cf))
             target_values.append(bulk_mod.values())
-            target_val_names.append('bulk_mod')
+            target_val_names.append("bulk_mod")
             self._groups += [self._groups[r] for r in bulk_mod_rows]
 
         # Add the pressure derivative of the bulk modulus (dB/dP)
-        if 'dBdP' in self.properties:
-            dBdP = self._extract_key(set(ids), 'dBdP')
+        if "dBdP" in self.properties:
+            dBdP = self._extract_key(set(ids), "dBdP")
             dBdP_rows = [id_row[key] for key in dBdP]
             dBdP_cf = np.zeros((len(dBdP), cf_vol_dep.shape[1]))
             dBdP = np.array(list(dBdP.values()))
@@ -825,19 +840,19 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             for col in range(cf.shape[1]):
                 for power in range(self.order + 1):
                     # Double derivative of the energy
-                    dE2 = power * (power - 1) * \
-                        cf[dBdP_rows, col] * vols**(power - 2)
+                    dE2 = power * (power - 1) * cf[dBdP_rows, col] * vols ** (power - 2)
 
                     # Third derivative of the energy
-                    dE3 = power*(power-1)*(power-2)*cf[dBdP_rows, col] * \
-                        vols**(power-3)
+                    dE3 = (
+                        power * (power - 1) * (power - 2) * cf[dBdP_rows, col] * vols ** (power - 3)
+                    )
                     dBdP_cf[:, counter] = (1.0 + dBdP) * dE2 + vols * dE3
                     counter += 1
 
             # Update the full design matrix
             cf_vol_dep = np.vstack((cf_vol_dep, dBdP_cf))
             target_values.append(np.zeros(len(dBdP)))
-            target_val_names.append('dBdP')
+            target_val_names.append("dBdP")
             self._groups += [self._groups[r] for r in dBdP_rows]
 
         # Assign the global design matrix to the attribute _X, the vector with
@@ -845,7 +860,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         # joining all subnames
         self._X = cf_vol_dep
         self._y = np.array([x for values in target_values for x in values])
-        self._target_name = '-'.join(target_val_names)
+        self._target_name = "-".join(target_val_names)
 
     def _extract_key(self, ids: Set[int], key: str) -> Dict[int, float]:
         """
@@ -890,8 +905,9 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
         return self._groups
 
 
-def make_corr_func_data_manager(prop: str, db_name: str, tab_name: str, cf_names: Sequence[str],
-                                **kwargs) -> DataManager:
+def make_corr_func_data_manager(
+    prop: str, db_name: str, tab_name: str, cf_names: Sequence[str], **kwargs
+) -> DataManager:
     """Helper function for creating a correlation function data manager"""
     if prop.lower() == "energy":
         return CorrFuncEnergyDataManager(db_name, tab_name, cf_names, **kwargs)

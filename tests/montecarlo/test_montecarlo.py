@@ -26,7 +26,7 @@ from clease.montecarlo.mc_evaluator import CEMCEvaluator
 # Set the random seed
 np.random.seed(0)
 
-almgsix_eci_file = Path(__file__).parent / 'almgsix_eci.json'
+almgsix_eci_file = Path(__file__).parent / "almgsix_eci.json"
 
 
 @pytest.fixture
@@ -36,42 +36,46 @@ def almgsix_eci():
 
 
 def get_example_mc_system(db_name):
-    conc = Concentration(basis_elements=[['Au', 'Cu']])
-    settings = CEBulk(db_name=db_name,
-                      concentration=conc,
-                      crystalstructure='fcc',
-                      a=4.0,
-                      max_cluster_dia=[5.0, 4.1],
-                      size=[2, 2, 2])
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    settings = CEBulk(
+        db_name=db_name,
+        concentration=conc,
+        crystalstructure="fcc",
+        a=4.0,
+        max_cluster_dia=[5.0, 4.1],
+        size=[2, 2, 2],
+    )
 
     atoms = settings.atoms.copy() * (3, 3, 3)
     # Insert a few different symbols
-    atoms.symbols = 'Au'
-    atoms.symbols[:10] = 'Cu'
+    atoms.symbols = "Au"
+    atoms.symbols[:10] = "Cu"
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
-    eci['c0'] = 1.0
-    eci['c2_d0000_0_00'] = 2.5
-    eci['c3_d0000_0_000'] = 3.5
+    eci["c0"] = 1.0
+    eci["c2_d0000_0_00"] = 2.5
+    eci["c3_d0000_0_000"] = 3.5
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
 
 def get_rocksalt_mc_system(db_name):
-    conc = Concentration(basis_elements=[['Si', 'X'], ['O', 'C']])
-    settings = CEBulk(db_name=db_name,
-                      concentration=conc,
-                      crystalstructure='rocksalt',
-                      a=4.0,
-                      max_cluster_dia=[2.51, 3.0],
-                      size=[2, 2, 2])
+    conc = Concentration(basis_elements=[["Si", "X"], ["O", "C"]])
+    settings = CEBulk(
+        db_name=db_name,
+        concentration=conc,
+        crystalstructure="rocksalt",
+        a=4.0,
+        max_cluster_dia=[2.51, 3.0],
+        size=[2, 2, 2],
+    )
     atoms = settings.atoms.copy() * (3, 3, 3)
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
-    eci['c0'] = -1.0
-    eci['c2_d0000_0_00'] = -2.5
+    eci["c0"] = -1.0
+    eci["c2_d0000_0_00"] = -2.5
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
@@ -83,31 +87,33 @@ def example_system(db_name):
 
 @pytest.mark.slow
 def test_run_heavy(db_name):
-    conc = Concentration(basis_elements=[['Au', 'Cu']])
-    settings = CEBulk(db_name=db_name,
-                      concentration=conc,
-                      crystalstructure='fcc',
-                      a=4.0,
-                      max_cluster_dia=[5, 5, 5])
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    settings = CEBulk(
+        db_name=db_name,
+        concentration=conc,
+        crystalstructure="fcc",
+        a=4.0,
+        max_cluster_dia=[5, 5, 5],
+    )
 
     atoms = settings.atoms.copy() * (3, 3, 3)
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
-    eci['c0'] = -1.0
-    eci['c2_d0000_0_00'] = -0.2
+    eci["c0"] = -1.0
+    eci["c2_d0000_0_00"] = -0.2
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
 
     # Insert a few elements
     for i in range(10):
-        atoms[i].symbol = 'Cu'
+        atoms[i].symbol = "Cu"
 
     E = []
     for T in [1000, 500, 100]:
         mc = Montecarlo(atoms, T)
         mc.run(steps=10_000)
-        E.append(mc.get_thermodynamic_quantities()['energy'])
+        E.append(mc.get_thermodynamic_quantities()["energy"])
 
     cf = CorrFunction(atoms.calc.settings)
     cf_calc = atoms.calc.get_cf()
@@ -130,7 +136,7 @@ def test_run(db_name):
     for T in [1000, 500, 100]:
         mc = Montecarlo(atoms, T)
         mc.run(steps=1000)
-        E.append(mc.get_thermodynamic_quantities()['energy'])
+        E.append(mc.get_thermodynamic_quantities()["energy"])
 
     assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
     assert mc.atoms is atoms
@@ -180,7 +186,7 @@ def test_mc_rng(db_name, set_rng):
         mc.run(steps=500)
         # Get the state after we're done, so we can compare
         state_after[seed].append(random.getstate())
-        energies[seed].append(mc.get_thermodynamic_quantities()['energy'])
+        energies[seed].append(mc.get_thermodynamic_quantities()["energy"])
 
     # Test the energies after resetting are identical
     assert np.array(start_energies) == pytest.approx(start_energies[0])
@@ -208,8 +214,8 @@ def test_mc_rng(db_name, set_rng):
 def test_corr_func_observer(db_name):
     atoms = get_example_mc_system(db_name)
 
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
+    atoms[0].symbol = "Cu"
+    atoms[1].symbol = "Cu"
 
     mc = Montecarlo(atoms, 600)
     obs = CorrelationFunctionObserver(atoms.calc)
@@ -222,13 +228,13 @@ def test_corr_func_observer(db_name):
     cf_keys = atoms.calc.get_cf().keys()
 
     for k in cf_keys:
-        assert 'cf_' + k in thermo.keys()
+        assert "cf_" + k in thermo.keys()
 
 
 def test_snapshot(db_name, make_tempfile):
     atoms = get_example_mc_system(db_name)
 
-    fname = make_tempfile('snapshot.traj')
+    fname = make_tempfile("snapshot.traj")
     obs = Snapshot(atoms, fname=fname)
 
     mc = Montecarlo(atoms, 600)
@@ -237,9 +243,9 @@ def test_snapshot(db_name, make_tempfile):
     assert len(obs.traj) == 10
 
     # Test extension-less
-    fname = make_tempfile('snapshot')
+    fname = make_tempfile("snapshot")
     obs = Snapshot(atoms, fname=fname)
-    assert str(obs.fname) == fname + '.traj'
+    assert str(obs.fname) == fname + ".traj"
 
 
 def test_energy_evolution(db_name, make_tempfile):
@@ -259,10 +265,10 @@ def test_energy_evolution(db_name, make_tempfile):
     assert len(obs.energies) == 20
 
     # Test extensionless, should default to .csv
-    fname_base = 'energy_evol_no_ext'
+    fname_base = "energy_evol_no_ext"
     fname = make_tempfile(fname_base)
     obs.save(fname=fname)
-    assert os.path.isfile(str(fname) + '.csv')
+    assert os.path.isfile(str(fname) + ".csv")
     assert not os.path.isfile(fname)
 
 
@@ -270,28 +276,28 @@ def test_site_order_parameter(db_name):
     atoms = get_example_mc_system(db_name)
 
     # Manually change some symbols
-    atoms.symbols = 'Au'
-    atoms.symbols[:3] = 'Cu'
+    atoms.symbols = "Au"
+    atoms.symbols[:3] = "Cu"
 
     obs = SiteOrderParameter(atoms)
     mc = Montecarlo(atoms, 600)
     mc.attach(obs)
     mc.run(steps=1000)
     avg = obs.get_averages()
-    assert avg['site_order_average'] <= 6.0
+    assert avg["site_order_average"] <= 6.0
 
     thermo = mc.get_thermodynamic_quantities()
 
-    assert 'site_order_average' in thermo.keys()
-    assert 'site_order_std' in thermo.keys()
+    assert "site_order_average" in thermo.keys()
+    assert "site_order_std" in thermo.keys()
 
 
 def test_lowest_energy_obs(db_name):
     atoms = get_example_mc_system(db_name)
 
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
-    atoms[2].symbol = 'Cu'
+    atoms[0].symbol = "Cu"
+    atoms[1].symbol = "Cu"
+    atoms[2].symbol = "Cu"
 
     low_en = LowestEnergyStructure(atoms)
 
@@ -308,15 +314,17 @@ def test_lowest_energy_obs(db_name):
 def test_diffraction_obs(db_name):
     atoms = get_example_mc_system(db_name)
 
-    atoms[0].symbol = 'Cu'
-    atoms[1].symbol = 'Cu'
-    atoms[2].symbol = 'Cu'
+    atoms[0].symbol = "Cu"
+    atoms[1].symbol = "Cu"
+    atoms[2].symbol = "Cu"
 
-    obs = DiffractionObserver(atoms=atoms,
-                              k_vector=[0.25, 0.0, 0.0],
-                              name='reflect1',
-                              active_symbols=['Cu'],
-                              all_symbols=['Au', 'Cu'])
+    obs = DiffractionObserver(
+        atoms=atoms,
+        k_vector=[0.25, 0.0, 0.0],
+        name="reflect1",
+        active_symbols=["Cu"],
+        all_symbols=["Au", "Cu"],
+    )
 
     mc = Montecarlo(atoms, 600)
     mc.attach(obs)
@@ -324,7 +332,7 @@ def test_diffraction_obs(db_name):
     mc.run(steps=1000)
     thermo = mc.get_thermodynamic_quantities()
 
-    assert 'reflect1' in thermo.keys()
+    assert "reflect1" in thermo.keys()
 
 
 def test_constrain_swap(db_name):
@@ -335,8 +343,8 @@ def test_constrain_swap(db_name):
     # Insert a few vacancies
     num_X = 0
     for atom in atoms:
-        if atom.symbol == 'Si':
-            atom.symbol = 'X'
+        if atom.symbol == "Si":
+            atom.symbol = "X"
             num_X += 1
 
         if num_X >= 20:
@@ -345,8 +353,8 @@ def test_constrain_swap(db_name):
     # Insert a few C
     num_C = 0
     for atom in atoms:
-        if atom.symbol == 'O':
-            atom.symbol = 'C'
+        if atom.symbol == "O":
+            atom.symbol = "C"
             num_C += 1
 
         if num_C >= 20:
@@ -365,7 +373,7 @@ def test_constrain_swap(db_name):
     symbs = [atom.symbol for atom in atoms]
     assert not all(map(lambda x: x[0] == x[1], zip(orig_symbs, symbs)))
 
-    allowed_elements = [['Si', 'X'], ['O', 'C']]
+    allowed_elements = [["Si", "X"], ["O", "C"]]
     for basis, allowed in zip(i_by_basis, allowed_elements):
         for indx in basis:
             assert atoms[indx].symbol in allowed
@@ -377,8 +385,8 @@ def test_fixed_element(db_name):
     # Insert a few vacancies
     num_X = 0
     for atom in atoms:
-        if atom.symbol == 'Si':
-            atom.symbol = 'X'
+        if atom.symbol == "Si":
+            atom.symbol = "X"
             num_X += 1
 
         if num_X >= 20:
@@ -387,24 +395,24 @@ def test_fixed_element(db_name):
     # Insert a few C
     num_C = 0
     for atom in atoms:
-        if atom.symbol == 'O':
-            atom.symbol = 'C'
+        if atom.symbol == "O":
+            atom.symbol = "C"
             num_C += 1
 
         if num_C >= 20:
             break
 
     # Let's say that all Si atoms should be fixed
-    fixed_element = FixedElement('Si')
+    fixed_element = FixedElement("Si")
     generator = RandomSwap(atoms)
     generator.add_constraint(fixed_element)
 
     mc = Montecarlo(atoms, 10000, generator=generator)
 
-    si_indices = [atom.index for atom in atoms if atom.symbol == 'Si']
+    si_indices = [atom.index for atom in atoms if atom.symbol == "Si"]
     mc.run(steps=1000)
 
-    si_after = [atom.index for atom in atoms if atom.symbol == 'Si']
+    si_after = [atom.index for atom in atoms if atom.symbol == "Si"]
     assert si_indices == si_after
 
 
@@ -414,8 +422,8 @@ def test_fixed_indices(db_name):
     # Insert a few vacancies
     num_X = 0
     for atom in atoms:
-        if atom.symbol == 'Si':
-            atom.symbol = 'X'
+        if atom.symbol == "Si":
+            atom.symbol = "X"
             num_X += 1
 
         if num_X >= 20:
@@ -424,8 +432,8 @@ def test_fixed_indices(db_name):
     # Insert a few C
     num_C = 0
     for atom in atoms:
-        if atom.symbol == 'O':
-            atom.symbol = 'C'
+        if atom.symbol == "O":
+            atom.symbol = "C"
             num_C += 1
 
         if num_C >= 20:
@@ -452,28 +460,30 @@ def test_fixed_indices(db_name):
 @pytest.mark.slow
 # pylint: disable=redefined-outer-name
 def test_gs_mgsi(db_name, almgsix_eci):
-    conc = Concentration(basis_elements=[['Al', 'Mg', 'Si', 'X']])
-    settings = CEBulk(conc,
-                      crystalstructure='fcc',
-                      a=4.05,
-                      size=[1, 1, 1],
-                      max_cluster_dia=[5.0, 5.0],
-                      db_name=db_name)
+    conc = Concentration(basis_elements=[["Al", "Mg", "Si", "X"]])
+    settings = CEBulk(
+        conc,
+        crystalstructure="fcc",
+        a=4.05,
+        size=[1, 1, 1],
+        max_cluster_dia=[5.0, 5.0],
+        db_name=db_name,
+    )
     settings.basis_func_type = "binary_linear"
 
-    atoms = bulk('Al', a=4.05, cubic=True) * (2, 2, 2)
+    atoms = bulk("Al", a=4.05, cubic=True) * (2, 2, 2)
     atoms = attach_calculator(settings, atoms, almgsix_eci)
     expect = atoms.copy()
     layers, _ = get_layers(expect, (1, 0, 0))
     for i, layer in enumerate(layers):
         if layer % 2 == 0:
-            expect[i].symbol = 'Si'
+            expect[i].symbol = "Si"
         else:
-            expect[i].symbol = 'Mg'
+            expect[i].symbol = "Mg"
 
     for i in range(int(len(atoms) / 2)):
-        atoms[i].symbol = 'Mg'
-        atoms[i + int(len(atoms) / 2)].symbol = 'Si'
+        atoms[i].symbol = "Mg"
+        atoms[i + int(len(atoms) / 2)].symbol = "Si"
 
     mc = Montecarlo(atoms, 1000)
     print(mc.current_energy)
@@ -510,13 +520,13 @@ def test_acceptance_rate(db_name):
 
     num_acc = 3
     for _ in range(num_acc):
-        acc_rate([SystemChange(0, 'Al', 'Mg', '')])
+        acc_rate([SystemChange(0, "Al", "Mg", "")])
 
     assert acc_rate.rate == pytest.approx(1.0)
 
     num_reject = 3
     for _ in range(num_reject):
-        acc_rate([SystemChange(0, 'Al', 'Al', '')])
+        acc_rate([SystemChange(0, "Al", "Al", "")])
     assert acc_rate.rate == pytest.approx(num_acc / (num_acc + num_reject))
 
     # Try to use as observer in MC
@@ -537,17 +547,17 @@ def test_acceptance_rate(db_name):
 
 def test_mc_mixed_ensemble(db_name):
     atoms = get_rocksalt_mc_system(db_name)
-    fixed_conc = [atom.index for atom in atoms if atom.symbol == 'Si']
-    fixed_chem_pot = [atom.index for atom in atoms if atom.symbol == 'O']
-    atoms.symbols[fixed_conc[:20]] = 'X'
+    fixed_conc = [atom.index for atom in atoms if atom.symbol == "Si"]
+    fixed_chem_pot = [atom.index for atom in atoms if atom.symbol == "O"]
+    atoms.symbols[fixed_conc[:20]] = "X"
 
-    generator = MixedSwapFlip(atoms, fixed_conc, fixed_chem_pot, ['O', 'C'])
+    generator = MixedSwapFlip(atoms, fixed_conc, fixed_chem_pot, ["O", "C"])
 
     mc = Montecarlo(atoms, 10000, generator=generator)
     mc.run(2000)
 
-    assert all(s in ['Si', 'X'] for s in atoms.symbols[fixed_conc])
-    assert all(s in ['O', 'C'] for s in atoms.symbols[fixed_chem_pot])
+    assert all(s in ["Si", "X"] for s in atoms.symbols[fixed_conc])
+    assert all(s in ["O", "C"] for s in atoms.symbols[fixed_chem_pot])
 
 
 def test_mc_reset_step_counter(db_name):

@@ -8,7 +8,7 @@ from clease.datastructures import FourVector, Figure
 from .cluster import Cluster
 from .cluster_fingerprint import ClusterFingerprint
 
-__all__ = ('ClusterGenerator', 'SitesWithinCutoff')
+__all__ = ("ClusterGenerator", "SitesWithinCutoff")
 
 
 class ClusterGenerator:
@@ -57,7 +57,7 @@ class ClusterGenerator:
         if not cartesian.ndim == 1:
             # XXX: This could instead return a List[FourVector] if we pass a 2d
             # set of coordinates.
-            raise ValueError('Can only translate 1 position at a time.')
+            raise ValueError("Can only translate 1 position at a time.")
 
         if sublattice is None:
             sublattice = self.get_lattice(cartesian)
@@ -82,7 +82,7 @@ class ClusterGenerator:
         shifts = self.prim.get_positions()
         reshaped = np.reshape(pos, (1, 3))
         wrapped = wrap_positions(reshaped, self.prim.get_cell())
-        diff_sq = np.sum((wrapped[0, :] - shifts)**2, axis=1)
+        diff_sq = np.sum((wrapped[0, :] - shifts) ** 2, axis=1)
         return int(np.argmin(diff_sq))
 
     def eucledian_distance(self, x1: FourVector, x2: FourVector) -> float:
@@ -114,10 +114,14 @@ class ClusterGenerator:
 
         def filter_func(fv: FourVector) -> bool:
             d = self.eucledian_distance(x0, fv)
-            return 1E-5 < d < cutoff
+            return 1e-5 < d < cutoff
 
-        all_sites = product(range(-max_int, max_int + 1), range(-max_int, max_int + 1),
-                            range(-max_int, max_int + 1), range(self.num_sub_lattices))
+        all_sites = product(
+            range(-max_int, max_int + 1),
+            range(-max_int, max_int + 1),
+            range(-max_int, max_int + 1),
+            range(self.num_sub_lattices),
+        )
 
         return filter(filter_func, (FourVector(*site) for site in all_sites))
 
@@ -133,8 +137,9 @@ class ClusterGenerator:
         X = figure.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
         return positions_to_fingerprint(X)
 
-    def prepare_within_cutoff(self, cutoff: float,
-                              lattice: int) -> Dict[FourVector, Set[FourVector]]:
+    def prepare_within_cutoff(
+        self, cutoff: float, lattice: int
+    ) -> Dict[FourVector, Set[FourVector]]:
         """Prepare all sites which are within the cutoff sphere. Note, this only prepares sites
         which are pair-wise within the cutoff, and does not consider the distance to the
         center-of-mass. This needs to be checked for the individual figure which is created from
@@ -180,8 +185,9 @@ class ClusterGenerator:
         filter_func = functools.partial(is_figure_ok, cutoff=cutoff)
         return filter(filter_func, site_iterator(cutoff_lut, size, ref_lattice))
 
-    def generate(self, size: int, cutoff: float,
-                 ref_lattice: int) -> Tuple[List[List[Figure]], List[ClusterFingerprint]]:
+    def generate(
+        self, size: int, cutoff: float, ref_lattice: int
+    ) -> Tuple[List[List[Figure]], List[ClusterFingerprint]]:
         """Generate all possible figures of a given size, are within a given cutoff radius
         (from the center of mass of the figure), and from a reference lattice.
 
@@ -231,9 +237,7 @@ class ClusterGenerator:
             dists.append(sorted(tmp_dist, reverse=True))
         return dists
 
-    def _order_by_internal_distances(self,
-                                     figure: Figure) \
-            -> Figure:
+    def _order_by_internal_distances(self, figure: Figure) -> Figure:
         """Order the Figure by internal distances. Returns a new instance of the Figure."""
         dists = self._get_internal_distances(figure)
         fvs = figure.components
@@ -313,8 +317,9 @@ class SitesWithinCutoff:
         return self.pre_calc[ref_lattice]
 
 
-def site_iterator(within_cutoff: Dict[FourVector, Set[FourVector]], size: int,
-                  ref_lattice: int) -> Iterator[Figure]:
+def site_iterator(
+    within_cutoff: Dict[FourVector, Set[FourVector]], size: int, ref_lattice: int
+) -> Iterator[Figure]:
     """
     Return an iterator of all combinations of sites within a cutoff
 
@@ -365,7 +370,7 @@ def positions_to_fingerprint(X: np.ndarray) -> ClusterFingerprint:
     offset = 0
     for i in range(1, N):
         diag = np.diagonal(X, offset=i)
-        off_diag[offset:(len(diag) + offset)] = diag
+        off_diag[offset : (len(diag) + offset)] = diag
         offset += len(diag)
     # Sort positions, such that the largest position is first
     diag_positions = np.sort(diag_positions)[::-1]

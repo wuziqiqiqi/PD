@@ -3,17 +3,17 @@ import logging
 import sys
 from contextlib import contextmanager
 
-__all__ = ('log_stream', 'log_stream_context', 'get_root_clease_logger')
+__all__ = ("log_stream", "log_stream_context", "get_root_clease_logger")
 
 
 def get_root_clease_logger() -> logging.Logger:
     """Get the root clease logger."""
-    return logging.getLogger('clease')
+    return logging.getLogger("clease")
 
 
-def log_stream(level: Optional[int] = None,
-               stream: TextIO = sys.stdout,
-               fmt: Optional[str] = None) -> logging.StreamHandler:
+def log_stream(
+    level: Optional[int] = None, stream: TextIO = sys.stdout, fmt: Optional[str] = None
+) -> logging.StreamHandler:
     """Helper function to enable CLEASE logging to a stream. Default stream is stdout.
     This function permanently adjusts the global CLEASE logger. Use ``log_stream_context``
     to temporarily adjust the clease logger.
@@ -49,9 +49,9 @@ def log_stream(level: Optional[int] = None,
 
 
 @contextmanager
-def log_stream_context(level: Optional[int] = None,
-                       stream: TextIO = sys.stdout,
-                       fmt: Optional[str] = None) -> Iterator[logging.StreamHandler]:
+def log_stream_context(
+    level: Optional[int] = None, stream: TextIO = sys.stdout, fmt: Optional[str] = None
+) -> Iterator[logging.StreamHandler]:
     """Context which temporarily adds a stream handler to the root CLEASE logger.
     Yields the added stream handler, so that it can be adjusted as needed.
 
@@ -92,9 +92,9 @@ def log_stream_context(level: Optional[int] = None,
             root_logger.setLevel(original_log_level)
 
 
-def _make_stream_handler(level: Optional[int],
-                         stream: TextIO,
-                         fmt: Optional[str] = None) -> logging.StreamHandler:
+def _make_stream_handler(
+    level: Optional[int], stream: TextIO, fmt: Optional[str] = None
+) -> logging.StreamHandler:
     """Helper function to create a stream handler with a specified level and stream.
     If the level is None, use the effective level of the CLEASE root logger.
     """
@@ -106,7 +106,7 @@ def _make_stream_handler(level: Optional[int],
     handler.setLevel(eff_level)
     # Set some formatting
     if fmt is None:
-        fmt = '%(name)s - %(levelname)s - %(message)s'
+        fmt = "%(name)s - %(levelname)s - %(message)s"
     formatter = logging.Formatter(fmt)
     handler.setFormatter(formatter)
     return handler

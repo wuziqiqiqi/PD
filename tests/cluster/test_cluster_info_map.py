@@ -16,14 +16,16 @@ def dict_amost_equal(d1, d2):
 
 
 def test_fcc(db_name):
-    basis_elements = [['Au', 'Cu']]
+    basis_elements = [["Au", "Cu"]]
     concentration = Concentration(basis_elements=basis_elements)
-    settings = CEBulk(crystalstructure='fcc',
-                      a=4.05,
-                      size=[6, 6, 6],
-                      concentration=concentration,
-                      db_name=db_name,
-                      max_cluster_dia=[4.3, 4.3, 4.3])
+    settings = CEBulk(
+        crystalstructure="fcc",
+        a=4.05,
+        size=[6, 6, 6],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[4.3, 4.3, 4.3],
+    )
 
     # Let's try to obtain cluster info for conventional cell
     atoms_small = bulk("Au", crystalstructure="fcc", cubic=True, a=4.05)
@@ -34,8 +36,8 @@ def test_fcc(db_name):
 
     map_info, map_tm = info_mapper.map_info(atoms_small)
 
-    atoms_small[0].symbol = 'Cu'
-    atoms_small[4].symbol = 'Cu'
+    atoms_small[0].symbol = "Cu"
+    atoms_small[4].symbol = "Cu"
 
     # Generate the cubic from scratch
     settings.set_active_template(atoms=atoms_small)
@@ -52,39 +54,50 @@ def test_fcc(db_name):
 
 
 def test_TaXO(db_name):
-    basis_elements = [['O', 'X'], ['Ta'], ['O', 'X'], ['O', 'X']]
+    basis_elements = [["O", "X"], ["Ta"], ["O", "X"], ["O", "X"]]
     grouped_basis = [[1], [0, 2, 3]]
     concentration = Concentration(basis_elements=basis_elements, grouped_basis=grouped_basis)
 
-    bsg = CECrystal(basis=[(0., 0., 0.), (0.2244, 0.3821, 0.), (0.3894, 0.1405, 0.),
-                           (0.201, 0.3461, 0.5)],
-                    spacegroup=55,
-                    cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                    size=[4, 4, 4],
-                    concentration=concentration,
-                    db_name=db_name,
-                    max_cluster_dia=[3.0, 3.0])
+    bsg = CECrystal(
+        basis=[
+            (0.0, 0.0, 0.0),
+            (0.2244, 0.3821, 0.0),
+            (0.3894, 0.1405, 0.0),
+            (0.201, 0.3461, 0.5),
+        ],
+        spacegroup=55,
+        cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
+        size=[4, 4, 4],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[3.0, 3.0],
+    )
 
     # Create a small cell
-    atoms_small = crystal(basis=[(0., 0., 0.), (0.2244, 0.3821, 0.), (0.3894, 0.1405, 0.),
-                                 (0.201, 0.3461, 0.5)],
-                          spacegroup=55,
-                          cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
-                          symbols=['O', 'Ta', 'O', 'O'])
+    atoms_small = crystal(
+        basis=[
+            (0.0, 0.0, 0.0),
+            (0.2244, 0.3821, 0.0),
+            (0.3894, 0.1405, 0.0),
+            (0.201, 0.3461, 0.5),
+        ],
+        spacegroup=55,
+        cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
+        symbols=["O", "Ta", "O", "O"],
+    )
     atoms_small = atoms_small * (2, 1, 1)
 
     atoms_small = atoms_small = wrap_and_sort_by_position(atoms_small)
 
-    info_mapper = \
-        ClusterInfoMapper(bsg.atoms, bsg.trans_matrix, bsg.cluster_list)
+    info_mapper = ClusterInfoMapper(bsg.atoms, bsg.trans_matrix, bsg.cluster_list)
 
     map_info, map_tm = info_mapper.map_info(atoms_small)
 
     # Swap 3 O with X
     count = 0
     for atom in atoms_small:
-        if atom.symbol == 'O':
-            atom.symbol = 'X'
+        if atom.symbol == "O":
+            atom.symbol = "X"
             count += 1
 
         if count >= 3:

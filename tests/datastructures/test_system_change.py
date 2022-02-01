@@ -6,7 +6,7 @@ from clease.datastructures import SystemChange
 
 @pytest.fixture
 def atoms():
-    return bulk('Al', crystalstructure='sc', a=4.0)
+    return bulk("Al", crystalstructure="sc", a=4.0)
 
 
 def test_system_change(atoms):
@@ -17,10 +17,10 @@ def test_system_change(atoms):
     assert len(sym_count) == 1
     # Get the symbol
     sym = supercell.symbols[0]
-    assert sym == 'Al'
-    new_sym = 'Zn'
+    assert sym == "Al"
+    new_sym = "Zn"
     index = 4
-    name = 'test_change'
+    name = "test_change"
 
     # Create a system change
     change = SystemChange(index, sym, new_sym, name)

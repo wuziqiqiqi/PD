@@ -13,7 +13,7 @@ from .constrained_ridge import ConstrainedRidge
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('PhysicalRidge',)
+__all__ = ("PhysicalRidge",)
 
 
 class PhysicalRidge(LinearRegression):
@@ -67,12 +67,14 @@ class PhysicalRidge(LinearRegression):
         is recommended to put normalize=False for such cases.
     """
 
-    def __init__(self,
-                 lamb_size: float = 1e-6,
-                 lamb_dia: float = 1e-6,
-                 size_decay: Union[str, Callable[[int], float]] = 'linear',
-                 dia_decay: Union[str, Callable[[int], float]] = 'linear',
-                 normalize: bool = True) -> None:
+    def __init__(
+        self,
+        lamb_size: float = 1e-6,
+        lamb_dia: float = 1e-6,
+        size_decay: Union[str, Callable[[int], float]] = "linear",
+        dia_decay: Union[str, Callable[[int], float]] = "linear",
+        normalize: bool = True,
+    ) -> None:
         super().__init__()
         self.lamb_size = lamb_size
         self.lamb_dia = lamb_dia
@@ -93,7 +95,7 @@ class PhysicalRidge(LinearRegression):
         :param c: Vector representing the right hand side of
             constraint equations
         """
-        self._constraint = {'A': A, 'c': c}
+        self._constraint = {"A": A, "c": c}
 
     def fit_data(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -148,10 +150,10 @@ class PhysicalRidge(LinearRegression):
         """
         diameters = []
         for n in names:
-            if n[1] == '0' or n[1] == '1':
+            if n[1] == "0" or n[1] == "1":
                 diameters.append(0.0)
             else:
-                dia_str = n.split('_')[1]
+                dia_str = n.split("_")[1]
                 dia = int(dia_str[1:])
                 diameters.append(dia)
         self.diameters = diameters
@@ -192,7 +194,7 @@ class PhysicalRidge(LinearRegression):
         if self._constraint is not None:
             # Use the constrained Tikhonov verison
             regressor = ConstrainedRidge(penalty)
-            regressor.add_constraint(self._constraint['A'], self._constraint['c'])
+            regressor.add_constraint(self._constraint["A"], self._constraint["c"])
             coeff = regressor.fit(X_fit, y_fit)
         else:
             matrix = np.vstack((X_fit, np.diag(np.sqrt(penalty))))
@@ -230,11 +232,11 @@ def exponential_dia(dia: int) -> float:
 
 def get_size_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int], float]:
     if isinstance(decay, str):
-        if decay == 'linear':
+        if decay == "linear":
             return linear_size
-        if decay == 'exponential':
+        if decay == "exponential":
             return exponential_size
-        if decay.startswith('poly'):
+        if decay.startswith("poly"):
             power = int(decay[-1])
             return lambda size: size**power
         raise ValueError(f"Unknown decay type {decay}")
@@ -246,11 +248,11 @@ def get_size_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int],
 
 def get_dia_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int], float]:
     if isinstance(decay, str):
-        if decay == 'linear':
+        if decay == "linear":
             return linear_dia
-        if decay == 'exponential':
+        if decay == "exponential":
             return exponential_dia
-        if decay.startswith('poly'):
+        if decay.startswith("poly"):
             power = int(decay[-1])
             return lambda dia: dia**power
         raise ValueError(f"Unknown decay type {decay}")
@@ -260,13 +262,15 @@ def get_dia_decay(decay: Union[str, Callable[[int], float]]) -> Callable[[int], 
     raise ValueError("dia_decay has to be either a string or callable")
 
 
-def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
-                        params: Dict,
-                        X: np.ndarray,
-                        y: np.ndarray,
-                        cv: int = 5,
-                        num_trials: int = 100,
-                        groups: Sequence[int] = ()) -> Dict:
+def random_cv_hyper_opt(
+    phys_ridge: PhysicalRidge,
+    params: Dict,
+    X: np.ndarray,
+    y: np.ndarray,
+    cv: int = 5,
+    num_trials: int = 100,
+    groups: Sequence[int] = (),
+) -> Dict:
     """
     Estimate the hyper parameters of the Physical Ridge by random search.
 
@@ -301,10 +305,10 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
     partitions = split_dataset(X, y, nsplits=cv, groups=groups)
 
     for i in range(num_trials):
-        lamb_dia = choice(params.get('lamb_dia', [phys_ridge.lamb_dia]))
-        lamb_size = choice(params.get('lamb_size', [phys_ridge.lamb_size]))
-        size_decay = choice(params.get('size_decay', [phys_ridge.size_decay]))
-        dia_decay = choice(params.get('dia_decay', [phys_ridge.dia_decay]))
+        lamb_dia = choice(params.get("lamb_dia", [phys_ridge.lamb_dia]))
+        lamb_size = choice(params.get("lamb_size", [phys_ridge.lamb_size]))
+        size_decay = choice(params.get("size_decay", [phys_ridge.size_decay]))
+        dia_decay = choice(params.get("dia_decay", [phys_ridge.dia_decay]))
 
         phys_ridge.lamb_dia = lamb_dia
         phys_ridge.lamb_size = lamb_size
@@ -312,21 +316,21 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
         phys_ridge.dia_decay = dia_decay
 
         param_dict = {
-            'lamb_dia': lamb_dia,
-            'lamb_size': lamb_size,
-            'size_decay': size_decay,
-            'dia_decay': dia_decay,
+            "lamb_dia": lamb_dia,
+            "lamb_size": lamb_size,
+            "size_decay": size_decay,
+            "dia_decay": dia_decay,
         }
 
         cv_score = 0.0
         mse = 0.0
         for p in partitions:
-            coeff = phys_ridge.fit(p['train_X'], p['train_y'])
-            pred = p['validate_X'].dot(coeff)
-            cv_score += np.sqrt(np.mean((pred - p['validate_y'])**2))
+            coeff = phys_ridge.fit(p["train_X"], p["train_y"])
+            pred = p["validate_X"].dot(coeff)
+            cv_score += np.sqrt(np.mean((pred - p["validate_y"]) ** 2))
 
-            pred = p['train_X'].dot(coeff)
-            mse += np.sqrt(np.mean((pred - p['train_y'])**2))
+            pred = p["train_X"].dot(coeff)
+            mse += np.sqrt(np.mean((pred - p["train_y"]) ** 2))
 
         cv_score /= len(partitions)
         mse /= len(partitions)
@@ -339,17 +343,19 @@ def random_cv_hyper_opt(phys_ridge: PhysicalRidge,
             best_param = param_dict
 
         if time.time() - last_print > 30:
-            msg = (f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
-                   f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}")
+            msg = (
+                f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
+                f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}"
+            )
             logger.info(msg)
             last_print = time.time()
 
     cv_params = sorted(cv_params, key=lambda x: x[0])
     res = {
-        'best_coeffs': best_coeff,
-        'best_params': best_param,
-        'best_cv': best_cv,
-        'cvs': [x[0] for x in cv_params],
-        'params': [x[1] for x in cv_params]
+        "best_coeffs": best_coeff,
+        "best_params": best_param,
+        "best_cv": best_cv,
+        "cvs": [x[0] for x in cv_params],
+        "params": [x[1] for x in cv_params],
     }
     return res

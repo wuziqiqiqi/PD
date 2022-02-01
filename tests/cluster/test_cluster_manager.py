@@ -9,17 +9,16 @@ import numpy as np
 
 @pytest.fixture
 def bulk_al():
-    return bulk('Al')
+    return bulk("Al")
 
 
 @pytest.fixture
 def nacl():
-    return bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+    return bulk("NaCl", crystalstructure="rocksalt", a=4.0)
 
 
 @pytest.fixture
 def make_cluster_mng():
-
     def _make_cluster_mng(atoms, **kwargs):
         return ClusterManager(atoms, **kwargs)
 
@@ -47,7 +46,7 @@ def trans_matrix_matches(tm, template):
 
 
 def test_tm_fcc():
-    prim = bulk('Al')
+    prim = bulk("Al")
     prim[0].tag = 0
     manager = ClusterManager(prim)
     template = prim * (3, 3, 3)
@@ -58,7 +57,7 @@ def test_tm_fcc():
 
 
 def test_tm_hcp():
-    prim = bulk('Mg', crystalstructure='hcp', a=3.8, c=4.8)
+    prim = bulk("Mg", crystalstructure="hcp", a=3.8, c=4.8)
     prim.wrap()
     for atom in prim:
         atom.tag = atom.index
@@ -71,7 +70,7 @@ def test_tm_hcp():
 
 
 def test_tm_rocksalt():
-    prim = bulk('LiX', crystalstructure='rocksalt', a=4.0)
+    prim = bulk("LiX", crystalstructure="rocksalt", a=4.0)
     prim.wrap()
     for atom in prim:
         atom.tag = atom.index
@@ -84,50 +83,50 @@ def test_tm_rocksalt():
 
 
 def test_lut():
-    prim = bulk('LiO', crystalstructure='rocksalt', a=4.05)
+    prim = bulk("LiO", crystalstructure="rocksalt", a=4.05)
     prim.wrap()
     for atom in prim:
         atom.tag = atom.index
 
-    tests = [{
-        'atoms': prim,
-        'expect': {
-            FourVector(0, 0, 0, 0): 0,
-            FourVector(0, 0, 0, 1): 1
-        }
-    }, {
-        'atoms': wrap_and_sort_by_position(prim * (2, 2, 2)),
-        'expect': {
-            FourVector(0, 0, 0, 0): 0,
-            FourVector(0, 0, 0, 1): 4,
-            FourVector(0, 1, 0, 0): 2,
-            FourVector(0, 1, 0, 1): 9,
-            FourVector(0, 0, 1, 0): 3,
-            FourVector(0, 0, 1, 1): 10,
-            FourVector(0, 1, 1, 0): 8,
-            FourVector(0, 1, 1, 1): 14,
-            FourVector(1, 0, 0, 0): 1,
-            FourVector(1, 0, 0, 1): 7,
-            FourVector(1, 0, 1, 0): 6,
-            FourVector(1, 0, 1, 1): 13,
-            FourVector(1, 1, 0, 0): 5,
-            FourVector(1, 1, 0, 1): 12,
-            FourVector(1, 1, 1, 0): 11,
-            FourVector(1, 1, 1, 1): 15
-        }
-    }]
+    tests = [
+        {
+            "atoms": prim,
+            "expect": {FourVector(0, 0, 0, 0): 0, FourVector(0, 0, 0, 1): 1},
+        },
+        {
+            "atoms": wrap_and_sort_by_position(prim * (2, 2, 2)),
+            "expect": {
+                FourVector(0, 0, 0, 0): 0,
+                FourVector(0, 0, 0, 1): 4,
+                FourVector(0, 1, 0, 0): 2,
+                FourVector(0, 1, 0, 1): 9,
+                FourVector(0, 0, 1, 0): 3,
+                FourVector(0, 0, 1, 1): 10,
+                FourVector(0, 1, 1, 0): 8,
+                FourVector(0, 1, 1, 1): 14,
+                FourVector(1, 0, 0, 0): 1,
+                FourVector(1, 0, 0, 1): 7,
+                FourVector(1, 0, 1, 0): 6,
+                FourVector(1, 0, 1, 1): 13,
+                FourVector(1, 1, 0, 0): 5,
+                FourVector(1, 1, 0, 1): 12,
+                FourVector(1, 1, 1, 0): 11,
+                FourVector(1, 1, 1, 1): 15,
+            },
+        },
+    ]
 
     manager = ClusterManager(prim)
     for i, test in enumerate(tests):
-        lut = manager.create_four_vector_lut(test['atoms'])
-        msg = 'Test #{} failed.\nGot: {}\nExpected: {}'.format(i, lut, test['expect'])
-        assert lut == test['expect'], msg
+        lut = manager.create_four_vector_lut(test["atoms"])
+        msg = "Test #{} failed.\nGot: {}\nExpected: {}".format(i, lut, test["expect"])
+        assert lut == test["expect"], msg
 
 
 def test_get_figures_multiple_times(cluster_mng):
     """Regression test. After getting figures from settings,
     attaching a calculator would result in a RuntimeError.
-    
+
     See issue #263
     """
     fig1 = cluster_mng.get_figures()
@@ -135,16 +134,19 @@ def test_get_figures_multiple_times(cluster_mng):
     assert fig1 == fig2
 
 
-@pytest.mark.parametrize('max_cluster_dia', [
-    [5., 5.],
-    (5., 5.),
-    [],
-    np.array([1, 2, 3]),
-])
+@pytest.mark.parametrize(
+    "max_cluster_dia",
+    [
+        [5.0, 5.0],
+        (5.0, 5.0),
+        [],
+        np.array([1, 2, 3]),
+    ],
+)
 def test_cache(mocker, cluster_mng, max_cluster_dia):
     # max_size = 3
     # max_cluster_dia = [5, 5]
-    mocker.spy(ClusterManager, '_prepare_new_build')
+    mocker.spy(ClusterManager, "_prepare_new_build")
     assert cluster_mng._prepare_new_build.call_count == 0
     # No build has been performed yet, we should require a build
     assert cluster_mng.requires_build(max_cluster_dia)
@@ -165,7 +167,7 @@ def test_cache(mocker, cluster_mng, max_cluster_dia):
 
     # Build using a new set of arguments
     # max_size = 4
-    max_cluster_dia = list(max_cluster_dia) + [5.]
+    max_cluster_dia = list(max_cluster_dia) + [5.0]
     assert cluster_mng.requires_build(max_cluster_dia)
     cluster_mng.build(max_cluster_dia)
     assert cluster_mng._prepare_new_build.call_count == 2
@@ -174,11 +176,14 @@ def test_cache(mocker, cluster_mng, max_cluster_dia):
     assert cluster_0 is not cluster_mng.clusters[0]
 
 
-@pytest.mark.parametrize('background_syms, expect', [
-    (None, {'Na', 'Cl'}),
-    ({'Na'}, {'Cl'}),
-    ({'Cl'}, {'Na'}),
-])
+@pytest.mark.parametrize(
+    "background_syms, expect",
+    [
+        (None, {"Na", "Cl"}),
+        ({"Na"}, {"Cl"}),
+        ({"Cl"}, {"Na"}),
+    ],
+)
 def test_background_manager_background(nacl, make_cluster_mng, background_syms, expect):
     """Test that we properly filter the background symbols in the primitive."""
     mng = make_cluster_mng(nacl, background_syms=background_syms)
@@ -189,30 +194,33 @@ def test_no_mutation(nacl, make_cluster_mng):
     """Test we don't mutate the input atoms"""
     atoms = nacl
     atoms_orig = atoms.copy()
-    mng = make_cluster_mng(atoms=atoms, background_syms={'Na'})
+    mng = make_cluster_mng(atoms=atoms, background_syms={"Na"})
     # Test we filtered the primtive
     assert len(mng.prim) == 1
-    assert set(mng.prim.symbols) == {'Cl'}
+    assert set(mng.prim.symbols) == {"Cl"}
     # Test we didn't alter the atoms we inserted in the cluster manager
     assert atoms == atoms_orig
-    assert set(atoms.symbols) == {'Na', 'Cl'}
+    assert set(atoms.symbols) == {"Na", "Cl"}
 
 
 def test_is_background(nacl, make_cluster_mng):
-    mng = make_cluster_mng(nacl, background_syms={'Na'})
+    mng = make_cluster_mng(nacl, background_syms={"Na"})
 
     atoms = nacl * (4, 4, 4)
-    assert set(atoms.symbols) == {'Na', 'Cl'}
+    assert set(atoms.symbols) == {"Na", "Cl"}
     for atom in atoms:
-        expect = atom.symbol == 'Na'
+        expect = atom.symbol == "Na"
         assert mng.is_background_atom(atom) == expect
 
 
-@pytest.mark.parametrize('max_cluster_dia, max_body_size', [
-    ([], 1),
-    ([4.0], 2),
-    ([4.0, 4.0], 3),
-])
+@pytest.mark.parametrize(
+    "max_cluster_dia, max_body_size",
+    [
+        ([], 1),
+        ([4.0], 2),
+        ([4.0, 4.0], 3),
+    ],
+)
 def test_build_empty(nacl, make_cluster_mng, max_cluster_dia, max_body_size):
     mng = make_cluster_mng(nacl)
 

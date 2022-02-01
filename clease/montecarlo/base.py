@@ -3,7 +3,7 @@ from abc import ABC
 from ase import Atoms
 from .mc_evaluator import MCEvaluator, construct_evaluator
 
-__all__ = ('BaseMC',)
+__all__ = ("BaseMC",)
 
 
 class BaseMC(ABC):

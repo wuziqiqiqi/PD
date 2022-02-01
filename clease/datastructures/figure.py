@@ -5,7 +5,7 @@ import ase
 import numpy as np
 from .four_vector import FourVector
 
-__all__ = ('Figure',)
+__all__ = ("Figure",)
 
 
 def _convert_figure(x: Any) -> Any:
@@ -37,8 +37,9 @@ class Figure:
     >>> Figure((fv1, fv2))
     """
 
-    components: Tuple[FourVector] = attr.ib(converter=_convert_figure,
-                                            validator=attr.validators.instance_of(tuple))
+    components: Tuple[FourVector] = attr.ib(
+        converter=_convert_figure, validator=attr.validators.instance_of(tuple)
+    )
 
     @components.validator
     def _validate_all_four_vectors(self, attribute, value):
@@ -47,8 +48,10 @@ class Figure:
         # The signature of this function is dictated by attrs.
         for ii, v in enumerate(value):
             if not isinstance(v, FourVector):
-                raise TypeError(f'All values must FourVector type, got {value} '
-                                f'of type {type(v)} in index {ii}.')
+                raise TypeError(
+                    f"All values must FourVector type, got {value} "
+                    f"of type {type(v)} in index {ii}."
+                )
 
     def to_cartesian(self, prim: ase.Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
         """Get the Figure in terms of the cartesian coordinates, as defined

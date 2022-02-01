@@ -7,8 +7,14 @@ from clease.tools import flatten
 from .constraints import MCConstraint
 from .swap_move_index_tracker import SwapMoveIndexTracker
 
-__all__ = ('TrialMoveGenerator', 'RandomFlip', 'RandomSwap', 'MixedSwapFlip', 'TooFewElementsError',
-           'RandomFlipWithinBasis')
+__all__ = (
+    "TrialMoveGenerator",
+    "RandomFlip",
+    "RandomSwap",
+    "MixedSwapFlip",
+    "TooFewElementsError",
+    "RandomFlipWithinBasis",
+)
 
 DEFAULT_MAX_ATTEMPTS = 10000
 
@@ -101,6 +107,7 @@ class SingleTrialMoveGenerator(TrialMoveGenerator, ABC):
     """
     Interface class for generators that return only one type of trial moves
     """
+
     CHANGE_NAME = None
 
     def __init__(self, **kwargs):
@@ -135,7 +142,8 @@ class RandomFlip(SingleTrialMoveGenerator):
     :param indices: List with all indices that should be considered. If None, all indices are
         considered
     """
-    CHANGE_NAME = 'flip_move'
+
+    CHANGE_NAME = "flip_move"
 
     def __init__(self, symbols: Set[str], atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
@@ -164,7 +172,8 @@ class RandomSwap(SingleTrialMoveGenerator):
     :param indices: List with indices that can be chosen from. If None, all indices
         can be chosen.
     """
-    CHANGE_NAME = 'swap_move'
+
+    CHANGE_NAME = "swap_move"
 
     def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
@@ -181,8 +190,10 @@ class RandomSwap(SingleTrialMoveGenerator):
             self.tracker.filter_indices(self.indices)
 
         if self.tracker.num_symbols < 2:
-            raise TooFewElementsError("After filtering there are less than two symbol type left. "
-                                      "Must have at least two.")
+            raise TooFewElementsError(
+                "After filtering there are less than two symbol type left. "
+                "Must have at least two."
+            )
 
     def get_single_trial_move(self) -> List[SystemChange]:
         """
@@ -193,8 +204,18 @@ class RandomSwap(SingleTrialMoveGenerator):
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [
-            SystemChange(index=rand_pos_a, old_symb=symb_a, new_symb=symb_b, name=self.CHANGE_NAME),
-            SystemChange(index=rand_pos_b, old_symb=symb_b, new_symb=symb_a, name=self.CHANGE_NAME)
+            SystemChange(
+                index=rand_pos_a,
+                old_symb=symb_a,
+                new_symb=symb_b,
+                name=self.CHANGE_NAME,
+            ),
+            SystemChange(
+                index=rand_pos_b,
+                old_symb=symb_b,
+                new_symb=symb_a,
+                name=self.CHANGE_NAME,
+            ),
         ]
 
     def on_move_accepted(self, changes: Sequence[SystemChange]):
@@ -221,13 +242,15 @@ class MixedSwapFlip(TrialMoveGenerator):
         of returning a swap move is then 1 - flip_prob.
     """
 
-    def __init__(self,
-                 atoms: Atoms,
-                 swap_indices: Sequence[int],
-                 flip_indices: Sequence[int],
-                 flip_symbols: Sequence[str],
-                 flip_prob: float = 0.5,
-                 **kwargs) -> None:
+    def __init__(
+        self,
+        atoms: Atoms,
+        swap_indices: Sequence[int],
+        flip_indices: Sequence[int],
+        flip_symbols: Sequence[str],
+        flip_prob: float = 0.5,
+        **kwargs,
+    ) -> None:
         super().__init__(**kwargs)
         self.swapper = RandomSwap(atoms, swap_indices)
         self.flipper = RandomFlip(flip_symbols, atoms, flip_indices)
@@ -301,13 +324,15 @@ class RandomFlipWithinBasis(SingleTrialMoveGenerator):
     >>> generator = RandomFlipWithinBasis([["Li", "X"], ["O", "V"]], atoms, [basis1, basis2])
     """
 
-    CHANGE_NAME = 'flip_within_basis_move'
+    CHANGE_NAME = "flip_within_basis_move"
 
-    def __init__(self,
-                 symbols: Sequence[Sequence[str]],
-                 atoms: Atoms,
-                 indices: Sequence[Sequence[int]] = None,
-                 **kwargs):
+    def __init__(
+        self,
+        symbols: Sequence[Sequence[str]],
+        atoms: Atoms,
+        indices: Sequence[Sequence[int]] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
 
         if len(symbols) != len(indices):

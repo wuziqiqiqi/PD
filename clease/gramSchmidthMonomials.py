@@ -86,8 +86,7 @@ class GramSchmidtMonimial:
             for i in range(num_values):
                 new_bf_values.append(self.evaluate_monomial_basis_function(bf1, self.values[i]))
                 for bf2 in range(bf1):
-                    new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2) \
-                        * self.bf_values[bf2][i]
+                    new_bf_values[-1] -= self.dot_monomial_bf(bf1, bf2) * self.bf_values[bf2][i]
 
             self.bf_values.append(new_bf_values)
 
@@ -107,9 +106,10 @@ class GramSchmidtMonimial:
         bf2:
             Index of the second basis function
         """
-        if (bf1 >= len(self.values) or bf2 >= len(self.values)):
-            raise ValueError("The provided indices has to be smaller "
-                             "than total number of basis functions")
+        if bf1 >= len(self.values) or bf2 >= len(self.values):
+            raise ValueError(
+                "The provided indices has to be smaller " "than total number of basis functions"
+            )
 
         dot_prod = 0.0
         for i in range(len(self.values)):
@@ -131,8 +131,9 @@ class GramSchmidtMonimial:
         """
         dot_prod = 0.0
         for i, value in enumerate(self.values):
-            dot_prod += (self.evaluate_monomial_basis_function(monomial, value) *
-                         self.bf_values[bf][i])
+            dot_prod += (
+                self.evaluate_monomial_basis_function(monomial, value) * self.bf_values[bf][i]
+            )
         return dot_prod / len(self.values)
 
     def norm(self, bf: List[float]) -> float:

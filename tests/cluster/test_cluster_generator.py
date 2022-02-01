@@ -8,7 +8,7 @@ from clease.datastructures import FourVector, Figure
 
 
 def test_sites_cutoff_fcc():
-    atoms = bulk('Al', a=4.05)
+    atoms = bulk("Al", a=4.05)
     generator = ClusterGenerator(atoms)
     indices = generator.sites_within_cutoff(3.0, FourVector(0, 0, 0, 0))
     indices = list(indices)
@@ -27,7 +27,7 @@ def test_sites_cutoff_fcc():
 
 def test_sites_cutoff_bcc():
     a = 3.8
-    atoms = bulk('Fe', a=a)
+    atoms = bulk("Fe", a=a)
     generator = ClusterGenerator(atoms)
 
     # Neighbour distances
@@ -40,7 +40,7 @@ def test_sites_cutoff_bcc():
 
 
 def test_generate_pairs_fcc():
-    atoms = bulk('Al', a=4.05)
+    atoms = bulk("Al", a=4.05)
     generator = ClusterGenerator(atoms)
     clusters, fps = generator.generate(2, 5.0, 0)
     assert len(clusters) == 3
@@ -48,7 +48,7 @@ def test_generate_pairs_fcc():
 
 
 def test_equivalent_sites():
-    atoms = bulk('Au', a=3.8)
+    atoms = bulk("Au", a=3.8)
     generator = ClusterGenerator(atoms)
 
     # Test pairs
@@ -66,53 +66,59 @@ def test_equivalent_sites():
 
 
 def test_get_lattice():
-    tests = [{
-        'prim': bulk('Al'),
-        'atoms': bulk('Al') * (2, 2, 2),
-        'site': 4,
-        'lattice': 0
-    }, {
-        'prim': bulk('LiX', 'rocksalt', 4.0),
-        'atoms': bulk('LiX', 'rocksalt', 4.0) * (1, 2, 3),
-        'site': 4,
-        'lattice': 0,
-    }, {
-        'prim': bulk('LiX', 'rocksalt', 4.0),
-        'atoms': bulk('LiX', 'rocksalt', 4.0) * (1, 2, 3),
-        'site': 5,
-        'lattice': 1,
-    }]
+    tests = [
+        {"prim": bulk("Al"), "atoms": bulk("Al") * (2, 2, 2), "site": 4, "lattice": 0},
+        {
+            "prim": bulk("LiX", "rocksalt", 4.0),
+            "atoms": bulk("LiX", "rocksalt", 4.0) * (1, 2, 3),
+            "site": 4,
+            "lattice": 0,
+        },
+        {
+            "prim": bulk("LiX", "rocksalt", 4.0),
+            "atoms": bulk("LiX", "rocksalt", 4.0) * (1, 2, 3),
+            "site": 5,
+            "lattice": 1,
+        },
+    ]
 
     for i, test in enumerate(tests):
-        test['atoms'].wrap()
-        test['prim'].wrap()
-        for at in test['prim']:
+        test["atoms"].wrap()
+        test["prim"].wrap()
+        for at in test["prim"]:
             at.tag = at.index
-        pos = test['atoms'][test['site']].position
-        gen = ClusterGenerator(test['prim'])
+        pos = test["atoms"][test["site"]].position
+        gen = ClusterGenerator(test["prim"])
         lattice = gen.get_lattice(pos)
-        assert lattice == test['lattice']
+        assert lattice == test["lattice"]
 
 
-@pytest.mark.parametrize('test', [{
-    'input': Figure([FourVector(1, 2, 3, 0), FourVector(3, 4, 1, 0)]),
-    'result': 3.4641
-}, {
-    'input': Figure([FourVector(1, 2, 3, 0), FourVector(2, 3, 4, 0)]),
-    'result': 1.7321
-}, {
-    'input': Figure([FourVector(1, 2, 3, 0),
-                     FourVector(2, 3, 4, 0),
-                     FourVector(3, 4, 1, 0)]),
-    'result': 3.4641
-}])
+@pytest.mark.parametrize(
+    "test",
+    [
+        {
+            "input": Figure([FourVector(1, 2, 3, 0), FourVector(3, 4, 1, 0)]),
+            "result": 3.4641,
+        },
+        {
+            "input": Figure([FourVector(1, 2, 3, 0), FourVector(2, 3, 4, 0)]),
+            "result": 1.7321,
+        },
+        {
+            "input": Figure(
+                [FourVector(1, 2, 3, 0), FourVector(2, 3, 4, 0), FourVector(3, 4, 1, 0)]
+            ),
+            "result": 3.4641,
+        },
+    ],
+)
 def test_get_max_distance(test):
     a = 3.8
-    atoms = bulk('Fe', a=a)
+    atoms = bulk("Fe", a=a)
     atoms.cell = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
     generator = ClusterGenerator(atoms)
-    assert pytest.approx(test['result']) == round(generator.get_max_distance(test['input']), 4)
+    assert pytest.approx(test["result"]) == round(generator.get_max_distance(test["input"]), 4)
 
 
 def test_cutoff():

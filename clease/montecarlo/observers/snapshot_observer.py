@@ -18,7 +18,7 @@ class Snapshot(MCObserver):
 
     def __init__(self, atoms: Atoms, fname: str = "snapshot.traj", mode: str = "w"):
         super().__init__()
-        full_fname = add_file_extension(fname, '.traj')
+        full_fname = add_file_extension(fname, ".traj")
         self.atoms = atoms
         self.traj = TrajectoryWriter(full_fname, mode=mode)
         self.fname = full_fname

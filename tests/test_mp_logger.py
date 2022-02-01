@@ -29,7 +29,7 @@ workers.map(function_logging, args)
 # Try the read the logging file back and ensure that
 # it has the expected format
 record_found = [False for _ in range(len(args))]
-with open(log_file, 'r') as infile:
+with open(log_file, "r") as infile:
     lines = infile.readlines()
 
 for line in lines:

@@ -9,13 +9,15 @@ from clease.datastructures import SystemChange
 
 @pytest.fixture
 def settings(db_name):
-    conc = Concentration(basis_elements=[['Au', 'Cu']])
-    settings = CEBulk(db_name=db_name,
-                      concentration=conc,
-                      crystalstructure='fcc',
-                      a=4.0,
-                      max_cluster_dia=[4.0],
-                      size=[1, 1, 1])
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    settings = CEBulk(
+        db_name=db_name,
+        concentration=conc,
+        crystalstructure="fcc",
+        a=4.0,
+        max_cluster_dia=[4.0],
+        size=[1, 1, 1],
+    )
     return settings
 
 
@@ -23,8 +25,8 @@ def settings(db_name):
 def atoms(settings):
     atoms_ = settings.prim_cell.copy() * (3, 3, 3)
     # Insert a few different symbols
-    atoms_.symbols = 'Au'
-    atoms_.symbols[:10] = 'Cu'
+    atoms_.symbols = "Au"
+    atoms_.symbols[:10] = "Cu"
     return atoms_
 
 
@@ -34,17 +36,20 @@ def example_system(atoms, settings):
     cf_scratch = cf.get_cf(settings.atoms)
     eci = {k: 0.0 for k, v in cf_scratch.items()}
 
-    eci['c0'] = -1.0
-    eci['c2_d0000_0_00'] = -0.2
+    eci["c0"] = -1.0
+    eci["c2_d0000_0_00"] = -0.2
     atoms = attach_calculator(settings, atoms=atoms, eci=eci)
     return atoms
 
 
 @pytest.fixture
 def simple_change(atoms):
-    assert atoms.symbols[0] == 'Cu'
-    assert atoms.symbols[11] == 'Au'
-    changes = [SystemChange(0, 'Cu', 'Au', 'dummy'), SystemChange(11, 'Au', 'Cu', 'dummy')]
+    assert atoms.symbols[0] == "Cu"
+    assert atoms.symbols[11] == "Au"
+    changes = [
+        SystemChange(0, "Cu", "Au", "dummy"),
+        SystemChange(11, "Au", "Cu", "dummy"),
+    ]
     return changes
 
 
@@ -88,7 +93,7 @@ def test_keep_changes(example_system, simple_change):
 
 
 def test_attach_calculator(atoms, settings):
-    eci = {'c0': 0.5, 'c1_0': 0.3}
+    eci = {"c0": 0.5, "c1_0": 0.3}
     new_atoms = attach_calculator(settings, atoms, eci)
     cf1 = new_atoms.calc.get_cf()
 

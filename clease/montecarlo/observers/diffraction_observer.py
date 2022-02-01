@@ -92,17 +92,21 @@ class DiffractionObserver(MCObserver):
     >>> active_elements = ['Mg', 'Si']
     """
 
-    def __init__(self,
-                 atoms=None,
-                 k_vector=(),
-                 active_symbols=(),
-                 all_symbols=(),
-                 name="reflection1"):
+    def __init__(
+        self,
+        atoms=None,
+        k_vector=(),
+        active_symbols=(),
+        all_symbols=(),
+        name="reflection1",
+    ):
         super().__init__()
-        self.updater = \
-            DiffractionUpdater(atoms=atoms, k_vector=k_vector,
-                               active_symbols=active_symbols,
-                               all_symbols=all_symbols)
+        self.updater = DiffractionUpdater(
+            atoms=atoms,
+            k_vector=k_vector,
+            active_symbols=active_symbols,
+            all_symbols=all_symbols,
+        )
         self.avg = self.updater.value
         self.num_updates = 1
         self.name = name

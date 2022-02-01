@@ -3,7 +3,7 @@
 import re
 import logging
 from pathlib import Path
-from itertools import (permutations, combinations, product, filterfalse, chain)
+from itertools import permutations, combinations, product, filterfalse, chain
 from collections.abc import Iterable
 from typing import List, Optional, Tuple, Dict, Set, Sequence, Union
 from typing import Iterable as tIterable
@@ -34,7 +34,7 @@ class ApproxEqualityList:
         Toleracnce for comparison check
     """
 
-    def __init__(self, array, tol=1E-5):
+    def __init__(self, array, tol=1e-5):
         self.array = array
         self.tol = tol
 
@@ -93,7 +93,7 @@ def ndarray2list(data):
 def dec_string(deco, equiv_sites):
     """Create the decoration string based on equiv sites."""
     equiv_dec = sorted(equivalent_deco(deco, equiv_sites))
-    return ''.join(str(i) for i in equiv_dec[0])
+    return "".join(str(i) for i in equiv_dec[0])
 
 
 def equivalent_deco(deco, equiv_sites):
@@ -154,11 +154,13 @@ def nested_array2list(array):
     return array
 
 
-def update_db(uid_initial=None,
-              final_struct=None,
-              db_name=None,
-              custom_kvp_init: dict = None,
-              custom_kvp_final: dict = None):
+def update_db(
+    uid_initial=None,
+    final_struct=None,
+    db_name=None,
+    custom_kvp_init: dict = None,
+    custom_kvp_final: dict = None,
+):
     """Update the database.
 
     Parameters:
@@ -192,25 +194,27 @@ def update_db(uid_initial=None,
 
     # Check if a final structure already exits
     name = init_row.name
-    select_cond = [('name', '=', name), ('struct_type', '=', 'final')]
+    select_cond = [("name", "=", name), ("struct_type", "=", "final")]
     exist = sum(1 for row in db.select(select_cond))
     if exist >= 1:
-        logger.warning("A structure with 'name'=%s and 'struct_type'=final already exits in DB.",
-                       name)
+        logger.warning(
+            "A structure with 'name'=%s and 'struct_type'=final already exits in DB.",
+            name,
+        )
         return
 
     # Write the final structure to database
-    kvp_final = {'struct_type': 'final', 'name': name}
+    kvp_final = {"struct_type": "final", "name": name}
     kvp_final.update(custom_kvp_final)
     uid_final = db.write(final_struct, key_value_pairs=kvp_final)
 
     kvp_update_init = {
-        'converged': True,
-        'started': '',
-        'queued': '',
+        "converged": True,
+        "started": "",
+        "queued": "",
     }
-    if kvp_final['struct_type'] == 'final':
-        kvp_update_init['final_struct_id'] = uid_final
+    if kvp_final["struct_type"] == "final":
+        kvp_update_init["final_struct_id"] = uid_final
     kvp_update_init.update(custom_kvp_init)
 
     # Update info for the initial structure
@@ -219,14 +223,14 @@ def update_db(uid_initial=None,
 
 def exclude_information_entries():
     """Return selection condition to exlcude all entries in the database that
-       only contain information about the clusters.
+    only contain information about the clusters.
     """
-    return [('name', '!=', 'primitive_cell'), ('name', '!=', 'template')]
+    return [("name", "!=", "primitive_cell"), ("name", "!=", "template")]
 
 
 def get_all_internal_distances(atoms, max_dist, ref_indices):
     """Obtain all internal distances of the passed atoms object and return a
-       Numpy array containing all the distances sorted in an ascending order.
+    Numpy array containing all the distances sorted in an ascending order.
     """
     tree = KDTree(atoms.get_positions())
     distances = []
@@ -234,13 +238,13 @@ def get_all_internal_distances(atoms, max_dist, ref_indices):
         indices = tree.query_ball_point(atoms[ind].position, max_dist)
         dists = atoms.get_distances(ind, indices)
         for d in dists:
-            if np.any(np.abs(np.array(distances) - d) < 1E-6):
+            if np.any(np.abs(np.array(distances) - d) < 1e-6):
                 continue
             distances.append(d)
     distances = sorted(distances)
 
     # Make sure that the first element is 0
-    assert distances[0] < 1E-6
+    assert distances[0] < 1e-6
     return np.array(distances[1:])
 
 
@@ -254,6 +258,7 @@ def reconfigure(settings, **kwargs) -> None:
     # pylint: disable=import-outside-toplevel, cyclic-import
     from clease.corr_func import CorrFunction
     from clease.settings import ClusterExpansionSettings
+
     # Note, we cannot import ClusterExpansionSettings for typing,
     # otherwise we get cyclic imports.
     if not isinstance(settings, ClusterExpansionSettings):
@@ -261,10 +266,9 @@ def reconfigure(settings, **kwargs) -> None:
     CorrFunction(settings).reconfigure_db_entries(**kwargs)
 
 
-def split_dataset(X: np.ndarray,
-                  y: np.ndarray,
-                  nsplits: int = 10,
-                  groups: Sequence[int] = ()) -> List[Dict[str, np.ndarray]]:
+def split_dataset(
+    X: np.ndarray, y: np.ndarray, nsplits: int = 10, groups: Sequence[int] = ()
+) -> List[Dict[str, np.ndarray]]:
     """Split the dataset such that it can be used for k-fold
         cross validation.
 
@@ -282,8 +286,9 @@ def split_dataset(X: np.ndarray,
     unique_groups = list(set(groups))
 
     if len(unique_groups) < nsplits:
-        raise ValueError("The number of unique groups has to be greater "
-                         "than the number of partitions.")
+        raise ValueError(
+            "The number of unique groups has to be greater " "than the number of partitions."
+        )
     shuffle(unique_groups)
     partitions = []
     num_validation = int(len(unique_groups) / nsplits)
@@ -309,15 +314,15 @@ def split_dataset(X: np.ndarray,
             "train_X": X[index_mask == 0, :],
             "train_y": y[index_mask == 0],
             "validate_X": X[index_mask == 1, :],
-            "validate_y": y[index_mask == 1]
+            "validate_y": y[index_mask == 1],
         }
         partitions.append(data)
     return partitions
 
 
-def random_validation_set(num: int = 10,
-                          select_cond: Optional[list] = None,
-                          db_name: Optional[str] = None):
+def random_validation_set(
+    num: int = 10, select_cond: Optional[list] = None, db_name: Optional[str] = None
+):
     """
     Construct a random test set.
 
@@ -328,7 +333,7 @@ def random_validation_set(num: int = 10,
     :param db_name: Name of the database
     """
     if select_cond is None:
-        select_cond = [('struct_type', '=', 'initial'), ('converged', '=', True)]
+        select_cond = [("struct_type", "=", "initial"), ("converged", "=", True)]
 
     if db_name is None:
         raise ValueError("No database provided!")
@@ -383,7 +388,7 @@ def bf2npyarray(basis_functions, symb_id):
 
 def nested_list2str(nested_list):
     """Convert a nested list to string."""
-    return 'x'.join(','.join(str(x) for x in item) for item in nested_list)
+    return "x".join(",".join(str(x) for x in item) for item in nested_list)
 
 
 def str2nested_list(string):
@@ -392,7 +397,7 @@ def str2nested_list(string):
     def _as_int(x):
         return int(x)
 
-    return [list(map(_as_int, item.split(','))) for item in string.split('x')]
+    return [list(map(_as_int, item.split(","))) for item in string.split("x")]
 
 
 def min_distance_from_facet(x, cell):
@@ -501,8 +506,13 @@ def all_integer_transform_matrices_given_diag(diag):
     rng2 = rng1
     rng3 = range(0, diag[1] + 1)
     for off_diag in product(rng1, rng2, rng3):
-        yield np.array([[diag[0], off_diag[0], off_diag[1]], [0, diag[1], off_diag[2]],
-                        [0, 0, diag[2]]])
+        yield np.array(
+            [
+                [diag[0], off_diag[0], off_diag[1]],
+                [0, diag[1], off_diag[2]],
+                [0, 0, diag[2]],
+            ]
+        )
 
 
 def all_integer_transform_matrices_per_diag(n):
@@ -532,8 +542,7 @@ def rotate_cells(cell, target_cell):
     uvec_target_cell = np.zeros_like(target_cell)
     for i in range(3):
         uvec_cell[i, :] = cell[i, :] / np.sqrt(dot_prod_cell[i, i])
-        uvec_target_cell[i, :] = target_cell[i, :] / \
-            np.sqrt(dot_prod_target_cell[i, i])
+        uvec_target_cell[i, :] = target_cell[i, :] / np.sqrt(dot_prod_target_cell[i, i])
 
     # Rotate one vector to be parallel
     v = np.cross(uvec_cell[0, :], uvec_target_cell[0, :])
@@ -743,14 +752,14 @@ def cname_lt(cname1, cname2):
     Return `True` if cname1 < cname2 and `False` otherwise.
     """
     if not isinstance(cname1, str) and isinstance(cname2, str):
-        raise TypeError('cnames should be strings.')
+        raise TypeError("cnames should be strings.")
 
-    if cname1 in ('c0', 'c1'):
+    if cname1 in ("c0", "c1"):
         prefix1 = cname1
     else:
         prefix1 = cname1.rpartition("_")[0]
 
-    if cname2 in ('c0', 'c1'):
+    if cname2 in ("c0", "c1"):
         prefix2 = cname2
     else:
         prefix2 = cname2.rpartition("_")[0]
@@ -761,12 +770,12 @@ def cname_lt(cname1, cname2):
         return False
 
     # Case where prefixes are the same.
-    if cname1 in ('c0', 'c1'):
+    if cname1 in ("c0", "c1"):
         suffix1 = 0
     else:
         suffix1 = int(cname1.rpartition("_")[-1])
 
-    if cname2 in ('c0', 'c1'):
+    if cname2 in ("c0", "c1"):
         suffix2 = 0
     else:
         suffix2 = int(cname2.rpartition("_")[-1])
@@ -858,7 +867,7 @@ def add_file_extension(fname: Union[str, Path], ext: str) -> str:
     current_ext = fname.suffix
     if current_ext == ext:
         return str(fname)
-    if current_ext == '':
+    if current_ext == "":
         return str(fname.with_suffix(ext))
     raise ValueError(f"Passed extenstion {current_ext} expected {ext}")
 
@@ -903,7 +912,7 @@ def get_ids(select_cond: List[tuple], db_name: str) -> List[int]:
     sql, args = db.create_select_statement(keys, cmps)
 
     # Extract the ids in the database that corresponds to select_cond
-    sql = sql.replace('systems.*', 'systems.id')
+    sql = sql.replace("systems.*", "systems.id")
     with connect(db_name) as db:
         con = db.connection
         cur = con.cursor()
@@ -914,7 +923,6 @@ def get_ids(select_cond: List[tuple], db_name: str) -> List[int]:
 
 
 class SQLCursor(Protocol):
-
     def execute(self, sql: str, placeholder: Tuple[str]) -> None:
         pass
 
@@ -937,7 +945,7 @@ def get_attribute(ids: List[int], cur: SQLCursor, key: str, table: str) -> list:
     if table not in known_tables:
         raise ValueError(f"Table has to be one of {known_tables}")
 
-    sql = f'SELECT value, id FROM {table} WHERE key=?'
+    sql = f"SELECT value, id FROM {table} WHERE key=?"
     id_set = set(ids)
     cur.execute(sql, (key,))
 
@@ -960,7 +968,7 @@ def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
     :param cur: SQL cursor
     :param table: Table to check
     """
-    known_tables = ['polynomial_cf', 'binary_linear_cf', 'trigonometric_cf']
+    known_tables = ["polynomial_cf", "binary_linear_cf", "trigonometric_cf"]
     if table not in known_tables:
         raise ValueError(f"Table has to be one of {known_tables}")
 
@@ -977,12 +985,14 @@ def common_cf_names(ids: Set[int], cur: SQLCursor, table: str) -> Set[str]:
     return set.intersection(*list(cf_names.values()))
 
 
-def constraint_is_redundant(A_lb: np.ndarray,
-                            b_lb: np.ndarray,
-                            c_lb: np.ndarray,
-                            d: float,
-                            A_eq: np.ndarray = None,
-                            b_eq: np.ndarray = None) -> bool:
+def constraint_is_redundant(
+    A_lb: np.ndarray,
+    b_lb: np.ndarray,
+    c_lb: np.ndarray,
+    d: float,
+    A_eq: np.ndarray = None,
+    b_eq: np.ndarray = None,
+) -> bool:
     """
     The method considers the following system
 
@@ -1014,10 +1024,9 @@ def constraint_is_redundant(A_lb: np.ndarray,
     return c_lb @ res.x >= d
 
 
-def remove_redundant_constraints(A_lb: np.ndarray,
-                                 b_lb: np.ndarray,
-                                 A_eq: np.ndarray = None,
-                                 b_eq: np.ndarray = None) -> Tuple[np.ndarray, np.ndarray]:
+def remove_redundant_constraints(
+    A_lb: np.ndarray, b_lb: np.ndarray, A_eq: np.ndarray = None, b_eq: np.ndarray = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Remove all redundant constraints from A_lb and b_lb.
 

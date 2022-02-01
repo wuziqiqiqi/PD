@@ -10,7 +10,7 @@ import pytest
 
 @pytest.fixture
 def prim():
-    ats = bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+    ats = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
     ats.wrap()
     return ats
 
@@ -62,7 +62,7 @@ def test_Ns(cpp_atoms, four_vectors, prim):
     assert cpp_atoms.Ns == len(prim)
 
 
-@pytest.mark.parametrize('name, attr', [('Nx', 'ix'), ('Ny', 'iy'), ('Nz', 'iz')])
+@pytest.mark.parametrize("name, attr", [("Nx", "ix"), ("Ny", "iy"), ("Nz", "iz")])
 def test_max_4vec_values(cpp_atoms, four_vectors, name, attr):
     expect = max(getattr(fv, attr) for fv in four_vectors) + 1
     assert getattr(cpp_atoms, name) == expect
@@ -80,17 +80,17 @@ def test_apply_change(cpp_atoms):
     syms = cpp_atoms.get_symbols()
     syms_cpy = copy.deepcopy(syms)
 
-    change = SystemChange(0, 'Na', 'Au', 'dummy')
+    change = SystemChange(0, "Na", "Au", "dummy")
     cpp_atoms.apply_change(change)
 
     assert syms == syms_cpy
     syms_new = cpp_atoms.get_symbols()
 
     assert syms_new != syms
-    assert syms[0] == 'Na'
-    assert syms_new[0] == 'Au'
+    assert syms[0] == "Na"
+    assert syms_new[0] == "Au"
 
     cpp_atoms.undo_change(change)
     syms_undone = cpp_atoms.get_symbols()
-    assert syms_undone[0] == 'Na'
-    assert syms_new[0] == 'Au'
+    assert syms_undone[0] == "Na"
+    assert syms_new[0] == "Au"

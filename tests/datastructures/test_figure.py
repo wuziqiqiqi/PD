@@ -13,7 +13,7 @@ def figure():
 
 @pytest.fixture
 def prim():
-    return bulk('NaCl', crystalstructure='rocksalt', a=4.0)
+    return bulk("NaCl", crystalstructure="rocksalt", a=4.0)
 
 
 def test_initialization():
@@ -74,7 +74,6 @@ def test_no_ordering(figure):
 
 
 def test_get_diameter(prim):
-
     def d(vec):
         """Helper function get the length of a vector"""
         return np.linalg.norm(vec)
@@ -107,11 +106,13 @@ def test_get_diameter(prim):
     assert fig.get_diameter(prim) == pytest.approx(23.776739333502675)
 
     # Square surrounding (0, 0) in the (x, y) plane.
-    fig = Figure([
-        FourVector(-1, 0, 0, 0),
-        FourVector(1, 0, 0, 0),
-        FourVector(0, -1, 0, 0),
-        FourVector(0, 1, 0, 0)
-    ])
+    fig = Figure(
+        [
+            FourVector(-1, 0, 0, 0),
+            FourVector(1, 0, 0, 0),
+            FourVector(0, -1, 0, 0),
+            FourVector(0, 1, 0, 0),
+        ]
+    )
     assert fig.get_diameter(prim) == pytest.approx(d(x) * 2)
     assert fig.get_diameter(prim) == pytest.approx(d(y) * 2)

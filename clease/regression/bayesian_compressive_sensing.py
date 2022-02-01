@@ -10,7 +10,7 @@ from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('BayesianCompressiveSensing',)
+__all__ = ("BayesianCompressiveSensing",)
 
 
 class BayesianCompressiveSensing(LinearRegression):
@@ -74,19 +74,21 @@ class BayesianCompressiveSensing(LinearRegression):
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self,
-                 shape_var=0.5,
-                 rate_var=0.5,
-                 shape_lamb=0.5,
-                 lamb_opt_start=200,
-                 variance_opt_start=100,
-                 fname="bayes_compr_sens.json",
-                 maxiter=100000,
-                 output_rate_sec=2,
-                 select_strategy="max_increase",
-                 noise=0.1,
-                 init_lamb=0.0,
-                 penalty=1E-8):
+    def __init__(
+        self,
+        shape_var=0.5,
+        rate_var=0.5,
+        shape_lamb=0.5,
+        lamb_opt_start=200,
+        variance_opt_start=100,
+        fname="bayes_compr_sens.json",
+        maxiter=100000,
+        output_rate_sec=2,
+        select_strategy="max_increase",
+        noise=0.1,
+        init_lamb=0.0,
+        penalty=1e-8,
+    ):
         # pylint: disable=too-many-arguments
         super().__init__()
 
@@ -117,7 +119,7 @@ class BayesianCompressiveSensing(LinearRegression):
             "select_strategy": select_strategy,
             "noise": noise,
             "init_lamb": init_lamb,
-            "penalty": penalty
+            "penalty": penalty,
         }
 
         # Arrays used during fitting
@@ -204,12 +206,12 @@ class BayesianCompressiveSensing(LinearRegression):
         s = self.ss[indx]
 
         # Conda had divide by zero error
-        if abs(s) < 1E-6:
-            s = 1E-6
-        qsq = self.qq[indx]**2
+        if abs(s) < 1e-6:
+            s = 1e-6
+        qsq = self.qq[indx] ** 2
 
-        if self.lamb < 1E-6:
-            return (self.qq[indx] / s)**2 - 1.0 / s
+        if self.lamb < 1e-6:
+            return (self.qq[indx] / s) ** 2 - 1.0 / s
 
         term1 = s + 2 * self.lamb
 
@@ -219,22 +221,21 @@ class BayesianCompressiveSensing(LinearRegression):
         return gamma
 
     def optimal_lamb(self):
-        """Calculate the optimal value for the lambda parameter. """
+        """Calculate the optimal value for the lambda parameter."""
         N = self.X.shape[1]  # Number of ECIs
-        return 2*(N - 1 + 0.5*self.shape_lamb) / \
-            (np.sum(self.gammas) + self.shape_lamb)
+        return 2 * (N - 1 + 0.5 * self.shape_lamb) / (np.sum(self.gammas) + self.shape_lamb)
 
     def optimal_inv_variance(self):
         """Calculate the optimal value for the inverse variance"""
         N = self.X.shape[0]  # Number of data points
         a = 1.0
         b = 0.0
-        mse = np.sum((self.y - self.X.dot(self.eci))**2)
+        mse = np.sum((self.y - self.X.dot(self.eci)) ** 2)
         return (0.5 * N + a) / (0.5 * mse + b)
 
     def optimal_shape_lamb(self):
         """Calculate the optimal value for the shape paremeter for lambda."""
-        res = brentq(shape_parameter_equation, 1E-30, 1E100, args=(self.lamb,), maxiter=10000)
+        res = brentq(shape_parameter_equation, 1e-30, 1e100, args=(self.lamb,), maxiter=10000)
         return res
 
     def update_quantities(self):
@@ -243,11 +244,13 @@ class BayesianCompressiveSensing(LinearRegression):
         X_sel = self.X[:, sel]
         prec = X_sel.dot(self.inverse_sigma).dot(X_sel.T)
 
-        self.S = \
-            np.diag(self.inv_variance*self.X.T.dot(self.X)
-                    - self.inv_variance**2 * self.X.T.dot(prec.dot(self.X)))
-        self.Q = self.inv_variance*self.X.T.dot(self.y) - \
-            self.inv_variance**2 * self.X.T.dot(prec.dot(self.y))
+        self.S = np.diag(
+            self.inv_variance * self.X.T.dot(self.X)
+            - self.inv_variance**2 * self.X.T.dot(prec.dot(self.X))
+        )
+        self.Q = self.inv_variance * self.X.T.dot(self.y) - self.inv_variance**2 * self.X.T.dot(
+            prec.dot(self.y)
+        )
 
         self.ss = self.S / (1.0 - self.gammas * self.S)
         self.qq = self.Q / (1.0 - self.gammas * self.S)
@@ -259,8 +262,7 @@ class BayesianCompressiveSensing(LinearRegression):
     def update_sigma_mu(self):
         """Update sigma and mu."""
         X_sel = self.X[:, self.selected]
-        sigma = self.inv_variance*X_sel.T.dot(X_sel) + \
-            np.diag(1.0/self.gammas[self.selected])
+        sigma = self.inv_variance * X_sel.T.dot(X_sel) + np.diag(1.0 / self.gammas[self.selected])
         try:
             self.inverse_sigma = np.linalg.inv(sigma)
         except np.linalg.LinAlgError:
@@ -273,7 +275,7 @@ class BayesianCompressiveSensing(LinearRegression):
             return np.random.randint(low=0, high=len(self.gammas))
         if select_strategy == "max_increase":
             return self._get_bf_with_max_increase()
-        raise ValueError(f'Unknown select strategy: {select_strategy}')
+        raise ValueError(f"Unknown select strategy: {select_strategy}")
 
     def log_likelihood_for_each_gamma(self, gammas):
         """Log likelihood value for all gammas.
@@ -288,12 +290,12 @@ class BayesianCompressiveSensing(LinearRegression):
         # quantities leading to a negativie denuminator should not
         # be possible (but because of iterative increment they occure)
         # once in a while. Set such numbers to a number close to zero.
-        denum[denum <= 0.0] = 1E-10
+        denum[denum <= 0.0] = 1e-10
         return np.log(1 / denum) + self.qq**2 * gammas / denum - self.lamb * gammas
 
     def _get_bf_with_max_increase(self):
         """Return the index of the correlation function that leads
-           to the largest increase in likelihiood value."""
+        to the largest increase in likelihiood value."""
 
         new_gammas = np.array([self.optimal_gamma(i) for i in range(len(self.gammas))])
 
@@ -301,7 +303,8 @@ class BayesianCompressiveSensing(LinearRegression):
             rand_gam = np.random.randint(0, high=(len(self.gammas)))
             logger.warning(
                 "Cannot determine which gamma to include. Trying random selection, gamma=%.3f ...",
-                rand_gam)
+                rand_gam,
+            )
             return rand_gam
 
         new_gammas[new_gammas < 0.0] = 0.0
@@ -315,7 +318,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Return root mean square error."""
         indx = self.selected
         pred = self.X[:, indx].dot(self.eci[indx])
-        return np.sqrt(np.mean((pred - self.y)**2))
+        return np.sqrt(np.mean((pred - self.y) ** 2))
 
     @property
     def num_ecis(self):
@@ -326,8 +329,19 @@ class BayesianCompressiveSensing(LinearRegression):
         data = {}
 
         # Selection of vars we want to save
-        vars_to_save = ("inv_variance", 'gammas', 'shape_var', 'rate_var', 'shape_lamb', 'lamb',
-                        'maxiter', 'output_rate_sec', 'select_strategy', 'noise', 'lamb_opt_start')
+        vars_to_save = (
+            "inv_variance",
+            "gammas",
+            "shape_var",
+            "rate_var",
+            "shape_lamb",
+            "lamb",
+            "maxiter",
+            "output_rate_sec",
+            "select_strategy",
+            "noise",
+            "lamb_opt_start",
+        )
         for var in vars_to_save:
             val = getattr(self, var)
             if isinstance(val, np.ndarray):
@@ -338,7 +352,7 @@ class BayesianCompressiveSensing(LinearRegression):
 
     def save(self):
         """Save the results from file."""
-        with open(self.fname, 'w') as outfile:
+        with open(self.fname, "w") as outfile:
             json.dump(self.todict(), outfile)
         logger.info("Backup data written to %s", self.fname)
 
@@ -346,7 +360,7 @@ class BayesianCompressiveSensing(LinearRegression):
     def load(fname):
         bayes = BayesianCompressiveSensing()
         bayes.fname = fname
-        with open(fname, 'r') as infile:
+        with open(fname, "r") as infile:
             data = json.load(infile)
 
         for key, value in data.items():
@@ -361,15 +375,26 @@ class BayesianCompressiveSensing(LinearRegression):
         # Required fields to be equal if two objects
         # should be considered equal
         items = [
-            "fname", "gammas", "inv_variance", "lamb", "shape_var", "rate_var", "shape_lamb",
-            "lamb", "maxiter", "select_strategy", "output_rate_sec", "noise", "variance_opt_start"
+            "fname",
+            "gammas",
+            "inv_variance",
+            "lamb",
+            "shape_var",
+            "rate_var",
+            "shape_lamb",
+            "lamb",
+            "maxiter",
+            "select_strategy",
+            "output_rate_sec",
+            "noise",
+            "variance_opt_start",
         ]
         for k in items:
             v = self.__dict__[k]
             if isinstance(v, np.ndarray):
                 equal = equal and np.allclose(v, other.__dict__[k])
             elif isinstance(v, float):
-                equal = equal and abs(v - other.__dict__[k]) < 1E-6
+                equal = equal and abs(v - other.__dict__[k]) < 1e-6
             else:
                 equal = equal and (v == other.__dict__[k])
         return equal
@@ -412,7 +437,7 @@ class BayesianCompressiveSensing(LinearRegression):
         is_first = True
         iteration = 0
         now = time.time()
-        d_gamma = 1E100
+        d_gamma = 1e100
         while iteration < self.maxiter:
             if time.time() - now > self.output_rate_sec:
                 msg = f"Iter: {iteration} "
@@ -442,7 +467,7 @@ class BayesianCompressiveSensing(LinearRegression):
             else:
                 gamma = self.gammas[indx]
 
-                if abs(gamma) < 1E-6:
+                if abs(gamma) < 1e-6:
                     already_excluded = True
 
                 self.gammas[indx] = 0.0
@@ -461,7 +486,7 @@ class BayesianCompressiveSensing(LinearRegression):
             if iteration > self.variance_opt_start:
                 self.inv_variance = self.optimal_inv_variance()
 
-            if abs(d_gamma) < 1E-8:
+            if abs(d_gamma) < 1e-8:
                 break
 
         # Save backup for future restart
@@ -472,7 +497,7 @@ class BayesianCompressiveSensing(LinearRegression):
 
     def show_shape_parameter(self):
         """Show a plot of the transient equation for the optimal
-            shape parameter for lambda."""
+        shape parameter for lambda."""
         x = np.logspace(-10, 10)
 
         fig = plt.figure()

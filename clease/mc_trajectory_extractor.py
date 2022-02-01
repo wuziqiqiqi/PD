@@ -38,7 +38,7 @@ class MCTrajectoryExtractor:
         """
         swaps = []
         for i, atoms1 in enumerate(all_atoms):
-            for j, atoms2 in enumerate(all_atoms[i + 1:]):
+            for j, atoms2 in enumerate(all_atoms[i + 1 :]):
                 if self.is_related_by_swap(atoms1, atoms2):
                     swaps.append((i, i + j + 1))
         return swaps
@@ -86,7 +86,7 @@ class MCTrajectoryExtractor:
             Variance
         """
         # pylint: disable=no-self-use
-        return np.exp(-(x - mu)**2 / (2 * var)) / np.sqrt(2 * np.pi * var)
+        return np.exp(-((x - mu) ** 2) / (2 * var)) / np.sqrt(2 * np.pi * var)
 
     def plot_swap_deviation(self, dev):
         """
@@ -94,9 +94,15 @@ class MCTrajectoryExtractor:
         """
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        hist, bins = np.histogram(np.array(dev), bins='auto')
+        hist, bins = np.histogram(np.array(dev), bins="auto")
         dx = bins[1] - bins[0]
-        ax.plot(bins[1:] - 0.5 * dx, hist / np.trapz(hist, dx=dx), 'o', mfc='none', color='grey')
+        ax.plot(
+            bins[1:] - 0.5 * dx,
+            hist / np.trapz(hist, dx=dx),
+            "o",
+            mfc="none",
+            color="grey",
+        )
         ax.set_xlabel("Energy deviation (eV)")
         ax.set_ylabel("Probability Density")
         mu = np.mean(dev)

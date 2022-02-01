@@ -17,7 +17,7 @@ def test_buffered_array():
 
 
 def load_buffer(buffer_file):
-    with open(buffer_file, 'r') as f:
+    with open(buffer_file, "r") as f:
         return [float(line.strip()) for line in f]
 
 

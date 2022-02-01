@@ -11,6 +11,12 @@ from .utils import *
 
 from . import settings
 
-ADDITIONAL = ('settings', 'template_atoms', 'template_filters', 'atoms_manager')
-__all__ = (concentration.__all__ + settings.__all__ + settings_bulk.__all__ +
-           settings_slab.__all__ + utils.__all__ + ADDITIONAL)
+ADDITIONAL = ("settings", "template_atoms", "template_filters", "atoms_manager")
+__all__ = (
+    concentration.__all__
+    + settings.__all__
+    + settings_bulk.__all__
+    + settings_slab.__all__
+    + utils.__all__
+    + ADDITIONAL
+)

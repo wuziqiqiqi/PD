@@ -24,12 +24,12 @@ from .template_filters import ValidConcentrationFilter
 from .template_atoms import TemplateAtoms
 from .atoms_manager import AtomsManager
 
-__all__ = ('ClusterExpansionSettings',)
+__all__ = ("ClusterExpansionSettings",)
 
 logger = logging.getLogger(__name__)
 
 
-@jsonable('ce_settings')
+@jsonable("ce_settings")
 class ClusterExpansionSettings:
     """Base class for all Cluster Expansion settings.
 
@@ -67,33 +67,42 @@ class ClusterExpansionSettings:
 
         basis_func_type (str, optional): Type of basis function to use. Defaults to 'polynomial'.
     """
+
     # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     # Keys which are important for saving/loading
-    ARG_KEYS = ('prim_cell', 'concentration')
-    KWARG_KEYS = ('size', 'supercell_factor', 'db_name', 'max_cluster_dia',
-                  'include_background_atoms', 'basis_func_type')
+    ARG_KEYS = ("prim_cell", "concentration")
+    KWARG_KEYS = (
+        "size",
+        "supercell_factor",
+        "db_name",
+        "max_cluster_dia",
+        "include_background_atoms",
+        "basis_func_type",
+    )
 
     # Other keys we want to input back into the loaded object, but after initialization
     OTHER_KEYS = (
-        'skew_threshold',
+        "skew_threshold",
         # kwargs is a bookkeeping variable, for compatibility.
         # Just contains information about how the factory functions were called.
-        'kwargs')
+        "kwargs",
+    )
 
     def __init__(
-            self,
-            prim: Atoms,
-            concentration: Union[Concentration, dict],
-            size: Optional[List[int]] = None,
-            supercell_factor: int = 27,
-            db_name: str = 'clease.db',
-            # max_cluster_size is only here for deprecation purposes
-            # if it is not None, the user has manually specified a value
-            max_cluster_size=None,
-            max_cluster_dia: Sequence[float] = (5., 5., 5.),
-            include_background_atoms=False,
-            basis_func_type='polynomial') -> None:
+        self,
+        prim: Atoms,
+        concentration: Union[Concentration, dict],
+        size: Optional[List[int]] = None,
+        supercell_factor: int = 27,
+        db_name: str = "clease.db",
+        # max_cluster_size is only here for deprecation purposes
+        # if it is not None, the user has manually specified a value
+        max_cluster_size=None,
+        max_cluster_dia: Sequence[float] = (5.0, 5.0, 5.0),
+        include_background_atoms=False,
+        basis_func_type="polynomial",
+    ) -> None:
 
         self._include_background_atoms = None
         self._cluster_mng = None
@@ -115,16 +124,19 @@ class ClusterExpansionSettings:
         prim_ind_by_basis = prim_mng.index_by_symbol([x[0] for x in self.basis_elements])
         conc_filter = ValidConcentrationFilter(concentration, prim_ind_by_basis)
 
-        self.template_atoms = TemplateAtoms(self.prim_cell,
-                                            supercell_factor=supercell_factor,
-                                            size=self.size,
-                                            skew_threshold=40,
-                                            filters=[conc_filter])
+        self.template_atoms = TemplateAtoms(
+            self.prim_cell,
+            supercell_factor=supercell_factor,
+            size=self.size,
+            skew_threshold=40,
+            filters=[conc_filter],
+        )
 
         self.atoms_mng = AtomsManager(None)
 
-        self.max_cluster_dia = _format_max_cluster_dia(max_cluster_dia,
-                                                       max_cluster_size=max_cluster_size)
+        self.max_cluster_dia = _format_max_cluster_dia(
+            max_cluster_dia, max_cluster_size=max_cluster_size
+        )
 
         self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
@@ -172,10 +184,10 @@ class ClusterExpansionSettings:
 
     @skew_threshold.setter
     def skew_threshold(self, threshold: int) -> None:
-        '''
+        """
         Maximum acceptable skew level (ratio of max and min diagonal of the
         Niggli reduced cell)
-        '''
+        """
         self.template_atoms.skew_threshold = threshold
 
     @property
@@ -194,7 +206,7 @@ class ClusterExpansionSettings:
         if self._cluster_mng is None:
             kwargs = {}
             if not self.include_background_atoms:
-                kwargs['background_syms'] = self.get_bg_syms()
+                kwargs["background_syms"] = self.get_bg_syms()
             self._cluster_mng = ClusterManager(self.prim_cell, **kwargs)
         return self._cluster_mng
 
@@ -211,8 +223,7 @@ class ClusterExpansionSettings:
         self._cluster_mng = None
 
         self.clear_cache()
-        self.basis_func_type.unique_elements = \
-            self.unique_element_without_background()
+        self.basis_func_type.unique_elements = self.unique_element_without_background()
 
     @property
     def spin_dict(self) -> Dict[str, float]:
@@ -294,8 +305,12 @@ class ClusterExpansionSettings:
             elem = basis[0]
             if elem not in unique_no_bkg:
                 if len(basis) != 1:
-                    raise ValueError(("Ignored sublattice contains multiple elements -"
-                                      "this does not make any sense"))
+                    raise ValueError(
+                        (
+                            "Ignored sublattice contains multiple elements -"
+                            "this does not make any sense"
+                        )
+                    )
                 if elem not in ignored:
                     ignored[elem] = ratio
                 else:
@@ -327,13 +342,15 @@ class ClusterExpansionSettings:
 
         if isinstance(bf_type, BasisFunction):
             if bf_type.unique_elements != sorted(unique_element):
-                raise ValueError("Unique elements in BasisFunction instance "
-                                 "is different from the one in settings")
+                raise ValueError(
+                    "Unique elements in BasisFunction instance "
+                    "is different from the one in settings"
+                )
             self._basis_func_type = bf_type
         elif isinstance(bf_type, str):
-            if bf_type.lower() == 'polynomial':
+            if bf_type.lower() == "polynomial":
                 self._basis_func_type = Polynomial(unique_element)
-            elif bf_type.lower() == 'trigonometric':
+            elif bf_type.lower() == "trigonometric":
                 self._basis_func_type = Trigonometric(unique_element)
             elif bf_type.lower() == "binary_linear":
                 self._basis_func_type = BinaryLinear(unique_element)
@@ -375,7 +392,7 @@ class ClusterExpansionSettings:
 
     def prepare_new_active_template(self, template):
         """Prepare necessary data structures when setting new template."""
-        logger.debug('Preparing new template in settings')
+        logger.debug("Preparing new template in settings")
         self.atoms_mng.atoms = template
         self.clear_cache()
 
@@ -393,9 +410,11 @@ class ClusterExpansionSettings:
             # matches the ones in the passed object
             atoms = wrap_and_sort_by_position(atoms)
             if not np.allclose(template.get_positions(), atoms.get_positions()):
-                raise ValueError(f"Inconsistent positions. Passed object\n"
-                                 f"{atoms.get_positions()}\nGenerated template"
-                                 f"\n{template.get_positions()}")
+                raise ValueError(
+                    f"Inconsistent positions. Passed object\n"
+                    f"{atoms.get_positions()}\nGenerated template"
+                    f"\n{template.get_positions()}"
+                )
         self.prepare_new_active_template(template)
 
     def _order_and_tag_prim_cell(self):
@@ -434,12 +453,12 @@ class ClusterExpansionSettings:
         """Store unit cell to the database. Returns the id of primitive cell in the database"""
         with connect(self.db_name) as db:
             shape = self.prim_cell.cell.cellpar()
-            for row in db.select(name='primitive_cell'):
+            for row in db.select(name="primitive_cell"):
                 uc_shape = row.toatoms().cell.cellpar()
                 if np.allclose(shape, uc_shape):
                     return row.id
 
-            uid = db.write(self.prim_cell, name='primitive_cell')
+            uid = db.write(self.prim_cell, name="primitive_cell")
         return uid  # Ensure connection is closed before returning
 
     def _get_prim_cell(self):
@@ -459,13 +478,13 @@ class ClusterExpansionSettings:
 
     def clear_cache(self) -> None:
         """Clear the cached objects, due to a change e.g. in the template atoms"""
-        logger.debug('Clearing the cache')
+        logger.debug("Clearing the cache")
         self._trans_matrix = None
         self._cluster_list = None
 
     def create_cluster_list_and_trans_matrix(self):
         """Prepares the internal cache objects by calculating cluster related properties"""
-        logger.debug('Creating translation matrix and cluster list')
+        logger.debug("Creating translation matrix and cluster list")
         at_cpy = self.atoms.copy()
         self.cluster_mng.build(self.max_cluster_dia)
         self._cluster_list = self.cluster_mng.info_for_template(at_cpy)
@@ -476,10 +495,11 @@ class ClusterExpansionSettings:
         # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
+
         figures = self.get_all_figures_as_atoms()
         images = Images()
         images.initialize(figures)
-        gui = GUI(images, expr='')
+        gui = GUI(images, expr="")
         gui.show_name = True
         gui.run()
 
@@ -495,7 +515,7 @@ class ClusterExpansionSettings:
         for performance reasons. They will be constructed if required.
         Nothing is done if the cache exists."""
         if self._cluster_list is None or self._trans_matrix is None:
-            logger.debug('Triggered construction of clusters')
+            logger.debug("Triggered construction of clusters")
             self.create_cluster_list_and_trans_matrix()
             # It should not be possible for them to be None after this call.
             assert self._cluster_list is not None
@@ -513,6 +533,7 @@ class ClusterExpansionSettings:
         """
         # pylint: disable=import-outside-toplevel
         from ase.visualize import view
+
         view(self.get_all_templates())
 
     def _check_first_elements(self):
@@ -536,14 +557,14 @@ class ClusterExpansionSettings:
             >>> dct = settings.todict()  # Get the dictionary representation
         """
         vars_to_save = self.ARG_KEYS + self.KWARG_KEYS + self.OTHER_KEYS
-        dct = {'clease_version': str(__version__)}
+        dct = {"clease_version": str(__version__)}
         for key in vars_to_save:
             val = getattr(self, key)
             dct[key] = val
         return dct
 
     @classmethod
-    def from_dict(cls, dct: Dict[str, Any]) -> 'ClusterExpansionSettings':
+    def from_dict(cls, dct: Dict[str, Any]) -> "ClusterExpansionSettings":
         """Load a new ClusterExpansionSettings class from a dictionary representation.
 
         Example:
@@ -558,11 +579,12 @@ class ClusterExpansionSettings:
             >>> settings = ClusterExpansionSettings.from_dict(dct)
         """
         dct = deepcopy(dct)
-        version = dct.pop('clease_version', None)
-        if version is None or parse(version) < Version('0.10.2'):
+        version = dct.pop("clease_version", None)
+        if version is None or parse(version) < Version("0.10.2"):
             # For backwards compatibility
             # pylint: disable=import-outside-toplevel, cyclic-import
             from .utils import old_settings_from_json
+
             return old_settings_from_json(dct)
 
         # Get the args and kwargs we expect in our function signature
@@ -571,9 +593,9 @@ class ClusterExpansionSettings:
         # Should we allow for missing kwargs keys?
         kwargs = {key: dct.pop(key) for key in cls.KWARG_KEYS}
 
-        if 'max_cluster_size' in dct:
+        if "max_cluster_size" in dct:
             # For compatibility, since it's no longer in KWARG_KEYS
-            kwargs['max_cluster_size'] = dct.pop('max_cluster_size')
+            kwargs["max_cluster_size"] = dct.pop("max_cluster_size")
 
         settings = cls(*args, **kwargs)
 
@@ -584,35 +606,43 @@ class ClusterExpansionSettings:
 
         if dct:
             # We have some unexpected left-overs
-            logger.warning('Unused items from dictionary: %s', dct)
+            logger.warning("Unused items from dictionary: %s", dct)
         return settings
 
     def clusters_table(self) -> str:
         """String with information about the clusters"""
         mult_dict = self.multiplicity_factor
 
-        columns = ['Index', 'Cluster Name', 'Size', 'Group', 'Radius', 'Figures', 'Multiplicity']
+        columns = [
+            "Index",
+            "Cluster Name",
+            "Size",
+            "Group",
+            "Radius",
+            "Figures",
+            "Multiplicity",
+        ]
 
-        fmt = '| {:<5} | {:<12} | {:<4} | {:<5} | {:<6} | {:<7} | {:<12} |'
+        fmt = "| {:<5} | {:<12} | {:<4} | {:<5} | {:<6} | {:<7} | {:<12} |"
         header = fmt.format(*columns)
-        rule = '-' * len(header)  # Horizontal line of -----
+        rule = "-" * len(header)  # Horizontal line of -----
         lines = [rule, header, rule]
 
         for ii, cluster in enumerate(self.cluster_list.clusters):
             name = cluster.name
-            size = f'{cluster.size:d}'.center(4, ' ')
-            mult = f'{int(mult_dict[name]):d}'.center(12, ' ')
-            radius = f'{cluster.diameter / 2:2.4f}'
-            n_figures = f'{len(cluster.figures)}'.center(7)
-            group = f'{cluster.group:d}'.center(5)
-            index_s = f'{ii:d}'.center(5)
+            size = f"{cluster.size:d}".center(4, " ")
+            mult = f"{int(mult_dict[name]):d}".center(12, " ")
+            radius = f"{cluster.diameter / 2:2.4f}"
+            n_figures = f"{len(cluster.figures)}".center(7)
+            group = f"{cluster.group:d}".center(5)
+            index_s = f"{ii:d}".center(5)
 
             s = fmt.format(index_s, name, size, group, radius, n_figures, mult)
             lines.append(s)
 
         lines.append(rule)
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
 def to_3x3_matrix(size):
@@ -664,7 +694,7 @@ def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
     for 2-, 3- and 4-body clusters of cutoff 5 Å.
     """
 
-    @deprecated(version='0.10.6', reason=dep_msg)
+    @deprecated(version="0.10.6", reason=dep_msg)
     def _formatter():
         # max_cluster_dia is list or array
         if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
@@ -680,7 +710,7 @@ def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
                 raise ValueError("Invalid length for max_cluster_dia.")
         elif isinstance(max_cluster_dia, (int, float)):
             if max_cluster_size is None:
-                raise ValueError('Received no max_cluster_size, but a float for max_cluster_dia')
+                raise ValueError("Received no max_cluster_size, but a float for max_cluster_dia")
             mcd = np.ones(max_cluster_size - 1, dtype=float) * max_cluster_dia
         # Case for *None* or something else
         else:

@@ -10,11 +10,10 @@ from .cluster_generator import ClusterGenerator
 from .cluster import Cluster
 
 logger = logging.getLogger(__name__)
-__all__ = ('ClusterList',)
+__all__ = ("ClusterList",)
 
 
 class ClusterList:
-
     def __init__(self):
         self._clusters = []
         # Format of the names cache: {num_bf: names}
@@ -90,7 +89,7 @@ class ClusterList:
         cf_names = []
         for dec in product(bf_list, repeat=cluster.size):
             dec_str = dec_string(dec, eq_sites)
-            cf_names.append(name + '_' + dec_str)
+            cf_names.append(name + "_" + dec_str)
         return sorted(list(set(cf_names)))
 
     def get_all_cf_names(self, num_bf: int) -> List[str]:
@@ -115,8 +114,8 @@ class ClusterList:
             raise TypeError(f"Number of basis functions must be integer, got {num_bf}")
         all_cf_names = []
         for cluster in self.clusters:
-            if cluster.name == 'c0':
-                all_cf_names.append('c0')
+            if cluster.name == "c0":
+                all_cf_names.append("c0")
             else:
                 all_cf_names += self.get_cf_names(cluster, num_bf)
         return sorted(set(all_cf_names))
@@ -139,7 +138,7 @@ class ClusterList:
 
         for c1, c2 in zip(self.clusters, other.clusters):
             if c1 != c2:
-                logger.debug('Clusters not equal: %s and %s', c1, c2)
+                logger.debug("Clusters not equal: %s and %s", c1, c2)
                 return False
         return True
 
@@ -150,7 +149,7 @@ class ClusterList:
         # the ordering of the cached results.
         self.clear_cache()
 
-    def get_sorted_list(self) -> 'ClusterList':
+    def get_sorted_list(self) -> "ClusterList":
         """Get a new instance of the ClusterList which is sorted."""
         new_list = copy.deepcopy(self)
         new_list.sort()
@@ -204,13 +203,13 @@ class ClusterList:
         figures: List[Atoms] = []
         self.sort()
         # We want to skip c0 and c1 anyways
-        used_names = {'c0', 'c1'}
+        used_names = {"c0", "c1"}
         for cluster in self.clusters:
             if cluster.name in used_names:
                 continue
             figure = cluster.get_figure(generator.prim)
 
-            figure.info = {'name': cluster.name}
+            figure.info = {"name": cluster.name}
             used_names.add(cluster.name)
             figures.append(figure)
         return figures
@@ -262,34 +261,34 @@ class ClusterList:
         for s in range(2, self.max_size() + 1):
             names = list(set(c.name for c in self.get_by_size(s)))
             names.sort()
-            prefixes = list(set(n.rpartition('_')[0] for n in names))
+            prefixes = list(set(n.rpartition("_")[0] for n in names))
             prefixes.sort()
             name_map = {}
 
             for n in names:
                 # Fix distance string
                 new_name = copy.deepcopy(n)
-                prefix = n.rpartition('_')[0]
+                prefix = n.rpartition("_")[0]
                 new_dist = f"{prefixes.index(prefix):04d}"
-                new_name = ''.join([new_name[:4], new_dist, new_name[8:]])
+                new_name = "".join([new_name[:4], new_dist, new_name[8:]])
                 name_map[n] = new_name
 
             prefix_map = {}
             # Fix additional ID
             for k in name_map:
-                pref = k.rpartition('_')[0]
+                pref = k.rpartition("_")[0]
                 prefix_map[pref] = prefix_map.get(pref, []) + [k]
 
             for k, v in prefix_map.items():
                 v.sort()
                 uid_map = {}
                 for i, x in enumerate(v):
-                    new_name = ''.join([x.rpartition('_')[0], '_', str(i)])
+                    new_name = "".join([x.rpartition("_")[0], "_", str(i)])
                     uid_map[x] = new_name
 
                 for k2, v2 in uid_map.items():
-                    name_map[k2] = ''.join(
-                        [name_map[k2].rpartition('_')[0], '_',
-                         v2.rpartition('_')[2]])
+                    name_map[k2] = "".join(
+                        [name_map[k2].rpartition("_")[0], "_", v2.rpartition("_")[2]]
+                    )
             for c in self.get_by_size(s):
                 c.name = name_map[c.name]

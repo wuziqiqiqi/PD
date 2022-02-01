@@ -6,7 +6,7 @@ from ase import Atoms
 from ase.db import connect
 from clease.settings import ClusterExpansionSettings
 
-__all__ = ('ClusterCoverageChecker',)
+__all__ = ("ClusterCoverageChecker",)
 
 
 class ClusterCoverageChecker:
@@ -48,14 +48,16 @@ class ClusterCoverageChecker:
         is used.
     """
 
-    def __init__(self,
-                 settings: ClusterExpansionSettings,
-                 select_cond: Sequence[Tuple[str, str, str]] = None):
+    def __init__(
+        self,
+        settings: ClusterExpansionSettings,
+        select_cond: Sequence[Tuple[str, str, str]] = None,
+    ):
         # Make copy such that we don't alter the settings object
         self.settings = deepcopy(settings)
 
         if select_cond is None:
-            self._select_cond = [('struct_type', '=', 'initial')]
+            self._select_cond = [("struct_type", "=", "initial")]
         else:
             self._select_cond = select_cond
 
@@ -81,7 +83,7 @@ class ClusterCoverageChecker:
         self.settings.set_active_template(atoms=template)
         coverages = {}
         for cluster in self.settings.cluster_list:
-            if cluster.name.startswith(('c0', 'c1')):
+            if cluster.name.startswith(("c0", "c1")):
                 continue
             sorted_figs = []
             for figure in cluster.indices:
@@ -121,7 +123,10 @@ class ClusterCoverageChecker:
         print("| Cluster name    | Coverage    |", file=file)
         print("-" * 33, file=file)
         for item in srt:
-            print(f"| {item[1]:15} | {item[0]:8.2f}{_quality_indicator(item[0])} |", file=file)
+            print(
+                f"| {item[1]:15} | {item[0]:8.2f}{_quality_indicator(item[0])} |",
+                file=file,
+            )
         print("-" * 33, file=file)
         print("Explanation: ***: Insufficient, **: Poor, *: OK, '' Good", file=file)
         print(f"Cluster coverage: {_grade(coverage)}", file=file)
@@ -157,9 +162,9 @@ def _quality_indicator(num: float) -> str:
     Return a quality indicator. *** very bad, ** better, * even better and empty (best)
     """
     if num < 0.25:
-        return '***'
+        return "***"
     if num < 0.5:
-        return '** '
+        return "** "
     if num < 0.75:
-        return '*  '
-    return '   '
+        return "*  "
+    return "   "

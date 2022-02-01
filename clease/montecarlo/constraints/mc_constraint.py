@@ -2,6 +2,7 @@ class MCConstraint:
     """
     Class for that prevents the MC sampler to run certain moves
     """
+
     name = "GenericConstraint"
 
     def __call__(self, system_changes):

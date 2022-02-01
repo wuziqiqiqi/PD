@@ -32,8 +32,9 @@ class SGCState:
         Construct a prefix based on the chemical potentials and the temperature
         """
         prefix = f"{int(self.temp)}K_"
-        prefix += '_'.join(
-            f"{k}{sign_indicator(v)}{int(1000.0*abs(v))}" for k, v in self.chem_pot.items())
+        prefix += "_".join(
+            f"{k}{sign_indicator(v)}{int(1000.0*abs(v))}" for k, v in self.chem_pot.items()
+        )
         return prefix
 
 
@@ -109,8 +110,10 @@ class MultiStateSGCConcObserver(MCObserver):
         for state in self.thermo_states:
             cf = self.calc.get_cf()
             beta2 = 1.0 / (kB * state.temp)
-            betadE = sum((beta2 * state.chem_pot[k] - beta1 * self.ref_state.chem_pot[k]) * cf[k]
-                         for k in state.chem_pot.keys())
+            betadE = sum(
+                (beta2 * state.chem_pot[k] - beta1 * self.ref_state.chem_pot[k]) * cf[k]
+                for k in state.chem_pot.keys()
+            )
             E = self.calc.energy
             weight = np.exp((beta1 - beta2) * E + betadE)
             for k in state.chem_pot.keys():

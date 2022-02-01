@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ('SVD',)
+__all__ = ("SVD",)
 
 
 class SVD:

@@ -12,18 +12,20 @@ from .concentration import Concentration
 from .settings import ClusterExpansionSettings
 
 __all__ = (
-    'CEBulk',
-    'CECrystal',
+    "CEBulk",
+    "CECrystal",
 )
 
 
-def CEBulk(concentration: Concentration,
-           crystalstructure='sc',
-           a=None,
-           c=None,
-           covera=None,
-           u=None,
-           **kwargs):
+def CEBulk(
+    concentration: Concentration,
+    crystalstructure="sc",
+    a=None,
+    c=None,
+    covera=None,
+    u=None,
+    **kwargs,
+):
     """
     Specify cluster expansion settings for bulk materials defined based on
     crystal structures.
@@ -53,16 +55,16 @@ def CEBulk(concentration: Concentration,
     For more kwargs, see docstring of :class:`clease.settings.ClusterExpansionSettings`.
     """
     structures = {
-        'sc': 1,
-        'fcc': 1,
-        'bcc': 1,
-        'hcp': 1,
-        'diamond': 1,
-        'zincblende': 2,
-        'rocksalt': 2,
-        'cesiumchloride': 2,
-        'fluorite': 3,
-        'wurtzite': 2
+        "sc": 1,
+        "fcc": 1,
+        "bcc": 1,
+        "hcp": 1,
+        "diamond": 1,
+        "zincblende": 2,
+        "rocksalt": 2,
+        "cesiumchloride": 2,
+        "fluorite": 3,
+        "wurtzite": 2,
     }
 
     num_basis = len(concentration.orig_basis_elements)
@@ -73,31 +75,35 @@ def CEBulk(concentration: Concentration,
         raise ValueError(msg)
 
     basis_elements = concentration.orig_basis_elements
-    name = ''.join(x[0] for x in basis_elements)
+    name = "".join(x[0] for x in basis_elements)
     prim = bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)
 
     settings = ClusterExpansionSettings(prim, concentration, **kwargs)
 
-    settings.kwargs.update({
-        'crystalstructure': crystalstructure,
-        'a': a,
-        'c': c,
-        'covera': covera,
-        'u': u,
-        'factory': 'CEBulk'
-    })
+    settings.kwargs.update(
+        {
+            "crystalstructure": crystalstructure,
+            "a": a,
+            "c": c,
+            "covera": covera,
+            "u": u,
+            "factory": "CEBulk",
+        }
+    )
     return settings
 
 
-def CECrystal(concentration: Concentration,
-              spacegroup=1,
-              basis=None,
-              cell=None,
-              cellpar=None,
-              ab_normal=(0, 0, 1),
-              crystal_kwargs=None,
-              **kwargs):
+def CECrystal(
+    concentration: Concentration,
+    spacegroup=1,
+    basis=None,
+    cell=None,
+    cellpar=None,
+    ab_normal=(0, 0, 1),
+    crystal_kwargs=None,
+    **kwargs,
+):
     """Store CE settings on bulk materials defined based on space group.
 
     Parameters:
@@ -141,24 +147,28 @@ def CECrystal(concentration: Concentration,
         symbols.append(concentration.orig_basis_elements[x][0])
 
     crystal_kwargs = crystal_kwargs or {}
-    prim = crystal(symbols=symbols,
-                   basis=basis,
-                   spacegroup=spacegroup,
-                   cell=cell,
-                   cellpar=cellpar,
-                   ab_normal=ab_normal,
-                   size=[1, 1, 1],
-                   primitive_cell=True,
-                   **crystal_kwargs)
+    prim = crystal(
+        symbols=symbols,
+        basis=basis,
+        spacegroup=spacegroup,
+        cell=cell,
+        cellpar=cellpar,
+        ab_normal=ab_normal,
+        size=[1, 1, 1],
+        primitive_cell=True,
+        **crystal_kwargs,
+    )
     prim = wrap_and_sort_by_position(prim)
 
     settings = ClusterExpansionSettings(prim, concentration, **kwargs)
-    settings.kwargs.update({
-        'basis': deepcopy(basis),
-        'spacegroup': spacegroup,
-        'cell': cell,
-        'cellpar': cellpar,
-        'ab_normal': ab_normal,
-        'factory': 'CECrystal'
-    })
+    settings.kwargs.update(
+        {
+            "basis": deepcopy(basis),
+            "spacegroup": spacegroup,
+            "cell": cell,
+            "cellpar": cellpar,
+            "ab_normal": ab_normal,
+            "factory": "CECrystal",
+        }
+    )
     return settings

@@ -9,7 +9,7 @@ def test_normalizer():
     coeff = [1.0, -2.0]
     y = X.dot(coeff)
     meanY = np.mean(y)
-    meanX = [1. / 3, 0.0]
+    meanX = [1.0 / 3, 0.0]
     stdX = [2.0 / np.sqrt(3.0), np.sqrt(12.0)]
 
     normalizer = DataNormalizer()

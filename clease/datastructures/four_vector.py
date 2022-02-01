@@ -9,7 +9,7 @@ from ase.atoms import Cell
 from ase import Atoms
 import attr
 
-__all__ = ('FourVector', 'construct_four_vectors')
+__all__ = ("FourVector", "construct_four_vectors")
 
 
 def _int_converter(x):
@@ -25,6 +25,7 @@ class FourVector:
     Represents the position of a site in terms of the number of repitions of the primitive atoms,
     as well as which sublattice it belongs to in that cell.
     """
+
     ix: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
     iy: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
     iz: int = attr.ib(converter=_int_converter, validator=attr.validators.instance_of(int))
@@ -63,15 +64,14 @@ class FourVector:
         return np.array([self.ix, self.iy, self.iz])
 
     def to_tuple(self) -> Tuple[int]:
-        """Get the tuple representation of the four-vector
-        """
+        """Get the tuple representation of the four-vector"""
         return attr.astuple(self)
 
-    def copy(self) -> 'FourVector':
+    def copy(self) -> "FourVector":
         """Create a copy of the FourVector instance."""
         return copy.copy(self)
 
-    def shift_xyz(self, other: 'FourVector') -> 'FourVector':
+    def shift_xyz(self, other: "FourVector") -> "FourVector":
         """Shift a this vector by another FourVector instance.
         Only translates the x, y, and z values, the sublattice remains the original,
         *so be mindful of the order*, i.e. a.shift_xyz(b) is not the same as b.shift_xyz(a).
@@ -87,10 +87,11 @@ class FourVector:
         FourVector(ix=1, iy=0, iz=0, sublattice=1)
         """
         if not isinstance(other, FourVector):
-            raise NotImplementedError(f'Shift must be by another FourVector, got {type(other)}')
+            raise NotImplementedError(f"Shift must be by another FourVector, got {type(other)}")
 
-        return FourVector(self.ix + other.ix, self.iy + other.iy, self.iz + other.iz,
-                          self.sublattice)
+        return FourVector(
+            self.ix + other.ix, self.iy + other.iy, self.iz + other.iz, self.sublattice
+        )
 
 
 class _Box(NamedTuple):
@@ -99,6 +100,7 @@ class _Box(NamedTuple):
     the start (lower) and end (upper) of the diagonal. The names lower and upper
     refers to "lower corner" and "upper corner", respectively.
     """
+
     lower: np.ndarray
     upper: np.ndarray
 
@@ -168,8 +170,10 @@ def construct_four_vectors(prim: Atoms, supercell: Atoms) -> List[FourVector]:
     supercell_cpy.set_cell(prim.get_cell())
     sc_scaled_pos = supercell_cpy.get_scaled_positions(wrap=False)
 
-    bounding_box = _Box(lower=np.floor(np.min(sc_scaled_pos, axis=0)).astype(int),
-                        upper=np.ceil(np.max(sc_scaled_pos, axis=0)).astype(int))
+    bounding_box = _Box(
+        lower=np.floor(np.min(sc_scaled_pos, axis=0)).astype(int),
+        upper=np.ceil(np.max(sc_scaled_pos, axis=0)).astype(int),
+    )
 
     # Fill the bounding box with a grid
     four_vecs_grid, scaled_pos_grid = _make_grid(bounding_box, prim)
@@ -188,12 +192,16 @@ def construct_four_vectors(prim: Atoms, supercell: Atoms) -> List[FourVector]:
     sub_lat_count = Counter(fv.sublattice for fv in four_vectors)
 
     if any(v != int(len(supercell_cpy) / len(prim)) for v in sub_lat_count.values()):
-        raise RuntimeError("The four vectors are invalid as the number of atoms in each "
-                           "sublattice does not match the number of primitive cells")
+        raise RuntimeError(
+            "The four vectors are invalid as the number of atoms in each "
+            "sublattice does not match the number of primitive cells"
+        )
 
     if len(sub_lat_count) != len(prim):
-        raise RuntimeError("The four vectors are invalid as the number of sublattice "
-                           "detected does not match the number of sublattices in the "
-                           "primitive cell")
+        raise RuntimeError(
+            "The four vectors are invalid as the number of sublattice "
+            "detected does not match the number of sublattices in the "
+            "primitive cell"
+        )
 
     return four_vectors

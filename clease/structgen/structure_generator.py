@@ -23,20 +23,27 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('StructureGenerator', 'GSStructure', 'MetropolisTrajectory', 'ProbeStructure')
+__all__ = (
+    "StructureGenerator",
+    "GSStructure",
+    "MetropolisTrajectory",
+    "ProbeStructure",
+)
 
 
 # pylint: disable=too-many-instance-attributes
 class StructureGenerator(ABC):
     """Base class for generating new strctures."""
 
-    def __init__(self,
-                 settings,
-                 atoms,
-                 init_temp=None,
-                 final_temp=None,
-                 num_temp=5,
-                 num_steps_per_temp=10000):
+    def __init__(
+        self,
+        settings,
+        atoms,
+        init_temp=None,
+        final_temp=None,
+        num_temp=5,
+        num_steps_per_temp=10000,
+    ):
         if not isinstance(settings, ClusterExpansionSettings):
             raise TypeError(f"Settings must be a ClusterExpansionSettings object, got {settings}")
 
@@ -51,12 +58,14 @@ class StructureGenerator(ABC):
             if len(atoms) != len(settings.atoms):
                 raise ValueError("Passed Atoms has a wrong size.")
         else:
-            raise ValueError("concentration of the elements in the provided"
-                             " atoms is not consistent with the settings.")
+            raise ValueError(
+                "concentration of the elements in the provided"
+                " atoms is not consistent with the settings."
+            )
 
         # eci set to 1 to ensure that all correlation functions are included
         # but the energy produced from this should never be used
-        self.eci = {name: 1. for name in self.cf_names}
+        self.eci = {name: 1.0 for name in self.cf_names}
         calc = Clease(self.settings, eci=self.eci)
         self.atoms.calc = calc
         self.output_every = 30
@@ -115,12 +124,13 @@ class StructureGenerator(ABC):
                         # Print same len as max required
                         f"MC Step: {count:>{len_num_steps}d} of "
                         f"{self.num_steps_per_temp}, "
-                        f"Accept. rate: {acc_rate*100:.2f} %")
+                        f"Accept. rate: {acc_rate*100:.2f} %"
+                    )
                     logger.info(msg)
                     now = time.time()
 
                 if choice([True, False]) and self.alter_composition:
-                    logger.debug('Change element type? %s', change_element)
+                    logger.debug("Change element type? %s", change_element)
                     # Change element Type
                     if change_element:
                         self._change_element_type()
@@ -128,10 +138,9 @@ class StructureGenerator(ABC):
                         continue
                 else:
                     indx = self._swap_two_atoms()
-                    logger.debug('Swapping indices %s', indx)
-                    if self.atoms[indx[0]].symbol == \
-                            self.atoms[indx[1]].symbol:
-                        logger.debug('Same symbols detected, skipping.')
+                    logger.debug("Swapping indices %s", indx)
+                    if self.atoms[indx[0]].symbol == self.atoms[indx[1]].symbol:
+                        logger.debug("Same symbols detected, skipping.")
                         continue
                 self.atoms.get_potential_energy()
 
@@ -189,8 +198,7 @@ class StructureGenerator(ABC):
                     continue
             else:
                 indx = self._swap_two_atoms()
-                if self.atoms[indx[0]].symbol == \
-                        self.atoms[indx[1]].symbol:
+                if self.atoms[indx[0]].symbol == self.atoms[indx[1]].symbol:
                     continue
                 count += 1
             self.atoms.get_potential_energy()
@@ -272,19 +280,21 @@ class StructureGenerator(ABC):
 
     def _check_consistency(self):
         # Check to see if the cf is indeed preserved
-        final_cf = \
-            self.corrFunc.get_cf_by_names(
-                self.generated_structure,
-                self.atoms.calc.cf_names)
+        final_cf = self.corrFunc.get_cf_by_names(self.generated_structure, self.atoms.calc.cf_names)
         for k in final_cf:
-            if abs(final_cf[k] - self.cf_generated_structure[k]) > 1E-6:
-                msg = 'Correlation function changed after simulated annealing'
+            if abs(final_cf[k] - self.cf_generated_structure[k]) > 1e-6:
+                msg = "Correlation function changed after simulated annealing"
                 logger.error(msg)
 
                 # Print a summary of all basis functions (useful for debuggin)
-                logger.debug('Basis functions:')
+                logger.debug("Basis functions:")
                 for k2 in final_cf:
-                    logger.debug('   %s: %s, %s', k2, final_cf[k2], self.cf_generated_structure[k2])
+                    logger.debug(
+                        "   %s: %s, %s",
+                        k2,
+                        final_cf[k2],
+                        self.cf_generated_structure[k2],
+                    )
                 raise ValueError(msg)
 
     def _get_full_cf_matrix(self):
@@ -292,7 +302,7 @@ class StructureGenerator(ABC):
         cfm = []
         db = connect(self.settings.db_name)
         tab_name = f"{self.settings.basis_func_type.name}_cf"
-        for row in db.select(struct_type='initial'):
+        for row in db.select(struct_type="initial"):
             cfm.append([row[tab_name][x] for x in self.cf_names])
         cfm = np.array(cfm, dtype=float)
         return cfm
@@ -337,26 +347,29 @@ class ProbeStructure(StructureGenerator):
                   Reads sigma and mu from 'probe_structure-sigma_mu.npz' file.
     """
 
-    def __init__(self,
-                 settings,
-                 atoms,
-                 init_temp=None,
-                 final_temp=None,
-                 num_temp=5,
-                 num_steps_per_temp=1000,
-                 approx_mean_var=False):
+    def __init__(
+        self,
+        settings,
+        atoms,
+        init_temp=None,
+        final_temp=None,
+        num_temp=5,
+        num_steps_per_temp=1000,
+        approx_mean_var=False,
+    ):
 
-        StructureGenerator.__init__(self, settings, atoms, init_temp, final_temp, num_temp,
-                                    num_steps_per_temp)
+        StructureGenerator.__init__(
+            self, settings, atoms, init_temp, final_temp, num_temp, num_steps_per_temp
+        )
         self.o_cf = self.atoms.calc.cf
         self.o_cfm = np.vstack((self.cfm, self.o_cf))
         self.approx_mean_var = approx_mean_var
-        fname = 'probe_structure-sigma_mu.npz'
+        fname = "probe_structure-sigma_mu.npz"
         if not approx_mean_var:
             if os.path.isfile(fname):
                 data = np.load(fname)
-                self.sigma = data['sigma']
-                self.mu = data['mu']
+                self.sigma = data["sigma"]
+                self.mu = data["mu"]
                 self.o_mv = mean_variance(self.o_cfm, self.sigma, self.mu)
             else:
                 raise IOError(f"'{fname}' not found.")
@@ -445,16 +458,19 @@ class GSStructure(StructureGenerator):
         Dictionary containing cluster names and their ECI values
     """
 
-    def __init__(self,
-                 settings,
-                 atoms,
-                 init_temp=2000,
-                 final_temp=10,
-                 num_temp=10,
-                 num_steps_per_temp=100000,
-                 eci=None):
-        StructureGenerator.__init__(self, settings, atoms, init_temp, final_temp, num_temp,
-                                    num_steps_per_temp)
+    def __init__(
+        self,
+        settings,
+        atoms,
+        init_temp=2000,
+        final_temp=10,
+        num_temp=10,
+        num_steps_per_temp=100000,
+        eci=None,
+    ):
+        StructureGenerator.__init__(
+            self, settings, atoms, init_temp, final_temp, num_temp, num_steps_per_temp
+        )
         self.alter_composition = False
         self.eci = eci
         calc = Clease(self.settings, eci=eci)
@@ -489,7 +505,6 @@ class GSStructure(StructureGenerator):
 
 
 class MetropolisTrajectory:
-
     def __init__(self, settings, atoms, num):
         self.settings = settings
         self.atoms = atoms
@@ -497,13 +512,13 @@ class MetropolisTrajectory:
 
     def generate(self):
         cnst = ConstrainSwapByBasis(self.atoms, self.settings.index_by_basis)
-        eci = {'c0': 0.0}
+        eci = {"c0": 0.0}
         calc = Clease(self.settings, eci=eci)
         self.atoms.calc = calc
 
         mc = Montecarlo(self.atoms, 10000000)
         mc.generator.add_constraint(cnst)
-        fname = 'metropolis_traj'
+        fname = "metropolis_traj"
         obs = Snapshot(self.atoms, fname=fname)
         mc.attach(obs, interval=1)
 
@@ -519,7 +534,7 @@ class MetropolisTrajectory:
 
 def mean_variance_full(cfm):
     prec = precision_matrix(cfm)
-    mv = 0.
+    mv = 0.0
     for x in range(cfm.shape[0]):
         mv += cfm[x].dot(prec).dot(cfm[x].T)
     mv = mv / cfm.shape[0]

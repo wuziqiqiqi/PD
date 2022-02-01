@@ -37,7 +37,7 @@ class LowestEnergyStructure(MCObserver):
 
     @property
     def energy(self):
-        return self.calc.results['energy']
+        return self.calc.results["energy"]
 
     def __call__(self, system_changes):
         """

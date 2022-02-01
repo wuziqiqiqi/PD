@@ -3,7 +3,7 @@ from functools import total_ordering
 import numpy as np
 import attr
 
-__all__ = ('ClusterFingerprint',)
+__all__ = ("ClusterFingerprint",)
 
 
 def _fingerprint_converter(x: Any) -> Any:
@@ -19,8 +19,10 @@ def _fingerprint_converter(x: Any) -> Any:
 class ClusterFingerprint:
     """Container for a Cluster Fingerprint."""
 
-    fp: np.ndarray = attr.ib(converter=_fingerprint_converter,
-                             validator=attr.validators.instance_of(np.ndarray))
+    fp: np.ndarray = attr.ib(
+        converter=_fingerprint_converter,
+        validator=attr.validators.instance_of(np.ndarray),
+    )
     tol: float = attr.ib(default=1e-9)
 
     def __lt__(self, other) -> bool:

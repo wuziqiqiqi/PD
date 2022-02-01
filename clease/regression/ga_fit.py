@@ -3,14 +3,14 @@ import logging
 from numpy.random import shuffle, choice
 import numpy as np
 from matplotlib import pyplot as plt
-from clease.tools import (aic, aicc, bic)
+from clease.tools import aic, aicc, bic
 from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
 
 workers = None
 
-__all__ = ('SaturatedPopulationError', 'GAFit')
+__all__ = ("SaturatedPopulationError", "GAFit")
 
 
 class SaturatedPopulationError(Exception):
@@ -59,15 +59,17 @@ class GAFit:
         (tend to avoid overfitting better than aic)
     """
 
-    def __init__(self,
-                 cf_matrix,
-                 e_dft,
-                 mutation_prob=0.001,
-                 elitism=1,
-                 fname="ga_fit.csv",
-                 num_individuals="auto",
-                 max_num_in_init_pool=None,
-                 cost_func="aicc"):
+    def __init__(
+        self,
+        cf_matrix,
+        e_dft,
+        mutation_prob=0.001,
+        elitism=1,
+        fname="ga_fit.csv",
+        num_individuals="auto",
+        max_num_in_init_pool=None,
+        cost_func="aicc",
+    ):
         allowed_cost_funcs = {"bic": bic, "aic": aic, "aicc": aicc}
 
         if cost_func not in allowed_cost_funcs:
@@ -113,7 +115,7 @@ class GAFit:
             for i in range(self.pop_size):
                 shuffle(indices)
                 individual = np.zeros(self.num_genes, dtype=np.uint8)
-                indx = indices[:num_non_zero[i]]
+                indx = indices[: num_non_zero[i]]
                 individual[np.array(indx)] = 1
                 individuals.append(self.make_valid(individual))
         return individuals
@@ -122,7 +124,7 @@ class GAFit:
         """Initialize the population from file."""
         logger.info("Initializing population from %s", self.fname)
         individuals = []
-        with open(self.fname, 'r') as infile:
+        with open(self.fname, "r") as infile:
             for line in infile:
                 individual = np.zeros(self.num_genes, dtype=np.uint8)
                 indices = np.array([int(x.strip()) for x in line.split(",")])
@@ -250,8 +252,7 @@ class GAFit:
             # Check if there are any equal individuals in
             # the population
             counter = 0
-            while (self._is_in_population(new_individual, new_generation) and
-                   counter < max_attempts):
+            while self._is_in_population(new_individual, new_generation) and counter < max_attempts:
                 new_individual = self.flip_one_mutation(new_individual)
                 new_individual = self.make_valid(new_individual)
                 counter += 1
@@ -262,8 +263,9 @@ class GAFit:
             new_generation.append(new_individual)
 
             counter = 0
-            while (self._is_in_population(new_individual2, new_generation) and
-                   counter < max_attempts):
+            while (
+                self._is_in_population(new_individual2, new_generation) and counter < max_attempts
+            ):
                 new_individual2 = self.flip_one_mutation(new_individual2)
                 new_individual2 = self.make_valid(new_individual2)
                 counter += 1
@@ -275,9 +277,11 @@ class GAFit:
             new_generation.append(new_individual2)
 
         if len(new_generation) != len(self.individuals):
-            raise RuntimeError(f"Size of generation changed! Original size: "
-                               f"{len(self.individuals)}. New size: "
-                               f"{len(new_generation)}")
+            raise RuntimeError(
+                f"Size of generation changed! Original size: "
+                f"{len(self.individuals)}. New size: "
+                f"{len(new_generation)}"
+            )
         self.individuals = new_generation
 
     @staticmethod
@@ -348,7 +352,7 @@ class GAFit:
     def save_population(self):
         # Save population
         self.check_valid()
-        with open(self.fname, 'w') as out:
+        with open(self.fname, "w") as out:
             for i in range(len(self.individuals)):
                 out.write(",".join(str(x) for x in self.index_of_selected_clusters(i)))
                 out.write("\n")
@@ -399,9 +403,19 @@ class GAFit:
             best3 = np.abs(np.sort(self.fitness)[::-1][:3])
             loocv_msg = ""
 
-            logger.info(("Generation: %s. Top 3 scores %.2e (-)%.2e (-)%.2e."
-                         " Num ECI: %d. Pop. div: %.2f. %s"), gen, best3[0], best3[0] - best3[1],
-                        best3[0] - best3[2], num_eci, diversity, loocv_msg)
+            logger.info(
+                (
+                    "Generation: %s. Top 3 scores %.2e (-)%.2e (-)%.2e."
+                    " Num ECI: %d. Pop. div: %.2f. %s"
+                ),
+                gen,
+                best3[0],
+                best3[0] - best3[1],
+                best3[0] - best3[2],
+                num_eci,
+                diversity,
+                loocv_msg,
+            )
             self.mutate()
             self.create_new_generation()
             if abs(current_best - self.fitness[best_indx]) > min_change:
@@ -414,8 +428,10 @@ class GAFit:
                 self.save_population()
 
             if num_gen_without_change >= gen_without_change:
-                logger.info('Reached %d generations without sufficient improvement.',
-                            gen_without_change)
+                logger.info(
+                    "Reached %d generations without sufficient improvement.",
+                    gen_without_change,
+                )
                 break
             gen += 1
 

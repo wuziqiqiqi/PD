@@ -16,7 +16,6 @@ class MovedIgnoredAtomError(Exception):
 
 
 class KeepChanges:
-
     def __init__(self):
         self.keep_changes = True
 
@@ -39,14 +38,16 @@ class Clease(Calculator):
         file. Use '-' for stdout.
     """
 
-    name = 'CLEASE'
-    implemented_properties = ['energy']
+    name = "CLEASE"
+    implemented_properties = ["energy"]
 
-    def __init__(self,
-                 settings: ClusterExpansionSettings,
-                 eci: Dict[str, float],
-                 init_cf: Optional[Dict[str, float]] = None,
-                 logfile: Union[TextIO, str, None] = None) -> None:
+    def __init__(
+        self,
+        settings: ClusterExpansionSettings,
+        eci: Dict[str, float],
+        init_cf: Optional[Dict[str, float]] = None,
+        logfile: Union[TextIO, str, None] = None,
+    ) -> None:
         Calculator.__init__(self)
 
         if not isinstance(settings, ClusterExpansionSettings):
@@ -74,11 +75,11 @@ class Clease(Calculator):
 
         # logfile
         if isinstance(logfile, str):
-            if logfile == '-':
+            if logfile == "-":
                 logfile = sys.stdout
             else:
                 # pylint: disable=consider-using-with
-                logfile = open(logfile, 'a')
+                logfile = open(logfile, "a")
         self.logfile = logfile
 
         # reference atoms for calculating the cf and energy for new atoms
@@ -105,28 +106,27 @@ class Clease(Calculator):
             fig_keys = list(set(cluster.get_all_figure_keys()))
             num_occ = {}
             for key in fig_keys:
-                num_occ[key] = cluster_list.num_occ_figure(key, cluster.name, symm_group,
-                                                           self.settings.trans_matrix)
+                num_occ[key] = cluster_list.num_occ_figure(
+                    key, cluster.name, symm_group, self.settings.trans_matrix
+                )
             num_fig_occ = cluster.num_fig_occurences
             norm_factors = {}
             for key in fig_keys:
                 tot_num = num_occ[key]
                 num_unique = len(set(key.split("-")))
-                norm_factors[key] = \
-                    float(tot_num)/(num_unique*num_fig_occ[key])
+                norm_factors[key] = float(tot_num) / (num_unique * num_fig_occ[key])
 
             norm_factor_list = []
             for fig in cluster.indices:
                 key = cluster.get_figure_key(fig)
                 norm_factor_list.append(norm_factors[key])
-            cluster.info['normalization_factor'] = norm_factor_list
+            cluster.info["normalization_factor"] = norm_factor_list
 
     def set_atoms(self, atoms: Atoms) -> None:
         self.atoms = atoms
 
         if self.init_cf is None:
-            self.init_cf = \
-                self.corrFunc.get_cf_by_names(self.atoms, self.cf_names)
+            self.init_cf = self.corrFunc.get_cf_by_names(self.atoms, self.cf_names)
 
         if len(self.settings.atoms) != len(atoms):
             msg = "Passed Atoms object and settings.atoms should have same "
@@ -145,8 +145,13 @@ class Clease(Calculator):
         self.is_backround_index[self.settings.background_indices] = 1
 
         self._set_norm_factors()
-        self.updater = PyCEUpdater(self.atoms, self.settings, self.init_cf, self.eci,
-                                   self.settings.cluster_list)
+        self.updater = PyCEUpdater(
+            self.atoms,
+            self.settings,
+            self.init_cf,
+            self.eci,
+            self.settings.cluster_list,
+        )
 
     def get_energy_given_change(self, system_changes: SystemChanges, keep_changes=False) -> float:
         """
@@ -170,16 +175,20 @@ class Clease(Calculator):
         res = super().check_state(atoms)
         syst_ch = self.indices_of_changed_atoms
 
-        if syst_ch and 'energy' not in res:
-            res.append('energy')
+        if syst_ch and "energy" not in res:
+            res.append("energy")
         return res
 
     def reset(self):
         self.results = {}
 
     # pylint: disable=signature-differs
-    def calculate(self, atoms: Atoms, properties: Union[List[str], str],
-                  system_changes: SystemChanges) -> float:
+    def calculate(
+        self,
+        atoms: Atoms,
+        properties: Union[List[str], str],
+        system_changes: SystemChanges,
+    ) -> float:
         """Calculate the energy of the passed Atoms object.
 
         If accept=True, the most recently used atoms object is used as a
@@ -225,19 +234,18 @@ class Clease(Calculator):
 
     @property
     def energy(self):
-        return self.results.get('energy', None)
+        return self.results.get("energy", None)
 
     @energy.setter
     def energy(self, value):
-        self.results['energy'] = value
+        self.results["energy"] = value
 
     @property
     def indices_of_changed_atoms(self) -> List[int]:
         """Return the indices of atoms that have been changed."""
         changed = self.updater.get_changed_sites(self.atoms)
         for index in changed:
-            if self.is_backround_index[index] and \
-                    not self.settings.include_background_atoms:
+            if self.is_backround_index[index] and not self.settings.include_background_atoms:
                 msg = f"Atom with index {index} is a background atom."
                 raise MovedIgnoredAtomError(msg)
 
@@ -262,10 +270,13 @@ class Clease(Calculator):
             swapped_indices = self.indices_of_changed_atoms
             symbols = self.updater.get_symbols()
             system_changes = [
-                SystemChange(index=idx,
-                             old_symb=symbols[idx],
-                             new_symb=self.atoms[idx].symbol,
-                             name='internal_symbol_change') for idx in swapped_indices
+                SystemChange(
+                    index=idx,
+                    old_symb=symbols[idx],
+                    new_symb=self.atoms[idx].symbol,
+                    name="internal_symbol_change",
+                )
+                for idx in swapped_indices
             ]
         for change in system_changes:
             self.updater.update_cf(change)

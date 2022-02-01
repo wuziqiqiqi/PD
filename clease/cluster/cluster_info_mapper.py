@@ -4,7 +4,7 @@ from scipy.spatial import cKDTree as KDTree
 from ase.geometry import wrap_positions
 from .cluster_list import ClusterList
 
-__all__ = ('AtomsNotContainedInLargeCellError', 'ClusterInfoMapper')
+__all__ = ("AtomsNotContainedInLargeCellError", "ClusterInfoMapper")
 
 
 class AtomsNotContainedInLargeCellError(Exception):
@@ -44,7 +44,7 @@ class ClusterInfoMapper:
 
         # loop through small Atoms and find the closest atoms in large cell
         dist, index_map = tree.query(large_pos)
-        assert np.all(dist < 1E-6)
+        assert np.all(dist < 1e-6)
 
         if len(list(set(index_map))) != len(small_atoms):
             raise AtomsNotContainedInLargeCellError("All indices not covered")
@@ -71,10 +71,12 @@ class ClusterInfoMapper:
 
         for row in unique:
             row_large = np.where(index_map == row)[0][0]
-            new_tm.append({
-                int(index_map[k]): int(index_map[v])
-                for k, v in self.trans_matrix[row_large].items()
-            })
+            new_tm.append(
+                {
+                    int(index_map[k]): int(index_map[v])
+                    for k, v in self.trans_matrix[row_large].items()
+                }
+            )
         return new_tm
 
     def map_info(self, small_atoms):

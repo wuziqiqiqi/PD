@@ -49,8 +49,7 @@ class GaussianKernelBiasPotential(BiasPotential):
         self.xmin_corrected = self.xmin - self.pad * width
         self.xmax_corrected = self.xmax + self.pad * width
         self.centers = np.linspace(self.xmin_corrected, self.xmax_corrected, self.num_kernels)
-        self.dx = (self.xmax_corrected - self.xmin_corrected) / \
-            (self.num_kernels-1)
+        self.dx = (self.xmax_corrected - self.xmin_corrected) / (self.num_kernels - 1)
 
     def get_index(self, x):
         return int((x - self.xmin_corrected) / self.dx)
@@ -80,12 +79,12 @@ class GaussianKernelBiasPotential(BiasPotential):
         return i_lower, i_upper
 
     def _gaussian(self, x, x0):
-        return np.exp(-((x - x0) / self.width)**2)
+        return np.exp(-(((x - x0) / self.width) ** 2))
 
     def evaluate(self, x):
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high + 1])
-        return np.sum(self.coeff[low:high + 1] * w)
+        w = self._gaussian(x, self.centers[low : high + 1])
+        return np.sum(self.coeff[low : high + 1] * w)
 
     def __call__(self, system_changes: Sequence[SystemChange]):
         x = self.getter(system_changes, peak=True)
@@ -94,54 +93,54 @@ class GaussianKernelBiasPotential(BiasPotential):
     def local_update(self, x, dE):
         """Increase the local energy at x by an amount dE."""
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high + 1])
+        w = self._gaussian(x, self.centers[low : high + 1])
 
         # Update the coefficient in such a way that the value at
         # point x is increased by dE and that the L2 norm of the
         # change in coefficient is minimised
-        self.coeff[low:high + 1] += dE * w / np.sum(w**2)
+        self.coeff[low : high + 1] += dE * w / np.sum(w**2)
 
     def slope(self, x):
         """Evaluate slope."""
         low, high = self.inside_range(x)
-        w = self._gaussian(x, self.centers[low:high + 1])
-        w *= -(x - self.centers[low:high + 1]) / self.width**2
-        return np.sum(self.coeff[low:high + 1] * w)
+        w = self._gaussian(x, self.centers[low : high + 1])
+        w *= -(x - self.centers[low : high + 1]) / self.width**2
+        return np.sum(self.coeff[low : high + 1] * w)
 
     def ensure_zero_slope(self, x):
         """Change the coefficients such that the slope is zero at x."""
         low, high = self.inside_range(x)
-        c = self.centers[low:high + 1]
-        w = self._gaussian(x, self.centers[low:high + 1])
-        denom = (w * (x - c) / self.width**2)**2
+        c = self.centers[low : high + 1]
+        w = self._gaussian(x, self.centers[low : high + 1])
+        denom = (w * (x - c) / self.width**2) ** 2
         lamb = self.slope(x) / np.sum(denom)
-        self.coeff[low:high + 1] += lamb * (x - c) * w / self.width**2
+        self.coeff[low : high + 1] += lamb * (x - c) * w / self.width**2
 
     def todict(self):
         return {
-            'xmin': self.xmin,
-            'xmax': self.xmax,
-            'num_kernels': self.num_kernels,
-            'width': self.width,
-            'coeff': self.coeff.tolist(),
-            'centers': self.centers.tolist(),
-            'dx': self.dx,
-            'xmin_corrected': self.xmin_corrected,
-            'xmax_corrected': self.xmax_corrected,
-            'pad': self.pad
+            "xmin": self.xmin,
+            "xmax": self.xmax,
+            "num_kernels": self.num_kernels,
+            "width": self.width,
+            "coeff": self.coeff.tolist(),
+            "centers": self.centers.tolist(),
+            "dx": self.dx,
+            "xmin_corrected": self.xmin_corrected,
+            "xmax_corrected": self.xmax_corrected,
+            "pad": self.pad,
         }
 
     def from_dict(self, data):
-        self.xmin = data['xmin']
-        self.xmax = data['xmax']
-        self.num_kernels = data['num_kernels']
-        self.width = data['width']
-        self.coeff = np.array(data['coeff'])
-        self.centers = np.array(data['centers'])
-        self.dx = data['dx']
-        self.xmin_corrected = data['xmin_corrected']
-        self.xmax_corrected = data['xmax_corrected']
-        self.pad = data.get('pad', 3)
+        self.xmin = data["xmin"]
+        self.xmax = data["xmax"]
+        self.num_kernels = data["num_kernels"]
+        self.width = data["width"]
+        self.coeff = np.array(data["coeff"])
+        self.centers = np.array(data["centers"])
+        self.dx = data["dx"]
+        self.xmin_corrected = data["xmin_corrected"]
+        self.xmax_corrected = data["xmax_corrected"]
+        self.pad = data.get("pad", 3)
 
     def calculate_from_scratch(self, atoms):
         x = self.getter.calculate_from_scratch(atoms)

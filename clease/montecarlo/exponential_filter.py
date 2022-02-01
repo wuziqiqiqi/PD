@@ -3,7 +3,6 @@ from scipy.optimize import minimize
 
 
 class ExponentialFilter:
-
     def __init__(self, min_time=1, max_time=10, n_subfilters=2, dt=1):
         self.min_time = min_time
         self.max_time = max_time
@@ -16,7 +15,7 @@ class ExponentialFilter:
     def get_normalization_factors(self):
         """Return the normalization factors."""
         norm_factor = 1.0 - np.exp(-self.n_samples * self.dt / self.tau)
-        norm_factor /= (1.0 - np.exp(-self.dt / self.tau))
+        norm_factor /= 1.0 - np.exp(-self.dt / self.tau)
         return norm_factor
 
     def reset(self):
@@ -95,7 +94,7 @@ class ExponentialFilter:
             prefactor = params[1]
             damping = params[2]
             predict = constant + prefactor * np.exp(-damping * x)
-            return np.sum((y - predict)**2)
+            return np.sum((y - predict) ** 2)
 
         res = minimize(cost, x0=(y[0], 0.0, 0.0))
         params = res["x"]

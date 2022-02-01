@@ -14,12 +14,14 @@ from clease.tools import wrap_and_sort_by_position
 def bc_settings(db_name):
     basis_elements = [["Au", "Cu", "Si"]]
     concentration = Concentration(basis_elements=basis_elements)
-    return CEBulk(crystalstructure="fcc",
-                  a=4.05,
-                  size=[4, 4, 4],
-                  concentration=concentration,
-                  db_name=db_name,
-                  max_cluster_dia=[5.73, 5.73])
+    return CEBulk(
+        crystalstructure="fcc",
+        a=4.05,
+        size=[4, 4, 4],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[5.73, 5.73],
+    )
 
 
 def get_mic_dists(atoms, cluster):
@@ -44,14 +46,16 @@ def test_trans_matrix(bc_settings):
 
 
 def test_supercell_consistency(db_name):
-    basis_elements = [['Li', 'X'], ['O', 'X']]
+    basis_elements = [["Li", "X"], ["O", "X"]]
     concentration = Concentration(basis_elements=basis_elements)
-    settings = CEBulk(crystalstructure='rocksalt',
-                      a=4.05,
-                      size=[1, 1, 1],
-                      concentration=concentration,
-                      db_name=db_name,
-                      max_cluster_dia=[7.0, 4.0])
+    settings = CEBulk(
+        crystalstructure="rocksalt",
+        a=4.05,
+        size=[1, 1, 1],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[7.0, 4.0],
+    )
     atoms = settings.atoms.copy()
     cf = CorrFunction(settings)
     cf_dict = cf.get_cf(atoms)
@@ -64,22 +68,24 @@ def test_supercell_consistency(db_name):
 
 
 def test_error_message_for_non_existent_cluster(db_name):
-    basis_elements = [['Li', 'X'], ['O', 'X']]
+    basis_elements = [["Li", "X"], ["O", "X"]]
     concentration = Concentration(basis_elements=basis_elements)
-    settings = CEBulk(crystalstructure='rocksalt',
-                      a=4.05,
-                      size=[1, 1, 1],
-                      concentration=concentration,
-                      db_name=db_name,
-                      max_cluster_dia=[7.0, 4.0])
+    settings = CEBulk(
+        crystalstructure="rocksalt",
+        a=4.05,
+        size=[1, 1, 1],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[7.0, 4.0],
+    )
     corr = CorrFunction(settings)
     atoms = settings.atoms
     # No error should occure
-    corr.get_cf_by_names(atoms, ['c3_d0000_0_000'])
+    corr.get_cf_by_names(atoms, ["c3_d0000_0_000"])
 
     # Try a quadruplet: Have to raise error
     with pytest.raises(ClusterNotTrackedError):
-        corr.get_cf_by_names(atoms, ['c4_d0001_0_0000'])
+        corr.get_cf_by_names(atoms, ["c4_d0001_0_0000"])
     os.remove(db_name)
 
 
@@ -89,7 +95,7 @@ def test_reconfigure(bc_settings):
     for i in range(10):
         atoms = bc_settings.atoms.copy()
         for a in atoms:
-            a.symbol = choice(['Al', 'Mg', 'Si'])
+            a.symbol = choice(["Al", "Mg", "Si"])
 
         final = atoms.copy()
         calc = SinglePointCalculator(final, energy=-0.2)
@@ -98,7 +104,7 @@ def test_reconfigure(bc_settings):
 
     # Collect final_struct_ids
     db = connect(db_name)
-    query = [('struct_type', '=', 'initial')]
+    query = [("struct_type", "=", "initial")]
     final_str_ids = [row.final_struct_id for row in db.select(query)]
 
     cf = CorrFunction(bc_settings)

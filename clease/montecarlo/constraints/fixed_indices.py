@@ -12,7 +12,8 @@ class FixedIndices(MCConstraint):
     fixed_indices: sequence of integers
         The indices of the atoms object which are to be fixed.
     """
-    name = 'FixedIndices'
+
+    name = "FixedIndices"
 
     def __init__(self, fixed_indices: Sequence[int]):
         super().__init__()

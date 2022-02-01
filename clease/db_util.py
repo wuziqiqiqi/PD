@@ -18,19 +18,23 @@ def toggle_require_compatible_table_version() -> None:
     """Toggle to disable/enable the "require_reconfigure_table" function."""
     global REQUIRE_COMPATIBLE_TABLE_VERISON  # pylint: disable=global-statement
     new = not REQUIRE_COMPATIBLE_TABLE_VERISON
-    logger.info('Toggling global "REQUIRE_COMPATIBLE_TABLE_VERISON" from %s to %s.',
-                REQUIRE_COMPATIBLE_TABLE_VERISON, new)
+    logger.info(
+        'Toggling global "REQUIRE_COMPATIBLE_TABLE_VERISON" from %s to %s.',
+        REQUIRE_COMPATIBLE_TABLE_VERISON,
+        new,
+    )
     REQUIRE_COMPATIBLE_TABLE_VERISON = new
 
 
 class MetaTableKeys:
     """Container for keys in the meta table"""
+
     # Key where we store what version a database has been configured on
-    CLEASE_CONFIGURE_VERSION = 'clease_config_version'
+    CLEASE_CONFIGURE_VERSION = "clease_config_version"
     # External table with clease table metadata
-    CLEASE_META_TABLE = 'clease_metadata'
-    TIME = 'time'
-    ENCODE_DELIMITER = '__'  # Delimiter splitting encoding a table-name/table-key pair
+    CLEASE_META_TABLE = "clease_metadata"
+    TIME = "time"
+    ENCODE_DELIMITER = "__"  # Delimiter splitting encoding a table-name/table-key pair
 
 
 class OutOfDateTable(Exception):
@@ -62,10 +66,10 @@ def get_metadata(ase_connection: _CONNECTION, *ids) -> _TABLE:
     table_name = MetaTableKeys.CLEASE_META_TABLE
     # pylint: disable=protected-access
     if not ase_connection._external_table_exists(table_name):
-        logger.debug('No metadata table was found')
+        logger.debug("No metadata table was found")
         return {}
     sql = f"SELECT key,value,id FROM {table_name}"
-    logger.info('Grabbing metadata with querry %s', sql)
+    logger.info("Grabbing metadata with querry %s", sql)
     with ase_connection.managed_connection() as con:
         cur = con.cursor()
         cur.execute(sql)
@@ -73,7 +77,7 @@ def get_metadata(ase_connection: _CONNECTION, *ids) -> _TABLE:
         for key, value, row_id in cur.fetchall():
             if row_id in ids:
                 metadata[row_id].update({key: value})
-    logger.debug('%s', metadata)
+    logger.debug("%s", metadata)
     return {k: decode_meta(v) for k, v in metadata.items()}
 
 
@@ -110,7 +114,7 @@ def require_reconfigure_table(ase_connection: _CONNECTION, table_name: str, *ids
             # or not a CLEASE database
             return True
         vers = parse(value)
-        if vers < Version('0.10.1'):
+        if vers < Version("0.10.1"):
             # 0.10.1 introduced a change, requiring a reconfigure
             return True
     return False  # We're up-to-date
@@ -121,13 +125,15 @@ def _make_meta_for_table(**kwargs) -> _TABLE:
     the table. If no table is given, a new one is created."""
 
     meta = {}
-    now = datetime.now().strftime('%H:%M:%S %d-%m-%Y')  # Store a timestamp of the config
+    now = datetime.now().strftime("%H:%M:%S %d-%m-%Y")  # Store a timestamp of the config
     version = str(__version__)
-    meta.update({
-        MetaTableKeys.TIME: now,
-        MetaTableKeys.CLEASE_CONFIGURE_VERSION: version,
-        **kwargs
-    })
+    meta.update(
+        {
+            MetaTableKeys.TIME: now,
+            MetaTableKeys.CLEASE_CONFIGURE_VERSION: version,
+            **kwargs,
+        }
+    )
     return meta
 
 
@@ -208,8 +214,13 @@ def make_meta_table(table_name: str, **kwargs) -> _TABLE:
     return {table_name: _make_meta_for_table(**kwargs)}
 
 
-def new_row_with_many_tables(ase_connection: _CONNECTION, atoms, table_names: Sequence[str],
-                             tables: Sequence[_TABLE], **kwargs) -> int:
+def new_row_with_many_tables(
+    ase_connection: _CONNECTION,
+    atoms,
+    table_names: Sequence[str],
+    tables: Sequence[_TABLE],
+    **kwargs,
+) -> int:
     """Write a new row to a database with multiple external tables. Adds metadata for each table.
 
     Returns the ID of the new row in the database.
@@ -223,8 +234,11 @@ def new_row_with_many_tables(ase_connection: _CONNECTION, atoms, table_names: Se
     """
     if not len(table_names) == len(tables):
         raise ValueError(
-            (f'Number of table names should match number of tables. Got {len(table_names)} '
-             f'table names, but {len(tables)} tables.'))
+            (
+                f"Number of table names should match number of tables. Got {len(table_names)} "
+                f"table names, but {len(tables)} tables."
+            )
+        )
 
     metatable = {}
     for table_name in table_names:
@@ -236,8 +250,13 @@ def new_row_with_many_tables(ase_connection: _CONNECTION, atoms, table_names: Se
     return uid
 
 
-def new_row_with_single_table(ase_connection: _CONNECTION, atoms: ase.Atoms, table_name: str,
-                              table: _TABLE, **kwargs) -> int:
+def new_row_with_single_table(
+    ase_connection: _CONNECTION,
+    atoms: ase.Atoms,
+    table_name: str,
+    table: _TABLE,
+    **kwargs,
+) -> int:
     """Write a new row to a database with a single external table. Adds metadata to the table.
 
     See :func:`new_row_with_many_tables` for more details.
@@ -253,8 +272,12 @@ def update_table(ase_connection: _CONNECTION, row_id: int, table_name: str, tabl
     metatable = make_meta_table(table_name)
     meta = {MetaTableKeys.CLEASE_META_TABLE: encode_meta(metatable)}
     tables = dict(**{table_name: table}, **meta)
-    logger.debug('Updating table "%s" for row id %d with keys: %s', table_name, row_id,
-                 tables.keys())
+    logger.debug(
+        'Updating table "%s" for row id %d with keys: %s',
+        table_name,
+        row_id,
+        tables.keys(),
+    )
     ase_connection.update(row_id, external_tables=tables)
 
 
@@ -312,5 +335,5 @@ def get_cf_tables(db_name: str) -> List[str]:
     """
     db = connect(db_name)
     ext_tab = db._get_external_table_names()  # pylint: disable=protected-access
-    cf_tables = [n for n in ext_tab if n.endswith('_cf')]
+    cf_tables = [n for n in ext_tab if n.endswith("_cf")]
     return cf_tables

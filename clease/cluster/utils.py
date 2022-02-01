@@ -1,6 +1,6 @@
 import numpy as np
 
-__all__ = ('name_clusters', 'get_first_match', 'diameter', 'size')
+__all__ = ("name_clusters", "get_first_match", "diameter", "size")
 
 
 def name_clusters(fingerprints):
@@ -20,7 +20,7 @@ def name_clusters(fingerprints):
         else:
             dia = diameter(fp)
             index = np.argmin(np.abs(distance_list - dia))
-            assert abs(dia - distance_list[index]) < 2E-6
+            assert abs(dia - distance_list[index]) < 2e-6
 
             if index < 10:
                 prefix = f"c{s}_d000{index}"
@@ -68,5 +68,5 @@ def size(fingerprint):
     """Get size of the cluster using its fingerprint."""
     num = np.sqrt(2 * len(fingerprint) + 0.25)
     s = num - 0.5
-    assert abs(int(s) - s) < 1E-9
+    assert abs(int(s) - s) < 1e-9
     return int(s)

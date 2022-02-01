@@ -1,7 +1,7 @@
 from typing import List, Sequence, Optional
 from ase import Atoms
 
-__all__ = ('AtomsManager',)
+__all__ = ("AtomsManager",)
 
 
 class AtomsManager:
@@ -23,11 +23,15 @@ class AtomsManager:
     @atoms.setter
     def atoms(self, other: Optional[Atoms]) -> None:
         if other is not None and not isinstance(other, Atoms):
-            raise TypeError(('Trying to set atoms with a non-atoms object. '
-                             f'Expected atoms, got {type(other)}'))
+            raise TypeError(
+                (
+                    "Trying to set atoms with a non-atoms object. "
+                    f"Expected atoms, got {type(other)}"
+                )
+            )
         self._atoms = other
 
-    def __eq__(self, other: 'AtomsManager') -> bool:
+    def __eq__(self, other: "AtomsManager") -> bool:
         if not isinstance(other, AtomsManager):
             return NotImplemented
 

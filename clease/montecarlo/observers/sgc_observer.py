@@ -27,7 +27,7 @@ class SGCObserver(MCObserver):
             "energy": Averager(ref_value=E),
             "energy_sq": Averager(ref_value=E**2),
             "singl_eng": np.zeros(n_singlets, dtype=np.float64),
-            "counter": 0
+            "counter": 0,
         }
 
     def reset(self):
@@ -51,7 +51,7 @@ class SGCObserver(MCObserver):
         self.quantities["counter"] += 1
         new_singlets = self.calc.get_singlets()
 
-        E = self.calc.results['energy']
+        E = self.calc.results["energy"]
 
         self.quantities["singlets"] += new_singlets
         self.quantities["singlets_sq"] += new_singlets**2

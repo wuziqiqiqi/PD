@@ -41,6 +41,6 @@ class EnergyEvolution(MCObserver):
 
         :param fname: File name of .csv file. Adds extension if none is given.
         """
-        full_fname = add_file_extension(fname, '.csv')
+        full_fname = add_file_extension(fname, ".csv")
         np.savetxt(full_fname, self.energies, delimiter=",")
         logger.info("Energy evolution data saved to %s.", full_fname)

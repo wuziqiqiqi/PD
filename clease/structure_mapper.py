@@ -5,7 +5,7 @@ from scipy.optimize import linear_sum_assignment
 from ase.atoms import Atoms, Cell
 from ase.geometry import find_mic
 
-__all__ = ('TransformInfo', 'StructureMapper')
+__all__ = ("TransformInfo", "StructureMapper")
 
 
 class TransformInfo:
@@ -19,7 +19,7 @@ class TransformInfo:
         self.strain = []
 
     def todict(self) -> dict:
-        return {'displacements': list(self.displacements), 'strain': list(self.strain)}
+        return {"displacements": list(self.displacements), "strain": list(self.strain)}
 
 
 class StructureMapper:
@@ -47,9 +47,11 @@ class StructureMapper:
         scaled_pos = atoms.get_scaled_positions()
         numbers = np.array(atoms.numbers)
 
-        result = spglib.refine_cell((cell, scaled_pos, numbers),
-                                    symprec=self.symprec,
-                                    angle_tolerance=self.angle_tol)
+        result = spglib.refine_cell(
+            (cell, scaled_pos, numbers),
+            symprec=self.symprec,
+            angle_tolerance=self.angle_tol,
+        )
 
         if result is None:
             raise RuntimeError("Could not refine cell")
@@ -108,7 +110,11 @@ class StructureMapper:
         transform_info = TransformInfo()
         transform_info.displacements = displacements
         transform_info.strain = strain
-        transform_info.dispVec = np.array([
-            distVec[i * len(template) + j] for i in range(len(atoms)) for j in range(len(template))
-        ])
+        transform_info.dispVec = np.array(
+            [
+                distVec[i * len(template) + j]
+                for i in range(len(atoms))
+                for j in range(len(template))
+            ]
+        )
         return template, transform_info

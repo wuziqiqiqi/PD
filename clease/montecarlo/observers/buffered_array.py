@@ -2,7 +2,7 @@ from typing import Union
 from pathlib import Path
 import numpy as np
 
-__all__ = ('BufferedArray',)
+__all__ = ("BufferedArray",)
 
 
 class BufferedArray:
@@ -22,7 +22,7 @@ class BufferedArray:
 
     def flush(self):
         if self.fname is not None:
-            with open(self.fname, 'a') as f:
+            with open(self.fname, "a") as f:
                 np.savetxt(f, self._buffer)
         self._next = 0
         self._buffer[:] = 0

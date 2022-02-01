@@ -23,8 +23,9 @@ class Sparsifier:
         self._aicc = []
         self._num_features = []
 
-    def sparsify(self, fitter: LinearRegression, X: np.ndarray,
-                 y: np.ndarray) -> Tuple[List[int], np.ndarray]:
+    def sparsify(
+        self, fitter: LinearRegression, X: np.ndarray, y: np.ndarray
+    ) -> Tuple[List[int], np.ndarray]:
         """
         Remove the feature corresponding to the smallest coefficient
         iteratively. On each step, modified Afaike information

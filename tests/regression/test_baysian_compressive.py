@@ -58,7 +58,7 @@ def test_fit(bayes):
     expected_eci = np.zeros(X.shape[1])
     expected_eci[20] = 60.0
     expected_eci[2] = -80.0
-    assert np.allclose(eci, expected_eci, rtol=1E-4)
+    assert np.allclose(eci, expected_eci, rtol=1e-4)
 
 
 def test_fit_more_coeff(make_bayes):
@@ -75,13 +75,24 @@ def test_fit_more_coeff(make_bayes):
         y += X[:, i] * c
         expected_eci[i] = c
     eci = bayes.fit(X, y)
-    assert np.allclose(eci, expected_eci, atol=1E-2)
+    assert np.allclose(eci, expected_eci, atol=1e-2)
 
 
 def test_to_dict(bayes, bayes_initialized):
     # Variables we expect to find in the dictionaries
-    vars_to_save = ("inv_variance", 'gammas', 'shape_var', 'rate_var', 'shape_lamb', 'lamb',
-                    'maxiter', 'output_rate_sec', 'select_strategy', 'noise', 'lamb_opt_start')
+    vars_to_save = (
+        "inv_variance",
+        "gammas",
+        "shape_var",
+        "rate_var",
+        "shape_lamb",
+        "lamb",
+        "maxiter",
+        "output_rate_sec",
+        "select_strategy",
+        "noise",
+        "lamb_opt_start",
+    )
 
     dct1 = bayes.todict()
     dct2 = bayes_initialized.todict()
@@ -91,7 +102,6 @@ def test_to_dict(bayes, bayes_initialized):
 
 
 def test_save_load(bayes, bayes_initialized):
-
     def save_load(bayes1):
         fname = bayes1.fname
         bayes1.save()
@@ -106,7 +116,7 @@ def test_save_load(bayes, bayes_initialized):
 
 
 def test_fit_linear_dep_col(make_bayes):
-    bayes = make_bayes(noise=0.2, penalty=1E-2, maxiter=1000)
+    bayes = make_bayes(noise=0.2, penalty=1e-2, maxiter=1000)
     X = np.random.rand(30, 400)
     X[:, 2] = X[:, 0]
     X[:, 8] = X[:, 20]

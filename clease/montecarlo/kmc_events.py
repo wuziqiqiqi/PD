@@ -3,11 +3,10 @@ from abc import ABCMeta
 from ase import Atoms
 from ase.neighborlist import neighbor_list
 
-__all__ = ('KMCEventType', 'NeighbourSwap')
+__all__ = ("KMCEventType", "NeighbourSwap")
 
 
 class KMCEventType(metaclass=ABCMeta):
-
     @property
     def name(self):
         return type(self).__name__
@@ -26,7 +25,7 @@ class NeighbourSwap(KMCEventType):
 
     def __init__(self, atoms: Atoms, cutoff: float):
         super().__init__()
-        first, second = neighbor_list('ij', atoms, cutoff)
+        first, second = neighbor_list("ij", atoms, cutoff)
         self.nl = [[] for _ in range(len(atoms))]
         for f, s in zip(first, second):
             self.nl[f].append(s)

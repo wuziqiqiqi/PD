@@ -26,8 +26,8 @@ class BiasPotential:
 
     def initialize(self):
         """Initialize the bias potential (if applicable).
-           This functions is called right before MC sampling
-           starts.
+        This functions is called right before MC sampling
+        starts.
         """
 
     # pylint: disable=no-self-use,unused-argument
@@ -52,7 +52,8 @@ class BiasPotential:
             will be stored.
         """
         import dill
-        with open(fname, 'wb') as outfile:
+
+        with open(fname, "wb") as outfile:
             dill.dump(self, outfile)
         print(f"Pseudo binary free energy bias potential written to " f"{fname}")
 
@@ -69,7 +70,8 @@ class BiasPotential:
             Filename of a serialized version of this object
         """
         import dill
-        with open(fname, 'rb') as infile:
+
+        with open(fname, "rb") as infile:
             obj = dill.load(infile)
         return obj
 
@@ -106,10 +108,12 @@ class SampledBiasPotential(BiasPotential):
         if smooth_length % 2 == 0:
             raise ValueError("smooth_length has to be an odd number!")
         from scipy.signal import savgol_filter
+
         smoothed = savgol_filter(self.free_eng, smooth_length, 3)
 
         # Update the interpolator
         from scipy.interpolate import interp1d
+
         self.bias_interp = interp1d(self.reac_crd, smoothed, fill_value="extrapolate")
 
         if show:
@@ -118,9 +122,10 @@ class SampledBiasPotential(BiasPotential):
     def show(self):
         """Create a plot of the bias potential."""
         from matplotlib import pyplot as plt
+
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
-        ax.plot(self.reac_crd, self.free_eng, 'o', mfc="none")
+        ax.plot(self.reac_crd, self.free_eng, "o", mfc="none")
         ax.plot(self.reac_crd, self.bias_interp(self.reac_crd))
         ax.set_xlabel("Reaction coordinate")
         ax.set_ylabel("Bias potential")
@@ -140,6 +145,7 @@ class SampledBiasPotential(BiasPotential):
 
     def __add__(self, other):
         from copy import deepcopy
+
         new_obj = deepcopy(self)
         new_obj += other
         return new_obj
@@ -174,17 +180,21 @@ class PseudoBinaryFreeEnergyBias(SampledBiasPotential):
     @property
     def conc_init(self):
         from cemc.mcmc import PseudoBinaryConcInitializer
+
         if not isinstance(self._conc_init, PseudoBinaryConcInitializer):
-            raise TypeError("pseudo_bin_conc_init has to be of type "
-                            "PseudoBinaryConcInitializer!")
+            raise TypeError(
+                "pseudo_bin_conc_init has to be of type " "PseudoBinaryConcInitializer!"
+            )
         return self._conc_init
 
     @conc_init.setter
     def conc_init(self, init):
         from cemc.mcmc import PseudoBinaryConcInitializer
+
         if not isinstance(init, PseudoBinaryConcInitializer):
-            raise TypeError("pseudo_bin_conc_init has to be of type "
-                            "PseudoBinaryConcInitializer!")
+            raise TypeError(
+                "pseudo_bin_conc_init has to be of type " "PseudoBinaryConcInitializer!"
+            )
         self._conc_init = init
 
     def __call__(self, system_changes: Sequence[SystemChange]):
@@ -244,6 +254,7 @@ class CovarianceBiasPotential(SampledBiasPotential):
     @property
     def cov_range(self):
         from cemc.mcmc import CovarianceRangeConstraint
+
         if not isinstance(self._cov_range, CovarianceRangeConstraint):
             raise TypeError("cov_range has to be of type CovarianceRangeConstraint")
         return self._cov_range

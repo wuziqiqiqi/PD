@@ -18,9 +18,9 @@ def calc():
 
 @pytest.fixture
 def atoms(calc) -> Atoms:
-    ats = bulk('Cu') * (4, 4, 4)
+    ats = bulk("Cu") * (4, 4, 4)
     assert len(ats) == 64
-    ats.symbols[:30] = 'Au'
+    ats.symbols[:30] = "Au"
 
     # Randomize the symbols
     syms = list(ats.symbols)
@@ -79,10 +79,10 @@ def test_evaluator(evaluator):
     # Change the first symbol to something not already in the list of symbols
     idx = 0
     old_symb = original_symbols[idx]
-    new_symb = 'Ni'
+    new_symb = "Ni"
     assert old_symb != new_symb
     assert new_symb not in set(original_symbols)
-    changes = [SystemChange(idx, old_symb, new_symb, 'test')]
+    changes = [SystemChange(idx, old_symb, new_symb, "test")]
 
     evaluator.apply_system_changes(changes)
     assert atoms.symbols[0] == new_symb

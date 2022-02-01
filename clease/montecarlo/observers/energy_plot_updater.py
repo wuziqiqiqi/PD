@@ -19,7 +19,7 @@ class EnergyPlotUpdater(MCObserver):
         ymin = np.min(e) - e[0]
         ymax = np.max(e) - e[0]
 
-        if abs(ymax - ymin) < 1E-6:
+        if abs(ymax - ymin) < 1e-6:
             return
 
         self.mean_plot.points = [(i, x - e[0]) for i, x in enumerate(e)]

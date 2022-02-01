@@ -2,12 +2,22 @@ from abc import ABC, abstractmethod
 from itertools import product, permutations, combinations
 import numpy as np
 from ase import Atoms
-from .concentration import (Concentration, IntConversionNotConsistentError,
-                            InvalidConcentrationError, InvalidConstraintError)
+from .concentration import (
+    Concentration,
+    IntConversionNotConsistentError,
+    InvalidConcentrationError,
+    InvalidConstraintError,
+)
 
-__all__ = ('SkewnessFilter', 'EquivalentCellsFilter', 'ValidConcentrationFilter',
-           'DistanceBetweenFacetsFilter', 'VolumeToSurfaceRatioFilter', 'CellVectorDirectionFilter',
-           'AngleFilter')
+__all__ = (
+    "SkewnessFilter",
+    "EquivalentCellsFilter",
+    "ValidConcentrationFilter",
+    "DistanceBetweenFacetsFilter",
+    "VolumeToSurfaceRatioFilter",
+    "CellVectorDirectionFilter",
+    "AngleFilter",
+)
 
 
 class AtomsFilter(ABC):
@@ -131,13 +141,16 @@ class ValidConcentrationFilter(AtomsFilter):
             x_from_int = conc.to_float_conc(nib, x_int)
             if not conc.is_valid_conc(x_from_int):
                 return False
-        except (InvalidConcentrationError, InvalidConstraintError, IntConversionNotConsistentError):
+        except (
+            InvalidConcentrationError,
+            InvalidConstraintError,
+            IntConversionNotConsistentError,
+        ):
             valid = False
         return valid
 
 
 class DistanceBetweenFacetsFilter(CellFilter):
-
     def __init__(self, ratio):
         self.ratio = ratio
 
@@ -164,7 +177,6 @@ class DistanceBetweenFacetsFilter(CellFilter):
 
 
 class VolumeToSurfaceRatioFilter(CellFilter):
-
     def __init__(self, ratio):
         self.ratio = ratio
 
@@ -178,12 +190,11 @@ class VolumeToSurfaceRatioFilter(CellFilter):
             area = np.abs(normal.dot(normal))
             surf += 2 * area
 
-        factor = area / (6.0 * vol**(2.0 / 3.0))
+        factor = area / (6.0 * vol ** (2.0 / 3.0))
         return factor < self.ratio
 
 
 class AngleFilter(CellFilter):
-
     def __init__(self, min_angle, max_angle):
         self.min_angle = min_angle
         self.max_angle = max_angle

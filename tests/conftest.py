@@ -53,19 +53,19 @@ def remove_file(name):
         os.remove(name)
     except FileNotFoundError:
         pass
-    assert not name.exists(), f'File {name} still exists after teardown.'
+    assert not name.exists(), f"File {name} still exists after teardown."
 
 
 @pytest.fixture
 def make_tempfile(tmpdir):
     """Factory function for creating temporary files.
-    The file will be removed at teardown of the fixture. """
+    The file will be removed at teardown of the fixture."""
 
     created_files = []  # Keep track of files which are created
 
     def _make_tempfile(filename):
         name = tmpdir / filename
-        assert not name.exists(), f'File {name} already exists.'
+        assert not name.exists(), f"File {name} already exists."
         created_files.append(name)
         return str(name)
 
@@ -79,35 +79,34 @@ def make_tempfile(tmpdir):
 @pytest.fixture
 def db_name(make_tempfile):
     """Create a temporary database file"""
-    yield make_tempfile('temp_db.db')
+    yield make_tempfile("temp_db.db")
 
 
 @pytest.fixture
 def traj_file(make_tempfile):
     """Create a temporary trajectory file"""
-    yield make_tempfile('temp_trajectory.traj')
+    yield make_tempfile("temp_trajectory.traj")
 
 
 @pytest.fixture
 def buffer_file(make_tempfile):
-    yield make_tempfile('temp_buffer.txt')
+    yield make_tempfile("temp_buffer.txt")
 
 
 @pytest.fixture
 def make_conc():
-
     def _make_conc(basis_elements, **kwargs):
         return Concentration(basis_elements=basis_elements, **kwargs)
 
     return _make_conc
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def make_module_tempfile(tmpdir_factory):
     """Same fixture as make_tempfile, but scoped to the module level"""
     created_files = []  # Keep track of files which are created
 
-    def _make_module_tempfile(filename, folder='evaluate'):
+    def _make_module_tempfile(filename, folder="evaluate"):
         name = tmpdir_factory.mktemp(folder).join(filename)
         assert not name.exists()
         created_files.append(name)
@@ -123,17 +122,19 @@ def make_module_tempfile(tmpdir_factory):
 # No modifications should be made to this DB though, as changes will propagate throughout the test
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def module_bc_setting(make_module_tempfile):
-    db_name = make_module_tempfile('module_temp_db.db')
-    basis_elements = [['Au', 'Cu']]
+    db_name = make_module_tempfile("module_temp_db.db")
+    basis_elements = [["Au", "Cu"]]
     conc = Concentration(basis_elements=basis_elements)
-    settings = CEBulk(concentration=conc,
-                      crystalstructure='fcc',
-                      a=4.05,
-                      max_cluster_dia=[5, 5, 5],
-                      size=[3, 3, 3],
-                      db_name=db_name)
+    settings = CEBulk(
+        concentration=conc,
+        crystalstructure="fcc",
+        a=4.05,
+        max_cluster_dia=[5, 5, 5],
+        size=[3, 3, 3],
+        db_name=db_name,
+    )
     newstruct = NewStructures(settings, struct_per_gen=3)
     newstruct.generate_initial_pool()
     calc = EMT()

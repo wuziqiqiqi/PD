@@ -3,17 +3,17 @@ from typing import Any
 from ase.io import jsonio as aseio
 from ase.utils import reader, writer
 
-__all__ = ('encode', 'decode', 'read_json', 'write_json', 'jsonable')
+__all__ = ("encode", "decode", "read_json", "write_json", "jsonable")
 
 
 def clease_default(obj: Any) -> Any:
     """Function for identifying CLEASE object types
     in the Encoder"""
-    if hasattr(obj, 'clease_objtype'):
+    if hasattr(obj, "clease_objtype"):
         d = obj.todict()
-        d['__clease_objtype__'] = obj.clease_objtype
+        d["__clease_objtype__"] = obj.clease_objtype
         return d
-    raise TypeError('Not a CLEASE object')
+    raise TypeError("Not a CLEASE object")
 
 
 class CleaseEncoder(json.JSONEncoder):
@@ -47,8 +47,8 @@ encode = CleaseEncoder().encode
 
 def object_hook(dct):
     """Wrapper around ASE jsonio object hook"""
-    if '__clease_objtype__' in dct:
-        objtype = dct.pop('__clease_objtype__')
+    if "__clease_objtype__" in dct:
+        objtype = dct.pop("__clease_objtype__")
         return create_clease_object(objtype, dct)
     return aseio.object_hook(dct)
 
@@ -57,18 +57,21 @@ def object_hook(dct):
 # so it's not actually an issue.
 # pylint: disable=import-outside-toplevel,cyclic-import
 def create_clease_object(objtype, dct):
-    if objtype == 'concentration':
+    if objtype == "concentration":
         from .settings import Concentration
+
         obj = Concentration.from_dict(dct)
-    elif objtype == 'basisfunction':
+    elif objtype == "basisfunction":
         # It could be multiple types of basis functions
         from .basis_function import basis_function_from_dict
+
         obj = basis_function_from_dict(dct)
-    elif objtype == 'ce_settings':
+    elif objtype == "ce_settings":
         from .settings import ClusterExpansionSettings
+
         obj = ClusterExpansionSettings.from_dict(dct)
     else:
-        raise ValueError(f'Do now know how to load object type: {objtype}')
+        raise ValueError(f"Do now know how to load object type: {objtype}")
     assert obj.clease_objtype == objtype
     return obj
 
@@ -118,7 +121,7 @@ def jsonable(name):
 
     def jsonableclass(cls):
         """Wrapper function which adds the save/load methods to the class"""
-        assert hasattr(cls, 'todict')
+        assert hasattr(cls, "todict")
 
         # Define the class attributes
         cls.clease_objtype = name

@@ -14,8 +14,21 @@ from .binned_bias_potential import BinnedBiasPotential
 from .random_bias_with_memory import RandomBiasWithMemory
 from .metadynamics_sampler import MetaDynamicsSampler
 
-ADDITIONAL = ('Montecarlo', 'SGCMonteCarlo', 'MetaDynamicsSampler', 'BinnedBiasPotential',
-              'BiasPotential', 'GaussianKernelBiasPotential', 'RandomBiasWithMemory', 'base',
-              'swap_move_index_tracker')
-__all__ = ADDITIONAL + (barrier_models.__all__ + kinetic_monte_carlo.__all__ + kmc_events.__all__ +
-                        trial_move_generator.__all__ + mc_evaluator.__all__)
+ADDITIONAL = (
+    "Montecarlo",
+    "SGCMonteCarlo",
+    "MetaDynamicsSampler",
+    "BinnedBiasPotential",
+    "BiasPotential",
+    "GaussianKernelBiasPotential",
+    "RandomBiasWithMemory",
+    "base",
+    "swap_move_index_tracker",
+)
+__all__ = ADDITIONAL + (
+    barrier_models.__all__
+    + kinetic_monte_carlo.__all__
+    + kmc_events.__all__
+    + trial_move_generator.__all__
+    + mc_evaluator.__all__
+)

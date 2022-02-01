@@ -7,14 +7,16 @@ from ase.geometry import get_layers
 from .concentration import Concentration
 from .settings import ClusterExpansionSettings
 
-__all__ = ('CESlab',)
+__all__ = ("CESlab",)
 
 
-def CESlab(conventional_cell: Union[Atoms, str],
-           miller: Tuple[int],
-           concentration: Concentration,
-           size: Optional[Sequence[int]] = (1, 1, 1),
-           **kwargs) -> ClusterExpansionSettings:
+def CESlab(
+    conventional_cell: Union[Atoms, str],
+    miller: Tuple[int],
+    concentration: Concentration,
+    size: Optional[Sequence[int]] = (1, 1, 1),
+    **kwargs,
+) -> ClusterExpansionSettings:
     """
 
     :param conventional_cell:
@@ -37,7 +39,7 @@ def CESlab(conventional_cell: Union[Atoms, str],
     """
 
     for b in concentration.basis_elements:
-        if 'X' not in b:
+        if "X" not in b:
             raise ValueError("Slab calculation requires that X is present in all basis")
 
     prim = get_prim_slab_cell(conventional_cell, miller)
@@ -50,12 +52,14 @@ def CESlab(conventional_cell: Union[Atoms, str],
         if isinstance(v, np.ndarray):
             dict_rep[k] = v.tolist()
 
-    settings.kwargs.update({
-        'factory': 'CESlab',
-        'miller': miller,
-        'conventional_cell': dict_rep,
-        'size': size
-    })
+    settings.kwargs.update(
+        {
+            "factory": "CESlab",
+            "miller": miller,
+            "conventional_cell": dict_rep,
+            "size": size,
+        }
+    )
     return settings
 
 
@@ -93,7 +97,7 @@ def add_vacuum_layers(atoms: Atoms, prim: Atoms, thickness: float) -> Atoms:
     P = np.vstack((P, [0, 0, 1]))
     vacuum = make_supercell(prim, P)
     for atom in vacuum:
-        atom.symbol = 'X'
+        atom.symbol = "X"
 
     dz = atoms.get_cell()[2, 2]
     vacuum.translate([0, 0, dz])
@@ -122,7 +126,7 @@ def remove_vacuum_layers(atoms: Atoms) -> Atoms:
 
     for layer in range(num_total_layers):
         symbols = [atoms[i].symbol for i, tag in enumerate(tags) if tag == layer]
-        if set(symbols) == {'X'}:
+        if set(symbols) == {"X"}:
             vac_layers.append(layer)
 
     del atoms[[atoms[i].index for i, tag in enumerate(tags) if tag in vac_layers]]

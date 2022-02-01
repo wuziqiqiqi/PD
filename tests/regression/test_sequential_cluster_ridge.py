@@ -18,4 +18,4 @@ def test_support_expanding():
     expected[2] = 5.0
     expected[6] = -2.0
     assert len(coeff) > 6
-    assert np.allclose(expected[:len(coeff)], coeff, atol=1e-6)
+    assert np.allclose(expected[: len(coeff)], coeff, atol=1e-6)

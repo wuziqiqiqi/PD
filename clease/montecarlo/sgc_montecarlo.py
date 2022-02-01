@@ -25,11 +25,13 @@ class SGCMonteCarlo(Montecarlo):
     :param generator: Generator that produces trial moves
     """
 
-    def __init__(self,
-                 atoms: Atoms,
-                 temp: float,
-                 symbols: Sequence[str] = (),
-                 generator: TrialMoveGenerator = None):
+    def __init__(
+        self,
+        atoms: Atoms,
+        temp: float,
+        symbols: Sequence[str] = (),
+        generator: TrialMoveGenerator = None,
+    ):
         if generator is None:
             if len(symbols) <= 1:
                 raise ValueError("At least 2 symbols have to be specified")
@@ -150,8 +152,9 @@ class SGCMonteCarlo(Montecarlo):
 
         if chem_pot is None and self.chemical_potential is None:
             ex_chem_pot = {"c1_1": -0.1, "c1_2": 0.05}
-            raise ValueError(f"No chemicalpotentials given. Has to be "
-                             f"dictionary of the form {ex_chem_pot}")
+            raise ValueError(
+                f"No chemicalpotentials given. Has to be " f"dictionary of the form {ex_chem_pot}"
+            )
 
         if chem_pot is not None:
             self.chemical_potential = chem_pot
@@ -196,10 +199,11 @@ class SGCMonteCarlo(Montecarlo):
         singlets_sq = self.averager.quantities["singlets_sq"] / N
 
         quantities["sgc_energy"] = self.averager.energy.mean
-        quantities["sgc_heat_capacity"] = self.averager.energy_sq.mean - \
-            self.averager.energy.mean**2
+        quantities["sgc_heat_capacity"] = (
+            self.averager.energy_sq.mean - self.averager.energy.mean**2
+        )
 
-        quantities["sgc_heat_capacity"] /= (kB * self.T**2)
+        quantities["sgc_heat_capacity"] /= kB * self.T**2
 
         quantities["energy"] = self.averager.energy.mean
         natoms = len(self.atoms)
@@ -216,7 +220,7 @@ class SGCMonteCarlo(Montecarlo):
             quantities[name] = singlets[i]
 
             name = f"var_singlet_{self.chem_pot_names[i]}"
-            quantities[name] = singlets_sq[i] - singlets[i]**2
+            quantities[name] = singlets_sq[i] - singlets[i] ** 2
 
             name = f"mu_{self.chem_pot_names[i]}"
             quantities[name] = self.chem_pots[i]

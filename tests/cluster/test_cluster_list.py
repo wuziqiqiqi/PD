@@ -6,18 +6,19 @@ import numpy as np
 
 @pytest.fixture
 def make_cluster():
-
     def _make_cluster(**kwargs):
         fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
-        inputs = dict(name='c3_d0001_0',
-                      size=3,
-                      diameter=5.4,
-                      fingerprint=fp,
-                      ref_indx=0,
-                      figures=(),
-                      indices=[[1, 0], [3, 4]],
-                      equiv_sites=(),
-                      group=0)
+        inputs = dict(
+            name="c3_d0001_0",
+            size=3,
+            diameter=5.4,
+            fingerprint=fp,
+            ref_indx=0,
+            figures=(),
+            indices=[[1, 0], [3, 4]],
+            equiv_sites=(),
+            group=0,
+        )
         inputs.update(kwargs)
         return Cluster(**inputs)
 
@@ -36,7 +37,7 @@ def test_get_occurence_counts(make_cluster):
 
 
 def test_parent_tracker(make_cluster):
-    atoms = bulk("NaCl", crystalstructure='rocksalt', a=4.0)
+    atoms = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
     atoms.wrap()
     for atom in atoms:
         atom.tag = atom.index
@@ -75,21 +76,21 @@ def test_parent_tracker(make_cluster):
 
 def test_cf_names_no_equiv_sites(make_cluster):
 
-    prefix = 'c3_d0001_0'
+    prefix = "c3_d0001_0"
     cluster = make_cluster(name=prefix)
     cf_names = ClusterList.get_cf_names(cluster, 2)
-    expected_suffix = ['_000', '_001', '_010', '_011', '_100', '_101', '_110', '_111']
+    expected_suffix = ["_000", "_001", "_010", "_011", "_100", "_101", "_110", "_111"]
     expected_cf_names = [prefix + s for s in expected_suffix]
     assert cf_names == expected_cf_names
 
 
 def test_cf_names_with_equiv_sites(make_cluster):
-    prefix = 'c3_d0001_0'
+    prefix = "c3_d0001_0"
 
     cluster = make_cluster(name=prefix, equiv_sites=[[0, 1]])
 
     cf_names = ClusterList.get_cf_names(cluster, 2)
-    expected_suffix = ['_000', '_001', '_010', '_011', '_110', '_111']
+    expected_suffix = ["_000", "_001", "_010", "_011", "_110", "_111"]
     expected_cf_names = [prefix + s for s in expected_suffix]
     assert cf_names == expected_cf_names
 
@@ -97,18 +98,18 @@ def test_cf_names_with_equiv_sites(make_cluster):
 def test_get_all_cf_names(make_cluster):
     cluster_list = ClusterList()
     fp = ClusterFingerprint([3.4, 4.3, 1.2, -1.0, 2.0, 3.0])
-    prefix1 = 'c3_d0001_0'
+    prefix1 = "c3_d0001_0"
     cluster1 = make_cluster(name=prefix1, equiv_sites=[[0, 1]])
-    prefix2 = 'c3_d0002_0'
+    prefix2 = "c3_d0002_0"
     cluster2 = make_cluster(name=prefix2, equiv_sites=[])
 
     cluster_list.append(cluster1)
     cluster_list.append(cluster2)
     all_cf_names = cluster_list.get_all_cf_names(2)
 
-    expected_suffix1 = ['_000', '_001', '_010', '_011', '_110', '_111']
+    expected_suffix1 = ["_000", "_001", "_010", "_011", "_110", "_111"]
     expected_cf_names1 = [prefix1 + s for s in expected_suffix1]
-    expected_suffix2 = ['_000', '_001', '_010', '_011', '_100', '_101', '_110', '_111']
+    expected_suffix2 = ["_000", "_001", "_010", "_011", "_100", "_101", "_110", "_111"]
     expected_cf_names2 = [prefix2 + s for s in expected_suffix2]
 
     expected_cf_names = expected_cf_names1 + expected_cf_names2
@@ -174,21 +175,21 @@ def test_get_subclusters(make_cluster):
 def test_get_key(make_cluster):
     cluster = make_cluster(size=3, indices=[[3, 0, 5], [1, 4, 6]], equiv_sites=[])
     key = cluster.get_figure_key([3, 0, 5])
-    assert key == '3-0-5'
+    assert key == "3-0-5"
 
     cluster.equiv_sites = [[0, 1]]
     key = cluster.get_figure_key([3, 0, 5])
-    assert key == '0-3-5'
+    assert key == "0-3-5"
 
     # Try to pass a figure that mimics translated indices
     key = cluster.get_figure_key([6, 4, 0])
-    assert key == '4-6-0'
+    assert key == "4-6-0"
 
 
 def test_num_occurences(make_cluster):
     c1 = make_cluster(size=3, indices=[[3, 0, 0], [0, 3, 0], [0, 4, 5]], equiv_sites=[])
     occ_count = c1.num_fig_occurences
-    expected = {'3-0-0': 1, '0-3-0': 1, '0-4-5': 1}
+    expected = {"3-0-0": 1, "0-3-0": 1, "0-4-5": 1}
     for k in expected.keys():
         assert occ_count[k] == expected[k]
 
@@ -196,38 +197,18 @@ def test_num_occurences(make_cluster):
 def test_num_occurences_equiv_sites(make_cluster):
     c1 = make_cluster(size=3, indices=[[3, 0, 0], [0, 3, 0], [0, 4, 5]], equiv_sites=[[0, 1]])
     occ_count = c1.num_fig_occurences
-    expected = {'0-3-0': 2, '0-4-5': 1}
+    expected = {"0-3-0": 2, "0-4-5": 1}
     for k in expected.keys():
         assert occ_count[k] == expected[k]
 
 
 def test_corresponding_figure(make_cluster):
     c1 = make_cluster(size=4, ref_indx=0, indices=[[0, 2, 5, 1], [0, 4, 6, 7]])
-    trans_matrix = [{
-        0: 0,
-        1: 1,
-        2: 2,
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7
-    }, {
-        0: 0,
-        1: 7,
-        2: 4,
-        4: 2,
-        5: 6,
-        6: 5,
-        7: 1
-    }, {
-        0: 0,
-        1: 6,
-        2: 4,
-        4: 2,
-        5: 3,
-        6: 5,
-        7: 1
-    }]
+    trans_matrix = [
+        {0: 0, 1: 1, 2: 2, 4: 4, 5: 5, 6: 6, 7: 7},
+        {0: 0, 1: 7, 2: 4, 4: 2, 5: 6, 6: 5, 7: 1},
+        {0: 0, 1: 6, 2: 4, 4: 2, 5: 3, 6: 5, 7: 1},
+    ]
     corresponding = c1.corresponding_figure(1, [0, 4, 6, 7], trans_matrix)
     assert corresponding == [0, 2, 5, 1]
 
@@ -236,21 +217,23 @@ def test_corresponding_figure(make_cluster):
 
 
 def test_num_occ_figure(make_cluster):
-    c1 = make_cluster(size=4,
-                      ref_indx=0,
-                      name='c4_d0000_0',
-                      indices=[[0, 2, 5, 1], [0, 4, 6, 7]],
-                      group=0)
-    c2 = make_cluster(size=4,
-                      ref_indx=1,
-                      name='c4_d0000_0',
-                      indices=[[1, 3, 6, 2], [0, 2, 5, 1]],
-                      group=1)
-    c3 = make_cluster(size=3,
-                      ref_indx=1,
-                      name='c3_d0000_0',
-                      indices=[[1, 3, 6], [1, 5, 7]],
-                      group=1)
+    c1 = make_cluster(
+        size=4,
+        ref_indx=0,
+        name="c4_d0000_0",
+        indices=[[0, 2, 5, 1], [0, 4, 6, 7]],
+        group=0,
+    )
+    c2 = make_cluster(
+        size=4,
+        ref_indx=1,
+        name="c4_d0000_0",
+        indices=[[1, 3, 6, 2], [0, 2, 5, 1]],
+        group=1,
+    )
+    c3 = make_cluster(
+        size=3, ref_indx=1, name="c3_d0000_0", indices=[[1, 3, 6], [1, 5, 7]], group=1
+    )
 
     cluster_list = ClusterList()
     cluster_list.append(c1)
@@ -262,16 +245,22 @@ def test_num_occ_figure(make_cluster):
     di = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
     tm = [di, di, di, di, di, di, di, di]
 
-    fig_key = '0-2-5-1'
+    fig_key = "0-2-5-1"
     symm_groups = [0, 1, 0, 0, 1, 0, 1, 0, 1]
-    num_fig_occ = cluster_list.num_occ_figure(fig_key, 'c4_d0000_0', symm_groups, tm)
+    num_fig_occ = cluster_list.num_occ_figure(fig_key, "c4_d0000_0", symm_groups, tm)
     assert num_fig_occ == 4
 
 
 def test_make_names_sequential(make_cluster):
     names = [
-        'c2_d0001_0', 'c2_d0005_1', 'c2_d0011_0', 'c2_d0111_0', 'c2_d1111_2', 'c3_d0000_0',
-        'c3_d0001_0', 'c3_d0010_0'
+        "c2_d0001_0",
+        "c2_d0005_1",
+        "c2_d0011_0",
+        "c2_d0111_0",
+        "c2_d1111_2",
+        "c3_d0000_0",
+        "c3_d0001_0",
+        "c3_d0010_0",
     ]
     cluster_list = ClusterList()
     for n in names:
@@ -280,11 +269,17 @@ def test_make_names_sequential(make_cluster):
 
     cluster_list.make_names_sequential()
 
-    expect_names2 = ['c2_d0000_0', 'c2_d0001_0', 'c2_d0002_0', 'c2_d0003_0', 'c2_d0004_0']
+    expect_names2 = [
+        "c2_d0000_0",
+        "c2_d0001_0",
+        "c2_d0002_0",
+        "c2_d0003_0",
+        "c2_d0004_0",
+    ]
     n = sorted(set(c.name for c in cluster_list.get_by_size(2)))
     assert expect_names2 == n
 
-    expect_names3 = ['c3_d0000_0', 'c3_d0001_0', 'c3_d0002_0']
+    expect_names3 = ["c3_d0000_0", "c3_d0001_0", "c3_d0002_0"]
     n = sorted(set(c.name for c in cluster_list.get_by_size(3)))
     assert expect_names3 == n
 
@@ -292,20 +287,26 @@ def test_make_names_sequential(make_cluster):
 def test_names(make_cluster):
     cluster_list = ClusterList()
 
-    c1 = make_cluster(name='c3_d0010_0')
+    c1 = make_cluster(name="c3_d0010_0")
     cluster_list.append(c1)
 
-    assert cluster_list.names == ['c3_d0010_0']
-    c2 = make_cluster(name='c2_d0005_1')
+    assert cluster_list.names == ["c3_d0010_0"]
+    c2 = make_cluster(name="c2_d0005_1")
     cluster_list.append(c2)
-    assert cluster_list.names == ['c3_d0010_0', 'c2_d0005_1']
+    assert cluster_list.names == ["c3_d0010_0", "c2_d0005_1"]
 
 
 def test_get_by_name(make_cluster):
     cluster_list = ClusterList()
     names = [
-        'c2_d0001_0', 'c2_d0005_1', 'c2_d0011_0', 'c2_d0111_0', 'c2_d1111_2', 'c3_d0000_0',
-        'c3_d0001_0', 'c3_d0010_0'
+        "c2_d0001_0",
+        "c2_d0005_1",
+        "c2_d0011_0",
+        "c2_d0111_0",
+        "c2_d1111_2",
+        "c3_d0000_0",
+        "c3_d0001_0",
+        "c3_d0010_0",
     ]
     exp_clusters = []
     for name in names:

@@ -1,7 +1,10 @@
 import os
 import pytest
 from ase.calculators.emt import EMT
-from clease.montecarlo.observers import CorrelationFunctionObserver, EntropyProductionRate
+from clease.montecarlo.observers import (
+    CorrelationFunctionObserver,
+    EntropyProductionRate,
+)
 from clease.montecarlo import KineticMonteCarlo, BEPBarrier, NeighbourSwap
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
@@ -10,18 +13,20 @@ from clease.montecarlo.mc_evaluator import MCEvaluator
 
 @pytest.fixture
 def barrier():
-    dilute_barriers = {'Au': 0.5, 'Cu': 0.4}
+    dilute_barriers = {"Au": 0.5, "Cu": 0.4}
     return BEPBarrier(dilute_barriers)
 
 
 @pytest.fixture
 def example_system(db_name):
-    conc = Concentration(basis_elements=[['Au', 'Cu', 'X']])
-    settings = CEBulk(conc,
-                      crystalstructure='fcc',
-                      size=[1, 1, 1],
-                      max_cluster_dia=[3.0],
-                      db_name=db_name)
+    conc = Concentration(basis_elements=[["Au", "Cu", "X"]])
+    settings = CEBulk(
+        conc,
+        crystalstructure="fcc",
+        size=[1, 1, 1],
+        max_cluster_dia=[3.0],
+        db_name=db_name,
+    )
     return settings
 
 
@@ -29,17 +34,17 @@ def example_system(db_name):
 def atoms(example_system):
     ats = example_system.atoms.copy() * (2, 2, 2)
     # Insert some Cu
-    ats.symbols[:4] = 'Cu'
+    ats.symbols[:4] = "Cu"
     return ats
 
 
 def test_kmc(atoms, example_system, barrier):
     settings = example_system
-    eci = {'c0': 0.0, 'c1_0': 0.0, 'c2_d0000_0_00': 0.0}
+    eci = {"c0": 0.0, "c1_0": 0.0, "c2_d0000_0_00": 0.0}
 
     atoms = attach_calculator(settings, atoms, eci)
     vac_idx = 5
-    atoms[vac_idx].symbol = 'X'
+    atoms[vac_idx].symbol = "X"
 
     neighbor = NeighbourSwap(atoms, 3.0)
     for l in neighbor.nl:
@@ -50,7 +55,7 @@ def test_kmc(atoms, example_system, barrier):
     obs = CorrelationFunctionObserver(atoms.calc)
     kmc.attach(obs, 2)
 
-    epr_file = 'epr.txt'
+    epr_file = "epr.txt"
     kmc.epr = EntropyProductionRate(buffer_length=2, logfile=epr_file)
 
     # Check that ValueError is raised if vac_idx is not vacancy
@@ -67,11 +72,10 @@ def test_kmc_emt(atoms, barrier):
     """Perform a KMC using an EMT calculator"""
 
     class EMTEvaluator(MCEvaluator):
-
         def get_energy(self, **kwargs):
             """Helper function to evaluate EMT energy with vacancies"""
             atoms = self.atoms
-            mask = [atom.index for atom in atoms if atom.symbol != 'X']
+            mask = [atom.index for atom in atoms if atom.symbol != "X"]
             atoms_masked = atoms[mask]
             atoms_masked.calc = EMT()
             return atoms_masked.get_potential_energy()
@@ -79,7 +83,7 @@ def test_kmc_emt(atoms, barrier):
     evaluator = EMTEvaluator(atoms)
 
     vac_idx = 5
-    atoms[vac_idx].symbol = 'X'
+    atoms[vac_idx].symbol = "X"
     neighbor = NeighbourSwap(atoms, 3.0)
     orig_symbols = list(atoms.symbols)
 

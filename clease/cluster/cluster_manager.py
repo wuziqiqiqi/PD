@@ -13,7 +13,7 @@ from .cluster_list import ClusterList
 from .cluster_generator import ClusterGenerator
 from .utils import name_clusters, size
 
-__all__ = ('ClusterManager',)
+__all__ = ("ClusterManager",)
 
 
 class ClusterManager:
@@ -66,12 +66,10 @@ class ClusterManager:
         return atom.symbol in self.background_syms
 
     def __eq__(self, other):
-        return self.clusters == other.clusters and \
-            self.generator == other.generator
+        return self.clusters == other.clusters and self.generator == other.generator
 
     def _prepare_new_build(self, max_cluster_dia):
-        """Prepare for a new call to ``build``
-        """
+        """Prepare for a new call to ``build``"""
         # Update the cache
         self._cache.set_cache(max_cluster_dia)
         # Clear any old clusters
@@ -124,34 +122,42 @@ class ClusterManager:
             diameter = figures[0].get_diameter(self.prim)
             eq_sites = self.generator.equivalent_sites(figures[0])
 
-            cluster = Cluster(name=name,
-                              size=cluster_size,
-                              diameter=diameter,
-                              fingerprint=fp,
-                              figures=figures,
-                              equiv_sites=eq_sites,
-                              group=ref_lattice)
+            cluster = Cluster(
+                name=name,
+                size=cluster_size,
+                diameter=diameter,
+                fingerprint=fp,
+                figures=figures,
+                equiv_sites=eq_sites,
+                group=ref_lattice,
+            )
             self.clusters.append(cluster)
 
         # Add singlets
         for i in range(len(self.prim)):
             self.clusters.append(
-                Cluster(name='c1',
-                        size=1,
-                        diameter=0.0,
-                        fingerprint=ClusterFingerprint([1.0]),
-                        figures=[Figure([FourVector(0, 0, 0, i)])],
-                        equiv_sites=[],
-                        group=i))
+                Cluster(
+                    name="c1",
+                    size=1,
+                    diameter=0.0,
+                    fingerprint=ClusterFingerprint([1.0]),
+                    figures=[Figure([FourVector(0, 0, 0, i)])],
+                    equiv_sites=[],
+                    group=i,
+                )
+            )
         # Add empty
         self.clusters.append(
-            Cluster(name='c0',
-                    size=0,
-                    diameter=0.0,
-                    fingerprint=ClusterFingerprint([0.0]),
-                    figures=[],
-                    equiv_sites=[],
-                    group=0))
+            Cluster(
+                name="c0",
+                size=0,
+                diameter=0.0,
+                fingerprint=ClusterFingerprint([0.0]),
+                figures=[],
+                equiv_sites=[],
+                group=0,
+            )
+        )
         # Put the clusters in order of size. Has no practical effect,
         # but it looks nicer upon inspection.
         self.clusters.sort()
@@ -253,8 +259,9 @@ class ClusterManager:
             lut[vec] = i
         return lut
 
-    def fourvec_to_indx(self, template: ase.Atoms,
-                        unique: Sequence[FourVector]) -> Dict[FourVector, int]:
+    def fourvec_to_indx(
+        self, template: ase.Atoms, unique: Sequence[FourVector]
+    ) -> Dict[FourVector, int]:
         """Translate a set of unique FourVectors into their corresponding index
         in a template atoms object."""
         cell = template.get_cell()
@@ -265,7 +272,7 @@ class ClusterManager:
         pos = wrap_positions(pos, cell)
         unique_indices = []
         for i in range(pos.shape[0]):
-            diff_sq = np.sum((pos[i, :] - template.get_positions())**2, axis=1)
+            diff_sq = np.sum((pos[i, :] - template.get_positions()) ** 2, axis=1)
             unique_indices.append(np.argmin(diff_sq))
         return dict(zip(unique, unique_indices))
 
@@ -315,8 +322,10 @@ class ClusterManager:
 
             # Re-translate the wrapped-Cartesian coordinates of the unique four-vectors
             # into a four-vector representation (with a generator expression)
-            four_vecs = (self.generator.to_four_vector(cart, fv.sublattice)
-                         for cart, fv in zip(cartesian, translated_unique))
+            four_vecs = (
+                self.generator.to_four_vector(cart, fv.sublattice)
+                for cart, fv in zip(cartesian, translated_unique)
+            )
 
             # Get the index of the translated four-vector
             indices = [lut[fv] for fv in four_vecs]

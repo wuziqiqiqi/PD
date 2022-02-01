@@ -8,18 +8,24 @@ import ase
 from ase.build.tools import niggli_reduce_cell
 from ase.build import make_supercell
 from clease.tools import all_integer_transform_matrices
-from .template_filters import CellFilter, AtomsFilter, SkewnessFilter, EquivalentCellsFilter
+from .template_filters import (
+    CellFilter,
+    AtomsFilter,
+    SkewnessFilter,
+    EquivalentCellsFilter,
+)
 
-__all__ = ('TemplateAtoms',)
+__all__ = ("TemplateAtoms",)
 
 
 class TemplateAtoms:
-
     def __init__(self, prim_cell, supercell_factor=27, size=None, skew_threshold=40, filters=()):
         if size is None and supercell_factor is None:
-            raise TypeError("Either size or supercell_factor needs to be "
-                            "specified.\n size: list or numpy array.\n "
-                            "supercell_factor: int")
+            raise TypeError(
+                "Either size or supercell_factor needs to be "
+                "specified.\n size: list or numpy array.\n "
+                "supercell_factor: int"
+            )
 
         self.supercell_factor = supercell_factor
         self._skew_threshold = skew_threshold
@@ -42,9 +48,12 @@ class TemplateAtoms:
         self.prim_cell = prim_cell
 
     def __eq__(self, other):
-        return self.supercell_factor == other.supercell_factor and \
-            self.skew_threshold == other.skew_threshold and \
-            self.size == other.size and self.prim_cell == other.prim_cell
+        return (
+            self.supercell_factor == other.supercell_factor
+            and self.skew_threshold == other.skew_threshold
+            and self.size == other.size
+            and self.prim_cell == other.prim_cell
+        )
 
     @property
     def skew_threshold(self):
@@ -89,7 +98,7 @@ class TemplateAtoms:
         elif isinstance(f, CellFilter):
             self.cell_filters.remove(f)
         else:
-            raise TypeError('Only AtomsFilters and CellFilters can be removed')
+            raise TypeError("Only AtomsFilters and CellFilters can be removed")
 
     def remove_filters(self, filters):
         """Remove a list of filters."""
@@ -141,7 +150,7 @@ class TemplateAtoms:
 
         if isinstance(size, np.ndarray):
             size = size.tolist()
-        template.info['size'] = size
+        template.info["size"] = size
 
         if not self.is_valid(atoms=template):
             raise ValueError("Requested size violates the constraints!")
@@ -165,12 +174,14 @@ class TemplateAtoms:
             size = size.tolist()
 
         template = make_supercell(prim_cell, size)
-        template.info['size'] = size
+        template.info["size"] = size
 
         if not np.allclose(atoms.get_cell(), template.get_cell()):
-            raise ValueError(f"Inconsistent cells! Passed atoms\n"
-                             f"{atoms.get_cell()}\nGenerated template\n"
-                             f"{template.get_cell()}")
+            raise ValueError(
+                f"Inconsistent cells! Passed atoms\n"
+                f"{atoms.get_cell()}\nGenerated template\n"
+                f"{template.get_cell()}"
+            )
 
         if not self.is_valid(atoms=template):
             raise ValueError("Requested template violates the constraints!")
@@ -190,9 +201,11 @@ class TemplateAtoms:
             check_valid_conversion_matrix(scale_int)
             return scale_int.tolist()
 
-        raise ValueError(f"The passed atoms object cannot be described by "
-                         f"repeating of the unit cells. Scale factors found "
-                         f"{size_factor}")
+        raise ValueError(
+            f"The passed atoms object cannot be described by "
+            f"repeating of the unit cells. Scale factors found "
+            f"{size_factor}"
+        )
 
     def get_all_templates(self) -> List[ase.Atoms]:
         """Return a list with all templates."""
@@ -232,7 +245,7 @@ class TemplateAtoms:
                 if self.is_valid(cell=cell):
                     at = make_supercell(self.prim_cell, mat)
                     if self.is_valid(atoms=at):
-                        at.info['size'] = mat.tolist()
+                        at.info["size"] = mat.tolist()
                         cells.append(cell)
                         new_atoms_flag = True
             # Ensure we remove the filter again, so it does not affect the
@@ -270,7 +283,7 @@ class TemplateAtoms:
                 at = make_supercell(self.prim_cell, mat)
                 if self.is_valid(atoms=at):
                     cells.append(cell)
-                    at.info['size'] = mat.tolist()
+                    at.info["size"] = mat.tolist()
                     templates.append(at)
         self.remove_filter(equiv_filter)
         return templates
@@ -286,7 +299,7 @@ class TemplateAtoms:
 
         ucell = self.prim_cell.get_cell()
         max_attempts = 100000
-        exp_value = self.supercell_factor**(1.0 / 3.0)
+        exp_value = self.supercell_factor ** (1.0 / 3.0)
         for _ in range(max_attempts):
             diag = np.random.poisson(lam=exp_value, size=3)
             while np.prod(diag) > self.supercell_factor or np.prod(diag) == 0:
@@ -295,7 +308,7 @@ class TemplateAtoms:
             off_diags = np.random.poisson(lam=1, size=3)
 
             # Check that off diagonals are smaller or equal to diagonal
-            if (off_diags[0] > diag[0] or off_diags[1] > diag[0] or off_diags[2] > diag[1]):
+            if off_diags[0] > diag[0] or off_diags[1] > diag[0] or off_diags[2] > diag[1]:
                 continue
 
             matrix = np.zeros((3, 3), dtype=int)
@@ -310,11 +323,12 @@ class TemplateAtoms:
             if self.is_valid(cell=cell):
                 atoms = make_supercell(self.prim_cell, matrix)
                 if self.is_valid(atoms=atoms):
-                    atoms.info['size'] = matrix.tolist()
+                    atoms.info["size"] = matrix.tolist()
                     return atoms
 
-        raise RuntimeError("Did not manage to generate a random template that "
-                           "satisfies all the constraints")
+        raise RuntimeError(
+            "Did not manage to generate a random template that " "satisfies all the constraints"
+        )
 
     def has_atoms_filters(self):
         return len(self.atoms_filters) > 0
@@ -372,6 +386,8 @@ def check_valid_conversion_matrix(array):
     """
     determinant = np.linalg.det(array)
     if determinant < 0.0:
-        raise ValueError(f"The determinant of the size matrix is less than "
-                         f"zero (got {determinant}). For a right coordinate "
-                         f"system, we need a positive determinant.")
+        raise ValueError(
+            f"The determinant of the size matrix is less than "
+            f"zero (got {determinant}). For a right coordinate "
+            f"system, we need a positive determinant."
+        )

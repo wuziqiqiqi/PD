@@ -4,7 +4,6 @@ import numpy as np
 
 
 class SwapMoveIndexTracker:
-
     def __init__(self):
         self.tracker = {}
         self.index_loc = None

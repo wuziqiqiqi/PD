@@ -92,12 +92,12 @@ def test_syst_with_one_fixed_comp(db_name):
 
 def test_system_multiple_endpoints(db_name, rng):
     db = connect(db_name)
-    atoms_orig = bulk('Au') * (1, 1, 2)
+    atoms_orig = bulk("Au") * (1, 1, 2)
 
     # Create some atoms objects at each extremum,
     # with vastly different energies
     energies = -350 * rng.random(25)
-    mult = {'Au': 1, 'Zn': 2}
+    mult = {"Au": 1, "Zn": 2}
     for en in energies:
         for sym, m in mult.items():
             atoms = atoms_orig.copy()
@@ -111,4 +111,4 @@ def test_system_multiple_endpoints(db_name, rng):
     end_points = cnv_hull.end_points
     # Ensure the end-points correspond to the energy of the minimum energy structure
     for sym, m in mult.items():
-        assert end_points[sym]['energy'] == pytest.approx(energies.min() * m / len(atoms_orig))
+        assert end_points[sym]["energy"] == pytest.approx(energies.min() * m / len(atoms_orig))

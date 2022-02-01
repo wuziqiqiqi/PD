@@ -4,7 +4,7 @@ from ase import Atoms
 from clease.datastructures import SystemChanges
 from clease.calculator import Clease
 
-__all__ = ('MCEvaluator', 'CEMCEvaluator', 'construct_evaluator')
+__all__ = ("MCEvaluator", "CEMCEvaluator", "construct_evaluator")
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +105,9 @@ class CEMCEvaluator(MCEvaluator):
 
     def __init__(self, atoms: Atoms):
         if not isinstance(atoms.calc, Clease):
-            raise ValueError("Clease calculator must be attached to the atoms object "
-                             "when using CEMCEvaluator")
+            raise ValueError(
+                "Clease calculator must be attached to the atoms object " "when using CEMCEvaluator"
+            )
         super().__init__(atoms)
 
     def get_energy(self, applied_changes: SystemChanges = None) -> float:
@@ -171,13 +172,13 @@ def _make_mc_evaluator_from_atoms(atoms: Atoms) -> MCEvaluator:
     Raises a ``RuntimeError`` is the Atoms object has no calculator."""
     calc = atoms.calc
     if calc is None:
-        raise RuntimeError('Atoms object must have a calculator object.')
+        raise RuntimeError("Atoms object must have a calculator object.")
     if isinstance(calc, Clease):
         # Return the MC Evaluator specialized for the CLEASE calculator
-        logger.debug('Constructed a new CE MC Evaluator.')
+        logger.debug("Constructed a new CE MC Evaluator.")
         return CEMCEvaluator(atoms)
     # Return the generic MC Evaluator
-    logger.debug('Constructed a generic MC Evaluator.')
+    logger.debug("Constructed a generic MC Evaluator.")
     return MCEvaluator(atoms)
 
 
@@ -202,10 +203,10 @@ def construct_evaluator(system: Union[Atoms, MCEvaluator]) -> MCEvaluator:
 
     if isinstance(system, Atoms):
         # Construct the default evaluator object
-        logger.debug('Creating a new default evaluator.')
+        logger.debug("Creating a new default evaluator.")
         return _make_mc_evaluator_from_atoms(system)
     if isinstance(system, MCEvaluator):
         # User supplied a custom evaluator
-        logger.debug('Using a user-defined evaluator: %s', system)
+        logger.debug("Using a user-defined evaluator: %s", system)
         return system
-    raise TypeError(f'Received an unknown system: {system}')
+    raise TypeError(f"Received an unknown system: {system}")

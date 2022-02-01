@@ -11,7 +11,7 @@ from clease.settings import CEBulk, Concentration
 from clease import NewStructures, Evaluate
 from clease.tools import update_db
 
-all_cost_funcs = ('bic', 'aic', 'aicc')
+all_cost_funcs = ("bic", "aic", "aicc")
 
 
 @pytest.fixture
@@ -24,17 +24,19 @@ def cost_func(request):
     return request.param
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def ga_settings(make_module_tempfile):
-    db_name = make_module_tempfile('temp_db_ga.db')
-    basis_elements = [['Au', 'Cu']]
+    db_name = make_module_tempfile("temp_db_ga.db")
+    basis_elements = [["Au", "Cu"]]
     concentration = Concentration(basis_elements=basis_elements)
-    settings = CEBulk(crystalstructure='fcc',
-                      a=4.05,
-                      size=[2, 2, 2],
-                      concentration=concentration,
-                      db_name=db_name,
-                      max_cluster_dia=[4.06])
+    settings = CEBulk(
+        crystalstructure="fcc",
+        a=4.05,
+        size=[2, 2, 2],
+        concentration=concentration,
+        db_name=db_name,
+        max_cluster_dia=[4.06],
+    )
 
     newstruct = NewStructures(settings, struct_per_gen=3)
     newstruct.generate_initial_pool()
@@ -78,7 +80,7 @@ def test_init_from_file(cost_func, ga_settings, make_tempfile):
 def make_dummy_ga(dummy_cf_matrix, make_tempfile):
     default_cf_matirx = dummy_cf_matrix
 
-    def _make_dummy_ga(cf_matrix=None, e_dft=None, fname='ga_fit.csv', **kwargs):
+    def _make_dummy_ga(cf_matrix=None, e_dft=None, fname="ga_fit.csv", **kwargs):
         cf_matrix = cf_matrix or default_cf_matirx
         e_dft = e_dft or np.arange(cf_matrix.shape[0])
         fname = make_tempfile(fname)
@@ -90,7 +92,7 @@ def make_dummy_ga(dummy_cf_matrix, make_tempfile):
 def test_allowed_cost_funcs(make_dummy_ga, cost_func):
     for cost_func in all_cost_funcs:
         make_dummy_ga(cost_func=cost_func)
-    invalid_cost_func = f'{cost_func}_abc'
+    invalid_cost_func = f"{cost_func}_abc"
     with pytest.raises(ValueError):
         make_dummy_ga(cost_func=invalid_cost_func)
 

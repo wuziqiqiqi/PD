@@ -22,24 +22,21 @@ def test_in_range():
 
 
 def test_evaluate():
-
     def get_func(syst_change, peak=False):
-        if syst_change[0][2] == 'Al':
+        if syst_change[0][2] == "Al":
             return 1.03
         return 0.0
 
-    pot = GaussianKernelBiasPotential(xmin=0.0,
-                                      xmax=1.0,
-                                      num_kernels=10,
-                                      width=0.01,
-                                      getter=get_func)
+    pot = GaussianKernelBiasPotential(
+        xmin=0.0, xmax=1.0, num_kernels=10, width=0.01, getter=get_func
+    )
     pot.coeff[:] = np.linspace(0.0, 10.0, len(pot.coeff))
     expect = 10.0
-    got = pot([(0, 'Mg', 'Al')])
+    got = pot([(0, "Mg", "Al")])
     assert got == pytest.approx(expect)
 
     expect = 0.0
-    got = pot([(0, 'Al', 'Mg')])
+    got = pot([(0, "Al", "Mg")])
     assert got == pytest.approx(expect)
 
 

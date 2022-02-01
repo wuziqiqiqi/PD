@@ -21,5 +21,5 @@ def main(argv):
     update_db(uid_initial=db_id, final_struct=atoms, db_name=db_name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

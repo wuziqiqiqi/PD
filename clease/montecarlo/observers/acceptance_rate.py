@@ -2,7 +2,7 @@ from typing import Sequence, Dict
 from clease.datastructures import SystemChange
 from clease.montecarlo.observers.mc_observer import MCObserver
 
-__all__ = ('AcceptanceRate',)
+__all__ = ("AcceptanceRate",)
 
 
 class AcceptanceRate(MCObserver):
@@ -48,4 +48,4 @@ class AcceptanceRate(MCObserver):
         """
         Return dictionary with the rate such that it is added to thermodynaic quantities
         """
-        return {'accept_rate': self.rate}
+        return {"accept_rate": self.rate}

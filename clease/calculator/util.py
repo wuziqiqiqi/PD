@@ -5,9 +5,9 @@ from clease.tools import wrap_and_sort_by_position
 from .clease import Clease
 
 
-def attach_calculator(settings: ClusterExpansionSettings,
-                      atoms: Atoms,
-                      eci: Dict[str, float] = None) -> Atoms:
+def attach_calculator(
+    settings: ClusterExpansionSettings, atoms: Atoms, eci: Dict[str, float] = None
+) -> Atoms:
     """Utility function for an efficient initialization of large cells.
 
     :param settings: ClusterExpansionSettings object (e.g., CEBulk, CECyrstal)

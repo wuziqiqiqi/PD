@@ -21,7 +21,6 @@ def make_atoms(get_LiVX, get_random_eci):
 
 @pytest.fixture
 def make_dummy_atoms(make_dummy_settings, get_random_eci):
-
     def _make_dummy_atoms(rep=(1, 1, 1), **kwargs):
         settings = make_dummy_settings(**kwargs)
         atoms = settings.atoms * rep
@@ -38,9 +37,10 @@ def test_get_energy(make_atoms):
     assert isinstance(en1, float)
 
 
-@pytest.mark.parametrize('invalid_settings',
-                         ['somestring', None, True, False,
-                          Concentration(basis_elements=[['Au']])])
+@pytest.mark.parametrize(
+    "invalid_settings",
+    ["somestring", None, True, False, Concentration(basis_elements=[["Au"]])],
+)
 def test_invalid_settings(invalid_settings):
     """Test that if we pass some things which are not settings,
     that we cannot initialize"""
@@ -61,7 +61,7 @@ def test_init_cf(make_dummy_settings, get_random_eci):
     with pytest.raises(TypeError):
         Clease(settings, eci, init_cf=True)
     with pytest.raises(TypeError):
-        Clease(settings, eci, init_cf=['a', 'b', 'c'])
+        Clease(settings, eci, init_cf=["a", "b", "c"])
 
     # Fill ECI with some values, so it's not empty
     # ECI and init_cf need to match in length
@@ -70,7 +70,7 @@ def test_init_cf(make_dummy_settings, get_random_eci):
     with pytest.raises(ValueError):
         Clease(settings, eci, init_cf={})
     with pytest.raises(ValueError):
-        Clease(settings, {}, init_cf={'a': 1})
+        Clease(settings, {}, init_cf={"a": 1})
 
     # Just use ECI as the cf dict - same length
     Clease(settings, eci, init_cf=eci)
@@ -121,7 +121,7 @@ def test_set_atoms(make_dummy_atoms):
 def test_only_empty_and_singlet(make_dummy_settings):
     # Test added due to issue #265: seg fault
     settings = make_dummy_settings(max_cluster_dia=())
-    eci = {'c0': 0.0, 'c1_0': 0.0}
+    eci = {"c0": 0.0, "c1_0": 0.0}
     calc = Clease(settings, eci)
     atoms = settings.atoms.copy()
 

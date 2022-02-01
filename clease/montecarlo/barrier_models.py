@@ -4,7 +4,7 @@ from ase import Atoms
 from clease.datastructures import SystemChanges
 from clease.montecarlo.mc_evaluator import MCEvaluator, construct_evaluator
 
-__all__ = ('BarrierModel', 'BEPBarrier')
+__all__ = ("BarrierModel", "BEPBarrier")
 
 
 class BarrierModel(ABC):
@@ -73,8 +73,8 @@ class BEPBarrier(BarrierModel):
         old_symb, new_symb = system_changes[0].old_symb, system_changes[0].new_symb
 
         # Confirm that one of the symbols is a vacancy
-        assert old_symb == 'X' or new_symb == 'X'
+        assert old_symb == "X" or new_symb == "X"
 
-        jumping_symb = old_symb if old_symb != 'X' else new_symb
+        jumping_symb = old_symb if old_symb != "X" else new_symb
         Ea = self.dilute_barrier[jumping_symb] + self.alpha * (E2 - E1)
         return Ea

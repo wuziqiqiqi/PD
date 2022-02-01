@@ -4,7 +4,7 @@ from .regression import LinearRegression, Tikhonov
 
 logger = logging.getLogger(__name__)
 
-__all__ = ('SequentialClusterRidge',)
+__all__ = ("SequentialClusterRidge",)
 
 
 class SequentialClusterRidge(LinearRegression):
@@ -55,8 +55,9 @@ class SequentialClusterRidge(LinearRegression):
         print("       SUPPORT EXPANDING L2 SUMMARY         ")
         print("--------------------------------------------")
         for i in range(20):
-            print(f"Num. coeff: {len(coeffs[srt_idx[i]]):9d} "
-                  f"CV: {cvs[srt_idx[i]]:9.3f} meV/atom")
+            print(
+                f"Num. coeff: {len(coeffs[srt_idx[i]]):9d} " f"CV: {cvs[srt_idx[i]]:9.3f} meV/atom"
+            )
         print("--------------------------------------------")
 
     def fit(self, X, y):
@@ -90,6 +91,6 @@ class SequentialClusterRidge(LinearRegression):
         best_cv = np.argmin(cvs)
         res = np.zeros(numFeat)
         best_coeff = coeffs[best_cv]
-        res[:len(best_coeff)] = best_coeff
+        res[: len(best_coeff)] = best_coeff
         self._print_summary(cvs, coeffs)
         return res

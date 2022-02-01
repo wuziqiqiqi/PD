@@ -7,7 +7,7 @@ from clease.datastructures import Figure
 from clease.tools import equivalent_deco, list2str
 from .cluster_fingerprint import ClusterFingerprint
 
-__all__ = ('Cluster',)
+__all__ = ("Cluster",)
 
 
 @total_ordering
@@ -20,7 +20,8 @@ class Cluster:
     size: int = attr.ib()
     diameter: float = attr.ib()
     fingerprint: ClusterFingerprint = attr.ib(
-        validator=attr.validators.instance_of(ClusterFingerprint))
+        validator=attr.validators.instance_of(ClusterFingerprint)
+    )
     figures: Sequence[Figure] = attr.ib()
     equiv_sites: Sequence[Sequence[int]] = attr.ib()
     group: int = attr.ib()
@@ -38,21 +39,22 @@ class Cluster:
         # pylint: disable=unused-argument, no-self-use
         for ii, v in enumerate(value):
             if not isinstance(v, Figure):
-                raise TypeError(f'All values must Figure type, got {value} '
-                                f'of type {type(v)} in index {ii}.')
+                raise TypeError(
+                    f"All values must Figure type, got {value} " f"of type {type(v)} in index {ii}."
+                )
 
     @property
     def fp(self) -> ClusterFingerprint:
         """Alias for fingerprint, for compatibility."""
         return self.fingerprint
 
-    def __lt__(self, other: 'Cluster') -> bool:
+    def __lt__(self, other: "Cluster") -> bool:
         """Less-than comparison operator."""
         if not isinstance(other, Cluster):
             return NotImplemented
         return self.fingerprint < other.fingerprint
 
-    def __eq__(self, other: 'Cluster') -> bool:
+    def __eq__(self, other: "Cluster") -> bool:
         """Equals comparison operator."""
         if not isinstance(other, Cluster):
             return NotImplemented
@@ -106,8 +108,12 @@ class Cluster:
             occ_count[key] = current_num + 1
         return occ_count
 
-    def corresponding_figure(self, ref_indx: int, target_figure: Sequence[int],
-                             trans_matrix: List[Dict[int, int]]):
+    def corresponding_figure(
+        self,
+        ref_indx: int,
+        target_figure: Sequence[int],
+        trans_matrix: List[Dict[int, int]],
+    ):
         """Find figures that correspond to another reference index.
 
         Parameters:
@@ -129,8 +135,10 @@ class Cluster:
             if translated_figure == target_figure:
                 return self._order_equiv_sites(figure)
 
-        raise RuntimeError(f"There are no matching figure for ref_indx: "
-                           f"{ref_indx} and figure: {target_figure}!")
+        raise RuntimeError(
+            f"There are no matching figure for ref_indx: "
+            f"{ref_indx} and figure: {target_figure}!"
+        )
 
     def get_all_figure_keys(self):
         return [self.get_figure_key(fig) for fig in self.indices]

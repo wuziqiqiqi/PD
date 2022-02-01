@@ -37,9 +37,11 @@ class DataNormalizer:
         self.stdX = np.std(X, axis=0, ddof=1)
         tol = 1e-16
         if np.any(self.stdX < tol) and self.fail_on_constant:
-            raise ValueError(f"DataNormalizer: The following columns has a "
-                             f"constant value:\n{self.constant_cols(X)}\n"
-                             f"Please remove these.")
+            raise ValueError(
+                f"DataNormalizer: The following columns has a "
+                f"constant value:\n{self.constant_cols(X)}\n"
+                f"Please remove these."
+            )
         self.stdX[self.stdX < tol] = 1.0
         X_norm = (X - self.meanX) / self.stdX
         return X_norm, y_shifted

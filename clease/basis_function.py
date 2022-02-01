@@ -6,11 +6,16 @@ import numpy as np
 from clease.jsonio import jsonable
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
 
-__all__ = ('BasisFunction', 'Polynomial', 'Trigonometric', 'BinaryLinear',
-           'basis_function_from_dict')
+__all__ = (
+    "BasisFunction",
+    "Polynomial",
+    "Trigonometric",
+    "BinaryLinear",
+    "basis_function_from_dict",
+)
 
 
-@jsonable('basisfunction')
+@jsonable("basisfunction")
 class BasisFunction(ABC):
     """Base class for all Basis Functions."""
 
@@ -25,8 +30,7 @@ class BasisFunction(ABC):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, BasisFunction):
             return False
-        return self.name == other.name and \
-            self.unique_elements == other.unique_elements
+        return self.name == other.name and self.unique_elements == other.unique_elements
 
     @property
     def unique_elements(self) -> List[str]:
@@ -65,7 +69,7 @@ class BasisFunction(ABC):
         """
         Create a dictionary representation of the basis function class
         """
-        return {'name': self.name, 'unique_elements': self.unique_elements}
+        return {"name": self.name, "unique_elements": self.unique_elements}
 
 
 class Polynomial(BasisFunction):
@@ -121,12 +125,12 @@ class Trigonometric(BasisFunction):
         for a in alpha:
             bf = {}
             for key, value in self.spin_dict.items():
-                var = 2 * np.pi * math.ceil(a / 2.) * value
+                var = 2 * np.pi * math.ceil(a / 2.0) * value
                 var /= self.num_unique_elements
                 if a % 2 == 1:
-                    bf[key] = -np.cos(var) + 0.
+                    bf[key] = -np.cos(var) + 0.0
                 else:
-                    bf[key] = -np.sin(var) + 0.
+                    bf[key] = -np.sin(var) + 0.0
 
             # normalize the basis function
             sum_ = sum(bf[key] * bf[key] for key in self.spin_dict)
@@ -215,7 +219,7 @@ class BinaryLinear(BasisFunction):
         Creates a dictionary representation of the class
         """
         dct_rep = super().todict()
-        dct_rep['redundant_element'] = self.redundant_element
+        dct_rep["redundant_element"] = self.redundant_element
         return dct_rep
 
 
@@ -241,6 +245,6 @@ def basis_function_from_dict(dct: dict):
     """
     basis_functions = {bf.name: bf for bf in (Polynomial, Trigonometric, BinaryLinear)}
 
-    name = dct.pop('name')
+    name = dct.pop("name")
 
     return basis_functions[name](**dct)

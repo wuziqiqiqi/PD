@@ -13,6 +13,7 @@ class CorrelationFunctionObserver(MCObserver):
         List with correlation functions to track.
         If None, all correlation functions are tracked.
     """
+
     name = "CorrelationFunctionObserver"
 
     def __init__(self, calc, names=None):
@@ -44,4 +45,4 @@ class CorrelationFunctionObserver(MCObserver):
         self.counter = 1
 
     def get_averages(self):
-        return {'cf_' + k: v / self.counter for k, v in self.cf.items()}
+        return {"cf_" + k: v / self.counter for k, v in self.cf.items()}

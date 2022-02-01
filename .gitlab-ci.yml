@@ -15,6 +15,12 @@ flake8:
   script:
     - tox -e flake8
 
+black:
+  stage: Static Analysis
+  script:
+    - pip install black
+    - python -m black --check .
+
 pylint:
   stage: Static Analysis
   script:

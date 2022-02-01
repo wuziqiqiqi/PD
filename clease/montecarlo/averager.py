@@ -11,7 +11,7 @@ class Averager:
     def __init__(self, ref_value=1.0):
         self._ref_value = float(ref_value)
 
-        if abs(self._ref_value) < 1E-6:
+        if abs(self._ref_value) < 1e-6:
             self._ref_value = 1.0
         self._n_samples = 0.0
         self._mean = 0.0
@@ -45,7 +45,7 @@ class Averager:
         if not isinstance(other, Averager):
             raise NotImplementedError
 
-        ratio = (other._ref_value / self._ref_value)
+        ratio = other._ref_value / self._ref_value
         new_obj = Averager(ref_value=self._ref_value)
         new_obj._mean = self._mean + other._mean * ratio
         new_obj._n_samples = self._n_samples + other._n_samples

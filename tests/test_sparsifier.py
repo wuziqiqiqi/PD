@@ -5,7 +5,7 @@ from clease.regression import LinearRegression
 
 
 def test_sparsifier():
-    matplotlib.use('Agg')
+    matplotlib.use("Agg")
     num_feat = 12
     num_data = 100
     X = np.zeros((num_data, num_feat))

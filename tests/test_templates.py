@@ -8,9 +8,14 @@ from ase.build import niggli_reduce
 from ase.db import connect
 from clease.settings import CEBulk, Concentration
 from clease.settings.template_atoms import TemplateAtoms
-from clease.settings.template_filters import (AtomsFilter, CellFilter, SkewnessFilter,
-                                              DistanceBetweenFacetsFilter,
-                                              CellVectorDirectionFilter, ValidConcentrationFilter)
+from clease.settings.template_filters import (
+    AtomsFilter,
+    CellFilter,
+    SkewnessFilter,
+    DistanceBetweenFacetsFilter,
+    CellVectorDirectionFilter,
+    ValidConcentrationFilter,
+)
 from clease.tools import wrap_and_sort_by_position
 
 
@@ -19,13 +24,13 @@ class SettingsPlaceHolder:
     Dummy object that simply holds the few variables needed for the test.
     Only purpose of this is to make the test fast
     """
+
     atoms = None
     index_by_basis = []
     Concentration = None
 
 
 class NumAtomsFilter(AtomsFilter):
-
     def __init__(self, min_num_atoms):
         self.min_num_atoms = min_num_atoms
 
@@ -34,7 +39,6 @@ class NumAtomsFilter(AtomsFilter):
 
 
 class DummyCellFilter(CellFilter):
-
     def __call__(self, cell):
         return True
 
@@ -45,7 +49,7 @@ def get_settings_placeholder_valid_conc_filter(system):
     used together with the test_valid_conc_filter_class
     """
     settings = SettingsPlaceHolder()
-    if system == 'NaCl':
+    if system == "NaCl":
         prim_cell = bulk("NaCl", crystalstructure="rocksalt", a=4.0)
         settings.atoms = prim_cell
         settings.index_by_basis = [[0], [1]]
@@ -54,11 +58,11 @@ def get_settings_placeholder_valid_conc_filter(system):
         # concentration
         A_eq = [[0, 1, -2.0]]
         b_eq = [0.0]
-        settings.concentration = Concentration(basis_elements=[['Na'], ['Cl', 'X']],
-                                               A_eq=A_eq,
-                                               b_eq=b_eq)
+        settings.concentration = Concentration(
+            basis_elements=[["Na"], ["Cl", "X"]], A_eq=A_eq, b_eq=b_eq
+        )
 
-    elif system == 'LiNiMnCoO':
+    elif system == "LiNiMnCoO":
         a = 2.825
         b = 2.825
         c = 13.840
@@ -66,19 +70,21 @@ def get_settings_placeholder_valid_conc_filter(system):
         beta = 90
         gamma = 120
         spacegroup = 166
-        basis_elements = [['Li'], ['Ni', 'Mn', 'Co'], ['O']]
-        basis = [(0., 0., 0.), (0., 0., 0.5), (0., 0., 0.259)]
+        basis_elements = [["Li"], ["Ni", "Mn", "Co"], ["O"]]
+        basis = [(0.0, 0.0, 0.0), (0.0, 0.0, 0.5), (0.0, 0.0, 0.259)]
 
         A_eq = None
         b_eq = None
 
         conc = Concentration(basis_elements=basis_elements, A_eq=A_eq, b_eq=b_eq)
-        prim_cell = crystal(symbols=['Li', 'Ni', 'O'],
-                            basis=basis,
-                            spacegroup=spacegroup,
-                            cellpar=[a, b, c, alpha, beta, gamma],
-                            size=[1, 1, 1],
-                            primitive_cell=True)
+        prim_cell = crystal(
+            symbols=["Li", "Ni", "O"],
+            basis=basis,
+            spacegroup=spacegroup,
+            cellpar=[a, b, c, alpha, beta, gamma],
+            size=[1, 1, 1],
+            primitive_cell=True,
+        )
         prim_cell = wrap_and_sort_by_position(prim_cell)
         settings.concentration = conc
 
@@ -89,20 +95,19 @@ def get_settings_placeholder_valid_conc_filter(system):
 
 def check_NaCl_conc(templates):
     for atoms in templates:
-        num_cl = sum(1 for atom in atoms if atom.symbol == 'Cl')
+        num_cl = sum(1 for atom in atoms if atom.symbol == "Cl")
         assert 2.0 * num_cl / 3.0 == pytest.approx(np.round(2.0 * num_cl / 3.0))
 
 
 @pytest.fixture
 def prim_cell():
-    return bulk("Cu", a=4.05, crystalstructure='fcc')
+    return bulk("Cu", a=4.05, crystalstructure="fcc")
 
 
 @pytest.fixture
 def template_atoms_factory(prim_cell):
-
     def _template_atoms_factory(**kwargs):
-        default_settings = {'supercell_factor': 27, 'size': None, 'skew_threshold': 4}
+        default_settings = {"supercell_factor": 27, "size": None, "skew_threshold": 4}
         default_settings.update(**kwargs)
         return TemplateAtoms(prim_cell, **default_settings)
 
@@ -112,30 +117,36 @@ def template_atoms_factory(prim_cell):
 def test_fcc(template_atoms_factory):
     template_atoms = template_atoms_factory()
     templates = template_atoms.get_all_scaled_templates()
-    ref = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 3], [2, 2, 4], [2, 2, 5], [2, 3, 3], [2, 3, 4],
-           [3, 3, 3]]
+    ref = [
+        [1, 1, 1],
+        [1, 1, 2],
+        [2, 2, 2],
+        [2, 2, 3],
+        [2, 2, 4],
+        [2, 2, 5],
+        [2, 3, 3],
+        [2, 3, 4],
+        [3, 3, 3],
+    ]
 
     ref = [np.diag(x).tolist() for x in ref]
-    sizes = [t.info['size'] for t in templates]
+    sizes = [t.info["size"] for t in templates]
     assert ref == sizes
 
 
 def test_valid_concentration_filter():
 
-    tests = [{
-        'system': 'NaCl',
-        'func': check_NaCl_conc
-    }, {
-        'system': 'LiNiMnCoO',
-        'func': lambda templ: len(templ) >= 1
-    }]
+    tests = [
+        {"system": "NaCl", "func": check_NaCl_conc},
+        {"system": "LiNiMnCoO", "func": lambda templ: len(templ) >= 1},
+    ]
 
     for test in tests:
-        settings = get_settings_placeholder_valid_conc_filter(test['system'])
+        settings = get_settings_placeholder_valid_conc_filter(test["system"])
 
-        template_generator = TemplateAtoms(settings.atoms,
-                                           supercell_factor=20,
-                                           skew_threshold=1000000000)
+        template_generator = TemplateAtoms(
+            settings.atoms, supercell_factor=20, skew_threshold=1000000000
+        )
 
         conc_filter = ValidConcentrationFilter(settings.concentration, settings.index_by_basis)
         # Check that you cannot attach an AtomsFilter as a cell
@@ -147,7 +158,7 @@ def test_valid_concentration_filter():
         template_generator.add_atoms_filter(conc_filter)
 
         templates = template_generator.get_all_scaled_templates()
-        test['func'](templates)
+        test["func"](templates)
 
 
 def test_dist_filter():
@@ -177,18 +188,20 @@ def test_fixed_vol(template_atoms_factory):
 
 def test_fixed_vol_with_conc_constraint(mocker, db_name):
 
-    mocker.patch('clease.settings.ClusterExpansionSettings.create_cluster_list_and_trans_matrix')
+    mocker.patch("clease.settings.ClusterExpansionSettings.create_cluster_list_and_trans_matrix")
     A_eq = [[3, -2]]
     b_eq = [0]
-    conc = Concentration(basis_elements=[['Au', 'Cu']], A_eq=A_eq, b_eq=b_eq)
+    conc = Concentration(basis_elements=[["Au", "Cu"]], A_eq=A_eq, b_eq=b_eq)
 
-    settings = CEBulk(crystalstructure='fcc',
-                      a=3.8,
-                      size=[1, 1, 5],
-                      db_name=db_name,
-                      max_cluster_dia=[3.0],
-                      concentration=conc,
-                      supercell_factor=40)
+    settings = CEBulk(
+        crystalstructure="fcc",
+        a=3.8,
+        size=[1, 1, 5],
+        db_name=db_name,
+        max_cluster_dia=[3.0],
+        concentration=conc,
+        supercell_factor=40,
+    )
     settings.skew_threshold = 100
 
     tmp = settings.template_atoms
@@ -238,9 +251,9 @@ def test_set_skewness_threshold(template_atoms_factory):
 
 
 def test_cell_direction_filter(db_name):
-    cubic_cell = bulk("Cu", a=4.05, crystalstructure='fcc', cubic=True)
+    cubic_cell = bulk("Cu", a=4.05, crystalstructure="fcc", cubic=True)
     db = connect(db_name)
-    db.write(cubic_cell, name='primitive_cell')
+    db.write(cubic_cell, name="primitive_cell")
 
     cell_filter = CellVectorDirectionFilter(cell_vector=2, direction=[0, 0, 1])
 

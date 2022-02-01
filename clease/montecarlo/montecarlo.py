@@ -36,12 +36,15 @@ class Montecarlo(BaseMC):
             :class:`~clease.montecarlo.trial_move_generator.TrialMoveGenerator`
             object that produces trial moves. Defaults to None.
     """
+
     NAME = "MonteCarlo"
 
-    def __init__(self,
-                 system: Union[Atoms, MCEvaluator],
-                 temp: float,
-                 generator: TrialMoveGenerator = None):
+    def __init__(
+        self,
+        system: Union[Atoms, MCEvaluator],
+        temp: float,
+        generator: TrialMoveGenerator = None,
+    ):
 
         super().__init__(system)
         self.T = temp
@@ -70,13 +73,15 @@ class Montecarlo(BaseMC):
 
         self.quit = False
 
-        self.filter = ExponentialFilter(min_time=0.2 * len(self.atoms),
-                                        max_time=20 * len(self.atoms),
-                                        n_subfilters=10)
+        self.filter = ExponentialFilter(
+            min_time=0.2 * len(self.atoms),
+            max_time=20 * len(self.atoms),
+            n_subfilters=10,
+        )
 
     def update_current_energy(self):
         self.current_energy = self.evaluator.get_energy()
-        logger.debug('Updating current energy to %s', self.current_energy)
+        logger.debug("Updating current energy to %s", self.current_energy)
         self.evaluator.reset()
 
     def _initialize_energies(self) -> None:
@@ -94,7 +99,7 @@ class Montecarlo(BaseMC):
 
     def reset(self):
         """Reset all member variables to their original values."""
-        logger.debug('Resetting.')
+        logger.debug("Resetting.")
         for _, obs in self.observers:
             obs.reset()
 
@@ -143,7 +148,7 @@ class Montecarlo(BaseMC):
 
     def initialize_run(self):
         """Prepare MC object for a new run."""
-        logger.debug('Initializing run')
+        logger.debug("Initializing run")
         self.generator.initialize(self.atoms)
 
         # Ensure the evaluator is properly synchronized.
@@ -164,7 +169,7 @@ class Montecarlo(BaseMC):
             Number of steps in the MC simulation
         """
 
-        logger.info('Starting MC run with %d steps.', steps)
+        logger.info("Starting MC run with %d steps.", steps)
         # Check the number of different elements are correct to avoid
         # infinite loops
         self.initialize_run()
@@ -182,13 +187,18 @@ class Montecarlo(BaseMC):
             if info_enabled and time.time() - start > self.status_every_sec:
                 ms_per_step = 1000.0 * self.status_every_sec / (self.current_step - prev)
                 accept_rate = self.num_accepted / self.current_step
-                logger.info("%d of %d steps. %.2f ms per step. Acceptance rate: %.2f",
-                            self.current_step, steps, ms_per_step, accept_rate)
+                logger.info(
+                    "%d of %d steps. %.2f ms per step. Acceptance rate: %.2f",
+                    self.current_step,
+                    steps,
+                    ms_per_step,
+                    accept_rate,
+                )
                 prev = self.current_step
                 start = time.time()
 
             if self.quit:
-                logger.warning('Quit signal detected. Breaking the MC loop.')
+                logger.warning("Quit signal detected. Breaking the MC loop.")
                 break
 
         logger.info("Reached maximum number of steps (%d mc steps)", steps)
@@ -197,7 +207,7 @@ class Montecarlo(BaseMC):
     def meta_info(self):
         """Return dict with meta info."""
         ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+        st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
         clease_version = str(__version__)
         v_info = sys.version_info
         meta_info = {
@@ -240,7 +250,7 @@ class Montecarlo(BaseMC):
         system_changes: list
             List with system changes
         """
-        logger.debug('Applying changes to the system.')
+        logger.debug("Applying changes to the system.")
         self.evaluator.apply_system_changes(system_changes)
         # Evaluate the energy quantity after applying the changes to the system.
         self.new_energy = self.evaluator.get_energy(applied_changes=system_changes)
@@ -249,17 +259,20 @@ class Montecarlo(BaseMC):
         # already been introduced to the system
         for bias in self.bias_potentials:
             self.new_energy += bias(system_changes)
-        logger.debug('Current energy: %.3f eV, new energy: %.3f eV', self.current_energy,
-                     self.new_energy)
+        logger.debug(
+            "Current energy: %.3f eV, new energy: %.3f eV",
+            self.current_energy,
+            self.new_energy,
+        )
         accept = self._do_accept(self.current_energy, self.new_energy)
-        logger.debug('Change accepted? %s', accept)
+        logger.debug("Change accepted? %s", accept)
 
         if accept:
             # Changes accepted, finalize evaluator.
             self.evaluator.keep_system_changes(system_changes)
         else:
             # Undo changes
-            logger.debug('Change rejected, undoing system changes.')
+            logger.debug("Change rejected, undoing system changes.")
             self.evaluator.undo_system_changes(system_changes)
 
         return accept
@@ -280,29 +293,35 @@ class Montecarlo(BaseMC):
         kT = self.T * kB
         energy_diff = new_energy - current_energy
         probability = np.exp(-energy_diff / kT)
-        logger.debug('Energy difference: %.3e. Calculated probability: %.3f', energy_diff,
-                     probability)
+        logger.debug(
+            "Energy difference: %.3e. Calculated probability: %.3f",
+            energy_diff,
+            probability,
+        )
         return random.random() <= probability
 
     def _move_accepted(self, system_changes: SystemChanges) -> SystemChanges:
-        logger.debug('Move accepted, updating things')
+        logger.debug("Move accepted, updating things")
         self.num_accepted += 1
         self.generator.on_move_accepted(system_changes)
         self.current_energy = self.new_energy
         return system_changes
 
     def _move_rejected(self, system_changes: SystemChanges) -> SystemChanges:
-        logger.debug('Move rejected, undoing system changes: %s', system_changes)
+        logger.debug("Move rejected, undoing system changes: %s", system_changes)
         self.generator.on_move_rejected(system_changes)
 
         # Move rejected, no changes are made
         system_changes = [
-            SystemChange(index=change.index,
-                         old_symb=change.old_symb,
-                         new_symb=change.old_symb,
-                         name=change.name) for change in system_changes
+            SystemChange(
+                index=change.index,
+                old_symb=change.old_symb,
+                new_symb=change.old_symb,
+                name=change.name,
+            )
+            for change in system_changes
         ]
-        logger.debug('Reversed system changes: %s', system_changes)
+        logger.debug("Reversed system changes: %s", system_changes)
         return system_changes
 
     def count_atoms(self) -> Dict[str, int]:
@@ -330,6 +349,10 @@ class Montecarlo(BaseMC):
     def execute_observers(self, system_changes: SystemChanges):
         for interval, obs in self.observers:
             if self.current_step % interval == 0:
-                logger.debug('Executing observer %s at step %d with interval %d.', obs.name,
-                             self.current_step, interval)
+                logger.debug(
+                    "Executing observer %s at step %d with interval %d.",
+                    obs.name,
+                    self.current_step,
+                    interval,
+                )
                 obs(system_changes)

@@ -3,7 +3,7 @@ from scipy.spatial import ConvexHull as SciConvexHull
 import matplotlib.pyplot as plt
 from ase.db import connect
 
-__all__ = ('ConvexHull',)
+__all__ = ("ConvexHull",)
 
 
 class ConvexHull:
@@ -37,12 +37,14 @@ class ConvexHull:
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self,
-                 db_name,
-                 select_cond=None,
-                 atoms_per_fu=1,
-                 conc_scale=1.0,
-                 conc_ranges: dict = None):
+    def __init__(
+        self,
+        db_name,
+        select_cond=None,
+        atoms_per_fu=1,
+        conc_scale=1.0,
+        conc_ranges: dict = None,
+    ):
         if conc_ranges is None:
             conc_ranges = {}
         self.db_name = db_name
@@ -52,7 +54,7 @@ class ConvexHull:
         self.db = connect(self.db_name)
 
         if select_cond is None:
-            self.select_cond = [('converged', '=', True)]
+            self.select_cond = [("converged", "=", True)]
         else:
             self.select_cond = select_cond
 
@@ -121,13 +123,13 @@ class ConvexHull:
                 # is an endpoint
                 if conc[element] >= own_conc:
                     energy = _get_row_energy(row, self.db)
-                    if conc[element] == own_conc and energy >= v['energy']:
+                    if conc[element] == own_conc and energy >= v["energy"]:
                         # We already have a record with the same concentration,
                         # but a better (lower) energy
                         continue
                     # Either a higher concentration or a lower energy
                     # update our current best
-                    v['energy'] = energy
+                    v["energy"] = energy
                     for elem, new_conc in conc.items():
                         v[f"{elem}_conc"] = new_conc
 
@@ -235,7 +237,7 @@ class ConvexHull:
             List with indices of the points that lies
             on the convex hull
         """
-        tol = 1E-4
+        tol = 1e-4
         return all(self.energies[i] <= tol for i in simplex)
 
     def plot(self, fig=None, concs=None, energies=None, marker="o", mfc="none"):
@@ -293,7 +295,7 @@ class ConvexHull:
                         x_cnv = [x[simpl[0]], x[simpl[1]]]
                         y_cnv = [
                             self.energies[simpl[0]] * self.atoms_per_fu,
-                            self.energies[simpl[1]] * self.atoms_per_fu
+                            self.energies[simpl[1]] * self.atoms_per_fu,
                         ]
                         ax.plot(x_cnv, y_cnv, color="black")
             ax.set_xlabel(f"{elems[i]} conc")
@@ -321,7 +323,7 @@ class ConvexHull:
 
         images = Images()
         images.initialize(cnv_hull_atoms)
-        gui = GUI(images, expr='')
+        gui = GUI(images, expr="")
         gui.run()
 
     def cosine_similarity_convex_hull(self, conc, tot_en, cnv_hull=None):

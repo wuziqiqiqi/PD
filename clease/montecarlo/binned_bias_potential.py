@@ -68,9 +68,11 @@ class BinnedBiasPotential(BiasPotential):
             fac = 1.0 / self.dx**2
 
             # Lagrange polynomial
-            y = 0.5*fac*(x - x_center)*(x-x_right)*y_left - \
-                fac*(x - x_left)*(x - x_right)*y_center + \
-                0.5*fac*(x - x_left)*(x-x_center)*y_right
+            y = (
+                0.5 * fac * (x - x_center) * (x - x_right) * y_left
+                - fac * (x - x_left) * (x - x_right) * y_center
+                + 0.5 * fac * (x - x_left) * (x - x_center) * y_right
+            )
         return y
 
     def __call__(self, system_changes: Sequence[SystemChange]):
@@ -81,20 +83,20 @@ class BinnedBiasPotential(BiasPotential):
     def todict(self):
         """Return dictionary representation. (Does not include the getter)"""
         return {
-            'xmin': self.xmin,
-            'xmax': self.xmax,
-            'values': self.values.tolist(),
-            'nbins': self.nbins,
-            'dx': self.dx
+            "xmin": self.xmin,
+            "xmax": self.xmax,
+            "values": self.values.tolist(),
+            "nbins": self.nbins,
+            "dx": self.dx,
         }
 
     def from_dict(self, data):
         """Initialize from a dictionary (Does not include the getter)."""
-        self.xmin = data['xmin']
-        self.xmax = data['xmax']
-        self.values = np.array(data['values'])
-        self.nbins = data['nbins']
-        self.dx = data['dx']
+        self.xmin = data["xmin"]
+        self.xmax = data["xmax"]
+        self.values = np.array(data["values"])
+        self.nbins = data["nbins"]
+        self.dx = data["dx"]
 
     def calculate_from_scratch(self, atoms):
         """Calculate the value from scratch."""

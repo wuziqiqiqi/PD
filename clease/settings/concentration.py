@@ -4,9 +4,9 @@ from random import choice
 import numpy as np
 from scipy.optimize import minimize
 from clease.jsonio import jsonable
-from clease.tools import (remove_redundant_constraints, remove_redundant_equations)
+from clease.tools import remove_redundant_constraints, remove_redundant_equations
 
-__all__ = ('Concentration',)
+__all__ = ("Concentration",)
 
 
 class IntConversionNotConsistentError(Exception):
@@ -25,7 +25,7 @@ class InvalidConstraintError(Exception):
 
 
 # pylint: disable=too-many-instance-attributes
-@jsonable('concentration')
+@jsonable("concentration")
 class Concentration:
     """
     Specify concentration ranges of consituting elements for cluster
@@ -83,13 +83,15 @@ class Concentration:
     ...                      grouped_basis=[(0, 2), (1,)])
     """
 
-    def __init__(self,
-                 basis_elements=None,
-                 grouped_basis=None,
-                 A_lb=None,
-                 b_lb=None,
-                 A_eq=None,
-                 b_eq=None):
+    def __init__(
+        self,
+        basis_elements=None,
+        grouped_basis=None,
+        A_lb=None,
+        b_lb=None,
+        A_eq=None,
+        b_eq=None,
+    ):
         self.orig_basis_elements = basis_elements
         self.grouped_basis = grouped_basis
         self._check_grouped_basis_elements()
@@ -125,7 +127,7 @@ class Concentration:
             if start_col + len(basis) >= self.A_eq.shape[1]:
                 self.A_eq[i, start_col:] = 1
             else:
-                self.A_eq[i, start_col:start_col + len(basis)] = 1
+                self.A_eq[i, start_col : start_col + len(basis)] = 1
             start_col += len(basis)
             self.b_eq[i] = 1
 
@@ -135,12 +137,14 @@ class Concentration:
         self._get_interbasis_relations()
 
     def __eq__(self, other):
-        return np.allclose(self.A_eq, other.A_eq) and \
-            np.allclose(self.b_eq, other.b_eq) and \
-            self.basis_elements == other.basis_elements and \
-            self.grouped_basis == other.grouped_basis and \
-            np.allclose(self.A_lb, other.A_lb) and \
-            np.allclose(self.b_lb, other.b_lb)
+        return (
+            np.allclose(self.A_eq, other.A_eq)
+            and np.allclose(self.b_eq, other.b_eq)
+            and self.basis_elements == other.basis_elements
+            and self.grouped_basis == other.grouped_basis
+            and np.allclose(self.A_lb, other.A_lb)
+            and np.allclose(self.b_lb, other.b_lb)
+        )
 
     def _get_grouped_basis_elements(self):
         if self.grouped_basis is None:
@@ -201,12 +205,13 @@ class Concentration:
             raise InvalidConstraintError(
                 f"The number of columns in A_eq has to match the number of "
                 f"concentration variables. A_eq needs to have "
-                f"{self.num_concs} columns")
+                f"{self.num_concs} columns"
+            )
 
         if A_eq.shape[0] != len(b_eq):
             raise InvalidConstraintError(
-                "The length of b_eq has to be the same as the number of rows "
-                "in A_eq.")
+                "The length of b_eq has to be the same as the number of rows " "in A_eq."
+            )
 
         self.A_eq = np.vstack((self.A_eq, A_eq))
         self.b_eq = np.append(self.b_eq, b_eq)
@@ -227,12 +232,13 @@ class Concentration:
             raise InvalidConstraintError(
                 f"The number of columns in A_lb has to match the number of "
                 f"concentration variables. Hence, A_lb needs to have "
-                f"{self.num_concs} columns")
+                f"{self.num_concs} columns"
+            )
 
         if A_lb.shape[0] != len(b_lb):
             raise InvalidConstraintError(
-                "The length of b_lb has to be the same as the number of rows "
-                "in A_lb.")
+                "The length of b_lb has to be the same as the number of rows " "in A_lb."
+            )
 
     def add_usr_defined_ineq_constraints(self, A_lb, b_lb):
         """Add the user defined constraints.
@@ -254,8 +260,9 @@ class Concentration:
 
         self.A_lb = np.vstack((self.A_lb, A_lb))
         self.b_lb = np.append(self.b_lb, b_lb)
-        self.A_lb, self.b_lb = remove_redundant_constraints(self.A_lb, self.b_lb, self.A_eq,
-                                                            self.b_eq)
+        self.A_lb, self.b_lb = remove_redundant_constraints(
+            self.A_lb, self.b_lb, self.A_eq, self.b_eq
+        )
         self._get_interbasis_relations_for_given_matrix(self.A_lb)
 
     def set_conc_ranges(self, ranges):
@@ -271,22 +278,28 @@ class Concentration:
             coulde be [[(0, 1), (0.2, 0.5), (0, 1)], [(0, 0.8), (0, 0.2)]]
         """
         if len(ranges) != len(self.basis_elements):
-            raise InvalidConstraintError(f"The number of bases is wrong. Expected "
-                                         f"{len(self.basis_elements)}, got {len(ranges)}")
+            raise InvalidConstraintError(
+                f"The number of bases is wrong. Expected "
+                f"{len(self.basis_elements)}, got {len(ranges)}"
+            )
 
         for item, basis in zip(ranges, self.basis_elements):
             if len(item) != len(basis):
                 raise InvalidConstraintError(
                     f"Inconsistent number of elements in basis. "
                     f"Expected {len(basis)}, got {len(item)}. Basis elements: "
-                    f"{self.basis_elements}")
+                    f"{self.basis_elements}"
+                )
             for rng in item:
                 if len(rng) != 2:
-                    raise InvalidConstraintError("Provided range needs to be of length 2. "
-                                                 "Lower and upper bound")
+                    raise InvalidConstraintError(
+                        "Provided range needs to be of length 2. " "Lower and upper bound"
+                    )
                 if any(x < 0.0 or x > 1.0 for x in rng):
-                    raise InvalidConstraintError("Concentrations below 0 or above 1 "
-                                                 "can not be used as concentration constraints")
+                    raise InvalidConstraintError(
+                        "Concentrations below 0 or above 1 "
+                        "can not be used as concentration constraints"
+                    )
 
         flatten_rng = [item for sublist in ranges for item in sublist]
         A_lb = np.zeros((2 * self.num_concs, self.num_concs))
@@ -388,7 +401,8 @@ class Concentration:
             raise InvalidConstraintError(
                 f"Inconsistent number of basis passed. "
                 f"Expected: {len(self.basis_elements)}, got {len(formulas)}. "
-                f"Basis elements: {self.basis_elements}")
+                f"Basis elements: {self.basis_elements}"
+            )
 
         element_conc = self._parse_formula_unit_string(formulas)
         num_atoms_in_basis = self._num_atoms_in_basis(formulas, variable_range)
@@ -533,9 +547,11 @@ class Concentration:
                 return col
             col += 1
 
-        raise RuntimeError(f"Did not find any column corresponding to "
-                           f"{element} in basis {basis}. "
-                           f"Current basis_elements are {self.basis_elements}")
+        raise RuntimeError(
+            f"Did not find any column corresponding to "
+            f"{element} in basis {basis}. "
+            f"Current basis_elements are {self.basis_elements}"
+        )
 
     def _get_coeff(self, string):
         """Get the coefficient in front of the symbol.
@@ -583,7 +599,7 @@ class Concentration:
             new_constraint = {
                 "type": "eq",
                 "fun": equality_constraint,
-                "args": (self.A_eq[i, :], self.b_eq[i])
+                "args": (self.A_eq[i, :], self.b_eq[i]),
             }
             constraints.append(new_constraint)
 
@@ -591,7 +607,7 @@ class Concentration:
             new_constraint = {
                 "type": "ineq",
                 "fun": inequality_constraint,
-                "args": (self.A_lb[i, :], self.b_lb[i])
+                "args": (self.A_lb[i, :], self.b_lb[i]),
             }
             constraints.append(new_constraint)
         return constraints
@@ -645,8 +661,8 @@ class Concentration:
         """Remove the last rows."""
         if not self.fixed_element_constraint_added:
             return
-        self.A_eq = self.A_eq[:self.orig_num_equality, :]
-        self.b_eq = self.b_eq[:self.orig_num_equality]
+        self.A_eq = self.A_eq[: self.orig_num_equality, :]
+        self.b_eq = self.b_eq[: self.orig_num_equality]
         self.fixed_element_constraint_added = False
 
     def get_individual_comp_range(self):
@@ -670,13 +686,15 @@ class Concentration:
         x_init = pinv.dot(self.b_eq)
 
         # Find the closest vector to x0 that satisfies all constraints
-        opt_res = minimize(objective_random,
-                           x_init,
-                           args=(x0,),
-                           method="SLSQP",
-                           jac=obj_jac_random,
-                           constraints=constraints,
-                           bounds=self.trivial_bounds)
+        opt_res = minimize(
+            objective_random,
+            x_init,
+            args=(x0,),
+            method="SLSQP",
+            jac=obj_jac_random,
+            constraints=constraints,
+            bounds=self.trivial_bounds,
+        )
         self._remove_fixed_element_in_each_basis_constraint()
         x = opt_res["x"]
 
@@ -697,7 +715,7 @@ class Concentration:
             basis_start_col.append(start_col)
 
         # Linked basis
-        tol = 1E-6
+        tol = 1e-6
         for i in range(A.shape[0]):
             lowest_nonzoro_basis = None
             for j, basis_start in enumerate(basis_start_col):
@@ -729,8 +747,8 @@ class Concentration:
     def trivial_bounds(self):
         """Return trivial bounds (i.e. 0 <= x <= 1)
 
-           NOTE: One can give stricter bounds, but these
-                 trivial bounds are always satisfied
+        NOTE: One can give stricter bounds, but these
+              trivial bounds are always satisfied
         """
         return [(0, 1) for _ in range(self.num_concs)]
 
@@ -744,13 +762,15 @@ class Concentration:
         x0 = np.random.rand(self.num_concs)
 
         # Find the closest vector to x0 that satisfies all constraints
-        opt_res = minimize(objective_func,
-                           x0,
-                           args=(comp,),
-                           method="SLSQP",
-                           jac=objective_jac_func,
-                           constraints=constraints,
-                           bounds=self.trivial_bounds)
+        opt_res = minimize(
+            objective_func,
+            x0,
+            args=(comp,),
+            method="SLSQP",
+            jac=objective_jac_func,
+            constraints=constraints,
+            bounds=self.trivial_bounds,
+        )
 
         x = opt_res["x"]
         if not self.is_valid_conc(x):
@@ -804,9 +824,11 @@ class Concentration:
         """
 
         if len(num_atoms_in_basis) != len(self.basis_elements):
-            raise ValueError(f"Number of atoms has to be specified for each "
-                             f"basis. Given: {len(num_atoms_in_basis)}. "
-                             f"Expected: {len(self.basis_elements)}")
+            raise ValueError(
+                f"Number of atoms has to be specified for each "
+                f"basis. Given: {len(num_atoms_in_basis)}. "
+                f"Expected: {len(self.basis_elements)}"
+            )
 
         int_array = np.zeros(self.num_concs, dtype=int)
         start = 0
@@ -817,8 +839,7 @@ class Concentration:
             if end >= len(int_array):
                 int_array[start:] = np.round(conc[start:] * num).astype(np.int32)
             else:
-                int_array[start: end] = \
-                    np.round(conc[start: end]*num).astype(np.int32)
+                int_array[start:end] = np.round(conc[start:end] * num).astype(np.int32)
 
             # Check that the sum is consistent
             diff = num - np.sum(int_array[start:end])
@@ -849,14 +870,14 @@ class Concentration:
 
         num_basis = len([i for sub in self.grouped_basis for i in sub])
         if num_basis != len(self.orig_basis_elements):
-            raise ValueError('grouped_basis do not contain all the basis')
+            raise ValueError("grouped_basis do not contain all the basis")
 
         # check if grouped basis have same elements
         for group in self.grouped_basis:
             ref_elements = self.orig_basis_elements[group[0]]
             for indx in group[1:]:
                 if self.orig_basis_elements[indx] != ref_elements:
-                    raise ValueError('elements in the same group must be same')
+                    raise ValueError("elements in the same group must be same")
 
     def get_concentration_vector(self, index_by_basis, atoms):
         """Get the concentration vector."""
@@ -865,15 +886,13 @@ class Concentration:
         concs = np.zeros(self.num_concs)
         start = 0
         for i, indices in enumerate(index_by_basis):
-            symbol_lookuptable = \
-                {symb: start+j for j, symb
-                 in enumerate(self.basis_elements[i])}
+            symbol_lookuptable = {symb: start + j for j, symb in enumerate(self.basis_elements[i])}
             for indx in indices:
                 concs[symbol_lookuptable[atoms[indx].symbol]] += 1
             if start + len(self.basis_elements[i]) >= len(concs):
                 concs[start:] /= len(indices)
             else:
-                concs[start:start + len(self.basis_elements[i])] /= len(indices)
+                concs[start : start + len(self.basis_elements[i])] /= len(indices)
             start += len(self.basis_elements[i])
         assert np.all(concs <= 1.0)
         return concs
@@ -938,7 +957,7 @@ def eq_jac(x, vec, rhs):
 
 def inequality_constraint(x, vec, rhs):
     """Inequality constraints. Return a non-negative number if constraints
-       are satisfied."""
+    are satisfied."""
     return vec.dot(x) - rhs
 
 

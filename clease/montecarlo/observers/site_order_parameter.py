@@ -30,7 +30,7 @@ class SiteOrderParameter(MCObserver):
         """Check if symbols have changed on all sites."""
         nums = self.atoms.get_atomic_numbers()
         self.current_num_changed = np.count_nonzero(nums != self.orig_nums)
-        self.site_changed = (nums != self.orig_nums)
+        self.site_changed = nums != self.orig_nums
 
     def reset(self):
         """Resets the tracked data. (Not the original symbols array)."""
