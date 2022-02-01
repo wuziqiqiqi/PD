@@ -139,3 +139,11 @@ def test_cutoff():
                     fig_dia = figure.get_diameter(atoms)
                     assert fig_dia <= max_diameter
                     assert fig_dia == pytest.approx(fig0_dia)
+
+
+@pytest.mark.parametrize("atoms", [bulk("NaCl", "rocksalt", a=5.0), bulk("Al"), bulk("Fe")])
+def test_cellT_contiguous(atoms):
+    """Test that the transposed and inversed cached cells are c-contiguous in memory"""
+    gen = ClusterGenerator(atoms)
+    assert gen.prim_cell_T.data.c_contiguous
+    assert gen.prim_cell_invT.data.c_contiguous

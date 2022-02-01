@@ -1,6 +1,6 @@
 from itertools import product
 import functools
-from typing import List, Tuple, Dict, Set, Iterator, Iterable
+from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union
 import numpy as np
 from ase import Atoms
 from ase.geometry import wrap_positions
@@ -31,7 +31,7 @@ class ClusterGenerator:
             raise TypeError("prim must be an Atoms object")
         self._prim = other
         # Get the transposed cell as a contiguous array
-        self.prim_cell_T = np.array(other.get_cell().T)
+        self.prim_cell_T = np.ascontiguousarray(other.get_cell().T)
         self.prim_cell_invT = np.linalg.inv(self.prim_cell_T)
 
     def __eq__(self, other) -> bool:
@@ -40,16 +40,32 @@ class ClusterGenerator:
 
         return np.allclose(self.prim_cell_invT, other.prim_cell_invT) and self.prim == other.prim
 
-    def eucledian_distance_vec(self, x1: FourVector, x2: FourVector) -> np.ndarray:
+    def _fv_to_cart(self, fv: FourVector) -> np.ndarray:
+        """Helper function to convert a FourVector object to cartesian using the internal
+        primitive cell."""
+        return fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+
+    def eucledian_distance_vec(
+        self, x1: Union[np.ndarray, FourVector], x2: Union[np.ndarray, FourVector]
+    ) -> np.ndarray:
         """
-        Eucledian distance between to FourVectors in cartesian coordinates.
+        Calculate the difference between two vectors. Either they are in FourVector representation.
+        in which case they are translated into cartesian coordiantes, or they are assumed to be
+        NumPy arrays in cartesian coordinates.
 
         :param x1: First vector
         :param x2: Second vector
         """
 
-        euc1 = x1.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
-        euc2 = x2.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+        def as_euc(x: Union[np.ndarray, FourVector]) -> np.ndarray:
+            """Helper function to translate vector to NumPy array format"""
+            if isinstance(x, FourVector):
+                return self._fv_to_cart(x)
+            # Assume it's already in cartesian coordinates
+            return x
+
+        euc1 = as_euc(x1)
+        euc2 = as_euc(x2)
         return euc2 - euc1
 
     def to_four_vector(self, cartesian: np.ndarray, sublattice: int = None) -> FourVector:
@@ -63,14 +79,14 @@ class ClusterGenerator:
             sublattice = self.get_lattice(cartesian)
         cartesian = cartesian - self.prim.positions[sublattice, :]
 
-        ix, iy, iz = np.round(self.prim_cell_invT.dot(cartesian)).astype(int)
+        ix, iy, iz = map(round, self.prim_cell_invT.dot(cartesian))
         return FourVector(ix, iy, iz, sublattice)
 
     def to_cartesian(self, *four_vectors: FourVector) -> np.ndarray:
         """Convert one or more FourVectors into their Cartesian coordinates."""
         pos = np.zeros((len(four_vectors), 3))
         for ii, fv in enumerate(four_vectors):
-            pos[ii, :] = fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
+            pos[ii, :] = self._fv_to_cart(fv)
         return pos
 
     def get_lattice(self, pos: np.ndarray) -> int:
@@ -85,23 +101,39 @@ class ClusterGenerator:
         diff_sq = np.sum((wrapped[0, :] - shifts) ** 2, axis=1)
         return int(np.argmin(diff_sq))
 
-    def eucledian_distance(self, x1: FourVector, x2: FourVector) -> float:
+    def eucledian_distance(
+        self, x1: Union[np.ndarray, FourVector], x2: Union[np.ndarray, FourVector]
+    ) -> float:
+        """
+        Eucledian distance between to FourVectors in cartesian coordinates.
+        Either the arrays are given as a FourVector object, in which case they are translated
+        into the cartesian coordiates, or they are assumed to already be cartesian coordinates.
+        This allows for either passing in a pre-calculated euclidian vector,
+        or the FourVector itself.
+
+        :param x1: First vector
+        :param x2: Second vector
+        """
+
         d = self.eucledian_distance_vec(x1, x2)
         return np.linalg.norm(d, ord=2)
 
     @property
     def shortest_diag(self) -> float:
-        shortest = None
-        cellT = self.prim.get_cell().T
-        for w in product([-1, 0, 1], repeat=3):
-            if all(x == 0 for x in w):
-                continue
+        cellT = self.prim_cell_T
 
-            diag = cellT.dot(w)
-            length: float = np.sqrt(np.sum(diag**2))
-            if shortest is None or length < shortest:
-                shortest = length
-        assert shortest is not None
+        def _iter_diags() -> Iterable[float]:
+            """Helper function to iterate all diagonals"""
+            for w in product([-1, 0, 1], repeat=3):
+                if all(x == 0 for x in w):
+                    continue
+
+                diag = cellT.dot(w)
+                length: float = np.linalg.norm(diag, ord=2)
+                yield length
+
+        # Find the shortest length
+        shortest = min(_iter_diags())
         return shortest
 
     @property
@@ -112,8 +144,11 @@ class ClusterGenerator:
         min_diag = self.shortest_diag
         max_int = int(cutoff / min_diag) + 1
 
+        # Pre-calculated cartesian representation
+        cart0 = self._fv_to_cart(x0)
+
         def filter_func(fv: FourVector) -> bool:
-            d = self.eucledian_distance(x0, fv)
+            d = self.eucledian_distance(cart0, fv)
             return 1e-5 < d < cutoff
 
         all_sites = product(
@@ -149,8 +184,12 @@ class ClusterGenerator:
         x0 = FourVector(0, 0, 0, lattice)
         sites = set(self.with_cutoff.get(cutoff, lattice))
         within_cutoff[x0] = sites
+
+        dist_fnc = self.eucledian_distance  # Cache the distance function
         for s in sites:
-            nearby = set(s1 for s1 in sites if s1 != s and self.eucledian_distance(s1, s) <= cutoff)
+            # Precalculate the cartesian representation of the FourVector
+            cart_s = self._fv_to_cart(s)
+            nearby = set(s1 for s1 in sites if s1 != s and dist_fnc(s1, cart_s) <= cutoff)
 
             within_cutoff[s] = nearby
         return within_cutoff

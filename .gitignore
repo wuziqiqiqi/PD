@@ -31,3 +31,4 @@ demo_save.json
 prof/
 .tox/
 .benchmarks/
+*.prof

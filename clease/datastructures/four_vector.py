@@ -48,7 +48,7 @@ class FourVector:
         """
         if transposed_cell is None:
             transposed_cell = prim.get_cell().T
-        return np.dot(transposed_cell, self.xyz_array) + prim[self.sublattice].position
+        return np.dot(transposed_cell, self.xyz_array) + prim.positions[self.sublattice]
 
     def to_scaled(self, prim: Atoms) -> np.ndarray:
         """

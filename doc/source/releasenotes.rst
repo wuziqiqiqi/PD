@@ -13,6 +13,7 @@ Release notes
   Use the ``prop`` keyword in the :class:`~clease.evaluate.Evaluate` class to use
   this feature.
 * Added the ``check_db`` keyword to :class:`~clease.structgen.new_struct.NewStructures`
+* Some minor optimizations
 
 0.10.8
 =======
