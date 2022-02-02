@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.11.0
+=======
+
 0.10.9
 =======
 * Now caches the CF names if requesting every CF name.
