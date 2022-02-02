@@ -50,19 +50,6 @@ doctest:
     - cd doc
     - make doctest SPHINXOPTS="-W"
 
-pages:
-  stage: Deploy
-  script:
-    - python3 -m pip install .[doc]
-    - cd doc
-    - make html
-    - mv build/html/ ../public/
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
-
 .test_template: &manual_test
   stage: Code Test
   when: manual
@@ -112,9 +99,31 @@ linux_wheels:
     CIBW_BUILD: cp{36,37,38,39}-manylinux*
   script:
     - curl -sSL https://get.docker.com/ | sh
-    - python -m pip install cibuildwheel==2.2.2
+    - python -m pip install cibuildwheel==2.3.1
     - cibuildwheel --output-dir wheelhouse
   artifacts:
     paths:
       - wheelhouse/
     expire_in: 2 weeks
+  tags:
+    # CLEASER chokes on this job, so make it target only non-cleaser tags
+    # (due to not being able to do DinD, security reasons)
+    - gitlab-org-docker
+
+pypi:
+  stage: Deploy
+  cache: {}
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: ${CI_PYPI_TOKEN}
+  script:
+    - pip install pyclean>=2.0.0 twine build
+    - make publish
+  # https://stackoverflow.com/a/52807912
+  # only allow on tags on master
+  only:
+    - tags
+  except:
+    - branches
+  # Safety guard that it's a tag + manual trigger.
+  when: manual
