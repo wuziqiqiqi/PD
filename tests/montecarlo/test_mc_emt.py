@@ -91,4 +91,4 @@ def test_evaluator(evaluator):
 
     evaluator.undo_system_changes(changes)
     assert list(atoms.symbols) == original_symbols
-    assert pytest.approx(evaluator.get_energy(), en)
+    assert pytest.approx(evaluator.get_energy()) == en

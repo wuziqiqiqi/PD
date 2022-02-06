@@ -56,7 +56,7 @@ class NewStructures:
 
     :param struct_per_gen: Number of structures to generate per generation
 
-    :check_db: Should a new structure which is being inserted into the database be checked
+    :param check_db: Should a new structure which is being inserted into the database be checked
         against pre-existing structures? Should only be disabled if you know what you are doing.
         Default is ``True``.
     """
