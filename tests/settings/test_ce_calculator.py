@@ -210,9 +210,9 @@ def do_test_update_correlation_functions(settings, atoms, n_trial_configs=20, fi
 
         # The calculator should update its correlation functions
         # when the energy is computed
-        start = time.time()
+        start = time.perf_counter()
         atoms.get_potential_energy()
-        timings.append(time.time() - start)
+        timings.append(time.perf_counter() - start)
         brute_force_cf = cf.get_cf_by_names(atoms, calc.cf_names)
         calc_cf = calc.get_cf()
 

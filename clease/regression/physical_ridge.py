@@ -301,7 +301,7 @@ def random_cv_hyper_opt(
     best_coeff = None
 
     cv_params = []
-    last_print = time.time()
+    last_print = time.perf_counter()
     partitions = split_dataset(X, y, nsplits=cv, groups=groups)
 
     for i in range(num_trials):
@@ -342,13 +342,13 @@ def random_cv_hyper_opt(
             best_coeff = coeff
             best_param = param_dict
 
-        if time.time() - last_print > 30:
+        if time.perf_counter() - last_print > 30:
             msg = (
                 f"{i} of {num_trials}. CV: {best_cv*1000.0} meV/atom. "
                 f"MSE: {best_mse*1000.0} meV/atom. Params: {best_param}"
             )
             logger.info(msg)
-            last_print = time.time()
+            last_print = time.perf_counter()
 
     cv_params = sorted(cv_params, key=lambda x: x[0])
     res = {

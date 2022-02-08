@@ -186,11 +186,11 @@ class KineticMonteCarlo(BaseMC):
         self.evaluator.get_energy()
         self.evaluator.reset()
 
-        now = time.time()
+        now = time.perf_counter()
         for i in range(num_steps):
-            if self.log_interval is not False and time.time() - now > self.log_interval:
+            if self.log_interval is not False and time.perf_counter() - now > self.log_interval:
                 logger.info("Step %d of %d", i, num_steps)
-                now = time.time()
+                now = time.perf_counter()
             vac_idx = self._mc_step(vac_idx, i)
 
         # If entropy is tracked: Flush the buffer

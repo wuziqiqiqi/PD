@@ -161,7 +161,7 @@ class MetaDynamicsSampler:
                 "update at position x"
             )
         conv = False
-        now = time.time()
+        now = time.perf_counter()
 
         sweep_no = 0
         counter = 0
@@ -170,14 +170,14 @@ class MetaDynamicsSampler:
         self.mc.initialize_run()
         while not conv:
             counter += 1
-            if time.time() - now > self.log_freq:
+            if time.perf_counter() - now > self.log_freq:
                 msg = f"Sweep no. {int(counter/len(self.mc.atoms))} "
                 msg += f"Average visits: {self.progress_info['mean']:.2e}. "
                 msg += f"Min/avg: {self.progress_info['minval']:.2e} "
                 msg += f"x: {self.bias.getter(None):.2e}"
                 logger.info(msg)
                 self.save()
-                now = time.time()
+                now = time.perf_counter()
 
             # pylint: disable=protected-access
             self.mc._mc_step()

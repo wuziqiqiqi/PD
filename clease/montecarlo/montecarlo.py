@@ -166,7 +166,7 @@ class Montecarlo(BaseMC):
         # infinite loops
         self.initialize_run()
 
-        start = time.time()
+        start = time.perf_counter()
         prev = self.current_step
         info_enabled = logger.isEnabledFor(logging.INFO)  # Do we emit INFO logs?
         while self.current_step < steps:
@@ -176,7 +176,7 @@ class Montecarlo(BaseMC):
             self.energy_squared += E**2
 
             # We only want to do this calculation if logging is enabled for INFO.
-            if info_enabled and time.time() - start > self.status_every_sec:
+            if info_enabled and time.perf_counter() - start > self.status_every_sec:
                 ms_per_step = 1000.0 * self.status_every_sec / (self.current_step - prev)
                 accept_rate = self.num_accepted / self.current_step
                 logger.info(
@@ -187,7 +187,7 @@ class Montecarlo(BaseMC):
                     accept_rate,
                 )
                 prev = self.current_step
-                start = time.time()
+                start = time.perf_counter()
 
             if self.quit:
                 logger.warning("Quit signal detected. Breaking the MC loop.")

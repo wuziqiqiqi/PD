@@ -436,10 +436,10 @@ class BayesianCompressiveSensing(LinearRegression):
 
         is_first = True
         iteration = 0
-        now = time.time()
+        now = time.perf_counter()
         d_gamma = 1e100
         while iteration < self.maxiter:
-            if time.time() - now > self.output_rate_sec:
+            if time.perf_counter() - now > self.output_rate_sec:
                 msg = f"Iter: {iteration} "
                 msg += f"RMSE: {1000.0*self.rmse():.3E} "
                 msg += f"LOOCV (approx.): {1000.0*self.estimate_loocv():.3E} "
@@ -448,7 +448,7 @@ class BayesianCompressiveSensing(LinearRegression):
                 msg += f"Shape lamb: {self.shape_lamb:.3E} "
                 msg += f"Noise: {np.sqrt(1.0/self.inv_variance):.3E}"
                 logger.info(msg)
-                now = time.time()
+                now = time.perf_counter()
 
             iteration += 1
             already_excluded = False

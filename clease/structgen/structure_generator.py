@@ -99,7 +99,7 @@ class StructureGenerator(ABC):
         self._reset()
 
         temps = np.logspace(math.log10(self.init_temp), math.log10(self.final_temp), self.num_temp)
-        now = time.time()
+        now = time.perf_counter()
         change_element = self._has_more_than_one_conc()
 
         N = len(temps)
@@ -115,7 +115,7 @@ class StructureGenerator(ABC):
             while count < self.num_steps_per_temp:
                 count += 1
 
-                if time.time() - now > self.output_every:
+                if time.perf_counter() - now > self.output_every:
                     acc_rate = float(num_accepted) / count
                     msg = (
                         f"T Step: {Ti+1:>{len_max_temp}} of {N}, "
@@ -127,7 +127,7 @@ class StructureGenerator(ABC):
                         f"Accept. rate: {acc_rate*100:.2f} %"
                     )
                     logger.info(msg)
-                    now = time.time()
+                    now = time.perf_counter()
 
                 if choice([True, False]) and self.alter_composition:
                     logger.debug("Change element type? %s", change_element)
@@ -181,13 +181,13 @@ class StructureGenerator(ABC):
         self._reset()
         count = 0
         max_count = 100
-        now = time.time()
+        now = time.perf_counter()
         # To avoid errors, just set the temperature to an arbitrary file
         self.temp = 10000000.0
         while count < max_count:
-            if time.time() - now > self.output_every:
+            if time.perf_counter() - now > self.output_every:
                 logger.info("Progress (%.3f %%)", 100 * count / max_count)
-                now = time.time()
+                now = time.perf_counter()
 
             if choice([True, False]) and self.alter_composition:
                 # Change element Type
