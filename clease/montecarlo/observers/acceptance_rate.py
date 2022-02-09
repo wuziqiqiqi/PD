@@ -1,5 +1,5 @@
-from typing import Sequence, Dict
-from clease.datastructures import SystemChange
+from typing import Dict
+from clease.datastructures import SystemChanges
 from clease.montecarlo.observers.mc_observer import MCObserver
 
 __all__ = ("AcceptanceRate",)
@@ -31,7 +31,7 @@ class AcceptanceRate(MCObserver):
         self.num_calls = 0
         self.num_accept = 0
 
-    def __call__(self, system_changes: Sequence[SystemChange]) -> None:
+    def __call__(self, system_changes: SystemChanges) -> None:
         """
         Updates the acceptance rate.
 

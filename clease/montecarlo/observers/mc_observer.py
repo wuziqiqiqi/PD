@@ -1,13 +1,15 @@
-from typing import List, Tuple
+from abc import ABC, abstractmethod
 from ase import Atoms
+from clease.datastructures.system_changes import SystemChanges
 
 
-class MCObserver:
+class MCObserver(ABC):
     """Base class for all MC observers."""
 
     name = "GenericObserver"
 
-    def __call__(self, system_changes: List[Tuple[int, str, str]]):
+    @abstractmethod
+    def __call__(self, system_changes: SystemChanges) -> None:
         """
         Gets information about the system changes and can perform some action
 
