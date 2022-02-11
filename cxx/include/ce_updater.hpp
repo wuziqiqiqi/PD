@@ -122,7 +122,6 @@ public:
   void get_clusters(const char *cname, std::map<unsigned int, const Cluster *> &clusters) const;
 
   /** Returns the translation matrix */
-  // const Matrix<int>& get_trans_matrix() const {return trans_matrix;};
   const RowSparseStructMatrix &get_trans_matrix() const { return trans_matrix; };
 
   /** Get the translation symmetry group of a site */
@@ -165,7 +164,7 @@ private:
   std::map<std::string, int> normalisation_factor;
 
   // bf_list basis_functions;
-  BasisFunction *basis_functions{nullptr};
+  BasisFunction basis_functions;
 
   Status_t status{Status_t::NOT_INITIALIZED};
   // Matrix<int> trans_matrix;
@@ -186,9 +185,6 @@ private:
 
   /** Undos the latest changes keeping the tracker CE tracker updated */
   void undo_changes_tracker(int num_steps);
-
-  /** Extracts the decoration number from cluster names */
-  int get_decoration_number(const std::string &cluster_name) const;
 
   /** Returns true if all decoration numbers are equal */
   bool all_decoration_nums_equal(const std::vector<int> &dec_num) const;

@@ -19,8 +19,6 @@ CEUpdater::~CEUpdater()
 
   delete symbols_with_id;
   symbols_with_id = nullptr;
-  delete basis_functions;
-  basis_functions = nullptr;
 }
 
 void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc, PyObject *pyeci, PyObject *cluster_list)
@@ -179,7 +177,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
     basis_func_raw.push_back(new_entry);
   }
 
-  basis_functions = new BasisFunction(basis_func_raw, *symbols_with_id);
+  this->basis_functions = BasisFunction(basis_func_raw, *symbols_with_id);
 
 #ifdef PRINT_DEBUG
   cout << "Reading translation matrix from settings\n";
@@ -264,7 +262,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
     {
       int trans_index = trans_matrix(ref_indx, indices[j]);
       int id = (trans_index == ref_indx) ? ref_id : symbols_with_id->id(trans_index);
-      sp_temp *= basis_functions->get(dec[j], id);
+      sp_temp *= basis_functions.get(dec[j], id);
     }
     sp += sp_temp * dup_factors[i];
   }
@@ -339,7 +337,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
     if (name.find("c1") == 0)
     {
       int dec = bfs[0];
-      next_cf[i] = current_cf[i] + (basis_functions->get(dec, new_symb_id) - basis_functions->get(dec, old_symb_id)) / num_non_bkg_sites;
+      next_cf[i] = current_cf[i] + (basis_functions.get(dec, new_symb_id) - basis_functions.get(dec, old_symb_id)) / num_non_bkg_sites;
       continue;
     }
 
@@ -527,7 +525,6 @@ PyObject *CEUpdater::get_cf()
   PyObject *cf_dict = PyDict_New();
   cf &corrfunc = history->get_current();
 
-  // for (auto iter=corrfunc.begin(); iter != corrfunc.end(); ++iter)
   for (unsigned int i = 0; i < corrfunc.size(); i++)
   {
     PyObject *pyvalue = PyFloat_FromDouble(corrfunc[i]);
@@ -545,7 +542,7 @@ CEUpdater *CEUpdater::copy() const
   obj->trans_symm_group = trans_symm_group;
   obj->trans_symm_group_count = trans_symm_group_count;
   obj->normalisation_factor = normalisation_factor;
-  obj->basis_functions = new BasisFunction(*basis_functions);
+  obj->basis_functions = BasisFunction(basis_functions);
   obj->status = status;
   obj->trans_matrix = trans_matrix;
   obj->ctype_lookup = ctype_lookup;
@@ -582,18 +579,6 @@ void CEUpdater::set_eci(PyObject *new_eci)
   {
     throw invalid_argument("All ECIs has to correspond to a correlation function!");
   }
-}
-
-int CEUpdater::get_decoration_number(const string &cname) const
-{
-  if (basis_functions->size() == 1)
-  {
-    return 0;
-  }
-
-  // Find position of the last under score
-  size_t found = cname.find_last_of("_");
-  return atoi(cname.substr(found + 1).c_str()) - 1;
 }
 
 bool CEUpdater::all_decoration_nums_equal(const vector<int> &dec_nums) const
@@ -764,11 +749,10 @@ void CEUpdater::read_trans_matrix(PyObject *py_trans_mat)
 
   set<int> unique_indx;
   clusters.unique_indices(unique_indx);
-  // get_unique_indx_in_clusters(unique_indx);
   vector<int> unique_indx_vec;
   set2vector(unique_indx, unique_indx_vec);
 
-  // unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
+  // Compute the max index that is ever going to be checked
   unsigned int max_indx = clusters.max_index();
   if (is_list)
   {
@@ -949,7 +933,7 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
       {
         if (!is_background_index[atom_no] || !ignore_background_indices)
         {
-          new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
+          new_value += basis_functions.get(dec, symbols_with_id->id(atom_no));
         }
       }
       cf[name] = new_value / num_non_bkg_sites;
@@ -973,7 +957,6 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
         continue;
       }
 
-      // const Cluster& cluster = *clust_per_symm_group[symm];
       const Cluster &cluster = clusters.get(prefix, symm);
       unsigned int size = cluster.size;
       assert(cluster_indices[0].size() == size);
