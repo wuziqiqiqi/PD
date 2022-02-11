@@ -3,7 +3,7 @@
 #include <iostream>
 #include "additional_tools.hpp"
 #include "basis_function.hpp"
-#include <iostream>
+#include "atomic_numbers.hpp"
 #include <sstream>
 #include <algorithm>
 #include <cassert>
@@ -28,7 +28,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
   atoms = py_atoms;
   if (settings == nullptr)
   {
-    throw invalid_argument("CEBulk object is nullptr!");
+    throw invalid_argument("Settings object is nullptr!");
   }
 
 #ifdef PRINT_DEBUG
@@ -118,7 +118,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
   {
     throw invalid_argument("cluster_list is nullptr!");
   }
-  //unsigned int num_trans_symm = list_size(cluster_info);
+  // unsigned int num_trans_symm = list_size(cluster_info);
   unsigned int num_clusters = PySequence_Size(cluster_list);
 
 #ifdef PRINT_DEBUG
@@ -208,7 +208,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
 
   vector<string> flattened_cnames;
   flattened_cf_names(flattened_cnames);
-  //history = new CFHistoryTracker(flattened_cnames);
+  // history = new CFHistoryTracker(flattened_cnames);
   history = new CFHistoryTracker(eci.get_names());
   history->insert(corrFunc, nullptr);
 
@@ -257,7 +257,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
     double sp_temp = 1.0;
 
     // Use pointer arithmetics in the inner most loop
-    //const int *indx_list_ptr = &indx_list[i][0];
+    // const int *indx_list_ptr = &indx_list[i][0];
     const int *indices = &indx_list[i][0];
 
     for (unsigned int j = 0; j < n_memb; j++)
@@ -316,13 +316,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
 
   if (atoms != nullptr)
   {
-    PyObject *symb_str = string2py(symb_change.new_symb.c_str());
-    PyObject *pyindx = int2py(symb_change.indx);
-    PyObject *atom = PyObject_GetItem(atoms, pyindx);
-    PyObject_SetAttrString(atom, "symbol", symb_str);
-    Py_DECREF(symb_str);
-    Py_DECREF(pyindx);
-    Py_DECREF(atom);
+    set_symbol_in_atoms(atoms, symb_change.indx, symb_change.new_symb);
   }
 
   // Loop over all ECIs
@@ -331,11 +325,11 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
   //#pragma omp parallel for num_threads(cf_update_num_threads) schedule(dynamic)
   for (unsigned int i = 0; i < eci.size(); i++)
   {
-    //const string &name = iter->first;
+    // const string &name = iter->first;
     const string &name = eci.name(i);
     if (name.find("c0") == 0)
     {
-      //next_cf[name] = current_cf[name];
+      // next_cf[name] = current_cf[name];
       next_cf[i] = current_cf[i];
       continue;
     }
@@ -411,15 +405,7 @@ void CEUpdater::undo_changes(int num_steps)
 
     if (atoms != nullptr)
     {
-      PyObject *old_symb_str = string2py(last_changes->old_symb.c_str());
-      PyObject *pyindx = int2py(last_changes->indx);
-      PyObject *pysymb = PyObject_GetItem(atoms, pyindx);
-      PyObject_SetAttrString(pysymb, "symbol", old_symb_str);
-
-      // Remove temporary objects
-      Py_DECREF(old_symb_str);
-      Py_DECREF(pyindx);
-      Py_DECREF(pysymb);
+      set_symbol_in_atoms(atoms, last_changes->indx, last_changes->old_symb);
     }
   }
 }
@@ -541,7 +527,7 @@ PyObject *CEUpdater::get_cf()
   PyObject *cf_dict = PyDict_New();
   cf &corrfunc = history->get_current();
 
-  //for (auto iter=corrfunc.begin(); iter != corrfunc.end(); ++iter)
+  // for (auto iter=corrfunc.begin(); iter != corrfunc.end(); ++iter)
   for (unsigned int i = 0; i < corrfunc.size(); i++)
   {
     PyObject *pyvalue = PyFloat_FromDouble(corrfunc[i]);
@@ -778,11 +764,11 @@ void CEUpdater::read_trans_matrix(PyObject *py_trans_mat)
 
   set<int> unique_indx;
   clusters.unique_indices(unique_indx);
-  //get_unique_indx_in_clusters(unique_indx);
+  // get_unique_indx_in_clusters(unique_indx);
   vector<int> unique_indx_vec;
   set2vector(unique_indx, unique_indx_vec);
 
-  //unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
+  // unsigned int max_indx = get_max_indx_of_zero_site(); // Compute the max index that is ever going to be checked
   unsigned int max_indx = clusters.max_index();
   if (is_list)
   {
@@ -987,7 +973,7 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
         continue;
       }
 
-      //const Cluster& cluster = *clust_per_symm_group[symm];
+      // const Cluster& cluster = *clust_per_symm_group[symm];
       const Cluster &cluster = clusters.get(prefix, symm);
       unsigned int size = cluster.size;
       assert(cluster_indices[0].size() == size);

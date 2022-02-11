@@ -53,6 +53,7 @@ src_files = [
     "basis_function.cpp",
     "cluster_list.cpp",
     "atoms.cpp",
+    "atomic_numbers.cpp",
 ]
 
 src_files = [cxx_src_folder + x for x in src_files]

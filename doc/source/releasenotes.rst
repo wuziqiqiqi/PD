@@ -8,6 +8,7 @@ Release notes
 =======
 * Python 3.7+ is now required.
 * Removed old deprecated functions and classes.
+* Some performance improvements.
 
 0.10.9
 =======

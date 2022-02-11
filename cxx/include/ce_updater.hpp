@@ -27,7 +27,7 @@ typedef std::vector<std::map<std::string, double>> bf_list;
 typedef std::array<SymbolChange, 2> swap_move;
 typedef std::unordered_map<std::string, Cluster> cluster_dict;
 
-//typedef std::unordered_map<std::string,double> cf;
+// typedef std::unordered_map<std::string,double> cf;
 typedef NamedArray cf;
 
 enum class Status_t
@@ -116,13 +116,13 @@ public:
   const ClusterList &get_clusters() const { return clusters; };
 
   /** Return the cluster with the given name
-  * The key in the map is the symmetry group
-  */
+   * The key in the map is the symmetry group
+   */
   void get_clusters(const std::string &cname, std::map<unsigned int, const Cluster *> &clusters) const;
   void get_clusters(const char *cname, std::map<unsigned int, const Cluster *> &clusters) const;
 
   /** Returns the translation matrix */
-  //const Matrix<int>& get_trans_matrix() const {return trans_matrix;};
+  // const Matrix<int>& get_trans_matrix() const {return trans_matrix;};
   const RowSparseStructMatrix &get_trans_matrix() const { return trans_matrix; };
 
   /** Get the translation symmetry group of a site */
@@ -156,19 +156,19 @@ private:
 
   unsigned int cf_update_num_threads{1};
 
-  //std::vector<std::string> symbols;
+  // std::vector<std::string> symbols;
   Symbols *symbols_with_id{nullptr};
-  //std::vector<cluster_dict> clusters;
+  // std::vector<cluster_dict> clusters;
   ClusterList clusters;
   std::vector<int> trans_symm_group;
   std::vector<int> trans_symm_group_count;
   std::map<std::string, int> normalisation_factor;
 
-  //bf_list basis_functions;
+  // bf_list basis_functions;
   BasisFunction *basis_functions{nullptr};
 
   Status_t status{Status_t::NOT_INITIALIZED};
-  //Matrix<int> trans_matrix;
+  // Matrix<int> trans_matrix;
   RowSparseStructMatrix trans_matrix;
   std::map<std::string, int> ctype_lookup;
   NamedArray eci;
@@ -215,7 +215,7 @@ private:
   bool is_swap_move(const swap_move &move) const;
 
   /** Sort indices according to order */
-  //static void sort_indices(std::vector<int> &indx, const std::vector<int> &order);
+  // static void sort_indices(std::vector<int> &indx, const std::vector<int> &order);
   static void sort_indices(int indices[], const std::vector<int> &order, unsigned int n_indices);
 };
 #endif

@@ -1,8 +1,21 @@
 from typing import NamedTuple, Sequence
 import typing
 import ase
+from ase.data import atomic_numbers
 
 __all__ = ("SystemChange", "SystemChanges")
+
+
+def _apply_symbol_to_index(atoms: ase.Atoms, index: int, symbol: str) -> None:
+    """Faster method for changing a single symbol at a given index, since it short-circuits
+    the whole atoms.symbols mechanism, since we already know we only want to change 1 symbol.
+
+    Roughly equivalent to
+
+    atoms.symbols[index] = new_sybmol
+    """
+    number = atomic_numbers[symbol]
+    atoms.numbers[index] = number
 
 
 class SystemChange(NamedTuple):
@@ -17,7 +30,7 @@ class SystemChange(NamedTuple):
 
         :param atoms: ASE Atoms object to be mutated.
         """
-        atoms.symbols[self.index] = self.new_symb
+        _apply_symbol_to_index(atoms, self.index, self.new_symb)
 
     def undo_change(self, atoms: ase.Atoms) -> None:
         """Undo the change to the atoms object. The atoms object is mutated in place.
@@ -25,7 +38,7 @@ class SystemChange(NamedTuple):
 
         :param atoms: ASE Atoms object to be mutated.
         """
-        atoms.symbols[self.index] = self.old_symb
+        _apply_symbol_to_index(atoms, self.index, self.old_symb)
 
 
 # Type alias for multiple SystemChange objects
