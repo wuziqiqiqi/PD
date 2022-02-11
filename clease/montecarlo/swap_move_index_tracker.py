@@ -1,20 +1,33 @@
-from typing import Sequence, List
+from typing import Sequence, List, Dict
 import random
 import numpy as np
+import ase
 
 
 class SwapMoveIndexTracker:
-    def __init__(self):
-        self.tracker = {}
+    """
+    Tracker for possible swap move indices.
+
+    :param atoms: The ase Atoms object to be tracked.
+    :param indices: List with indices that can be chosen from. If None, all indices
+        can be chosen.
+    """
+
+    def __init__(self, atoms, indices: Sequence[int] = None):
+        self.tracker: Dict[str, List[int]] = {}
         self.index_loc = None
         self._last_move = []
+
+        self._init_tracker(atoms, indices=indices)
+
+        # Cache of the unique symbols for faster lookup
+        self.unique_symbols = self.get_unique_symbols()
 
     @staticmethod
     def _unique_symbols_from_atoms(atoms) -> List[str]:
         return sorted(set(atoms.symbols))
 
-    @property
-    def symbols(self) -> List[str]:
+    def get_unique_symbols(self) -> List[str]:
         return list(self.tracker.keys())
 
     @property
@@ -23,12 +36,13 @@ class SwapMoveIndexTracker:
 
     def __repr__(self):
         str_repr = f"SwapMoveIndexTracker at {hex(id(self))}\n"
-        str_repr += f"Symbols tracked: {self.symbols}\n"
+        str_repr += f"Symbols tracked: {self.get_unique_symbols()}\n"
         str_repr += f"Tracker info: {self.tracker}\n"
         return str_repr
 
-    def init_tracker(self, atoms):
+    def _init_tracker(self, atoms: ase.Atoms, indices: Sequence[int] = None) -> None:
         """Initialize the tracker with the numbers."""
+        # Cache the unique symbols for faster access
         symbols = self._unique_symbols_from_atoms(atoms)
 
         # Track indices of all symbols
@@ -40,7 +54,10 @@ class SwapMoveIndexTracker:
             self.tracker[atom.symbol].append(atom.index)
             self.index_loc[atom.index] = len(self.tracker[atom.symbol]) - 1
 
-    def filter_indices(self, include: Sequence[int]):
+        if indices is not None:
+            self._filter_indices(indices)
+
+    def _filter_indices(self, include: Sequence[int]) -> None:
         include_set = set(include)
         for s, idx in self.tracker.items():
             self.tracker[s] = list(set(idx).intersection(include_set))
@@ -50,7 +67,7 @@ class SwapMoveIndexTracker:
         # Remove empty items
         self.tracker = {k: v for k, v in self.tracker.items() if v}
 
-    def move_already_updated(self, system_changes):
+    def move_already_updated(self, system_changes) -> bool:
         """Return True if system_changes have already been taken into account.
 
         Parameters:
@@ -59,7 +76,7 @@ class SwapMoveIndexTracker:
         """
         return system_changes == self._last_move
 
-    def update_swap_move(self, system_changes):
+    def update_swap_move(self, system_changes) -> None:
         """Update the atoms tracker.
 
         Parameters:
@@ -86,7 +103,7 @@ class SwapMoveIndexTracker:
         self.tracker[symb2][loc2] = indx1
         self.index_loc[indx1] = loc2
 
-    def undo_last_swap_move(self):
+    def undo_last_swap_move(self) -> None:
         """Undo last swap move."""
         if not self._last_move:
             return

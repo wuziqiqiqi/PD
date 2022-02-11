@@ -86,7 +86,7 @@ class TrialMoveGenerator(ABC):
             move = self.get_single_trial_move()
             if self._change_ok(move):
                 return move
-        raise RuntimeError("Can not produce a valid trial move")
+        raise RuntimeError(f"Can not produce a valid trial move in {self.max_attempts} attempts.")
 
     def on_move_accepted(self, changes: Sequence[SystemChange]) -> None:
         """
@@ -177,17 +177,9 @@ class RandomSwap(SingleTrialMoveGenerator):
 
     def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
-        self.tracker = SwapMoveIndexTracker()
         self.indices = indices
-        self.initialize(atoms)
 
-    def initialize(self, atoms: Atoms) -> None:
-        """
-        Initializes the atoms tracker
-        """
-        self.tracker.init_tracker(atoms)
-        if self.indices:
-            self.tracker.filter_indices(self.indices)
+        self.tracker = SwapMoveIndexTracker(atoms, indices=indices)
 
         if self.tracker.num_symbols < 2:
             raise TooFewElementsError(
@@ -199,8 +191,8 @@ class RandomSwap(SingleTrialMoveGenerator):
         """
         Create a swap move
         """
-        symb_a = random.choice(self.tracker.symbols)
-        symb_b = random.choice([s for s in self.tracker.symbols if s != symb_a])
+        # random.sample samples without replacement.
+        symb_a, symb_b = random.sample(self.tracker.unique_symbols, 2)
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [

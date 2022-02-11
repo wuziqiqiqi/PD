@@ -13,7 +13,6 @@ from clease.version import __version__
 from clease.datastructures import SystemChange, SystemChanges
 from .mc_evaluator import MCEvaluator
 from .base import BaseMC
-from .exponential_filter import ExponentialFilter
 from .averager import Averager
 from .bias_potential import BiasPotential
 from .observers import MCObserver
@@ -73,12 +72,6 @@ class Montecarlo(BaseMC):
 
         self.quit = False
 
-        self.filter = ExponentialFilter(
-            min_time=0.2 * len(self.atoms),
-            max_time=20 * len(self.atoms),
-            n_subfilters=10,
-        )
-
     def update_current_energy(self):
         self.current_energy = self.evaluator.get_energy()
         logger.debug("Updating current energy to %s", self.current_energy)
@@ -104,7 +97,6 @@ class Montecarlo(BaseMC):
             obs.reset()
 
         self.evaluator.reset()
-        self.filter.reset()
         self._reset_internal_counters()
 
         if self.mean_energy is not None:
@@ -343,7 +335,6 @@ class Montecarlo(BaseMC):
 
         # Execute all observers
         self.execute_observers(system_changes)
-        self.filter.add(self.current_energy)
         return self.current_energy, move_accepted
 
     def execute_observers(self, system_changes: SystemChanges):
