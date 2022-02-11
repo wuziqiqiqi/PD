@@ -97,6 +97,7 @@ def check_NaCl_conc(templates):
     for atoms in templates:
         num_cl = sum(1 for atom in atoms if atom.symbol == "Cl")
         assert 2.0 * num_cl / 3.0 == pytest.approx(np.round(2.0 * num_cl / 3.0))
+    return True
 
 
 @pytest.fixture
@@ -134,31 +135,32 @@ def test_fcc(template_atoms_factory):
     assert ref == sizes
 
 
-def test_valid_concentration_filter():
-
-    tests = [
+@pytest.mark.parametrize(
+    "test",
+    [
         {"system": "NaCl", "func": check_NaCl_conc},
         {"system": "LiNiMnCoO", "func": lambda templ: len(templ) >= 1},
-    ]
+    ],
+)
+def test_valid_concentration_filter(test):
 
-    for test in tests:
-        settings = get_settings_placeholder_valid_conc_filter(test["system"])
+    settings = get_settings_placeholder_valid_conc_filter(test["system"])
 
-        template_generator = TemplateAtoms(
-            settings.atoms, supercell_factor=20, skew_threshold=1000000000
-        )
+    template_generator = TemplateAtoms(
+        settings.atoms, supercell_factor=20, skew_threshold=1000000000
+    )
 
-        conc_filter = ValidConcentrationFilter(settings.concentration, settings.index_by_basis)
-        # Check that you cannot attach an AtomsFilter as a cell
-        # filter
-        with pytest.raises(TypeError):
-            template_generator.add_cell_filter(conc_filter)
+    conc_filter = ValidConcentrationFilter(settings.concentration, settings.index_by_basis)
+    # Check that you cannot attach an AtomsFilter as a cell
+    # filter
+    with pytest.raises(TypeError):
+        template_generator.add_cell_filter(conc_filter)
 
-        template_generator.clear_filters()
-        template_generator.add_atoms_filter(conc_filter)
+    template_generator.clear_filters()
+    template_generator.add_atoms_filter(conc_filter)
 
-        templates = template_generator.get_all_scaled_templates()
-        test["func"](templates)
+    templates = template_generator.get_all_scaled_templates()
+    assert test["func"](templates)
 
 
 def test_dist_filter():
