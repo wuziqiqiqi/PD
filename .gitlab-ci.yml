@@ -39,6 +39,10 @@ pytest:default:
   script:
     - pwd
     - tox -e cov
+  artifacts:
+    paths:
+      - .coverage
+    expire_in: 2 weeks
 
 doctest:
   stage: Code Test
