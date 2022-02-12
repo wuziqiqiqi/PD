@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.11.1
+=======
+
 0.11.0
 =======
 * Python 3.7+ is now required.
