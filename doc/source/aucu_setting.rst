@@ -88,3 +88,29 @@ found in the following articles.
 One can alternatively use :class:`CECrystal` class to specify the unit cell of
 the system. :class:`CECrystal` takes a more general approach where the unit
 cell is specified based on its space group and the positions of unique sites.
+
+Verify your structures
+-----------------------
+
+After you created your templates, it may be a good idea to inspect the possible template structures
+and clusters, to verify that it looks like you would expect.
+
+The ``template`` refers to all possible supercells that can be generated from your settings class,
+and ``clusters`` are the basic clusters found by CLEASE. Templates can be visualized with the
+:meth:`~ClusterExpansionSettings.view_templates`, and the clusters with
+:meth:`~ClusterExpansionSettings.view_clusters` of your :class:`~ClusterExpansionSettings` instance.
+
+.. doctest::
+  :options: +SKIP
+
+  >>> settings.view_clusters()
+
+This will open a new instance of the ASE GUI, which should look something like this, which
+is an example of a 4-body cluster:
+
+.. image:: ./resources/view_clusters_example.png
+  :align: center
+  :width: 400
+
+And similarly, :meth:`~ClusterExpansionSettings.view_templates` will open the templates in
+the ASE GUI as well.
