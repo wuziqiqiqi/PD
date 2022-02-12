@@ -1,4 +1,3 @@
-# pylint: disable=import-outside-toplevel
 from tkinter import TclError
 from matplotlib import pyplot as plt
 from ase.db import connect

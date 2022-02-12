@@ -240,7 +240,6 @@ class CorrFuncEnergyDataManager(DataManager):
         :param select_cond: List with select conditions for the database
             (e.g. [('converged', '=', True)])
         """
-        # pylint: disable=arguments-differ
         return self._get_data_from_getters(
             select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
@@ -672,7 +671,6 @@ class CorrFuncVolumeDataManager(DataManager):
             List with select conditions for the database
             (e.g. [('converged', '=', True)])
         """
-        # pylint: disable=arguments-differ
         return self._get_data_from_getters(
             select_cond,
             CorrelationFunctionGetter(self.db_name, self.tab_name, self.cf_names, order=self.order),
