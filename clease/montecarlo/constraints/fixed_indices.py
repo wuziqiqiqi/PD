@@ -1,4 +1,5 @@
 from typing import Sequence
+from clease.datastructures import SystemChanges
 from .mc_constraint import MCConstraint
 
 
@@ -22,8 +23,6 @@ class FixedIndices(MCConstraint):
         # Avoid floating point conversion issues with round
         self.fixed_basis = set(round(idx) for idx in fixed_indices)
 
-    def __call__(self, system_changes):
-        for idx, _, _ in system_changes:
-            if idx in self.fixed_basis:
-                return False
-        return True
+    def __call__(self, system_changes: SystemChanges) -> bool:
+        """Check if any of the proposed changes are from the fixed basis"""
+        return all(change.index not in self.fixed_basis for change in system_changes)
