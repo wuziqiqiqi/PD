@@ -7,6 +7,8 @@ Release notes
 0.11.1
 =======
 * Fixed a bug in the ``FixedIndices`` constraint class.
+* Greatly improved speed of supercell generation - this mostly affects performance
+  concerning large supercells.
 
 0.11.0
 =======

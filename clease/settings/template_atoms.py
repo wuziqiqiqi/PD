@@ -6,8 +6,7 @@ import numpy as np
 from numpy.random import shuffle
 import ase
 from ase.build.tools import niggli_reduce_cell
-from ase.build import make_supercell
-from clease.tools import all_integer_transform_matrices
+from clease.tools import all_integer_transform_matrices, make_supercell
 from .template_filters import (
     CellFilter,
     AtomsFilter,

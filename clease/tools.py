@@ -8,13 +8,17 @@ from collections.abc import Iterable
 from typing import List, Optional, Tuple, Dict, Set, Sequence, Union
 from typing import Iterable as tIterable
 from typing_extensions import Protocol
+from packaging.version import Version, parse
 import numpy as np
 from numpy.random import sample, shuffle
 import ase
+import ase.build.supercells as ase_sc
 from ase.db import connect
 from ase.db.core import parse_selection
 from scipy.spatial import cKDTree as KDTree
 from scipy.optimize import linprog
+
+ASE_VERSION = parse(ase.__version__)
 
 logger = logging.getLogger(__name__)
 
@@ -1096,3 +1100,85 @@ def get_cubicness(atoms: ase.Atoms) -> float:
     # Take absolute value, as determinants can be negative.
     # We just need it to be as close to 0 as possible
     return abs(np.linalg.det(cell - diag))
+
+
+def make_supercell(
+    prim: ase.Atoms, P: np.ndarray, wrap: bool = True, tol: float = 1e-5
+) -> ase.Atoms:
+    """Dispatcher for ase.build.supercells.make_supercell,
+    since the version prior to 3.22.1 had poor scaling with number of atoms."""
+    if ASE_VERSION <= Version("3.22.1"):
+        # Old version, use our local copy
+        logger.debug("Dispatching make_supercell to internal version, ASE version: %s", ASE_VERSION)
+        fnc = _make_supercell
+    else:
+        # Use the ASE version, since it contains the newer version
+        logger.debug(
+            "Dispatching make_supercell to the ASE version version, ASE version: %s", ASE_VERSION
+        )
+        fnc = ase_sc.make_supercell
+    return fnc(prim, P, wrap=wrap, tol=tol)
+
+
+def _make_supercell(prim, P, wrap=True, tol=1e-5):
+    r"""
+    NOTE: This is a copy of the ase make_supercell implementation,
+    until !2639 (in the ASE GitLab repo) gets merged. This was due to an exceptionally
+    poor scaling with number of atoms.
+
+    Generate a supercell by applying a general transformation (*P*) to
+    the input configuration (*prim*).
+
+    The transformation is described by a 3x3 integer matrix
+    `\mathbf{P}`. Specifically, the new cell metric
+    `\mathbf{h}` is given in terms of the metric of the input
+    configuration `\mathbf{h}_p` by `\mathbf{P h}_p =
+    \mathbf{h}`.
+
+    Parameters:
+
+    prim: ASE Atoms object
+        Input configuration.
+    P: 3x3 integer matrix
+        Transformation matrix `\mathbf{P}`.
+    wrap: bool
+        wrap in the end
+    tol: float
+        tolerance for wrapping
+    """
+
+    supercell_matrix = P
+    supercell = ase_sc.clean_matrix(supercell_matrix @ prim.cell)
+
+    # cartesian lattice points
+    lattice_points_frac = ase_sc.lattice_points_in_supercell(supercell_matrix)
+    lattice_points = np.dot(lattice_points_frac, supercell)
+
+    shifted = prim.get_positions()[:, None] + lattice_points
+    N = len(lattice_points)
+    # Reshape such that the order is [atom1_shift1, atom2_shift1, atom1_shift2, atom2_shift2, ...]
+    # i.e. alternating between atom 1 and atom 2
+    # This preserves the order from older implementations.
+    shifted_reshaped = np.reshape(shifted, (len(prim) * N, 3), order="F")
+
+    superatoms = ase.Atoms(positions=shifted_reshaped, cell=supercell, pbc=prim.pbc)
+
+    # Copy over any other possible arrays, inspired by atoms.__imul__
+    for name, arr in prim.arrays.items():
+        if name == "positions":
+            # This was added during construction of the super cell
+            continue
+        # Shape borrowed from atoms.__imul__
+        new_arr = np.tile(arr, (N,) + (1,) * (len(arr.shape) - 1))
+        superatoms.set_array(name, new_arr)
+
+    # check number of atoms is correct
+    n_target = abs(int(np.round(np.linalg.det(supercell_matrix) * len(prim))))
+    if n_target != len(superatoms):
+        msg = "Number of atoms in supercell: {}, expected: {}".format(n_target, len(superatoms))
+        raise ase_sc.SupercellError(msg)
+
+    if wrap:
+        superatoms.wrap(eps=tol)
+
+    return superatoms

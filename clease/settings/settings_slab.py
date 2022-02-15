@@ -1,8 +1,10 @@
 from typing import Union, Tuple, Optional, Sequence
 import numpy as np
 from ase import Atoms
-from ase.build import surface, make_supercell
+from ase.build import surface
 from ase.geometry import get_layers
+
+from clease.tools import make_supercell
 
 from .concentration import Concentration
 from .settings import ClusterExpansionSettings

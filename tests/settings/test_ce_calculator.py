@@ -5,7 +5,7 @@ from pathlib import Path
 import json
 import pytest
 import numpy as np
-from numpy.random import randint, choice
+from random import randint, choice
 from ase.build import bulk
 from ase.spacegroup import crystal
 

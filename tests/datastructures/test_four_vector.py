@@ -1,9 +1,10 @@
 from ase import Atoms
-from ase.build import bulk, make_supercell
+from ase.build import bulk
 from ase.spacegroup import crystal
 from collections import Counter
 import pytest
 import numpy as np
+from clease.tools import make_supercell
 from clease.datastructures import FourVector, construct_four_vectors
 
 
@@ -133,7 +134,7 @@ def test_four_vector(test):
     assert construct_four_vectors(test["prim"], test["atoms"]) == test["expect"]
 
 
-def test_random_spacegroup_four_vector():
+def test_random_spacegroup_four_vector(default_seed):
     """
     Tests nessecary conditions for four vectors for random atoms object
 
