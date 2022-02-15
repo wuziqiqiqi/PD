@@ -7,7 +7,7 @@
 #include <Python.h>
 
 // Map created using the ASE atomic_numbers from ase.data
-static std::unordered_map<std::string, int> atomic_numbers_map = {
+const static std::unordered_map<std::string, int> atomic_numbers_map = {
     {"X", 0},
     {"H", 1},
     {"He", 2},
@@ -129,8 +129,6 @@ static std::unordered_map<std::string, int> atomic_numbers_map = {
     {"Og", 118},
 };
 
-int get_number_from_symbol(std::string symbol);
-
-void set_symbol_in_atoms(PyObject *py_atoms, int index, std::string symbol);
+void set_symbol_in_atoms(PyObject *py_atoms, const int index, const std::string symbol);
 
 #endif
