@@ -129,6 +129,6 @@ const static std::unordered_map<std::string, int> atomic_numbers_map = {
     {"Og", 118},
 };
 
-void set_symbol_in_atoms(PyObject *py_atoms, const int index, const std::string symbol);
+void set_symbol_in_atoms(PyObject *py_atoms, const int index, const std::string &symbol);
 
 #endif
