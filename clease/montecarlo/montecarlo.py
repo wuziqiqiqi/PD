@@ -5,8 +5,8 @@ import datetime
 import time
 import logging
 import random
+import math
 from collections import Counter
-import numpy as np
 from ase import Atoms
 from ase.units import kB
 from clease.version import __version__
@@ -264,7 +264,6 @@ class Montecarlo(BaseMC):
             self.evaluator.keep_system_changes(system_changes)
         else:
             # Undo changes
-            logger.debug("Change rejected, undoing system changes.")
             self.evaluator.undo_system_changes(system_changes)
 
         return accept
@@ -284,7 +283,7 @@ class Montecarlo(BaseMC):
             return True
         kT = self.T * kB
         energy_diff = new_energy - current_energy
-        probability = np.exp(-energy_diff / kT)
+        probability = math.exp(-energy_diff / kT)
         logger.debug(
             "Energy difference: %.3e. Calculated probability: %.3f",
             energy_diff,
