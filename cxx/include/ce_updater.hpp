@@ -80,6 +80,8 @@ public:
 
   /** Computes the spin product for one element */
   double spin_product_one_atom(int ref_indx, const Cluster &indx_list, const std::vector<int> &dec, int ref_id);
+  // Calculate the change in spin product going from old_symb_id to new_symb_id
+  double spin_product_one_atom_delta(int ref_indx, const Cluster &indx_list, const std::vector<int> &dec, int old_symb_id, int new_symb_id);
 
   /**
   Calculates the new energy given a set of system changes

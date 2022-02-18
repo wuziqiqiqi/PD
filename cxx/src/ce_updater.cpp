@@ -269,6 +269,49 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
   return sp;
 }
 
+double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &cluster, const vector<int> &dec, int old_symb_id, int new_symb_id)
+{
+  // Keep track of the change in spin-product
+  double sp_delta = 0.0;
+
+  const vector<vector<int>> &indx_list = cluster.get();
+  const vector<double> &dup_factors = cluster.get_duplication_factors();
+  unsigned int num_indx = indx_list.size();
+  unsigned int n_memb = indx_list[0].size();
+
+  for (unsigned int i = 0; i < num_indx; i++)
+  {
+    // Calculate the spin product for both new and the old (ref)
+    double sp_temp_new = 1.0;
+    double sp_temp_ref = 1.0;
+
+    // Use pointer arithmetics in the inner most loop
+    const int *indices = &indx_list[i][0];
+
+    for (unsigned int j = 0; j < n_memb; j++)
+    {
+      double bf_new, bf_ref;
+      int trans_index = trans_matrix(ref_indx, indices[j]);
+      int dec_j = dec[j];
+      if (trans_index == ref_indx)
+      {
+        bf_new = basis_functions.get(dec_j, new_symb_id);
+        bf_ref = basis_functions.get(dec_j, old_symb_id);
+      }
+      else
+      {
+        double bf = basis_functions.get(dec_j, symbols_with_id->id(trans_index));
+        bf_new = bf;
+        bf_ref = bf;
+      }
+      sp_temp_new *= bf_new;
+      sp_temp_ref *= bf_ref;
+    }
+    sp_delta += (sp_temp_new - sp_temp_ref) * dup_factors[i];
+  }
+  return sp_delta;
+}
+
 void CEUpdater::update_cf(PyObject *single_change)
 {
   SymbolChange symb_change = py_tuple_to_symbol_change(single_change);
@@ -346,7 +389,6 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
     string prefix = name.substr(0, pos);
     string dec_str = name.substr(pos + 1);
 
-    double delta_sp = 0.0;
     int symm = trans_symm_group[symb_change.indx];
 
     if (!clusters.is_in_symm_group(prefix, symm))
@@ -361,11 +403,10 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
 
     const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
 
+    double delta_sp = 0.0;
     for (const vector<int> &deco : equiv_deco)
     {
-      double sp_ref = spin_product_one_atom(symb_change.indx, cluster, deco, old_symb_id);
-      double sp_new = spin_product_one_atom(symb_change.indx, cluster, deco, new_symb_id);
-      delta_sp += sp_new - sp_ref;
+      delta_sp += spin_product_one_atom_delta(symb_change.indx, cluster, deco, old_symb_id, new_symb_id);
     }
 
     delta_sp *= (static_cast<double>(size) / equiv_deco.size());
