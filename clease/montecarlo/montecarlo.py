@@ -173,7 +173,8 @@ class Montecarlo(BaseMC):
             E, _ = self._mc_step()
 
             self.mean_energy += E
-            self.energy_squared += E**2
+            # E * E is slightly faster than E ** 2
+            self.energy_squared += E * E
 
             # We only want to do this calculation if logging is enabled for INFO.
             if info_enabled and time.perf_counter() - start > self.status_every_sec:
