@@ -147,3 +147,35 @@ def test_cellT_contiguous(atoms):
     gen = ClusterGenerator(atoms)
     assert gen.prim_cell_T.data.c_contiguous
     assert gen.prim_cell_invT.data.c_contiguous
+
+
+@pytest.mark.parametrize("atoms", [bulk("NaCl", "rocksalt", a=5.0), bulk("Al"), bulk("Fe")])
+def test_many_four_vector(atoms):
+    gen = ClusterGenerator(atoms)
+    n = 10
+    natoms = len(atoms)
+    cart = np.repeat(atoms.positions, n, axis=0)
+    sublattice = np.repeat(range(natoms), n)
+
+    fv_lst = gen.many_to_four_vector(cart, sublattice)
+    fv_set = set(fv_lst)
+    assert len(fv_lst) == len(cart)
+    assert len(fv_lst) == len(sublattice)
+    assert len(fv_set) == len(atoms)
+    assert fv_set == set([FourVector(0, 0, 0, i) for i in range(natoms)])
+
+    fv1 = gen.to_four_vector(atoms.positions[0, :], 0)
+    assert fv1 in fv_set
+    assert fv1 == FourVector(0, 0, 0, 0)
+
+    sc = atoms * (3, 3, 3)
+    sublattices = [gen.get_lattice(pos) for pos in sc.positions]
+    fc_lst = gen.many_to_four_vector(sc.positions, sublattices)
+    assert len(fc_lst) == len(sc)
+    assert len(fc_lst) == len(set(fc_lst))
+
+    for ix in range(3):
+        for iy in range(3):
+            for iz in range(3):
+                for s in range(natoms):
+                    assert FourVector(ix, iy, iz, s) in fc_lst

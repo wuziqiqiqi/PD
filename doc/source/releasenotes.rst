@@ -9,6 +9,7 @@ Release notes
 * Fixed a bug in the ``FixedIndices`` constraint class.
 * Greatly improved speed of supercell generation - this mostly affects performance
   concerning large supercells.
+* Improved performance of the trans matrix generation.
 
 0.11.0
 =======

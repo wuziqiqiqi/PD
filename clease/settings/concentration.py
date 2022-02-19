@@ -4,7 +4,7 @@ from random import choice
 import numpy as np
 from scipy.optimize import minimize
 from clease.jsonio import jsonable
-from clease.tools import remove_redundant_constraints, remove_redundant_equations
+from clease.tools import remove_redundant_constraints, remove_redundant_equations, invert_matrix
 
 __all__ = ("Concentration",)
 
@@ -682,7 +682,7 @@ class Concentration:
         # Setup the constraints
         constraints = self._get_constraints()
         x0 = np.random.rand(self.num_concs)
-        pinv = np.linalg.pinv(self.A_eq)
+        pinv = invert_matrix(self.A_eq)
         x_init = pinv.dot(self.b_eq)
 
         # Find the closest vector to x0 that satisfies all constraints

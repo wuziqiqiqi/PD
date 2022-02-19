@@ -1,10 +1,13 @@
-from typing import Sequence, Set, Dict, List
+from typing import Sequence, Set, Dict, List, Iterator
+import logging
 from itertools import product
+import functools
 from copy import deepcopy
 import numpy as np
 import ase
 from ase.geometry import wrap_positions
 
+from clease import tools
 from clease.datastructures import FourVector, Figure
 
 from .cluster_fingerprint import ClusterFingerprint
@@ -14,6 +17,8 @@ from .cluster_generator import ClusterGenerator
 from .utils import name_clusters, size
 
 __all__ = ("ClusterManager",)
+
+logger = logging.getLogger(__name__)
 
 
 class ClusterManager:
@@ -34,6 +39,10 @@ class ClusterManager:
         self.generator = ClusterGenerator(primitive_filtered)
         self.clusters = ClusterList()
         self._cache = _CacheChecker()
+        # Flag for determining if we can do the "trivial" path in trans_matrix
+        # Should only be disabled for testing purposes!
+        # Generally, should be set to True".
+        self._allow_trivial_path = True
 
     @property
     def prim(self) -> ase.Atoms:
@@ -294,8 +303,25 @@ class ClusterManager:
         # Get the unique four-vectors which are present in all of our clusters.
         unique = self.unique_four_vectors()
 
+        # Only set "trivial_supercell" to True, if we allow that path.
+        # Setting self._allow_trivial_path to False is only for testing purposes
+        if self._allow_trivial_path:
+            trivial_supercell = tools.is_trivial_supercell(self.prim, template)
+        else:
+            trivial_supercell = False
+
+        # Set up the FourVector wrap function
+        if trivial_supercell:
+            nx, ny, nz = tools.get_repetition(self.prim, template)
+            wrap_fnc = functools.partial(
+                self._wrap_four_vectors_trivial, unique=unique, nx=nx, ny=ny, nz=nz
+            )
+            logger.info("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
+        else:
+            wrap_fnc = functools.partial(self._wrap_four_vectors_general, unique=unique, cell=cell)
+            logger.info("Non-trivial supercell, will wrap using cartesian coordinates")
+
         lut = self.create_four_vector_lut(template)
-        cartesian = np.zeros((len(unique), 3))
 
         # Map the un-translated unique 4-vectors to their index
         unique_indx_lut = self.fourvec_to_indx(template, unique)
@@ -311,27 +337,47 @@ class ClusterManager:
             # Translate the atom into its four-vector representation
             vec = self.generator.to_four_vector(atom.position, sublattice=atom.tag)
 
-            # Translate the (x, y, z) components of the unique four-vectors
-            # by this atom's (x, y, z) four-vector component
-            translated_unique = [u.shift_xyz(vec) for u in unique]
-
-            # Find the new Cartesian coordinates of the translated FourVectors,
-            # and wrap them back into the cell
-            cartesian = self.generator.to_cartesian(*translated_unique)
-            cartesian = wrap_positions(cartesian, cell)
-
-            # Re-translate the wrapped-Cartesian coordinates of the unique four-vectors
-            # into a four-vector representation (with a generator expression)
-            four_vecs = (
-                self.generator.to_four_vector(cart, fv.sublattice)
-                for cart, fv in zip(cartesian, translated_unique)
-            )
+            # Calculate the four vectors wrapped back into the supercell
+            four_vecs = wrap_fnc(vec)
 
             # Get the index of the translated four-vector
             indices = [lut[fv] for fv in four_vecs]
 
             trans_mat.append(dict(zip(unique_index, indices)))
         return trans_mat
+
+    def _wrap_four_vectors_trivial(
+        self,
+        translation_vector: FourVector,
+        unique: Sequence[FourVector],
+        nx: int,
+        ny: int,
+        nz: int,
+    ) -> Iterator[FourVector]:
+        """Wrap FourVectors using the trivial shift+modulo operation"""
+        # pylint: disable=no-self-use
+        # Create as a generator, no need to assign this into a new list.
+        return (u.shift_xyz_and_modulo(translation_vector, nx, ny, nz) for u in unique)
+
+    def _wrap_four_vectors_general(
+        self,
+        translation_vector: FourVector,
+        unique: Sequence[FourVector],
+        cell: np.ndarray,
+    ) -> Iterator[FourVector]:
+        """Generalized FourVector wrapping function."""
+        # Translate the (x, y, z) components of the unique four-vectors
+        # by this atom's (x, y, z) four-vector component
+        translated_unique = [u.shift_xyz(translation_vector) for u in unique]
+        # Find the new Cartesian coordinates of the translated FourVectors,
+        # and wrap them back into the cell
+        cartesian = self.generator.to_cartesian(*translated_unique)
+        cartesian = wrap_positions(cartesian, cell)
+
+        # Re-translate the wrapped-Cartesian coordinates of the unique four-vectors
+        # into a four-vector representation (with a generator expression)
+        sublattices = [fv.sublattice for fv in translated_unique]
+        return self.generator.many_to_four_vector(cartesian, sublattices)
 
 
 class _CacheChecker:

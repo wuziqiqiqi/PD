@@ -2,6 +2,7 @@ import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
 import matplotlib.pyplot as plt
 from ase.db import connect
+from clease.tools import invert_matrix
 
 __all__ = ("ConvexHull",)
 
@@ -160,10 +161,7 @@ class ConvexHull:
             rhs[row] = v["energy"]
             row += 1
 
-        try:
-            inv_mat = np.linalg.inv(matrix)
-        except np.linalg.LinAlgError:
-            inv_mat = np.linalg.pinv(matrix)
+        inv_mat = invert_matrix(matrix)
 
         coeff = inv_mat.dot(rhs)
         weights = {s: coeff[i] for i, s in enumerate(self._unique_elem)}

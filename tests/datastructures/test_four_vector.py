@@ -46,6 +46,37 @@ def test_invalid_constructor(inputs):
         FourVector(*inputs)
 
 
+def test_int_np_int_hash():
+    """Test that python int and np.int64/np.integer
+    behaves identical
+    """
+    a = 4
+    a_np = np.int_(4)
+    assert a == a_np
+    assert hash(a) == hash(a_np)
+    assert type(a) != type(a_np)
+
+    fv1 = FourVector(0, 0, 0, 0)
+    for v in fv1.to_tuple():
+        # Verify the elements are regular int, and not numpy int
+        assert isinstance(v, int)
+        assert not isinstance(v, np.integer)
+
+    arr = np.array([0, 0, 0, 0], dtype=np.int_)
+    fv2 = FourVector(*arr)
+    for v in fv2.to_tuple():
+        # Verify each element is numpy integer type
+        assert isinstance(v, np.integer)
+        assert isinstance(v, np.int_)
+        assert not isinstance(v, int)
+    assert fv1 == fv2
+    assert hash(fv1) == hash(fv2)
+
+    # Verify that a set of the regular python int FourVector
+    # and the np.integer becomes just one element.
+    assert len(set([fv1, fv2])) == 1
+
+
 @pytest.mark.parametrize(
     "test",
     [
@@ -231,3 +262,13 @@ def test_shift_notimplemented():
         fv.shift_xyz((0, 0, 0, 1))
     with pytest.raises(NotImplementedError):
         fv.shift_xyz([0, 0, 0, 1])
+
+
+def test_shift_xyz_and_modulo():
+    a = FourVector(-1, -1, 3, 0)
+    b = FourVector(0, 0, 0, 0)
+
+    assert a.shift_xyz_and_modulo(b, 2, 2, 1) == FourVector(1, 1, 0, 0)
+
+    b = FourVector(5, 0, 0, 0)
+    assert a.shift_xyz_and_modulo(b, 2, 2, 1) == FourVector(0, 1, 0, 0)

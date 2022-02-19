@@ -56,7 +56,7 @@ void Atoms::parse_four_vectors(PyObject *py_four_vectors)
 }
 
 // Find Nx, Ny, Nz and Ns
-// i.e. the maximum repition in the x, y, and z directions,
+// i.e. the maximum repetition in the x, y, and z directions,
 // as well as the number of sublattices (number of sites in the primitive)
 void Atoms::parse_max_lattice()
 {
@@ -68,7 +68,7 @@ void Atoms::parse_max_lattice()
         Nz = (fv.iz > Nz) ? fv.iz : Nz;
         Ns = (fv.sublattice > Ns) ? fv.sublattice : Ns;
     }
-    // Number of sublattices/repitions is 1 greater than the max index,
+    // Number of sublattices/repetitions is 1 greater than the max index,
     // since we start from 0.
     Ns++;
     Nx++;

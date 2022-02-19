@@ -1,6 +1,6 @@
 from itertools import product
 import functools
-from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union
+from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
 import numpy as np
 from ase import Atoms
 from ase.geometry import wrap_positions
@@ -68,19 +68,43 @@ class ClusterGenerator:
         euc2 = as_euc(x2)
         return euc2 - euc1
 
+    def many_to_four_vector(
+        self, cartesian: np.ndarray, sublattices: Sequence[int]
+    ) -> List[FourVector]:
+        """Translate many positions into FourVector's"""
+
+        if cartesian.ndim != 2:
+            raise ValueError(f"Cartesian must be 2 dimensional, got {cartesian.ndim:d}")
+
+        if cartesian.shape[1] != 3:
+            raise ValueError(
+                "Cartesian should have a length of 3 on the 2nd dimension, "
+                f"got {cartesian.shape[1]:d}."
+            )
+
+        if len(sublattices) != len(cartesian):
+            raise ValueError(
+                "Number of sublattices should be same as number of cartesian positions"
+            )
+
+        delta = cartesian - self.prim.positions[sublattices, :]
+        inv = self.prim_cell_invT.dot(delta.T).T
+        # Round off, and cast to integer
+        ints = np.rint(inv).astype(int)  # dtype: np.int64
+
+        # One position per sublattice
+        assert len(sublattices) == len(ints)
+        return [FourVector(*vals, subl) for vals, subl in zip(ints, sublattices)]
+
     def to_four_vector(self, cartesian: np.ndarray, sublattice: int = None) -> FourVector:
         """Translate a position in Cartesian coordinates to its FourVector"""
-        if not cartesian.ndim == 1:
-            # XXX: This could instead return a List[FourVector] if we pass a 2d
-            # set of coordinates.
-            raise ValueError("Can only translate 1 position at a time.")
+        if cartesian.ndim != 1:
+            raise ValueError(f"Cartesian positions must be 1-dimensional, got {cartesian.ndim:d}")
 
         if sublattice is None:
             sublattice = self.get_lattice(cartesian)
-        cartesian = cartesian - self.prim.positions[sublattice, :]
 
-        ix, iy, iz = map(round, self.prim_cell_invT.dot(cartesian))
-        return FourVector(ix, iy, iz, sublattice)
+        return self.many_to_four_vector(cartesian[None, :], [sublattice])[0]
 
     def to_cartesian(self, *four_vectors: FourVector) -> np.ndarray:
         """Convert one or more FourVectors into their Cartesian coordinates."""

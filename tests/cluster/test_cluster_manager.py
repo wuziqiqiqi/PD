@@ -7,6 +7,11 @@ from clease.tools import wrap_and_sort_by_position
 import numpy as np
 
 
+def tagger(atoms):
+    for atom in atoms:
+        atom.tag = atom.index
+
+
 @pytest.fixture
 def bulk_al():
     return bulk("Al")
@@ -234,3 +239,49 @@ def test_build_empty(nacl, make_cluster_mng, max_cluster_dia, max_body_size):
     assert counts[1] == 2
     # Check we find the maximum size is the expected
     assert max(counts.keys()) == max_body_size
+
+
+@pytest.mark.parametrize(
+    "prim",
+    [
+        bulk("LiX", crystalstructure="rocksalt", a=4.0),
+        bulk("Au", crystalstructure="fcc", a=3.8),
+    ],
+)
+@pytest.mark.parametrize(
+    "rep",
+    [
+        (1, 1, 1),
+        (3, 3, 3),
+        (1, 2, 3),
+    ],
+)
+def test_trivial_path(prim, rep, make_cluster_mng, mocker):
+    prim.wrap()
+    tagger(prim)
+
+    manager: ClusterManager = make_cluster_mng(prim)
+
+    template = prim * rep
+
+    # Ensure we're calling the correct wrapping function
+    # We do not include background, so we assume the number of calls
+    # is the number of atoms in the template
+    mocker.spy(manager, "_wrap_four_vectors_trivial")
+    mocker.spy(manager, "_wrap_four_vectors_general")
+
+    manager.build(max_cluster_dia=[4.0, 4.0])
+    assert manager._wrap_four_vectors_trivial.call_count == 0
+    assert manager._wrap_four_vectors_general.call_count == 0
+
+    tm_trivial = manager.translation_matrix(template)
+    assert manager._wrap_four_vectors_trivial.call_count == len(template)
+    assert manager._wrap_four_vectors_general.call_count == 0
+
+    manager._allow_trivial_path = False
+    tm_general = manager.translation_matrix(template)
+    assert manager._wrap_four_vectors_trivial.call_count == len(template)
+    assert manager._wrap_four_vectors_general.call_count == len(template)
+
+    assert tm_trivial is not tm_general
+    assert tm_trivial == tm_general

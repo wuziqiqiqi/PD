@@ -596,7 +596,7 @@ def species_chempot2eci(bf_list, species_chempot):
     try:
         eci_chem_pot = np.linalg.solve(mat, rhs)
     except np.linalg.LinAlgError:
-        inv_mat = np.linalg.pinv(mat)
+        inv_mat = invert_matrix(mat)
         eci_chem_pot = inv_mat.dot(rhs)
     eci_chem_pot = eci_chem_pot.tolist()
     eci_dct = {f"c1_{i}": v for i, v in enumerate(eci_chem_pot)}
@@ -1182,3 +1182,54 @@ def _make_supercell(prim, P, wrap=True, tol=1e-5):
         superatoms.wrap(eps=tol)
 
     return superatoms
+
+
+def invert_matrix(mat: np.ndarray) -> np.ndarray:
+    """Invert a matrix. Will first try to use np.linalg.inv,
+    and in case that fails, fall back to np.linalg.pinv."""
+    try:
+        return np.linalg.inv(mat)
+    except np.linalg.LinAlgError:
+        return np.linalg.pinv(mat)
+
+
+def is_trivial_supercell(prim: ase.Atoms, atoms: ase.Atoms) -> bool:
+    """Check whether a given supercell is trivially a supercell of the primitive,
+    i.e. if the supercell can be expressed as atoms = prim * (n1, n2, n3),
+    where n1, n2 and n3 are positive integers."""
+
+    # Get repetition matrix
+    cell = prim.get_cell()
+    try:
+        p_inv = invert_matrix(cell)
+    except np.linalg.LinAlgError:
+        return False
+
+    P = atoms.get_cell() @ p_inv
+    P = ase_sc.clean_matrix(P)
+
+    # Check if the repetition matrix is diagonal, i.e. if all non-diagonal elements are close to 0
+    is_diag = np.allclose(P - np.diag(np.diagonal(P)), 0)
+    if not is_diag:
+        return False
+
+    # Check if the diagonal is positive
+    diag = np.diag(P)
+    if (diag < 0).any():
+        return False
+
+    # Check if the diagonal elements are all integer
+    return np.allclose(diag - np.rint(diag), 0)
+
+
+def get_repetition(prim: ase.Atoms, atoms: ase.Atoms) -> np.ndarray:
+    """Get the repetitions of a primitive and supercell
+    Note: This assumes they are a simple repetition, i.e.
+    atoms = prim * (n1, n2, n3). No check will be performed!
+    """
+
+    cell = prim.get_cell()
+    p_inv = invert_matrix(cell)
+    P = atoms.get_cell() @ p_inv
+
+    return np.rint(np.diag(P)).astype(int)

@@ -2,6 +2,7 @@ from itertools import product
 import pytest
 import numpy as np
 from ase.build import bulk
+from ase.spacegroup import crystal
 from ase.db import connect
 from clease.tools import (
     min_distance_from_facet,
@@ -602,3 +603,67 @@ def test_cubicness():
     c2 = tools.get_cubicness(atoms2)
     assert c2 == pytest.approx(0)
     assert c2 < c1
+
+
+def make_TaOX():
+    return crystal(
+        symbols=["O", "X", "O", "Ta"],
+        basis=[
+            (0.0, 0.0, 0.0),
+            (0.3894, 0.1405, 0.0),
+            (0.201, 0.3461, 0.5),
+            (0.2244, 0.3821, 0.0),
+        ],
+        spacegroup=55,
+        cell=None,
+        cellpar=[6.25, 7.4, 3.83, 90, 90, 90],
+        ab_normal=(0, 0, 1),
+        primitive_cell=True,
+        size=[1, 1, 1],
+    )
+
+
+@pytest.mark.parametrize(
+    "P, expect",
+    [
+        (np.array([[2, 0, 0], [0, 2, 0], [0, 0, 2]]), True),
+        (np.array([[2, 0, 1], [0, 2, 0], [0, 0, 2]]), False),
+        (np.array([[2, -1, 0], [0, 2, 0], [0, 0, 2]]), False),
+        (np.array([[1, 0, 0], [0, 1, 0], [0, 0, 3]]), True),
+    ],
+)
+@pytest.mark.parametrize(
+    "prim",
+    [
+        bulk("NaCl", crystalstructure="rocksalt", a=3.0),
+        bulk("Au", crystalstructure="fcc", a=3.8),
+        make_TaOX(),
+    ],
+)
+def test_is_trivial_supercell(prim, P, expect):
+    atoms = tools.make_supercell(prim, P)
+    assert tools.is_trivial_supercell(prim, atoms) == expect
+
+
+@pytest.mark.parametrize(
+    "rep",
+    [
+        (1, 1, 1),
+        (3, 2, 1),
+        (1, 2, 3),
+        (5, 5, 5),
+        (8, 1, 1),
+    ],
+)
+@pytest.mark.parametrize(
+    "prim",
+    [
+        bulk("NaCl", crystalstructure="rocksalt", a=3.0),
+        bulk("Au", crystalstructure="fcc", a=3.8),
+        make_TaOX(),
+    ],
+)
+def test_get_repetition(prim, rep):
+    atoms = prim * rep
+    rep_tool = tools.get_repetition(prim, atoms)
+    assert all(rep_tool == rep)

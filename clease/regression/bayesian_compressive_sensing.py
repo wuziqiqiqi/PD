@@ -6,7 +6,9 @@ import numpy as np
 from scipy.special import polygamma
 from scipy.optimize import brentq
 from matplotlib import pyplot as plt
+from clease.tools import invert_matrix
 from .regression import LinearRegression
+
 
 logger = logging.getLogger(__name__)
 
@@ -263,10 +265,7 @@ class BayesianCompressiveSensing(LinearRegression):
         """Update sigma and mu."""
         X_sel = self.X[:, self.selected]
         sigma = self.inv_variance * X_sel.T.dot(X_sel) + np.diag(1.0 / self.gammas[self.selected])
-        try:
-            self.inverse_sigma = np.linalg.inv(sigma)
-        except np.linalg.LinAlgError:
-            self.inverse_sigma = np.linalg.pinv(sigma)
+        self.inverse_sigma = invert_matrix(sigma)
         self.eci[self.selected] = self.mu()
 
     def get_basis_function_index(self, select_strategy) -> int:
