@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.11.2
+=======
+
 0.11.1
 =======
 * Fixed a bug in the ``FixedIndices`` constraint class.
