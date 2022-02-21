@@ -90,12 +90,12 @@ def add_vacuum_layers(atoms: Atoms, prim: Atoms, thickness: float) -> Atoms:
         ASE Atoms object representing the slab
 
     :param thickness:
-        Thickness of the vacuum layer
+        Approximate thickness of the vacuum layer
     """
     # construct one layer of vacuum filled with vacancies
     prim_xy = prim.cell[:3]
     atoms_xy = atoms.cell[:3]
-    P = atoms_xy.dot(np.linalg.inv(prim_xy))[:2].astype(int)
+    P = np.rint(atoms_xy.dot(np.linalg.inv(prim_xy))[:2]).astype(int)
     P = np.vstack((P, [0, 0, 1]))
     vacuum = make_supercell(prim, P)
     for atom in vacuum:
