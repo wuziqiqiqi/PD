@@ -596,8 +596,7 @@ def test_mc_reset_step_counter(db_name):
     assert mc.current_step == 0
     mc.run(5)
     assert mc.current_step == 5
-    # If we didn't reset step counter,
-    # we couldn't be able to get a smaller step count
+    # We always reset on a new run
     mc.run(3)
     assert mc.current_step == 3
     # pylint: disable=protected-access
@@ -655,3 +654,26 @@ def test_default_swapmove_background(make_settings_with_bkg, rep, set_rng, seed)
     with pytest.raises(RuntimeError):
         # We will try to swap a background index, which will fail
         mc.run(100)
+
+
+def test_mc_irun(example_system):
+    mc = Montecarlo(example_system, 300)
+
+    it = mc.irun(20)
+    assert mc.current_step == 0
+
+    # Check we can run for a bit, and stop to inspect
+    for _ in range(10):
+        next(it)
+    assert mc.current_step == 10
+
+    for _ in it:
+        pass
+    assert mc.current_step == 20
+
+    # Check that we reset everything
+    it = mc.irun(20)
+    assert mc.current_step == 0
+    for i, _ in enumerate(it):
+        assert mc.current_step == i + 1
+    assert mc.current_step == 20

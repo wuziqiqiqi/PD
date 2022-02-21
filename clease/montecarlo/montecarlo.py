@@ -1,5 +1,5 @@
 """Monte Carlo method for ase."""
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, Union, Iterator
 import sys
 import datetime
 import time
@@ -161,21 +161,13 @@ class Montecarlo(BaseMC):
             Number of steps in the MC simulation
         """
 
-        logger.info("Starting MC run with %d steps.", steps)
-        # Check the number of different elements are correct to avoid
-        # infinite loops
-        self.initialize_run()
+        # Construct the iterator, make the preparations for starting the run
+        mc_iter = self.irun(steps)
 
         start = time.perf_counter()
         prev = self.current_step
         info_enabled = logger.isEnabledFor(logging.INFO)  # Do we emit INFO logs?
-        while self.current_step < steps:
-            E, _ = self._mc_step()
-
-            self.mean_energy += E
-            # E * E is slightly faster than E ** 2
-            self.energy_squared += E * E
-
+        for _ in mc_iter:
             # We only want to do this calculation if logging is enabled for INFO.
             if info_enabled and time.perf_counter() - start > self.status_every_sec:
                 ms_per_step = 1000.0 * self.status_every_sec / (self.current_step - prev)
@@ -190,11 +182,56 @@ class Montecarlo(BaseMC):
                 prev = self.current_step
                 start = time.perf_counter()
 
+    def irun(self, steps: int) -> Iterator[Tuple[float, bool]]:
+        """Run Monte Carlo simulation as an iterator.
+        Can be used to inspect the MC after each step, for example,
+        to print the energy every 5 steps, one could do:
+
+        # doctest: +SKIP
+        >>> mc = Montecarlo(...)
+        >>> for E, move_accepted in mc.irun(500):
+        ...     if mc.current_step % 5 == 0:
+        ...         print(f"Current energy: {E:.2f} eV")
+
+        The iterator yields the current energy, as well as whether the last move
+        was accepted.
+
+        Parameters:
+
+        steps: int
+            Number of steps in the MC simulation
+        """
+        logger.info("Starting MC run with %d steps.", steps)
+
+        # We first ensure the MC object is initialized, and then we
+        # construct the iterator.
+        # This ensures everything is prepared before the first step
+        # is consumed from the iterator.
+        self.initialize_run()
+
+        # Now we create the iterator
+        return self._irun(steps)
+
+    def _irun(self, steps: int) -> Iterator[Tuple[float, bool]]:
+        """Create the MC iterator"""
+        # Offset range by 1, so that we start with current step = 1
+        for _ in range(steps):
+            E, move_accepted = self._mc_step()
+
+            self.mean_energy += E
+            # E * E is slightly faster than E ** 2
+            self.energy_squared += E * E
+
             if self.quit:
+                # Breaking out will cause the iterator to end.
                 logger.warning("Quit signal detected. Breaking the MC loop.")
                 break
-
-        logger.info("Reached maximum number of steps (%d mc steps)", steps)
+            # Yield, allow inspection before continuing.
+            yield E, move_accepted
+        else:
+            # Loop was not broken, we reached the max number of steps
+            logger.info("Reached maximum number of steps (%d mc steps)", steps)
+        logger.debug("Reached end of MC iterator.")
 
     @property
     def meta_info(self):
@@ -323,7 +360,6 @@ class Montecarlo(BaseMC):
     def _mc_step(self) -> Tuple[float, bool]:
         """Make one Monte Carlo step by swithing two atoms."""
         self.current_step += 1
-
         system_changes = self.generator.get_trial_move()
         self.trial_move = system_changes
 

@@ -11,6 +11,8 @@ Release notes
 * Temporarily restricts ASE to ``<3.23``, until we resolve issues with current ASE master.
 * Montecarlo will no longer consider background indices in the default swap move generator,
   if background is ignored.
+* Added a new :meth:`~clease.montecarlo.montecarlo.Montecarlo.irun` method,
+  for iteratively running MC calculations.
 
 0.11.1
 =======
