@@ -10,7 +10,7 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 
 from clease.tools import wrap_and_sort_by_position
-from clease.datastructures import SystemChange
+from clease.datastructures import SystemChange, TransMatrix
 from clease.settings import CEBulk, CECrystal
 from clease.corr_func import CorrFunction
 from clease.settings import Concentration
@@ -35,7 +35,7 @@ def load_trans_matrix(references_path):
         with open(references_path / filename) as file:
             loaded = json.load(file)
         # Convert keys to integers, not strings
-        tm = [{int(k): v for k, v in dct.items()} for dct in loaded]
+        tm = TransMatrix([{int(k): v for k, v in dct.items()} for dct in loaded])
         return tm
 
     return _load_trans_matrix

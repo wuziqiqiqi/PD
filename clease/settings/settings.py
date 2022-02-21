@@ -18,12 +18,14 @@ from clease.version import __version__
 from clease.jsonio import jsonable
 from clease.tools import wrap_and_sort_by_position
 from clease.basis_function import BasisFunction
-from clease.cluster import ClusterManager
+from clease.cluster import ClusterManager, ClusterList
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
+from clease.datastructures import TransMatrix
 from .concentration import Concentration
 from .template_filters import ValidConcentrationFilter
 from .template_atoms import TemplateAtoms
 from .atoms_manager import AtomsManager
+
 
 __all__ = ("ClusterExpansionSettings",)
 
@@ -109,6 +111,7 @@ class ClusterExpansionSettings:
         self._cluster_mng = None
         self._trans_matrix = None
         self._cluster_list = None
+        self._basis_func_type = None
         self.concentration = _get_concentration(concentration)
 
         self.basis_elements = deepcopy(self.concentration.basis_elements)
@@ -141,8 +144,10 @@ class ClusterExpansionSettings:
 
         self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
-        self.basis_func_type = basis_func_type
+        # We need to initialize background before basis_func_type
+        # since basis functions depend on whether we have backgrounds
         self.include_background_atoms = include_background_atoms
+        self.basis_func_type = basis_func_type
 
         if len(self.basis_elements) != self.num_basis:
             raise ValueError("list of elements is needed for each basis")
@@ -224,7 +229,10 @@ class ClusterExpansionSettings:
         self._cluster_mng = None
 
         self.clear_cache()
-        self.basis_func_type.unique_elements = self.unique_element_without_background()
+        if self.basis_func_type is not None:
+            # Basis func type can be None during initialization, if we havn't initialized
+            # basis functions yet.
+            self.basis_func_type.unique_elements = self.unique_element_without_background()
 
     @property
     def spin_dict(self) -> Dict[str, float]:
@@ -345,7 +353,9 @@ class ClusterExpansionSettings:
             if bf_type.unique_elements != sorted(unique_element):
                 raise ValueError(
                     "Unique elements in BasisFunction instance "
-                    "is different from the one in settings"
+                    "is different from the one in settings",
+                    bf_type.unique_elements,
+                    sorted(unique_element),
                 )
             self._basis_func_type = bf_type
         elif isinstance(bf_type, str):
@@ -466,13 +476,13 @@ class ClusterExpansionSettings:
         raise NotImplementedError("This function has to be implemented in in derived classes.")
 
     @property
-    def trans_matrix(self):
+    def trans_matrix(self) -> TransMatrix:
         """Get the translation matrix, will be created upon request"""
         self.ensure_clusters_exist()
         return self._trans_matrix
 
     @property
-    def cluster_list(self):
+    def cluster_list(self) -> ClusterList:
         """Get the cluster list, will be created upon request"""
         self.ensure_clusters_exist()
         return self._cluster_list
@@ -510,12 +520,18 @@ class ClusterExpansionSettings:
         self.ensure_clusters_exist()
         return self.cluster_mng.get_figures()
 
+    def requires_build(self) -> bool:
+        """Check if the cluster list and trans matrix exist.
+        Returns True the cluster list and trans matrix needs to be built.
+        """
+        return self._cluster_list is None or self._trans_matrix is None
+
     def ensure_clusters_exist(self) -> None:
         """Ensure the cluster list and trans matrix has been populated.
         They are not calculated upon creaton of the settings instance,
         for performance reasons. They will be constructed if required.
         Nothing is done if the cache exists."""
-        if self._cluster_list is None or self._trans_matrix is None:
+        if self.requires_build():
             logger.debug("Triggered construction of clusters")
             self.create_cluster_list_and_trans_matrix()
             # It should not be possible for them to be None after this call.

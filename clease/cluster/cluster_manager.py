@@ -8,7 +8,7 @@ import ase
 from ase.geometry import wrap_positions
 
 from clease import tools
-from clease.datastructures import FourVector, Figure
+from clease.datastructures import FourVector, Figure, TransMatrix
 
 from .cluster_fingerprint import ClusterFingerprint
 from .cluster import Cluster
@@ -348,7 +348,7 @@ class ClusterManager:
 
         # Calculate the mapping for each site in the template.
         trans_mat = list(map(_make_site_mapping, template))
-        return trans_mat
+        return TransMatrix(trans_mat)
 
     def _wrap_four_vectors_trivial(
         self,

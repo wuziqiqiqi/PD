@@ -182,14 +182,19 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
 #ifdef PRINT_DEBUG
   cout << "Reading translation matrix from settings\n";
 #endif
-  PyObject *trans_mat_orig = get_attr(settings, "trans_matrix");
-  if (trans_mat_orig == NULL)
+  // Retrieve the TransMatrix object
+  PyObject *trans_mat_obj = get_attr(settings, "trans_matrix");
+  if (trans_mat_obj == NULL)
   {
     status = Status_t::INIT_FAILED;
     return;
   }
 
+  // Get the internal trans_matrix object from within the TransMatrix object
+  PyObject *trans_mat_orig = get_attr(trans_mat_obj, "trans_matrix");
+
   read_trans_matrix(trans_mat_orig);
+  Py_DECREF(trans_mat_obj);
   Py_DECREF(trans_mat_orig);
 
   // Read the ECIs

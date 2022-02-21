@@ -6,6 +6,9 @@ Release notes
 
 0.11.2
 =======
+* Introduces a new :class:`~clease.datastructures.TransMatrix` dataclass
+  for the translation matrix.
+
 
 0.11.1
 =======
