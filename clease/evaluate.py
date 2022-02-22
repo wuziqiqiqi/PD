@@ -618,12 +618,12 @@ class Evaluate:
         # get CV scores
         alphas = []
         if self.parallel:
-            workers = mp.Pool(self.num_core)
-            args = [(self, scheme) for scheme in fitting_schemes]
-            alphas = [s.get_scalar_parameter() for s in fitting_schemes]
-            cv = workers.map(loocv_mp, args)
-            cv = np.array(cv)
-            workers.close()
+            # Use a context manager to ensure workers are properly closed, even upon a crash
+            with mp.Pool(self.num_core) as workers:
+                args = [(self, scheme) for scheme in fitting_schemes]
+                alphas = [s.get_scalar_parameter() for s in fitting_schemes]
+                cv = workers.map(loocv_mp, args)
+                cv = np.array(cv)
         else:
             cv = np.ones(len(fitting_schemes))
             for i, scheme in enumerate(fitting_schemes):
