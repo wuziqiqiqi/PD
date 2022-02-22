@@ -9,6 +9,7 @@ from typing import Optional, Dict, List
 
 import numpy as np
 from ase.db import connect
+import threadpoolctl
 
 from clease.settings import ClusterExpansionSettings
 from clease.regression import LinearRegression
@@ -618,12 +619,16 @@ class Evaluate:
         # get CV scores
         alphas = []
         if self.parallel:
-            # Use a context manager to ensure workers are properly closed, even upon a crash
-            with mp.Pool(self.num_core) as workers:
-                args = [(self, scheme) for scheme in fitting_schemes]
-                alphas = [s.get_scalar_parameter() for s in fitting_schemes]
-                cv = workers.map(loocv_mp, args)
-                cv = np.array(cv)
+            # We need to limit NumPy's parallelization (and any other BLAS/OpenMP threading)
+            # as it'll spawn num_score * NUM_THREADS threads, which ultimately hurts the performance.
+            # We un-limit the threading again after the work is done.
+            with threadpoolctl.threadpool_limits(limits=1):
+                # Use a context manager to ensure workers are properly closed, even upon a crash
+                with mp.Pool(self.num_core) as workers:
+                    args = [(self, scheme) for scheme in fitting_schemes]
+                    alphas = [s.get_scalar_parameter() for s in fitting_schemes]
+                    cv = workers.map(loocv_mp, args)
+                    cv = np.array(cv)
         else:
             cv = np.ones(len(fitting_schemes))
             for i, scheme in enumerate(fitting_schemes):
