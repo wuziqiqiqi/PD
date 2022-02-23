@@ -10,9 +10,6 @@ from clease.settings.settings_slab import (
 )
 from clease.settings import settings_from_json, Concentration
 
-# Skip entire module if we are not above ASE 3.19
-pytestmark = pytest.mark.skipif(ase.__version__ < "3.19", reason="CESlab requires ASE > 3.19")
-
 
 @pytest.mark.parametrize(
     "test",
