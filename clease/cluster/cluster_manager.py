@@ -297,7 +297,6 @@ class ClusterManager:
         template: ase.Atoms
             Atoms object representing the simulation cell
         """
-        trans_mat = []  # The final translation matrix list
         cell = template.get_cell()
 
         # Get the unique four-vectors which are present in all of our clusters.
@@ -318,6 +317,7 @@ class ClusterManager:
             )
             logger.info("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
         else:
+            # Choose the generalized pathway.
             wrap_fnc = functools.partial(self._wrap_four_vectors_general, unique=unique, cell=cell)
             logger.info("Non-trivial supercell, will wrap using cartesian coordinates")
 
@@ -328,11 +328,12 @@ class ClusterManager:
         # call int() to convert from NumPy integer to python integer
         unique_index = [int(unique_indx_lut[u]) for u in unique]
 
-        for atom in template:
+        def _make_site_mapping(atom: ase.Atom) -> Dict[int, int]:
+            """Helper function to calculate the translation mapping for each
+            atomic site."""
             if self.is_background_atom(atom):
                 # This atom is considered a background, it has no mapping
-                trans_mat.append({})
-                continue
+                return {}
 
             # Translate the atom into its four-vector representation
             vec = self.generator.to_four_vector(atom.position, sublattice=atom.tag)
@@ -343,7 +344,10 @@ class ClusterManager:
             # Get the index of the translated four-vector
             indices = [lut[fv] for fv in four_vecs]
 
-            trans_mat.append(dict(zip(unique_index, indices)))
+            return dict(zip(unique_index, indices))
+
+        # Calculate the mapping for each site in the template.
+        trans_mat = list(map(_make_site_mapping, template))
         return trans_mat
 
     def _wrap_four_vectors_trivial(
