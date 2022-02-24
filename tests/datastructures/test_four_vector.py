@@ -1,10 +1,11 @@
+from collections import Counter
 from ase import Atoms
 from ase.build import bulk
 from ase.spacegroup import crystal
-from collections import Counter
 import pytest
 import numpy as np
 from clease.tools import make_supercell
+from clease.jsonio import read_json
 from clease.datastructures import FourVector, construct_four_vectors
 
 
@@ -272,3 +273,14 @@ def test_shift_xyz_and_modulo():
 
     b = FourVector(5, 0, 0, 0)
     assert a.shift_xyz_and_modulo(b, 2, 2, 1) == FourVector(0, 1, 0, 0)
+
+
+def test_save_load(make_random_four_vector, make_tempfile):
+    file = make_tempfile("four_vector.json")
+    for _ in range(20):
+        fv = make_random_four_vector(min=-20, max=20)
+        fv.save(file)
+        loaded = read_json(file)
+        assert isinstance(loaded, FourVector)
+        assert fv == loaded
+        assert fv is not loaded

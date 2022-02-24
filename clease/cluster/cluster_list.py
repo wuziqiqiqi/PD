@@ -1,11 +1,13 @@
+from __future__ import annotations
 from itertools import product
 import copy
-from typing import List, Dict
+from typing import List, Dict, Any
 import logging
 
 from ase import Atoms
 
 from clease.tools import flatten, dec_string, list2str
+from clease.jsonio import jsonable
 from .cluster_generator import ClusterGenerator
 from .cluster import Cluster
 
@@ -13,11 +15,24 @@ logger = logging.getLogger(__name__)
 __all__ = ("ClusterList",)
 
 
+@jsonable("cluster_list")
 class ClusterList:
+    # pylint: disable=too-many-public-methods
     def __init__(self):
         self._clusters = []
         # Format of the names cache: {num_bf: names}
         self._all_cf_name_cache: Dict[int, List[str]] = {}
+
+    def todict(self) -> Dict[str, Any]:
+        return {"clusters": self.clusters}
+
+    @classmethod
+    def from_dict(cls, dct: Dict[str, Any]) -> ClusterList:
+        cluster_lst = cls()
+        clusters = dct["clusters"]
+        for cluster in clusters:
+            cluster_lst.append(cluster)
+        return cluster_lst
 
     @property
     def clusters(self) -> List[Cluster]:
@@ -56,7 +71,7 @@ class ClusterList:
         # Return all clusters with a given size
         return [c for c in self.clusters if c.size == size]
 
-    def max_size(self):
+    def max_size(self) -> int:
         return max(c.size for c in self.clusters)
 
     def get_by_group(self, group):
@@ -149,7 +164,7 @@ class ClusterList:
         # the ordering of the cached results.
         self.clear_cache()
 
-    def get_sorted_list(self) -> "ClusterList":
+    def get_sorted_list(self) -> ClusterList:
         """Get a new instance of the ClusterList which is sorted."""
         new_list = copy.deepcopy(self)
         new_list.sort()

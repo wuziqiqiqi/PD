@@ -1,7 +1,19 @@
+import random
+import copy
 import pytest
 from ase.build import bulk
-from clease.cluster import Cluster, ClusterList, ClusterFingerprint
 import numpy as np
+from clease.cluster import Cluster, ClusterList, ClusterFingerprint
+from clease.jsonio import read_json
+
+
+@pytest.fixture
+def make_random_fingerprint():
+    def _make_random_fingerprint(length, min=-3, max=3):
+        v = [random.uniform(min, max) for _ in range(length)]
+        return ClusterFingerprint(v)
+
+    return _make_random_fingerprint
 
 
 @pytest.fixture
@@ -23,6 +35,53 @@ def make_cluster():
         return Cluster(**inputs)
 
     return _make_cluster
+
+
+def test_save_load_fingerprint(make_tempfile, make_random_fingerprint):
+    file = make_tempfile("fp.json")
+    for i in range(15):
+        fp = make_random_fingerprint(i)
+        fp.save(file)
+
+        fp_loaded = read_json(file)
+        assert isinstance(fp_loaded, ClusterFingerprint)
+        assert fp == fp_loaded
+
+
+def test_save_load_cluster(make_tempfile, make_cluster, make_random_fingerprint):
+    file = make_tempfile("cluster.json")
+    for i in range(10):
+        cluster = make_cluster(fingerprint=make_random_fingerprint(i))
+        cluster.save(file)
+
+        cluster_loaded = read_json(file)
+        assert isinstance(cluster_loaded, Cluster)
+        assert cluster == cluster_loaded
+
+
+def test_save_load_cluster_list(make_tempfile, make_cluster, make_random_fingerprint):
+    file = make_tempfile("cluster_list.json")
+    cluster_lst = ClusterList()
+    for i in range(10):
+        cluster = make_cluster(fingerprint=make_random_fingerprint(i))
+        cluster_lst.append(cluster)
+    assert cluster_lst == cluster_lst
+    cluster_lst.save(file)
+    loaded = read_json(file)
+    assert isinstance(loaded, ClusterList)
+    assert cluster_lst == loaded
+
+
+def test_cluster_list_eq(make_cluster, make_random_fingerprint):
+    cluster_list = ClusterList()
+    for i in range(1, 15):
+        cluster = make_cluster(fingerprint=make_random_fingerprint(i))
+        cluster_list.append(cluster)
+
+    cpy = copy.deepcopy(cluster_list)
+    assert cpy == cluster_list
+    cpy.clusters[0].fingerprint = make_random_fingerprint(18)
+    assert cpy != cluster_list
 
 
 def test_get_occurence_counts(make_cluster):

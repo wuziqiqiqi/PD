@@ -1,3 +1,4 @@
+from __future__ import annotations
 import copy
 from collections import Counter
 from itertools import product
@@ -8,6 +9,7 @@ from scipy.optimize import linear_sum_assignment
 from ase.atoms import Cell
 from ase import Atoms
 import attr
+from clease.jsonio import jsonable, AttrSavable
 
 __all__ = ("FourVector", "construct_four_vectors")
 
@@ -15,8 +17,9 @@ __all__ = ("FourVector", "construct_four_vectors")
 _FV_KWARGS = dict(validator=attr.validators.instance_of((np.integer, int)))
 
 
+@jsonable("four_vector")
 @attr.s(frozen=True, order=True)
-class FourVector:
+class FourVector(AttrSavable):
     """Container for a vector in 4-vector space, i.e. a vector of [ix, iy, iz, sublattice].
     Represents the position of a site in terms of the number of repetitions of the primitive atoms,
     as well as which sublattice it belongs to in that cell.
@@ -63,11 +66,11 @@ class FourVector:
         """Get the tuple representation of the four-vector"""
         return attr.astuple(self)
 
-    def copy(self) -> "FourVector":
+    def copy(self) -> FourVector:
         """Create a copy of the FourVector instance."""
         return copy.copy(self)
 
-    def shift_xyz(self, other: "FourVector") -> "FourVector":
+    def shift_xyz(self, other: FourVector) -> FourVector:
         """Shift a this vector by another FourVector instance.
         Only translates the x, y, and z values, the sublattice remains the original,
         *so be mindful of the order*, i.e. a.shift_xyz(b) is not the same as b.shift_xyz(a).
@@ -89,7 +92,7 @@ class FourVector:
             self.ix + other.ix, self.iy + other.iy, self.iz + other.iz, self.sublattice
         )
 
-    def shift_xyz_and_modulo(self, other: "FourVector", nx: int, ny: int, nz: int) -> "FourVector":
+    def shift_xyz_and_modulo(self, other: FourVector, nx: int, ny: int, nz: int) -> FourVector:
         """
         Shift the four vector, similarly to "shift_xyz". Additionally, apply a modulo
         of (nx, ny, nz) to (ix, iy, iz).

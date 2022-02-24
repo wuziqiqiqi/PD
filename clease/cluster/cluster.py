@@ -4,15 +4,17 @@ import numpy as np
 from ase import Atoms
 import attr
 from clease.datastructures import Figure
+from clease.jsonio import jsonable, AttrSavable
 from clease.tools import equivalent_deco, list2str
 from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ("Cluster",)
 
 
+@jsonable("cluster")
 @total_ordering
 @attr.s(order=False, eq=False)
-class Cluster:
+class Cluster(AttrSavable):
     """A Cluster class, which collects multiple symmetry equivalent Figure objects,
     and related properties."""
 
@@ -62,9 +64,6 @@ class Cluster:
 
     def equiv_deco(self, deco):
         return equivalent_deco(deco, self.equiv_sites)
-
-    def todict(self) -> Dict[str, Any]:
-        return attr.asdict(self)
 
     def is_subcluster(self, other) -> bool:
         """Check if the passed cluster is a subcluster of the current."""

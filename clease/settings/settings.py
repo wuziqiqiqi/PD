@@ -3,6 +3,7 @@
 This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
+from __future__ import annotations
 import logging
 from copy import deepcopy
 from typing import List, Dict, Optional, Union, Sequence, Set, Any
@@ -564,7 +565,7 @@ class ClusterExpansionSettings:
         return dct
 
     @classmethod
-    def from_dict(cls, dct: Dict[str, Any]) -> "ClusterExpansionSettings":
+    def from_dict(cls, dct: Dict[str, Any]) -> ClusterExpansionSettings:
         """Load a new ClusterExpansionSettings class from a dictionary representation.
 
         Example:

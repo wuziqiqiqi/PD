@@ -3,6 +3,7 @@ from typing import Iterable, Any, Tuple
 import attr
 import ase
 import numpy as np
+from clease.jsonio import jsonable, AttrSavable
 from .four_vector import FourVector
 
 __all__ = ("Figure",)
@@ -20,8 +21,9 @@ def _convert_figure(x: Any) -> Any:
     return x
 
 
+@jsonable("figure")
 @attr.s(frozen=True, order=False)
-class Figure:
+class Figure(AttrSavable):
     """Class which defines a Figure, i.e. a collection of FourVector objects
     which defines a single cluster. Each entry in the components must be a FourVector,
     and is checked upon construction. The order of the FourVector objects is preserved,

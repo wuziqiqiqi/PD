@@ -137,6 +137,8 @@ class Concentration:
         self._get_interbasis_relations()
 
     def __eq__(self, other):
+        if not isinstance(other, Concentration):
+            return NotImplemented
         return (
             np.allclose(self.A_eq, other.A_eq)
             and np.allclose(self.b_eq, other.b_eq)

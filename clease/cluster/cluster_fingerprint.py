@@ -2,6 +2,7 @@ from typing import Any, Iterable
 from functools import total_ordering
 import numpy as np
 import attr
+from clease.jsonio import jsonable, AttrSavable
 
 __all__ = ("ClusterFingerprint",)
 
@@ -14,9 +15,10 @@ def _fingerprint_converter(x: Any) -> Any:
     return x
 
 
+@jsonable("cluster_fingerprint")
 @total_ordering
 @attr.s(eq=False, order=False)
-class ClusterFingerprint:
+class ClusterFingerprint(AttrSavable):
     """Container for a Cluster Fingerprint."""
 
     fp: np.ndarray = attr.ib(

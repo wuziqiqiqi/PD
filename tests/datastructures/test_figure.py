@@ -2,6 +2,16 @@ import pytest
 from ase.build import bulk
 import numpy as np
 from clease.datastructures import FourVector, Figure
+from clease.jsonio import read_json
+
+
+@pytest.fixture
+def make_random_figure(make_random_four_vector):
+    def _make_random_figure(length):
+        fvs = [make_random_four_vector() for _ in range(length)]
+        return Figure(fvs)
+
+    return _make_random_figure
 
 
 @pytest.fixture
@@ -116,3 +126,16 @@ def test_get_diameter(prim):
     )
     assert fig.get_diameter(prim) == pytest.approx(d(x) * 2)
     assert fig.get_diameter(prim) == pytest.approx(d(y) * 2)
+
+
+def test_save_load(make_random_figure, make_tempfile):
+    file = make_tempfile("figure.json")
+    for i in range(25):
+        figure = make_random_figure(i)
+        figure.save(file)
+        loaded = read_json(file)
+        assert isinstance(loaded, Figure)
+        assert figure == loaded
+        assert figure is not loaded
+        for fv in loaded.components:
+            assert isinstance(fv, FourVector)

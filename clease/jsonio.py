@@ -1,5 +1,6 @@
 import json
-from typing import Any
+from typing import Any, Dict
+import attr
 from ase.io import jsonio as aseio
 from ase.utils import reader, writer
 
@@ -70,8 +71,28 @@ def create_clease_object(objtype, dct):
         from .settings import ClusterExpansionSettings
 
         obj = ClusterExpansionSettings.from_dict(dct)
+    elif objtype == "cluster_list":
+        from .cluster.cluster_list import ClusterList
+
+        obj = ClusterList.from_dict(dct)
+    elif objtype == "cluster":
+        from .cluster.cluster import Cluster
+
+        obj = Cluster.from_dict(dct)
+    elif objtype == "cluster_fingerprint":
+        from .cluster.cluster_fingerprint import ClusterFingerprint
+
+        obj = ClusterFingerprint.from_dict(dct)
+    elif objtype == "figure":
+        from .datastructures.figure import Figure
+
+        obj = Figure.from_dict(dct)
+    elif objtype == "four_vector":
+        from .datastructures.four_vector import FourVector
+
+        obj = FourVector.from_dict(dct)
     else:
-        raise ValueError(f"Do now know how to load object type: {objtype}")
+        raise ValueError(f"Cannot load object type: {objtype}")
     assert obj.clease_objtype == objtype
     return obj
 
@@ -130,3 +151,17 @@ def jsonable(name):
         return cls
 
     return jsonableclass
+
+
+class AttrSavable:
+    """Mixin for saving simple attrs classes"""
+
+    def todict(self) -> Dict[str, Any]:
+        """Convert into a dictionary representation."""
+        # Disable recursive, since the json module takes care of that
+        return attr.asdict(self, recurse=False)
+
+    @classmethod
+    def from_dict(cls, dct: Dict[str, Any]):
+        """Load an instance of the class from a dictionary."""
+        return cls(**dct)
