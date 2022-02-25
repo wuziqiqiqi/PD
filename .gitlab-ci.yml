@@ -81,6 +81,12 @@ pytest:py39:
   script:
     - tox -e py39
 
+# CI to test CLEASE against the current ASE master.
+pytest:ase_master:
+  <<: *manual_test
+  script:
+    - tox -e ase
+
 # Build as many linux wheels as we can. Only to be triggered manually.
 # This takes a while, and performs no uploads to PyPI, only to gitlab.
 linux_wheels:
