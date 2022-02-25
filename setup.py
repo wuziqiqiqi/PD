@@ -1,5 +1,5 @@
 import os
-from distutils.sysconfig import get_python_inc
+import sysconfig
 from setuptools import setup, Extension
 
 
@@ -60,6 +60,9 @@ src_files = [cxx_src_folder + x for x in src_files]
 src_files.append(cython_folder + "clease_cxx.pyx")
 extra_comp_args = ["-std=c++11"]
 
+# Replaces the deprecated "distutils.sysconfig.get_python_inc()"
+py_include = sysconfig.get_path("include")
+
 clease_cxx = Extension(
     "clease_cxx",
     sources=src_files,
@@ -67,7 +70,7 @@ clease_cxx = Extension(
         cxx_inc_folder,
         get_npy_include_folder(),
         cxx_src_folder,
-        get_python_inc(),
+        py_include,
         cython_folder,
     ],
     extra_compile_args=extra_comp_args,
