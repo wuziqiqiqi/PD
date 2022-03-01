@@ -35,6 +35,35 @@ def almgsix_eci():
         return json.load(file)
 
 
+@pytest.fixture
+def make_settings_with_bkg(db_name):
+    def _make_settings_with_bkg(size=(1, 1, 1)):
+        conc = Concentration(basis_elements=[["Li", "X"], ["O"]])
+        settings = CEBulk(
+            db_name=db_name,
+            concentration=conc,
+            a=4.0,
+            crystalstructure="rocksalt",
+            max_cluster_dia=[5.0],
+            size=size,
+        )
+        atoms = settings.atoms.copy()
+        non_bkg_sites = atoms.symbols == "Li"
+        # Set half of the symbols to "X"
+        # (randomly ordered)
+        indices = list(np.arange(len(atoms))[non_bkg_sites])
+        indices = random.sample(indices, len(indices) // 2)
+        atoms.symbols[indices] = "X"
+
+        all_cf_names = settings.all_cf_names
+        eci = {name: random.random() for name in all_cf_names}
+        atoms = attach_calculator(settings, atoms, eci=eci)
+
+        return settings, atoms
+
+    return _make_settings_with_bkg
+
+
 def get_example_mc_system(db_name):
     conc = Concentration(basis_elements=[["Au", "Cu"]])
     settings = CEBulk(
@@ -589,3 +618,40 @@ def test_evaluator(example_system):
     mc = Montecarlo(evaluator, 200)
     assert mc.atoms is atoms
     assert mc.evaluator is evaluator
+
+
+@pytest.mark.parametrize("rep", [(2, 1, 1), (3, 3, 3)])
+@pytest.mark.parametrize("seed", [10, 42])
+def test_default_swapmove_background(make_settings_with_bkg, rep, set_rng, seed):
+    """Test that we ignore background indices in
+    the default MC swap move object"""
+    set_rng(seed)
+    settings, atoms = make_settings_with_bkg(rep)
+
+    bkg_indices = [at.index for at in atoms if at.symbol == "O"]
+    assert settings.background_indices == bkg_indices
+
+    mc = Montecarlo(atoms, 300)
+
+    assert mc.generator.indices == settings.non_background_indices
+
+    gen = mc.generator
+
+    # Ensure none of the background indices are tracked
+    for index in settings.background_indices:
+        assert not gen.is_tracked(index)
+
+    # Ensure all non-background indices are tracked
+    for index in settings.non_background_indices:
+        assert gen.is_tracked(index)
+
+    # Verify we can run
+    mc.run(50)
+
+    # Make an MC with no background "protection"
+    swapmove = RandomSwap(atoms, indices=None)
+    mc = Montecarlo(atoms, 300, generator=swapmove)
+
+    with pytest.raises(RuntimeError):
+        # We will try to swap a background index, which will fail
+        mc.run(100)

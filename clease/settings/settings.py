@@ -208,6 +208,15 @@ class ClusterExpansionSettings:
         return bkg_indices
 
     @property
+    def non_background_indices(self) -> List[int]:
+        """Indices of sites which are not background"""
+        bkg = set(self.background_indices)
+
+        all_indices = set(range(len(self.atoms)))
+        # Remove all background indices
+        return sorted(all_indices - bkg)
+
+    @property
     def cluster_mng(self):
         if self._cluster_mng is None:
             kwargs = {}

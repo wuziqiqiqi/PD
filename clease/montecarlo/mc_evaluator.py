@@ -3,6 +3,7 @@ import logging
 from ase import Atoms
 from clease.datastructures import SystemChanges
 from clease.calculator import Clease
+from clease.settings.settings import ClusterExpansionSettings
 
 __all__ = ("MCEvaluator", "CEMCEvaluator", "construct_evaluator")
 
@@ -110,12 +111,22 @@ class CEMCEvaluator(MCEvaluator):
             )
         super().__init__(atoms)
 
+    @property
+    def settings(self) -> ClusterExpansionSettings:
+        """Get the related settings object"""
+        return self.calc.settings
+
+    @property
+    def calc(self) -> Clease:
+        """Get the internal calculator object"""
+        return self.atoms.calc
+
     def get_energy(self, applied_changes: SystemChanges = None) -> float:
-        return self.atoms.calc.get_energy()
+        return self.calc.get_energy()
 
     def reset(self) -> None:
         """Perform a reset on the evaluator and/or on the atoms"""
-        self.atoms.calc.clear_history()
+        self.calc.clear_history()
         super().reset()
 
     def apply_system_changes(self, system_changes: SystemChanges, keep=False) -> None:
@@ -128,8 +139,7 @@ class CEMCEvaluator(MCEvaluator):
                 :meth:`~clease.montecarlo.mc_evaluator.MCEvaluator.keep_system_changes`
                 after applying changes. Defaults to False.
         """
-        atoms = self.atoms
-        atoms.calc.apply_system_changes(system_changes)
+        self.calc.apply_system_changes(system_changes)
         if keep:
             self.keep_system_changes(system_changes=system_changes)
 
@@ -140,12 +150,12 @@ class CEMCEvaluator(MCEvaluator):
             atoms (Atoms): Atoms object to be mutated.
             system_changes (SystemChanges): Sequence of changes to be applied.
         """
-        self.atoms.calc.undo_system_changes()
+        self.calc.undo_system_changes()
 
     def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
-        self.atoms.calc.keep_system_changes()
+        self.calc.keep_system_changes()
 
     def get_energy_given_change(self, system_changes: SystemChanges) -> float:
         """Calculate the energy of a set of changes, and undo any changes.
@@ -158,12 +168,12 @@ class CEMCEvaluator(MCEvaluator):
             float: The resulting energy from a
             call to :meth:`~clease.montecarlo.mc_evaluator.MCEvaluator.get_energy`.
         """
-        return self.atoms.calc.get_energy_given_change(system_changes)
+        return self.calc.get_energy_given_change(system_changes)
 
     def synchronize(self) -> None:
         """Ensure the calculator and atoms objects are synchronized."""
         # Recalculate the CF
-        self.atoms.calc.update_cf()
+        self.calc.update_cf()
 
 
 def _make_mc_evaluator_from_atoms(atoms: Atoms) -> MCEvaluator:

@@ -11,7 +11,7 @@ from ase import Atoms
 from ase.units import kB
 from clease.version import __version__
 from clease.datastructures import SystemChange, SystemChanges
-from .mc_evaluator import MCEvaluator
+from .mc_evaluator import CEMCEvaluator, MCEvaluator
 from .base import BaseMC
 from .averager import Averager
 from .bias_potential import BiasPotential
@@ -49,7 +49,7 @@ class Montecarlo(BaseMC):
         self.T = temp
 
         if generator is None:
-            self.generator = RandomSwap(self.atoms)
+            self.generator = _make_default_swap_generator(self.evaluator)
         else:
             self.generator = generator
 
@@ -347,3 +347,21 @@ class Montecarlo(BaseMC):
                     interval,
                 )
                 obs(system_changes)
+
+
+def _make_default_swap_generator(evaluator: MCEvaluator) -> RandomSwap:
+    """Construct the default RandomSwap trial move generator.
+    If the evaluator object is not a Cluster Expansion evaluator,
+    then any swaps are allowed.
+
+    If the evaluator is a Cluster Expansion MC evaluator object,
+    then only non-background sites are considered for random swaps.
+    This does *not* constrain swaps between sublattices.
+    """
+    atoms = evaluator.atoms
+    if not isinstance(evaluator, CEMCEvaluator):
+        # Running a non-CE Evaluator
+        return RandomSwap(atoms)
+    # We're a CE evaluator, constrain the background sites
+    non_bkg_indices = evaluator.settings.non_background_indices
+    return RandomSwap(atoms, indices=non_bkg_indices)

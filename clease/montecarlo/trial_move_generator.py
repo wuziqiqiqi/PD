@@ -213,6 +213,10 @@ class RandomSwap(SingleTrialMoveGenerator):
     def on_move_accepted(self, changes: Sequence[SystemChange]):
         self.tracker.update_swap_move(changes)
 
+    def is_tracked(self, index: int) -> bool:
+        """Check if a given index is being tracked."""
+        return any(index in lst for lst in self.tracker.tracker.values())
+
 
 class MixedSwapFlip(TrialMoveGenerator):
     """

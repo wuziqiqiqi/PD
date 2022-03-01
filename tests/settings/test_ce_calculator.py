@@ -523,3 +523,16 @@ def test_formula_after_attach(db_name):
     # Revert when the calculator is attached
     atoms_with_calc[0].symbol = "Au"
     assert E1 == pytest.approx(atoms_with_calc.get_potential_energy(), abs=1e-6)
+
+
+@pytest.mark.parametrize("rep", [(1, 1, 1), (3, 3, 4), (5, 1, 1)])
+def test_non_bkg_indices(db_name, rep):
+    settings, atoms = get_rocksalt(db_name)
+    atoms = atoms * rep
+    atoms = wrap_and_sort_by_position(atoms)
+    settings.set_active_template(atoms=atoms)
+
+    bkg_exp = [at.index for at in atoms if at.symbol == "O"]
+    assert settings.background_indices == bkg_exp
+    non_bkg_exp = [at.index for at in atoms if at.symbol != "O"]
+    assert settings.non_background_indices == non_bkg_exp
