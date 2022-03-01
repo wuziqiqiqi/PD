@@ -13,6 +13,9 @@ Release notes
   if background is ignored.
 * Added a new :meth:`~clease.montecarlo.montecarlo.Montecarlo.irun` method,
   for iteratively running MC calculations.
+* MC observers can now override
+  :meth:`~clease.montecarlo.observers.MCObserver.observe_step` instead, which takes a
+  :class:`~clease.montecarlo.base.MCStep` object.
 
 0.11.1
 =======

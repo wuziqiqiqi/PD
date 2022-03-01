@@ -21,13 +21,20 @@ which adds the following methods:
 .. autoclass:: clease.montecarlo.base.BaseMC
     :members:
 
+Individual steps from montecarlo iterations return
+:class:`~clease.montecarlo.base.MCStep` objects:
+
+.. autoclass:: clease.montecarlo.base.MCStep
+    :members:
+
+
 Related Objects
 ---------------
 
 Below are some related objects, which may be useful in your Monte Carlo endeavours.
 
 .. toctree::
-    
+
     ./mc_constraints
     ./mc_observers
     ./mc_evaluator

@@ -10,7 +10,7 @@ from collections import Counter
 from ase import Atoms
 from ase.units import kB
 from clease.version import __version__
-from clease.datastructures import SystemChange, SystemChanges
+from clease.datastructures import SystemChanges
 from .mc_evaluator import CEMCEvaluator, MCEvaluator
 from .base import BaseMC, MCStep
 from .averager import Averager
@@ -330,29 +330,15 @@ class Montecarlo(BaseMC):
         )
         return random.random() <= probability
 
-    def _move_accepted(self, system_changes: SystemChanges) -> SystemChanges:
+    def _move_accepted(self, system_changes: SystemChanges) -> None:
         logger.debug("Move accepted, updating things")
         self.num_accepted += 1
         self.generator.on_move_accepted(system_changes)
         self.current_energy = self.new_energy
-        return system_changes
 
-    def _move_rejected(self, system_changes: SystemChanges) -> SystemChanges:
+    def _move_rejected(self, system_changes: SystemChanges) -> None:
         logger.debug("Move rejected, undoing system changes: %s", system_changes)
         self.generator.on_move_rejected(system_changes)
-
-        # Move rejected, no changes are made
-        system_changes = [
-            SystemChange(
-                index=change.index,
-                old_symb=change.old_symb,
-                new_symb=change.old_symb,
-                name=change.name,
-            )
-            for change in system_changes
-        ]
-        logger.debug("Reversed system changes: %s", system_changes)
-        return system_changes
 
     def count_atoms(self) -> Dict[str, int]:
         """Count the number of each element."""
@@ -368,14 +354,15 @@ class Montecarlo(BaseMC):
         move_accepted = self._calculate_step(system_changes)
 
         updater = self._move_accepted if move_accepted else self._move_rejected
-        updated_changes = updater(system_changes)
+        updater(system_changes)
 
+        step = MCStep(self.current_step, self.current_energy, move_accepted, system_changes)
         # Execute all observers
-        self.execute_observers(updated_changes)
+        self.execute_observers(step)
 
-        return MCStep(self.current_step, self.current_energy, move_accepted, system_changes)
+        return step
 
-    def execute_observers(self, system_changes: SystemChanges):
+    def execute_observers(self, last_step: MCStep):
         for interval, obs in self.observers:
             if self.current_step % interval == 0:
                 logger.debug(
@@ -384,7 +371,7 @@ class Montecarlo(BaseMC):
                     self.current_step,
                     interval,
                 )
-                obs(system_changes)
+                obs.observe_step(last_step)
 
 
 def _make_default_swap_generator(evaluator: MCEvaluator) -> RandomSwap:

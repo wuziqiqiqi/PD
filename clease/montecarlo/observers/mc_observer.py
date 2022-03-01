@@ -1,14 +1,16 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from ase import Atoms
+from clease.montecarlo.base import MCStep
 from clease.datastructures.system_changes import SystemChanges
 
 
 class MCObserver(ABC):
-    """Base class for all MC observers."""
+    """Base class for all MC observers.
+
+    Child observers should override the observe_step() method."""
 
     name = "GenericObserver"
 
-    @abstractmethod
     def __call__(self, system_changes: SystemChanges) -> None:
         """
         Gets information about the system changes and can perform some action
@@ -19,6 +21,15 @@ class MCObserver(ABC):
             index 26 is swapped with an Al atom occupying the atomic index 12,
             system_change = [(26, Mg, Al), (12, Al, Mg)]
         """
+        raise NotImplementedError("Observer does not implement __call__")
+
+    def observe_step(self, mc_step: MCStep) -> None:
+        """Observe on a MCStep object. Defaults to __call__(system_changes)
+        for compatibility reasons. Child classes overriding this function
+        should therefore not call the super() version.
+        """
+        # use the __call__ method for backwards compatibility
+        self(mc_step.last_move)
 
     def reset(self) -> None:
         """Reset all values of the MC observer"""

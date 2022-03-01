@@ -133,8 +133,9 @@ the tag of each atom represents the corresponding layer.
              if atom.symbol == 'Cu':
                  self.layer_average[self.layers[atom.index]] += 1
 
-     def __call__(self, system_changes):
+     def observe_step(self, step):
          self.num_calls += 1
+         system_changes = step.last_change
          for change in system_changes:
              layer = self.layers[change[0]]
              if change[2] == 'Cu':
@@ -145,8 +146,10 @@ the tag of each atom represents the corresponding layer.
      def get_averages(self):
          return {'layer{}'.format(i): x/self.num_calls for i, x in enumerate(self.layer_average)}
 
-When this observer is attached, the `__call__` method will be executed
-on every Monte Carlo step. The `system_changes` parameter is a list of
+When this observer is attached, the `observe_step` method will be executed
+on every Monte Carlo step. The call signature takes in a
+:class:`~clease.montecarlo.base.MCStep` instance.
+The `system_changes` variable here is a list of
 the following form `[(10, Au, Cu), (34, Cu, Au)]` which means that the
 symbol on site 10 changes from Au to Cu and the symbol on site 34 changes
 from Cu to Au. Hence, in the update algorithm above we check if
