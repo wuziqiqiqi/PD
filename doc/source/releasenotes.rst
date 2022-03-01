@@ -8,6 +8,7 @@ Release notes
 =======
 * Introduces a new :class:`~clease.datastructures.TransMatrix` dataclass
   for the translation matrix.
+* Temporarily restricts ASE to ``<3.23``, until we resolve issues with current ASE master.
 
 
 0.11.1
