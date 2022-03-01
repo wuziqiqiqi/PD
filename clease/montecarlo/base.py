@@ -1,9 +1,18 @@
-from typing import Union
+from typing import Union, NamedTuple
 from abc import ABC
 from ase import Atoms
+from clease.datastructures import SystemChanges
 from .mc_evaluator import MCEvaluator, construct_evaluator
 
-__all__ = ("BaseMC",)
+__all__ = ("BaseMC", "MCStep")
+
+
+class MCStep(NamedTuple):
+    """Container with information about a single MC step"""
+
+    energy: float
+    move_accepted: bool
+    last_move: SystemChanges
 
 
 class BaseMC(ABC):

@@ -9,7 +9,7 @@ from ase.build import bulk
 from ase.geometry import get_layers
 import clease
 from clease.calculator import attach_calculator
-from clease.montecarlo import Montecarlo
+from clease.montecarlo import Montecarlo, MCStep
 from clease.montecarlo.observers import CorrelationFunctionObserver
 from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
@@ -664,7 +664,8 @@ def test_mc_irun(example_system):
 
     # Check we can run for a bit, and stop to inspect
     for _ in range(10):
-        next(it)
+        step = next(it)
+        assert isinstance(step, MCStep)
     assert mc.current_step == 10
 
     for _ in it:

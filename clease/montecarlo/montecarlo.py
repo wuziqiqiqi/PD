@@ -1,5 +1,5 @@
 """Monte Carlo method for ase."""
-from typing import Tuple, Dict, Union, Iterator
+from typing import Dict, Union, Iterator
 import sys
 import datetime
 import time
@@ -12,7 +12,7 @@ from ase.units import kB
 from clease.version import __version__
 from clease.datastructures import SystemChange, SystemChanges
 from .mc_evaluator import CEMCEvaluator, MCEvaluator
-from .base import BaseMC
+from .base import BaseMC, MCStep
 from .averager import Averager
 from .bias_potential import BiasPotential
 from .observers import MCObserver
@@ -152,7 +152,7 @@ class Montecarlo(BaseMC):
         # Reset the internal step counters
         self._reset_internal_counters()
 
-    def run(self, steps: int = 100):
+    def run(self, steps: int = 100) -> None:
         """Run Monte Carlo simulation.
 
         Parameters:
@@ -182,7 +182,7 @@ class Montecarlo(BaseMC):
                 prev = self.current_step
                 start = time.perf_counter()
 
-    def irun(self, steps: int) -> Iterator[Tuple[float, bool]]:
+    def irun(self, steps: int) -> Iterator[MCStep]:
         """Run Monte Carlo simulation as an iterator.
         Can be used to inspect the MC after each step, for example,
         to print the energy every 5 steps, one could do:
@@ -212,22 +212,23 @@ class Montecarlo(BaseMC):
         # Now we create the iterator
         return self._irun(steps)
 
-    def _irun(self, steps: int) -> Iterator[Tuple[float, bool]]:
+    def _irun(self, steps: int) -> Iterator[MCStep]:
         """Create the MC iterator"""
         # Offset range by 1, so that we start with current step = 1
         for _ in range(steps):
-            E, move_accepted = self._mc_step()
+            step = self._mc_step()
 
-            self.mean_energy += E
+            en = step.energy
+            self.mean_energy += en
             # E * E is slightly faster than E ** 2
-            self.energy_squared += E * E
+            self.energy_squared += en * en
 
             if self.quit:
                 # Breaking out will cause the iterator to end.
                 logger.warning("Quit signal detected. Breaking the MC loop.")
                 break
             # Yield, allow inspection before continuing.
-            yield E, move_accepted
+            yield step
         else:
             # Loop was not broken, we reached the max number of steps
             logger.info("Reached maximum number of steps (%d mc steps)", steps)
@@ -357,7 +358,7 @@ class Montecarlo(BaseMC):
         """Count the number of each element."""
         return dict(Counter(self.atoms.symbols))
 
-    def _mc_step(self) -> Tuple[float, bool]:
+    def _mc_step(self) -> MCStep:
         """Make one Monte Carlo step by swithing two atoms."""
         self.current_step += 1
         system_changes = self.generator.get_trial_move()
@@ -367,11 +368,12 @@ class Montecarlo(BaseMC):
         move_accepted = self._calculate_step(system_changes)
 
         updater = self._move_accepted if move_accepted else self._move_rejected
-        system_changes = updater(system_changes)
+        updated_changes = updater(system_changes)
 
         # Execute all observers
-        self.execute_observers(system_changes)
-        return self.current_energy, move_accepted
+        self.execute_observers(updated_changes)
+
+        return MCStep(self.current_energy, move_accepted, system_changes)
 
     def execute_observers(self, system_changes: SystemChanges):
         for interval, obs in self.observers:
