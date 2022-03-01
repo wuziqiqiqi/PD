@@ -10,6 +10,7 @@ __all__ = ("BaseMC", "MCStep")
 class MCStep(NamedTuple):
     """Container with information about a single MC step"""
 
+    step: int
     energy: float
     move_accepted: bool
     last_move: SystemChanges

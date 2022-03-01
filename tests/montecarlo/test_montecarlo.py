@@ -662,10 +662,8 @@ def test_mc_irun(example_system):
     it = mc.irun(20)
     assert mc.current_step == 0
 
-    # Check we can run for a bit, and stop to inspect
     for _ in range(10):
-        step = next(it)
-        assert isinstance(step, MCStep)
+        next(it)
     assert mc.current_step == 10
 
     for _ in it:
@@ -678,3 +676,29 @@ def test_mc_irun(example_system):
     for i, _ in enumerate(it):
         assert mc.current_step == i + 1
     assert mc.current_step == 20
+
+
+def test_mc_step(example_system):
+    """Test the contents of the MCStep"""
+    mc = Montecarlo(example_system, 300)
+
+    nsteps = 50
+    it = mc.irun(nsteps)
+    assert mc.current_step == 0
+
+    # Check we can run for a bit, and stop to inspect
+    step0 = next(it)
+    for ii, step in enumerate(it, start=2):
+        assert isinstance(step, MCStep)
+        assert step.step == ii
+        # Verify the contents of the MCStep
+        assert step.move_accepted is True or step.move_accepted is False
+        assert len(step.last_move) == 2
+        for move in step.last_move:
+            assert isinstance(move, SystemChange)
+        assert isinstance(step.energy, float)
+        assert step.energy == mc.current_energy
+    assert step0.step == 1  # Check we didn't mutate the original step
+    assert mc.current_step == nsteps
+    assert step.step == nsteps
+    assert step.energy == mc.current_energy

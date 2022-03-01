@@ -189,9 +189,9 @@ class Montecarlo(BaseMC):
 
         # doctest: +SKIP
         >>> mc = Montecarlo(...)
-        >>> for E, move_accepted in mc.irun(500):
-        ...     if mc.current_step % 5 == 0:
-        ...         print(f"Current energy: {E:.2f} eV")
+        >>> for mc_step in mc.irun(500):
+        ...     if mc_step.step % 5 == 0:
+        ...         print(f"Current energy: {mc_step.energy:.2f} eV")
 
         The iterator yields the current energy, as well as whether the last move
         was accepted.
@@ -373,7 +373,7 @@ class Montecarlo(BaseMC):
         # Execute all observers
         self.execute_observers(updated_changes)
 
-        return MCStep(self.current_energy, move_accepted, system_changes)
+        return MCStep(self.current_step, self.current_energy, move_accepted, system_changes)
 
     def execute_observers(self, system_changes: SystemChanges):
         for interval, obs in self.observers:
