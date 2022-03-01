@@ -16,6 +16,7 @@ Release notes
 * MC observers can now override
   :meth:`~clease.montecarlo.observers.MCObserver.observe_step` instead, which takes a
   :class:`~clease.montecarlo.base.MCStep` object.
+* Added a new MC observer: :class:`clease.montecarlo.observers.MoveObserver`.
 
 0.11.1
 =======

@@ -678,9 +678,10 @@ def test_mc_irun(example_system):
     assert mc.current_step == 20
 
 
-def test_mc_step(example_system):
+@pytest.mark.parametrize("temp", [1, 300, 30_000])
+def test_mc_step(example_system, temp):
     """Test the contents of the MCStep"""
-    mc = Montecarlo(example_system, 300)
+    mc = Montecarlo(example_system, temp)
 
     nsteps = 50
     it = mc.irun(nsteps)
@@ -698,6 +699,10 @@ def test_mc_step(example_system):
             assert isinstance(move, SystemChange)
         assert isinstance(step.energy, float)
         assert step.energy == mc.current_energy
+        for change in step.last_move:
+            # Find the expected symbol, based on whether the move was accepted
+            exp_symb = change.new_symb if step.move_accepted else change.old_symb
+            assert mc.atoms.symbols[change.index] == exp_symb, ii
     assert step0.step == 1  # Check we didn't mutate the original step
     assert mc.current_step == nsteps
     assert step.step == nsteps

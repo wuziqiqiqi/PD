@@ -12,6 +12,7 @@ from .concentration_observer import ConcentrationObserver
 from .multi_state_sgc_observer import MultiStateSGCConcObserver, SGCState
 from .entropy_prod_rate import *
 from .acceptance_rate import *
+from .move_obs import *
 
 ADDITIONAL = (
     "MCObserver",
@@ -28,4 +29,4 @@ ADDITIONAL = (
     "SGCState",
 )
 
-__all__ = ADDITIONAL + (entropy_prod_rate.__all__ + acceptance_rate.__all__)
+__all__ = ADDITIONAL + (entropy_prod_rate.__all__ + acceptance_rate.__all__ + move_obs.__all__)
