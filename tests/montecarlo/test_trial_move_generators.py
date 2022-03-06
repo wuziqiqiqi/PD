@@ -163,6 +163,7 @@ def test_random_flip_within_basis():
 
 
 @pytest.mark.parametrize("flip_prob", [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1])
+@pytest.mark.filterwarnings("ignore:divide by zero")
 def test_mixed_swap_probability(flip_prob):
     """Test the flip_prob properly affects the ratio of flip moves and swap moves"""
 

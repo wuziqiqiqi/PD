@@ -544,6 +544,8 @@ def test_constraint_is_redundant(test):
     ],
     ids=["Paulraj", "Telgen"],
 )
+# Silence warnings from solving the Telgen test
+@pytest.mark.filterwarnings("ignore:Solving system with option", "ignore:Ill-conditioned matrix")
 def test_remove_redundant_constraints(test):
     # References:
     #
