@@ -4,6 +4,9 @@
 Release notes
 =============
 
+0.11.3
+=======
+
 0.11.2
 =======
 * Introduces a new :class:`~clease.datastructures.TransMatrix` dataclass
