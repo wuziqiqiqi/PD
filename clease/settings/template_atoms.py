@@ -73,24 +73,24 @@ class TemplateAtoms:
         msg += f"Skew threshold: {self.skew_threshold}\n"
         return msg
 
-    def add_cell_filter(self, cell_filter):
+    def add_cell_filter(self, cell_filter: CellFilter) -> None:
         """Attach a new Cell filter."""
         if not isinstance(cell_filter, CellFilter):
             raise TypeError("filter has to be an instance of CellFilter")
         self.cell_filters.append(cell_filter)
 
-    def add_atoms_filter(self, at_filter):
+    def add_atoms_filter(self, at_filter: AtomsFilter) -> None:
         """Attach a new Atoms filter."""
         if not isinstance(at_filter, AtomsFilter):
             raise TypeError("filter has to be an instance of AtomsFilter")
         self.atoms_filters.append(at_filter)
 
-    def clear_filters(self):
+    def clear_filters(self) -> None:
         """Remove all filters."""
         self.cell_filters = []
         self.atoms_filters = []
 
-    def remove_filter(self, f):
+    def remove_filter(self, f) -> None:
         """Remove one filter"""
         if isinstance(f, AtomsFilter):
             self.atoms_filters.remove(f)
@@ -99,12 +99,12 @@ class TemplateAtoms:
         else:
             raise TypeError("Only AtomsFilters and CellFilters can be removed")
 
-    def remove_filters(self, filters):
+    def remove_filters(self, filters) -> None:
         """Remove a list of filters."""
         for f in filters:
             self.remove_filter(f)
 
-    def is_valid(self, atoms=None, cell=None):
+    def is_valid(self, atoms=None, cell=None) -> bool:
         """
         Check the validity of the template.
 
