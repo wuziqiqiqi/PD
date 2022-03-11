@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sysconfig
 from setuptools import setup, Extension
 
@@ -6,7 +7,7 @@ from setuptools import setup, Extension
 def src_folder():
     candidates = ["cxx/src/", "clease/", "./"]
     for c in candidates:
-        if os.path.exists(c + "cluster.cpp"):
+        if os.path.exists(os.path.join(c, "cluster.cpp")):
             return c
     raise RuntimeError("Cannot find source folder.")
 
@@ -14,7 +15,7 @@ def src_folder():
 def get_cython_folder():
     candidates = ["cxx/cython/", "cython/", "./"]
     for c in candidates:
-        if os.path.exists(c + "clease_cxx.pyx"):
+        if os.path.exists(os.path.join(c, "clease_cxx.pyx")):
             return c
     raise RuntimeError("Cannot find cython folder")
 
@@ -22,7 +23,7 @@ def get_cython_folder():
 def include_folder():
     candidates = ["cxx/include/", "clease/", "./"]
     for c in candidates:
-        if os.path.exists(c + "cluster.hpp"):
+        if os.path.exists(os.path.join(c, "cluster.hpp")):
             return c
     raise RuntimeError("Cannot find include folder")
 
@@ -36,30 +37,33 @@ def get_npy_include_folder():
 def build_ext(ext_module):
     from Cython.Build import cythonize
 
-    return cythonize(ext_module, compiler_directives={"language_level": "3"})
+    return cythonize(
+        ext_module, compiler_directives={"language_level": "3", "embedsignature": True}
+    )
 
 
 cxx_src_folder = src_folder()
 cxx_inc_folder = include_folder()
 cython_folder = get_cython_folder()
 
-src_files = [
-    "cf_history_tracker.cpp",
-    "additional_tools.cpp",
-    "cluster.cpp",
-    "row_sparse_struct_matrix.cpp",
-    "named_array.cpp",
-    "symbols_with_numbers.cpp",
-    "basis_function.cpp",
-    "cluster_list.cpp",
-    "atoms.cpp",
-    "atomic_numbers.cpp",
-]
 
-src_files = [cxx_src_folder + x for x in src_files]
-src_files.append(cython_folder + "clease_cxx.pyx")
+def get_source_files():
+    """Construct a list of all sources to be included."""
+    cpp_sources = Path(cxx_src_folder).glob("*.cpp")
+
+    # C++ sources, excluding the ones which rely on NumPy
+    # those are included directly from the Cython source
+    sources = [str(f) for f in cpp_sources]
+
+    # Cython sources
+    cython_src = ["clease_cxx.pyx"]
+    for src in cython_src:
+        sources.append(os.path.join(cython_folder, src))
+    return sources
+
+
+src_files = get_source_files()
 extra_comp_args = ["-std=c++11"]
-
 # Replaces the deprecated "distutils.sysconfig.get_python_inc()"
 py_include = sysconfig.get_path("include")
 

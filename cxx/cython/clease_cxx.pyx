@@ -8,5 +8,5 @@ include "py_cluster.pyx"
 include "py_atoms.pyx"
 
 # Files that use the Numpy Array API are included here
-cdef extern from "ce_updater.cpp":
+cdef extern from "with_numpy/ce_updater.cpp":
     pass
