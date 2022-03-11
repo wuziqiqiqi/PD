@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 import numpy as np
+from clease.datastructures import SystemChange
 from clease.montecarlo.gaussian_kernel_bias_potential import GaussianKernelBiasPotential
 
 
@@ -23,7 +24,7 @@ def test_in_range():
 
 def test_evaluate():
     def get_func(syst_change, peak=False):
-        if syst_change[0][2] == "Al":
+        if syst_change[0].new_symb == "Al":
             return 1.03
         return 0.0
 
@@ -32,11 +33,11 @@ def test_evaluate():
     )
     pot.coeff[:] = np.linspace(0.0, 10.0, len(pot.coeff))
     expect = 10.0
-    got = pot([(0, "Mg", "Al")])
+    got = pot([SystemChange(0, "Mg", "Al")])
     assert got == pytest.approx(expect)
 
     expect = 0.0
-    got = pot([(0, "Al", "Mg")])
+    got = pot([SystemChange(0, "Al", "Mg")])
     assert got == pytest.approx(expect)
 
 

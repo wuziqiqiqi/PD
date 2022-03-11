@@ -319,7 +319,7 @@ double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &clust
 
 void CEUpdater::update_cf(PyObject *single_change)
 {
-  SymbolChange symb_change = py_tuple_to_symbol_change(single_change);
+  SymbolChange symb_change = SymbolChange(single_change);
   update_cf(symb_change);
 }
 
@@ -328,7 +328,7 @@ void CEUpdater::py_changes2_symb_changes(PyObject *all_changes, vector<SymbolCha
   unsigned int size = list_size(all_changes);
   for (unsigned int i = 0; i < size; i++)
   {
-    SymbolChange symb_change = py_tuple_to_symbol_change(PyList_GetItem(all_changes, i));
+    SymbolChange symb_change = SymbolChange(PyList_GetItem(all_changes, i));
     symb_changes.push_back(symb_change);
   }
 }
@@ -496,8 +496,8 @@ double CEUpdater::calculate(PyObject *system_changes)
     for (unsigned int i = 0; i < size / 2; i++)
     {
       swap_move changes;
-      changes[0] = py_tuple_to_symbol_change(PyList_GetItem(system_changes, 2 * i));
-      changes[1] = py_tuple_to_symbol_change(PyList_GetItem(system_changes, 2 * i + 1));
+      changes[0] = SymbolChange(PyList_GetItem(system_changes, 2 * i));
+      changes[1] = SymbolChange(PyList_GetItem(system_changes, 2 * i + 1));
 
       if (!is_swap_move(changes))
       {
@@ -517,7 +517,7 @@ double CEUpdater::calculate(PyObject *system_changes)
   vector<SymbolChange> changes(size);
   for (unsigned int i = 0; i < size; i++)
   {
-    changes[i] = py_tuple_to_symbol_change(PyList_GetItem(system_changes, i));
+    changes[i] = SymbolChange(PyList_GetItem(system_changes, i));
   }
   return calculate(changes);
 }

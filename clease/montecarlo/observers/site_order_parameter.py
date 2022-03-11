@@ -1,4 +1,5 @@
 import numpy as np
+from clease.datastructures import SystemChanges
 from .mc_observer import MCObserver
 
 
@@ -40,7 +41,7 @@ class SiteOrderParameter(MCObserver):
         self.current_num_changed = 0
         self._check_all_sites()
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges):
         """Get a new value for the order parameter.
 
         system_changes: list
@@ -54,7 +55,7 @@ class SiteOrderParameter(MCObserver):
         # The point this function is called the atoms object is already
         # updated
         for change in system_changes:
-            indx = change[0]
+            indx = change.index
             if self.site_changed[indx]:
                 if self.atoms[indx].number == self.orig_nums[indx]:
                     self.current_num_changed -= 1

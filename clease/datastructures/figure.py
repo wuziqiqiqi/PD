@@ -22,7 +22,7 @@ def _convert_figure(x: Any) -> Any:
 
 
 @jsonable("figure")
-@attr.s(frozen=True, order=False)
+@attr.define(frozen=True, order=False)
 class Figure(AttrSavable):
     """Class which defines a Figure, i.e. a collection of FourVector objects
     which defines a single cluster. Each entry in the components must be a FourVector,
@@ -39,7 +39,7 @@ class Figure(AttrSavable):
     >>> Figure((fv1, fv2))
     """
 
-    components: Tuple[FourVector] = attr.ib(
+    components: Tuple[FourVector] = attr.field(
         converter=_convert_figure, validator=attr.validators.instance_of(tuple)
     )
 

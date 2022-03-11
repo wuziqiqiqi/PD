@@ -10,9 +10,9 @@ from collections import Counter
 from ase import Atoms
 from ase.units import kB
 from clease.version import __version__
-from clease.datastructures import SystemChanges
+from clease.datastructures import SystemChanges, MCStep
 from .mc_evaluator import CEMCEvaluator, MCEvaluator
-from .base import BaseMC, MCStep
+from .base import BaseMC
 from .averager import Averager
 from .bias_potential import BiasPotential
 from .observers import MCObserver

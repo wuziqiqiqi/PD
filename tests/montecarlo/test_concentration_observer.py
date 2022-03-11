@@ -1,5 +1,6 @@
-from clease.montecarlo.observers import ConcentrationObserver
 import unittest
+from clease.montecarlo.observers import ConcentrationObserver
+from clease.datastructures import SystemChange
 from ase.build import bulk
 
 
@@ -9,12 +10,16 @@ class TestConcObsrever(unittest.TestCase):
         obs = ConcentrationObserver(atoms, element="Au")
         self.assertAlmostEqual(obs.current_conc, 1.0)
 
-        changes = [(0, "Au", "Cu"), (1, "Au", "Cu"), (2, "Au", "Cu")]
+        changes = [
+            SystemChange(0, "Au", "Cu"),
+            SystemChange(1, "Au", "Cu"),
+            SystemChange(2, "Au", "Cu"),
+        ]
         obs(changes)
         N = len(atoms)
         self.assertAlmostEqual(obs.current_conc, 1.0 - 3.0 / N)
 
-        changes = [(0, "Cu", "Au")]
+        changes = [SystemChange(0, "Cu", "Au")]
         obs(changes)
         self.assertAlmostEqual(obs.current_conc, 1.0 - 2.0 / N)
 
@@ -23,7 +28,11 @@ class TestConcObsrever(unittest.TestCase):
         obs = ConcentrationObserver(atoms, element="Au")
         self.assertAlmostEqual(obs.current_conc, 1.0)
 
-        changes = [(0, "Au", "Cu"), (1, "Au", "Cu"), (2, "Au", "Cu")]
+        changes = [
+            SystemChange(0, "Au", "Cu"),
+            SystemChange(1, "Au", "Cu"),
+            SystemChange(2, "Au", "Cu"),
+        ]
         new_conc = obs(changes, peak=True)
         self.assertAlmostEqual(new_conc, 1.0 - 3.0 / len(atoms))
         self.assertAlmostEqual(obs.current_conc, 1.0)
@@ -33,7 +42,11 @@ class TestConcObsrever(unittest.TestCase):
         obs = ConcentrationObserver(atoms, element="Au")
         self.assertAlmostEqual(obs.current_conc, 1.0)
 
-        changes = [(0, "Au", "Cu"), (1, "Au", "Cu"), (2, "Au", "Cu")]
+        changes = [
+            SystemChange(0, "Au", "Cu"),
+            SystemChange(1, "Au", "Cu"),
+            SystemChange(2, "Au", "Cu"),
+        ]
         new_conc = obs(changes)
         avg = obs.get_averages()
         expect = (1.0 + 1.0 - 3.0 / len(atoms)) * 0.5

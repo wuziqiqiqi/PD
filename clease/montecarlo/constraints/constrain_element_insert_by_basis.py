@@ -1,4 +1,5 @@
 import numpy as np
+from clease.datastructures import SystemChanges
 from .mc_constraint import MCConstraint
 
 
@@ -40,10 +41,10 @@ class ConstrainElementInserts(MCConstraint):
             for elem in elements:
                 self.element_allowed[elem][i] = 1
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges):
         for change in system_changes:
-            indx = change[0]
-            new_elem = change[2]
+            indx = change.index
+            new_elem = change.new_symb
             basis = self.basis[indx]
             if self.element_allowed[new_elem][basis] == 0:
                 return False

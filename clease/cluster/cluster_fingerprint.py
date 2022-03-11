@@ -17,15 +17,15 @@ def _fingerprint_converter(x: Any) -> Any:
 
 @jsonable("cluster_fingerprint")
 @total_ordering
-@attr.s(eq=False, order=False)
+@attr.define(eq=False, order=False)
 class ClusterFingerprint(AttrSavable):
     """Container for a Cluster Fingerprint."""
 
-    fp: np.ndarray = attr.ib(
+    fp: np.ndarray = attr.field(
         converter=_fingerprint_converter,
         validator=attr.validators.instance_of(np.ndarray),
     )
-    tol: float = attr.ib(default=1e-9)
+    tol: float = attr.field(default=1e-9)
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, ClusterFingerprint):

@@ -13,27 +13,27 @@ __all__ = ("Cluster",)
 
 @jsonable("cluster")
 @total_ordering
-@attr.s(order=False, eq=False)
+@attr.define(order=False, eq=False)
 class Cluster(AttrSavable):
     """A Cluster class, which collects multiple symmetry equivalent Figure objects,
     and related properties."""
 
-    name: str = attr.ib()
-    size: int = attr.ib()
-    diameter: float = attr.ib()
-    fingerprint: ClusterFingerprint = attr.ib(
+    name: str = attr.field()
+    size: int = attr.field()
+    diameter: float = attr.field()
+    fingerprint: ClusterFingerprint = attr.field(
         validator=attr.validators.instance_of(ClusterFingerprint)
     )
-    figures: Sequence[Figure] = attr.ib()
-    equiv_sites: Sequence[Sequence[int]] = attr.ib()
-    group: int = attr.ib()
+    figures: Sequence[Figure] = attr.field()
+    equiv_sites: Sequence[Sequence[int]] = attr.field()
+    group: int = attr.field()
 
-    info: Dict[str, Any] = attr.ib(default=attr.Factory(dict))
+    info: Dict[str, Any] = attr.field(default=attr.Factory(dict))
     # "indices" are the integer index representation of the Figures.
     # therefore, "indices" and "ref_indx" depend on the currently active template,
     # and are subject to mutation.
-    indices: Sequence[Sequence[int]] = attr.ib(default=None)
-    ref_indx: int = attr.ib(default=None)
+    indices: Sequence[Sequence[int]] = attr.field(default=None)
+    ref_indx: int = attr.field(default=None)
 
     @figures.validator
     def _validate_figures(self, attribute, value):

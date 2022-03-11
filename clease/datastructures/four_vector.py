@@ -18,17 +18,17 @@ _FV_KWARGS = dict(validator=attr.validators.instance_of((np.integer, int)))
 
 
 @jsonable("four_vector")
-@attr.s(frozen=True, order=True)
+@attr.define(frozen=True, order=True)
 class FourVector(AttrSavable):
     """Container for a vector in 4-vector space, i.e. a vector of [ix, iy, iz, sublattice].
     Represents the position of a site in terms of the number of repetitions of the primitive atoms,
     as well as which sublattice it belongs to in that cell.
     """
 
-    ix: int = attr.ib(**_FV_KWARGS)
-    iy: int = attr.ib(**_FV_KWARGS)
-    iz: int = attr.ib(**_FV_KWARGS)
-    sublattice: int = attr.ib(**_FV_KWARGS)
+    ix: int = attr.field(**_FV_KWARGS)
+    iy: int = attr.field(**_FV_KWARGS)
+    iz: int = attr.field(**_FV_KWARGS)
+    sublattice: int = attr.field(**_FV_KWARGS)
 
     def to_cartesian(self, prim: Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
         """Convert the four vector into cartesian coordinates

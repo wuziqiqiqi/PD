@@ -1,5 +1,6 @@
 #include "additional_tools.hpp"
 #include "cf_history_tracker.hpp"
+#include "symbol_change.hpp"
 #include <stdexcept>
 #include <sstream>
 
@@ -89,13 +90,13 @@ int int_attr_from_py_object(PyObject *obj, const char *attr_name)
   return value;
 }
 
-SymbolChange py_tuple_to_symbol_change(PyObject *single_change)
+std::string str_attr_from_py_object(PyObject *obj, const char *attr_name)
 {
-  SymbolChange symb_change;
-  symb_change.indx = py2int(PyTuple_GetItem(single_change, 0));
-  symb_change.old_symb = py2string(PyTuple_GetItem(single_change, 1));
-  symb_change.new_symb = py2string(PyTuple_GetItem(single_change, 2));
-  return symb_change;
+  // Get a string with attr_name. Ensure we dereference the reference again
+  PyObject *ref = PyObject_GetAttrString(obj, attr_name);
+  std::string value = py2string(ref);
+  Py_DECREF(ref);
+  return value;
 }
 
 void py_changes2symb_changes(PyObject *all_changes, vector<SymbolChange> &symb_changes)
@@ -104,7 +105,7 @@ void py_changes2symb_changes(PyObject *all_changes, vector<SymbolChange> &symb_c
   unsigned int size = list_size(all_changes);
   for (unsigned int i = 0; i < size; i++)
   {
-    symb_change = py_tuple_to_symbol_change(PyList_GetItem(all_changes, i));
+    symb_change = SymbolChange(PyList_GetItem(all_changes, i));
     symb_changes.push_back(symb_change);
   }
 }
@@ -115,7 +116,7 @@ void py_change2swap_move(PyObject *all_changes, swap_move &symb_changes)
   unsigned int size = list_size(all_changes);
   for (unsigned int i = 0; i < size; i++)
   {
-    symb_changes[i] = py_tuple_to_symbol_change(PyList_GetItem(all_changes, i));
+    symb_changes[i] = SymbolChange(PyList_GetItem(all_changes, i));
   }
 }
 
@@ -145,7 +146,7 @@ void inverse3x3(const mat3x3 &mat, mat3x3 &inv)
   // Set the inverse matrix equal to the identity matrix
   double determinant = 0;
 
-  //finding determinant
+  // finding determinant
   for (unsigned int i = 0; i < 3; i++)
     determinant = determinant + (mat[0][i] * (mat[1][(i + 1) % 3] * mat[2][(i + 2) % 3] - mat[1][(i + 2) % 3] * mat[2][(i + 1) % 3]));
 

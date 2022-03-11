@@ -148,7 +148,7 @@ the tag of each atom represents the corresponding layer.
 
 When this observer is attached, the `observe_step` method will be executed
 on every Monte Carlo step. The call signature takes in a
-:class:`~clease.montecarlo.base.MCStep` instance.
+:class:`~clease.datastructures.mc_step.MCStep` instance.
 The `system_changes` variable here is a list of
 the following form `[(10, Au, Cu), (34, Cu, Au)]` which means that the
 symbol on site 10 changes from Au to Cu and the symbol on site 34 changes
@@ -194,7 +194,7 @@ them fixed.
   class FixedIndices(MCConstraint):
      def __call__(self, system_changes):
          for change in system_changes:
-             if change[0] <= 25:
+             if change.index <= 25:
                  return False
          return True
 

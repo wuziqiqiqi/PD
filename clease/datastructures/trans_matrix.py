@@ -10,11 +10,11 @@ _MISSING = -1
 __all__ = ("TransMatrix",)
 
 
-@attr.s(eq=True, order=False)
+@attr.define(eq=True, order=False)
 class TransMatrix:
     """Data class wrapper for the translation matrix."""
 
-    trans_matrix: List[Dict[int, int]] = attr.ib()
+    trans_matrix: List[Dict[int, int]] = attr.field()
 
     def key_array(self) -> np.ndarray:
         """The keys of the trans matrix in NumPy format."""

@@ -10,16 +10,6 @@ from clease.montecarlo import SGCMonteCarlo
 from clease.montecarlo.observers import ConcentrationObserver
 
 
-def fake_get_energy_method(self, system_change):
-    """
-    MC code assumes that the get_energy method updates the
-    atoms object
-    """
-    for change in system_change:
-        self.atoms[change[0]].symbol = change[2]
-    return 0.0
-
-
 def test_ideal_mixture(tmpdir, db_name):
     conc = Concentration(basis_elements=[["Au", "Cu"]])
     settings = CEBulk(conc, a=3.9, db_name=db_name, max_cluster_dia=[3.0], crystalstructure="fcc")

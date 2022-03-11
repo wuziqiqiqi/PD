@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 import numpy as np
+from clease.datastructures import SystemChange
 from clease.montecarlo import BinnedBiasPotential
 
 
@@ -34,7 +35,7 @@ def test_evaluate():
 
 def test_call():
     def getter(syst_change, peak=False):
-        if syst_change[0][1] == "Al":
+        if syst_change[0].old_symb == "Al":
             return 0.5
         return 0.4
 
@@ -42,7 +43,7 @@ def test_call():
     x = np.array([bias.get_x(i) for i in range(bias.nbins)])
     bias.values = x
 
-    changes = [[(1, "Al", "Mg")], [(2, "Mg", "Al")]]
+    changes = [[SystemChange(1, "Al", "Mg")], [SystemChange(2, "Mg", "Al")]]
     expect = [0.5, 0.4]
     for i, test in enumerate(zip(changes, expect)):
         y = bias(test[0])

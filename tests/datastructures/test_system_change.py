@@ -1,6 +1,7 @@
 from collections import Counter
 import pytest
 from ase.build import bulk
+from clease.jsonio import read_json
 from clease.datastructures import SystemChange
 
 
@@ -45,3 +46,47 @@ def test_system_change(atoms):
     assert len(sym_count) == 1
     assert sym_count[sym] == natoms
     assert supercell.symbols[index] == sym
+
+
+def test_default_name():
+    s = SystemChange(0, "A", "B")
+    assert s.name == ""
+    s = SystemChange(0, "A", "B", "test")
+    assert s.name == "test"
+
+
+def test_step_order():
+    """Test that system change is un-orderable"""
+    change1 = SystemChange(0, "A", "B")
+    change2 = SystemChange(1, "B", "A")
+    with pytest.raises(TypeError):
+        change1 < change2
+    with pytest.raises(TypeError):
+        change1 > change2
+
+
+def test_eq():
+    change1 = SystemChange(-1, "A", "B", "C")
+    change2 = SystemChange(-1, "A", "B", "asdf")
+    # name shouldn't be checked in equality
+    assert change1 == change2
+    change3 = SystemChange(0, "A", "C", "dummy")
+    assert change1 != change3
+    change4 = SystemChange(-1, "C", "B")
+    assert change1 != change4
+    assert change3 != change4
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        SystemChange(-1, "", "", "A"),
+        SystemChange(1, "A", "B", "A"),
+        SystemChange(0, "C", "B", "A"),
+    ],
+)
+def test_save_load(make_tempfile, change):
+    file = make_tempfile("change.json")
+    change.save(file)
+    loaded = read_json(file)
+    assert change == loaded

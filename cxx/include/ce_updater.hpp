@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include "symbol_change.hpp"
 #include "matrix.hpp"
 #include "row_sparse_struct_matrix.hpp"
 #include "cf_history_tracker.hpp"

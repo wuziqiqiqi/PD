@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Iterator, List
 import ase
 from ase.calculators.singlepoint import SinglePointCalculator
-from clease.montecarlo.base import MCStep
+from clease.datastructures import MCStep
 from .mc_observer import MCObserver
 
 __all__ = ("MoveObserver",)

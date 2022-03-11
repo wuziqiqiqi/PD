@@ -22,9 +22,9 @@ which adds the following methods:
     :members:
 
 Individual steps from montecarlo iterations return
-:class:`~clease.montecarlo.base.MCStep` objects:
+:class:`~clease.datastructures.mc_step.MCStep` objects:
 
-.. autoclass:: clease.montecarlo.base.MCStep
+.. autoclass:: clease.datastructures.mc_step.MCStep
     :members:
 
 

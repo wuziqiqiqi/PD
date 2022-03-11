@@ -90,8 +90,8 @@ def test_mixed_ensemble():
 
         # If the length of move is 2: Cl sublattice
         if len(move) == 2:
-            idx1, old1, new1, name1 = move[0]
-            idx2, old2, new2, name2 = move[1]
+            idx1, old1, new1, name1 = move[0].astuple()
+            idx2, old2, new2, name2 = move[1].astuple()
             assert idx1 != idx2
             assert idx1 in swap_idx
             assert idx2 in swap_idx

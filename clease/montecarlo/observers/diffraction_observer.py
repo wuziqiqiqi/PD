@@ -1,4 +1,5 @@
 import numpy as np
+from clease.datastructures import SystemChanges
 from .mc_observer import MCObserver
 
 
@@ -21,13 +22,13 @@ class DiffractionUpdater:
         self.value = self.calculate_from_scratch(self.orig_symbols)
         self.prev_value = self.value
 
-    def update(self, system_changes):
+    def update(self, system_changes: SystemChanges):
         """Update the reflection value."""
         self.prev_value = self.value
         for change in system_changes:
-            f_val = np.exp(1j * self.k_dot_r[change[0]]) / self.N
-            self.value += self.indicator[change[2]] * f_val
-            self.value -= self.indicator[change[1]] * f_val
+            f_val = np.exp(1j * self.k_dot_r[change.index]) / self.N
+            self.value += self.indicator[change.new_symb] * f_val
+            self.value -= self.indicator[change.old_symb] * f_val
 
     def undo(self):
         """Undo the last update."""
@@ -111,7 +112,7 @@ class DiffractionObserver(MCObserver):
         self.num_updates = 1
         self.name = name
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges):
         self.updater.update(system_changes)
         self.avg += self.updater.value
 

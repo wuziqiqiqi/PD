@@ -1,3 +1,4 @@
+from clease.datastructures import SystemChanges
 from .mc_observer import MCObserver
 
 
@@ -27,21 +28,21 @@ class ConcentrationObserver(MCObserver):
         self.avg_conc_sq = self.current_conc**2
         self.num_calls = 1
 
-    def new_concentration(self, system_change):
+    def new_concentration(self, system_changes: SystemChanges):
         """Calculate the new consentration after the changes."""
         new_conc = self.current_conc
-        for change in system_change:
-            if change[2] == self.element:
+        for change in system_changes:
+            if change.new_symb == self.element:
                 new_conc += 1.0 / self.n
-            if change[1] == self.element:
+            if change.old_symb == self.element:
                 new_conc -= 1.0 / self.n
         return new_conc
 
-    def __call__(self, system_change, peak=False):
-        if system_change is None:
+    def __call__(self, system_changes: SystemChanges, peak=False):
+        if system_changes is None:
             return self.current_conc
 
-        new_conc = self.new_concentration(system_change)
+        new_conc = self.new_concentration(system_changes)
 
         if peak:
             return new_conc

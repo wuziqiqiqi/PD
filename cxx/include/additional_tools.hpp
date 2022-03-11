@@ -11,8 +11,6 @@
 typedef std::array<SymbolChange, 2> swap_move;
 typedef std::array<std::array<double, 3>, 3> mat3x3;
 
-//class SymbolChange;
-
 template <class key, class value>
 std::ostream &operator<<(std::ostream &out, const std::map<key, value> &map);
 
@@ -48,13 +46,14 @@ int py2int(PyObject *integer);
 
 // Extract an integer from a Python object by attribute name
 int int_attr_from_py_object(PyObject *obj, const char *attr_name);
+// Extract a string from a Python object by attribute name
+std::string str_attr_from_py_object(PyObject *obj, const char *attr_name);
 
 PyObject *get_attr(PyObject *obj, const char *name);
 
 /** Return the length of a python list */
 unsigned int list_size(PyObject *list);
 
-SymbolChange py_tuple_to_symbol_change(PyObject *single_change);
 void py_changes2symb_changes(PyObject *all_changes, std::vector<SymbolChange> &symb_changes);
 void py_change2swap_move(PyObject *all_changes, swap_move &symb_changes);
 

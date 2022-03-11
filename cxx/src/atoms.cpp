@@ -140,7 +140,7 @@ int Atoms::get_1d_index(const FourVector &v) const
 
 void Atoms::apply_change(PyObject *single_change)
 {
-    SymbolChange change = py_tuple_to_symbol_change(single_change);
+    SymbolChange change = SymbolChange(single_change);
     this->apply_change(change);
 }
 
@@ -151,7 +151,7 @@ void Atoms::apply_change(const SymbolChange &single_change)
 
 void Atoms::undo_change(PyObject *single_change)
 {
-    SymbolChange change = py_tuple_to_symbol_change(single_change);
+    SymbolChange change = SymbolChange(single_change);
     this->undo_change(change);
 }
 

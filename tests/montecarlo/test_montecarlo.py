@@ -9,7 +9,7 @@ from ase.build import bulk
 from ase.geometry import get_layers
 import clease
 from clease.calculator import attach_calculator
-from clease.montecarlo import Montecarlo, MCStep
+from clease.montecarlo import Montecarlo
 from clease.montecarlo.observers import CorrelationFunctionObserver
 from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
@@ -20,7 +20,7 @@ from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
 from clease.montecarlo import RandomSwap, MixedSwapFlip
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
-from clease.datastructures import SystemChange
+from clease.datastructures import SystemChange, MCStep
 from clease.montecarlo.mc_evaluator import CEMCEvaluator
 
 # Set the random seed
@@ -679,8 +679,9 @@ def test_mc_irun(example_system):
 
 
 @pytest.mark.parametrize("temp", [1, 300, 30_000])
-def test_mc_step(example_system, temp):
+def test_mc_step(example_system, temp, make_tempfile):
     """Test the contents of the MCStep"""
+    file = make_tempfile("mc_step.json")
     mc = Montecarlo(example_system, temp)
 
     nsteps = 50
@@ -703,6 +704,10 @@ def test_mc_step(example_system, temp):
             # Find the expected symbol, based on whether the move was accepted
             exp_symb = change.new_symb if step.move_accepted else change.old_symb
             assert mc.atoms.symbols[change.index] == exp_symb, ii
+        # Test saving/loading a step
+        step.save(file)
+        loaded = MCStep.load(file)
+        assert step == loaded
     assert step0.step == 1  # Check we didn't mutate the original step
     assert mc.current_step == nsteps
     assert step.step == nsteps

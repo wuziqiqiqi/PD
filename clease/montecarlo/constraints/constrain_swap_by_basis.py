@@ -36,8 +36,8 @@ class ConstrainSwapByBasis(MCConstraint):
         if len(system_changes) != 2:
             raise ValueError("ConstrainSwapByBasis requires swap move")
 
-        i1 = system_changes[0][0]
+        i1 = system_changes[0].index
         b1 = self.basis[i1]
-        i2 = system_changes[1][0]
+        i2 = system_changes[1].index
         b2 = self.basis[i2]
         return b1 == b2

@@ -1,3 +1,4 @@
+from clease.datastructures import SystemChanges
 from .mc_constraint import MCConstraint
 
 
@@ -38,19 +39,19 @@ class PairConstraint(MCConstraint):
                 return False
         return True
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges):
         # Introduce all changes
         for change in system_changes:
-            self.atoms[change[0]].symbol = change[2]
+            self.atoms[change.index].symbol = change.new_symb
 
         # Loop through all changes
         move_ok = True
         for change in system_changes:
-            if not self._check_one(change[0]):
+            if not self._check_one(change.index):
                 move_ok = False
                 break
 
         # Undo all changes
         for change in system_changes:
-            self.atoms[change[0]].symbol = change[1]
+            self.atoms[change.index].symbol = change.old_symb
         return move_ok

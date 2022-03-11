@@ -6,7 +6,6 @@ from .kmc_events import *
 from .kinetic_monte_carlo import *
 from .trial_move_generator import *
 from . import base
-from .base import MCStep
 from .bias_potential import BiasPotential
 from .montecarlo import Montecarlo
 from .sgc_montecarlo import SGCMonteCarlo
@@ -25,7 +24,6 @@ ADDITIONAL = (
     "RandomBiasWithMemory",
     "base",
     "swap_move_index_tracker",
-    "MCStep",
 )
 __all__ = ADDITIONAL + (
     barrier_models.__all__

@@ -91,6 +91,14 @@ def create_clease_object(objtype, dct):
         from .datastructures.four_vector import FourVector
 
         obj = FourVector.from_dict(dct)
+    elif objtype == "system_change":
+        from .datastructures.system_changes import SystemChange
+
+        obj = SystemChange.from_dict(dct)
+    elif objtype == "mc_step":
+        from .datastructures.mc_step import MCStep
+
+        obj = MCStep.from_dict(dct)
     else:
         raise ValueError(f"Cannot load object type: {objtype}")
     assert obj.clease_objtype == objtype

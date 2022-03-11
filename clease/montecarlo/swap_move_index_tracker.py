@@ -87,10 +87,10 @@ class SwapMoveIndexTracker:
             # This change has already been updated!
             return
         self._last_move = system_changes
-        indx1 = system_changes[0][0]
-        indx2 = system_changes[1][0]
-        symb1 = system_changes[0][1]
-        symb2 = system_changes[0][2]
+        indx1 = system_changes[0].index
+        indx2 = system_changes[1].index
+        symb1 = system_changes[0].old_symb
+        symb2 = system_changes[0].new_symb
 
         # Find the locations of the indices
         loc1 = self.index_loc[indx1]

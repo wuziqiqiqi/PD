@@ -6,6 +6,10 @@ Release notes
 
 0.11.3
 =======
+* :class:`~clease.datastructures.mc_step.MCStep` and
+  :class:`~clease.datastructures.system_change.SystemChange` instances
+  are now savable to json via the ``jsonio`` module.
+
 
 0.11.2
 =======
@@ -18,7 +22,7 @@ Release notes
   for iteratively running MC calculations.
 * MC observers can now override
   :meth:`~clease.montecarlo.observers.MCObserver.observe_step` instead, which takes a
-  :class:`~clease.montecarlo.base.MCStep` object.
+  :class:`~clease.datastructures.mc_step.MCStep` object.
 * Added a new MC observer: :class:`clease.montecarlo.observers.MoveObserver`.
 
 0.11.1
