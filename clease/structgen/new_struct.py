@@ -513,7 +513,7 @@ class NewStructures:
                         num_attempt = 0
 
                     if num_attempt > 100:
-                        msg = f"Could not find {self.num_to_gen} unique "
+                        msg = f"Could not find {self.num_to_gen()} unique "
                         msg += "compositions using the provided Atoms object."
                         raise RuntimeError(msg)
                 num_atoms_in_basis = [len(indices) for indices in self.settings.index_by_basis]
