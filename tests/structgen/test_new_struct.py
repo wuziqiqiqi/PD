@@ -78,16 +78,22 @@ def test_insert_structures(db_name, tmpdir):
 
 
 def test_determine_generation_number(db_name):
-    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
+    connect_f = lambda: connect(db_name)
+    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name, connect=connect_f)
+
     settings.db_name = db_name
-    connect(db_name).write(Atoms("H"))
+    settings.connect().write(Atoms("H"))
     N = 5
     new_struct = NewStructures(settings, generation_number=None, struct_per_gen=N)
 
     def insert_in_db(n, gen):
-        with connect(db_name) as db:
+        with settings.connect() as db:
             for _ in range(n):
                 db.write(Atoms(), gen=gen)
+
+    con = connect(db_name)
+    # Verify we correctly wrote to the database
+    assert con.count() == 1
 
     db_sequence = [
         {"num_insert": 0, "insert_gen": 0, "expect": 0},
@@ -95,9 +101,11 @@ def test_determine_generation_number(db_name):
         {"num_insert": 3, "insert_gen": 0, "expect": 1},
         {"num_insert": 5, "insert_gen": 1, "expect": 2},
     ]
-
+    tot = 1
     for i, action in enumerate(db_sequence):
         insert_in_db(action["num_insert"], action["insert_gen"])
+        tot += action["num_insert"]
+        assert con.count() == tot
         gen = new_struct._determine_gen_number()
 
         msg = "Test: #{} failed".format(i)
@@ -222,7 +230,8 @@ def test_num_generated_structures(gs_mock, db_name):
 
 
 def test_unique_name(db_name):
-    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name)
+    connect_f = lambda: connect(db_name)
+    settings = MagicMock(spec=ClusterExpansionSettings, db_name=db_name, connect=connect_f)
     settings.db_name = db_name
     settings.size = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
 

@@ -11,15 +11,15 @@ from packaging.version import Version, parse
 
 from deprecated import deprecated
 import numpy as np
-from ase.db import connect
 from ase import Atoms
+from ase.db import connect
+from ase.db.core import Database
 
 from clease.version import __version__
 from clease.jsonio import jsonable
 from clease.tools import wrap_and_sort_by_position
-from clease.basis_function import BasisFunction
 from clease.cluster import ClusterManager, ClusterList
-from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
+from clease.basis_function import Polynomial, Trigonometric, BinaryLinear, BasisFunction
 from clease.datastructures import TransMatrix
 from .concentration import Concentration
 from .template_filters import ValidConcentrationFilter
@@ -30,6 +30,10 @@ from .atoms_manager import AtomsManager
 __all__ = ("ClusterExpansionSettings",)
 
 logger = logging.getLogger(__name__)
+
+
+class PrimitiveCellNotFound(Exception):
+    """Exception which is raised if the primitive isn't found in the database."""
 
 
 @jsonable("ce_settings")
@@ -112,19 +116,18 @@ class ClusterExpansionSettings:
         self._trans_matrix = None
         self._cluster_list = None
         self._basis_func_type = None
+        self._prim_cell = None
         self.concentration = _get_concentration(concentration)
 
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self._check_first_elements()
-        self.db_name = db_name
         self.size = to_3x3_matrix(size)
         self.supercell_factor = supercell_factor
 
-        self.prim_cell = prim.copy()
-        self._order_and_tag_prim_cell()
-        self._store_prim_cell()
+        self.db_name = db_name
+        self._set_prim_cell(prim)
 
-        prim_mng = AtomsManager(prim)
+        prim_mng = AtomsManager(self.prim_cell)
         prim_ind_by_basis = prim_mng.index_by_symbol([x[0] for x in self.basis_elements])
         conc_filter = ValidConcentrationFilter(concentration, prim_ind_by_basis)
 
@@ -158,7 +161,40 @@ class ClusterExpansionSettings:
 
     @property
     def atoms(self) -> Atoms:
+        """The currently active template."""
         return self.atoms_mng.atoms
+
+    @property
+    def prim_cell(self) -> Atoms:
+        """The primitive atoms object of the model."""
+        return self._prim_cell
+
+    def _set_prim_cell(self, value: Atoms) -> None:
+        """Set the primitive cell, ensure it gets properly tagged and stored.
+        This should not be changed after initialization."""
+        self._prim_cell = value.copy()
+        self._order_and_tag_prim_cell()
+        self._ensure_primitive_exists()
+
+    @property
+    def db_name(self) -> str:
+        """Name of the underlaying data base."""
+        return self._db_name
+
+    @db_name.setter
+    def db_name(self, value: str) -> str:
+        """Changing the DB name, needs to ensure the primitive cell exists in
+        the new database as well."""
+        self._db_name = value
+        if self.prim_cell is not None:
+            # Ensure the primitive cell is stored in the new database.
+            # None should only happen during initialization, where we let the
+            # prim_cell setter store the primitive.
+            self._ensure_primitive_exists()
+
+    def connect(self, **kwargs) -> Database:
+        """Return the ASE connection object to the internal database."""
+        return connect(self.db_name, **kwargs)
 
     @property
     def max_cluster_size(self):
@@ -467,22 +503,37 @@ class ClusterExpansionSettings:
 
         # Rearange primitive cell in order of the tags.
         sorted_indx = np.argsort([atom.tag for atom in self.prim_cell])
-        self.prim_cell = self.prim_cell[sorted_indx]
+        # Set the primitive cell directly, without calling the setter.
+        self._prim_cell = self.prim_cell[sorted_indx]
 
-    def _store_prim_cell(self):
-        """Store unit cell to the database. Returns the id of primitive cell in the database"""
-        with connect(self.db_name) as db:
-            shape = self.prim_cell.cell.cellpar()
-            for row in db.select(name="primitive_cell"):
-                uc_shape = row.toatoms().cell.cellpar()
-                if np.allclose(shape, uc_shape):
-                    return row.id
+    def _ensure_primitive_exists(self) -> None:
+        """Ensure that the primitive cell exists in the DB.
+        Write it if it is missing."""
+        self.get_prim_cell_id(write_if_missing=True)
 
-            uid = db.write(self.prim_cell, name="primitive_cell")
-        return uid  # Ensure connection is closed before returning
+    def get_prim_cell_id(self, write_if_missing=False) -> int:
+        """Retrieve the ID of the primitive cell in the database.
+        Raises a PrimitiveCellNotFound error if it is not found and write_if_missing is False.
+        If ``write_if_missing`` is True a primitive cell is written to the database
+        if it is missing.
 
-    def _get_prim_cell(self):
-        raise NotImplementedError("This function has to be implemented in in derived classes.")
+        Returns the ID (an integer) of the row which corresponds to the primitive cell.
+        """
+        with self.connect() as con:
+            try:
+                # Check if the primitive has already been written to the database
+                uid = _get_prim_cell_id_from_connection(self.prim_cell, con)
+            except PrimitiveCellNotFound:
+                # Primitive wasn't found
+                if write_if_missing:
+                    # Write it to the database.
+                    uid = con.write(self.prim_cell, name="primitive_cell")
+                else:
+                    # We're not allowed to write to the database. Raise the error.
+                    raise
+        # Ensure connection is closed before returning, to ensure that the primitive
+        # has been written.
+        return uid
 
     @property
     def trans_matrix(self) -> TransMatrix:
@@ -744,3 +795,14 @@ def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
         return mcd.round(decimals=3)
 
     return _formatter()
+
+
+def _get_prim_cell_id_from_connection(prim_cell: Atoms, connection: Database) -> int:
+    """Retrieve the primitive cell ID from a database connection"""
+    shape = prim_cell.cell.cellpar()
+    for row in connection.select(name="primitive_cell"):
+        loaded_shape = row.toatoms().cell.cellpar()
+        if np.allclose(shape, loaded_shape):
+            return row.id
+
+    raise PrimitiveCellNotFound("The primitive cell was not found in the database.")

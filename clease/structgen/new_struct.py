@@ -11,9 +11,8 @@ from numpy.random import shuffle
 
 from ase import Atoms
 from ase.io import read
-from ase.db import connect
-from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 from ase.io.trajectory import TrajectoryReader
+from ase.utils.structure_comparator import SymmetryEquivalenceCheck
 
 from clease import db_util
 from clease.settings import ClusterExpansionSettings
@@ -70,7 +69,6 @@ class NewStructures:
     ) -> None:
         self.check_db = check_db
         self.settings = settings
-        self.db = connect(settings.db_name)
         self.corrfunc = CorrFunction(self.settings)
         self.struct_per_gen = struct_per_gen
 
@@ -79,9 +77,13 @@ class NewStructures:
         else:
             self.gen = generation_number
 
+    def connect(self, **kwargs):
+        """Short-cut to access the settings connection."""
+        return self.settings.connect(**kwargs)
+
     def num_in_gen(self) -> int:
-        with connect(self.settings.db_name) as db:
-            cur = db.connection.cursor()
+        with self.connect() as con:
+            cur = con.connection.cursor()
             cur.execute(
                 "SELECT id FROM number_key_values WHERE key=? AND value=?",
                 ("gen", self.gen),
@@ -724,8 +726,8 @@ class NewStructures:
             is bypassed and the given cf is inserted in DB.
         """
         if name is not None:
-            with connect(self.settings.db_name) as db:
-                cur = db.connection.cursor()
+            with self.connect() as con:
+                cur = con.connection.cursor()
                 cur.execute(
                     "SELECT id FROM text_key_values WHERE key=? and value=?",
                     ("name", name),
@@ -759,14 +761,15 @@ class NewStructures:
         kvp["queued"] = False
         kvp["struct_type"] = "initial"
         tab_name = self.corr_func_table_name
-        uid_init = db_util.new_row_with_single_table(self.db, init_struct, tab_name, cf, **kvp)
+        con = self.connect()
+        uid_init = db_util.new_row_with_single_table(con, init_struct, tab_name, cf, **kvp)
 
         if final_struct is not None:
             if not isinstance(final_struct, Atoms):
                 final_struct = read(final_struct)
             kvp_final = {"struct_type": "final", "name": kvp["name"]}
-            uid = self.db.write(final_struct, kvp_final)
-            self.db.update(uid_init, converged=True, started="", queued="", final_struct_id=uid)
+            uid = con.write(final_struct, kvp_final)
+            con.update(uid_init, converged=True, started="", queued="", final_struct_id=uid)
 
     def _exists_in_db(self, atoms: Atoms, formula_unit: Optional[str] = None) -> bool:
         """
@@ -801,9 +804,8 @@ class NewStructures:
             angle_tol=1.0, ltol=0.05, stol=0.05, scale_volume=True, to_primitive=to_prim
         )
 
-        atoms_in_db = []
-        for row in self.db.select(cond):
-            atoms_in_db.append(row.toatoms())
+        with self.connect() as con:
+            atoms_in_db = [row.toatoms() for row in con.select(cond)]
 
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
@@ -825,8 +827,8 @@ class NewStructures:
 
         suffixes = []
         logger.debug("Connecting to %s", self.settings.db_name)
-        with connect(self.settings.db_name) as db:
-            cur = db.connection.cursor()
+        with self.connect() as con:
+            cur = con.connection.cursor()
             logger.debug("Selecting from db: formula_unit=%s", formula_unit)
             cur.execute(
                 "SELECT id FROM text_key_values WHERE key=? AND value=?",
@@ -916,8 +918,8 @@ class NewStructures:
 
     def _determine_gen_number(self) -> int:
         """Determine generation number based on the values in DB."""
-        with connect(self.settings.db_name) as db:
-            cur = db.connection.cursor()
+        with self.connect() as con:
+            cur = con.connection.cursor()
             cur.execute("SELECT value FROM number_key_values WHERE key='gen'")
             gens = [int(i[0]) for i in cur.fetchall()]
             if len(gens) == 0:

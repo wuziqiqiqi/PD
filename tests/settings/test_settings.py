@@ -3,6 +3,7 @@ import pytest
 from ase import Atoms
 from ase.build import bulk
 from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
+from clease.settings.settings import PrimitiveCellNotFound
 from clease.cluster import ClusterManager
 from clease.calculator import Clease
 from clease.tools import wrap_and_sort_by_position
@@ -225,3 +226,31 @@ def test_get_all_figures(make_settings):
     settings = make_settings()
     figures = settings.get_all_figures_as_atoms()
     assert all(isinstance(atoms, Atoms) for atoms in figures)
+
+
+def test_get_prim_cell_id(make_settings, make_tempfile):
+    db2 = make_tempfile("another_database.db")
+    settings = make_settings()
+    # The constructor should've added the primitive cell, no error
+    settings.get_prim_cell_id()
+    settings._db_name = db2
+    with pytest.raises(PrimitiveCellNotFound):
+        settings.get_prim_cell_id()
+    uid1 = settings.get_prim_cell_id(write_if_missing=True)
+    # Now the cell should be there, no more error
+    uid2 = settings.get_prim_cell_id()
+    assert uid1 == uid2
+
+
+def test_db_name(make_settings, make_tempfile):
+    db2 = make_tempfile("another_database.db")
+    settings = make_settings()
+    # The constructor should've added the primitive cell, no error
+    settings.get_prim_cell_id()
+    # Set the underlying db_name, without calling the setter
+    settings._db_name = db2
+    with pytest.raises(PrimitiveCellNotFound):
+        settings.get_prim_cell_id()
+    settings.db_name = db2
+    # Now the primitive should be there.
+    settings.get_prim_cell_id()
