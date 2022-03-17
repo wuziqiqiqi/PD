@@ -203,3 +203,26 @@ def default_seed(set_rng):
     Automatically set the random seed before a test.
     """
     set_rng()
+
+
+@pytest.fixture
+def compare_atoms():
+    def _compare_atoms(atoms1, atoms2):
+        if len(atoms1) != len(atoms2):
+            return False
+
+        if not np.allclose(atoms1.cell, atoms2.cell):
+            return False
+
+        if atoms1.arrays.keys() != atoms2.arrays.keys():
+            return False
+
+        for k in atoms1.arrays:
+            # positions, numbers, tags, etc...
+            arr1 = atoms1.arrays[k]
+            arr2 = atoms2.arrays[k]
+            if not np.allclose(arr1, arr2):
+                return False
+        return True
+
+    return _compare_atoms

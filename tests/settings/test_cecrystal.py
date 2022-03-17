@@ -5,6 +5,7 @@ from pathlib import Path
 from collections import Counter
 import numpy as np
 import pytest
+from ase import Atoms
 from ase.db import connect
 from ase.spacegroup import crystal
 from clease.settings import CECrystal, settings_from_json, Concentration
@@ -60,7 +61,7 @@ def get_figures_of_family(settings, cname):
     return figures
 
 
-def test_spgroup_217(db_name, tmpdir, all_cf):
+def test_spgroup_217(db_name, tmpdir, all_cf, compare_atoms):
     """Test the initialization of spacegroup 217."""
     a = 10.553
     b = 10.553
@@ -132,6 +133,8 @@ def test_spgroup_217(db_name, tmpdir, all_cf):
             continue
         if isinstance(v, np.ndarray):
             assert np.allclose(v, bsg_loaded.__dict__[k])
+        elif isinstance(v, Atoms):
+            compare_atoms(v, getattr(bsg_loaded, k))
         else:
             assert v == bsg_loaded.__dict__[k], k
     assert bsg.skew_threshold == bsg_loaded.skew_threshold

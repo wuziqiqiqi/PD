@@ -173,6 +173,7 @@ class ClusterExpansionSettings:
         """Set the primitive cell, ensure it gets properly tagged and stored.
         This should not be changed after initialization."""
         self._prim_cell = value.copy()
+        self._prim_cell.wrap()
         self._order_and_tag_prim_cell()
         self._ensure_primitive_exists()
 

@@ -1,5 +1,6 @@
 import copy
 import pytest
+import numpy as np
 from ase import Atoms
 from ase.build import bulk
 from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
@@ -254,3 +255,16 @@ def test_db_name(make_settings, make_tempfile):
     settings.db_name = db2
     # Now the primitive should be there.
     settings.get_prim_cell_id()
+
+
+def test_prim_wrap():
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    prim = bulk("Au", crystalstructure="fcc", a=4.0)
+    # shift the x-lattice vector, ensure the site is outside of the cell
+    prim[0].x -= prim.cell.cellpar()[0]
+
+    settings = ClusterExpansionSettings(prim, conc)
+    assert settings.prim_cell is not prim
+    assert not np.allclose(settings.prim_cell.positions, prim.positions)
+    prim.wrap()
+    assert np.allclose(settings.prim_cell.positions, prim.positions)
