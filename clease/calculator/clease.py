@@ -97,7 +97,7 @@ class Clease(Calculator):
         thus, include self-interactions. This methods corrects the impact of
         self-interactions.
         """
-        symm_group = np.zeros(len(self.settings.atoms), dtype=np.uint8)
+        symm_group = np.zeros(len(self.settings.atoms), dtype=np.uintc)
         for num, group in enumerate(self.settings.index_by_sublattice):
             symm_group[group] = num
 

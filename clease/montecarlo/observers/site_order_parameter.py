@@ -25,7 +25,7 @@ class SiteOrderParameter(MCObserver):
         self.avg_num_changed_sq = 0
         self.num_calls = 0
         self.current_num_changed = 0
-        self.site_changed = np.zeros(len(self.atoms), dtype=np.uint8)
+        self.site_changed = np.zeros(len(self.atoms), dtype=np.bool_)
 
     def _check_all_sites(self):
         """Check if symbols have changed on all sites."""
