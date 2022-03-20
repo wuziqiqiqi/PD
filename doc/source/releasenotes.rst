@@ -9,6 +9,13 @@ Release notes
 * :class:`~clease.datastructures.mc_step.MCStep` and
   :class:`~clease.datastructures.system_change.SystemChange` instances
   are now savable to json via the ``jsonio`` module.
+* Fixed a bug which prevented the primitive to have more than 255 atoms.
+* The primitive cell is now always wrapped in the settings object.
+* Changing ``db_name`` will check if the primitive exists in the new DB,
+  and write it if it's missing.
+* ``size`` and ``supercell_factor`` are now stored and managed by the
+  :class:`~clease.settings.template_atoms.TemplateAtoms` object.
+* Made some adjustments to the compilation process.
 
 
 0.11.2
