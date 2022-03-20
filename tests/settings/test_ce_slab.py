@@ -73,7 +73,7 @@ def test_load(db_name, make_tempfile):
     settings2 = settings_from_json(backup_file)
 
     assert settings.atoms == settings2.atoms
-    assert settings.size == settings2.size
+    assert np.array_equal(settings.size, settings2.size)
     assert settings.concentration == settings2.concentration
 
 

@@ -122,9 +122,8 @@ def test_spgroup_217(db_name, tmpdir, all_cf, compare_atoms):
     for k, v in bsg.__dict__.items():
         if k in [
             "kwargs",
-            "size",
-            "template_atoms",
             "atoms_mng",
+            "_template_atoms",
             "_trans_matrix",
             "_cluster_list",
             "_cluster_mng",

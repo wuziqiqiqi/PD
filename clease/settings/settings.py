@@ -101,7 +101,7 @@ class ClusterExpansionSettings:
         prim: Atoms,
         concentration: Union[Concentration, dict],
         size: Optional[List[int]] = None,
-        supercell_factor: int = 27,
+        supercell_factor: Optional[int] = 27,
         db_name: str = "clease.db",
         # max_cluster_size is only here for deprecation purposes
         # if it is not None, the user has manually specified a value
@@ -121,8 +121,6 @@ class ClusterExpansionSettings:
 
         self.basis_elements = deepcopy(self.concentration.basis_elements)
         self._check_first_elements()
-        self.size = to_3x3_matrix(size)
-        self.supercell_factor = supercell_factor
 
         self.db_name = db_name
         self._set_prim_cell(prim)
@@ -131,21 +129,24 @@ class ClusterExpansionSettings:
         prim_ind_by_basis = prim_mng.index_by_symbol([x[0] for x in self.basis_elements])
         conc_filter = ValidConcentrationFilter(concentration, prim_ind_by_basis)
 
-        self.template_atoms = TemplateAtoms(
+        self.atoms_mng = AtomsManager(None)
+
+        # Construct the template atoms, this is a protected property
+        # Access and changes to size and/or supercell factor are redirected to
+        # this instance.
+        self._template_atoms = TemplateAtoms(
             self.prim_cell,
             supercell_factor=supercell_factor,
-            size=self.size,
+            size=size,
             skew_threshold=40,
             filters=[conc_filter],
         )
 
-        self.atoms_mng = AtomsManager(None)
+        self.set_active_template()
 
         self.max_cluster_dia = _format_max_cluster_dia(
             max_cluster_dia, max_cluster_size=max_cluster_size
         )
-
-        self.set_active_template(atoms=self.template_atoms.weighted_random_template())
 
         # We need to initialize background before basis_func_type
         # since basis functions depend on whether we have backgrounds
@@ -196,6 +197,10 @@ class ClusterExpansionSettings:
     def connect(self, **kwargs) -> Database:
         """Return the ASE connection object to the internal database."""
         return connect(self.db_name, **kwargs)
+
+    @property
+    def template_atoms(self) -> TemplateAtoms:
+        return self._template_atoms
 
     @property
     def max_cluster_size(self):
@@ -324,6 +329,24 @@ class ClusterExpansionSettings:
     @property
     def basis_func_type(self):
         return self._basis_func_type
+
+    @property
+    def size(self) -> Union[np.ndarray, None]:
+        return self.template_atoms.size
+
+    @size.setter
+    def size(self, value):
+        """Exposure of the template atoms size setter"""
+        self.template_atoms.size = value
+
+    @property
+    def supercell_factor(self) -> Union[int, None]:
+        return self.template_atoms.supercell_factor
+
+    @supercell_factor.setter
+    def supercell_factor(self, value) -> None:
+        """Exposure of the template atoms supercell_factor setter"""
+        self.template_atoms.supercell_factor = value
 
     def get_sublattice_site_ratios(self) -> np.ndarray:
         """Return the ratios of number of sites per (grouped) sublattice"""
@@ -721,22 +744,6 @@ class ClusterExpansionSettings:
         lines.append(rule)
 
         return "\n".join(lines)
-
-
-def to_3x3_matrix(size):
-    if size is None:
-        return None
-    if isinstance(size, np.ndarray):
-        size = size.tolist()
-
-    # Is already a matrix
-    if np.array(size).shape == (3, 3):
-        return size
-
-    if np.array(size).shape == (3,):
-        return np.diag(size).tolist()
-
-    raise ValueError(f"Cannot convert passed array {size} to 3x3 matrix")
 
 
 def _get_concentration(concentration: Union[Concentration, dict]) -> Concentration:

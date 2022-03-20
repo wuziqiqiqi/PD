@@ -268,3 +268,19 @@ def test_prim_wrap():
     assert not np.allclose(settings.prim_cell.positions, prim.positions)
     prim.wrap()
     assert np.allclose(settings.prim_cell.positions, prim.positions)
+
+
+def test_set_size_and_supercell_Factor(make_settings):
+    settings = make_settings()
+
+    settings.size = [3, 3, 3]
+    # Test the size is the same address in memory.
+    assert settings.size is settings.template_atoms.size
+    assert (settings.size == np.diag([3, 3, 3])).all()
+    assert settings.supercell_factor is None
+
+    settings.supercell_factor = 28
+    assert settings.size is None
+    assert settings.template_atoms.size is None
+    assert settings.supercell_factor == 28
+    assert settings.template_atoms.supercell_factor == 28

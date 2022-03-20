@@ -1,6 +1,6 @@
 """Class containing a manager for creating template atoms."""
 from itertools import product
-from typing import Iterator, List
+from typing import Iterator, List, Union, Optional
 from contextlib import contextmanager
 import numpy as np
 from numpy.random import shuffle
@@ -25,9 +25,13 @@ class TemplateAtoms:
                 "specified.\n size: list or numpy array.\n "
                 "supercell_factor: int"
             )
+        # Pre-initialize variables.
+        self._size = None
+        self._supercell_factor = None
 
-        self.supercell_factor = supercell_factor
         self._skew_threshold = skew_threshold
+        self.supercell_factor = supercell_factor
+        # Set size last, so that it takes priority if both supercell factor and size are set.
         self.size = size
 
         self.cell_filters = []
@@ -40,17 +44,43 @@ class TemplateAtoms:
                 self.add_cell_filter(f)
             elif isinstance(f, AtomsFilter):
                 self.add_atoms_filter(f)
+            else:
+                raise TypeError(
+                    f"Unknown filter type: {f!r}. Must either be a CellFilter or AtomsFilter."
+                )
 
-        if self.size is not None:
-            self.supercell_factor = None
-            check_valid_conversion_matrix(self.size)
         self.prim_cell = prim_cell
+
+    @property
+    def size(self) -> Union[None, np.ndarray]:
+        return self._size
+
+    @size.setter
+    def size(self, value) -> None:
+        """Change the size of the template atoms. Will unset supercell factor,
+        if the value is different from None."""
+        if value is not None:
+            value = _to_3x3_matrix(value)
+            check_valid_conversion_matrix(value)
+            self.supercell_factor = None
+        self._size = value
+
+    @property
+    def supercell_factor(self) -> Union[int, None]:
+        return self._supercell_factor
+
+    @supercell_factor.setter
+    def supercell_factor(self, value: Optional[int]) -> None:
+        if value is not None:
+            # Unset the size, since we provided a value for supercell_factor
+            self.size = None
+        self._supercell_factor = value
 
     def __eq__(self, other):
         return (
             self.supercell_factor == other.supercell_factor
             and self.skew_threshold == other.skew_threshold
-            and self.size == other.size
+            and np.array_equal(self.size, other.size)
             and self.prim_cell == other.prim_cell
         )
 
@@ -211,7 +241,7 @@ class TemplateAtoms:
         return list(self.iterate_all_templates())
 
     def iterate_all_templates(self, max_per_size: int = None) -> Iterator[ase.Atoms]:
-        """Get ass possible templates in an iterator.
+        """Get all possible templates in an iterator.
 
         :param max_per_size: Maximum number of iterations per size.
             Optional. If None, then all sizes will be used.
@@ -374,8 +404,23 @@ class TemplateAtoms:
         return templates
 
 
-def is_3x3_matrix(array):
+def is_3x3_matrix(array) -> bool:
     return np.array(array).shape == (3, 3)
+
+
+def _to_3x3_matrix(size: Union[List[int], List[List[int]], np.ndarray]) -> np.ndarray:
+    """Convert a list of ints (1D) or list of list of ints (2D) into a
+    3x3 transformation matrix, if possible."""
+    size = np.array(size)
+
+    # Is already a matrix
+    if size.shape == (3, 3):
+        return size
+
+    if size.shape == (3,):
+        return np.diag(size)
+
+    raise ValueError(f"Cannot convert passed array with shape {size.shape} to 3x3 matrix")
 
 
 def check_valid_conversion_matrix(array):

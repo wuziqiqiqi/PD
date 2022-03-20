@@ -7,6 +7,7 @@ from ase.spacegroup import crystal
 from ase.build import niggli_reduce
 from ase.db import connect
 from clease.settings import CEBulk, Concentration
+from clease.settings import template_atoms
 from clease.settings.template_atoms import TemplateAtoms
 from clease.settings.template_filters import (
     AtomsFilter,
@@ -250,6 +251,40 @@ def test_set_skewness_threshold(template_atoms_factory):
     for f in template_atoms.cell_filters:
         if isinstance(f, SkewnessFilter):
             assert f.ratio == 100
+
+
+def test_size_and_supercell(template_atoms_factory):
+    template_atoms = template_atoms_factory()
+    assert template_atoms.size is None
+    assert template_atoms.supercell_factor is not None
+
+    template_atoms.size = [3, 3, 3]
+    assert np.allclose(template_atoms.size, np.diag([3, 3, 3]))
+    assert template_atoms.supercell_factor is None
+
+    for _ in range(5):
+        t = template_atoms.weighted_random_template()
+        assert (t.cell == (template_atoms.prim_cell * (3, 3, 3)).get_cell()).all()
+        assert t.info["size"] == [[3, 0, 0], [0, 3, 0], [0, 0, 3]]
+        assert t == t
+        t_size = t
+
+    template_atoms.supercell_factor = 27
+    assert template_atoms.size is None
+    assert template_atoms.supercell_factor == 27
+
+    sizes = []
+    for _ in range(5):
+        t = template_atoms.weighted_random_template()
+        assert t != t_size
+        assert t == t
+        size = t.info["size"]
+        assert round(np.linalg.det(size)) <= template_atoms.supercell_factor
+        sizes.append(size)
+
+    for s0 in sizes:
+        # At least 1 size should be different for each size.
+        assert any(s0 != s for s in sizes)
 
 
 def test_cell_direction_filter(db_name):
