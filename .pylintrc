@@ -95,6 +95,7 @@ disable=locally-disabled,
         too-few-public-methods,
         invalid-name,
         unspecified-encoding,
+        duplicate-code,
         locally-disabled,  # We locally disable on purpose
         fixme  # Don't fail on fixme notes for the moment
 
@@ -261,7 +262,6 @@ enable=disallowed-name,
        useless-object-inheritance,
        property-with-parameters,
        consider-using-from-import,
-       duplicate-code,
        too-many-ancestors,
        too-many-instance-attributes,
        too-few-public-methods,

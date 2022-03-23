@@ -10,7 +10,7 @@ from .settings_slab import CESlab
 __all__ = ("settings_from_json",)
 
 
-def settings_from_json(fname):
+def settings_from_json(fname) -> ClusterExpansionSettings:
     """Initialize settings from JSON.
 
     Exists due to compatibility. You should instead use
