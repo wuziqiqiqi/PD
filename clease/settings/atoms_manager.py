@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List, Sequence, Optional
 from ase import Atoms
 
@@ -31,7 +32,7 @@ class AtomsManager:
             )
         self._atoms = other
 
-    def __eq__(self, other: "AtomsManager") -> bool:
+    def __eq__(self, other: AtomsManager) -> bool:
         if not isinstance(other, AtomsManager):
             return NotImplemented
 
@@ -44,11 +45,11 @@ class AtomsManager:
         continuous sequence starting from 0.
         """
 
-        tags = sorted(set(atom.tag for atom in self.atoms))
-        ind_by_tag = [[] for _ in tags]
+        all_tags = self.atoms.get_tags()
 
-        for atom in self.atoms:
-            ind_by_tag[atom.tag].append(atom.index)
+        ind_by_tag = [[] for _ in set(all_tags)]
+        for index, tag in enumerate(all_tags):
+            ind_by_tag[tag].append(index)
         return ind_by_tag
 
     def index_by_symbol(self, symbols: List) -> List[List[int]]:
@@ -67,7 +68,6 @@ class AtomsManager:
 
         :param symbols: List of symbols that define a group
         """
-        ind_by_symbol = [[] for _ in symbols]
         group_map = {}
         for i, item in enumerate(symbols):
             if isinstance(item, list):
@@ -77,8 +77,9 @@ class AtomsManager:
                 group_map[item] = i
 
         # Loop over indices
-        for atom in self.atoms:
-            ind_by_symbol[group_map[atom.symbol]].append(atom.index)
+        ind_by_symbol = [[] for _ in symbols]
+        for index, symbol in enumerate(self.atoms.symbols):
+            ind_by_symbol[group_map[symbol]].append(index)
         return ind_by_symbol
 
     def unique_elements(self, ignore: Sequence[str] = ()) -> List[str]:
@@ -108,7 +109,7 @@ class AtomsManager:
         """
         single_site_symb = [x[0] for x in allowed_elements if len(x) == 1]
         single_sites = []
-        for atom in self.atoms:
-            if atom.symbol in single_site_symb:
-                single_sites.append(atom.index)
+        for index, symbol in enumerate(self.atoms.symbols):
+            if symbol in single_site_symb:
+                single_sites.append(index)
         return single_sites
