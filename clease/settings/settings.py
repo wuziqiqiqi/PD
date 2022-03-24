@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 from typing import List, Dict, Optional, Union, Sequence, Set, Any
-from packaging.version import Version, parse
 
 from deprecated import deprecated
 import numpy as np
@@ -680,13 +679,9 @@ class ClusterExpansionSettings:
             >>> settings = ClusterExpansionSettings.from_dict(dct)
         """
         dct = deepcopy(dct)
-        version = dct.pop("clease_version", None)
-        if version is None or parse(version) < Version("0.10.2"):
-            # For backwards compatibility
-            # pylint: disable=import-outside-toplevel, cyclic-import
-            from .utils import old_settings_from_json
 
-            return old_settings_from_json(dct)
+        # pop out the version. We can use this for compatibility checks if needed.
+        dct.pop("clease_version", None)
 
         # Get the args and kwargs we expect in our function signature
         args = [dct.pop(key) for key in cls.ARG_KEYS]
