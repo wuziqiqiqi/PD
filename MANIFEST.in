@@ -7,3 +7,7 @@ setup.py:
 
 # Remove .tox from the sdist
 prune .tox
+# Borrowed from NumPy
+# Exclude generated files
+prune */__pycache__
+global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~
