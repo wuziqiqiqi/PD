@@ -67,8 +67,8 @@ class LinearRegression:
         # pylint: disable=no-self-use
         return False
 
-    @staticmethod
-    def get_scalar_parameter():  # pragma: no cover
+    def get_scalar_parameter(self):  # pragma: no cover
+        # pylint: disable=no-self-use
         raise ValueError("Fitting scheme is not described by a scalar parameter!")
 
     @property

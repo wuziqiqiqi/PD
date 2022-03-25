@@ -137,7 +137,6 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.atoms.calc.eci)
 
-    # pylint: disable=arguments-differ
     def run(self, steps: int = 10, chem_pot: Dict[str, float] = None):
         """
         Run Monte Carlo simulation.
@@ -153,14 +152,14 @@ class SGCMonteCarlo(Montecarlo):
         if chem_pot is None and self.chemical_potential is None:
             ex_chem_pot = {"c1_1": -0.1, "c1_2": 0.05}
             raise ValueError(
-                f"No chemicalpotentials given. Has to be " f"dictionary of the form {ex_chem_pot}"
+                f"No chemical potentials given. Has to be a dictionary of the form {ex_chem_pot}"
             )
 
         if chem_pot is not None:
             self.chemical_potential = chem_pot
         self.reset()
 
-        Montecarlo.run(self, steps=steps)
+        super().run(steps=steps)
 
     def singlet2composition(self, avg_singlets: Dict[str, float]):
         """Convert singlets to composition."""
@@ -184,7 +183,6 @@ class SGCMonteCarlo(Montecarlo):
             res[name] = x[i]
         return res
 
-    # pylint: disable=arguments-differ
     def get_thermodynamic_quantities(self, reset_eci=True):
         """Compute thermodynamic quantities.
 
