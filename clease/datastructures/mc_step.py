@@ -29,3 +29,7 @@ class MCStep(AttrSavable):
     last_move: SystemChanges = attr.field(
         eq=attr.cmp_using(eq=_compare_moves, require_same_type=False)
     )
+
+    @property
+    def move_rejected(self) -> bool:
+        return not self.move_accepted

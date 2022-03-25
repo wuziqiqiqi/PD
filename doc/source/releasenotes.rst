@@ -19,6 +19,7 @@ Release notes
 * Removed the ``include_background_atoms`` setter in the settings object.
   This value must now be set explicitly in the constructor for consistency reasons.
   For more information, see `#292 <https://gitlab.com/computationalmaterials/clease/-/issues/292>`_.
+* Fixes a bug with the :class:`~clease.montecarlo.observers.concentration_observer.ConcentrationObserver`.
 
 
 0.11.2

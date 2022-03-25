@@ -3,7 +3,7 @@ import numpy as np
 
 from clease.calculator import attach_calculator
 from clease.montecarlo import SGCMonteCarlo
-from clease.montecarlo.observers import SGCState, MultiStateSGCConcObserver
+from clease.montecarlo.observers import SGCState, MultiStateSGCConcObserver, ConcentrationObserver
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.montecarlo.constraints import ConstrainElementInserts
@@ -47,6 +47,52 @@ def test_run(db_name):
     # Make sure that the energies are decreasing
     for i in range(1, len(E)):
         assert E[i - 1] >= E[i]
+
+
+def test_conc_obs_sgc(db_name):
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    settings = CEBulk(
+        db_name=db_name,
+        concentration=conc,
+        crystalstructure="fcc",
+        a=4.0,
+        max_cluster_dia=[5.0, 4.1],
+        size=[2, 2, 2],
+    )
+    atoms = settings.atoms.copy() * (3, 3, 3)
+
+    settings.set_active_template(atoms)
+    eci = {k: 0.0 for k in settings.all_cf_names}
+    eci["c0"] = -1.0
+    eci["c2_d0000_0_00"] = -0.2
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
+
+    obs1 = ConcentrationObserver(atoms, "Au")
+    obs2 = ConcentrationObserver(atoms, "Cu")
+    conc1_orig = obs1.get_averages()
+    conc2_orig = obs2.get_averages()
+
+    mc = SGCMonteCarlo(atoms, 5000, symbols=["Au", "Cu"])
+    mc.attach(obs1)
+    mc.attach(obs2)
+
+    E = []
+    for T in [5000, 2000, 500]:
+        mc.T = T
+        mc.run(steps=10000, chem_pot={"c1_0": -0.02})
+
+        conc1 = obs1.get_averages()
+        conc2 = obs2.get_averages()
+        assert conc1 != pytest.approx(conc1_orig)
+        assert conc2 != pytest.approx(conc2_orig)
+
+        c_au = conc1["conc_Au"]
+        c_cu = conc2["conc_Cu"]
+        assert 0 <= c_au <= 1
+        assert 0 <= c_cu <= 1
+        assert c_au + c_cu == pytest.approx(1)
+        conc1_orig = conc1
+        conc2_orig = conc2
 
 
 def test_constrain_inserts(db_name):

@@ -33,3 +33,9 @@ def test_save_load(swap_change, make_tempfile):
     loaded = read_json(file)
     assert step is not loaded
     assert step == loaded
+
+
+@pytest.mark.parametrize("move_accepted", [True, False])
+def test_move_rejected(move_accepted):
+    step = MCStep(0, 1.0, move_accepted, [])
+    assert step.move_rejected is (not move_accepted)
