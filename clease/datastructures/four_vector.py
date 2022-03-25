@@ -60,7 +60,7 @@ class FourVector(AttrSavable):
     @property
     def xyz_array(self) -> np.ndarray:
         """Return the [ix, iy, iz] component of the four-vector as a NumPy array."""
-        return np.array([self.ix, self.iy, self.iz])
+        return np.array([self.ix, self.iy, self.iz], dtype=int)
 
     def to_tuple(self) -> Tuple[int]:
         """Get the tuple representation of the four-vector"""

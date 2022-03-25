@@ -284,3 +284,12 @@ def test_save_load(make_random_four_vector, make_tempfile):
         assert isinstance(loaded, FourVector)
         assert fv == loaded
         assert fv is not loaded
+
+
+def test_xyz_array(make_random_four_vector):
+    for _ in range(20):
+        fv = make_random_four_vector(min=-20, max=20)
+        xyz = fv.xyz_array
+        assert isinstance(xyz, np.ndarray)
+        assert xyz.shape == (3,)
+        assert np.issubdtype(xyz.dtype, np.integer)
