@@ -16,6 +16,9 @@ Release notes
 * ``size`` and ``supercell_factor`` are now stored and managed by the
   :class:`~clease.settings.template_atoms.TemplateAtoms` object.
 * Made some adjustments to the compilation process.
+* Removed the ``include_background_atoms`` setter in the settings object.
+  This value must now be set explicitly in the constructor for consistency reasons.
+  For more information, see `#292 <https://gitlab.com/computationalmaterials/clease/-/issues/292>`_.
 
 
 0.11.2

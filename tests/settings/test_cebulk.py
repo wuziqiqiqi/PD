@@ -370,9 +370,13 @@ def test_2grouped_basis_probe(make_conc, make_settings):
     basis_elements = [["Zr", "Ce"], ["O"], ["O"]]
     conc = make_conc(basis_elements, grouped_basis=[[0], [1, 2]])
     settings = make_settings(
-        conc, crystalstructure="fluorite", a=4.0, size=[2, 2, 3], max_cluster_dia=[4.01]
+        conc,
+        crystalstructure="fluorite",
+        a=4.0,
+        size=[2, 2, 3],
+        max_cluster_dia=[4.01],
+        include_background_atoms=True,
     )
-    settings.include_background_atoms = True
     fam_figures = get_figures_of_family(settings, "c2_d0005_0")
     assert len(fam_figures[0]) == 6
     assert len(fam_figures[1]) == 6
@@ -529,7 +533,14 @@ def test_concentration_with_background(make_conc, make_settings):
     assert settings.ignored_species_and_conc == {"O": 2 / 3}
 
     # If the background atoms are included
-    settings.include_background_atoms = True
+    settings = make_settings(
+        conc,
+        crystalstructure="fluorite",
+        a=4.0,
+        size=[2, 2, 3],
+        max_cluster_dia=[4.01],
+        include_background_atoms=True,
+    )
     assert settings.num_active_sublattices == 2
     assert settings.atomic_concentration_ratio == 1.0
     assert settings.ignored_species_and_conc == {}

@@ -12,9 +12,9 @@ def test_fcc(db_name):
         concentration=conc,
         db_name=db_name,
         max_cluster_dia=3 * [4.01],
+        include_background_atoms=True,
     )
     settings.skew_threshold = 4
-    settings.include_background_atoms = True
 
     scaled = settings.template_atoms.get_all_scaled_templates()
     assert len(scaled) == 3
@@ -29,9 +29,9 @@ def test_fcc(db_name):
         concentration=conc,
         db_name=db_name,
         max_cluster_dia=3 * [4.0],
+        include_background_atoms=True,
     )
     settings.skew_threshold = 4
-    settings.include_background_atoms = True
 
     scaled = settings.template_atoms.get_all_scaled_templates()
     assert len(scaled) == 1

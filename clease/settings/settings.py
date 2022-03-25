@@ -106,11 +106,11 @@ class ClusterExpansionSettings:
         # if it is not None, the user has manually specified a value
         max_cluster_size=None,
         max_cluster_dia: Sequence[float] = (5.0, 5.0, 5.0),
-        include_background_atoms=False,
+        include_background_atoms: bool = False,
         basis_func_type="polynomial",
     ) -> None:
 
-        self._include_background_atoms = None
+        self._include_background_atoms = include_background_atoms
         self._cluster_mng = None
         self._trans_matrix = None
         self._cluster_list = None
@@ -147,9 +147,6 @@ class ClusterExpansionSettings:
             max_cluster_dia, max_cluster_size=max_cluster_size
         )
 
-        # We need to initialize background before basis_func_type
-        # since basis functions depend on whether we have backgrounds
-        self.include_background_atoms = include_background_atoms
         self.basis_func_type = basis_func_type
 
         if len(self.basis_elements) != self.num_basis:
@@ -272,17 +269,11 @@ class ClusterExpansionSettings:
 
     @include_background_atoms.setter
     def include_background_atoms(self, value: bool) -> None:
-        if value == self._include_background_atoms:
-            return
-        self._include_background_atoms = value
-        # We need to reset cluster manager
-        self._cluster_mng = None
-
-        self.clear_cache()
-        if self.basis_func_type is not None:
-            # Basis func type can be None during initialization, if we havn't initialized
-            # basis functions yet.
-            self.basis_func_type.unique_elements = self.unique_element_without_background()
+        # pylint: disable=no-self-use
+        msg = "The include_background_atoms setter has been removed in version 0.11.3.\n"
+        msg += f"Please set 'include_background_atoms={value}' in the settings constructor, "
+        msg += "instead."
+        raise NotImplementedError(msg)
 
     @property
     def spin_dict(self) -> Dict[str, float]:

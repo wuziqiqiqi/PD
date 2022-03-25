@@ -76,8 +76,8 @@ def make_TaO(db_name, background=True):
         concentration=concentration,
         db_name=db_name,
         max_cluster_dia=[4.0, 4.0],
+        include_background_atoms=background,
     )
-    settings.include_background_atoms = background
     return settings
 
 
@@ -284,3 +284,10 @@ def test_set_size_and_supercell_Factor(make_settings):
     assert settings.template_atoms.size is None
     assert settings.supercell_factor == 28
     assert settings.template_atoms.supercell_factor == 28
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_set_background_setter(make_settings, value):
+    settings = make_settings()
+    with pytest.raises(NotImplementedError):
+        settings.include_background_atoms = value

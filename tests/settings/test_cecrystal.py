@@ -88,8 +88,8 @@ def test_spgroup_217(db_name, tmpdir, all_cf, compare_atoms):
         db_name=db_name,
         size=[1, 1, 1],
         max_cluster_dia=[3.5, 3.5],
+        include_background_atoms=True,
     )
-    bsg.include_background_atoms = True
     bsg.skew_threshold = 80
 
     # The correlation functions are actually calculated for the
@@ -211,8 +211,8 @@ def test_two_grouped_basis_probe_structure(db_name, check_cf):
         size=[1, 2, 2],
         db_name=db_name,
         max_cluster_dia=[3.0, 3.0],
+        include_background_atoms=True,
     )
-    bsg.include_background_atoms = True
 
     assert bsg.unique_elements == ["O", "Ta", "X"]
     assert bsg.spin_dict == {"O": 1.0, "Ta": -1.0, "X": 0.0}
