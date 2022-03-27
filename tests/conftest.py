@@ -189,10 +189,14 @@ def compare_dict():
 
 @pytest.fixture
 def set_rng():
-    """Fixture to set the seed of random number generators"""
+    """Fixture to set the seed of random number generators
+    as well as the global numpy RNG."""
 
-    def _set_rng(seed=42):
+    def _set_rng(seed=42, np_seed=None):
         random.seed(seed)
+        if np_seed is None:
+            np_seed = seed
+        np.random.seed(np_seed)
 
     return _set_rng
 

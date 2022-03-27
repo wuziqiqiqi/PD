@@ -1,7 +1,7 @@
 import os
 import pytest
 from unittest.mock import MagicMock, patch
-from numpy.random import choice
+import numpy as np
 from ase.io.trajectory import TrajectoryWriter
 from ase.build import bulk
 from ase.calculators.emt import EMT
@@ -44,8 +44,8 @@ def test_insert_structures(db_name, tmpdir):
     num_struct = 10
     for i in range(num_struct):
         init = bulk("Au") * (5, 5, 5)
-        for atom in init:
-            init.symbol = choice(symbols)
+        symbols = np.random.choice(symbols, size=len(init))
+        init.symbols = symbols
 
         final = init.copy()
         calc = EMT()
@@ -124,8 +124,7 @@ def test_num_generated_structures(gs_mock, db_name):
 
     def get_random_structure():
         atoms = bulk("Au", a=2.9, crystalstructure="sc") * (5, 5, 5)
-        for a in atoms:
-            a.symbol = choice(["Au", "Cu"])
+        atoms.symbols = np.random.choice(["Au", "Cu"], size=len(atoms))
         atoms.calc = SinglePointCalculator(atoms, energy=0.0)
         return atoms, {"c1_0": 0.0}
 

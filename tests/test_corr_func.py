@@ -1,7 +1,7 @@
 """Unit tests for the corr function class."""
 import os
 import pytest
-from numpy.random import choice
+import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.db import connect
 from clease.settings import CEBulk, Concentration
@@ -94,8 +94,7 @@ def test_reconfigure(bc_settings):
     newStruct = NewStructures(bc_settings)
     for i in range(10):
         atoms = bc_settings.atoms.copy()
-        for a in atoms:
-            a.symbol = choice(["Al", "Mg", "Si"])
+        atoms.symbols = np.random.choice(["Al", "Mg", "Si"], size=len(atoms))
 
         final = atoms.copy()
         calc = SinglePointCalculator(final, energy=-0.2)

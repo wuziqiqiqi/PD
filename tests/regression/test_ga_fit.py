@@ -2,7 +2,6 @@
 import pytest
 
 import numpy as np
-from numpy.random import choice
 from ase.calculators.emt import EMT
 from ase.db import connect
 
@@ -45,7 +44,7 @@ def ga_settings(make_module_tempfile):
     atoms = settings.atoms.copy()
     symbols = ["Au", "Cu"]
     for _ in range(6):
-        atoms.symbols = choice(symbols, size=len(atoms))
+        atoms.symbols = np.random.choice(symbols, size=len(atoms))
         newstruct.insert_structure(init_struct=atoms)
 
     # Compute the energy of the structures

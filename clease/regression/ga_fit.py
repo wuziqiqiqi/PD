@@ -1,6 +1,5 @@
 import os
 import logging
-from numpy.random import shuffle, choice
 import numpy as np
 from matplotlib import pyplot as plt
 from clease.tools import aic, aicc, bic
@@ -113,7 +112,7 @@ class GAFit:
             num_non_zero %= max_num
             num_non_zero[num_non_zero < 3] = 3
             for i in range(self.pop_size):
-                shuffle(indices)
+                np.random.shuffle(indices)
                 individual = np.zeros(self.num_genes, dtype=np.uint8)
                 indx = indices[: num_non_zero[i]]
                 individual[np.array(indx)] = 1
@@ -175,9 +174,9 @@ class GAFit:
         # Flip included or not included cluster with equal
         # probability
         if np.random.rand() < 0.5:
-            indx = choice(indx_sel)
+            indx = np.random.choice(indx_sel)
         else:
-            indx = choice(ns)
+            indx = np.random.choice(ns)
         individual[indx] = (individual[indx] + 1) % 2
         return individual
 
