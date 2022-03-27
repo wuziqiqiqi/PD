@@ -64,6 +64,7 @@ def get_metadata(ase_connection: _CONNECTION, *ids) -> _TABLE:
     :param *ids: One or more ID's to get meta data for. Must be integers.
     """
     table_name = MetaTableKeys.CLEASE_META_TABLE
+    # pylint: disable=protected-access
     if not ase_connection._external_table_exists(table_name):
         logger.debug("No metadata table was found")
         return {}
