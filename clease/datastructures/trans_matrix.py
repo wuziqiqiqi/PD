@@ -52,6 +52,11 @@ class TransMatrix:
             # Trans matrix has length 0
             return 0
 
+    @property
+    def n_sites(self) -> int:
+        """The number of sites which were used to build the trans matrix."""
+        return len(self)
+
     @trans_matrix.validator
     def _validate_trans_matrix(self, attribute, value):
         # pylint: disable=unused-argument, no-self-use

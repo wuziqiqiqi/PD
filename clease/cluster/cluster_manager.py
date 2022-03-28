@@ -1,4 +1,4 @@
-from typing import Sequence, Set, Dict, List, Iterator
+from typing import Sequence, Set, Dict, List, Iterator, Tuple
 import logging
 from itertools import product
 import functools
@@ -200,9 +200,10 @@ class ClusterManager:
                 names[i] = n
         return names
 
-    def info_for_template(self, template: ase.Atoms) -> ClusterList:
+    def cluster_list_for_template(self, template: ase.Atoms) -> ClusterList:
         """
-        Specialise the cluster information to a template
+        Specialise the cluster information to a template. Returns a new
+        ClusterList instance.
 
         Parameter:
 
@@ -213,18 +214,14 @@ class ClusterManager:
         lut = self.fourvec_to_indx(template, unique)
         ref_indices = [lut[FourVector(0, 0, 0, i)] for i in range(self.generator.num_sub_lattices)]
 
-        cluster_int = deepcopy(self.clusters)
-        for cluster in cluster_int:
-            if cluster.size == 0:
-                cluster.ref_indx = int(ref_indices[cluster.group])
-                cluster.indices = []
-            elif cluster.size == 1:
-                cluster.ref_indx = int(ref_indices[cluster.group])
+        template_cluster_list = deepcopy(self.clusters)
+        for cluster in template_cluster_list:
+            cluster.ref_indx = int(ref_indices[cluster.group])
+            if cluster.size in {0, 1}:
                 cluster.indices = []
             else:
                 cluster.indices = self.generator.to_atom_index(cluster, lut)
-                cluster.ref_indx = int(ref_indices[cluster.group])
-        return cluster_int
+        return template_cluster_list
 
     def unique_four_vectors(self) -> Set[FourVector]:
         """
@@ -382,6 +379,64 @@ class ClusterManager:
         # into a four-vector representation (with a generator expression)
         sublattices = [fv.sublattice for fv in translated_unique]
         return self.generator.many_to_four_vector(cartesian, sublattices)
+
+    def build_all(
+        self,
+        template_atoms: ase.Atoms,
+        max_cluster_dia: Sequence[float],
+        index_by_sublattice: List[List[int]],
+    ) -> Tuple[ClusterList, TransMatrix]:
+        """Create a ClusterList and a TransMatrix object, and calculate the norm factors."""
+        # Ensure that we have built the clusters for the cutoff
+        self.build(max_cluster_dia)
+
+        at_cpy = template_atoms.copy()
+        # Build the cluster list and translation matrix.
+        cluster_list = self.cluster_list_for_template(at_cpy)
+        trans_matrix = self.translation_matrix(at_cpy)
+
+        # Finally calculate the norm factors, and insert them into the new cluster list
+        _set_norm_factors(
+            index_by_sublattice,
+            trans_matrix,
+            cluster_list,
+        )
+        return cluster_list, trans_matrix
+
+
+def _set_norm_factors(
+    index_by_sublattice: List[List[int]],
+    trans_matrix: TransMatrix,
+    cluster_list: ClusterList,
+) -> None:
+    """Set normalization factor for each cluster. Will mutate the ClusterList.
+
+    The normalization factor only kicks in when the cell is too small and
+    thus, include self-interactions. This methods corrects the impact of
+    self-interactions.
+    """
+    symm_group = np.zeros(trans_matrix.n_sites, dtype=np.uintc)
+    for num, group in enumerate(index_by_sublattice):
+        symm_group[group] = num
+
+    for cluster in cluster_list:
+        fig_keys = list(set(cluster.get_all_figure_keys()))
+        num_occ = {}
+        for key in fig_keys:
+            num_occ[key] = cluster_list.num_occ_figure(key, cluster.name, symm_group, trans_matrix)
+        num_fig_occ = cluster.num_fig_occurences
+        norm_factors = {}
+        for key in fig_keys:
+            tot_num = num_occ[key]
+            num_unique = len(set(key.split("-")))
+            norm_factors[key] = float(tot_num) / (num_unique * num_fig_occ[key])
+
+        norm_factor_list = []
+        for fig in cluster.indices:
+            key = cluster.get_figure_key(fig)
+            norm_factor_list.append(norm_factors[key])
+        assert len(norm_factor_list) == len(cluster.indices)
+        cluster.info["normalization_factor"] = norm_factor_list
 
 
 class _CacheChecker:

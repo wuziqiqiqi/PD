@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 __all__ = ("ClusterList",)
 
 
+class ClusterDoesNotExistError(Exception):
+    """A requested cluster doesn't exist"""
+
+
 @jsonable("cluster_list")
 class ClusterList:
     # pylint: disable=too-many-public-methods
@@ -64,8 +68,8 @@ class ClusterList:
         for c in clusters:
             if c.group == group:
                 return c
-        msg = f"There are no cluster named {name} and group {group}"
-        raise ValueError(msg)
+        msg = f"There is no cluster named {name} and in group {group}"
+        raise ClusterDoesNotExistError(msg)
 
     def get_by_size(self, size) -> List[Cluster]:
         # Return all clusters with a given size
@@ -170,8 +174,9 @@ class ClusterList:
         new_list.sort()
         return new_list
 
-    def tolist(self):
-        return self.clusters
+    def tolist(self) -> List[Cluster]:
+        """Returns a copy of the ClusterList as a regular list."""
+        return list(self.clusters)
 
     @property
     def unique_indices(self):
@@ -262,8 +267,21 @@ class ClusterList:
 
         for ref in set(figure):
             group = symm_groups[ref]
-            cluster = self.get_by_name_and_group(c_name, group)
-            corr_figure = cluster.corresponding_figure(ref, figure, trans_matrix)
+            try:
+                cluster = self.get_by_name_and_group(c_name, group)
+                corr_figure = cluster.corresponding_figure(ref, figure, trans_matrix)
+            except (ClusterDoesNotExistError, RuntimeError) as err:
+                # If a cutoff is _very_ close to an internal distance in the cell,
+                # numerical fluctuations may cause a cluster from one ref site to be included,
+                # but not from the other reference site.
+                # See !480
+                cluster_size = len(figure)
+                msg = f"A {cluster_size:d}-body cluster expected to be found was missing. "
+                msg += "This *may* indicate a cutoff which is very close to an internal "
+                msg += "distance in the cell.\n"
+                msg += "If that is the case, try increasing the cutoff diameter for "
+                msg += f"{cluster_size:d}-body clusters slightly."
+                raise ClusterDoesNotExistError(msg) from err
             corr_fig_key = list2str(corr_figure)
             tot_num += occ_count[cluster.group][corr_fig_key]
         return tot_num

@@ -570,10 +570,11 @@ class ClusterExpansionSettings:
     def create_cluster_list_and_trans_matrix(self):
         """Prepares the internal cache objects by calculating cluster related properties"""
         logger.debug("Creating translation matrix and cluster list")
-        at_cpy = self.atoms.copy()
-        self.cluster_mng.build(self.max_cluster_dia)
-        self._cluster_list = self.cluster_mng.info_for_template(at_cpy)
-        self._trans_matrix = self.cluster_mng.translation_matrix(at_cpy)
+        self._cluster_list, self._trans_matrix = self.cluster_mng.build_all(
+            self.atoms,
+            self.max_cluster_dia,
+            self.index_by_sublattice,
+        )
 
     def view_clusters(self) -> None:
         """Display all clusters along with their names."""

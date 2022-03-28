@@ -1,5 +1,4 @@
 from itertools import product
-import functools
 from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
 import numpy as np
 from ase import Atoms
@@ -232,7 +231,7 @@ class ClusterGenerator:
             Iterator[Figure]: Iterable with all acceptable figures.
         """
 
-        def is_figure_ok(figure: Figure, cutoff: float) -> bool:
+        def is_figure_ok(figure: Figure) -> bool:
             """Does the figure obey the cutoff radius?
             The diameter can be larger than the maximum distance between two atoms
             in the cluster, and so the site_iterator can prepare clusters with too large
@@ -244,9 +243,7 @@ class ClusterGenerator:
             return figure.get_diameter(self.prim, transposed_cell=self.prim_cell_T) < cutoff
 
         cutoff_lut = self.prepare_within_cutoff(cutoff, ref_lattice)
-        # Function which filters figures based on the cutoff diameter from the center of mass
-        filter_func = functools.partial(is_figure_ok, cutoff=cutoff)
-        return filter(filter_func, site_iterator(cutoff_lut, size, ref_lattice))
+        return filter(is_figure_ok, site_iterator(cutoff_lut, size, ref_lattice))
 
     def generate(
         self, size: int, cutoff: float, ref_lattice: int

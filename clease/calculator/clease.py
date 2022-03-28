@@ -90,38 +90,6 @@ class Clease(Calculator):
         # C++ updater initialized when atoms are set
         self.updater = None
 
-    def _set_norm_factors(self) -> None:
-        """Set normalization factor for each cluster.
-
-        The normalization factor only kicks in when the cell is too small and
-        thus, include self-interactions. This methods corrects the impact of
-        self-interactions.
-        """
-        symm_group = np.zeros(len(self.settings.atoms), dtype=np.uintc)
-        for num, group in enumerate(self.settings.index_by_sublattice):
-            symm_group[group] = num
-
-        cluster_list = self.settings.cluster_list
-        for cluster in cluster_list:
-            fig_keys = list(set(cluster.get_all_figure_keys()))
-            num_occ = {}
-            for key in fig_keys:
-                num_occ[key] = cluster_list.num_occ_figure(
-                    key, cluster.name, symm_group, self.settings.trans_matrix
-                )
-            num_fig_occ = cluster.num_fig_occurences
-            norm_factors = {}
-            for key in fig_keys:
-                tot_num = num_occ[key]
-                num_unique = len(set(key.split("-")))
-                norm_factors[key] = float(tot_num) / (num_unique * num_fig_occ[key])
-
-            norm_factor_list = []
-            for fig in cluster.indices:
-                key = cluster.get_figure_key(fig)
-                norm_factor_list.append(norm_factors[key])
-            cluster.info["normalization_factor"] = norm_factor_list
-
     def set_atoms(self, atoms: Atoms) -> None:
         self.atoms = atoms
 
@@ -144,7 +112,6 @@ class Clease(Calculator):
         self.is_backround_index = np.zeros(len(atoms), dtype=np.uint8)
         self.is_backround_index[self.settings.background_indices] = 1
 
-        self._set_norm_factors()
         self.updater = PyCEUpdater(
             self.atoms,
             self.settings,
@@ -181,6 +148,18 @@ class Clease(Calculator):
 
     def reset(self):
         self.results = {}
+
+    def calculate_cf_from_scratch(self) -> Dict[str, float]:
+        """Calculate correlation functions from scratch."""
+        return self.updater.calculate_cf_from_scratch(self.atoms, self.cf_names)
+
+    def calculate_energy_from_scratch(self) -> float:
+        """Calculate the correlation functions, and hence also the energy,
+        from scratch.
+        """
+        self.calculate_cf_from_scratch()
+        self.energy = self.updater.get_energy()
+        return self.energy
 
     # pylint: disable=signature-differs
     def calculate(

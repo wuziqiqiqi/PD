@@ -249,9 +249,12 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
 {
   double sp = 0.0;
 
+  // Note: No duplication factor is included here, since this method is used for calculating the
+  // CF from scratch (which will account for self-interactions with no issue), and not updating
+  // (which must account for self-interactions via the duplication factor).
+  // i.e. spin_product_one_atom_delta must accounts for the self-interaction.
+
   const vector<vector<int>> &indx_list = cluster.get();
-  // const vector< vector<int> >& order = cluster.get_order();
-  const vector<double> &dup_factors = cluster.get_duplication_factors();
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();
 
@@ -269,7 +272,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
       int id = (trans_index == ref_indx) ? ref_id : symbols_with_id->id(trans_index);
       sp_temp *= basis_functions.get(dec[j], id);
     }
-    sp += sp_temp * dup_factors[i];
+    sp += sp_temp;
   }
   return sp;
 }
@@ -280,6 +283,7 @@ double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &clust
   double sp_delta = 0.0;
 
   const vector<vector<int>> &indx_list = cluster.get();
+  // Account for the self-interaction, in case we updated 2 sites with 1 change
   const vector<double> &dup_factors = cluster.get_duplication_factors();
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();

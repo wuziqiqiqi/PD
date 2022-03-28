@@ -153,13 +153,13 @@ of the cluster
 The decoration numbers are pushed back into the "deco" vector.
 Number of permutations which are added: num_bfs**size
 Example: size=3, num_bfs=2, we add the following vectors:
-  0 0 0 
-  1 0 0 
-  0 1 0 
-  1 1 0 
-  0 0 1 
-  1 0 1 
-  0 1 1 
+  0 0 0
+  1 0 0
+  0 1 0
+  1 1 0
+  0 0 1
+  1 0 1
+  0 1 1
   1 1 1
 */
 {
@@ -291,11 +291,17 @@ void Cluster::parse_info_dict(PyObject *info)
   PyObject *key = string2py("normalization_factor");
   if (PyDict_Contains(cluster_info_dict, key))
   {
+#ifdef PRINT_DEBUG
+    cout << "Loading duplication factors from python dictionary\n";
+#endif
     PyObject *py_dup_factors = PyDict_GetItemString(cluster_info_dict, "normalization_factor");
     calculate_scaling_factors(py_dup_factors);
   }
   else
   {
+#ifdef PRINT_DEBUG
+    cout << "Filling duplication factors with 1\n";
+#endif
     // Fill duplication factors with 1.0
     duplication_factors.clear();
     for (unsigned int i = 0; i < figures.size(); i++)
@@ -303,6 +309,14 @@ void Cluster::parse_info_dict(PyObject *info)
       duplication_factors.push_back(1.0);
     }
   }
+#ifdef PRINT_DEBUG
+  cout << "Normalization factors (amount: " << duplication_factors.size() << "):\n";
+  for (const auto &v : duplication_factors)
+  {
+    cout << v << " ";
+  }
+  cout << std::endl;
+#endif
   Py_DECREF(key);
 
   // Sanity check
@@ -336,6 +350,7 @@ void Cluster::check_consistency() const
 
 void Cluster::calculate_scaling_factors(PyObject *pylist)
 {
+  duplication_factors.clear();
   for (unsigned int i = 0; i < PyList_Size(pylist); i++)
   {
     double factor = PyFloat_AsDouble(PyList_GetItem(pylist, i));

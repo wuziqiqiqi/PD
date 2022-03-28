@@ -62,9 +62,8 @@ def test_supercell_consistency(db_name):
 
     atoms = wrap_and_sort_by_position(atoms * (4, 3, 2))
     cf_dict_sc = cf.get_cf(atoms)
-    for k in cf_dict_sc.keys():
-        assert cf_dict[k] == pytest.approx(cf_dict_sc[k])
-    os.remove(db_name)
+
+    assert pytest.approx(cf_dict) == cf_dict_sc
 
 
 def test_error_message_for_non_existent_cluster(db_name):

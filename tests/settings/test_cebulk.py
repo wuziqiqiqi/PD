@@ -27,6 +27,7 @@ from clease.corr_func import CorrFunction
 from clease.structgen import MaxAttemptReachedError
 from clease.tools import update_db
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
+from clease.cluster.cluster_list import ClusterDoesNotExistError
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated
@@ -314,7 +315,7 @@ def test_initial_pool(make_conc, make_settings):
         crystalstructure="rocksalt",
         a=4.0,
         size=[2, 2, 1],
-        max_cluster_dia=[4.0, 4.0],
+        max_cluster_dia=[4.1, 4.1],
     )
     ns = NewStructures(settings, struct_per_gen=2)
     ns.generate_initial_pool()
@@ -662,3 +663,34 @@ def test_save_load_roundtrip(kwargs, make_conc, make_settings, make_tempfile, co
     settings_loaded = ClusterExpansionSettings.load(file)
 
     compare_dict(settings.todict(), settings_loaded.todict())
+
+
+@pytest.mark.parametrize("a_lp", np.linspace(3, 4, 8))
+@pytest.mark.parametrize("crystalstructure", ["hcp", "rocksalt"])
+def test_cutoff_equals_lp(crystalstructure, a_lp):
+    """Having the cutoff be equal to the lattice parameter (or other internal distances)
+    can cause a lot of issues. Here we test that we get a very specific and predictable
+    error, since this numerical instability results in missing clusters that we would
+    expect to find. See also !480."""
+    if crystalstructure == "rocksalt":
+        basis_elements = [["Na", "Au"], ["Cu", "Ag"]]
+    else:
+        basis_elements = [["Au", "Cu"]]
+    cutoff_dia = [a_lp] * 3
+
+    conc = Concentration(basis_elements=basis_elements)
+    settings = CEBulk(
+        conc,
+        crystalstructure=crystalstructure,
+        a=a_lp,
+        max_cluster_dia=cutoff_dia,
+        size=[2, 2, 2],
+    )
+
+    try:
+        settings.ensure_clusters_exist()
+    except ClusterDoesNotExistError as err:
+        # This is the only error we tolerate is raised
+        # Not all test settings will raise here either, but some probably will
+        assert "try increasing the cutoff diameter" in str(err)
+        print(f"Cluster failure with settings: {crystalstructure}, and {a_lp}.")

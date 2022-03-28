@@ -211,13 +211,18 @@ def do_test_update_correlation_functions(settings, atoms, n_trial_configs=20, fi
         # The calculator should update its correlation functions
         # when the energy is computed
         start = time.perf_counter()
-        atoms.get_potential_energy()
+        calc.update_cf()
+        en_update = calc.get_energy()
         timings.append(time.perf_counter() - start)
         brute_force_cf = cf.get_cf_by_names(atoms, calc.cf_names)
+        # Get the CF's with the "smart" update method first
         calc_cf = calc.get_cf()
+        assert pytest.approx(calc_cf) == brute_force_cf
 
-        for key in calc_cf.keys():
-            assert abs(calc_cf[key] - brute_force_cf[key]) < 1e-6
+        # Now verify we get the same CF's calculating with brute force from the calculator.
+        calc_brute_force = calc.calculate_cf_from_scratch()
+        assert pytest.approx(calc_cf) == calc_brute_force
+        assert pytest.approx(en_update) == calc.calculate_energy_from_scratch()
 
     print(np.mean(timings))
 
@@ -244,13 +249,13 @@ def do_test_insert_element(settings, atoms, n_trial_configs=20):
                 continue
             assert abs(calc_cf[k] - brute_force_cf[k]) < 1e-6
 
+        assert calc.calculate_cf_from_scratch() == pytest.approx(brute_force_cf)
+
 
 def test_normfactors_no_self_interaction(db_name):
     settings, atoms = get_binary(db_name)
 
     eci = generate_ex_eci(settings)
-    calc = Clease(settings, eci=eci)
-    atoms.calc = calc
 
     for cluster in settings.cluster_list:
         if cluster.name == "c0" or cluster.name == "c1":
