@@ -285,3 +285,27 @@ def test_trivial_path(prim, rep, make_cluster_mng, mocker):
 
     assert tm_trivial is not tm_general
     assert tm_trivial == tm_general
+
+
+@pytest.mark.parametrize(
+    "prim",
+    [
+        bulk("LiX", crystalstructure="rocksalt", a=4.0),
+        bulk("Au", crystalstructure="fcc", a=3.8),
+    ],
+)
+@pytest.mark.parametrize("max_cutoff_dia", [[5.0], [6.0, 5.0], [5.5, 5.5, 5.5]])
+def test_cluster_list(prim, max_cutoff_dia, make_cluster_mng):
+    prim.wrap()
+
+    manager: ClusterManager = make_cluster_mng(prim)
+
+    manager.build(max_cutoff_dia)
+
+    for cluster in manager.clusters:
+        for figure in cluster.figures:
+            for fv in figure.components:
+                fv._validate()
+            max_size = max_cutoff_dia[figure.size - 2]
+            dia = figure.get_diameter(prim)
+            assert dia <= max_size

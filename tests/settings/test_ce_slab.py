@@ -84,3 +84,10 @@ def test_remove_vacuum():
     slab = add_vacuum_layers(atoms.copy(), prim, thickness=20)
     recovered = remove_vacuum_layers(slab)
     assert atoms == recovered
+
+
+def test_clusters(db_name, verify_clusters):
+    atoms = bulk("Al", a=4.05, cubic=True)
+    conc = Concentration(basis_elements=[["Al", "X"]])
+    settings = CESlab(atoms, (1, 1, 1), conc, db_name=db_name)
+    verify_clusters(settings)

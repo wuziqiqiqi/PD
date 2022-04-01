@@ -281,17 +281,18 @@ def test_indices_of_changed_symbols(db_name):
     assert calc_changes == changes
 
 
-def test_update_corr_func_binary(db_name):
+def test_update_corr_func_binary(db_name, verify_clusters):
     print("binary")
     bin_settings, bin_atoms = get_binary(db_name)
     do_test_update_correlation_functions(bin_settings, bin_atoms, n_trial_configs=5)
+    verify_clusters(bin_settings)
 
 
-def test_update_corr_func_ternary(db_name):
+def test_update_corr_func_ternary(db_name, verify_clusters):
     print("ternary")
     tern_settings, tern_atoms = get_ternary(db_name)
     do_test_update_correlation_functions(tern_settings, tern_atoms, n_trial_configs=5)
-    os.remove(db_name)
+    verify_clusters(tern_settings)
 
 
 def test_update_corr_func_rocksalt(db_name):
@@ -300,16 +301,18 @@ def test_update_corr_func_rocksalt(db_name):
     do_test_update_correlation_functions(rs_settings, rs_atoms, n_trial_configs=5, fixed=["O"])
 
 
-def test_insert_element_rocksalt_1x1x1(db_name):
+def test_insert_element_rocksalt_1x1x1(db_name, verify_clusters):
     print("rocksalt with self interaction 1x1x1")
     rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 1], db_name)
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=5)
+    verify_clusters(rs_settings)
 
 
-def test_insert_element_rocksalt_1x1x2(db_name):
+def test_insert_element_rocksalt_1x1x2(db_name, verify_clusters):
     print("rocksalt with self interaction 1x1x2")
     rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 2], db_name)
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=1)
+    verify_clusters(rs_settings)
 
 
 def test_insert_element_rocksalt_1x1x3(db_name):
@@ -324,10 +327,11 @@ def test_insert_element_rocksalt_1x2x3(db_name):
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=10)
 
 
-def test_update_corr_func_spacegroup(db_name):
+def test_update_corr_func_spacegroup(db_name, verify_clusters):
     print("spacegroup")
     sp_settings, sp_atoms = get_spacegroup(db_name)
     do_test_update_correlation_functions(sp_settings, sp_atoms, n_trial_configs=5, fixed=["Ta"])
+    verify_clusters(sp_settings)
 
 
 @pytest.mark.parametrize(
@@ -337,15 +341,18 @@ def test_update_corr_func_spacegroup(db_name):
         get_spacegroup,
     ],
 )
-def test_trans_matrix(db_name, settings_maker):
+def test_trans_matrix(db_name, settings_maker, verify_clusters):
     settings, atoms = settings_maker(db_name)
     settings.set_active_template(atoms=atoms)
     tm = settings.trans_matrix
 
     assert len(tm) == len(atoms)
+    assert isinstance(tm, TransMatrix)
 
     for k, v in tm[0].items():
         assert k == v
+
+    verify_clusters(settings)
 
 
 @pytest.mark.parametrize(

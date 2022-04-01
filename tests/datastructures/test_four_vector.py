@@ -42,9 +42,9 @@ def make_wrapped_nacl():
 
 
 @pytest.mark.parametrize("inputs", [(0.5, 1, 1, 1), (1, 0.5, 1, 1), (1, 1, 0.5, 1), (1, 1, 1, 0.5)])
-def test_invalid_constructor(inputs):
+def test_invalid_fv(inputs):
     with pytest.raises(TypeError):
-        FourVector(*inputs)
+        FourVector(*inputs)._validate()
 
 
 def test_int_np_int_hash():
@@ -58,6 +58,7 @@ def test_int_np_int_hash():
     assert type(a) != type(a_np)
 
     fv1 = FourVector(0, 0, 0, 0)
+    fv1._validate()
     for v in fv1.to_tuple():
         # Verify the elements are regular int, and not numpy int
         assert isinstance(v, int)
@@ -163,6 +164,8 @@ def test_int_np_int_hash():
     ],
 )
 def test_four_vector(test):
+    for fv in test["expect"]:
+        fv._validate()
     assert construct_four_vectors(test["prim"], test["atoms"]) == test["expect"]
 
 
@@ -193,6 +196,8 @@ def test_random_spacegroup_four_vector(default_seed):
         supercell = make_supercell(prim, P)
 
         four_vecs = construct_four_vectors(prim, supercell)
+        for fv in four_vecs:
+            fv._validate()
 
         # Correct number of atoms
         assert len(four_vecs) == len(supercell)

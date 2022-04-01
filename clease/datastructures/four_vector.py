@@ -14,9 +14,6 @@ from clease.jsonio import jsonable, AttrSavable
 __all__ = ("FourVector", "construct_four_vectors")
 
 
-_FV_KWARGS = dict(validator=attr.validators.instance_of((np.integer, int)))
-
-
 @jsonable("four_vector")
 @attr.define(frozen=True, order=True)
 class FourVector(AttrSavable):
@@ -25,10 +22,10 @@ class FourVector(AttrSavable):
     as well as which sublattice it belongs to in that cell.
     """
 
-    ix: int = attr.field(**_FV_KWARGS)
-    iy: int = attr.field(**_FV_KWARGS)
-    iz: int = attr.field(**_FV_KWARGS)
-    sublattice: int = attr.field(**_FV_KWARGS)
+    ix: int = attr.field()
+    iy: int = attr.field()
+    iz: int = attr.field()
+    sublattice: int = attr.field()
 
     def to_cartesian(self, prim: Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
         """Convert the four vector into cartesian coordinates
@@ -116,6 +113,17 @@ class FourVector(AttrSavable):
         iy = (self.iy + other.iy) % ny
         iz = (self.iz + other.iz) % nz
         return FourVector(ix, iy, iz, self.sublattice)
+
+    def _validate(self) -> None:
+        """Method for explicitly checking the validity of the FourVector.
+        Mainly for testing purposes. Is not run upon instantiation.
+
+        Raises a TypeError if the type of the fields are incorrect.
+        """
+        for field in attr.fields(self.__class__):
+            value = getattr(self, field.name)
+            if not isinstance(value, (np.integer, int)):
+                raise TypeError(f"Expected field {field} to be integer, but got {value!r}")
 
 
 class _Box(NamedTuple):

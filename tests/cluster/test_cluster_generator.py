@@ -139,6 +139,8 @@ def test_cutoff():
                     fig_dia = figure.get_diameter(atoms)
                     assert fig_dia <= max_diameter
                     assert fig_dia == pytest.approx(fig0_dia)
+                    for fv in figure.components:
+                        fv._validate()
 
 
 @pytest.mark.parametrize("atoms", [bulk("NaCl", "rocksalt", a=5.0), bulk("Al"), bulk("Fe")])
@@ -158,6 +160,8 @@ def test_many_four_vector(atoms):
     sublattice = np.repeat(range(natoms), n)
 
     fv_lst = gen.many_to_four_vector(cart, sublattice)
+    for fv in fv_lst:
+        fv._validate()
     fv_set = set(fv_lst)
     assert len(fv_lst) == len(cart)
     assert len(fv_lst) == len(sublattice)
@@ -170,12 +174,14 @@ def test_many_four_vector(atoms):
 
     sc = atoms * (3, 3, 3)
     sublattices = [gen.get_lattice(pos) for pos in sc.positions]
-    fc_lst = gen.many_to_four_vector(sc.positions, sublattices)
-    assert len(fc_lst) == len(sc)
-    assert len(fc_lst) == len(set(fc_lst))
+    fv_lst = gen.many_to_four_vector(sc.positions, sublattices)
+    for fv in fv_lst:
+        fv._validate()
+    assert len(fv_lst) == len(sc)
+    assert len(fv_lst) == len(set(fv_lst))
 
     for ix in range(3):
         for iy in range(3):
             for iz in range(3):
                 for s in range(natoms):
-                    assert FourVector(ix, iy, iz, s) in fc_lst
+                    assert FourVector(ix, iy, iz, s) in fv_lst

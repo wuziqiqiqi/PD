@@ -83,12 +83,15 @@ def calculate_cf(settings, atoms):
 
 
 @pytest.fixture
-def make_settings(db_name):
-    def _make_settings(conc, **kwargs):
+def make_settings(db_name, verify_clusters):
+    def _make_settings(conc, verify=False, **kwargs):
         assert isinstance(conc, Concentration)
         defaults = dict(crystalstructure="fcc", a=4.05, db_name=db_name, max_cluster_dia=[5.0])
         defaults.update(**kwargs)
-        return CEBulk(conc, **defaults)
+        settings = CEBulk(conc, **defaults)
+        if verify:
+            verify_clusters(settings)
+        return settings
 
     return _make_settings
 
@@ -113,7 +116,7 @@ def test_max_cluster_dia(make_conc, make_settings):
     conc = make_conc(basis_elements)
     mcd = [4.3, 4.3, 4.3]
     mcd_orig = mcd.copy()
-    settings = make_settings(conc, max_cluster_dia=mcd)
+    settings = make_settings(conc, max_cluster_dia=mcd, verify=True)
 
     # Ensure max cluster dia has not been mutated
     assert not mcd is mcd_orig
@@ -142,7 +145,7 @@ def test_max_cluster_size(mcs, make_conc, make_settings):
         diameter += 0.5
 
     mcd[-1] = diameter  # We are only interested in clusters of a certain size
-    settings = make_settings(conc, size=(3, 3, 3), max_cluster_dia=mcd)
+    settings = make_settings(conc, size=(3, 3, 3), max_cluster_dia=mcd, verify=True)
     assert settings.max_cluster_size == mcs
 
     max_found_size = max(cluster.size for cluster in settings.cluster_list.clusters)
@@ -159,7 +162,7 @@ def test_corrfunc_au_cu(make_conc, make_settings, check_cf):
     basis_elements = [["Au", "Cu"]]
     conc = make_conc(basis_elements)
     conc = Concentration(basis_elements=basis_elements)
-    settings = make_settings(conc, size=[3, 3, 3], max_cluster_dia=[4.3, 4.3, 4.3])
+    settings = make_settings(conc, size=[3, 3, 3], max_cluster_dia=[4.3, 4.3, 4.3], verify=True)
 
     atoms = settings.atoms.copy()
     atoms.symbols[[0, 3]] = "Cu"
@@ -179,6 +182,7 @@ def test_corrfunc_li_v_x_o(make_conc, make_settings, check_cf):
         a=4.0,
         size=[2, 2, 1],
         max_cluster_dia=[4.01, 4.01],
+        verify=True,
     )
     atoms = settings.atoms.copy()
     Li_ind = [atom.index for atom in atoms if atom.symbol == "Li"]
@@ -377,6 +381,7 @@ def test_2grouped_basis_probe(make_conc, make_settings):
         size=[2, 2, 3],
         max_cluster_dia=[4.01],
         include_background_atoms=True,
+        verify=True,
     )
     fam_figures = get_figures_of_family(settings, "c2_d0005_0")
     assert len(fam_figures[0]) == 6
@@ -424,6 +429,7 @@ def test_2grouped_basis_bckgrnd_probe(make_conc, make_settings):
         a=4.0,
         size=[2, 2, 2],
         max_cluster_dia=[4.01, 4.01],
+        verify=True,
     )
     assert settings.num_basis == 2
     assert len(settings.index_by_basis) == 2
@@ -495,6 +501,7 @@ def test_concentration_with_background(make_conc, make_settings):
         a=4.0,
         size=[2, 2, 2],
         max_cluster_dia=[4.01, 4.01],
+        verify=True,
     )
 
     assert settings.num_active_sublattices == 1
@@ -509,6 +516,7 @@ def test_concentration_with_background(make_conc, make_settings):
         a=4.0,
         size=[2, 2, 1],
         max_cluster_dia=[4.01, 4.01],
+        verify=True,
     )
 
     assert settings.num_active_sublattices == 1
@@ -526,7 +534,12 @@ def test_concentration_with_background(make_conc, make_settings):
     basis_elements = [["Zr", "Ce"], ["O"], ["O"]]
     conc = make_conc(basis_elements, grouped_basis=[[0], [1, 2]])
     settings = make_settings(
-        conc, crystalstructure="fluorite", a=4.0, size=[2, 2, 3], max_cluster_dia=[4.01]
+        conc,
+        crystalstructure="fluorite",
+        a=4.0,
+        size=[2, 2, 3],
+        max_cluster_dia=[4.01],
+        verify=True,
     )
 
     assert settings.num_active_sublattices == 1
@@ -541,6 +554,7 @@ def test_concentration_with_background(make_conc, make_settings):
         size=[2, 2, 3],
         max_cluster_dia=[4.01],
         include_background_atoms=True,
+        verify=True,
     )
     assert settings.num_active_sublattices == 2
     assert settings.atomic_concentration_ratio == 1.0
@@ -550,7 +564,12 @@ def test_concentration_with_background(make_conc, make_settings):
     basis_elements = [["Zr", "Ce"], ["O"], ["S"]]
     conc = Concentration(basis_elements)
     settings = make_settings(
-        conc, crystalstructure="fluorite", a=4.0, size=[2, 2, 3], max_cluster_dia=[4.01]
+        conc,
+        crystalstructure="fluorite",
+        a=4.0,
+        size=[2, 2, 3],
+        max_cluster_dia=[4.01],
+        verify=True,
     )
 
     assert settings.num_active_sublattices == 1
