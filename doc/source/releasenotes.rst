@@ -4,6 +4,10 @@
 Release notes
 =============
 
+0.11.4
+=======
+
+
 0.11.3
 =======
 * :class:`~clease.datastructures.mc_step.MCStep` and
