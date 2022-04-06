@@ -5,6 +5,7 @@ from clease.settings import Concentration, CEBulk
 from clease.corr_func import CorrFunction
 from clease.calculator import Clease, attach_calculator
 from clease.datastructures import SystemChange
+from clease import tools
 
 
 @pytest.fixture
@@ -100,3 +101,19 @@ def test_attach_calculator(atoms, settings):
     new_atoms.calc.updater.calculate_cf_from_scratch(atoms, eci.keys())
     cf2 = new_atoms.calc.get_cf()
     assert cf1 == pytest.approx(cf2)
+
+
+@pytest.mark.parametrize(
+    "P",
+    [
+        [[9, -9, 0], [0, 9, -9], [3, 3, 3]],
+        [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        [[3, 0, 0], [0, 2, 0], [0, 0, 4]],
+    ],
+)
+@pytest.mark.parametrize("rattle", [0.01, 0.001, 0.0001])
+def test_attach_calc_bad_atoms(settings, P, rattle):
+    supercell = tools.make_supercell(settings.prim_cell, P)
+    supercell.rattle(rattle)
+    with pytest.raises(ValueError):
+        attach_calculator(settings, supercell)

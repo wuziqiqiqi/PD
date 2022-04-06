@@ -8,7 +8,8 @@ from .clease import Clease
 def attach_calculator(
     settings: ClusterExpansionSettings, atoms: Atoms, eci: Dict[str, float] = None
 ) -> Atoms:
-    """Utility function for an efficient initialization of large cells.
+    """Utility function for an efficient initialization of large cells. Will set the atoms
+    object as the active template in the settings.
 
     :param settings: ClusterExpansionSettings object (e.g., CEBulk, CECyrstal)
     :param eci: Dictionary containing cluster names and their ECI values
@@ -17,10 +18,11 @@ def attach_calculator(
     if eci is None:
         eci = {}
 
-    template = settings.template_atoms.get_template_matching_atoms(atoms=atoms)
-    settings.set_active_template(atoms=template)
+    # The settings object will complain if we cannot coerce the atoms object into a template
+    # object.
+    settings.set_active_template(atoms=atoms)
 
-    wrapped = wrap_and_sort_by_position(atoms.copy())
+    wrapped = wrap_and_sort_by_position(atoms)
     atoms_with_calc = settings.atoms.copy()
 
     calc = Clease(settings, eci=eci)

@@ -6,6 +6,8 @@ Release notes
 
 0.11.4
 =======
+* Fixed an issue where :class:`~clease.calculator.util.attach_calculator` would incorrectly
+  try to snap the atoms onto a grid.
 
 
 0.11.3

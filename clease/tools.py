@@ -51,7 +51,7 @@ class ApproxEqualityList:
         return False
 
 
-def index_by_position(atoms):
+def index_by_position(atoms: ase.Atoms) -> List[int]:
     """Set atomic indices by its position."""
     # add zero to avoid negative zeros
     tags = atoms.get_positions() + 0
@@ -63,7 +63,7 @@ def index_by_position(atoms):
     return indices
 
 
-def sort_by_position(atoms):
+def sort_by_position(atoms: ase.Atoms) -> ase.Atoms:
     """Sort atoms by its position."""
     # Return a new Atoms object with sorted atomic order.
     # The default is to order according to chemical symbols,
@@ -73,8 +73,19 @@ def sort_by_position(atoms):
     return atoms[indices]
 
 
-def wrap_and_sort_by_position(atoms):
-    """Wrap and sort atoms by their positions."""
+def wrap_and_sort_by_position(atoms: ase.Atoms, copy: bool = True) -> ase.Atoms:
+    """Wrap and sort atoms by their positions.
+
+    Args:
+        atoms (ase.Atoms): Atoms object to be wrapped and sorted
+        copy (bool, optional): If True, a copy of the atoms object is returned,
+            to avoid mutating the original atoms object. Defaults to True.
+
+    Returns:
+        ase.Atoms: The wrapped and sorted Atoms object.
+    """
+    if copy:
+        atoms = atoms.copy()
     atoms.wrap()
     atoms = sort_by_position(atoms)
     return atoms
