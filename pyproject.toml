@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools >= 58, < 61", "wheel", "Cython", "numpy"]
+# setuptools 61.0 broke, see !488
+requires = ["setuptools >=58, !=61.0", "wheel", "Cython", "numpy"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
