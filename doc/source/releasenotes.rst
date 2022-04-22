@@ -8,6 +8,7 @@ Release notes
 =======
 * Fixed an issue where :class:`~clease.calculator.util.attach_calculator` would incorrectly
   try to snap the atoms onto a grid.
+* Typo in the axis labeling in ``plot_fit``.
 
 
 0.11.3

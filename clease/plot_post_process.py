@@ -23,8 +23,8 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         plot_args = {}
     X = evaluate.get_energy_predict()
     Y = evaluate.e_dft
-    xlabel = plot_args.get("xlabel", "E_DFT (eV/atom)")
-    ylabel = plot_args.get("ylabel", "E_CE (eV/atom)")
+    xlabel = plot_args.get("xlabel", "E_CE (eV/atom)")
+    ylabel = plot_args.get("ylabel", "E_DFT (eV/atom)")
     title = plot_args.get("title", f"Fit using {len(evaluate.e_dft)} data points.")
 
     # rmin, rmax set the plot range of x, y coordinate
