@@ -4,6 +4,10 @@
 Release notes
 =============
 
+0.11.5
+=======
+
+
 0.11.4
 =======
 * Fixed an issue where :class:`~clease.calculator.util.attach_calculator` would incorrectly
