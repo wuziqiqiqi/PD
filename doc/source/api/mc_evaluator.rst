@@ -34,9 +34,9 @@ by removing vacancies from the atoms object prior to evaluating the energy.
 ...         atoms_cpy = self.atoms.copy()
 ...         mask = [atom.index for atom in atoms_cpy if atom.symbol != 'X']
 ...         atoms_cpy = atoms_cpy[mask]
-...         
+...
 ...         atoms_cpy.calc = self.calc
-...         return atoms_cpy.get_potential_energy()  
+...         return atoms_cpy.get_potential_energy()
 
 Note that we overwrite the ``get_energy`` method of the :class:`MCEvaluator`, in order to have custom
 rules for the energy evaluation. Let's create an example system to run the MC on:

@@ -3,9 +3,9 @@
 Stoichiometric Constraints
 ---------------------------
 
-The most flexible method of imposing stoichiometric constraints in CLEASE 
+The most flexible method of imposing stoichiometric constraints in CLEASE
 is to use linear systems of equations. Here, you can find a list of examples
-of how different constraints can be imposed. In CLEASE a linear system of 
+of how different constraints can be imposed. In CLEASE a linear system of
 equations with the structure shown below
 
 .. figure:: resources/linear_system.svg
@@ -18,12 +18,12 @@ if :code:`basis_element = [['Au', 'Cu'], ['Cu', 'X]]` there will be to Cu concen
 you can restrict; one for each sublattice. The total number of sublattice concentrations
 in the example above is 4. Hence, all rows of the matrix has 4 columns. CLEASE has two
 types of constraints: **equality** and **lower bound**. Equality constraints are passed
-via :code:`A_eq` and :code:`b_eq` arguments in the *Concentration* class, and lower bound 
-constraints are passed via :code:`A_lb` and :code:`b_lb`. For lower bound constraints, the 
-equality sign in the figure is replaced by a *larger or equal than*-symbol. Note that upper 
-bound constraints can trivially be converted to a lower bound constraint by multiplying the 
-equation by -1. Finally, the example below shows how you can generate random concentrations 
-**satisfying** your constraints. The list passed to the function is the number of sites in 
+via :code:`A_eq` and :code:`b_eq` arguments in the *Concentration* class, and lower bound
+constraints are passed via :code:`A_lb` and :code:`b_lb`. For lower bound constraints, the
+equality sign in the figure is replaced by a *larger or equal than*-symbol. Note that upper
+bound constraints can trivially be converted to a lower bound constraint by multiplying the
+equation by -1. Finally, the example below shows how you can generate random concentrations
+**satisfying** your constraints. The list passed to the function is the number of sites in
 each sublattice.
 
 >>> import numpy as np
@@ -77,4 +77,3 @@ Two sublattices
     >>> for i in range(10):
     ...    x = conc.get_random_concentration([18, 18])
     ...    assert x[0] >= 0.2 and x[2] < 0.7
-

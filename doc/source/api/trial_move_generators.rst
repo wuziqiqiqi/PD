@@ -27,4 +27,3 @@ The API
 
 .. autoclass:: RandomFlipWithinBasis
     :members:
-

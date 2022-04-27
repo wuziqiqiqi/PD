@@ -1,8 +1,8 @@
 Importing Structures
 ======================
 
-If you have DFT data that are stored in different place/format than the CLEASE database 
-(databases, trajectory files, xyz files, etc.), 
+If you have DFT data that are stored in different place/format than the CLEASE database
+(databases, trajectory files, xyz files, etc.),
 CLEASE offers the possibility of importing those structures. The only thing that needs to be provided
 is the **initial** (e.g. non-relaxed structure where all atoms are on ideal sites) and the total energy
 associated with it. Note that the total energy can be one of the relaxed structure. To show how this
@@ -34,7 +34,7 @@ Next, we want to import these data into CLEASE. First, we create the settings
     >>> from clease.structgen import NewStructures
     >>> from clease.settings import CEBulk, Concentration
     >>> settings = CEBulk(
-    ...     Concentration(basis_elements=[['Au', 'Cu']]), 
+    ...     Concentration(basis_elements=[['Au', 'Cu']]),
     ...     crystalstructure='fcc', a=4.05, db_name="imported.db")
     >>> new_struct = NewStructures(settings)
 

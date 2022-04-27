@@ -10,9 +10,9 @@ cdef class CppCluster:
     def __init__(self, cluster_obj):
         """Construct the C++ Cluster from a regular CLEASE
         python cluster object.
-        
+
         Parameters:
-        
+
         :cluster_obj: Instance of a clease.cluster.Cluster object
         """
         self.thisptr = new Cluster(cluster_obj)

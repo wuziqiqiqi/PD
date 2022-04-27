@@ -72,7 +72,7 @@ void RowSparseStructMatrix::set_lookup_values( const vector<int> &lut_values )
     throw logic_error( "Cannot modify the allowed lookup values. This has already been done, and they can't be modified!" );
   }
   lut_values_set = true;
-  
+
   memcpy(allowed_lookup_values, &lut_values[0], lut_values.size()*sizeof(int));
 
   unsigned int max_value = *max_element(lut_values.begin(), lut_values.end() );

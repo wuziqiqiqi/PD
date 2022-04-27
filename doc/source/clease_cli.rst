@@ -1,7 +1,7 @@
 CLEASE Command Line Interface
 ==============================
 
-The CLEASE package comes with a convenient command line tools, 
+The CLEASE package comes with a convenient command line tools,
 that can be used for various things.
 
 1. Listing all tables in your database that contains correlation functions
