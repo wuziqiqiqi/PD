@@ -187,14 +187,13 @@ class Montecarlo(BaseMC):
         Can be used to inspect the MC after each step, for example,
         to print the energy every 5 steps, one could do:
 
-        # doctest: +SKIP
-        >>> mc = Montecarlo(...)
-        >>> for mc_step in mc.irun(500):
+        >>> mc = Montecarlo(...)  # doctest: +SKIP
+        >>> for mc_step in mc.irun(500):  # doctest: +SKIP
         ...     if mc_step.step % 5 == 0:
         ...         print(f"Current energy: {mc_step.energy:.2f} eV")
 
-        The iterator yields the current energy, as well as whether the last move
-        was accepted.
+        The iterator yields individual instances of :class:`~clease.datastructures.mc_step.MCStep`
+        for each step which is taken.
 
         Parameters:
 
