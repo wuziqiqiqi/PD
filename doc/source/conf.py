@@ -13,15 +13,18 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import datetime
 
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
 
+now = datetime.datetime.now()
+
 project = "CLEASE"
-copyright = "2019, J. H. Chang, D. Kleiven"
-author = "J. H. Chang, D. Kleiven, A. S. Tygesen"
+author = "J. H. Chang, D. Kleiven, A. Tygesen"
+copyright = f"{now.year}, {author}"
 
 # Get the version, we don't want to do an explicit CLEASE import here
 about = {}
