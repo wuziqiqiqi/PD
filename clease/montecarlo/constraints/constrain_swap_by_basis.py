@@ -1,4 +1,7 @@
+from typing import Sequence
 import numpy as np
+from ase import Atoms
+from clease.datastructures.system_changes import SystemChanges
 from .mc_constraint import MCConstraint
 
 
@@ -14,25 +17,26 @@ class ConstrainSwapByBasis(MCConstraint):
     atoms: Atoms object
         ASE Atoms object used in the MC simulation
 
-    index_by_basis: list
-        Indices ordered by basis (same as `index_by_basis` parameter in
-        `ClusterExpansionSettings`).
+    index_by_basis: List[List[int]]
+        Indices ordered by basis (same as ``index_by_basis`` parameter in
+        the :class:`~clease.settings.settings.ClusterExpansionSettings`
+        settings object.).
         If an Atoms object has 10 sites where the first 4 belongs to the
         first basis, the next 3 belongs to the next basis and the last 3
-        belongs to the last basis, the `index_by_basis` would be
-        [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        belongs to the last basis, the ``index_by_basis`` would be
+        [[0, 1, 2, 3], [4, 5, 6], [7, 8, 9]].
 
     Note: swaps are only allowed within each basis, not across two basis.
     """
 
-    def __init__(self, atoms, index_by_basis):
-        self.basis = np.zeros(len(atoms))
+    def __init__(self, atoms: Atoms, index_by_basis: Sequence[Sequence[int]]):
+        self.basis = np.zeros(len(atoms), dtype=int)
 
         for i, indices in enumerate(index_by_basis):
             for x in indices:
                 self.basis[x] = i
 
-    def __call__(self, system_changes):
+    def __call__(self, system_changes: SystemChanges) -> bool:
         if len(system_changes) != 2:
             raise ValueError("ConstrainSwapByBasis requires swap move")
 

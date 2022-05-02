@@ -108,6 +108,12 @@ Note, that the usage of a constraint in this system is a bit weird as it
 has only two elements. Hence, fixing one prevents any move from happening.
 But the point here is just to illustrate how a constraint can be attached.
 
+.. note::
+  If your system has multiple basis, you most likely want to add a
+  :class:`~clease.montecarlo.constraints.constrain_swap_by_basis.ConstrainSwapByBasis`
+  constraint object, in order to avoid swaps happening across different basis sites.
+  The Montecarlo object will not automatically avoid cross-basis swaps.
+
 Implementing Your Own Observer
 ------------------------------
 You can implement your own observer and monitor whatever quantity
