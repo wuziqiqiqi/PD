@@ -1,5 +1,7 @@
+import sys
+import pytest
 import numpy as np
-from clease.plot_post_process import plot_fit, plot_fit_residual, plot_eci, plot_cv
+import clease.plot_post_process as pp
 
 from clease import Evaluate
 
@@ -19,7 +21,7 @@ def test_plot_fit(bc_setting):
     # y-axis values calculated by get_energy_predict
     predict["y_axis_value"] = np.ndarray.tolist(evaluator.e_dft)
 
-    fig = plot_fit(evaluator, plot_args)
+    fig = pp.plot_fit(evaluator, plot_args)
     assert "loocv" in fig.get_axes()[0].texts[0].get_text()
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
@@ -37,7 +39,7 @@ def test_plot_fit_residual(bc_setting):
     # y-axis values calculated by subtract_predict_dft
     predict["delta_e"] = np.ndarray.tolist(evaluator.subtract_predict_dft())
 
-    fig = plot_fit_residual(evaluator, plot_args)
+    fig = pp.plot_fit_residual(evaluator, plot_args)
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[1].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
@@ -65,7 +67,7 @@ def test_plot_eci(bc_setting):
     # x, y-axis values of axhline
     predict["axhline_xy"] = [[0.0, 0.0], [1.0, 0.0]]
 
-    fig = plot_eci(evaluator, plot_args)
+    fig = pp.plot_eci(evaluator, plot_args)
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
@@ -83,7 +85,7 @@ def test_plot_cv(bc_setting):
 
     predict["alpha_cv"] = evaluator.cv_scores
 
-    fig = plot_cv(evaluator, plot_args)
+    fig = pp.plot_cv(evaluator, plot_args)
 
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
@@ -93,3 +95,12 @@ def test_plot_cv(bc_setting):
 
     for predict, true in zip(predict["alpha_cv"], true_list):
         assert predict["alpha"] == true
+
+
+@pytest.mark.parametrize("interactive", [True, False])
+def test_plot_ch(interactive, bc_setting):
+    evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
+    evaluator.get_eci()
+
+    # Simply verify that we can run the plot convex hull plotting function.
+    pp.plot_convex_hull(evaluator, interactive=interactive)

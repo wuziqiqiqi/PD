@@ -238,8 +238,20 @@ class ConvexHull:
         tol = 1e-4
         return all(self.energies[i] <= tol for i in simplex)
 
-    def plot(self, fig=None, concs=None, energies=None, marker="o", mfc="none"):
-        """Plot formation energies."""
+    def plot(
+        self,
+        fig=None,
+        concs=None,
+        energies=None,
+        marker="o",
+        mfc="none",
+        return_lines: bool = False,
+    ):
+        """Plot formation energies.
+
+        return_lines is primarily for internal use, to return the
+        matplotlib Line2D objects from the main energy plot.
+        """
         # pylint: disable=too-many-branches
         # We only add the Convex Hull for the DFT
         # data
@@ -267,13 +279,15 @@ class ConvexHull:
             energies = self.energies
 
         elems = sorted(varying_concs)[:-1]
+        energy_lines = []
         for i, ax in enumerate(fig.get_axes()):
-            # ax = fig.add_subplot(1, num_plots, i+1)
-
             x = np.array(concs[elems[i]])
             x /= self.conc_scale
 
-            ax.plot(x, np.asarray(energies) * self.atoms_per_fu, marker, mfc=mfc)
+            line = ax.plot(x, np.asarray(energies) * self.atoms_per_fu, marker, mfc=mfc)
+            # Store the line object, for potentially interacting with this object later.
+            # We only added 1 line here, so that's the reason for the 0-index.
+            energy_lines.append(line[0])
 
             if self.atoms_per_fu > 1:
                 unit = "eV/f.u."
@@ -297,6 +311,9 @@ class ConvexHull:
                         ]
                         ax.plot(x_cnv, y_cnv, color="black")
             ax.set_xlabel(f"{elems[i]} conc")
+
+        if return_lines:
+            return fig, energy_lines
         return fig
 
     def show_structures_on_convex_hull(self):

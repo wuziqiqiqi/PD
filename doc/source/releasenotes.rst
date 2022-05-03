@@ -6,7 +6,7 @@ Release notes
 
 0.11.5
 =======
-
+* Fixed a bug with interactive plotting and convex hulls.
 
 0.11.4
 =======

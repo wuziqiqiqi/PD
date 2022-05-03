@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
@@ -205,12 +206,24 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     return fig
 
 
-def plot_convex_hull(evaluate: Evaluate) -> Figure:
+def plot_convex_hull(evaluate: Evaluate, interactive=False) -> Figure:
+    """Plot the convex hull of an evaluate object.
+
+    Args:
+        evaluate (Evaluate): The Evaluate object to draw the convex hull from.
+        interactive (bool, optional): Plot as an interactive figure?. Defaults to False.
+    """
+    # pylint: disable=import-outside-toplevel
+    from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
     e_pred = evaluate.get_energy_predict()
 
     cnv_hull = ConvexHull(evaluate.settings.db_name, select_cond=evaluate.select_cond)
-    fig = cnv_hull.plot()  # Construct the figure object
+
+    # Construct the figure object, and plot the DFT points.
+    # Also fetch the Line2D objects which are drawn on the figure (i.e., the scatter points)
+    # dft_lines is for interactive plotting.
+    fig, dft_lines = cnv_hull.plot(return_lines=True)
 
     # `conc_per_frame` is the concentration with respect to the total number of atoms for
     # each frame
@@ -225,8 +238,55 @@ def plot_convex_hull(evaluate: Evaluate) -> Figure:
             value.append(frame_conc.get(key, 0.0))
 
     form_en = [cnv_hull.get_formation_energy(c, e) for c, e in zip(conc_per_frame, e_pred.tolist())]
-    cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
+    # Draw the CE energies, and fetch the lines, in case we need them for interactive plotting.
+    _, ce_lines = cnv_hull.plot(
+        fig=fig,
+        concs=concs,
+        energies=form_en,
+        marker="x",
+        return_lines=True,
+    )
 
     fig.suptitle("Convex hull DFT (o), CE (x)")
 
+    if interactive:
+        ax_list = fig.get_axes()
+
+        annotations = _make_annotations(evaluate)
+        # Construct the annotated axis objects.
+        annotated_axes = []
+        for ii, ax in enumerate(ax_list):
+            data_points = (dft_lines[ii], ce_lines[ii])
+            annotated_ax = AnnotatedAx(
+                ax,
+                data_points,
+                annotations,
+                structure_names=[evaluate.names, evaluate.names],
+            )
+            annotated_axes.append(annotated_ax)
+
+        ShowStructureOnClick(fig, annotated_axes, evaluate.settings.db_name)
+
     return fig
+
+
+def _make_annotations(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
+    """Helper function to make annotations for interactive plots."""
+    e_pred = evaluate.get_energy_predict()
+
+    def format_annotation_dft(idx):
+        name = evaluate.names[idx]
+        row_id = evaluate.row_ids[idx]
+        e_dft = evaluate.e_dft[idx]
+        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {e_dft:.4f} eV/atom"
+
+    def format_annotation_ce(idx):
+        name = evaluate.names[idx]
+        row_id = evaluate.row_ids[idx]
+        e_ce = e_pred[idx]
+        return f"DB ID: {row_id}\nName: {name}\nE(CE): {e_ce:.4f} eV/atom"
+
+    N = len(evaluate.names)
+    an_dft = [format_annotation_dft(idx) for idx in range(N)]
+    an_ce = [format_annotation_ce(idx) for idx in range(N)]
+    return an_dft, an_ce

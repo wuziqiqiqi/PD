@@ -13,9 +13,17 @@ from clease.settings import CEBulk, Concentration
 from clease import NewStructures
 from clease.tools import update_db
 
+try:
+    import matplotlib.pyplot as plt
+
+    HAS_PLT = True
+except ImportError:
+    HAS_PLT = False
+
 
 def pytest_addoption(parser):
     parser.addoption("--runslow", action="store_true", default=False, help="run slow tests")
+    parser.addoption("--fig", action="store_true", default=False, help="Enable figure plotting?")
 
 
 def pytest_configure(config):
@@ -31,6 +39,31 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture(autouse=True)
+def _plt_close_figures():
+    """Automatically close matplotlib figures.
+    Adapted from the ASE test suite."""
+    yield
+    if not HAS_PLT:
+        return
+    fignums = plt.get_fignums()
+    for fignum in fignums:
+        plt.close(fignum)
+
+
+@pytest.fixture(autouse=True)
+def _patch_show(mocker, request):
+    """Patch plt.show, so that figures aren't shown.
+    Can be disabled with the '--fig' flag when running pytest."""
+    # Check if we disabled this patch in CLI
+    if request.config.getoption("--fig"):
+        # The --fig flag was enabled, so we do *NOT* patch plt.show.
+        return
+    if not HAS_PLT:
+        return
+    mocker.patch("matplotlib.pyplot.show")
 
 
 @pytest.fixture(autouse=True)
@@ -135,7 +168,7 @@ def module_bc_setting(make_module_tempfile):
         size=[3, 3, 3],
         db_name=db_name,
     )
-    newstruct = NewStructures(settings, struct_per_gen=3)
+    newstruct = NewStructures(settings, struct_per_gen=4)
     newstruct.generate_initial_pool()
     calc = EMT()
 

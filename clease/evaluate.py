@@ -142,10 +142,10 @@ class Evaluate:
 
         self.cf_matrix, self.e_dft = self.dm.get_data(self.select_cond)
 
-        ids = get_ids(self.select_cond, settings.db_name)
+        self.row_ids = get_ids(self.select_cond, settings.db_name)
         with connect(settings.db_name) as db:
             cur = db.connection.cursor()
-            self.names = get_attribute(ids, cur, "name", "text_key_values")
+            self.names = get_attribute(self.row_ids, cur, "name", "text_key_values")
 
         self.effective_num_data_pts = len(self.e_dft)
         self.weight_matrix = np.eye(len(self.e_dft))
@@ -329,8 +329,8 @@ class Evaluate:
             whether or not to show convex hull.
         """
         import matplotlib.pyplot as plt
-        from clease import ConvexHull
-        from clease.interactive_plot import ShowStructureOnClick
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+        import clease.plot_post_process as pp
 
         if self.eci is None:
             self.get_eci()
@@ -399,7 +399,13 @@ class Evaluate:
                 data_points = [lines[0], lines[2]]
             annotations = [self.names, self.names]
             db_name = self.settings.db_name
-            ShowStructureOnClick(fig, ax, data_points, annotations, db_name)
+            annotated_ax = AnnotatedAx(
+                ax,
+                data_points,
+                annotations,
+                structure_names=[self.names, self.names],
+            )
+            ShowStructureOnClick(fig, annotated_ax, db_name)
         else:
             if savefig:
                 plt.savefig(fname=fname)
@@ -458,7 +464,9 @@ class Evaluate:
             else:
                 data_points = [lines[0]]
                 annotations = [self.names]
-            ShowStructureOnClick(fig_residual, ax_residual, data_points, annotations, db_name)
+
+            annotated_ax = AnnotatedAx(ax_residual, data_points, annotations)
+            ShowStructureOnClick(fig_residual, annotated_ax, db_name)
         else:
             if savefig:
                 fig_residual.savefig(prefix + "_residuals.png")
@@ -467,36 +475,11 @@ class Evaluate:
 
         # Optionally show the convex hull
         if show_hull:
-            cnv_hull = ConvexHull(self.settings.db_name, select_cond=self.select_cond)
-            fig = cnv_hull.plot()
+            fig = pp.plot_convex_hull(evaluate=self, interactive=interactive)
 
-            # `conc_per_frame` is the concentration with respect to the total number of atoms for
-            # each frame
-            conc_per_frame = self.atomic_concentrations
-
-            # `concs` is dictionary with the keys of species with value being the
-            # concentrations among the frames
-            concs = {key: [] for key in cnv_hull._unique_elem}
-            for frame_conc in conc_per_frame:
-                for key, value in concs.items():
-                    value.append(frame_conc.get(key, 0.0))
-
-            form_en = [
-                cnv_hull.get_formation_energy(c, e) for c, e in zip(conc_per_frame, e_pred.tolist())
-            ]
-            cnv_hull.plot(fig=fig, concs=concs, energies=form_en, marker="x")
-
-            fig.suptitle("Convex hull DFT (o), CE (x)")
-            ax_list = fig.axes
-            ax_cnv = ax_list[0]
             if interactive:
-                lines = ax_cnv.get_lines()
-                # lines[0] => DFT points
-                # lines[3] => CE points
-                data_points = (lines[0], lines[3])
-
-                annotations = [self.names, self.names]
-                ShowStructureOnClick(fig, ax_cnv, data_points, annotations, db_name)
+                # Interactive (currently) has a built-in plt.show()
+                pass
             else:
                 if savefig:
                     fig.savefig(prefix + "_cnv_hull.png")
@@ -844,7 +827,7 @@ class Evaluate:
             If ``True``, one can interact with the plot using mouse.
         """
         import matplotlib.pyplot as plt
-        from clease.interactive_plot import InteractivePlot
+        from clease.interactive_plot import InteractivePlot, AnnotatedAx
 
         if self.eci is None:
             self.get_eci()
@@ -892,8 +875,9 @@ class Evaluate:
         ax.set_ylabel("ECI (eV/atom)")
         ax.legend()
         if interactive:
+            annotated_ax = AnnotatedAx(ax, lines, annotations)
             # Note: Internally this calls plt.show()
-            InteractivePlot(fig, ax, lines, annotations)
+            InteractivePlot(fig, annotated_ax)
         else:
             plt.show()
 
