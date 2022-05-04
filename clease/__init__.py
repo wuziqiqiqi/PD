@@ -8,6 +8,7 @@ from . import datastructures
 from . import basis_function
 from . import logging_utils
 from . import mp_logger
+from . import geometry
 from . import cluster
 from . import jsonio
 from . import tools
@@ -50,6 +51,7 @@ ADDITIONAL = (
     "toggle_require_compatible_table_version",
     "logging_utils",
     "datastructures",
+    "geometry",
 )
 
 __all__ = (
