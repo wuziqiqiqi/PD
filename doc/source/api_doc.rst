@@ -8,3 +8,4 @@ API Documentation
     ./api/fitting
     ./api/montecarlo
     ./api/data_getters
+    ./api/geometry

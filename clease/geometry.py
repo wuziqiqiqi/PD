@@ -1,4 +1,4 @@
-"""Module for tools pertaining to geometry of atoms and cells"""
+"""Module for tools pertaining to geometry of atoms and cells."""
 import itertools
 import numpy as np
 
@@ -10,6 +10,13 @@ def max_sphere_dia_in_cell(cell: np.ndarray) -> float:
     inside a cell.
 
     For example, how large of a Death Star could be built inside a given atoms object?
+
+    Args:
+        cell (np.ndarray): A (3 x 3) matrix which defines the cell parameters.
+            Raises a ValueError if the cell shape is wrong.
+
+    Returns:
+        float: The diameter of the largest sphere which can fit within the cell.
     """
     if not cell.shape == (3, 3):
         raise ValueError(f"Cell should be (3, 3), got {cell.shape}")

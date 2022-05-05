@@ -7,6 +7,8 @@ Release notes
 0.11.5
 =======
 * Fixed a bug with interactive plotting and convex hulls.
+* Added the :func:`~clease.geometry.max_sphere_dia_in_cell`
+  for calculating sphere diameters within the given cell boundaries.
 
 0.11.4
 =======
