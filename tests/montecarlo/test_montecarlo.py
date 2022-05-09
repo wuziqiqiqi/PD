@@ -520,7 +520,7 @@ def test_gs_mgsi(db_name, almgsix_eci):
     mc.attach(en_obs)
     temps = [1000, 800, 600, 500, 400, 300, 200, 100]
     for T in temps:
-        mc.T = T
+        mc.temperature = T
         mc.run(steps=100 * len(atoms))
 
     E_final = atoms.get_potential_energy()
@@ -712,3 +712,22 @@ def test_mc_step(example_system, temp, make_tempfile):
     assert mc.current_step == nsteps
     assert step.step == nsteps
     assert step.energy == mc.current_energy
+
+
+def test_on_temp_change(example_system, mocker):
+    mc = Montecarlo(example_system, 300)
+    spy = mocker.spy(mc, "_on_temp_change")
+    mc.run(5)
+    assert spy.call_count == 0
+    assert mc.mean_energy.mean != 0
+    assert mc.mean_energy._n_samples > 0
+    assert mc.energy_squared != 0
+    # Change the temperature, and verify averagers are reset.
+    mc.temperature = 400
+    assert spy.call_count == 1
+    assert mc.mean_energy.mean == 0
+    assert mc.mean_energy._n_samples == 0
+    assert mc.energy_squared.mean == 0
+    # Verify it's also called when using the old attribute name
+    mc.T = 200
+    assert spy.call_count == 2

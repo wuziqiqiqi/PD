@@ -78,7 +78,7 @@ def test_conc_obs_sgc(db_name):
 
     E = []
     for T in [5000, 2000, 500]:
-        mc.T = T
+        mc.temperature = T
         mc.run(steps=10000, chem_pot={"c1_0": -0.02})
 
         conc1 = obs1.get_averages()

@@ -54,7 +54,7 @@ class MetaDynamicsSampler:
         self.visit_hist = deepcopy(bias)
         self.visit_hist.zero()
         self.flat_limit = flat_limit
-        self.mod_factor = mod_factor * kB * self.mc.T
+        self.mod_factor = mod_factor * kB * self.mc.temperature
         self.log_freq = 30
         self.fname = fname
         self.progress_info = {"mean": 0.0, "minimum": 0.0}
@@ -208,7 +208,7 @@ class MetaDynamicsSampler:
         xmin = self.bias.xmin
         xmax = self.bias.xmax
         x = np.linspace(xmin, xmax, 200)
-        beta = 1.0 / (kB * self.mc.T)
+        beta = 1.0 / (kB * self.mc.temperature)
         betaG = [self.bias.evaluate(y) * beta for y in x]
         data = {"bias_pot": pot, "betaG": {"x": x.tolist(), "y": betaG}}
         with open(self.fname, "w") as out:

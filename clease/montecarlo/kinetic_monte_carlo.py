@@ -48,12 +48,11 @@ class KineticMonteCarlo(BaseMC):
     def __init__(
         self,
         system: Union[Atoms, MCEvaluator],
-        T: float,
+        temp: float,
         barrier: BarrierModel,
         event_types: Sequence[KMCEventType],
     ):
-        super().__init__(system)
-        self.T = T
+        super().__init__(system, temp)
         self.barrier = barrier
         self.event_types = event_types
         self.time = 0.0

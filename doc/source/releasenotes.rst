@@ -9,6 +9,13 @@ Release notes
 * Fixed a bug with interactive plotting and convex hulls.
 * Added the :func:`~clease.geometry.max_sphere_dia_in_cell`
   for calculating sphere diameters within the given cell boundaries.
+* Changing the temperature of the :class:`~clease.montecarlo.montecarlo.Montecarlo`
+  object will now reset the internal energy averagers.
+  Also, :class:`~clease.montecarlo.base.BaseMC` now requires a temperature, and the temperature
+  property has been renamed ``temperature``. The old ``T`` attribute name is still accessible
+  for backwards compatibility.
+
+  For more information, see `#302 <https://gitlab.com/computationalmaterials/clease/-/issues/302>`_.
 
 0.11.4
 =======

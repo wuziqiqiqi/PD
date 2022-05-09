@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-many-instance-attributes
 class Montecarlo(BaseMC):
     """Class for running Monte Carlo at a fixed composition (canonical).
+    For more information, also see the documentation of the parent class
+    :class:`~clease.montecarlo.base.BaseMC`.
 
     Args:
         system (Union[ase.Atoms, MCEvaluator]): Either an ASE Atoms object
@@ -44,9 +46,14 @@ class Montecarlo(BaseMC):
         temp: float,
         generator: TrialMoveGenerator = None,
     ):
+        # We cannot cause an energy calculation trigger in init,
+        # so we defer these quantities until needed.
+        self.current_energy = None
+        self.new_energy = None
+        self.mean_energy = None
+        self.energy_squared = None
 
-        super().__init__(system)
-        self.T = temp
+        super().__init__(system, temp)
 
         if generator is None:
             self.generator = _make_default_swap_generator(self.evaluator)
@@ -63,16 +70,14 @@ class Montecarlo(BaseMC):
         self.status_every_sec = 30
 
         self.trial_move = []
-        # We cannot cause an energy calculation trigger in init,
-        # so we defer these quantities until needed.
-        self.current_energy = None
-        self.new_energy = None
-        self.mean_energy = None
-        self.energy_squared = None
 
         self.quit = False
 
-    def update_current_energy(self):
+    def _on_temp_change(self) -> None:
+        """Reset the energy averagers after a change in temperature"""
+        self.reset_averagers()
+
+    def update_current_energy(self) -> None:
         self.current_energy = self.evaluator.get_energy()
         logger.debug("Updating current energy to %s", self.current_energy)
         self.evaluator.reset()
@@ -90,7 +95,7 @@ class Montecarlo(BaseMC):
         if self.energy_squared is None:
             self.energy_squared = Averager(ref_value=self.current_energy)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset all member variables to their original values."""
         logger.debug("Resetting.")
         for _, obs in self.observers:
@@ -98,13 +103,16 @@ class Montecarlo(BaseMC):
 
         self.evaluator.reset()
         self._reset_internal_counters()
+        self.reset_averagers()
 
-        if self.mean_energy is not None:
-            self.mean_energy.clear()
-        if self.energy_squared is not None:
-            self.energy_squared.clear()
+    def reset_averagers(self) -> None:
+        """Reset the energy averagers."""
+        # Averagers are initialized to None in the constructor.
+        for averager in (self.mean_energy, self.energy_squared):
+            if averager is not None:
+                averager.clear()
 
-    def _reset_internal_counters(self):
+    def _reset_internal_counters(self) -> None:
         """Reset the step counters which are used internally"""
         self.current_step = 0
         self.num_accepted = 0
@@ -253,9 +261,9 @@ class Montecarlo(BaseMC):
         mean_energy = self.mean_energy.mean
         quantities["energy"] = mean_energy
         mean_sq = self.energy_squared.mean
-        quantities["heat_capacity"] = (mean_sq - mean_energy**2) / (kB * self.T**2)
+        quantities["heat_capacity"] = (mean_sq - mean_energy**2) / (kB * self.temperature**2)
         quantities["energy_var"] = mean_sq - mean_energy**2
-        quantities["temperature"] = self.T
+        quantities["temperature"] = self.temperature
         at_count = self.count_atoms()
         for key, value in at_count.items():
             name = f"{key}_conc"
@@ -319,7 +327,7 @@ class Montecarlo(BaseMC):
         # Standard Metropolis acceptance criteria
         if new_energy < current_energy:
             return True
-        kT = self.T * kB
+        kT = self.temperature * kB
         energy_diff = new_energy - current_energy
         probability = math.exp(-energy_diff / kT)
         logger.debug(

@@ -44,7 +44,7 @@ def test_move_observer(example_mc: Montecarlo, temp):
 
     obs = observers.MoveObserver(atoms, only_accept=False)
     example_mc.attach(obs)
-    example_mc.T = temp
+    example_mc.temperature = temp
 
     N_runs = 200
     example_mc.run(N_runs)
@@ -80,7 +80,7 @@ def test_move_obs_live(example_mc, temp):
 
     obs = observers.MoveObserver(atoms, only_accept=False)
     example_mc.attach(obs)
-    example_mc.T = temp
+    example_mc.temperature = temp
 
     for step in example_mc.irun(200):
         # Get the last reconstructed image
@@ -100,7 +100,7 @@ def test_move_observer_only_accept(example_mc: Montecarlo):
 
     obs = observers.MoveObserver(atoms, only_accept=True)
     example_mc.attach(obs)
-    example_mc.T = 1
+    example_mc.temperature = 1
 
     N_runs = 200
     for step in example_mc.irun(N_runs):

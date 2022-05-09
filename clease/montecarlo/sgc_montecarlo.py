@@ -201,14 +201,14 @@ class SGCMonteCarlo(Montecarlo):
             self.averager.energy_sq.mean - self.averager.energy.mean**2
         )
 
-        quantities["sgc_heat_capacity"] /= kB * self.T**2
+        quantities["sgc_heat_capacity"] /= kB * self.temperature**2
 
         quantities["energy"] = self.averager.energy.mean
         natoms = len(self.atoms)
         for i, chem_pot in enumerate(self.chem_pots):
             quantities["energy"] += chem_pot * singlets[i] * natoms
 
-        quantities["temperature"] = self.T
+        quantities["temperature"] = self.temperature
         quantities["n_mc_steps"] = self.averager.counter
 
         # Add singlets and chemical potential to the dictionary
