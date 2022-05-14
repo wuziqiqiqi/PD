@@ -21,7 +21,9 @@ from clease.regression import Lasso
     ],
 )
 def test_fit(data):
-    sk_lasso = sklearn.linear_model.Lasso(alpha=1, fit_intercept=False, copy_X=True, max_iter=1e6)
+    sk_lasso = sklearn.linear_model.Lasso(
+        alpha=1, fit_intercept=False, copy_X=True, max_iter=int(1e6)
+    )
     cl_lasso = Lasso(alpha=1)
 
     sk_lasso.fit(data["X"], data["Y"])
@@ -45,3 +47,10 @@ def test_get_scalar_parameter(test):
     assert las.is_scalar()
     las.alpha = test["alpha"]
     assert las.get_scalar_parameter() == test["alpha"]
+
+
+@pytest.mark.parametrize("max_iter", [1, 1e3, 1e6])
+def test_max_iter_int(max_iter):
+    las = Lasso(max_iter=max_iter)
+    assert las.max_iter == max_iter
+    assert isinstance(las.max_iter, int)

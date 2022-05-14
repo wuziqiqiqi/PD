@@ -198,15 +198,26 @@ class Lasso(LinearRegression):
     """LASSO regularization.
 
     :param alpha: regularization coefficient
+    :param max_iter: (int) Maximum number of iterations.
     """
 
-    def __init__(self, alpha: float = 1e-5) -> None:
+    def __init__(self, alpha: float = 1e-5, max_iter: int = int(1e6)) -> None:
         super().__init__()
         self.alpha = alpha
+        self.max_iter = max_iter
+
+    @property
+    def max_iter(self) -> int:
+        return self._max_iter
+
+    @max_iter.setter
+    def max_iter(self, value) -> None:
+        # sklearn Lasso class must have integer max_iter values.
+        self._max_iter = int(value)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Fit coefficients based on LASSO regularizeation."""
-        lasso = skLasso(alpha=self.alpha, fit_intercept=False, copy_X=True, max_iter=1e6)
+        lasso = skLasso(alpha=self.alpha, fit_intercept=False, copy_X=True, max_iter=self.max_iter)
         lasso.fit(X, y)
         return lasso.coef_
 
