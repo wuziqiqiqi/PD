@@ -1,5 +1,6 @@
 from json import load
 import pytest
+import numpy as np
 from clease.datastructures import SystemChange, MCStep
 from clease.jsonio import read_json
 
@@ -12,9 +13,11 @@ def swap_change():
 
 
 def test_step_eq_and_order(swap_change):
-    step1 = MCStep(0, 1.0, True, swap_change)
+    step1 = MCStep(0, 1.0, True, swap_change, other={"foo": "bar"})
     step2 = MCStep(0, 1.0, True, tuple(swap_change))
 
+    assert step1.other != pytest.approx(step2.other)
+    # "other" isn't included in the comparison.
     assert step1 == step2
     step1.energy = 1.5
     assert step1 != step2
@@ -29,10 +32,13 @@ def test_step_eq_and_order(swap_change):
 def test_save_load(swap_change, make_tempfile):
     file = make_tempfile("step.json")
     step = MCStep(0, 1.0, True, swap_change)
+    step.other["test"] = np.array([1, 2, 3.0])
     step.save(file)
     loaded = read_json(file)
     assert step is not loaded
     assert step == loaded
+    assert "test" in step.other
+    assert np.allclose(step.other["test"], loaded.other["test"])
 
 
 @pytest.mark.parametrize("move_accepted", [True, False])

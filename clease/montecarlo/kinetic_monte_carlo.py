@@ -6,7 +6,7 @@ import random
 from ase import Atoms
 from ase.units import kB
 import numpy as np
-from clease.datastructures import SystemChange
+from clease.datastructures import SystemChange, MCStep
 from .mc_evaluator import MCEvaluator
 from .base import BaseMC
 from .barrier_models import BarrierModel
@@ -128,7 +128,7 @@ class KineticMonteCarlo(BaseMC):
             rate = 0.001
         return rate
 
-    def _mc_step(self, vac_idx: int, step_no: int) -> int:
+    def _mc_step(self, vac_idx: int, step_no: int) -> Tuple[int, MCStep]:
         """
         Perform an MC step and return the new index of the moving vacancy
 
@@ -149,20 +149,35 @@ class KineticMonteCarlo(BaseMC):
 
         # Apply step
         symb = self.atoms[choice].symbol
-        system_change = [
+        system_changes = [
             SystemChange(index=vac_idx, old_symb="X", new_symb=symb, name="kmc_swap"),
             SystemChange(index=choice, old_symb=symb, new_symb="X", name="kmc_swap"),
         ]
 
         # Trigger update, apply changes to the system
-        self.evaluator.apply_system_changes(system_change, keep=True)
+        self.evaluator.apply_system_changes(system_changes, keep=True)
 
         self.time += tau
 
+        # Construct the MCStep object.
+        energy = self.evaluator.get_energy()
+        # This is a rejection free algorithm, so the move is always accepted.
+        step = MCStep(
+            step_no,
+            energy,
+            True,
+            system_changes,
+            other={"time": self.time, "vac_idx": choice},
+        )
+
+        return choice, step
+
+    def execute_observers(self, last_step: MCStep) -> None:
+        """Call all attached observers if their interval allows it."""
+        step_no = last_step.step
         for interval, obs in self.observers:
             if step_no % interval == 0:
-                obs(system_change)
-        return choice
+                obs.observe_step(last_step)
 
     def run(self, num_steps: int, vac_idx: int):
         """
@@ -190,7 +205,8 @@ class KineticMonteCarlo(BaseMC):
             if self.log_interval is not False and time.perf_counter() - now > self.log_interval:
                 logger.info("Step %d of %d", i, num_steps)
                 now = time.perf_counter()
-            vac_idx = self._mc_step(vac_idx, i)
+            vac_idx, step = self._mc_step(vac_idx, i)
+            self.execute_observers(step)
 
         # If entropy is tracked: Flush the buffer
         if self.epr is not None:

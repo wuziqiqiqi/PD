@@ -1,4 +1,3 @@
-import os
 import pytest
 from ase.calculators.emt import EMT
 from clease.montecarlo.observers import (
@@ -9,6 +8,7 @@ from clease.montecarlo import KineticMonteCarlo, BEPBarrier, NeighbourSwap
 from clease.settings import CEBulk, Concentration
 from clease.calculator import attach_calculator
 from clease.montecarlo.mc_evaluator import MCEvaluator
+from clease.datastructures import MCStep
 
 
 @pytest.fixture
@@ -38,24 +38,34 @@ def atoms(example_system):
     return ats
 
 
-def test_kmc(atoms, example_system, barrier):
-    settings = example_system
-    eci = {"c0": 0.0, "c1_0": 0.0, "c2_d0000_0_00": 0.0}
+@pytest.fixture
+def make_kmc(atoms, example_system, barrier):
+    def _make_kmc(temp=300):
+        settings = example_system
+        eci = {"c0": 0.0, "c1_0": 0.0, "c2_d0000_0_00": 0.0}
 
-    atoms = attach_calculator(settings, atoms, eci)
-    vac_idx = 5
-    atoms[vac_idx].symbol = "X"
+        atoms_calc = attach_calculator(settings, atoms, eci)
+        vac_idx = 5
+        atoms_calc[vac_idx].symbol = "X"
 
-    neighbor = NeighbourSwap(atoms, 3.0)
-    for l in neighbor.nl:
-        assert len(l) == 12
+        neighbor = NeighbourSwap(atoms_calc, 3.0)
+        for l in neighbor.nl:
+            assert len(l) == 12
 
-    T = 300
-    kmc = KineticMonteCarlo(atoms, T, barrier, [neighbor])
+        kmc = KineticMonteCarlo(atoms_calc, temp, barrier, [neighbor])
+        return vac_idx, kmc
+
+    return _make_kmc
+
+
+def test_kmc(make_kmc, make_tempfile):
+    vac_idx, kmc = make_kmc()
+    atoms = kmc.atoms
+
     obs = CorrelationFunctionObserver(atoms.calc)
     kmc.attach(obs, 2)
 
-    epr_file = "epr.txt"
+    epr_file = make_tempfile("epr.txt")
     kmc.epr = EntropyProductionRate(buffer_length=2, logfile=epr_file)
 
     # Check that ValueError is raised if vac_idx is not vacancy
@@ -65,7 +75,19 @@ def test_kmc(atoms, example_system, barrier):
 
     # Just run reset to confirm that this method runs without error
     kmc.reset()
-    os.remove(epr_file)
+
+
+def test_kmc_step(make_kmc):
+    vac_idx, kmc = make_kmc()
+    for i in range(10):
+        vac_idx, mc_step = kmc._mc_step(vac_idx, i)
+
+        assert isinstance(mc_step, MCStep)
+        assert mc_step.step == i
+        assert isinstance(mc_step.other, dict)
+        assert mc_step.other["time"] == kmc.time
+        assert mc_step.move_accepted
+        assert isinstance(mc_step.energy, float)
 
 
 def test_kmc_emt(atoms, barrier):
