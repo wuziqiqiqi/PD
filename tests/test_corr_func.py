@@ -1,9 +1,7 @@
 """Unit tests for the corr function class."""
-import os
 import pytest
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
-from ase.db import connect
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction, ClusterNotTrackedError
 from clease import NewStructures
@@ -35,14 +33,12 @@ def get_mic_dists(atoms, cluster):
 
 def test_trans_matrix(bc_settings):
     """Check that the MIC distance between atoms are correct."""
-    db_name = bc_settings.db_name
     atoms = bc_settings.atoms
     tm = bc_settings.trans_matrix
     ref_dist = atoms.get_distance(0, 1, mic=True)
     for indx in range(len(atoms)):
         dist = atoms.get_distance(indx, tm[indx][1], mic=True)
         assert dist == pytest.approx(ref_dist)
-    os.remove(db_name)
 
 
 def test_supercell_consistency(db_name):
@@ -85,11 +81,9 @@ def test_error_message_for_non_existent_cluster(db_name):
     # Try a quadruplet: Have to raise error
     with pytest.raises(ClusterNotTrackedError):
         corr.get_cf_by_names(atoms, ["c4_d0001_0_0000"])
-    os.remove(db_name)
 
 
 def test_reconfigure(bc_settings):
-    db_name = bc_settings.db_name
     newStruct = NewStructures(bc_settings)
     for i in range(10):
         atoms = bc_settings.atoms.copy()
@@ -101,14 +95,22 @@ def test_reconfigure(bc_settings):
         newStruct.insert_structure(init_struct=atoms, final_struct=final)
 
     # Collect final_struct_ids
-    db = connect(db_name)
+    db = bc_settings.connect()
     query = [("struct_type", "=", "initial")]
     final_str_ids = [row.final_struct_id for row in db.select(query)]
 
     cf = CorrFunction(bc_settings)
     cf.reconfigure_db_entries()
 
-    # Confirm that the final_str_ids strays the same
+    # Confirm that the final_str_ids stays the same
     final_str_ids_rec = [row.final_struct_id for row in db.select(query)]
     assert final_str_ids == final_str_ids_rec
-    os.remove(db_name)
+    ids = cf.check_consistency_of_cf_table_entries()
+    assert len(ids) == 0
+
+
+@pytest.mark.parametrize("value", [None, [1], 0])
+def test_bad_settings(value):
+    """Test passing something which isn't a ClusterExpansionSettings object."""
+    with pytest.raises(TypeError):
+        CorrFunction(value)

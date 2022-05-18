@@ -40,7 +40,7 @@ def test_reconfigure(run_cmd, bc_setting):
     opts = "reconfigure test_settings.json"
     p = run_cmd(opts=opts)
     assert "reconfiguration completed" in p.stdout
-    assert "updating" in p.stdout
+    assert "Updated" in p.stdout
 
 
 def test_print_cluster_table(run_cmd, bc_setting, mocker):

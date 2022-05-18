@@ -16,6 +16,7 @@ Release notes
   for backwards compatibility.
 
   For more information, see `#302 <https://gitlab.com/computationalmaterials/clease/-/issues/302>`_.
+* Added :py:meth:`~clease.corr_func.CorrFunction.iter_reconfigure_db_entries`.
 
 0.11.4
 =======
