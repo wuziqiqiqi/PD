@@ -46,7 +46,7 @@ Next, we want to import these data into CLEASE. First, we create the settings
     >>> for i in range(len(reader_init)):
     ...     initial = reader_init[i]
     ...     final = reader_final[i]
-    ...     new_struct.insert_structure(init_struct=initial, final_struct=final)
+    ...     ini_id = new_struct.insert_structure(init_struct=initial, final_struct=final)
 
 Note that it is important that the final structure has energy. In case you have stored the structures
 in a way that the energy is not added to the structures when it is loaded, add the energy to the final

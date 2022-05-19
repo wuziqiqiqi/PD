@@ -2,7 +2,7 @@
 import os
 from copy import deepcopy
 from functools import reduce
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Any
 import logging
 from itertools import product
 
@@ -711,8 +711,14 @@ class NewStructures:
         final_struct: Optional[Union[Atoms, str]] = None,
         name: Optional[str] = None,
         cf: Optional[Dict[str, float]] = None,
-    ) -> None:
+        meta: Optional[Dict[str, Any]] = None,
+    ) -> Optional[int]:
         """Insert a structure to the database.
+
+        Returns the ID of the initial structure which was inserted into the database.
+        If a row for the final structure is also inserted, this id can be retrieved of the
+        initial row from the ``final_struct_id`` entry. If no structure was inserted,
+        ``Ǹone`` is returned, instead.
 
         :param init_struct: Unrelaxed initial structure. If a string is passed,
             it should be the file name with .xyz, .cif or .traj extension.
@@ -724,6 +730,8 @@ class NewStructures:
             structure (correlation functions with zero values should also be
             included). If cf is given, the preprocessing of the init_structure
             is bypassed and the given cf is inserted in DB.
+        :param meta: (Optional) Extra information which will be added to the key-value
+            pair entries in the database.
         """
         if name is not None:
             with self.connect() as con:
@@ -750,7 +758,7 @@ class NewStructures:
             logger.warning(
                 ("Supplied structure already exists in DB. The structure will not be inserted.")
             )
-            return
+            return None
 
         kvp = self._get_kvp(formula_unit)
 
@@ -760,6 +768,12 @@ class NewStructures:
         kvp["started"] = False
         kvp["queued"] = False
         kvp["struct_type"] = "initial"
+        if meta is not None:
+            # Add optional meta-data. Ensure we do not have conflicts.
+            for key, value in meta.items():
+                if key in kvp:
+                    raise KeyError(f"Key {key} is reserved.")
+                kvp[key] = value
         tab_name = self.corr_func_table_name
         con = self.connect()
         uid_init = db_util.new_row_with_single_table(con, init_struct, tab_name, cf, **kvp)
@@ -770,6 +784,8 @@ class NewStructures:
             kvp_final = {"struct_type": "final", "name": kvp["name"]}
             uid = con.write(final_struct, kvp_final)
             con.update(uid_init, converged=True, started="", queued="", final_struct_id=uid)
+
+        return uid_init
 
     def _exists_in_db(self, atoms: Atoms, formula_unit: Optional[str] = None) -> bool:
         """

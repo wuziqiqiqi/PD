@@ -323,3 +323,20 @@ def test_check_db(new_struct_factory):
     assert new_struct._exists_in_db(atoms)
     new_struct.check_db = False
     assert not new_struct._exists_in_db(atoms)
+
+
+def test_insert_meta(new_struct_factory):
+    basis_elements = [["Au", "Ag"]]
+    crystalstructure = "fcc"
+    new_struct: NewStructures = new_struct_factory(
+        basis_elements,
+        crystalstructure,
+        a=4,
+    )
+    settings = new_struct.settings
+
+    atoms = settings.prim_cell * (2, 2, 2)
+    uid = new_struct.insert_structure(atoms, meta={"foo": "bar"})
+
+    row = settings.connect().get(id=uid)
+    assert row.foo == "bar"
