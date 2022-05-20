@@ -143,7 +143,7 @@ class CorrFunction:
             print("\nreconfiguration completed")
         logger.info("Reconfiguration complete")
 
-    def iter_reconfigure_db_entries(self, select_cond=None) -> Iterator[Tuple[int, int]]:
+    def iter_reconfigure_db_entries(self, select_cond=None) -> Iterator[Tuple[int, int, int]]:
         """Iterator which reconfigures the correlation function values in the DB,
         which yields after each reconfiguration and reports on the progress.
 
