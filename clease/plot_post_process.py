@@ -189,7 +189,8 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     Y = []
     for data in alpha_cv_data:
         X.append(data["alpha"])
-        Y.append(data["cv"])
+        # Convert from eV/atom to meV/atom
+        Y.append(data["cv"] * 1000)
     ax.plot(X, Y)
     ax.text(
         0.65,
@@ -203,6 +204,9 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         transform=ax.transAxes,
         fontsize=10,
     )
+    # Display the point with the best CV score as a red circle
+    idx = np.argmin(Y)
+    ax.plot(X[idx], Y[idx], "ro", markersize=5)
     return fig
 
 
