@@ -1,15 +1,16 @@
-#include "config.hpp"
-#include <vector>
 #include "atoms.hpp"
-#include "four_vector.hpp"
-#include "additional_tools.hpp"
+
 #include <Python.h>
+
+#include <vector>
+
+#include "additional_tools.hpp"
+#include "config.hpp"
+#include "four_vector.hpp"
 
 using namespace std;
 
-Atoms::Atoms(PyObject *py_atoms, PyObject *py_four_vectors)
-    : atoms(py_atoms)
-{
+Atoms::Atoms(PyObject *py_atoms, PyObject *py_four_vectors) : atoms(py_atoms) {
     // Atoms object represented in the 4-vector space
     // Parse objects from Python format to native
 #ifdef PRINT_DEBUG
@@ -18,9 +19,7 @@ Atoms::Atoms(PyObject *py_atoms, PyObject *py_four_vectors)
     parse_four_vectors(py_four_vectors);
 }
 
-void Atoms::parse_four_vectors(PyObject *py_four_vectors)
-{
-
+void Atoms::parse_four_vectors(PyObject *py_four_vectors) {
 #ifdef PRINT_DEBUG
     cout << "Parsing four-vectors in Atoms" << endl;
 #endif
@@ -36,8 +35,7 @@ void Atoms::parse_four_vectors(PyObject *py_four_vectors)
     four_vectors.clear();
     four_vectors.reserve(N);
 
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         // Get each python FourVector object (borrowed reference)
         PyObject *py_four_vec = PySequence_Fast_GET_ITEM(seq, i);
         // Parse the 4-vector
@@ -58,11 +56,9 @@ void Atoms::parse_four_vectors(PyObject *py_four_vectors)
 // Find Nx, Ny, Nz and Ns
 // i.e. the maximum repetition in the x, y, and z directions,
 // as well as the number of sublattices (number of sites in the primitive)
-void Atoms::parse_max_lattice()
-{
+void Atoms::parse_max_lattice() {
     Ns = 0, Nx = 0, Ny = 0, Nz = 0;
-    for (auto fv : four_vectors)
-    {
+    for (auto fv : four_vectors) {
         Nx = (fv.ix > Nx) ? fv.ix : Nx;
         Ny = (fv.iy > Ny) ? fv.iy : Ny;
         Nz = (fv.iz > Nz) ? fv.iz : Nz;
@@ -76,25 +72,21 @@ void Atoms::parse_max_lattice()
     Nz++;
 }
 
-Py_ssize_t Atoms::num_atoms() const
-{
+Py_ssize_t Atoms::num_atoms() const {
     return PySequence_Length(this->atoms);
 }
 
-PyObject *Atoms::get_atom(const Py_ssize_t index) const
-{
+PyObject *Atoms::get_atom(const Py_ssize_t index) const {
     return PySequence_GetItem(this->atoms, index);
 }
 
-std::vector<int> Atoms::get_numbers() const
-{
+std::vector<int> Atoms::get_numbers() const {
     Py_ssize_t num_atoms = this->num_atoms();
 
     std::vector<int> numbers;
     numbers.reserve(num_atoms);
 
-    for (int i = 0; i < num_atoms; ++i)
-    {
+    for (int i = 0; i < num_atoms; ++i) {
         // Get atom number i (new reference).
         PyObject *atom = this->get_atom(i);
         PyObject *number = get_attr(atom, "number");
@@ -114,8 +106,7 @@ vector<string> Atoms::get_symbols() const
     std::vector<std::string> symbols;
     symbols.reserve(num_atoms);
 
-    for (int i = 0; i < num_atoms; i++)
-    {
+    for (int i = 0; i < num_atoms; i++) {
         // Get atom number i (new reference).
         PyObject *atom = this->get_atom(i);
         PyObject *sym = get_attr(atom, "symbol");
@@ -127,41 +118,34 @@ vector<string> Atoms::get_symbols() const
     return symbols;
 }
 
-const std::vector<FourVector> &Atoms::get_four_vectors() const
-{
+const std::vector<FourVector> &Atoms::get_four_vectors() const {
     return this->four_vectors;
 }
 
-int Atoms::get_1d_index(const FourVector &v) const
-{
+int Atoms::get_1d_index(const FourVector &v) const {
     // Convert a 4-vector into its 1d array index
     return v.ix * Ny * Nz * Ns + v.iy * Nz * Ns + v.iz * Ns + v.sublattice;
 }
 
-void Atoms::apply_change(PyObject *single_change)
-{
+void Atoms::apply_change(PyObject *single_change) {
     SymbolChange change = SymbolChange(single_change);
     this->apply_change(change);
 }
 
-void Atoms::apply_change(const SymbolChange &single_change)
-{
+void Atoms::apply_change(const SymbolChange &single_change) {
     this->set_symbol(single_change.new_symb, single_change.indx);
 }
 
-void Atoms::undo_change(PyObject *single_change)
-{
+void Atoms::undo_change(PyObject *single_change) {
     SymbolChange change = SymbolChange(single_change);
     this->undo_change(change);
 }
 
-void Atoms::undo_change(const SymbolChange &single_change)
-{
+void Atoms::undo_change(const SymbolChange &single_change) {
     this->set_symbol(single_change.old_symb, single_change.indx);
 }
 
-void Atoms::set_symbol(const string &symb_str, const Py_ssize_t index)
-{
+void Atoms::set_symbol(const string &symb_str, const Py_ssize_t index) {
     PyObject *py_str = string2py(symb_str.c_str());
     PyObject *atom = this->get_atom(index);
     PyObject_SetAttrString(atom, "symbol", py_str);

@@ -4,6 +4,7 @@ repos:
     rev: v4.2.0
     hooks:
       - id: check-yaml
+        args: [--allow-multiple-documents]
       - id: trailing-whitespace # Remove trailing whitespaces
       - id: end-of-file-fixer # Ensure we have newline at end of file
 
@@ -29,8 +30,12 @@ repos:
         entry: pylint
         language: system
         types: [python]
-        args:
-          [
-            "--rcfile=.pylintrc"
-          ]
+        args: ["--rcfile=.pylintrc"]
         exclude: *exclude_files
+
+  # C++ code formatter
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v14.0.3
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]

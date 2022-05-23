@@ -2,11 +2,11 @@
 #define SYMBOL_CHANGE_H
 
 #include <Python.h>
+
 #include <string>
 
-class SymbolChange
-{
-public:
+class SymbolChange {
+   public:
     int indx;
     std::string old_symb;
     std::string new_symb;

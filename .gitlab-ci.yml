@@ -9,16 +9,10 @@ stages:
   - Code Test
   - Deploy
 
-flake8:
+code-style:
   stage: Static Analysis
   script:
-    - tox -e flake8
-
-black:
-  stage: Static Analysis
-  script:
-    - pip install black
-    - python -m black --check .
+    - tox -e style
 
 pylint:
   stage: Static Analysis

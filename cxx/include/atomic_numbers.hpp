@@ -2,12 +2,15 @@
 #define ATOMIC_NUMBERS_H
 // Mapping of symbols -> atomic_numbers
 
+#include <Python.h>
+
 #include <string>
 #include <unordered_map>
-#include <Python.h>
 
 // Map created using the ASE atomic_numbers from ase.data
 const static std::unordered_map<std::string, int> atomic_numbers_map = {
+    // Disable clang formatting to retain the one-entry-per-line format.
+    // clang-format off
     {"X", 0},
     {"H", 1},
     {"He", 2},
@@ -127,6 +130,7 @@ const static std::unordered_map<std::string, int> atomic_numbers_map = {
     {"Lv", 116},
     {"Ts", 117},
     {"Og", 118},
+    // clang-format on
 };
 
 void set_symbol_in_atoms(PyObject *py_atoms, const int index, const std::string &symbol);

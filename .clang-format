@@ -1,0 +1,12 @@
+# More info: https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+---
+BasedOnStyle: Google
+IndentWidth: 4
+---
+Language: Cpp
+# Force pointers to the type for C++.
+DerivePointerAlignment: false
+PointerAlignment: Right
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: false
+---

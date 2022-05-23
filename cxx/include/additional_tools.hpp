@@ -1,13 +1,15 @@
 #ifndef ADDITIONAL_TOOLS_H
 #define ADDITIONAL_TOOLS_H
-#include <vector>
+#include <Python.h>
+
+#include <array>
 #include <iostream>
 #include <map>
 #include <set>
-#include <array>
 #include <string>
+#include <vector>
+
 #include "cf_history_tracker.hpp"
-#include <Python.h>
 
 typedef std::array<SymbolChange, 2> swap_move;
 typedef std::array<std::array<double, 3>, 3> mat3x3;

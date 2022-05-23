@@ -107,6 +107,7 @@ EXTRAS_REQUIRE = {
         "ipython",
         "twine",
         "black>=22.1.0",  # Style formatting
+        "clang-format>=14.0.3",  # c++ style formatting
         "pylint",
         "pyclean>=2.0.0",  # For removing __pycache__ and .pyc files
         "pytest-cov",
