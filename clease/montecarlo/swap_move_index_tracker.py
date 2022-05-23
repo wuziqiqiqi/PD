@@ -116,3 +116,8 @@ class SwapMoveIndexTracker:
 
     def get_random_indx_of_symbol(self, symbol: str) -> int:
         return random.choice(self.tracker[symbol])
+
+    def get_two_random_symbols(self) -> List[str]:
+        """Get two different random unique symbols"""
+        # random.sample samples without replacement.
+        return random.sample(self.unique_symbols, 2)

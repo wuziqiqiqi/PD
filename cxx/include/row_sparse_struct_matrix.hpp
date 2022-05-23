@@ -27,30 +27,39 @@ class RowSparseStructMatrix
 public:
   RowSparseStructMatrix(){};
   RowSparseStructMatrix(const RowSparseStructMatrix &other);
-  RowSparseStructMatrix& operator=(const RowSparseStructMatrix &other);
-  ~RowSparseStructMatrix(){deallocate();};
+  RowSparseStructMatrix &operator=(const RowSparseStructMatrix &other);
+  ~RowSparseStructMatrix() { deallocate(); };
 
   /** Initialize the size arrays */
-  void set_size( unsigned int n_rows, unsigned int n_non_zero_per_row, unsigned int max_lut_value );
-  void set_size( unsigned int n_rows, unsigned int n_non_zero_per_row );
+  void set_size(unsigned int n_rows, unsigned int n_non_zero_per_row, unsigned int max_lut_value);
+  void set_size(unsigned int n_rows, unsigned int n_non_zero_per_row);
 
   /** Set the allowed lookup values */
-  void set_lookup_values( const std::vector<int> &lut_values );
+  void set_lookup_values(const std::vector<int> &lut_values);
 
   /** Insert a new value */
-  void insert( unsigned int row, unsigned int col, int value );
+  void insert(unsigned int row, unsigned int col, int value);
 
   /** Check if the provided value is allowed */
   bool is_allowed_lut(int col) const;
 
+  /** Get a specific row.
+   * NOTE: For max performance this function does not perform any validity checks */
+  int *get_row(unsigned int row_index) const;
+  /** Look up a column in a pre-cached row, e.g. from the get_row method.
+   * Use together with get_row() to split the operation of the () operator.
+   * NOTE: For max performance this function does not perform any validity checks */
+  const int lookup_in_row(int *row, unsigned int index) const;
+
   /** Matrix-like access operator. NOTE: For max performance this function does not perform any validity checks */
-  const int& operator()( unsigned int row, unsigned int col ) const;
+  const int &operator()(unsigned int row, unsigned int col) const;
 
   /** Matrix-like write operator */
-  int& operator()( unsigned int row, unsigned int col );
+  int &operator()(unsigned int row, unsigned int col);
 
   /** Access function that verifies that the lookup is valid */
-  int get_with_validity_check( unsigned int row, unsigned int col ) const;
+  int get_with_validity_check(unsigned int row, unsigned int col) const;
+
 private:
   int *allowed_lookup_values{nullptr};
   int *lookup{nullptr};
@@ -59,7 +68,7 @@ private:
   unsigned int max_lookup_value{0};
   unsigned int num_non_zero{0};
   bool lut_values_set{false};
-  void invalid_col_msg( unsigned int col_provided, std::string& msg ) const;
+  void invalid_col_msg(unsigned int col_provided, std::string &msg) const;
   void deallocate();
   void swap(const RowSparseStructMatrix &other);
 };

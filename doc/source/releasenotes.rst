@@ -6,7 +6,7 @@ Release notes
 
 0.11.6
 =======
-
+* Some small performance optimizations.
 
 0.11.5
 =======

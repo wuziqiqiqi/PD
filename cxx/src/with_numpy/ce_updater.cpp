@@ -258,6 +258,9 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();
 
+  // Cache the relevant row from the trans matrix.
+  int *trans_matrix_row = trans_matrix.get_row(ref_indx);
+
   for (unsigned int i = 0; i < num_indx; i++)
   {
     double sp_temp = 1.0;
@@ -268,7 +271,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster, co
 
     for (unsigned int j = 0; j < n_memb; j++)
     {
-      int trans_index = trans_matrix(ref_indx, indices[j]);
+      int trans_index = trans_matrix.lookup_in_row(trans_matrix_row, indices[j]);
       int id = (trans_index == ref_indx) ? ref_id : symbols_with_id->id(trans_index);
       sp_temp *= basis_functions.get(dec[j], id);
     }
@@ -288,6 +291,9 @@ double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &clust
   unsigned int num_indx = indx_list.size();
   unsigned int n_memb = indx_list[0].size();
 
+  // Cache the relevant row from the trans matrix.
+  int *trans_matrix_row = trans_matrix.get_row(ref_indx);
+
   for (unsigned int i = 0; i < num_indx; i++)
   {
     // Calculate the spin product for both new and the old (ref)
@@ -300,7 +306,7 @@ double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &clust
     for (unsigned int j = 0; j < n_memb; j++)
     {
       double bf_new, bf_ref;
-      int trans_index = trans_matrix(ref_indx, indices[j]);
+      int trans_index = trans_matrix.lookup_in_row(trans_matrix_row, indices[j]);
       int dec_j = dec[j];
       if (trans_index == ref_indx)
       {
@@ -377,7 +383,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
   {
     // const string &name = iter->first;
     const string &name = eci.name(i);
-    if (name.find("c0") == 0)
+    if (str_starts_with(name, "c0"))
     {
       // next_cf[name] = current_cf[name];
       next_cf[i] = current_cf[i];
@@ -386,7 +392,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change)
 
     vector<int> bfs;
     get_basis_functions(name, bfs);
-    if (name.find("c1") == 0)
+    if (str_starts_with(name, "c1_"))
     {
       int dec = bfs[0];
       next_cf[i] = current_cf[i] + (basis_functions.get(dec, new_symb_id) - basis_functions.get(dec, old_symb_id)) / num_non_bkg_sites;

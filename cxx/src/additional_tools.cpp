@@ -156,3 +156,8 @@ void inverse3x3(const mat3x3 &mat, mat3x3 &inv)
       inv[i][j] = ((mat[(j + 1) % 3][(i + 1) % 3] * mat[(j + 2) % 3][(i + 2) % 3]) - (mat[(j + 1) % 3][(i + 2) % 3] * mat[(j + 2) % 3][(i + 1) % 3])) / determinant;
   }
 }
+
+bool str_starts_with(const std::string &str, const std::string &sub_str)
+{
+  return str.rfind(sub_str, 0) == 0;
+}

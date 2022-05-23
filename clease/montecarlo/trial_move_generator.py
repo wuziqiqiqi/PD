@@ -191,8 +191,7 @@ class RandomSwap(SingleTrialMoveGenerator):
         """
         Create a swap move
         """
-        # random.sample samples without replacement.
-        symb_a, symb_b = random.sample(self.tracker.unique_symbols, 2)
+        symb_a, symb_b = self.tracker.get_two_random_symbols()
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [

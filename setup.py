@@ -64,6 +64,9 @@ def get_source_files():
 
 src_files = get_source_files()
 extra_comp_args = ["-std=c++11"]
+# Uncomment for profiling of the C++ code
+# extra_comp_args.append("-pg")
+
 # Replaces the deprecated "distutils.sysconfig.get_python_inc()"
 py_include = sysconfig.get_path("include")
 
