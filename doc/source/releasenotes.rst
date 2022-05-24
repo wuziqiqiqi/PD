@@ -14,6 +14,8 @@ Release notes
   :py:meth:`~clease.evaluate.Evaluate.fit_required` methods).
 * Introduced :py:meth:`~clease.evaluate.Evaluate.load_eci` for loading stored ECI values,
   which is convenient for subsequent plotting.
+* Added :py:meth:`~clease.montecarlo.kinetic_monte_carlo.KineticMonteCarlo.get_attempt_freq`
+  which allows for more flexible customization of the attempt frequencies.
 
 0.11.5
 =======

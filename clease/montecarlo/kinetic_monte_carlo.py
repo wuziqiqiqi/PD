@@ -6,7 +6,7 @@ import random
 from ase import Atoms
 from ase.units import kB
 import numpy as np
-from clease.datastructures import SystemChange, MCStep
+from clease.datastructures import SystemChange, MCStep, SystemChanges
 from .mc_evaluator import MCEvaluator
 from .base import BaseMC
 from .barrier_models import BarrierModel
@@ -56,6 +56,7 @@ class KineticMonteCarlo(BaseMC):
         self.barrier = barrier
         self.event_types = event_types
         self.time = 0.0
+        # A constant for the default attempt frequency.
         self.attempt_freq = 1e4
         self.observers = []
         self.log_interval = 30
@@ -122,11 +123,20 @@ class KineticMonteCarlo(BaseMC):
             SystemChange(index=swap_idx, old_symb=symb, new_symb="X", name="kmc_swap"),
         ]
         Ea = self.barrier(self.evaluator, system_change)
-        rate = self.attempt_freq * np.exp(-Ea / self.kT)
+        rate = self.get_attempt_freq(system_change) * np.exp(-Ea / self.kT)
         if rate < 0.0:
             warnings.warn("Negative rate encountered!")
             rate = 0.001
         return rate
+
+    def get_attempt_freq(self, system_changes: SystemChanges) -> float:
+        """Calculate the attempt frequency from a given change.
+        Defaults to the ``attempt_freq`` constant, if not overridden.
+
+        May be overridden by a child class to provide a custom behavior.
+        """
+        # pylint: disable=unused-argument
+        return self.attempt_freq
 
     def _mc_step(self, vac_idx: int, step_no: int) -> Tuple[int, MCStep]:
         """
