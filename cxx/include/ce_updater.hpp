@@ -13,6 +13,7 @@
 #include "cf_history_tracker.hpp"
 #include "cluster.hpp"
 #include "cluster_list.hpp"
+#include "cluster_name.hpp"
 #include "matrix.hpp"
 #include "named_array.hpp"
 #include "row_sparse_struct_matrix.hpp"
@@ -73,9 +74,6 @@ class CEUpdater {
     /** Returns the value of the singlets */
     void get_singlets(PyObject *npy_array) const;
     PyObject *get_singlets() const;
-
-    /** Extracts basis functions from the cluster name */
-    void get_basis_functions(const std::string &cluster_name, std::vector<int> &bfs) const;
 
     /** Updates the CF */
     void update_cf(PyObject *single_change);
@@ -205,6 +203,8 @@ class CEUpdater {
     PyObject *atoms{nullptr};
     tracker_t *tracker{nullptr};  // Do not own this pointer
     std::vector<std::string> singlets;
+    // Pre-parsed names of the ECI values.
+    std::vector<ParsedName> m_parsed_names;
 
     // Cached number of non background sites
     void count_non_bkg_sites();
@@ -240,5 +240,8 @@ class CEUpdater {
     /** Sort indices according to order */
     // static void sort_indices(std::vector<int> &indx, const std::vector<int> &order);
     static void sort_indices(int indices[], const std::vector<int> &order, unsigned int n_indices);
+
+    /* Pre-parse the ECI names for faster lookups */
+    void parse_eci_names();
 };
 #endif

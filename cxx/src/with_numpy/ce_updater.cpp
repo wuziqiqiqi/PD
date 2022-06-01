@@ -10,6 +10,7 @@
 #include "additional_tools.hpp"
 #include "atomic_numbers.hpp"
 #include "basis_function.hpp"
+#include "cluster_name.hpp"
 #include "config.hpp"
 
 using namespace std;
@@ -41,20 +42,9 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
         throw invalid_argument("Could not retrieve the length of the atoms object!");
     }
 
-    vector<string> symbols;
-    for (unsigned int i = 0; i < n_atoms; i++) {
-        PyObject *pyindx = int2py(i);
-        PyObject *atom = PyObject_GetItem(atoms, pyindx);
-        PyObject *pysymb = get_attr(atom, "symbol");
+    // Read the atomic symbols
+    std::vector<std::string> symbols = get_symbols_from_atoms(py_atoms);
 
-        if (pysymb == nullptr) {
-            throw invalid_argument("Could not get symbol from atom!");
-        }
-        symbols.push_back(py2string(pysymb));
-        Py_DECREF(pyindx);
-        Py_DECREF(atom);
-        Py_DECREF(pysymb);
-    }
     trans_symm_group.resize(n_atoms);
     set<string> unique_symbols;
 
@@ -128,12 +118,11 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
         new_clst.construct_equivalent_deco(num_bfs);
         clusters.append(new_clst);
 
+        int norm_fact = new_clst.get().size() * trans_symm_group_count[new_clst.symm_group];
         if (normalisation_factor.find(cluster_name) == normalisation_factor.end()) {
-            normalisation_factor[cluster_name] =
-                new_clst.get().size() * trans_symm_group_count[new_clst.symm_group];
+            normalisation_factor[cluster_name] = norm_fact;
         } else {
-            normalisation_factor[cluster_name] +=
-                new_clst.get().size() * trans_symm_group_count[new_clst.symm_group];
+            normalisation_factor[cluster_name] += norm_fact;
         }
     }
 #ifdef PRINT_DEBUG
@@ -184,27 +173,24 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
     Py_DECREF(trans_mat_obj);
     Py_DECREF(trans_mat_orig);
 
-    // Read the ECIs
-    Py_ssize_t pos = 0;
-    map<string, double> temp_eci;
-    while (PyDict_Next(pyeci, &pos, &key, &value)) {
-        temp_eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
-    }
-    eci.init(temp_eci);
+    // Read the ECIs, and parse the names.
+    this->set_eci(pyeci);
 #ifdef PRINT_DEBUG
     cout << "Parsing correlation function\n";
 #endif
 
     vector<string> flattened_cnames;
     flattened_cf_names(flattened_cnames);
-    // history = new CFHistoryTracker(flattened_cnames);
     history = new CFHistoryTracker(eci.get_names());
     history->insert(corrFunc, nullptr);
 
     // Store the singlets names
     for (unsigned int i = 0; i < flattened_cnames.size(); i++) {
-        if (flattened_cnames[i].substr(0, 2) == "c1") {
-            singlets.push_back(flattened_cnames[i]);
+        std::string name = flattened_cnames[i];
+        // Fetch the pre-parsed version of the name.
+        const ParsedName parsed = this->m_parsed_names[i];
+        if (parsed.size == 1) {
+            singlets.push_back(name);
         }
     }
 
@@ -217,6 +203,19 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
     // Verify that the ECIs given corresponds to a correlation function
     if (!all_eci_corresponds_to_cf()) {
         throw invalid_argument("All ECIs does not correspond to a correlation function!");
+    }
+}
+
+void CEUpdater::parse_eci_names() {
+    std::size_t num = eci.size();
+    this->m_parsed_names.clear();
+    this->m_parsed_names.reserve(num);
+
+    for (unsigned int i = 0; i < num; i++) {
+        std::string name = eci.name(i);
+        ClusterName c_name = ClusterName(name);
+        ParsedName parsed = c_name.get_parsed();
+        this->m_parsed_names.emplace_back(parsed);
     }
 }
 
@@ -350,41 +349,35 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
     // multiplicity factor, we need to apply a dynamic schedule
     //#pragma omp parallel for num_threads(cf_update_num_threads) schedule(dynamic)
     for (unsigned int i = 0; i < eci.size(); i++) {
-        // const string &name = iter->first;
-        const string &name = eci.name(i);
-        if (str_starts_with(name, "c0")) {
-            // next_cf[name] = current_cf[name];
+        // The pre-parsed version of the cluster name.
+        const ParsedName parsed = this->m_parsed_names[i];
+
+        // 0-body
+        if (parsed.size == 0) {
             next_cf[i] = current_cf[i];
             continue;
         }
 
-        vector<int> bfs;
-        get_basis_functions(name, bfs);
-        if (str_starts_with(name, "c1_")) {
-            int dec = bfs[0];
+        // Singlet
+        if (parsed.size == 1) {
+            unsigned int dec = parsed.dec_num;
             next_cf[i] = current_cf[i] + (basis_functions.get(dec, new_symb_id) -
                                           basis_functions.get(dec, old_symb_id)) /
                                              num_non_bkg_sites;
             continue;
         }
 
-        // Extract the prefix
-        int pos = name.rfind("_");
-        string prefix = name.substr(0, pos);
-        string dec_str = name.substr(pos + 1);
-
         int symm = trans_symm_group[symb_change.indx];
 
-        if (!clusters.is_in_symm_group(prefix, symm)) {
+        if (!clusters.is_in_symm_group(parsed.prefix, symm)) {
             next_cf[i] = current_cf[i];
             continue;
         }
 
-        const Cluster &cluster = clusters.get(prefix, symm);
+        const Cluster &cluster = clusters.get(parsed.prefix, symm);
         unsigned int size = cluster.size;
-        assert(bfs.size() == size);
 
-        const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
+        const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(parsed.dec_str);
 
         double delta_sp = 0.0;
         for (const vector<int> &deco : equiv_deco) {
@@ -393,7 +386,7 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
         }
 
         delta_sp *= (static_cast<double>(size) / equiv_deco.size());
-        delta_sp /= normalisation_factor.at(prefix);
+        delta_sp /= normalisation_factor.at(parsed.prefix);
         next_cf[i] = current_cf[i] + delta_sp;
     }
 }
@@ -561,15 +554,23 @@ void CEUpdater::set_symbols(const vector<string> &new_symbs) {
     symbols_with_id->set_symbols(new_symbs);
 }
 
-void CEUpdater::set_eci(PyObject *new_eci) {
+void CEUpdater::set_eci(PyObject *pyeci) {
     PyObject *key;
     PyObject *value;
-    Py_ssize_t pos = 0;
-    while (PyDict_Next(new_eci, &pos, &key, &value)) {
-        eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
-    }
 
-    if (!all_eci_corresponds_to_cf()) {
+    // Read the ECIs
+    Py_ssize_t pos = 0;
+    std::map<std::string, double> temp_eci;
+
+    while (PyDict_Next(pyeci, &pos, &key, &value)) {
+        temp_eci[py2string(key)] = PyFloat_AS_DOUBLE(value);
+    }
+    this->eci.init(temp_eci);
+    // Pre-parse the names of the clusters.
+    this->parse_eci_names();
+
+    // If status is not READY, then we're still initializing, and CF's are missing.
+    if (this->status == Status_t::READY && !all_eci_corresponds_to_cf()) {
         throw invalid_argument("All ECIs has to correspond to a correlation function!");
     }
 }
@@ -609,15 +610,6 @@ PyObject *CEUpdater::get_singlets() const {
     return npy_array;
 }
 
-void CEUpdater::get_basis_functions(const string &cname, vector<int> &bfs) const {
-    int pos = cname.rfind("_");
-    string bfs_str = cname.substr(pos + 1);
-    bfs.clear();
-    for (unsigned int i = 0; i < bfs_str.size(); i++) {
-        bfs.push_back(bfs_str[i] - '0');
-    }
-}
-
 void CEUpdater::create_cname_with_dec(PyObject *cf) {
     if (!PyDict_Check(cf)) {
         throw invalid_argument("Correlation functons has to be dictionary!");
@@ -627,14 +619,15 @@ void CEUpdater::create_cname_with_dec(PyObject *cf) {
     PyObject *value;
     while (PyDict_Next(cf, &pos, &key, &value)) {
         string new_key = py2string(key);
+        ClusterName c_name = ClusterName(new_key);
+        unsigned int size = c_name.get_size();
 #ifdef PRINT_DEBUG
         cout << "Read CF: " << new_key << endl;
 #endif
-        if ((new_key.substr(0, 2) == "c1") || (new_key == "c0")) {
+        if ((size == 0 || size == 1)) {
             cname_with_dec[new_key] = new_key;
         } else {
-            int pos = new_key.rfind("_");
-            string prefix = new_key.substr(0, pos);
+            std::string prefix = c_name.get_prefix();
             cname_with_dec[prefix] = new_key;
         }
     }
@@ -851,18 +844,18 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
 
     // Loop over all clusters
     for (const string &name : cf_names) {
+        ClusterName c_name = ClusterName(name);
+        unsigned int cluster_size = c_name.get_size();
+
         // Handle empty cluster
-        if (name.find("c0") == 0) {
+        if (cluster_size == 0) {
             cf[name] = 1.0;
             continue;
         }
 
-        vector<int> bfs;
-        get_basis_functions(name, bfs);
-
         // Handle singlet cluster
-        if (name.find("c1") == 0) {
-            int dec = bfs[0];
+        if (cluster_size == 1) {
+            unsigned int dec = c_name.get_dec_num();
             double new_value = 0.0;
             // Normalise with respect to the actual number of atoms included
             for (unsigned int atom_no = 0; atom_no < symbols_with_id->size(); atom_no++) {
@@ -875,10 +868,8 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
         }
 
         // Handle the rest of the clusters
-        // Extract the prefix
-        int pos = name.rfind("_");
-        string prefix = name.substr(0, pos);
-        string dec_str = name.substr(pos + 1);
+        std::string prefix, dec_str;
+        c_name.get_prefix_and_dec_str(prefix, dec_str);
 
         double sp = 0.0;
         double count = 0;
@@ -893,7 +884,6 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
             const Cluster &cluster = clusters.get(prefix, symm);
             unsigned int size = cluster.size;
             assert(cluster_indices[0].size() == size);
-            assert(bfs.size() == size);
 
             const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
             double sp_temp = 0.0;
@@ -916,20 +906,14 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
 }
 
 void CEUpdater::set_atoms(PyObject *py_atoms) {
-    vector<string> symbols;
     unsigned int num_atoms = PySequence_Length(py_atoms);
 
     if (num_atoms != symbols_with_id->size()) {
         throw invalid_argument("Length of passed atoms object is different from current");
     }
 
-    for (unsigned int i = 0; i < num_atoms; i++) {
-        PyObject *atom = PySequence_GetItem(py_atoms, i);
-        PyObject *symb_str = get_attr(atom, "symbol");
-        symbols.push_back(py2string(symb_str));
-        Py_DECREF(atom);
-        Py_DECREF(symb_str);
-    }
+    std::vector<std::string> symbols = get_symbols_from_atoms(py_atoms);
+
     this->atoms = py_atoms;
     symbols_with_id->set_symbols(symbols);
 }

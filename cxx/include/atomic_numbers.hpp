@@ -1,13 +1,14 @@
 #ifndef ATOMIC_NUMBERS_H
 #define ATOMIC_NUMBERS_H
-// Mapping of symbols -> atomic_numbers
 
 #include <Python.h>
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
-// Map created using the ASE atomic_numbers from ase.data
+/* Map created using the ASE atomic_numbers from ase.data
+ * Maps symbol -> atomic_numbers */
 const static std::unordered_map<std::string, int> atomic_numbers_map = {
     // Disable clang formatting to retain the one-entry-per-line format.
     // clang-format off
@@ -134,5 +135,11 @@ const static std::unordered_map<std::string, int> atomic_numbers_map = {
 };
 
 void set_symbol_in_atoms(PyObject *py_atoms, const int index, const std::string &symbol);
+
+/* Read the list of symbols from an Python atoms object */
+std::vector<std::string> get_symbols_from_atoms(PyObject *py_atoms);
+
+/* Invert the atomic numbers map, to go from number -> symbol */
+std::unordered_map<int, std::string> get_number_to_symbol_map();
 
 #endif
