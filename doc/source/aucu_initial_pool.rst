@@ -11,6 +11,7 @@
 
 .. _aucu_initial_pool:
 .. module:: clease.structgen.new_struct
+  :noindex:
 
 
 Generating initial structures
@@ -24,16 +25,16 @@ After the cluster expansion settings is specified, the next step is to generate
 initial structures to start training the CE model. New structures for training
 CE model are generated using :class:`NewStructures` class, which contains
 several methods for generating structures. The initial pool of structures is
-generated using :meth:`generate_initial_pool` method as
+generated using :py:meth:`~NewStructures.generate_initial_pool` method as
 
 >>> from clease.structgen import NewStructures
 >>> ns = NewStructures(settings, generation_number=0, struct_per_gen=10)
 >>> ns.generate_initial_pool()
 
-The :meth:`generate_initial_pool` method generates one structure per
+The :py:meth:`~NewStructures.generate_initial_pool` method generates one structure per
 concentration where the number of each constituing element is at
 maximum/minimum. In the case of AuCu alloy, there are two extrema:
-Au and Cu. Consequently, :meth:`generate_initial_pool` generates
+Au and Cu. Consequently, :py:meth:`~NewStructures.generate_initial_pool` generates
 two structures for training.
 
 .. note::
@@ -71,7 +72,7 @@ key-value pairs specifying their features. The genereated keys are:
 Generating random pool of structures
 ------------------------------------
 As we have generated only two structures for training, we can generate more
-random structures using :meth:`generate_random_structures` method by altering
+random structures using :py:meth:`~NewStructures.generate_random_structures` method by altering
 the above script with
 
 >>> from clease.structgen import NewStructures
@@ -80,7 +81,7 @@ the above script with
 >>> ns.generate_random_structures()
 
 The script generates 8 additional random structures such that there are 10
-structures in generation 0. By default, :meth:`generate_random_structures`
+structures in generation 0. By default, :py:meth:`~NewStructures.generate_random_structures`
 method generates a structure with both random size and concentration. If
 you prefer to generate random structures with a specific cell size, you
 can pass template atoms with desired size. For example, you can force the
@@ -99,7 +100,3 @@ new structures to be :math:`3 \times 3 \times 3` supercell by using
 
   import os
   os.remove("aucu.db")
-
-
-.. autoclass:: NewStructures
-   :members: generate_initial_pool, generate_random_structures

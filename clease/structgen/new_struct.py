@@ -712,6 +712,7 @@ class NewStructures:
         name: Optional[str] = None,
         cf: Optional[Dict[str, float]] = None,
         meta: Optional[Dict[str, Any]] = None,
+        warn_on_skip: bool = True,
     ) -> Optional[int]:
         """Insert a structure to the database.
 
@@ -732,6 +733,9 @@ class NewStructures:
             is bypassed and the given cf is inserted in DB.
         :param meta: (Optional) Extra information which will be added to the key-value
             pair entries in the database.
+        :param warn_on_skip: (Bool, optional) Toggle emitting a warning if a structure
+            was not inserted due to having a symmetrically equivalent structure
+            in the database. Defaults to true.
         """
         if name is not None:
             with self.connect() as con:
@@ -755,9 +759,11 @@ class NewStructures:
 
         formula_unit = self._get_formula_unit(init_struct)
         if self._exists_in_db(init_struct, formula_unit):
-            logger.warning(
-                ("Supplied structure already exists in DB. The structure will not be inserted.")
-            )
+            if warn_on_skip:
+                # Only emit a warning if requested.
+                logger.warning(
+                    "Supplied structure already exists in DB. The structure will not be inserted."
+                )
             return None
 
         kvp = self._get_kvp(formula_unit)

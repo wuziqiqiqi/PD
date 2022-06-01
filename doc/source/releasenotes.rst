@@ -7,6 +7,8 @@ Release notes
 0.11.6
 =======
 * Some small performance optimizations.
+* Added a `warn_on_skip` parameter to the
+  :py:meth:`~clease.structgen.new_struct.NewStructures.insert_structure` method.
 
 0.11.5
 =======
