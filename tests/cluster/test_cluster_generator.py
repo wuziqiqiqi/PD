@@ -1,3 +1,4 @@
+import itertools
 import pytest
 
 import numpy as np
@@ -185,3 +186,31 @@ def test_many_four_vector(atoms):
             for iz in range(3):
                 for s in range(natoms):
                     assert FourVector(ix, iy, iz, s) in fv_lst
+
+
+@pytest.mark.parametrize(
+    "atoms",
+    [
+        bulk("NaCl", "rocksalt", a=5.0),
+        bulk("Al"),
+        bulk("Fe"),
+    ],
+)
+def test_to_cart(atoms):
+    gen = ClusterGenerator(atoms)
+
+    # Make a bunch of 4-vectors to test on
+    fvs = [
+        FourVector(*xyz, s)
+        for xyz in itertools.product(range(-5, 5), repeat=3)
+        for s in range(len(atoms))
+    ]
+
+    # Build the cartesian coordinates from the FourVector directly
+    # "old" way of doing it
+    exp = np.zeros((len(fvs), 3))
+    for ii, fv in enumerate(fvs):
+        exp[ii, :] = fv.to_cartesian(gen.prim, transposed_cell=gen.prim_cell_T)
+
+    # Verify that the vectorized version yields the same results.
+    assert np.allclose(gen.to_cartesian(*fvs), exp)

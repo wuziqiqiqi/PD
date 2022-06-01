@@ -2,7 +2,7 @@ from itertools import product
 from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
 import numpy as np
 from ase import Atoms
-from ase.geometry import wrap_positions
+from clease import tools
 from clease.datastructures import FourVector, Figure
 from .cluster import Cluster
 from .cluster_fingerprint import ClusterFingerprint
@@ -107,10 +107,14 @@ class ClusterGenerator:
 
     def to_cartesian(self, *four_vectors: FourVector) -> np.ndarray:
         """Convert one or more FourVectors into their Cartesian coordinates."""
-        pos = np.zeros((len(four_vectors), 3))
+        # We calculate the dot product here, instead of using the fv.to_cartesian, in order
+        # to better utilize the NumPy vectorization.
+        # So first we allocate the necessary arrays
+        X = np.zeros((len(four_vectors), 3), dtype=int)
         for ii, fv in enumerate(four_vectors):
-            pos[ii, :] = self._fv_to_cart(fv)
-        return pos
+            X[ii, :] = fv.ix, fv.iy, fv.iz
+        subl = [fv.sublattice for fv in four_vectors]
+        return self.prim_cell_T.dot(X.T).T + self.prim.positions[subl]
 
     def get_lattice(self, pos: np.ndarray) -> int:
         """
@@ -120,7 +124,9 @@ class ClusterGenerator:
         """
         shifts = self.prim.get_positions()
         reshaped = np.reshape(pos, (1, 3))
-        wrapped = wrap_positions(reshaped, self.prim.get_cell())
+        wrapped = tools.wrap_positions_3d(
+            reshaped, self.prim.get_cell(), cell_T_inv=self.prim_cell_invT
+        )
         diff_sq = np.sum((wrapped[0, :] - shifts) ** 2, axis=1)
         return int(np.argmin(diff_sq))
 

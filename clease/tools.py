@@ -1244,3 +1244,46 @@ def get_repetition(prim: ase.Atoms, atoms: ase.Atoms) -> np.ndarray:
     P = atoms.get_cell() @ p_inv
 
     return np.rint(np.diag(P)).astype(int)
+
+
+def wrap_positions_3d(
+    positions: np.ndarray,
+    cell: np.ndarray,
+    center=(0.5, 0.5, 0.5),
+    cell_T_inv: np.ndarray = None,
+    eps: float = 1e-7,
+) -> np.ndarray:
+    """Similar to the ase.geometry.wrap_positions but this implementation assumes that the
+    cell is a fully 3-D periodic.
+    Assumes all directions are periodic! Also assumes the cell is correctly completed,
+    without any missing lattice vectors.
+
+    The inverse of the transposed cell is required, and can be provided as a pre-computed
+    quantity for reuse. This will be computed if not provided.
+
+    Args:
+        positions (np.ndarray): The positions to be wrapped.
+        cell (np.ndarray): Unit cell vectors of the atoms object.
+        center (tuple, optional): The positons in fractional coordinates that the new positions
+            will be nearest possible to. Defaults to (0.5, 0.5, 0.5).
+        cell_T_inv (np.ndarray, optional): A pre-computed inverse of the transposed cell.
+            Will be calculated, if it is not provided. Will not check if the provided
+            inverse is correct. Defaults to None.
+        eps (float, optional): Small number to prevent slightly negative coordinates from being
+            wrapped. Defaults to 1e-7.
+
+    Returns:
+        np.ndarray: The wrapped positions
+    """
+
+    shift = np.asarray(center) - 0.5 - eps
+
+    # If the cell_T_inv is not None, assume it was provided correctly.
+    if cell_T_inv is None:
+        cell_T_inv = np.linalg.inv(cell.T)
+
+    fractional = cell_T_inv.dot(positions.T).T - shift
+    fractional %= 1.0
+    fractional += shift
+
+    return np.dot(fractional, cell)

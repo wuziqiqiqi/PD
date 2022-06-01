@@ -1,9 +1,11 @@
 from itertools import product
+import random
 import pytest
 import numpy as np
 from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.db import connect
+from ase.geometry import wrap_positions
 from clease.tools import (
     min_distance_from_facet,
     factorize,
@@ -669,3 +671,40 @@ def test_get_repetition(prim, rep):
     atoms = prim * rep
     rep_tool = tools.get_repetition(prim, atoms)
     assert all(rep_tool == rep)
+
+
+@pytest.mark.parametrize(
+    "prim",
+    [
+        bulk("NaCl", crystalstructure="rocksalt", a=3.0),
+        bulk("Au", crystalstructure="fcc", a=3.8),
+        make_TaOX(),
+    ],
+)
+@pytest.mark.parametrize("center", [(0.5, 0.5, 0.5), (0.2, 0.2, 0.2), (0.8, 0.5, 0.5)])
+def test_wrap_3d(prim, center):
+    # Verify wrap_positions_3d yields the same wrapped
+    # positions as the ASE version. (only for fully periodic systems)
+
+    # Pre-computed inverse cell.
+    cell_T_inv = np.linalg.inv(prim.get_cell().T)
+
+    # Try rotating and translating some amount, and wrapping back into the primitive cell
+    # Repeat this process a few times
+    for _ in range(5):
+        atoms = prim * (5, 5, 5)
+        atoms.rotate(random.randint(0, 90), "z")
+        atoms.rotate(random.randint(0, 180), "x")
+        atoms.translate([random.uniform(-30, 30) for _ in range(3)])
+
+        exp = wrap_positions(atoms.get_positions(), prim.get_cell(), center=center)
+        res = tools.wrap_positions_3d(atoms.get_positions(), prim.get_cell(), center=center)
+        assert np.allclose(res, exp)
+        # Also with the pre-computed inverse cell
+        res = tools.wrap_positions_3d(
+            atoms.get_positions(),
+            prim.get_cell(),
+            cell_T_inv=cell_T_inv,
+            center=center,
+        )
+        assert np.allclose(res, exp)

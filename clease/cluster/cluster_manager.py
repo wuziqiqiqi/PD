@@ -5,7 +5,6 @@ import functools
 from copy import deepcopy
 import numpy as np
 import ase
-from ase.geometry import wrap_positions
 
 from clease import tools
 from clease.datastructures import FourVector, Figure, TransMatrix
@@ -256,13 +255,12 @@ class ClusterManager:
             Atoms object to use when creating the lookup table (LUT)
         """
         lut = {}
-        pos = template.get_positions().copy()
-        for i in range(pos.shape[0]):
-            if self.is_background_atom(template[i]):
+        for atom in template:
+            if self.is_background_atom(atom):
                 # No need to make a lookup for a background atom
                 continue
-            vec = self.generator.to_four_vector(pos[i, :], template[i].tag)
-            lut[vec] = i
+            vec = self.generator.to_four_vector(atom.position, atom.tag)
+            lut[vec] = atom.index
         return lut
 
     def fourvec_to_indx(
@@ -270,15 +268,16 @@ class ClusterManager:
     ) -> Dict[FourVector, int]:
         """Translate a set of unique FourVectors into their corresponding index
         in a template atoms object."""
-        cell = template.get_cell()
-        pos = np.zeros((len(unique), 3))
-        for i, fv in enumerate(unique):
-            pos[i, :] = fv.to_cartesian(self.prim)
+        # Translate the four-vectors onto the corresponding index, by wrapping
+        # them into the template atoms in cartesian space.
+        cart_pos = self.generator.to_cartesian(*unique)
 
-        pos = wrap_positions(pos, cell)
+        cell = template.get_cell()
+        cart_pos = tools.wrap_positions_3d(cart_pos, cell)
+
         unique_indices = []
-        for i in range(pos.shape[0]):
-            diff_sq = np.sum((pos[i, :] - template.get_positions()) ** 2, axis=1)
+        for i in range(cart_pos.shape[0]):
+            diff_sq = np.sum((cart_pos[i, :] - template.positions) ** 2, axis=1)
             unique_indices.append(np.argmin(diff_sq))
         return dict(zip(unique, unique_indices))
 
@@ -315,7 +314,11 @@ class ClusterManager:
             logger.info("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
         else:
             # Choose the generalized pathway.
-            wrap_fnc = functools.partial(self._wrap_four_vectors_general, unique=unique, cell=cell)
+            # Pre-calculate the inverse of the cell for faster wrapping of the positions.
+            cell_T_inv = np.linalg.inv(cell.T)
+            wrap_fnc = functools.partial(
+                self._wrap_four_vectors_general, unique=unique, cell=cell, cell_T_inv=cell_T_inv
+            )
             logger.info("Non-trivial supercell, will wrap using cartesian coordinates")
 
         lut = self.create_four_vector_lut(template)
@@ -365,6 +368,7 @@ class ClusterManager:
         translation_vector: FourVector,
         unique: Sequence[FourVector],
         cell: np.ndarray,
+        cell_T_inv: np.ndarray = None,
     ) -> Iterator[FourVector]:
         """Generalized FourVector wrapping function."""
         # Translate the (x, y, z) components of the unique four-vectors
@@ -373,7 +377,7 @@ class ClusterManager:
         # Find the new Cartesian coordinates of the translated FourVectors,
         # and wrap them back into the cell
         cartesian = self.generator.to_cartesian(*translated_unique)
-        cartesian = wrap_positions(cartesian, cell)
+        cartesian = tools.wrap_positions_3d(cartesian, cell, cell_T_inv=cell_T_inv)
 
         # Re-translate the wrapped-Cartesian coordinates of the unique four-vectors
         # into a four-vector representation (with a generator expression)
