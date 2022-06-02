@@ -108,7 +108,7 @@ class GramSchmidtMonimial:
         """
         if bf1 >= len(self.values) or bf2 >= len(self.values):
             raise ValueError(
-                "The provided indices has to be smaller " "than total number of basis functions"
+                "The provided indices has to be smaller than total number of basis functions"
             )
 
         dot_prod = 0.0

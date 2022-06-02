@@ -302,7 +302,7 @@ def split_dataset(
 
     if len(unique_groups) < nsplits:
         raise ValueError(
-            "The number of unique groups has to be greater " "than the number of partitions."
+            "The number of unique groups has to be greater than the number of partitions."
         )
     shuffle(unique_groups)
     partitions = []

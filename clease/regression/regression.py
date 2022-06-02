@@ -160,7 +160,7 @@ class Tikhonov(LinearRegression):
 
         if tikhonov.shape != (num_features, num_features):
             raise ValueError(
-                "The dimensions of Tikhonov matrix do not match " "the number of clusters!"
+                "The dimensions of Tikhonov matrix do not match the number of clusters!"
             )
 
         W = self.weight_matrix

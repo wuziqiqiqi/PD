@@ -356,7 +356,7 @@ class TemplateAtoms:
                     return atoms
 
         raise RuntimeError(
-            "Did not manage to generate a random template that " "satisfies all the constraints"
+            "Did not manage to generate a random template that satisfies all the constraints"
         )
 
     def has_atoms_filters(self):

@@ -142,7 +142,7 @@ class MetaDynamicsSampler:
 
         if not self._getter_accepts_peak():
             raise PeakNotAcceptedError(
-                ("Observer does not accept peak as a " "keyword argument to __call__")
+                ("Observer does not accept peak as a keyword argument to __call__")
             )
 
         if not hasattr(self.bias, "get_coeff"):

@@ -212,7 +212,7 @@ class Concentration:
 
         if A_eq.shape[0] != len(b_eq):
             raise InvalidConstraintError(
-                "The length of b_eq has to be the same as the number of rows " "in A_eq."
+                "The length of b_eq has to be the same as the number of rows in A_eq."
             )
 
         self.A_eq = np.vstack((self.A_eq, A_eq))
@@ -239,7 +239,7 @@ class Concentration:
 
         if A_lb.shape[0] != len(b_lb):
             raise InvalidConstraintError(
-                "The length of b_lb has to be the same as the number of rows " "in A_lb."
+                "The length of b_lb has to be the same as the number of rows in A_lb."
             )
 
     def add_usr_defined_ineq_constraints(self, A_lb, b_lb):
@@ -295,7 +295,7 @@ class Concentration:
             for rng in item:
                 if len(rng) != 2:
                     raise InvalidConstraintError(
-                        "Provided range needs to be of length 2. " "Lower and upper bound"
+                        "Provided range needs to be of length 2. Lower and upper bound"
                     )
                 if any(x < 0.0 or x > 1.0 for x in rng):
                     raise InvalidConstraintError(
@@ -397,7 +397,7 @@ class Concentration:
         """
         # pylint: disable=too-many-branches
         if formulas is None or variable_range is None:
-            raise InvalidConstraintError("formula and variable range has to" " be provided!")
+            raise InvalidConstraintError("formula and variable range has to be provided!")
 
         if len(formulas) != len(self.basis_elements):
             raise InvalidConstraintError(

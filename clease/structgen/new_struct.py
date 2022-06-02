@@ -141,7 +141,7 @@ class NewStructures:
                 self._generate_sigma_mu(num_samples_var)
 
         logger.info(
-            ("Generate %s probe structures (generation: %s, " "struct_per_gen=%s, %s present)"),
+            ("Generate %s probe structures (generation: %s, struct_per_gen=%s, %s present)"),
             self.num_to_gen(),
             self.gen,
             self.struct_per_gen,
@@ -652,7 +652,7 @@ class NewStructures:
             # TODO: Allow a tolerance here
             if not np.allclose(new_conc, x):
                 raise NotValidTemplateException(
-                    ("Did not find an atoms with a " "satisfactory concentration.")
+                    ("Did not find an atoms with a satisfactory concentration.")
                 )
 
         return atoms
@@ -683,9 +683,7 @@ class NewStructures:
         traj_final = TrajectoryReader(traj_final)
 
         if len(traj_in) != len(traj_final):
-            raise ValueError(
-                "Different number of structures in " "initial trajectory file and final."
-            )
+            raise ValueError("Different number of structures in initial trajectory file and final.")
 
         num_ins = 0
         for init, final in zip(traj_in, traj_final):
@@ -694,11 +692,11 @@ class NewStructures:
             count_final = count_atoms(final)
             for key, value in count_final.items():
                 if key not in count_init:
-                    raise ValueError("Final and initial structure contains " "different elements")
+                    raise ValueError("Final and initial structure contains different elements")
 
                 if count_init[key] != value:
                     raise ValueError(
-                        "Final and initial structure has " "different number of each species"
+                        "Final and initial structure has different number of each species"
                     )
 
             self.insert_structure(init_struct=init, final_struct=final)

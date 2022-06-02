@@ -107,7 +107,7 @@ class CEMCEvaluator(MCEvaluator):
     def __init__(self, atoms: Atoms):
         if not isinstance(atoms.calc, Clease):
             raise ValueError(
-                "Clease calculator must be attached to the atoms object " "when using CEMCEvaluator"
+                "Clease calculator must be attached to the atoms object when using CEMCEvaluator"
             )
         super().__init__(atoms)
 
