@@ -9,6 +9,11 @@ Release notes
 * Some small performance optimizations.
 * Added a `warn_on_skip` parameter to the
   :py:meth:`~clease.structgen.new_struct.NewStructures.insert_structure` method.
+* :class:`~clease.evaluate.Evaluate` should now correctly remember if it doesn't
+  need to re-fit the ECI's (see the new :py:meth:`~clease.evaluate.Evaluate.fit` and
+  :py:meth:`~clease.evaluate.Evaluate.fit_required` methods).
+* Introduced :py:meth:`~clease.evaluate.Evaluate.load_eci` for loading stored ECI values,
+  which is convenient for subsequent plotting.
 
 0.11.5
 =======

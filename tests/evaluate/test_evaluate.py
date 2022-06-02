@@ -396,3 +396,48 @@ def test_custom_prop(bc_setting):
 
     # Currently, the "property" is just "e_dft"
     assert eva.e_dft == pytest.approx(expected)
+
+
+def test_fit_required(make_eval):
+    evaluator: Evaluate = make_eval()
+    assert evaluator.fit_required()
+    evaluator.fit()
+    assert not evaluator.fit_required()
+    evaluator.set_fitting_scheme()
+    assert evaluator.fit_required()
+    evaluator.fit()
+    assert not evaluator.fit_required()
+
+
+def test_remember_alpha(make_eval, mocker):
+    evaluator: Evaluate = make_eval()
+    # Spy on the actual method which does the fitting.
+    # Verify it's only run when necessary.
+    spy = mocker.spy(evaluator, "_do_fit")
+    assert evaluator.fit_required()
+    assert spy.call_count == 0
+    evaluator.fit()
+    assert spy.call_count == 1
+    evaluator.fit()
+    # Repeated calls shouldn't trigger an actual re-fit since we changed nothing.
+    assert spy.call_count == 1
+    # Set a new scheme, so we need to re-fit next time we request a fit.
+    evaluator.set_fitting_scheme()
+    assert spy.call_count == 1
+    evaluator.fit()
+    assert spy.call_count == 2
+
+
+def test_load_eci_dict(make_eval):
+    evaluator: Evaluate = make_eval()
+
+    dct = {"c0": 1.0, "c3_d0001_0_000": -3.1}
+    evaluator.load_eci_dict(dct)
+
+    eci = evaluator.eci
+    assert len(evaluator.cf_names) == len(eci)
+    assert len(eci) > len(dct)
+
+    for name, value in zip(evaluator.cf_names, eci):
+        # Any names not in the dictionary should be 0
+        assert value == pytest.approx(dct.get(name, 0.0))

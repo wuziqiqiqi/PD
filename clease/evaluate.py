@@ -153,7 +153,7 @@ class Evaluate:
 
         self.multiplicity_factor = self.settings.multiplicity_factor
         self.eci = None
-        self.alpha = None
+        self._alpha = None
         self.e_pred_loo = None
         self.parallel = parallel
         if parallel:
@@ -210,7 +210,9 @@ class Evaluate:
         # longer consistent with the scheme
         # By setting it to None, a new calculation is performed
         # when the ECIs are requested
+        # Also reset the "last alpha"
         self.eci = None
+        self._alpha = None
 
         N = len(self.e_dft)
 
@@ -265,21 +267,52 @@ class Evaluate:
         self.weight_matrix = np.diag(np.exp(decay * cosine_sim))
         self.effective_num_data_pts = np.sum(self.weight_matrix)
 
-    def get_eci(self):
-        """Determine and return ECIs for a given alpha.
+    def fit_required(self) -> bool:
+        """Check whether we need to calculate the ECI values."""
+        return self.eci is None or self._alpha != self.scheme.alpha
 
-        This method also saves the last value of alpha used (self.alpha) and
+    def fit(self) -> None:
+        """Determine the ECI for a given alpha.
+
+        This method also saves the last value of alpha used and
         the corresponding ECIs (self.eci) such that ECIs are not calculated
         repeated if alpha value is unchanged.
         """
+        if self.fit_required():
+            self._do_fit()
+        assert self.eci is not None
+
+    def _do_fit(self) -> None:
+        """Fit using the current scheme, and remember the alpha"""
         self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
+        # Remember the latest alpha
+        self._alpha = self.scheme.alpha
+
+    def get_eci(self, allow_fit: bool = True) -> np.ndarray:
+        """Determine and return ECIs for a given alpha.
+
+        Args:
+            allow_fit (bool, optional): Is a new fit allowed to be run before returning the ECI's?
+                If no ECI's are present yet, and no re-fitting was allowed, then a ValueError
+                is raised.
+                Defaults to True.
+
+        Returns:
+            np.ndarray: A 1D array of floats with all ECI values.
+        """
+        if allow_fit:
+            self.fit()
+        if self.eci is None:
+            # getting ECI's was not allowed to fit, and we havn't run a fit yet.
+            raise ValueError("ECI's has not been fit yet.")
+
         return self.eci
 
-    def get_eci_dict(self):
+    def get_eci_dict(self, allow_fit: bool = True):
         """
         Determine cluster names and their corresponding ECI value and return
         them in a dictionary format."""
-        self.get_eci()
+        self.get_eci(allow_fit=allow_fit)
 
         # sanity check
         if len(self.cf_names) != len(self.eci):
@@ -293,6 +326,31 @@ class Evaluate:
             pairs.append((cname, self.eci[i]))
 
         return dict(pairs)
+
+    def load_eci_dict(self, eci_dict: Dict[str, float]) -> None:
+        """Load the ECI's from a dictionary. Any ECI's which are missing
+        from the internal cf_names list are assumed to be 0.
+
+        Note: this doesn't load the scheme or the alpha value, so it will not
+        prevent a new fit to be performed if requested, as it may be incompatible
+        with the current fitting scheme.
+        """
+
+        eci = np.zeros(len(self.cf_names), dtype=float)
+        for ii, name in enumerate(self.cf_names):
+            eci[ii] = eci_dict.get(name, 0.0)
+        self.eci = eci
+
+    def load_eci(self, fname="eci.json") -> None:
+        """Read in ECI values stored to a json file.
+
+        Note: this doesn't load the scheme or the alpha value, so it will not
+        prevent a new fit to be performed if requested, as it may be incompatible
+        with the current fitting scheme.
+        """
+        full_fname = add_file_extension(fname, ".json")
+        with open(full_fname, "r") as fd:
+            self.load_eci_dict(json.load(fd))
 
     def save_eci(self, fname="eci.json"):
         """
@@ -333,7 +391,7 @@ class Evaluate:
         import clease.plot_post_process as pp
 
         if self.eci is None:
-            self.get_eci()
+            self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
 
         e_range = max(np.append(self.e_dft, e_pred)) - min(np.append(self.e_dft, e_pred))
@@ -622,7 +680,7 @@ class Evaluate:
                     cv[i] = self.loocv_fast()
                 elif self.scoring_scheme == "k-fold":
                     cv[i] = self.k_fold_cv()
-                num_eci = len(np.nonzero(self.get_eci())[0])
+                num_eci = len(np.nonzero(self.get_eci(allow_fit=True))[0])
                 alpha = scheme.get_scalar_parameter()
                 alphas.append(alpha)
                 logger.info(f"{alpha:.10f}\t {num_eci}\t {cv[i]:.10f}")
@@ -652,7 +710,7 @@ class Evaluate:
                 cv = self.loocv_fast()
             elif self.scoring_scheme == "k-fold":
                 cv = self.k_fold_cv()
-            num_eci = len(np.nonzero(self.get_eci())[0])
+            num_eci = len(np.nonzero(self.get_eci(allow_fit=True))[0])
             self._cv_scores.append({"alpha": alpha, "cv": cv})
             logger.info(f"{alpha:.10f}\t {num_eci}\t {cv:.10f}")
 
@@ -830,7 +888,7 @@ class Evaluate:
         from clease.interactive_plot import InteractivePlot, AnnotatedAx
 
         if self.eci is None:
-            self.get_eci()
+            self.fit()
         distances = self._distance_from_names()
 
         # Structure the ECIs in terms by size
@@ -895,7 +953,7 @@ class Evaluate:
     def mae(self):
         """Calculate mean absolute error (MAE) of the fit."""
         if self.eci is None:
-            self.get_eci()
+            self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
         w = np.diag(self.weight_matrix)
@@ -905,7 +963,7 @@ class Evaluate:
     def rmse(self):
         """Calculate root-mean-square error (RMSE) of the fit."""
         if self.eci is None:
-            self.get_eci()
+            self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
 
@@ -927,7 +985,7 @@ class Evaluate:
             return self.loocv()
 
         if self.eci is None:
-            self.get_eci()
+            self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
         cfm = self.cf_matrix
@@ -1192,6 +1250,6 @@ def loocv_mp(args):
         cv = evaluator.loocv_fast()
     elif evaluator.scoring_scheme == "k-fold":
         cv = evaluator.k_fold_cv()
-    num_eci = len(np.nonzero(evaluator.get_eci())[0])
+    num_eci = len(np.nonzero(evaluator.get_eci(allow_fit=True))[0])
     logger.info("%.10f\t %d\t %.10f", alpha, num_eci, cv)
     return cv
