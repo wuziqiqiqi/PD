@@ -708,3 +708,30 @@ def test_wrap_3d(prim, center):
             center=center,
         )
         assert np.allclose(res, exp)
+
+
+@pytest.mark.parametrize(
+    "cname, exp",
+    [
+        ("c0", 0),
+        ("c0_blabla", 0),
+        ("c1_d0", 1),
+        ("c10_d000_000_000", 10),
+        ("c33_d000_000_000", 33),
+    ],
+)
+def test_get_size_from_cname(cname, exp):
+    assert tools.get_size_from_cf_name(cname) == exp
+
+
+@pytest.mark.parametrize(
+    "cname",
+    [
+        "0",
+        "foobar",
+        "d1",
+    ],
+)
+def test_get_size_from_cname_bad_name(cname):
+    with pytest.raises(ValueError):
+        assert tools.get_size_from_cf_name(cname)

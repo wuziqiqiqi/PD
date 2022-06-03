@@ -3,7 +3,7 @@ import pytest
 from ase.build import bulk
 from clease.cluster import ClusterManager
 from clease.datastructures.four_vector import FourVector
-from clease.tools import wrap_and_sort_by_position
+from clease.tools import wrap_and_sort_by_position, get_size_from_cf_name
 import numpy as np
 
 
@@ -303,6 +303,8 @@ def test_cluster_list(prim, max_cutoff_dia, make_cluster_mng):
     manager.build(max_cutoff_dia)
 
     for cluster in manager.clusters:
+        exp_size = get_size_from_cf_name(cluster.name)
+        assert cluster.size == exp_size
         for figure in cluster.figures:
             for fv in figure.components:
                 fv._validate()

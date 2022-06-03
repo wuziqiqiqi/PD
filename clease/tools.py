@@ -887,6 +887,18 @@ def add_file_extension(fname: Union[str, Path], ext: str) -> str:
     raise ValueError(f"Passed extenstion {current_ext} expected {ext}")
 
 
+def get_size_from_cf_name(cf_name: str) -> int:
+    """Extract the size from a CF name."""
+    if not cf_name.startswith("c"):
+        raise ValueError(f"The name {cf_name} doesn't look like a CF name.")
+    # Regex for finding the first integer occurence.
+    res = re.search(r"\d+", cf_name)
+    if not res:
+        # No numbers were found in the string.
+        raise ValueError(f"No numbers present in name: {cf_name}")
+    return int(res.group())
+
+
 def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     """
     Return a sorted list of correlation function names. The names are
@@ -896,7 +908,7 @@ def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     2. Diameter
     3. Lexicographical order of the name itself
     """
-    sizes = [int(n[1]) for n in cf_names]
+    sizes = [get_size_from_cf_name(n) for n in cf_names]
     # Regular expression that extracts all digits after the occurence
     # of _d (e.g. c2_d0001_0_00 --> 0001)
     prog = re.compile("_d(\\d+)")

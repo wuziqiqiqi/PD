@@ -17,7 +17,7 @@ from clease.mp_logger import MultiprocessHandler
 from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
-from clease.tools import add_file_extension, sort_cf_names
+from clease.tools import add_file_extension, sort_cf_names, get_size_from_cf_name
 
 __all__ = ("Evaluate",)
 
@@ -894,7 +894,7 @@ class Evaluate:
         # Structure the ECIs in terms by size
         eci_by_size = {}
         for name, d, eci in zip(self.cf_names, distances, self.eci):
-            size = int(name[1])
+            size = get_size_from_cf_name(name)
             if size not in eci_by_size.keys():
                 eci_by_size[size] = {"d": [], "eci": [], "name": []}
             eci_by_size[size]["d"].append(d)
@@ -1056,7 +1056,7 @@ class Evaluate:
         """
         filtered_names = []
         for name in self.cf_names:
-            size = int(name[1])
+            size = get_size_from_cf_name(name)
             if size <= max_size:
                 filtered_names.append(name)
         return filtered_names
@@ -1075,7 +1075,7 @@ class Evaluate:
         # Note: max_dia is a list starting from 2-body
         max_size_expected = len(max_dia) + 1
         for name in self.cf_names:
-            size = int(name[1])
+            size = get_size_from_cf_name(name)
             if size > max_size_expected:
                 raise ValueError(
                     "Inconsistent length of max_dia, size: {}, expected at most: {}".format(
@@ -1211,7 +1211,7 @@ class Evaluate:
         # Structure the ECIs in terms by size
         eci_by_size = {}
         for name, distance, eci in zip(self.cf_names, distances, self.eci):
-            size = int(name[1])
+            size = get_size_from_cf_name(name)
             if size not in eci_by_size.keys():
                 eci_by_size[size] = {"distance": [], "eci": [], "name": []}
             eci_by_size[size]["distance"].append(distance)
