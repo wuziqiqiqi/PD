@@ -5,18 +5,20 @@ from matplotlib.figure import Figure
 from clease import Evaluate, ConvexHull
 
 
-def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
+def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = False) -> Figure:
     """
     Figure object calculated (DFT) and predicted energies.
     If the plot_args dictionary contains keys,
     return  figure object to relate plot_args  keys
 
-    :param evaluate: Use the evaluate object
-    to define the plot argument.
+    :param evaluate: Use the evaluate object to define the plot argument.
     :param plot_args: plot_args dictionary contains:
+
         - "xlabel": x-axis label
         - "ylabel": y-axis label
         - "title": title of plot
+
+    :param interactive: Add interactive elements to the plot?
 
     :return: Figure instance of plot
     """
@@ -63,7 +65,23 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         fontsize=12,
     )
     ax.plot(linear_fit, linear_fit, "r")
-    ax.plot(X, Y, "bo", mfc="none")
+    plot_line = ax.plot(X, Y, "bo", mfc="none")[0]
+
+    if interactive:
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+
+        annotations = _make_annotations_plot_fit(evaluate)
+        # Construct the annotated axis objects.
+        annotated_ax = AnnotatedAx(
+            ax,
+            [plot_line],
+            annotations,
+            structure_names=[evaluate.names],
+        )
+
+        # Attach interactivity to the fig object.
+        ShowStructureOnClick(fig, annotated_ax, evaluate.settings.db_name)
 
     return fig
 
@@ -75,8 +93,9 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     return  figure object to relate plot_args  keys
 
     :param evaluate: Use the evaluate object
-    to define the plot argument.
+        to define the plot argument.
     :param plot_args: plot_args dictionary contains:
+
         - "xlabel": x-axis label
         - "ylabel": y-axis label
         - "title": title of plot
@@ -115,8 +134,9 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     return  figure object to relate plot_args  keys
 
     :param evaluate: Use the evaluate object
-    to define the plot argument.
+        to define the plot argument.
     :param plot_args: plot_args dictionary contains:
+
         - "xlabel": x-axis label
         - "ylabel": y-axis label
         - "title": title of plot
@@ -163,8 +183,9 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     return  figure object to relate plot_args  keys
 
     :param evaluate: Use the evaluate object
-    to define the plot argument.
+        to define the plot argument.
     :param plot_args: plot_args dictionary contains:
+
         - "xlabel": x-axis label
         - "ylabel": y-axis label
         - "title": title of plot
@@ -210,16 +231,13 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     return fig
 
 
-def plot_convex_hull(evaluate: Evaluate, interactive=False) -> Figure:
+def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
     """Plot the convex hull of an evaluate object.
 
     Args:
         evaluate (Evaluate): The Evaluate object to draw the convex hull from.
         interactive (bool, optional): Plot as an interactive figure?. Defaults to False.
     """
-    # pylint: disable=import-outside-toplevel
-    from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
-
     e_pred = evaluate.get_energy_predict()
 
     cnv_hull = ConvexHull(evaluate.settings.db_name, select_cond=evaluate.select_cond)
@@ -254,9 +272,12 @@ def plot_convex_hull(evaluate: Evaluate, interactive=False) -> Figure:
     fig.suptitle("Convex hull DFT (o), CE (x)")
 
     if interactive:
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+
         ax_list = fig.get_axes()
 
-        annotations = _make_annotations(evaluate)
+        annotations = _make_annotations_hull(evaluate)
         # Construct the annotated axis objects.
         annotated_axes = []
         for ii, ax in enumerate(ax_list):
@@ -274,7 +295,7 @@ def plot_convex_hull(evaluate: Evaluate, interactive=False) -> Figure:
     return fig
 
 
-def _make_annotations(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
+def _make_annotations_hull(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
     """Helper function to make annotations for interactive plots."""
     e_pred = evaluate.get_energy_predict()
 
@@ -294,3 +315,20 @@ def _make_annotations(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
     an_dft = [format_annotation_dft(idx) for idx in range(N)]
     an_ce = [format_annotation_ce(idx) for idx in range(N)]
     return an_dft, an_ce
+
+
+def _make_annotations_plot_fit(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
+    """Helper function to make annotations for interactive plots."""
+    e_pred = evaluate.get_energy_predict()
+
+    def format_annotation(idx):
+        name = evaluate.names[idx]
+        row_id = evaluate.row_ids[idx]
+        e_dft = evaluate.e_dft[idx]
+        e_ce = e_pred[idx]
+        return (
+            f"DB ID: {row_id}\nName: {name}\nE(DFT): {e_dft:.4f} eV/atom\nE(CE): {e_ce:.4f} eV/atom"
+        )
+
+    N = len(e_pred)
+    return ([format_annotation(idx) for idx in range(N)],)

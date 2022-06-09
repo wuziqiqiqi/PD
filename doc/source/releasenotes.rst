@@ -16,6 +16,7 @@ Release notes
   which is convenient for subsequent plotting.
 * Added :py:meth:`~clease.montecarlo.kinetic_monte_carlo.KineticMonteCarlo.get_attempt_freq`
   which allows for more flexible customization of the attempt frequencies.
+* Added the ``interactive`` keyword to :func:`~clease.plot_post_process.plot_fit`.
 
 0.11.5
 =======

@@ -104,3 +104,28 @@ def test_plot_ch(interactive, bc_setting):
 
     # Simply verify that we can run the plot convex hull plotting function.
     pp.plot_convex_hull(evaluator, interactive=interactive)
+
+
+@pytest.mark.parametrize("plot_name", ["plot_convex_hull", "plot_fit"])
+def test_plot_interactive_events(bc_setting, plot_name):
+    evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
+    evaluator.get_eci()
+
+    # Simply verify that we can run the plot convex hull plotting function.
+    fnc = getattr(pp, plot_name)
+    fig1 = fnc(evaluator, interactive=False)
+    fig2 = fnc(evaluator, interactive=True)
+
+    # Ensure there are more events in the interactive one (the ones we added)
+    def get_events(fig, event_name):
+        return fig.canvas.callbacks.callbacks.get(event_name, {})
+
+    for event in ["button_press_event", "motion_notify_event"]:
+        events1 = get_events(fig1, event)
+        events2 = get_events(fig2, event)
+        # We should have 1 more event
+        # Since the object fell out of scope, and the event is only weak-ref'd,
+        # it is normally garbage collected, unless we wrap it.
+        # If more events are added in the future, the number of expected extra events should be
+        # adjusted accordingly.
+        assert len(events2) == len(events1) + 1

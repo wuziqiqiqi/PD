@@ -10,3 +10,4 @@ API Documentation
     ./api/montecarlo
     ./api/data_getters
     ./api/geometry
+    ./api/plot_post

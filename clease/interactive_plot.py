@@ -1,10 +1,17 @@
-from typing import Union, Sequence
+from typing import Union, Sequence, Callable, List
 from tkinter import TclError
-from matplotlib import pyplot as plt
 from ase.db import connect
 from ase.gui.gui import GUI
 from ase.gui.images import Images
 import attr
+
+
+@attr.define
+class MPLEvent:
+    """Simple conatiner for a matplotlib event"""
+
+    event_name: str
+    func: Callable[[], None]
 
 
 @attr.define
@@ -74,10 +81,20 @@ class InteractivePlot:
         self.active_annot = self.all_annotations[0]
         self.active_line_index = 0
 
-        self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
-        # It seems we need to show now, otherwise the interactivity is lost?
-        # TODO: Figure out if this can be avoided.
-        plt.show()
+        self.connect_mpl()
+
+    def get_mpl_events(self) -> List[MPLEvent]:
+        event = MPLEvent("motion_notify_event", self.hover)
+        return [event]
+
+    def connect_mpl(self) -> None:
+        """Connect all MPL events to the canvas.
+        Ensure each event has a strong reference, so they are not garbage collected
+        if this class falls out of scope."""
+        for mpl_event in self.get_mpl_events():
+            # Apply the event_wrapper to make a stronger reference. See note on event handling:
+            # https://matplotlib.org/stable/users/explain/event_handling.html
+            self.fig.canvas.mpl_connect(mpl_event.event_name, _event_wrapper(mpl_event.func))
 
     @property
     def annotated_axes(self) -> Sequence[AnnotatedAx]:
@@ -155,8 +172,13 @@ class ShowStructureOnClick(InteractivePlot):
         # Uninitilized GUI. We don't create this until we click,
         # since we otherwise just open a new empty GUI window.
         self.gui = None
-        fig.canvas.mpl_connect("button_press_event", self.on_click)
         super().__init__(fig, axes)
+
+    def get_mpl_events(self) -> List[MPLEvent]:
+        event = MPLEvent("button_press_event", self.on_click)
+        events = super().get_mpl_events()
+        events.append(event)
+        return events
 
     def on_click(self, event) -> None:
 
@@ -205,3 +227,14 @@ class ShowStructureOnClick(InteractivePlot):
                 self.gui.exit()
             except TclError:
                 pass
+
+
+def _event_wrapper(fnc):
+    """Wrapper for an event function, to avoid a weak-referenced
+    method is garbage collected. Otherwise, the weak reference may be lost,
+    and the event is removed from the matplotlib callback."""
+
+    def _wrapper(*args, **kwargs):
+        fnc(*args, **kwargs)
+
+    return _wrapper
