@@ -1,11 +1,12 @@
 import pytest
-from ase.build import bulk
 import numpy as np
 from clease.settings import Concentration, CEBulk
 from clease.corr_func import CorrFunction
 from clease.calculator import Clease, attach_calculator
+from clease.calculator.clease import UnitializedCEError
 from clease.datastructures import SystemChange
 from clease import tools
+from clease_cxx import has_parallel
 
 
 @pytest.fixture
@@ -117,3 +118,44 @@ def test_attach_calc_bad_atoms(settings, P, rattle):
     supercell.rattle(rattle)
     with pytest.raises(ValueError):
         attach_calculator(settings, supercell)
+
+
+def test_attach_calc_default_threads(settings):
+    """Number of threads without specifying anything should be 1,
+    even when not compiled with OpenMP."""
+    atoms = settings.prim_cell.copy()
+    atoms = attach_calculator(settings, atoms)
+    assert atoms.calc.get_num_threads() == 1
+
+
+def test_calc_wrong_threads(settings):
+    """Number of threads without specifying anything should be 1,
+    even when not compiled with OpenMP."""
+    atoms = settings.prim_cell.copy()
+    atoms = attach_calculator(settings, atoms)
+    assert atoms.calc.get_num_threads() == 1
+
+    if not has_parallel():
+        # This only fails if not compiled with OpenMP
+        with pytest.raises(ValueError):
+            atoms.calc.set_num_threads(2)
+    else:
+        atoms.calc.set_num_threads(2)
+    # Fractional threads
+    for n in [1.2, 1.5, 2.7, 3.9, None]:
+        with pytest.raises(TypeError):
+            atoms.calc.set_num_threads(n)
+    with pytest.raises(ValueError):
+        atoms.calc.set_num_threads(0)
+
+
+def test_calc_no_initialization(settings):
+    """No atoms object has been attached yet"""
+    eci = {"c0": 0.0}
+    calc = Clease(settings, eci)
+    assert calc.updater is None
+    with pytest.raises(UnitializedCEError):
+        calc.set_num_threads(1)
+
+    with pytest.raises(UnitializedCEError):
+        calc.get_num_threads()

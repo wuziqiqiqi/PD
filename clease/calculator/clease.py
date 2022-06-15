@@ -5,7 +5,7 @@ from typing import Dict, Optional, TextIO, Union, List
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from clease_cxx import PyCEUpdater
+from clease_cxx import PyCEUpdater, has_parallel
 from clease.datastructures import SystemChange, SystemChanges
 from clease.corr_func import CorrFunction
 from clease.settings import ClusterExpansionSettings
@@ -13,6 +13,10 @@ from clease.settings import ClusterExpansionSettings
 
 class MovedIgnoredAtomError(Exception):
     """Raised when ignored atoms is moved."""
+
+
+class UnitializedCEError(Exception):
+    """The C++ CE Updater has not yet been initialized"""
 
 
 class KeepChanges:
@@ -53,6 +57,8 @@ class Clease(Calculator):
         if not isinstance(settings, ClusterExpansionSettings):
             msg = "settings must be CEBulk or CECrystal object."
             raise TypeError(msg)
+        # C++ updater initialized when atoms are set
+        self.updater = None
         self.parameters["eci"] = eci
         self.settings = settings
         self.corrFunc = CorrFunction(settings)
@@ -86,9 +92,6 @@ class Clease(Calculator):
         self.atoms = None
         self.symmetry_group = None
         self.is_backround_index = None
-
-        # C++ updater initialized when atoms are set
-        self.updater = None
 
     def set_atoms(self, atoms: Atoms) -> None:
         self.atoms = atoms
@@ -333,3 +336,27 @@ class Clease(Calculator):
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
         self.clear_history()
+
+    def get_num_threads(self) -> int:
+        """Get the number of threads from the C++ updater."""
+        if self.updater is None:
+            raise UnitializedCEError("Updater hasn't been initialized yet.")
+        return self.updater.get_num_threads()
+
+    def set_num_threads(self, value: int) -> None:
+        """Number of threads to use when updating CFs. Requires CLEASE to
+        be compiled with OpenMP if the value is different from 1.
+
+        Args:
+            value (int): Number of threads.
+        """
+        if not isinstance(value, int):
+            raise TypeError(f"Number of threads must be int, got {value!r}")
+        if value < 1:
+            raise ValueError("Number of threads must be at least 1")
+        if self.updater is None:
+            raise UnitializedCEError("Updater hasn't been initialized yet.")
+        if value != 1 and not has_parallel():
+            # Having a value of 1 is OK, since that's not threading.
+            raise ValueError("CLEASE not compiled with OpenMP. Cannot add more threads.")
+        self.updater.set_num_threads(value)

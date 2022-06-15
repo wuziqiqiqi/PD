@@ -158,6 +158,10 @@ class CEUpdater {
         cf_update_num_threads = num;
     };
 
+    unsigned int get_num_threads() const {
+        return this->cf_update_num_threads;
+    }
+
     /** Find which sites have changed */
     void get_changes(const std::vector<std::string> &new_symbols,
                      std::vector<unsigned int> &changed_sites) const;

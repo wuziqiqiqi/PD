@@ -141,3 +141,11 @@ void inverse3x3(const mat3x3 &mat, mat3x3 &inv) {
 bool str_starts_with(const std::string &str, const std::string &sub_str) {
     return str.rfind(sub_str, 0) == 0;
 }
+
+bool has_parallel() {
+#ifdef HAS_OMP
+    return true;
+#else
+    return false;
+#endif
+}

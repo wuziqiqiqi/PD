@@ -64,6 +64,20 @@ def get_source_files():
 
 src_files = get_source_files()
 extra_comp_args = ["-std=c++11"]
+extra_link_args = []
+define_macros = []
+# Check for OpenMP directive
+omp_cmd = os.environ.get("CLEASE_OMP", None)
+if omp_cmd:
+    # Generally for setting CLEASE_OMP=-fopenmp
+    # Opt-in for parallelism.
+    # !!! Experimental feature !!!
+    extra_comp_args.append(omp_cmd)
+    extra_link_args.append(omp_cmd)
+    # Macro definition, so the C++ code
+    # can detect it was compiled with OpenMP.
+    define_macros.append(("HAS_OMP", "1"))
+
 # Uncomment for profiling of the C++ code
 # extra_comp_args.append("-pg")
 
@@ -81,6 +95,8 @@ clease_cxx = Extension(
         cython_folder,
     ],
     extra_compile_args=extra_comp_args,
+    extra_link_args=extra_link_args,
+    define_macros=define_macros,
     language="c++",
 )
 

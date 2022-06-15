@@ -19,8 +19,9 @@ e.g. from the CLEASE root directory:
 
 .. code-block:: bash
 
-    pytest --benchmark-only --benchmark-autosave tests/
+    pytest --fig --benchmark-only --benchmark-autosave tests/
 
+The ``fig`` command allows a test which constructs a plots to output figures.
 Alternatively, *tox* can be used to execute the benchmarks, which is roughly equivalent to the
 above command:
 

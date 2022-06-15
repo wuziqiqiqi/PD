@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from ase import Atoms
 from clease.settings import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
@@ -6,7 +6,10 @@ from .clease import Clease
 
 
 def attach_calculator(
-    settings: ClusterExpansionSettings, atoms: Atoms, eci: Dict[str, float] = None
+    settings: ClusterExpansionSettings,
+    atoms: Atoms,
+    eci: Dict[str, float] = None,
+    num_threads: Optional[int] = None,
 ) -> Atoms:
     """Utility function for an efficient initialization of large cells. Will set the atoms
     object as the active template in the settings.
@@ -14,6 +17,8 @@ def attach_calculator(
     :param settings: ClusterExpansionSettings object (e.g., CEBulk, CECyrstal)
     :param eci: Dictionary containing cluster names and their ECI values
     :param atoms: ASE Atoms object.
+    :param num_threads: Number of threads to use when updating CFs. Requires CLEASE to
+        be compiled with OpenMP if the value is different from 1.
     """
     if eci is None:
         eci = {}
@@ -28,6 +33,8 @@ def attach_calculator(
     calc = Clease(settings, eci=eci)
     atoms_with_calc.symbols = wrapped.symbols
     atoms_with_calc.calc = calc
+    if num_threads is not None:
+        calc.set_num_threads(num_threads)
 
     return atoms_with_calc
 

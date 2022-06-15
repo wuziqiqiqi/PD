@@ -24,21 +24,32 @@ except ImportError:
 def pytest_addoption(parser):
     parser.addoption("--runslow", action="store_true", default=False, help="run slow tests")
     parser.addoption("--fig", action="store_true", default=False, help="Enable figure plotting?")
+    parser.addoption(
+        "--openmp",
+        action="store_true",
+        default=False,
+        help="Enable tests with OpenMP parallelization?",
+    )
 
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "slow: mark test as slow to run")
+    config.addinivalue_line("markers", "openmp: mark as requiring OpenMP parallelization")
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--runslow"):
-        # --runslow given in cli: do not skip slow tests
-        return
-    # add @pytest.mark.slow to run slow tests
-    skip_slow = pytest.mark.skip(reason="need --runslow option to run")
-    for item in items:
-        if "slow" in item.keywords:
-            item.add_marker(skip_slow)
+    def add_marker(option, keyword, skip):
+        if config.getoption(option):
+            # Don't add the marker if the option was enabled.
+            return
+        for item in items:
+            if keyword in item.keywords:
+                item.add_marker(skip)
+
+    skip_slow = pytest.mark.skip(reason="needs --runslow option to run")
+    skip_omp = pytest.mark.skip(reason="needs --openmp option to run")
+    add_marker("--runslow", "slow", skip_slow)
+    add_marker("--openmp", "openmp", skip_omp)
 
 
 @pytest.fixture(autouse=True)

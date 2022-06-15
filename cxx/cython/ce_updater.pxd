@@ -34,6 +34,8 @@ cdef extern from "ce_updater.hpp":
 
       void set_num_threads(unsigned int num_threads)
 
+      int get_num_threads() const
+
       void get_changes(vector[string] &symbs, vector[unsigned int] &changed_sites) except +
 
       void calculate_cf_from_scratch(const vector[string] &cf_names, map_cpp[string, double] &cf)

@@ -32,3 +32,5 @@ prof/
 .tox/
 .benchmarks/
 *.prof
+
+openmp_timing.json

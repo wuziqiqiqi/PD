@@ -347,7 +347,9 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
     // Loop over all ECIs
     // As work load for different clusters are different due to a different
     // multiplicity factor, we need to apply a dynamic schedule
-    //#pragma omp parallel for num_threads(cf_update_num_threads) schedule(dynamic)
+#ifdef HAS_OMP
+#pragma omp parallel for num_threads(this->cf_update_num_threads) schedule(dynamic)
+#endif
     for (unsigned int i = 0; i < eci.size(); i++) {
         // The pre-parsed version of the cluster name.
         const ParsedName parsed = this->m_parsed_names[i];

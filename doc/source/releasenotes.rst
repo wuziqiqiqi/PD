@@ -17,6 +17,8 @@ Release notes
 * Added :py:meth:`~clease.montecarlo.kinetic_monte_carlo.KineticMonteCarlo.get_attempt_freq`
   which allows for more flexible customization of the attempt frequencies.
 * Added the ``interactive`` keyword to :func:`~clease.plot_post_process.plot_fit`.
+* Added an experimental parallelization feature. See :doc:`parallelization`.
+* Added ``clease info`` to the CLI to display some information about the installation.
 
 0.11.5
 =======

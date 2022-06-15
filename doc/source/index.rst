@@ -85,6 +85,7 @@ The use of CLEASE is best learned through tutorials:
    clease_cli
    import_structures
    api_doc
+   parallelization
    benchmarking
    publications
    acknowledgements

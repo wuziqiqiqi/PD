@@ -52,8 +52,13 @@ cdef class PyCEUpdater:
     def get_symbols(self):
         return self.thisptr.get_symbols()
 
-    def set_num_threads(self, num_threads):
+    def set_num_threads(self, num_threads: int):
+        """Set the number of threads to be used with OpenMP"""
         self.thisptr.set_num_threads(num_threads)
+
+    def get_num_threads(self) -> int:
+        """Read the number of threads which will be used by OpenMP"""
+        return self.thisptr.get_num_threads()
 
     def get_changed_sites(self, atoms):
         symbs = [atom.symbol for atom in atoms]

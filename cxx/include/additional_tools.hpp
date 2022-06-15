@@ -73,5 +73,7 @@ void inverse3x3(const mat3x3 &inarray, mat3x3 &inv);
 /* Check if a string starts with a given substring */
 bool str_starts_with(const std::string &str, const std::string &sub_str);
 
+bool has_parallel();
+
 #include "additional_tools.tpp"
 #endif

@@ -1,4 +1,5 @@
 import subprocess
+from pathlib import Path
 import pytest
 from click.testing import CliRunner
 import clease
@@ -70,3 +71,11 @@ def test_print_cluster_table(run_cmd, bc_setting, mocker):
     p = run_cmd(opts=opts)
     assert mocked_view.call_count == 1
     assert "Cluster Name" in p.stdout
+
+
+def test_info(run_cmd):
+    p = run_cmd(opts="info")
+    assert str(clease.__version__) in p.stdout
+    assert "OpenMP" in p.stdout
+    # Check we printed the location of the installation path
+    assert str(Path(clease.__file__).parent.resolve()) in p.stdout
