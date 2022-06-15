@@ -100,6 +100,8 @@ linux_wheels:
     DOCKER_TLS_CERTDIR: ""
     # Only build CPython 3.7-3.10, no PyPy, only manylinux
     CIBW_BUILD: cp{37,38,39,310}-manylinux*
+    # Add the -fopenmp flag for wheel building.
+    CIBW_ENVIRONMENT_LINUX: CLEASE_OMP='-fopenmp'
   script:
     - curl -sSL https://get.docker.com/ | sh
     - python -m pip install cibuildwheel==2.3.1

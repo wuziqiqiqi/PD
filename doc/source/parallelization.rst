@@ -28,7 +28,7 @@ variable when installing with pip.
 
 .. code-block:: bash
 
-    $ CLEASE_OMP=-fopenmp pip install clease
+    $ CLEASE_OMP=-fopenmp pip install clease --no-cache-dir --no-binary=clease
 
 .. note::
     This only works when installing CLEASE via pip.
