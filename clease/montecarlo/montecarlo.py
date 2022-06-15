@@ -76,6 +76,7 @@ class Montecarlo(BaseMC):
     def _on_temp_change(self) -> None:
         """Reset the energy averagers after a change in temperature"""
         self.reset_averagers()
+        self._reset_internal_counters()
 
     def update_current_energy(self) -> None:
         self.current_energy = self.evaluator.get_energy()
@@ -179,13 +180,12 @@ class Montecarlo(BaseMC):
             # We only want to do this calculation if logging is enabled for INFO.
             if info_enabled and time.perf_counter() - start > self.status_every_sec:
                 ms_per_step = 1000.0 * self.status_every_sec / (self.current_step - prev)
-                accept_rate = self.num_accepted / self.current_step
                 logger.info(
                     "%d of %d steps. %.2f ms per step. Acceptance rate: %.2f",
                     self.current_step,
                     steps,
                     ms_per_step,
-                    accept_rate,
+                    self.current_accept_rate,
                 )
                 prev = self.current_step
                 start = time.perf_counter()
@@ -255,6 +255,14 @@ class Montecarlo(BaseMC):
         }
         return meta_info
 
+    @property
+    def current_accept_rate(self) -> float:
+        """Return the current accept rate as a value between 0 and 1."""
+        if self.current_step == 0:
+            # No steps have been taken yet.
+            return 0.0
+        return self.num_accepted / self.current_step
+
     def get_thermodynamic_quantities(self):
         """Compute thermodynamic quantities."""
         quantities = {}
@@ -264,6 +272,7 @@ class Montecarlo(BaseMC):
         quantities["heat_capacity"] = (mean_sq - mean_energy**2) / (kB * self.temperature**2)
         quantities["energy_var"] = mean_sq - mean_energy**2
         quantities["temperature"] = self.temperature
+        quantities["accept_rate"] = self.current_accept_rate
         at_count = self.count_atoms()
         for key, value in at_count.items():
             name = f"{key}_conc"

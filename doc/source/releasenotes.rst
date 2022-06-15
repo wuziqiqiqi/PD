@@ -5,13 +5,16 @@ Release notes
 =============
 
 0.11.7
-======
+=======
 * :class:`~clease.evaluate.Evaluate` can now properly support fitting with custom LinearRegression
   schemes, even if they don't support alpha cross-validation.
 * :class:`~clease.evaluate.Evaluate` now required explicit calls to
   :py:meth:`~clease.evaluate.Evaluate.fit`. Calls to :py:meth:`~clease.evaluate.Evaluate.get_eci`
   and :py:meth:`~clease.evaluate.Evaluate.get_eci_dict` can no longer implicitly do fitting.
   This un-does a change introduced in version 0.11.6.
+* Added the :py:attr:`~clease.montecarlo.montecarlo.Montecarlo.current_accept_rate` property,
+  and export the current accept rate in the thermodynamic quantities dictionary under the
+  ``accept_rate`` key.
 
 0.11.6
 =======

@@ -162,10 +162,16 @@ def test_run(db_name):
     atoms = get_example_mc_system(db_name)
 
     E = []
+    mc = Montecarlo(atoms, 300)
     for T in [1000, 500, 100]:
-        mc = Montecarlo(atoms, T)
+        mc.temperature = T
+        # Verify we don't divide by 0, and that steps are reset.
+        assert mc.current_accept_rate == 0
         mc.run(steps=1000)
-        E.append(mc.get_thermodynamic_quantities()["energy"])
+        assert 0 <= mc.current_accept_rate <= 1
+        thermo = mc.get_thermodynamic_quantities()
+        assert "accept_rate" in thermo
+        E.append(thermo["energy"])
 
     assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
     assert mc.atoms is atoms
