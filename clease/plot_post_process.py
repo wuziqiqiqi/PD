@@ -87,7 +87,9 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
     return fig
 
 
-def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
+def plot_fit_residual(
+    evaluate: Evaluate, plot_args: dict = None, interactive: bool = False
+) -> Figure:
     """
     Figure object subtracted (DFT) and predicted energies.
     If the plot_args dictionary contains keys,
@@ -114,11 +116,11 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
 
     gridspec_kw = {"wspace": 0.0, "width_ratios": [5, 1]}
     fig, ax = plt.subplots(ncols=2, sharey=True, gridspec_kw=gridspec_kw)
-    ax[0].set_title(title)
-    ax[0].set_ylabel(ylabel)
     ax[0].axhline(0, ls="--")
-    ax[0].plot(X, Y, "v", mfc="none")
+    plot_line = ax[0].plot(X, Y, "v", mfc="none")[0]
     ax[0].set_xlabel(r"$E_{DFT}$ (eV/atom)")
+    ax[0].set_ylabel(ylabel)
+    ax[0].set_title(title)
 
     hist, bin_edges = np.histogram(Y, bins=30)
     h = bin_edges[1] - bin_edges[0]
@@ -126,6 +128,22 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     ax[1].set_xlabel(xlabel)
     ax[1].spines["right"].set_visible(False)
     ax[1].spines["top"].set_visible(False)
+
+    if interactive:
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+
+        annotations = _make_annotations_plot_fit(evaluate)
+        # Construct the annotated axis objects.
+        annotated_ax = AnnotatedAx(
+            ax[0],
+            [plot_line],
+            annotations,
+            structure_names=[evaluate.names],
+        )
+
+        # Attach interactivity to the fig object.
+        ShowStructureOnClick(fig, annotated_ax, evaluate.settings.db_name)
 
     return fig
 

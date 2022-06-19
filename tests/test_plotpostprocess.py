@@ -106,7 +106,7 @@ def test_plot_ch(interactive, bc_setting):
     pp.plot_convex_hull(evaluator, interactive=interactive)
 
 
-@pytest.mark.parametrize("plot_name", ["plot_convex_hull", "plot_fit"])
+@pytest.mark.parametrize("plot_name", ["plot_convex_hull", "plot_fit", "plot_fit_residual"])
 def test_plot_interactive_events(bc_setting, plot_name):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
     evaluator.fit()
