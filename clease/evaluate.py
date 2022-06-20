@@ -7,6 +7,7 @@ import logging as lg
 import multiprocessing as mp
 from typing import Dict, List
 
+from deprecated import deprecated
 import numpy as np
 from ase.db import connect
 import threadpoolctl
@@ -364,6 +365,7 @@ class Evaluate:
         with open(full_fname, "w") as outfile:
             json.dump(self.get_eci_dict(**kwargs), outfile, indent=2, separators=(",", ": "))
 
+    @deprecated(reason="Use the clease.plot_post_process module instead.", version="0.11.7")
     def plot_fit(self, interactive=False, savefig=False, fname=None, show_hull=True):
         """Plot calculated (DFT) and predicted energies for a given alpha.
 
@@ -699,6 +701,7 @@ class Evaluate:
 
         return self._cv_scores
 
+    @deprecated(reason="Use the alpha_CV method instead.", version="0.11.7")
     def plot_CV(
         self,
         alpha_min=1e-7,
@@ -798,6 +801,7 @@ class Evaluate:
             plt.show()
         return min_alpha
 
+    @deprecated(reason="Logfile is being removed.", version="0.11.7")
     def _get_alphas_cv_from_file(self, logfile):
         alphas = []
         cv = []
@@ -850,6 +854,7 @@ class Evaluate:
                 if os.stat(logfile).st_size == 0:
                     logger.info("alpha \t\t # ECI \t CV")
 
+    @deprecated(reason="Use the clease.plot_post_process module instead.", version="0.11.7")
     def plot_ECI(self, ignore_sizes=(0,), interactive=True):
         """Plot the all the ECI.
 
