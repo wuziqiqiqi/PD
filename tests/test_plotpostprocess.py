@@ -14,7 +14,7 @@ def test_plot_fit(bc_setting):
     }
     plot_args = {"title": predict["title"], "ylabel": predict["ylabel"]}
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
-    evaluator.get_eci()
+    evaluator.fit()
 
     # x-axis values calculated by get_energy_predict
     predict["x_axis_value"] = np.ndarray.tolist(evaluator.get_energy_predict())
@@ -34,7 +34,7 @@ def test_plot_fit_residual(bc_setting):
     predict = {"title": "plot_FIT_TEST", "xlabel": "#OCC", "ylabel": "DFT_FIT"}
     plot_args = {"title": predict["title"], "ylabel": predict["ylabel"]}
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
-    evaluator.get_eci()
+    evaluator.fit()
 
     delta_e = evaluator.get_energy_predict() - evaluator.e_dft
     predict["delta_e"] = delta_e * 1000  # convert to meV/atom
@@ -54,7 +54,7 @@ def test_plot_eci(bc_setting):
     }
     plot_args = {"title": predict["title"], "ylabel": predict["ylabel"]}
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
-    evaluator.get_eci()
+    evaluator.fit()
 
     # x, y-axis values calculated by get_eci_by_size
     test_list = evaluator.get_eci_by_size()
@@ -100,7 +100,7 @@ def test_plot_cv(bc_setting):
 @pytest.mark.parametrize("interactive", [True, False])
 def test_plot_ch(interactive, bc_setting):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
-    evaluator.get_eci()
+    evaluator.fit()
 
     # Simply verify that we can run the plot convex hull plotting function.
     pp.plot_convex_hull(evaluator, interactive=interactive)
@@ -109,7 +109,7 @@ def test_plot_ch(interactive, bc_setting):
 @pytest.mark.parametrize("plot_name", ["plot_convex_hull", "plot_fit"])
 def test_plot_interactive_events(bc_setting, plot_name):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
-    evaluator.get_eci()
+    evaluator.fit()
 
     # Simply verify that we can run the plot convex hull plotting function.
     fnc = getattr(pp, plot_name)

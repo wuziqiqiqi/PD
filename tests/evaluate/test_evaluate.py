@@ -7,9 +7,11 @@ from ase.calculators.singlepoint import SinglePointCalculator
 from ase.db import connect
 from ase.calculators.emt import EMT
 from clease.settings import CEBulk, Concentration
-from clease import Evaluate
+from clease import Evaluate, supports_alpha_cv
 from clease import NewStructures
 from clease.tools import update_db
+from clease import regression
+import clease.plot_post_process as pp
 
 
 @pytest.fixture
@@ -188,9 +190,9 @@ def test_cv(make_eval):
         evaluator.scoring_scheme = predict_cv
         true_list.append(evaluator.get_cv_score())
 
-    assert loocv_result * 1000 == true_list[0]
-    assert fast_loocv_result * 1000 == true_list[1]
-    assert kfold_result * 1000 == true_list[2]
+    assert loocv_result == pytest.approx(true_list[0])
+    assert fast_loocv_result == pytest.approx(true_list[1])
+    assert kfold_result == pytest.approx(true_list[2])
 
 
 def test_error(make_eval):
@@ -270,6 +272,7 @@ def test_cv_for_alpha(make_eval):
 
 def test_get_energy_predict(make_eval):
     evaluator = make_eval(fitting_scheme="l1")
+    evaluator.fit()
     evaluator.get_eci()
     true_list = evaluator.cf_matrix.dot(evaluator.eci)
     predict_list = evaluator.get_energy_predict()
@@ -278,6 +281,7 @@ def test_get_energy_predict(make_eval):
 
 def test_save_eci(make_eval, make_tempfile):
     evaluator = make_eval()
+    evaluator.fit()
 
     # Save with extension
     fname = make_tempfile("eci.json")
@@ -294,6 +298,7 @@ def test_save_eci(make_eval, make_tempfile):
 
 def test_load_eci(make_eval, make_tempfile):
     evaluator = make_eval()
+    evaluator.fit()
 
     eci = evaluator.get_eci_dict()
 
@@ -314,7 +319,7 @@ def test_load_eci(make_eval, make_tempfile):
 
 def test_get_eci_by_size(make_eval):
     evaluator = make_eval(fitting_scheme="l1")
-    evaluator.get_eci()
+    evaluator.fit()
     name_list = []
     distance_list = []
     eci_list = []
@@ -392,25 +397,6 @@ def test_fit_required(make_eval):
     assert not evaluator.fit_required()
 
 
-def test_remember_alpha(make_eval, mocker):
-    evaluator: Evaluate = make_eval()
-    # Spy on the actual method which does the fitting.
-    # Verify it's only run when necessary.
-    spy = mocker.spy(evaluator, "_do_fit")
-    assert evaluator.fit_required()
-    assert spy.call_count == 0
-    evaluator.fit()
-    assert spy.call_count == 1
-    evaluator.fit()
-    # Repeated calls shouldn't trigger an actual re-fit since we changed nothing.
-    assert spy.call_count == 1
-    # Set a new scheme, so we need to re-fit next time we request a fit.
-    evaluator.set_fitting_scheme()
-    assert spy.call_count == 1
-    evaluator.fit()
-    assert spy.call_count == 2
-
-
 def test_load_eci_dict(make_eval):
     evaluator: Evaluate = make_eval()
 
@@ -424,3 +410,66 @@ def test_load_eci_dict(make_eval):
     for name, value in zip(evaluator.cf_names, eci):
         # Any names not in the dictionary should be 0
         assert value == pytest.approx(dct.get(name, 0.0))
+
+
+@pytest.mark.parametrize(
+    "regressor",
+    [
+        lambda eva: "l1",
+        lambda eva: "l2",
+        lambda eva: "ols",
+        lambda eva: regression.LinearRegression(),
+        lambda eva: regression.Tikhonov(),
+        lambda eva: regression.Lasso(),
+        lambda eva: regression.BayesianCompressiveSensing(),
+        lambda eva: regression.ConstrainedRidge(alpha=np.ones(len(eva.cf_names))),
+        lambda eva: regression.BayesianCompressiveSensing(),
+        lambda eva: regression.GeneralizedRidgeRegression(np.ones(len(eva.cf_names))),
+        lambda eva: regression.PhysicalRidge(cf_names=eva.cf_names),
+    ],
+)
+def test_regressor_fit(regressor, make_eval):
+    evaluator: Evaluate = make_eval()
+    reg = regressor(evaluator)  # Initialize the regressor
+    evaluator.set_fitting_scheme(fitting_scheme=reg)
+    evaluator.fit()
+
+    # Test that we can do the basic fit plots. Will not open the figures.
+    pp.plot_fit(evaluator)
+    pp.plot_fit_residual(evaluator)
+    pp.plot_eci(evaluator)
+
+
+def test_get_eci(make_eval):
+    evaluator: Evaluate = make_eval()
+    with pytest.raises(ValueError):
+        evaluator.get_eci()
+    evaluator.fit()
+    evaluator.get_eci()
+
+
+@pytest.mark.parametrize(
+    "regressor, expected",
+    [
+        (lambda: regression.Tikhonov(), True),
+        (lambda: regression.Lasso(), True),
+        (lambda: regression.LinearRegression(), False),
+        (lambda: regression.BayesianCompressiveSensing(), False),
+        (lambda: regression.ConstrainedRidge(alpha=np.ones(4)), False),
+        (lambda: regression.GeneralizedRidgeRegression(np.ones(4)), False),
+    ],
+)
+def test_supports_alpha_cv(regressor, expected):
+    assert supports_alpha_cv(regressor()) is expected
+
+
+def test_set_scoring_scheme(make_eval):
+    eva: Evaluate = make_eval()
+    eva.scoring_scheme = "K-FOLD"
+    assert eva.scoring_scheme == "k-fold"
+    eva.scoring_scheme = "LOOcV"
+    assert eva.scoring_scheme == "loocv"
+    eva.scoring_scheme = "loocv_fasT"
+    assert eva.scoring_scheme == "loocv_fast"
+    with pytest.raises(ValueError):
+        eva.scoring_scheme = "loo"

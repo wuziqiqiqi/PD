@@ -7,7 +7,7 @@ from numpy.random import choice
 from scipy.linalg import solve_triangular
 
 from clease.data_normalizer import DataNormalizer
-from clease.tools import split_dataset
+from clease.tools import split_dataset, get_size_from_cf_name
 from .regression import LinearRegression
 from .constrained_ridge import ConstrainedRidge
 
@@ -65,6 +65,9 @@ class PhysicalRidge(LinearRegression):
         (e.g. energy, pressure, bulk moduli) there will typically be different
         columns that corresponds to the bias term for the different groups. It
         is recommended to put normalize=False for such cases.
+
+    :param cf_names: List of strings, used to initialize the size and diameters
+        which will be used.
     """
 
     def __init__(
@@ -74,6 +77,7 @@ class PhysicalRidge(LinearRegression):
         size_decay: Union[str, Callable[[int], float]] = "linear",
         dia_decay: Union[str, Callable[[int], float]] = "linear",
         normalize: bool = True,
+        cf_names: List[str] = None,
     ) -> None:
         super().__init__()
         self.lamb_size = lamb_size
@@ -85,6 +89,9 @@ class PhysicalRidge(LinearRegression):
         self.normalize = normalize
         self.normalizer = DataNormalizer()
         self._constraint = None
+        if cf_names is not None:
+            self.diameters_from_names(cf_names)
+            self.sizes_from_names(cf_names)
 
     def add_constraint(self, A: np.ndarray, c: np.ndarray) -> None:
         """
@@ -137,7 +144,7 @@ class PhysicalRidge(LinearRegression):
             number of columns in the X matrix passed to the fit method.
             Ex: ['c0', 'c1_1', 'c2_d0000_0_00']
         """
-        self.sizes = [int(n[1]) for n in names]
+        self.sizes = [get_size_from_cf_name(n) for n in names]
 
     def diameters_from_names(self, names: List[str]) -> None:
         """
@@ -150,7 +157,8 @@ class PhysicalRidge(LinearRegression):
         """
         diameters = []
         for n in names:
-            if n[1] == "0" or n[1] == "1":
+            size = get_size_from_cf_name(n)
+            if size in {0, 1}:
                 diameters.append(0.0)
             else:
                 dia_str = n.split("_")[1]

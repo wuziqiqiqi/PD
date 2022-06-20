@@ -51,6 +51,8 @@ for all structures that are not yet converged
   :skipif: havedisplay is False
 
   >>> from clease import Evaluate
+  >>> import clease.plot_post_process as pp
+  >>> import matplotlib.pyplot as plt
   >>>
   >>> eva = Evaluate(settings=settings, scoring_scheme='k-fold', nsplits=10)
   >>> # scan different values of alpha and return the value of alpha that yields
@@ -60,11 +62,14 @@ for all structures that are not yet converged
   >>>
   >>> # set the alpha value with the one found above, and fit data using it.
   >>> eva.set_fitting_scheme(fitting_scheme='l1', alpha=alpha)
-  >>> eva.plot_fit(interactive=False)
+  >>> eva.fit()  # Run the fit with these settings.
+  >>>
+  >>> fig = pp.plot_fit(eva)
+  >>> plt.show()
   >>>
   >>> # plot ECI values
-  >>> eva.plot_ECI()
-  >>>
+  >>> fig = pp.plot_eci(eva)
+  >>> plt.show()
   >>> # save a dictionary containing cluster names and their ECIs
   >>> eva.save_eci(fname='eci_l1')
 

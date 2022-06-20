@@ -55,6 +55,10 @@ class ConstrainedRidge(LinearRegression):
         where coeff is the sought solution, and lamb is a set of Lagrange
         multipliers.
         """
+        if len(self.alpha) != X.shape[1]:
+            msg = "Alpha has wrong number of dimensions. It should be equal to the number "
+            msg += f"of features {X.shape[1]}, but got {len(self.alpha)}."
+            raise ValueError(msg)
         if self._constraint is None:
             return X.T.dot(X) + self.alpha, X.T.dot(y)
 

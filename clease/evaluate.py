@@ -19,7 +19,7 @@ from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
 from clease.tools import add_file_extension, sort_cf_names, get_size_from_cf_name
 
-__all__ = ("Evaluate",)
+__all__ = ("Evaluate", "supports_alpha_cv")
 
 # Initialize a module-wide logger
 logger = lg.getLogger(__name__)
@@ -111,7 +111,6 @@ class Evaluate:
         self.scoring_scheme = scoring_scheme
 
         self.scheme = None
-        self.scheme_string = None
         self.nsplits = nsplits
         self.num_repetitions = num_repetitions
 
@@ -153,7 +152,6 @@ class Evaluate:
 
         self.multiplicity_factor = self.settings.multiplicity_factor
         self.eci = None
-        self._alpha = None
         self.e_pred_loo = None
         self.parallel = parallel
         if parallel:
@@ -164,6 +162,21 @@ class Evaluate:
 
         self.set_fitting_scheme(fitting_scheme, alpha)
         self._cv_scores = []
+
+    @property
+    def scoring_scheme(self) -> str:
+        return self._scoring_scheme
+
+    @scoring_scheme.setter
+    def scoring_scheme(self, value: str) -> None:
+        if not isinstance(value, str):
+            raise TypeError(f"Scoring scheme should be string, got {value!r}")
+        value = value.lower()
+        allowed_schemas = {"loocv", "loocv_fast", "k-fold"}
+        if value not in allowed_schemas:
+            schemas_s = ", ".join(sorted(allowed_schemas))
+            raise ValueError(f"Unknown scoring scheme: {value}. Allowed schemas: {schemas_s}")
+        self._scoring_scheme = value
 
     @property
     def concentrations(self):
@@ -180,12 +193,11 @@ class Evaluate:
     def set_fitting_scheme(self, fitting_scheme="ridge", alpha=1e-9):
         from clease.regression import LinearRegression
 
-        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2", "ols"]
+        allowed_fitting_schemes = ["ridge", "tikhonov", "lasso", "l1", "l2", "ols", "linear"]
         if isinstance(fitting_scheme, LinearRegression):
             self.scheme = fitting_scheme
         elif isinstance(fitting_scheme, str):
             fitting_scheme = fitting_scheme.lower()
-            self.scheme_string = fitting_scheme
             if fitting_scheme not in allowed_fitting_schemes:
                 raise ValueError(f"Fitting scheme has to be one of {allowed_fitting_schemes}")
             if fitting_scheme in ["ridge", "tikhonov", "l2"]:
@@ -196,9 +208,11 @@ class Evaluate:
                 from clease.regression import Lasso
 
                 self.scheme = Lasso(alpha=alpha)
-            else:
+            elif fitting_scheme in ["ols", "linear"]:
                 # Perform ordinary least squares
                 self.scheme = LinearRegression()
+            else:
+                raise ValueError(f"Unknown fitting scheme: {fitting_scheme}")
         else:
             raise ValueError(
                 f"Fitting scheme has to be one of "
@@ -206,13 +220,8 @@ class Evaluate:
                 f"LinearRegression instance."
             )
 
-        # If the fitting scheme is changed, the ECIs computed are no
-        # longer consistent with the scheme
-        # By setting it to None, a new calculation is performed
-        # when the ECIs are requested
-        # Also reset the "last alpha"
+        # Unset the ECI, so a new fit is required.
         self.eci = None
-        self._alpha = None
 
         N = len(self.e_dft)
 
@@ -269,63 +278,50 @@ class Evaluate:
 
     def fit_required(self) -> bool:
         """Check whether we need to calculate the ECI values."""
-        return self.eci is None or self._alpha != self.scheme.alpha
+        return self.eci is None
 
     def fit(self) -> None:
-        """Determine the ECI for a given alpha.
+        """Determine the ECI with the given regressor.
 
-        This method also saves the last value of alpha used and
-        the corresponding ECIs (self.eci) such that ECIs are not calculated
-        repeated if alpha value is unchanged.
+        This will always calculate a new fit.
         """
-        if self.fit_required():
-            self._do_fit()
+        self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
         assert self.eci is not None
 
-    def _do_fit(self) -> None:
-        """Fit using the current scheme, and remember the alpha"""
-        self.eci = self.scheme.fit(self.cf_matrix, self.e_dft)
-        # Remember the latest alpha
-        self._alpha = self.scheme.alpha
-
-    def get_eci(self, allow_fit: bool = True) -> np.ndarray:
+    def get_eci(self) -> np.ndarray:
         """Determine and return ECIs for a given alpha.
-
-        Args:
-            allow_fit (bool, optional): Is a new fit allowed to be run before returning the ECI's?
-                If no ECI's are present yet, and no re-fitting was allowed, then a ValueError
-                is raised.
-                Defaults to True.
+        Raises a ValueError if no fit has been performed yet.
 
         Returns:
             np.ndarray: A 1D array of floats with all ECI values.
         """
-        if allow_fit:
-            self.fit()
         if self.eci is None:
             # getting ECI's was not allowed to fit, and we havn't run a fit yet.
-            raise ValueError("ECI's has not been fit yet.")
+            raise ValueError("ECI's has not been fit yet. Call the Evaluate.fit method first.")
 
         return self.eci
 
-    def get_eci_dict(self, allow_fit: bool = True):
+    def get_eci_dict(self, cutoff_tol: float = 1e-14) -> Dict[str, float]:
+        """Determine cluster names and their corresponding ECI value and return
+        them in a dictionary format.
+
+        Args:
+            cutoff_tol (float, optional): Cutoff value below which the absolute ECI
+                value is considered to be 0. Defaults to 1e-14.
+
+        Returns:
+            Dict[str, float]: Dictionary with the CF names and the corresponding
+                ECI value.
         """
-        Determine cluster names and their corresponding ECI value and return
-        them in a dictionary format."""
-        self.get_eci(allow_fit=allow_fit)
+        eci = self.get_eci()
 
         # sanity check
-        if len(self.cf_names) != len(self.eci):
+        if len(self.cf_names) != len(eci):
             raise ValueError("lengths of cf_names and ECIs are not same")
 
-        i_nonzeros = np.nonzero(self.eci)[0]
-        pairs = []
-        for i, cname in enumerate(self.cf_names):
-            if i not in i_nonzeros:
-                continue
-            pairs.append((cname, self.eci[i]))
-
-        return dict(pairs)
+        all_nonzero = np.abs(eci) > cutoff_tol
+        # Only keep the all non-zero values.
+        return {cf: val for cf, val, nonzero in zip(self.cf_names, eci, all_nonzero) if nonzero}
 
     def load_eci_dict(self, eci_dict: Dict[str, float]) -> None:
         """Load the ECI's from a dictionary. Any ECI's which are missing
@@ -352,7 +348,7 @@ class Evaluate:
         with open(full_fname, "r") as fd:
             self.load_eci_dict(json.load(fd))
 
-    def save_eci(self, fname="eci.json"):
+    def save_eci(self, fname="eci.json", **kwargs):
         """
         Save a dictionary of cluster names and their corresponding ECI value
         in JSON file format.
@@ -361,10 +357,12 @@ class Evaluate:
 
         fname: str
             json filename. If no extension if given, .json is added
+        kwargs:
+            Extra keywords are passed on to the :meth:`~get_eci_dict` method.
         """
         full_fname = add_file_extension(fname, ".json")
         with open(full_fname, "w") as outfile:
-            json.dump(self.get_eci_dict(), outfile, indent=2, separators=(",", ": "))
+            json.dump(self.get_eci_dict(**kwargs), outfile, indent=2, separators=(",", ": "))
 
     def plot_fit(self, interactive=False, savefig=False, fname=None, show_hull=True):
         """Plot calculated (DFT) and predicted energies for a given alpha.
@@ -404,13 +402,10 @@ class Evaluate:
 
         cv = None
         cv_name = "LOOCV"
-        if self.scoring_scheme == "loocv":
-            cv = self.loocv() * 1000.0
-        elif self.scoring_scheme == "loocv_fast":
-            cv = self.loocv_fast() * 1000.0
-        elif self.scoring_scheme == "k-fold":
-            cv = self.k_fold_cv() * 1000.0
+        cv = self.get_cv_score() * 1000.0
+        if self.scoring_scheme == "k-fold":
             cv_name = f"{self.nsplits}-fold"
+
         t = np.arange(rmin - 10, rmax + 10, 1)
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -613,21 +608,12 @@ class Evaluate:
         """
         from clease.regression import LinearRegression
 
-        if fitting_schemes is None:
-            if self.scheme_string is None:
-                raise ValueError("No fitting scheme supplied!")
-            if self.scheme_string in ["lasso", "l1"]:
-                from clease.regression import Lasso
+        if not supports_alpha_cv(self.scheme):
+            raise ValueError(f"Scheme must support scalar alpha, got {self.scheme!r}")
 
-                fitting_schemes = Lasso.get_instance_array(
-                    alpha_min, alpha_max, num_alpha=num_alpha, scale=scale
-                )
-            elif self.scheme_string in ["ridge", "l2", "tikhonov"]:
-                from clease.regression import Tikhonov
-
-                fitting_schemes = Tikhonov.get_instance_array(
-                    alpha_min, alpha_max, num_alpha=num_alpha, scale=scale
-                )
+        fitting_schemes = self.scheme.get_instance_array(
+            alpha_min, alpha_max, num_alpha=num_alpha, scale=scale
+        )
 
         for scheme in fitting_schemes:
             if not isinstance(scheme, LinearRegression):
@@ -674,13 +660,9 @@ class Evaluate:
             cv = np.ones(len(fitting_schemes))
             for i, scheme in enumerate(fitting_schemes):
                 self.set_fitting_scheme(fitting_scheme=scheme)
-                if self.scoring_scheme == "loocv":
-                    cv[i] = self.loocv()
-                elif self.scoring_scheme == "loocv_fast":
-                    cv[i] = self.loocv_fast()
-                elif self.scoring_scheme == "k-fold":
-                    cv[i] = self.k_fold_cv()
-                num_eci = len(np.nonzero(self.get_eci(allow_fit=True))[0])
+                cv[i] = self.get_cv_score()
+                self.fit()
+                num_eci = len(np.nonzero(self.get_eci())[0])
                 alpha = scheme.get_scalar_parameter()
                 alphas.append(alpha)
                 logger.info(f"{alpha:.10f}\t {num_eci}\t {cv[i]:.10f}")
@@ -704,13 +686,9 @@ class Evaluate:
 
         for alpha in alphas:
             self.scheme.alpha = alpha
-            if self.scoring_scheme == "loocv":
-                cv = self.loocv()
-            elif self.scoring_scheme == "loocv_fast":
-                cv = self.loocv_fast()
-            elif self.scoring_scheme == "k-fold":
-                cv = self.k_fold_cv()
-            num_eci = len(np.nonzero(self.get_eci(allow_fit=True))[0])
+            cv = self.get_cv_score()
+            self.fit()
+            num_eci = len(np.nonzero(self.get_eci())[0])
             self._cv_scores.append({"alpha": alpha, "cv": cv})
             logger.info(f"{alpha:.10f}\t {num_eci}\t {cv:.10f}")
 
@@ -1111,7 +1089,7 @@ class Evaluate:
             row = db.get(id=uid)
             cf = self._get_cf_from_atoms_row(row)
 
-            pred = self.eci.dot(cf)
+            pred = self.get_eci().dot(cf)
 
             if row.get("final_struct_id", -1) != -1:
                 energy = db.get(id=row.get("final_struct_id"))
@@ -1149,11 +1127,13 @@ class Evaluate:
         Calculate the CV score according to the selected scheme
         """
         if self.scoring_scheme == "loocv":
-            cv = self.loocv() * 1000.0
+            cv = self.loocv()
         elif self.scoring_scheme == "loocv_fast":
-            cv = self.loocv_fast() * 1000.0
+            cv = self.loocv_fast()
         elif self.scoring_scheme == "k-fold":
-            cv = self.k_fold_cv() * 1000.0
+            cv = self.k_fold_cv()
+        else:
+            raise ValueError(f"Unknown scoring scheme: {self.schoring_scheme}")
         return cv
 
     def get_energy_predict(self) -> np.ndarray:
@@ -1162,9 +1142,8 @@ class Evaluate:
 
         :return: Energy predicted using ECIs
         """
-        if self.eci is None:
-            raise ValueError("ECIs have not been fitted yet.")
-        return self.cf_matrix.dot(self.eci)
+        eci = self.get_eci()
+        return self.cf_matrix.dot(eci)
 
     def get_eci_by_size(self) -> Dict[str, Dict[str, list]]:
         """
@@ -1226,6 +1205,14 @@ def loocv_mp(args):
         cv = evaluator.loocv_fast()
     elif evaluator.scoring_scheme == "k-fold":
         cv = evaluator.k_fold_cv()
-    num_eci = len(np.nonzero(evaluator.get_eci(allow_fit=True))[0])
+    evaluator.fit()
+    num_eci = len(np.nonzero(evaluator.get_eci())[0])
     logger.info("%.10f\t %d\t %.10f", alpha, num_eci, cv)
     return cv
+
+
+def supports_alpha_cv(scheme: LinearRegression) -> bool:
+    """Determine whether a regression scheme supports alpha CV"""
+    if scheme.is_scalar() and hasattr(scheme, "alpha"):
+        return True
+    return False

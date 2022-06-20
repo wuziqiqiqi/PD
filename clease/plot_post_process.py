@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 from clease import Evaluate, ConvexHull
+from clease.evaluate import supports_alpha_cv
 
 
 def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = False) -> Figure:
@@ -46,7 +47,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
         nsplits = evaluate.nsplits
         cv_name = f"{nsplits}-fold CV"
 
-    cv = evaluate.get_cv_score()
+    cv = evaluate.get_cv_score() * 1000
     rmse = evaluate.rmse() * 1000
 
     fig = plt.figure()
@@ -194,6 +195,8 @@ def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
 
     :return: Figure instance of plot
     """
+    if not supports_alpha_cv(evaluate.scheme):
+        raise ValueError(f"Scheme {evaluate.scheme!r} doesn't support alpha CV.")
     if plot_args is None:
         plot_args = {}
     alpha_cv_data = evaluate.cv_scores
