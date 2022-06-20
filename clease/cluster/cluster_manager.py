@@ -311,7 +311,7 @@ class ClusterManager:
             wrap_fnc = functools.partial(
                 self._wrap_four_vectors_trivial, unique=unique, nx=nx, ny=ny, nz=nz
             )
-            logger.info("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
+            logger.debug("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
         else:
             # Choose the generalized pathway.
             # Pre-calculate the inverse of the cell for faster wrapping of the positions.
@@ -319,7 +319,7 @@ class ClusterManager:
             wrap_fnc = functools.partial(
                 self._wrap_four_vectors_general, unique=unique, cell=cell, cell_T_inv=cell_T_inv
             )
-            logger.info("Non-trivial supercell, will wrap using cartesian coordinates")
+            logger.debug("Non-trivial supercell, will wrap using cartesian coordinates")
 
         lut = self.create_four_vector_lut(template)
 
