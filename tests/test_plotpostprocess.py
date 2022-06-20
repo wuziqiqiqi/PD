@@ -36,14 +36,14 @@ def test_plot_fit_residual(bc_setting):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
     evaluator.get_eci()
 
-    # y-axis values calculated by subtract_predict_dft
-    predict["delta_e"] = np.ndarray.tolist(evaluator.subtract_predict_dft())
+    delta_e = evaluator.get_energy_predict() - evaluator.e_dft
+    predict["delta_e"] = delta_e * 1000  # convert to meV/atom
 
     fig = pp.plot_fit_residual(evaluator, plot_args)
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[1].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
-    assert predict["delta_e"] == np.ndarray.tolist(fig.get_children()[1].get_lines()[1].get_ydata())
+    assert np.allclose(predict["delta_e"], fig.get_children()[1].get_lines()[1].get_ydata())
 
 
 def test_plot_eci(bc_setting):

@@ -105,7 +105,8 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     if plot_args is None:
         plot_args = {}
     X = evaluate.e_dft
-    Y = evaluate.subtract_predict_dft()
+    Y = evaluate.get_energy_predict() - X  # eV/atom
+    Y *= 1000  # meV/atom
     xlabel = plot_args.get("xlabel", "#OCC")
     ylabel = plot_args.get("ylabel", r"$E_{DFT} - E_{pred}$ (meV/atom)")
     title = plot_args.get("title", "Residual (v)")
@@ -116,6 +117,7 @@ def plot_fit_residual(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     ax[0].set_ylabel(ylabel)
     ax[0].axhline(0, ls="--")
     ax[0].plot(X, Y, "v", mfc="none")
+    ax[0].set_xlabel(r"$E_{DFT}$ (eV/atom)")
 
     hist, bin_edges = np.histogram(Y, bins=30)
     h = bin_edges[1] - bin_edges[0]

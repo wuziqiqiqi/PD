@@ -312,23 +312,6 @@ def test_load_eci(make_eval, make_tempfile):
         assert pytest.approx(v) == eci_loaded[k]
 
 
-def test_subtract_predict_dft(make_eval):
-    evaluator = make_eval(fitting_scheme="l1")
-    evaluator.get_eci()
-    e_pred = evaluator.get_energy_predict()
-    true_delta = evaluator.e_dft - e_pred
-    predict_delta = evaluator.subtract_predict_dft()
-    assert true_delta.tolist() == predict_delta.tolist()
-
-
-def test_subtract_predict_dft_loo(make_eval):
-    evaluator = make_eval(fitting_scheme="l1")
-    evaluator.loocv()
-    true_delta = evaluator.e_dft - evaluator.e_pred_loo
-    predict_delta = evaluator.subtract_predict_dft_loo()
-    assert true_delta.tolist() == predict_delta.tolist()
-
-
 def test_get_eci_by_size(make_eval):
     evaluator = make_eval(fitting_scheme="l1")
     evaluator.get_eci()

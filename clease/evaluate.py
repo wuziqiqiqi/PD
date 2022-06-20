@@ -5,7 +5,7 @@ import sys
 import json
 import logging as lg
 import multiprocessing as mp
-from typing import Optional, Dict, List
+from typing import Dict, List
 
 import numpy as np
 from ase.db import connect
@@ -1165,30 +1165,6 @@ class Evaluate:
         if self.eci is None:
             raise ValueError("ECIs have not been fitted yet.")
         return self.cf_matrix.dot(self.eci)
-
-    def subtract_predict_dft(self) -> np.ndarray:
-        """
-        Subtract CE predicted energy from DFT energy
-
-        :return: Energy difference between DFT and CE model
-            (i.e., E_DFT - E_CE) in the original unit (typically eV)
-        """
-        e_pred = self.get_energy_predict()
-        delta_e = self.e_dft - e_pred
-        return delta_e
-
-    def subtract_predict_dft_loo(self) -> Optional[np.ndarray]:
-        """
-        Subtract CE predicted energy from DFT energy in the leave-one-out
-        scheme.
-
-        :return: Energy difference between DFT and CE model
-            (i.e., E_DFT - E_CE_LOO) in the original unit (typically eV)
-        """
-        if self.e_pred_loo is None:
-            return None
-        delta_e_loo = self.e_dft - self.e_pred_loo
-        return delta_e_loo
 
     def get_eci_by_size(self) -> Dict[str, Dict[str, list]]:
         """
