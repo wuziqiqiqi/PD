@@ -185,22 +185,6 @@ def test_initialization_settings_cluster_mng(mocker, make_settings):
     assert settings.cluster_mng.build.call_count == 2
 
 
-@pytest.mark.parametrize(
-    "kwargs",
-    [
-        dict(max_cluster_size=4, max_cluster_dia=3.0),
-        dict(max_cluster_size=2, max_cluster_dia=[4.0]),
-        dict(max_cluster_size=1, max_cluster_dia=[]),
-        dict(max_cluster_size=1, max_cluster_dia=3),
-    ],
-)
-def test_deprecated(make_settings, kwargs):
-    """Test some deprecated kwarg combinations.
-    They shouldn't fail, just raise a deprecation warning."""
-    with pytest.warns(DeprecationWarning):
-        make_settings(**kwargs)
-
-
 def test_cluster_table(make_settings):
     settings = make_settings()
     res = settings.clusters_table()

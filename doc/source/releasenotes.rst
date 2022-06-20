@@ -15,6 +15,15 @@ Release notes
 * Added the :py:attr:`~clease.montecarlo.montecarlo.Montecarlo.current_accept_rate` property,
   and export the current accept rate in the thermodynamic quantities dictionary under the
   ``accept_rate`` key.
+* Removed a series of deprecated things:
+
+  * Removed the ``clease.concentration`` module.
+  * Removed the ``clease.new_struct`` module.
+  * Removed old regression imports. Regression classes must now be imported from the
+    ``clease.regression`` module.
+  * Removed the ``clease.structure_generator`` module.
+  * Removed the ``max_cluster_size`` settings argument.
+
 
 0.11.6
 =======

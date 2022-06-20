@@ -110,8 +110,6 @@ def test_load_from_db(make_conc, make_settings):
 
 
 def test_max_cluster_dia(make_conc, make_settings):
-    from clease.settings.settings import _format_max_cluster_dia
-
     basis_elements = [["Au", "Cu"]]
     conc = make_conc(basis_elements)
     mcd = [4.3, 4.3, 4.3]
@@ -119,15 +117,14 @@ def test_max_cluster_dia(make_conc, make_settings):
     settings = make_settings(conc, max_cluster_dia=mcd, verify=True)
 
     # Ensure max cluster dia has not been mutated
-    assert not mcd is mcd_orig
+    assert mcd is not mcd_orig
     assert mcd == mcd_orig
 
     # Explicitly test format_max_cluster dia, ensure no mutation still
-    out = _format_max_cluster_dia(mcd)
-    assert mcd == mcd_orig
+    out = settings.max_cluster_dia
+    assert mcd is not out
     assert isinstance(out, np.ndarray)
-    assert isinstance(settings.max_cluster_dia, np.ndarray)
-    assert np.array_equal(settings.max_cluster_dia, out)
+    assert np.allclose(out, mcd)
 
 
 @pytest.mark.parametrize("mcs", [2, 3, 4, 5, 6, 7])

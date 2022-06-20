@@ -1,6 +1,5 @@
 # pylint: disable=undefined-variable
 import logging
-from deprecated import deprecated
 from .version import *
 
 # Do imports in the proper order, avoid cyclic imports

@@ -8,7 +8,6 @@ import logging
 from copy import deepcopy
 from typing import List, Dict, Optional, Union, Sequence, Set, Any
 
-from deprecated import deprecated
 import numpy as np
 from ase import Atoms
 from ase.db import connect
@@ -58,10 +57,6 @@ class ClusterExpansionSettings:
 
         db_name (str, optional): Name of the database file. Defaults to ``'clease.db'``.
 
-        max_cluster_size (int | None, optional): Deprecated. Specifies the maximum cluster
-            body size. Defaults to None. A DeprecationWarning will be raised,
-            if this value is not None.
-
         max_cluster_dia (Sequence[float], optional): A list of int or float containing the
             maximum diameter of clusters (in Å). Defaults to ``(5., 5., 5.)``, i.e.
             a 5 Å cutoff for 2-, 3-, and 4-body clusters.
@@ -102,9 +97,6 @@ class ClusterExpansionSettings:
         size: Optional[List[int]] = None,
         supercell_factor: Optional[int] = 27,
         db_name: str = "clease.db",
-        # max_cluster_size is only here for deprecation purposes
-        # if it is not None, the user has manually specified a value
-        max_cluster_size=None,
         max_cluster_dia: Sequence[float] = (5.0, 5.0, 5.0),
         include_background_atoms: bool = False,
         basis_func_type="polynomial",
@@ -144,9 +136,7 @@ class ClusterExpansionSettings:
 
         self.set_active_template()
 
-        self.max_cluster_dia = _format_max_cluster_dia(
-            max_cluster_dia, max_cluster_size=max_cluster_size
-        )
+        self.max_cluster_dia = np.array(max_cluster_dia)
 
         self.basis_func_type = basis_func_type
 
@@ -684,7 +674,8 @@ class ClusterExpansionSettings:
 
         if "max_cluster_size" in dct:
             # For compatibility, since it's no longer in KWARG_KEYS
-            kwargs["max_cluster_size"] = dct.pop("max_cluster_size")
+            # Avoid crashing.
+            dct.pop("max_cluster_size")
 
         settings = cls(*args, **kwargs)
 
@@ -743,54 +734,6 @@ def _get_concentration(concentration: Union[Concentration, dict]) -> Concentrati
     else:
         raise TypeError("concentration has to be either dict or instance of Concentration")
     return conc
-
-
-def _format_max_cluster_dia(max_cluster_dia, max_cluster_size=None):
-    """Formatter of max_cluster_dia."""
-    if max_cluster_size is None and not isinstance(max_cluster_dia, (int, float)):
-        # Assume max_cluster_dia is sequence[float], and user didn't specify any
-        # (now deprecated) max_cluster sizes.
-        return np.array(max_cluster_dia)
-    return _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size)
-
-
-def _old_format_max_cluster_dia(max_cluster_dia, max_cluster_size):
-
-    # User specified an old version of MCS and MCD
-    dep_msg = f"""
-    max_cluser_size should no longer be specfied explicitly,
-    and max_cluster_dia should no longer be an int or float.
-
-    Specify cluster sizes with max_cluster_dia as an array-like instead.
-    Got max_cluster_size '{max_cluster_size}' and max_cluster_dia '{max_cluster_dia}'.
-    Try instead to use max_cluster_dia as an array, e.g. max_cluster_dia=[5., 5., 5.]
-    for 2-, 3- and 4-body clusters of cutoff 5 Å.
-    """
-
-    @deprecated(version="0.10.6", reason=dep_msg)
-    def _formatter():
-        # max_cluster_dia is list or array
-        if isinstance(max_cluster_dia, (list, np.ndarray, tuple)):
-            # Length should be either max_cluster_size+1 or max_cluster_size-1
-            mcd = np.array(max_cluster_dia, dtype=float)
-            if len(max_cluster_dia) == max_cluster_size + 1:
-                # Remove the first two entries, assume they are 0- and 1-body diameters
-                mcd = mcd[2:]
-            elif len(max_cluster_dia) == max_cluster_size - 1:
-                # Assume max_cluster_dia contains 2+ body clusters
-                pass
-            else:
-                raise ValueError("Invalid length for max_cluster_dia.")
-        elif isinstance(max_cluster_dia, (int, float)):
-            if max_cluster_size is None:
-                raise ValueError("Received no max_cluster_size, but a float for max_cluster_dia")
-            mcd = np.ones(max_cluster_size - 1, dtype=float) * max_cluster_dia
-        # Case for *None* or something else
-        else:
-            raise TypeError(f"max_cluster_dia is of wrong type, got: {type(max_cluster_dia)}")
-        return mcd.round(decimals=3)
-
-    return _formatter()
 
 
 def _get_prim_cell_id_from_connection(prim_cell: Atoms, connection: Database) -> int:
