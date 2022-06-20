@@ -9,25 +9,25 @@ from clease import Evaluate
 def test_plot_fit(bc_setting):
     predict = {
         "title": "plot_FIT_TEST",
-        "xlabel": "E_CE (eV/atom)",
-        "ylabel": "E_DFT (eV/atom)",
+        "xlabel": "E_DFT (eV/atom)",
+        "ylabel": "E_CE (eV/atom)",
     }
     plot_args = {"title": predict["title"], "ylabel": predict["ylabel"]}
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
     evaluator.fit()
 
-    # x-axis values calculated by get_energy_predict
-    predict["x_axis_value"] = np.ndarray.tolist(evaluator.get_energy_predict())
-    # y-axis values calculated by get_energy_predict
-    predict["y_axis_value"] = np.ndarray.tolist(evaluator.e_dft)
+    # x-axis is the DFT energy
+    predict["x_axis_value"] = evaluator.e_dft
+    # y-axis is the CE energy
+    predict["y_axis_value"] = evaluator.get_energy_predict()
 
     fig = pp.plot_fit(evaluator, plot_args)
     assert "loocv" in fig.get_axes()[0].texts[0].get_text()
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
-    assert predict["x_axis_value"] == np.ndarray.tolist(fig.gca().lines[1].get_xdata())
-    assert predict["y_axis_value"] == np.ndarray.tolist(fig.gca().lines[1].get_ydata())
+    assert predict["x_axis_value"] == pytest.approx(fig.gca().lines[1].get_xdata())
+    assert predict["y_axis_value"] == pytest.approx(fig.gca().lines[1].get_ydata())
 
 
 def test_plot_fit_residual(bc_setting):
