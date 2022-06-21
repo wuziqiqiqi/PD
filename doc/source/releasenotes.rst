@@ -4,8 +4,9 @@
 Release notes
 =============
 
-0.11.7
-=======
+1.0.0
+======
+* 21 June 2022 - CLEASE is no longer considered beta.
 * :class:`~clease.evaluate.Evaluate` can now properly support fitting with custom LinearRegression
   schemes, even if they don't support alpha cross-validation.
 * :class:`~clease.evaluate.Evaluate` now required explicit calls to
