@@ -4,6 +4,10 @@
 Release notes
 =============
 
+1.0.1
+======
+
+
 1.0.0
 ======
 * 21 June 2022 - CLEASE is no longer considered beta.
