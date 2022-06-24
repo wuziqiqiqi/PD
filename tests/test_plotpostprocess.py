@@ -46,7 +46,8 @@ def test_plot_fit_residual(bc_setting):
     assert np.allclose(predict["delta_e"], fig.get_children()[1].get_lines()[1].get_ydata())
 
 
-def test_plot_eci(bc_setting):
+@pytest.mark.parametrize("ignore_sizes", [(), [0], [0, 1], [3, 4]])
+def test_plot_eci(bc_setting, ignore_sizes):
     predict = {
         "title": "plot_FIT_TEST",
         "xlabel": "Cluster diameter ($n^{th}$ nearest neighbor)",
@@ -56,23 +57,27 @@ def test_plot_eci(bc_setting):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
     evaluator.fit()
 
-    # x, y-axis values calculated by get_eci_by_size
-    test_list = evaluator.get_eci_by_size()
-    test_list = list(test_list.values())
+    # x, y-axis values calculated by get_eci_by_size (or largest we keep)
+    sizes = evaluator.get_eci_by_size()
+    test_list = [v for s, v in sizes.items() if s not in ignore_sizes]
 
-    # x, y-axis values of 4 body cluster eci
-    assert len(test_list) == 5, len(test_list)
-    predict["eci"] = test_list[4]["eci"]
+    # Verify we get 5 eci's (0, 1, 2, 3, 4) except the ones we should ignore.
+    assert len(test_list) == (5 - len(ignore_sizes)), len(test_list)
 
     # x, y-axis values of axhline
     predict["axhline_xy"] = [[0.0, 0.0], [1.0, 0.0]]
 
-    fig = pp.plot_eci(evaluator, plot_args)
+    fig = pp.plot_eci(evaluator, plot_args, ignore_sizes=ignore_sizes)
     assert predict["title"] == fig.get_axes()[0].get_title()
     assert predict["xlabel"] == fig.get_axes()[0].get_xlabel()
     assert predict["ylabel"] == fig.get_axes()[0].get_ylabel()
-    assert predict["eci"] == np.ndarray.tolist(fig.gca().lines[5].get_ydata())
-    assert predict["axhline_xy"] == np.ndarray.tolist(fig.gca().axhline().get_xydata())
+    ax = fig.gca()
+    # First the h-line is plotted, and then all of the ECI's
+    eci_lines = ax.lines[1:]
+    for ii, test in enumerate(test_list):
+        eci = test["eci"]
+        assert np.allclose(eci, eci_lines[ii].get_ydata())
+    assert np.allclose(predict["axhline_xy"], ax.axhline().get_xydata())
 
 
 def test_plot_cv(bc_setting):

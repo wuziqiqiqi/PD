@@ -148,7 +148,11 @@ def plot_fit_residual(
     return fig
 
 
-def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
+def plot_eci(
+    evaluate: Evaluate,
+    plot_args: dict = None,
+    ignore_sizes=(),
+) -> Figure:
     """
     Figure object of ECI value according to cluster diameter
     If the plot_args dictionary contains keys,
@@ -162,6 +166,10 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         - "ylabel": y-axis label
         - "title": title of plot
         - "sizes": list of int to include n-body cluster in plot
+    :param ignore_sizes: list of ints
+        Sizes listed in this list will not be plotted.
+        E.g. ``ignore_sizes=[0]`` will exclude the 0-body cluster.
+        Default is to not ignore any clusters.
 
     :return: Figure instance of plot
     """
@@ -186,6 +194,8 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     ax.set_ylabel(ylabel)
 
     for size in sizes:
+        if ignore_sizes and size in ignore_sizes:
+            continue
         data = eci_by_size[size]
         # Add 1, as NN starts from 1 and not 0
         X = np.array(data["distance"]) + 1

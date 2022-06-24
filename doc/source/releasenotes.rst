@@ -6,6 +6,7 @@ Release notes
 
 1.0.1
 ======
+* Added the ``ignore_sizes`` keyword to :py:func:`~clease.plot_post_process.plot_eci`
 
 
 1.0.0
