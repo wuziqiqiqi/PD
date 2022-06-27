@@ -136,7 +136,7 @@ class ClusterExpansionSettings:
 
         self.set_active_template()
 
-        self.max_cluster_dia = np.array(max_cluster_dia)
+        self.max_cluster_dia = max_cluster_dia
 
         self.basis_func_type = basis_func_type
 
@@ -164,6 +164,20 @@ class ClusterExpansionSettings:
         self._prim_cell.wrap()
         self._order_and_tag_prim_cell()
         self._ensure_primitive_exists()
+
+    @property
+    def max_cluster_dia(self) -> np.ndarray:
+        """The maximum cluster diameter, expressed in a NumPy
+        array starting from 2-body clusters at index 0.
+        Diameters are given in units of Ångstrom.
+        """
+        return self._max_cluster_dia
+
+    @max_cluster_dia.setter
+    def max_cluster_dia(self, value) -> None:
+        # Ensure it's NumPy array, and make a copy.
+        self._max_cluster_dia = np.array(value, dtype=float)
+        self.clear_cache()
 
     @property
     def db_name(self) -> str:

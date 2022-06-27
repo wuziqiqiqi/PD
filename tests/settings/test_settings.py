@@ -275,3 +275,14 @@ def test_set_background_setter(make_settings, value):
     settings = make_settings()
     with pytest.raises(NotImplementedError):
         settings.include_background_atoms = value
+
+
+def test_change_max_cluster_dia(make_settings):
+    settings: ClusterExpansionSettings = make_settings()
+    assert settings.requires_build()
+    settings.ensure_clusters_exist()
+    assert not settings.requires_build()
+    settings.max_cluster_dia = [3, 3, 3]
+    assert settings.requires_build()
+    assert isinstance(settings.max_cluster_dia, np.ndarray)
+    assert np.allclose(settings.max_cluster_dia, [3, 3, 3])
