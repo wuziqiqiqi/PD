@@ -9,8 +9,8 @@ from clease import Evaluate
 def test_plot_fit(bc_setting):
     predict = {
         "title": "plot_FIT_TEST",
-        "xlabel": "E_DFT (eV/atom)",
-        "ylabel": "E_CE (eV/atom)",
+        "xlabel": r"E$_{DFT}$ (eV/atom)",
+        "ylabel": r"E$_{CE}$ (eV/atom)",
     }
     plot_args = {"title": predict["title"], "ylabel": predict["ylabel"]}
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)

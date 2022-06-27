@@ -27,8 +27,8 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
         plot_args = {}
     X = evaluate.e_dft
     Y = evaluate.get_energy_predict()
-    xlabel = plot_args.get("xlabel", "E_DFT (eV/atom)")
-    ylabel = plot_args.get("ylabel", "E_CE (eV/atom)")
+    xlabel = plot_args.get("xlabel", r"E$_{DFT}$ (eV/atom)")
+    ylabel = plot_args.get("ylabel", r"E$_{CE}$ (eV/atom)")
     title = plot_args.get("title", f"Fit using {len(evaluate.e_dft)} data points.")
 
     # rmin, rmax set the plot range of x, y coordinate
@@ -169,7 +169,7 @@ def plot_eci(evaluate: Evaluate, plot_args: dict = None) -> Figure:
         plot_args = {}
     # eci_by_size dictionary contains eci, name, distance
     eci_by_size = evaluate.get_eci_by_size()
-    xlabel = plot_args.get("xlabel", "Cluster diameter ($n^{th}$ nearest neighbor)")
+    xlabel = plot_args.get("xlabel", r"Cluster diameter ($n^{th}$ nearest neighbor)")
     ylabel = plot_args.get("ylabel", "ECI (eV/atom)")
     title = plot_args.get("title", "Plot ECI")
     sizes = plot_args.get("sizes", list(eci_by_size.keys()))
