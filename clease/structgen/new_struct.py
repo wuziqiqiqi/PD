@@ -2,7 +2,7 @@
 import os
 from copy import deepcopy
 from functools import reduce
-from typing import List, Dict, Optional, Union, Any
+from typing import List, Dict, Optional, Union, Any, Tuple
 import logging
 from itertools import product
 
@@ -711,18 +711,17 @@ class NewStructures:
         cf: Optional[Dict[str, float]] = None,
         meta: Optional[Dict[str, Any]] = None,
         warn_on_skip: bool = True,
-    ) -> Optional[int]:
+    ) -> Optional[Union[int, Tuple[int, int]]]:
         """Insert a structure to the database.
 
         Returns the ID of the initial structure which was inserted into the database.
-        If a row for the final structure is also inserted, this id can be retrieved of the
-        initial row from the ``final_struct_id`` entry. If no structure was inserted,
-        ``Ǹone`` is returned, instead.
+        If a row for the final structure is also inserted, a tuple of (initial_id, final_id)
+        is returned. If no structure was inserted, ``Ǹone`` is returned, instead.
 
         :param init_struct: Unrelaxed initial structure. If a string is passed,
             it should be the file name with .xyz, .cif or .traj extension.
         :param final_struct: (Optional) final structure that contains energy.
-            It can be either ASE Atoms object or file anme ending with .traj.
+            It can be either ASE Atoms object or file name readable by ASE.
         :param name: (Optional) name of the DB entry if a custom name is to be
             used. If `None`, default naming convention will be used.
         :param cf: (Optional) full correlation function of the initial
@@ -780,16 +779,18 @@ class NewStructures:
                 kvp[key] = value
         tab_name = self.corr_func_table_name
         con = self.connect()
-        uid_init = db_util.new_row_with_single_table(con, init_struct, tab_name, cf, **kvp)
+        uid_init: int = db_util.new_row_with_single_table(con, init_struct, tab_name, cf, **kvp)
+        ret_val = uid_init
 
         if final_struct is not None:
             if not isinstance(final_struct, Atoms):
                 final_struct = read(final_struct)
             kvp_final = {"struct_type": "final", "name": kvp["name"]}
-            uid = con.write(final_struct, kvp_final)
-            con.update(uid_init, converged=True, started="", queued="", final_struct_id=uid)
+            uid_final: int = con.write(final_struct, kvp_final)
+            con.update(uid_init, converged=True, started="", queued="", final_struct_id=uid_final)
+            ret_val = (uid_init, uid_final)
 
-        return uid_init
+        return ret_val
 
     def _exists_in_db(self, atoms: Atoms, formula_unit: Optional[str] = None) -> bool:
         """

@@ -6,7 +6,8 @@ Release notes
 
 1.0.2
 ======
-
+* :py:meth:`~clease.structgen.new_struct.NewStructures.insert_structure` returns both
+  the initial and final ID if both an initial and final structure was inserted.
 
 1.0.1
 ======

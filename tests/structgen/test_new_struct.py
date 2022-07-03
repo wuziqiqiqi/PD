@@ -340,3 +340,27 @@ def test_insert_meta(new_struct_factory):
 
     row = settings.connect().get(id=uid)
     assert row.foo == "bar"
+
+
+def test_insert_initial_and_final(new_struct_factory, compare_atoms):
+    basis_elements = [["Au", "Ag"]]
+    crystalstructure = "fcc"
+    new_struct: NewStructures = new_struct_factory(
+        basis_elements,
+        crystalstructure,
+        a=4,
+    )
+    settings = new_struct.settings
+
+    atoms = settings.prim_cell * (2, 2, 2)
+    final = atoms.copy()
+    calc = SinglePointCalculator(final, energy=123.321)
+    final.calc = calc
+    uid_ini, uid_final = new_struct.insert_structure(atoms, final_struct=final)
+
+    con = settings.connect()
+    ini_row = con.get(id=uid_ini)
+    assert uid_final == ini_row.final_struct_id
+    compare_atoms(ini_row.toatoms(), atoms)
+    final_row = con.get(id=uid_final)
+    assert final_row.energy == pytest.approx(final.get_potential_energy())
