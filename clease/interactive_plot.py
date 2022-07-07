@@ -1,5 +1,6 @@
 from typing import Union, Sequence, Callable, List
 from tkinter import TclError
+import numpy as np
 from ase.db import connect
 from ase.gui.gui import GUI
 from ase.gui.images import Images
@@ -117,11 +118,33 @@ class InteractivePlot:
     def _update_annotation(self, ind, event_index: int):
         """Update the annotation shown."""
         ax_obj = self.annotated_axes[event_index]
+        ax = ax_obj.ax
         lines = ax_obj.lines
         line = lines[self.active_line_index]
         x, y = line.get_data()
         self.active_annot = self.all_annotations[event_index]
-        self.active_annot.xy = (x[ind["ind"][0]], y[ind["ind"][0]])
+        xy = x[ind["ind"][0]], y[ind["ind"][0]]
+        self.active_annot.xy = xy
+
+        # Adjust the xytext coordinates away from the figure edges.
+        # Calculate a vector towards the center of the plot
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        center = np.array([sum(xlim), sum(ylim)]) / 2
+        delta = center - xy
+
+        # Set the values depending on the sign of the difference vector.
+        # vector has constant length, of direction towards the center of the plot.
+        # (i.e. away from the edges)
+        # Values chosen by eye, but are scale-independent.
+        sgn = np.sign(delta)
+        xnew = 20 if sgn[0] >= 0 else -100
+        ynew = 20 if sgn[1] >= 0 else -80
+
+        self.active_annot.set_x(xnew)
+        self.active_annot.set_y(ynew)
+
         anot = ax_obj.annotations[self.active_line_index]
         text = anot[ind["ind"][0]]
         self.active_annot.set_text(text)
@@ -142,6 +165,7 @@ class InteractivePlot:
             if cont:
                 self._update_annotation(ind, event_index)
                 self.active_annot.set_visible(True)
+
                 self.fig.canvas.draw_idle()
             else:
                 if vis:
