@@ -93,7 +93,8 @@ class ClusterGenerator:
 
         # One position per sublattice
         assert len(sublattices) == len(ints)
-        return [FourVector(*vals, subl) for vals, subl in zip(ints, sublattices)]
+        # Iterating the array as a list is more efficient than iterating the numpy array.
+        return [FourVector(*vals, subl) for vals, subl in zip(ints.tolist(), sublattices)]
 
     def to_four_vector(self, cartesian: np.ndarray, sublattice: int = None) -> FourVector:
         """Translate a position in Cartesian coordinates to its FourVector"""
