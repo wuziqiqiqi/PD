@@ -15,7 +15,7 @@ from clease.montecarlo.observers import Snapshot
 from clease.montecarlo.observers import EnergyEvolution
 from clease.montecarlo.observers import SiteOrderParameter
 from clease.montecarlo.observers import LowestEnergyStructure
-from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate
+from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate, MCObserver
 from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
 from clease.montecarlo import RandomSwap, MixedSwapFlip
 from clease.settings import CEBulk, Concentration
@@ -27,6 +27,15 @@ from clease.montecarlo.mc_evaluator import CEMCEvaluator
 np.random.seed(0)
 
 almgsix_eci_file = Path(__file__).parent / "almgsix_eci.json"
+
+
+class DummyObs(MCObserver):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.call_count = 0
+
+    def observe_step(self, mc_step: MCStep) -> None:
+        self.call_count += 1
 
 
 @pytest.fixture
@@ -737,3 +746,26 @@ def test_on_temp_change(example_system, mocker):
     # Verify it's also called when using the old attribute name
     mc.T = 200
     assert spy.call_count == 2
+
+
+def test_call_observers(example_system, mocker):
+    mc = Montecarlo(example_system, 300)
+    obs = DummyObs()
+    mc.attach(obs)
+
+    mc.run(10)
+    assert obs.call_count == 10
+
+    mc.run(10, call_observers=False)
+    assert obs.call_count == 10
+
+    mc.run(20)
+    assert obs.call_count == 30
+
+    for _ in mc.irun(10, call_observers=False):
+        pass
+    assert obs.call_count == 30
+
+    for _ in mc.irun(10):
+        pass
+    assert obs.call_count == 40

@@ -137,10 +137,10 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.atoms.calc.eci)
 
-    def run(self, steps: int = 10, chem_pot: Dict[str, float] = None):
+    def run(self, steps: int = 10, call_observers: bool = True, chem_pot: Dict[str, float] = None):
         """
         Run Monte Carlo simulation.
-        See :py:meth:`cemc.mcmc.Montecarlo.runMC`
+        See :py:meth:`~clease.montecarlo.montecarlo.Montecarlo.run`
 
         Parameters:
 
@@ -159,7 +159,7 @@ class SGCMonteCarlo(Montecarlo):
             self.chemical_potential = chem_pot
         self.reset()
 
-        super().run(steps=steps)
+        super().run(steps=steps, call_observers=call_observers)
 
     def singlet2composition(self, avg_singlets: Dict[str, float]):
         """Convert singlets to composition."""

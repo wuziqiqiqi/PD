@@ -161,17 +161,21 @@ class Montecarlo(BaseMC):
         # Reset the internal step counters
         self._reset_internal_counters()
 
-    def run(self, steps: int = 100) -> None:
+    def run(self, steps: int = 100, call_observers: bool = True) -> None:
         """Run Monte Carlo simulation.
 
         Parameters:
 
         steps: int
             Number of steps in the MC simulation
+        call_observers: bool
+            Should the observers be called during this run? Can be turned off for running burn-ins.
+            The energy averagers will still be updated, even if this flag is disabled.
+            Defaults to True.
         """
 
         # Construct the iterator, make the preparations for starting the run
-        mc_iter = self.irun(steps)
+        mc_iter = self.irun(steps, call_observers=call_observers)
 
         start = time.perf_counter()
         prev = self.current_step
@@ -190,7 +194,7 @@ class Montecarlo(BaseMC):
                 prev = self.current_step
                 start = time.perf_counter()
 
-    def irun(self, steps: int) -> Iterator[MCStep]:
+    def irun(self, steps: int, call_observers: bool = True) -> Iterator[MCStep]:
         """Run Monte Carlo simulation as an iterator.
         Can be used to inspect the MC after each step, for example,
         to print the energy every 5 steps, one could do:
@@ -207,6 +211,10 @@ class Montecarlo(BaseMC):
 
         steps: int
             Number of steps in the MC simulation
+        call_observers: bool
+            Should the observers be called during this run? Can be turned off for running burn-ins.
+            The energy averagers will still be updated, even if this flag is disabled.
+            Defaults to True.
         """
         logger.info("Starting MC run with %d steps.", steps)
 
@@ -217,13 +225,13 @@ class Montecarlo(BaseMC):
         self.initialize_run()
 
         # Now we create the iterator
-        return self._irun(steps)
+        return self._irun(steps, call_observers=call_observers)
 
-    def _irun(self, steps: int) -> Iterator[MCStep]:
+    def _irun(self, steps: int, call_observers: bool = True) -> Iterator[MCStep]:
         """Create the MC iterator"""
         # Offset range by 1, so that we start with current step = 1
         for _ in range(steps):
-            step = self._mc_step()
+            step = self._mc_step(call_observers=call_observers)
 
             en = step.energy
             self.mean_energy += en
@@ -360,7 +368,7 @@ class Montecarlo(BaseMC):
         """Count the number of each element."""
         return dict(Counter(self.atoms.symbols))
 
-    def _mc_step(self) -> MCStep:
+    def _mc_step(self, call_observers: bool = True) -> MCStep:
         """Make one Monte Carlo step by swithing two atoms."""
         self.current_step += 1
         system_changes = self.generator.get_trial_move()
@@ -373,8 +381,9 @@ class Montecarlo(BaseMC):
         updater(system_changes)
 
         step = MCStep(self.current_step, self.current_energy, move_accepted, system_changes)
-        # Execute all observers
-        self.execute_observers(step)
+        if call_observers:
+            # Execute all observers
+            self.execute_observers(step)
 
         return step
 

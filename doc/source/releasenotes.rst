@@ -9,7 +9,8 @@ Release notes
 * Added the ``ignore_sizes`` keyword to :py:func:`~clease.plot_post_process.plot_eci`
 * Changing the maximum cluster diameter will now clear any cached clusters, and
   requires a new build.
-
+* Calling observers in canonical MC can now be disabled with the ``call_observers`` keyword
+  for performing burn-in, without executing observers.
 
 1.0.0
 ======

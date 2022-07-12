@@ -101,8 +101,6 @@ class ClusterExpansionSettings:
         include_background_atoms: bool = False,
         basis_func_type="polynomial",
     ) -> None:
-        # pylint: disable=too-many-arguments
-
         self._include_background_atoms = include_background_atoms
         self._cluster_mng = None
         self._trans_matrix = None
