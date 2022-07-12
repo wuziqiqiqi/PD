@@ -116,6 +116,8 @@ But the point here is just to illustrate how a constraint can be attached.
 
 Implementing Your Own Observer
 ------------------------------
+.. _implementing your own observer:
+
 You can implement your own observer and monitor whatever quantity
 you might be interested in. To to so you can create your own class that
 inherits from the base *MCObserver* class. To illustrate the usage,
@@ -184,6 +186,8 @@ of the mc calculation is called.
 
 Implementing Your Own Constraints
 ==================================
+.. _implementing your own constraints:
+
 If you want to have custom constraints on MC moves, CLEASE
 lets you implement your own. The idea is to create a class
 that inherits from the base *MCConstraint* class and has a

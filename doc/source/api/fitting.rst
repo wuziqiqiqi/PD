@@ -1,5 +1,6 @@
 Fitting Schemes
 ================
+.. _fitting_api:
 
 .. autoclass:: clease.regression.LinearRegression
     :members:
@@ -11,6 +12,9 @@ Fitting Schemes
     :members:
 
 .. autoclass:: clease.regression.ga_fit.GAFit
+    :members:
+
+.. autoclass:: clease.regression.physical_ridge.PhysicalRidge
     :members:
 
 .. autoclass:: clease.regression.bayesian_compressive_sensing.BayesianCompressiveSensing

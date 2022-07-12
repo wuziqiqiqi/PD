@@ -1,3 +1,5 @@
+.. _mc_observers:
+
 Monte Carlo Observers
 ======================
 

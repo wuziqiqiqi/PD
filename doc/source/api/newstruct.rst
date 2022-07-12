@@ -1,3 +1,5 @@
+.. _structgen_api:
+
 Structure Generation
 =====================
 

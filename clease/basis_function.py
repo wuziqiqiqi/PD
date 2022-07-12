@@ -50,6 +50,7 @@ class BasisFunction(ABC):
 
     @property
     def basis_functions(self) -> List[Dict[str, float]]:
+        """Property access to :meth:`get_basis_functions`."""
         return self.get_basis_functions()
 
     @abstractmethod
@@ -58,7 +59,7 @@ class BasisFunction(ABC):
 
     @abstractmethod
     def get_basis_functions(self):
-        """Get basis function."""
+        """Create basis functions which guarantees the orthonormality condition."""
 
     # pylint: disable=no-self-use
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
@@ -152,7 +153,9 @@ def _kronecker(i: int, j: int) -> int:
 
 
 class BinaryLinear(BasisFunction):
-    """Pseudospin and basis function from Zhang and Sluiter.
+    """Pseudospin and basis function from Zhang and Sluiter. The ``redunant_element``
+    parameter can be used to select which element is not explicitly defined by the ECI values.
+    If it is not set, the element will be chosen as the first element in alphabetical order.
 
     Zhang, X. and Sluiter M.
     Cluster expansions for thermodynamics and kinetics of multicomponent

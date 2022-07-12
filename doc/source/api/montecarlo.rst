@@ -1,3 +1,5 @@
+.. _mc_api:
+
 ============
 Monte Carlo
 ============
@@ -5,17 +7,26 @@ Monte Carlo
 .. contents:: Table of Contents
 
 
-The Monte Carlo class
-=====================
-
+Canonical MC
+=============
 The canonical Monte Carlo class has the following API:
 
 .. autoclass:: clease.montecarlo.montecarlo.Montecarlo
     :members:
 
+Semi-grand canonical MC
+========================
+The semi-grand canonical (SGC) Monte Carlo class:
 
-Additionally, the montecarlo class inherits from the
-:class:`~clease.montecarlo.base.BaseMC` class,
+.. autoclass:: clease.montecarlo.sgc_montecarlo.SGCMonteCarlo
+    :members:
+
+
+Related Objects
+===============
+
+All MC classes inherit from the
+:class:`~clease.montecarlo.base.BaseMC` interface,
 which adds the following methods:
 
 .. autoclass:: clease.montecarlo.base.BaseMC
@@ -26,10 +37,6 @@ Individual steps from montecarlo iterations return
 
 .. autoclass:: clease.datastructures.mc_step.MCStep
     :members:
-
-
-Related Objects
----------------
 
 Below are some related objects, which may be useful in your Monte Carlo endeavours.
 

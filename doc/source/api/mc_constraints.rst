@@ -1,3 +1,5 @@
+.. _mc_constraints:
+
 Monte Carlo Constraints
 ========================
 
