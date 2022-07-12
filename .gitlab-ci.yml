@@ -102,10 +102,14 @@ linux_wheels:
     CIBW_BUILD: cp{37,38,39,310}-manylinux*
     # Add the -fopenmp flag for wheel building.
     CIBW_ENVIRONMENT_LINUX: CLEASE_OMP='-fopenmp'
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: ${CI_PYPI_TOKEN}
   script:
     - curl -sSL https://get.docker.com/ | sh
-    - python -m pip install cibuildwheel==2.3.1
+    - python -m pip install cibuildwheel==2.3.1 twine
     - cibuildwheel --output-dir wheelhouse
+    - twine check wheelhouse/*
+    - twine upload wheelhouse/*
   artifacts:
     paths:
       - wheelhouse/
