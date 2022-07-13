@@ -1,10 +1,10 @@
 """Calculator for Cluster Expansion."""
 import sys
 import contextlib
-from typing import Dict, Optional, TextIO, Union, List
+from typing import Dict, Optional, TextIO, Union, List, Sequence, Any
 import numpy as np
 from ase import Atoms
-from ase.calculators.calculator import Calculator
+from ase.calculators.calculator import PropertyNotImplementedError
 from clease_cxx import PyCEUpdater, has_parallel
 from clease.datastructures import SystemChange, SystemChanges
 from clease.corr_func import CorrFunction
@@ -24,8 +24,8 @@ class KeepChanges:
         self.keep_changes = True
 
 
-# pylint: disable=too-many-instance-attributes
-class Clease(Calculator):
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
+class Clease:
     """Class for calculating energy using CLEASE.
 
     :param settings: `ClusterExpansionSettings` object
@@ -52,14 +52,13 @@ class Clease(Calculator):
         init_cf: Optional[Dict[str, float]] = None,
         logfile: Union[TextIO, str, None] = None,
     ) -> None:
-        Calculator.__init__(self)
 
         if not isinstance(settings, ClusterExpansionSettings):
             msg = "settings must be CEBulk or CECrystal object."
             raise TypeError(msg)
         # C++ updater initialized when atoms are set
         self.updater = None
-        self.parameters["eci"] = eci
+        self.results = {}
         self.settings = settings
         self.corrFunc = CorrFunction(settings)
         self.eci = eci
@@ -141,19 +140,12 @@ class Clease(Calculator):
             keeper.keep_changes = keep_changes
             return self.energy
 
-    def check_state(self, atoms: Atoms, tol: float = 1e-15):
-        res = super().check_state(atoms)
-        syst_ch = self.indices_of_changed_atoms
-
-        if syst_ch and "energy" not in res:
-            res.append("energy")
-        return res
-
-    def reset(self):
+    def reset(self) -> None:
         self.results = {}
 
     def calculate_cf_from_scratch(self) -> Dict[str, float]:
         """Calculate correlation functions from scratch."""
+        self.require_updater()
         return self.updater.calculate_cf_from_scratch(self.atoms, self.cf_names)
 
     def calculate_energy_from_scratch(self) -> float:
@@ -164,12 +156,11 @@ class Clease(Calculator):
         self.energy = self.updater.get_energy()
         return self.energy
 
-    # pylint: disable=signature-differs
     def calculate(
         self,
-        atoms: Atoms,
-        properties: Union[List[str], str],
-        system_changes: SystemChanges,
+        atoms: Optional[Atoms] = None,
+        properties: List[str] = None,
+        system_changes: SystemChanges = None,
     ) -> float:
         """Calculate the energy of the passed Atoms object.
 
@@ -180,17 +171,37 @@ class Clease(Calculator):
         :param atoms: ASE Atoms object
 
         :param properties: List of what needs to be calculated.
-            It can only by 'energy' at the moment.
+            It can only be ['energy'] for the basic Clease calculator.
 
         :param system_changes: List of system changes. For example, if the
             occupation of the atomic index 23 is changed from Mg to Al,
             system_change = [(23, Mg, Al)]. If an Mg atom occupying the atomic
             index 26 is swapped with an Al atom occupying the atomic index 12,
-            system_change = [(26, Mg, Al), (12, Al, Mg)]
+            system_change = [(26, Mg, Al), (12, Al, Mg)].
+            Currently not supported.
         """
+        if atoms is not None:
+            if self.atoms is None:
+                # We havn't yet initialized, so initialize with the passed atoms object.
+                self.set_atoms(atoms)
+            else:
+                # Use the symbols of the passed atoms object
+                self.atoms.symbols[:] = atoms.symbols
+        self.require_updater()
+
+        _check_properties(properties, self.implemented_properties)
+
+        if system_changes is not None:
+            raise ValueError("system_changes in calculate is currently not supported.")
+
         self.update_energy()
         self.energy = self.updater.get_energy()
         return self.energy
+
+    def get_potential_energy(self, atoms: Atoms = None) -> float:
+        """Calculate the energy from scratch with an atoms object"""
+        # self.set_atoms(atoms)
+        return self.calculate(atoms=atoms)
 
     def clear_history(self) -> None:
         self.updater.clear_history()
@@ -214,6 +225,28 @@ class Clease(Calculator):
         self.update_cf()
         self.energy = self.updater.get_energy()
 
+    def calculation_required(self, atoms: Atoms, properties: Sequence[str] = None) -> bool:
+        """Check whether a calculation is required for a given atoms object.
+        The ``properties`` argument only exists for compatibility reasons, and has no effect.
+        Primarily for ASE compatibility.
+        """
+        _check_properties(properties, self.implemented_properties)
+        if self.updater is None:
+            return True
+        if "energy" not in self.results:
+            return True
+        changed_indices = self.get_changed_sites(atoms)
+        return bool(changed_indices)
+
+    def check_state(self, atoms: Atoms) -> List[str]:
+        """Method for checking if energy needs calculation.
+        Primarily for ASE compatibility.
+        """
+        res = []
+        if self.calculation_required(atoms):
+            res.append("energy")
+        return res
+
     @property
     def energy(self):
         return self.results.get("energy", None)
@@ -225,13 +258,18 @@ class Clease(Calculator):
     @property
     def indices_of_changed_atoms(self) -> List[int]:
         """Return the indices of atoms that have been changed."""
-        changed = self.updater.get_changed_sites(self.atoms)
+        changed = self.get_changed_sites(self.atoms)
         for index in changed:
             if self.is_backround_index[index] and not self.settings.include_background_atoms:
                 msg = f"Atom with index {index} is a background atom."
                 raise MovedIgnoredAtomError(msg)
 
         return changed
+
+    def get_changed_sites(self, atoms: Atoms) -> List[int]:
+        """Return the list of indices which differ from the internal ones."""
+        self.require_updater()
+        return self.updater.get_changed_sites(atoms)
 
     def get_cf(self) -> Dict[str, float]:
         """Return the correlation functions as a dict"""
@@ -339,8 +377,7 @@ class Clease(Calculator):
 
     def get_num_threads(self) -> int:
         """Get the number of threads from the C++ updater."""
-        if self.updater is None:
-            raise UnitializedCEError("Updater hasn't been initialized yet.")
+        self.require_updater()
         return self.updater.get_num_threads()
 
     def set_num_threads(self, value: int) -> None:
@@ -354,9 +391,38 @@ class Clease(Calculator):
             raise TypeError(f"Number of threads must be int, got {value!r}")
         if value < 1:
             raise ValueError("Number of threads must be at least 1")
-        if self.updater is None:
-            raise UnitializedCEError("Updater hasn't been initialized yet.")
+        self.require_updater()
+
         if value != 1 and not has_parallel():
             # Having a value of 1 is OK, since that's not threading.
             raise ValueError("CLEASE not compiled with OpenMP. Cannot add more threads.")
         self.updater.set_num_threads(value)
+
+    def require_updater(self) -> None:
+        if self.updater is None:
+            raise UnitializedCEError("Updater hasn't been initialized yet.")
+
+    @property
+    def parameters(self) -> Dict[str, Any]:
+        """Return a dictionary with relevant parameters."""
+        return {"eci": self.eci}
+
+    def todict(self) -> dict:
+        """Return the parameters, i.e. the ECI values.
+        For ASE compatibility.
+        """
+        return self.parameters
+
+
+def _check_properties(properties: Optional[List[str]], implemented_properties: List[str]) -> None:
+    """Check whether the passed properties is supported. If it is None, nothing is checked.
+    Raises PropertyNotImplementedError upon finding a bad property.
+    """
+    if properties is None:
+        return
+    for prop in properties:
+        if prop not in implemented_properties:
+            allowed = ", ".join(implemented_properties)
+            raise PropertyNotImplementedError(
+                f"Property '{prop}' is unsupported. Implemented properties: {allowed}"
+            )

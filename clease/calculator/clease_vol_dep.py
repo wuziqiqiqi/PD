@@ -1,6 +1,5 @@
 from typing import Dict, Optional, Iterable, Set, List, Union, Sequence
 from ase import Atoms
-from ase.calculators.calculator import Calculator
 from clease.datastructures import SystemChange
 from clease.settings import ClusterExpansionSettings
 from .clease import Clease
@@ -231,25 +230,22 @@ class CleaseVolDep(Clease):
 
     def calculate(
         self,
-        atoms: Atoms,
-        properties: List[str],
-        system_changes: Union[Sequence[SystemChange], None],
+        atoms: Atoms = None,
+        properties: List[str] = None,
+        system_changes: Union[Sequence[SystemChange], None] = None,
     ) -> float:
         """Calculate the energy of the passed Atoms object.
 
-        If accept=True, the most recently used atoms object is used as a
-        reference structure to calculate the energy of the passed atoms.
-        Returns energy.
-
         Parameters:
 
-        :param atoms: ASE Atoms object
+        :param atoms: ASE Atoms object, or None. If None is passed,
+            the internal one is used, if the calculator has been initialized.
 
         :param system_changes:
             System changes. See doc-string of
             `clease.montecarlo.observers.MCObserver`
         """
-        Calculator.calculate(self, atoms)
+        super().calculate(atoms, properties, system_changes)
         self.update_cf()
         return self.get_energy_given_change([], keep_changes=True)
 
