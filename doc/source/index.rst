@@ -42,7 +42,7 @@ such as:
     CLEASE provides a :ref:`number of constraints <mc_constraints>`,
     but it is also easy to :ref:`implement custom constraints <implementing your own constraints>`.
 
-  * Use one our :ref:`pre-made observers <mc_observers>` to collect thermondynamic
+  * Use one our :ref:`pre-made observers <mc_observers>` to collect thermodynamic
     data about your system during an MC run, or
     :ref:`write your own <implementing your own observer>`.
 
