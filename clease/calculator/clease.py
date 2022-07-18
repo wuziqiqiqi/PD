@@ -195,8 +195,18 @@ class Clease:
             raise ValueError("system_changes in calculate is currently not supported.")
 
         self.update_energy()
-        self.energy = self.updater.get_energy()
         return self.energy
+
+    def get_property(self, name: str, atoms: Atoms = None, allow_calculation: bool = True):
+        """Get a property from the calculator.
+
+        Exists due to compatibility with ASE, should not be used directly.
+        """
+        _check_properties([name], self.implemented_properties)
+
+        if not allow_calculation:
+            return self.energy
+        return self.get_potential_energy(atoms=atoms)
 
     def get_potential_energy(self, atoms: Atoms = None) -> float:
         """Calculate the energy from scratch with an atoms object"""

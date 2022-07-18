@@ -8,6 +8,7 @@ Release notes
 ======
 * :py:meth:`~clease.structgen.new_struct.NewStructures.insert_structure` returns both
   the initial and final ID if both an initial and final structure was inserted.
+* Fixes a bug with writing the Clease calculator to a DB row.
 
 1.0.1
 ======

@@ -1,5 +1,8 @@
 import pytest
 import numpy as np
+from ase.db import connect
+from ase.io import read
+from ase.calculators.calculator import PropertyNotImplementedError
 from clease.settings import Concentration, CEBulk
 from clease.corr_func import CorrFunction
 from clease.calculator import Clease, attach_calculator
@@ -159,3 +162,50 @@ def test_calc_no_initialization(settings):
 
     with pytest.raises(UnitializedCEError):
         calc.get_num_threads()
+
+
+def test_save_load_calc_to_db(settings, make_tempfile):
+    eci = {"c0": -1.5}
+    atoms = settings.prim_cell.copy()
+    atoms = attach_calculator(settings, atoms, eci)
+    en = atoms.get_potential_energy()
+
+    con = connect(make_tempfile("tester.db"))
+    uid = con.write(atoms)
+    row = con.get(id=uid)
+    assert row.energy == pytest.approx(en)
+    loaded = row.toatoms()
+    assert loaded.get_potential_energy() == pytest.approx(en)
+    # ASE usually does a .lower() on the calc name
+    assert loaded.calc.name.lower() == atoms.calc.name.lower()
+
+
+@pytest.mark.parametrize("filename", ["tester.traj"])
+def test_save_load_calc_to_ase_file(filename, settings, make_tempfile):
+    eci = {"c0": -1.5, "c1_0": 0.02}
+    atoms = settings.prim_cell.copy()
+    atoms = attach_calculator(settings, atoms, eci)
+    en = atoms.get_potential_energy()
+
+    tmpf = make_tempfile(filename)
+    atoms.write(tmpf)
+    loaded = read(tmpf)
+    assert loaded.get_potential_energy() == pytest.approx(en)
+    assert loaded.calc.name.lower() == atoms.calc.name.lower()
+
+    with pytest.raises(PropertyNotImplementedError):
+        loaded.calc.get_property("forces")
+
+
+def test_get_property(settings):
+    atoms = settings.prim_cell.copy()
+    eci = {"c0": 0.0}
+    atoms = attach_calculator(settings, atoms, eci)
+    calc = atoms.calc
+
+    for prop in ["stress", "forces", "dipole"]:
+        with pytest.raises(PropertyNotImplementedError):
+            calc.get_property(prop)
+    en1 = calc.get_property("energy", allow_calculation=True)
+    en2 = calc.get_property("energy", allow_calculation=False)
+    assert en1 == pytest.approx(en2)
