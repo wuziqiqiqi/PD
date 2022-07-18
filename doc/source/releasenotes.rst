@@ -4,6 +4,9 @@
 Release notes
 =============
 
+1.0.3
+======
+
 1.0.2
 ======
 * :py:meth:`~clease.structgen.new_struct.NewStructures.insert_structure` returns both
