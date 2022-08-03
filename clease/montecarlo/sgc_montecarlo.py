@@ -210,6 +210,7 @@ class SGCMonteCarlo(Montecarlo):
 
         quantities["temperature"] = self.temperature
         quantities["n_mc_steps"] = self.averager.counter
+        quantities["accept_rate"] = self.current_accept_rate
 
         # Add singlets and chemical potential to the dictionary
         # pylint: disable=consider-using-enumerate
@@ -232,6 +233,9 @@ class SGCMonteCarlo(Montecarlo):
         except Exception as exc:
             print("Could not find average singlets!")
             print(exc)
+
+        # Add information from observers
+        quantities.update(self._get_obs_averages())
 
         if reset_eci:
             self._reset_eci_to_original(self.atoms.calc.eci)

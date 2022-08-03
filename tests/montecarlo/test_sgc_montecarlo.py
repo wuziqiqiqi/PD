@@ -76,7 +76,6 @@ def test_conc_obs_sgc(db_name):
     mc.attach(obs1)
     mc.attach(obs2)
 
-    E = []
     for T in [5000, 2000, 500]:
         mc.temperature = T
         mc.run(steps=10000, chem_pot={"c1_0": -0.02})
@@ -93,6 +92,13 @@ def test_conc_obs_sgc(db_name):
         assert c_au + c_cu == pytest.approx(1)
         conc1_orig = conc1
         conc2_orig = conc2
+
+        # Verify that the observer quantities are also in the thermodynamic quantities
+        thermo = mc.get_thermodynamic_quantities()
+        for k, v in conc1.items():
+            assert thermo[k] == pytest.approx(v)
+        for k, v in conc2.items():
+            assert thermo[k] == pytest.approx(v)
 
 
 def test_constrain_inserts(db_name):

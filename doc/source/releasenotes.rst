@@ -6,6 +6,7 @@ Release notes
 
 1.0.3
 ======
+* Getting thermodynamic quantities in the SGC MC now also retrieves averages from observers.
 
 1.0.2
 ======

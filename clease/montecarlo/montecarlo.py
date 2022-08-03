@@ -1,5 +1,5 @@
 """Monte Carlo method for ase."""
-from typing import Dict, Union, Iterator
+from typing import Dict, Union, Iterator, Any
 import sys
 import datetime
 import time
@@ -271,7 +271,7 @@ class Montecarlo(BaseMC):
             return 0.0
         return self.num_accepted / self.current_step
 
-    def get_thermodynamic_quantities(self):
+    def get_thermodynamic_quantities(self) -> Dict[str, Any]:
         """Compute thermodynamic quantities."""
         quantities = {}
         mean_energy = self.mean_energy.mean
@@ -291,9 +291,15 @@ class Montecarlo(BaseMC):
         quantities.update(self.meta_info)
 
         # Add information from observers
-        for obs in self.observers:
-            quantities.update(obs[1].get_averages())
+        quantities.update(self._get_obs_averages())
         return quantities
+
+    def _get_obs_averages(self) -> Dict[str, Any]:
+        """Get average measurements from observers"""
+        obs_avgs = {}
+        for obs in self.observers:
+            obs_avgs.update(obs[1].get_averages())
+        return obs_avgs
 
     def _calculate_step(self, system_changes: SystemChanges):
         """Calculate energies given a step, and decide if we accept the step.
