@@ -15,8 +15,8 @@ from ase.db.core import Database
 
 from clease.version import __version__
 from clease.jsonio import jsonable
-from clease.tools import wrap_and_sort_by_position
-from clease.cluster import ClusterManager, ClusterList
+from clease.tools import get_size_from_cf_name, wrap_and_sort_by_position
+from clease.cluster import ClusterManager, ClusterList, Cluster
 from clease.basis_function import Polynomial, Trigonometric, BinaryLinear, BasisFunction
 from clease.datastructures import TransMatrix
 from .concentration import Concentration
@@ -735,6 +735,29 @@ class ClusterExpansionSettings:
         lines.append(rule)
 
         return "\n".join(lines)
+
+    def get_cluster_corresponding_to_cf_name(self, cf_name: str) -> Cluster:
+        """Find the Cluster object which corresponds to a CF name.
+        The cluster will not be specialized to the decoration number if such exists
+        in the cf name.
+
+        Example:
+
+            >>> from clease.settings import CEBulk, Concentration
+            >>> conc = Concentration([['Au', 'Cu']])
+            >>> settings = CEBulk(conc, crystalstructure='fcc', a=4.1)
+            >>> cluster = settings.get_cluster_corresponding_to_cf_name("c1_0")
+            >>> cluster.size
+            1
+
+        """
+        size = get_size_from_cf_name(cf_name)
+        for cluster in self.cluster_list.clusters:
+            # This CF name may contain the decoration number, but the cluster name doesn't.
+            # Decoration number is last, so test everything before that is equal.
+            if cluster.size == size and cf_name.startswith(cluster.name):
+                return cluster
+        raise RuntimeError(f"Didn't find cluster corresponding to name: {cf_name}")
 
 
 def _get_concentration(concentration: Union[Concentration, dict]) -> Concentration:

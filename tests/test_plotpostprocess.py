@@ -111,7 +111,9 @@ def test_plot_ch(interactive, bc_setting):
     pp.plot_convex_hull(evaluator, interactive=interactive)
 
 
-@pytest.mark.parametrize("plot_name", ["plot_convex_hull", "plot_fit", "plot_fit_residual"])
+@pytest.mark.parametrize(
+    "plot_name", ["plot_convex_hull", "plot_fit", "plot_fit_residual", "plot_eci"]
+)
 def test_plot_interactive_events(bc_setting, plot_name):
     evaluator = Evaluate(bc_setting, fitting_scheme="l2", alpha=1e-6)
     evaluator.fit()
@@ -133,4 +135,8 @@ def test_plot_interactive_events(bc_setting, plot_name):
         # it is normally garbage collected, unless we wrap it.
         # If more events are added in the future, the number of expected extra events should be
         # adjusted accordingly.
-        assert len(events2) == len(events1) + 1
+        if plot_name in {"plot_eci"} and event == "button_press_event":
+            # Doesn't add any extra click events
+            assert len(events1) == len(events2)
+        else:
+            assert len(events2) == len(events1) + 1

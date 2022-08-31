@@ -6,6 +6,7 @@ import json
 import logging as lg
 import multiprocessing as mp
 from typing import Dict, List
+from collections import defaultdict
 
 from deprecated import deprecated
 import numpy as np
@@ -933,6 +934,11 @@ class Evaluate:
             dists.append(int(dist_str))
         return dists
 
+    def _get_cf_name_radius(self, cf_name: str) -> float:
+        """Get the cluster radius of a cf_name"""
+        cluster = self.settings.get_cluster_corresponding_to_cf_name(cf_name)
+        return cluster.diameter / 2
+
     def mae(self):
         """Calculate mean absolute error (MAE) of the fit."""
         if self.eci is None:
@@ -1154,31 +1160,33 @@ class Evaluate:
         """
         Classify distance, eci and cf_name according to cluster body size
 
-        :return: Dictionary contains
+        :return: Dictionary which contains
 
-            * first index
-                - body size of cluster
+            * Key: body size of cluster
+            * Value: A dictionary with the following entries:
 
-            * second index
                 - "distance" : distance of the cluster
                 - "eci" : eci of the cluster
                 - "name" : name of the cluster
+                - "radius" : Radius of the cluster in Ångstrom.
         """
         if self.eci is None:
             raise ValueError("ECIs have not been fitted yet.")
         distances = self._distance_from_names()
 
         # Structure the ECIs in terms by size
-        eci_by_size = {}
+        eci_by_size = defaultdict(lambda: defaultdict(list))
         for name, distance, eci in zip(self.cf_names, distances, self.eci):
             size = get_size_from_cf_name(name)
-            if size not in eci_by_size.keys():
-                eci_by_size[size] = {"distance": [], "eci": [], "name": []}
+            radius = self._get_cf_name_radius(name)
+
             eci_by_size[size]["distance"].append(distance)
             eci_by_size[size]["eci"].append(eci)
             eci_by_size[size]["name"].append(name)
+            eci_by_size[size]["radius"].append(radius)
 
-        return eci_by_size
+        # Remove the defaultdict factory attributes
+        return {k: dict(v) for k, v in eci_by_size.items()}
 
     def print_coverage_report(self, file=sys.stdout) -> None:
         """

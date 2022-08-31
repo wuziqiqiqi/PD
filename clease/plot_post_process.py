@@ -19,7 +19,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
         - "ylabel": y-axis label
         - "title": title of plot
 
-    :param interactive: Add interactive elements to the plot?
+    :param interactive: Add interactive elements to the plot.
 
     :return: Figure instance of plot
     """
@@ -102,6 +102,7 @@ def plot_fit_residual(
         - "xlabel": x-axis label
         - "ylabel": y-axis label
         - "title": title of plot
+    :param interactive: Add interactive elements to the plot.
 
     :return: Figure instance of plot
     """
@@ -152,6 +153,7 @@ def plot_eci(
     evaluate: Evaluate,
     plot_args: dict = None,
     ignore_sizes=(),
+    interactive: bool = False,
 ) -> Figure:
     """
     Figure object of ECI value according to cluster diameter
@@ -170,6 +172,7 @@ def plot_eci(
         Sizes listed in this list will not be plotted.
         E.g. ``ignore_sizes=[0]`` will exclude the 0-body cluster.
         Default is to not ignore any clusters.
+    :param interactive: Add interactive elements to the plot.
 
     :return: Figure instance of plot
     """
@@ -184,6 +187,7 @@ def plot_eci(
 
     markers = ["o", "v", "x", "D", "^", "h", "s", "p"]
     lines = []
+    annotations = []
 
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
@@ -202,8 +206,34 @@ def plot_eci(
         Y = data["eci"]
         mrk = markers[size % len(markers)]
         line = ax.plot(X, Y, label=f"{size}-body", marker=mrk, mfc="none", ls="", markersize=8)
-        lines.append(line[0])
+
+        # Make annotations for interactive plots, since we have all the data we need prepared here.
+        if interactive:
+            lines.append(line[0])
+            annot = [
+                (
+                    f"Size: {size}\nDiameter: {dist:d}\nName: {name}\n"
+                    f"Radius: {radius:.3f} Å\nECI: {eci:.4f} eV/atom"
+                )
+                for dist, name, eci, radius in zip(X, data["name"], Y, data["radius"])
+            ]
+            annotations.append(annot)
     ax.legend()
+
+    if interactive:
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import InteractivePlot, AnnotatedAx
+
+        # Construct the annotated axis objects.
+        annotated_ax = AnnotatedAx(
+            ax,
+            lines,
+            annotations,
+        )
+
+        # Attach interactivity to the fig object.
+        InteractivePlot(fig, annotated_ax)
+
     return fig
 
 

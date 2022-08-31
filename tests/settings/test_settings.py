@@ -5,7 +5,7 @@ from ase import Atoms
 from ase.build import bulk
 from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
 from clease.settings.settings import PrimitiveCellNotFound
-from clease.cluster import ClusterManager
+from clease.cluster import ClusterManager, Cluster
 from clease.calculator import Clease
 from clease.tools import wrap_and_sort_by_position
 
@@ -105,6 +105,29 @@ def test_prim_ordering(db_name, settings_maker):
     # Check the generator primitive cell is also in order
     prim = settings.cluster_mng.generator.prim
     assert all(a.index == a.tag for a in prim)
+
+
+@pytest.mark.parametrize(
+    "settings_maker",
+    [
+        make_au_cu_settings,
+        lambda db_name: make_TaO(db_name, background=True),
+        lambda db_name: make_TaO(db_name, background=False),
+    ],
+)
+def test_get_cluster_from_cf_name(settings_maker, db_name):
+    settings: ClusterExpansionSettings = settings_maker(db_name)
+
+    for name in settings.all_cf_names:
+        cluster = settings.get_cluster_corresponding_to_cf_name(name)
+        assert isinstance(cluster, Cluster)
+        if cluster.size > 1:
+            assert isinstance(cluster.diameter, float)
+        assert name.startswith(cluster.name)
+    with pytest.raises(ValueError):
+        settings.get_cluster_corresponding_to_cf_name("foo")
+    with pytest.raises(RuntimeError):
+        settings.get_cluster_corresponding_to_cf_name("c10_d0000")
 
 
 def test_TaO_no_bkg(db_name):
