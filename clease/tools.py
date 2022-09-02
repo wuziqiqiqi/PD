@@ -899,6 +899,22 @@ def get_size_from_cf_name(cf_name: str) -> int:
     return int(res.group())
 
 
+def get_diameter_from_cf_name(cf_name: str) -> int:
+    """Extract the diameter ground from the name.
+    Example: "c2_d0001_0_00" returns 1."""
+    size = get_size_from_cf_name(cf_name)
+    if size in {0, 1}:
+        # 0- and 1-body clusters have a slightly different convention.
+        return 0
+    dia_str = cf_name.split("_")[1]
+    # The diameter delimiter should start with a "d".
+    if not dia_str.startswith("d"):
+        raise ValueError(
+            f"Diameter format looks incorrect for cf name '{cf_name}'. Found '{dia_str}'."
+        )
+    return int(dia_str[1:])
+
+
 def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     """
     Return a sorted list of correlation function names. The names are
@@ -908,21 +924,11 @@ def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     2. Diameter
     3. Lexicographical order of the name itself
     """
-    sizes = [get_size_from_cf_name(n) for n in cf_names]
-    # Regular expression that extracts all digits after the occurence
-    # of _d (e.g. c2_d0001_0_00 --> 0001)
-    prog = re.compile("_d(\\d+)")
-    dia_str = [prog.findall(n) for n in cf_names]
-    dia = []
-    for d in dia_str:
-        if d:
-            dia.append(int(d[0]))
-        else:
-            dia.append(0)
+    # Helper sorting function to define the order of the sorting.
+    def _sort_ordering(name: str):
+        return get_size_from_cf_name(name), get_diameter_from_cf_name(name), name
 
-    sort_obj = list(zip(sizes, dia, cf_names))
-    sort_obj.sort()
-    return [s[-1] for s in sort_obj]
+    return sorted(cf_names, key=_sort_ordering)
 
 
 def get_ids(select_cond: List[tuple], db_name: str) -> List[int]:

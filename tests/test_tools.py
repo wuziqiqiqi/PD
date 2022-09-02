@@ -362,33 +362,35 @@ def test_add_proper_file_extension(test):
         assert fname == expect
 
 
-def test_sort_cf_names():
-    tests = [
-        {"names": ["c1_8", "c0_0", "c1_1"], "expect": ["c0_0", "c1_1", "c1_8"]},
-        {
-            "names": [
-                "c2_d0010_0_00",
-                "c2_d0009_0_00",
-                "c0_0",
-                "c1_1",
-            ],
-            "expect": ["c0_0", "c1_1", "c2_d0009_0_00", "c2_d0010_0_00"],
-        },
-        {
-            "names": [
-                "c3_d0008_0_00",
-                "c2_d0009_0_00",
-                "c0_0",
-                "c1_1",
-            ],
-            "expect": ["c0_0", "c1_1", "c2_d0009_0_00", "c3_d0008_0_00"],
-        },
-    ]
+@pytest.mark.parametrize(
+    "names,expect",
+    [
+        (["c1_8", "c0_0", "c1_1"], ["c0_0", "c1_1", "c1_8"]),
+        (
+            ["c2_d0010_0_00", "c2_d0009_0_00", "c0_0", "c1_1"],
+            ["c0_0", "c1_1", "c2_d0009_0_00", "c2_d0010_0_00"],
+        ),
+        (
+            ["c3_d0008_0_00", "c2_d0009_0_00", "c0_0", "c1_1"],
+            ["c0_0", "c1_1", "c2_d0009_0_00", "c3_d0008_0_00"],
+        ),
+    ],
+)
+def test_sort_cf_names(names, expect):
+    sorted_names = sort_cf_names(names)
+    assert isinstance(sorted_names, list)
+    assert sorted_names == expect
 
-    for test in tests:
-        sorted_names = sort_cf_names(test["names"])
-        assert isinstance(sorted_names, list)
-        assert sorted_names == test["expect"]
+    # Assert it's a new list
+    assert sorted_names is not names
+    assert sorted_names != names
+
+    # Should work on an iterable as well.
+    as_iter = iter(names)
+    assert not isinstance(as_iter, list)
+    sorted_names = sort_cf_names(as_iter)
+    assert isinstance(sorted_names, list)
+    assert sorted_names == expect
 
 
 def test_split_dataset():
@@ -715,7 +717,7 @@ def test_wrap_3d(prim, center):
     [
         ("c0", 0),
         ("c0_blabla", 0),
-        ("c1_d0", 1),
+        ("c1_0", 1),
         ("c10_d000_000_000", 10),
         ("c33_d000_000_000", 33),
     ],
@@ -726,12 +728,28 @@ def test_get_size_from_cname(cname, exp):
 
 @pytest.mark.parametrize(
     "cname",
-    [
-        "0",
-        "foobar",
-        "d1",
-    ],
+    ["0", "foobar", "d1"],
 )
 def test_get_size_from_cname_bad_name(cname):
     with pytest.raises(ValueError):
-        assert tools.get_size_from_cf_name(cname)
+        tools.get_size_from_cf_name(cname)
+
+
+@pytest.mark.parametrize(
+    "cname, exp",
+    [
+        ("c0", 0),
+        ("c0_blabla", 0),
+        ("c1_0", 0),
+        ("c10_d0004_000_000", 4),
+        ("c33_d0303_000_000", 303),
+    ],
+)
+def test_get_dia_from_cname(cname, exp):
+    assert tools.get_diameter_from_cf_name(cname) == exp
+
+
+@pytest.mark.parametrize("cname", ["0", "d1", "c2_e0000_3", "g2_d0000_3", "c2_dd0000"])
+def test_get_dia_bad_name(cname):
+    with pytest.raises(ValueError):
+        tools.get_diameter_from_cf_name(cname)

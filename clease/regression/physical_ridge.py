@@ -7,7 +7,7 @@ from numpy.random import choice
 from scipy.linalg import solve_triangular
 
 from clease.data_normalizer import DataNormalizer
-from clease.tools import split_dataset, get_size_from_cf_name
+from clease.tools import get_diameter_from_cf_name, split_dataset, get_size_from_cf_name
 from .regression import LinearRegression
 from .constrained_ridge import ConstrainedRidge
 
@@ -155,16 +155,7 @@ class PhysicalRidge(LinearRegression):
             number of columns in the X matrix passed to the fit method.
             Ex: ['c0', 'c1_1', 'c2_d0000_0_00']
         """
-        diameters = []
-        for n in names:
-            size = get_size_from_cf_name(n)
-            if size in {0, 1}:
-                diameters.append(0.0)
-            else:
-                dia_str = n.split("_")[1]
-                dia = int(dia_str[1:])
-                diameters.append(dia)
-        self.diameters = diameters
+        self.diameters = [get_diameter_from_cf_name(n) for n in names]
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """

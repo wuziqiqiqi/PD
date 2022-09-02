@@ -19,7 +19,12 @@ from clease.mp_logger import MultiprocessHandler
 from clease.tools import singlets2conc, get_ids, get_attribute
 from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
-from clease.tools import add_file_extension, sort_cf_names, get_size_from_cf_name
+from clease.tools import (
+    add_file_extension,
+    sort_cf_names,
+    get_size_from_cf_name,
+    get_diameter_from_cf_name,
+)
 
 __all__ = ("Evaluate", "supports_alpha_cv")
 
@@ -873,12 +878,12 @@ class Evaluate:
 
         if self.eci is None:
             self.fit()
-        distances = self._distance_from_names()
 
         # Structure the ECIs in terms by size
         eci_by_size = {}
-        for name, d, eci in zip(self.cf_names, distances, self.eci):
+        for name, eci in zip(self.cf_names, self.eci):
             size = get_size_from_cf_name(name)
+            d = get_diameter_from_cf_name(name)
             if size not in eci_by_size.keys():
                 eci_by_size[size] = {"d": [], "eci": [], "name": []}
             eci_by_size[size]["d"].append(d)
@@ -922,17 +927,6 @@ class Evaluate:
             InteractivePlot(fig, annotated_ax)
         else:
             plt.show()
-
-    def _distance_from_names(self):
-        """Get a list with all the distances for each name."""
-        dists = []
-        for name in self.cf_names:
-            if name == "c0" or name.startswith("c1"):
-                dists.append(0)
-                continue
-            dist_str = name.split("_")[1][1:]
-            dists.append(int(dist_str))
-        return dists
 
     def _get_cf_name_radius(self, cf_name: str) -> float:
         """Get the cluster radius of a cf_name"""
@@ -1172,12 +1166,12 @@ class Evaluate:
         """
         if self.eci is None:
             raise ValueError("ECIs have not been fitted yet.")
-        distances = self._distance_from_names()
 
         # Structure the ECIs in terms by size
         eci_by_size = defaultdict(lambda: defaultdict(list))
-        for name, distance, eci in zip(self.cf_names, distances, self.eci):
+        for name, eci in zip(self.cf_names, self.eci):
             size = get_size_from_cf_name(name)
+            distance = get_diameter_from_cf_name(name)
             radius = self._get_cf_name_radius(name)
 
             eci_by_size[size]["distance"].append(distance)

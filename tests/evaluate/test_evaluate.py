@@ -9,7 +9,7 @@ from ase.calculators.emt import EMT
 from clease.settings import CEBulk, Concentration
 from clease import Evaluate, supports_alpha_cv
 from clease import NewStructures
-from clease.tools import update_db
+from clease.tools import get_diameter_from_cf_name, update_db
 from clease import regression
 import clease.plot_post_process as pp
 
@@ -143,7 +143,7 @@ def test_distance_from_name(make_eval):
     }
     evaluator = make_eval()
     evaluator.cf_names = inputs["cf_name"]
-    predict_list = evaluator._distance_from_names()
+    predict_list = [get_diameter_from_cf_name(name) for name in evaluator.cf_names]
     assert inputs["dist"] == predict_list
 
 
@@ -323,7 +323,7 @@ def test_get_eci_by_size(make_eval):
     name_list = []
     distance_list = []
     eci_list = []
-    distances = evaluator._distance_from_names()
+    distances = [get_diameter_from_cf_name(name) for name in evaluator.cf_names]
 
     # Structure the ECIs in terms by size
 
