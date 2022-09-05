@@ -325,11 +325,18 @@ def split_dataset(
         for j, g in enumerate(groups):
             if group_mask[g]:
                 index_mask[j] = 1
+
+        train_mask = index_mask == 0
+        validate_mask = index_mask == 1
+        train_index = np.arange(len(y))[train_mask]
+        validate_index = np.arange(len(y))[validate_mask]
         data = {
-            "train_X": X[index_mask == 0, :],
-            "train_y": y[index_mask == 0],
-            "validate_X": X[index_mask == 1, :],
-            "validate_y": y[index_mask == 1],
+            "train_X": X[train_mask, :],
+            "train_y": y[train_mask],
+            "train_index": train_index,
+            "validate_X": X[validate_mask, :],
+            "validate_y": y[validate_mask],
+            "validate_index": validate_index,
         }
         partitions.append(data)
     return partitions

@@ -5,8 +5,8 @@ import sys
 import json
 import logging as lg
 import multiprocessing as mp
-from typing import Dict, List
-from collections import defaultdict
+from typing import Dict, List, Sequence, Optional
+from collections import defaultdict, Counter
 
 from deprecated import deprecated
 import numpy as np
@@ -102,6 +102,7 @@ class Evaluate:
         min_weight=1.0,
         nsplits=10,
         num_repetitions=1,
+        normalization_symbols: Optional[Sequence[str]] = None,
     ):
         """Initialize the Evaluate class."""
         if not isinstance(settings, ClusterExpansionSettings):
@@ -169,6 +170,35 @@ class Evaluate:
 
         self.set_fitting_scheme(fitting_scheme, alpha)
         self._cv_scores = []
+
+        self.set_normalization(normalization_symbols)
+
+    def set_normalization(self, normalization_symbols: Optional[Sequence[str]] = None) -> None:
+        """Set the energy normalization factor, e.g. to normalize the final energy reports
+        in energy per metal atom, rather than energy per atom (i.e. every atom).
+
+        :param normalization_symbols: A list of symbols which should be included in the counting.
+            If this is None, then the default of normalizing to energy per every atom is maintained.
+        """
+        self.normalization = np.ones(len(self.e_dft), dtype=float)
+
+        if normalization_symbols is None:
+            return
+        # We need to figure out the ratio between the total number of atoms, and the number of
+        # symbols we normalize to.
+        # Energies are assumed to be in energy per atoms, i.e. normalized by the total number of
+        # atoms in the initial cell, including vacancies.
+        con = self.settings.connect()
+        for ii, uid in enumerate(self.row_ids):
+            row = con.get(id=uid)
+            # Count the occurence of each symbol
+            count = Counter(row.symbols)
+            natoms = row.natoms
+
+            new_total = sum(count.get(s, 0) for s in normalization_symbols)
+            if new_total > 0:
+                # If none of the requested species were found we do not adjust the normalization.
+                self.normalization[ii] = natoms / new_total
 
     @property
     def scoring_scheme(self) -> str:
@@ -939,6 +969,8 @@ class Evaluate:
             self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
+        delta_e *= self.normalization
+
         w = np.diag(self.weight_matrix)
         delta_e *= w
         return sum(np.absolute(delta_e)) / self.effective_num_data_pts
@@ -949,6 +981,7 @@ class Evaluate:
             self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
+        delta_e *= self.normalization
 
         w = np.diag(self.weight_matrix)
         rmse_sq = np.sum(w * delta_e**2)
@@ -971,11 +1004,17 @@ class Evaluate:
             self.fit()
         e_pred = self.cf_matrix.dot(self.eci)
         delta_e = self.e_dft - e_pred
+        delta_e *= self.normalization
+
         cfm = self.cf_matrix
         # precision matrix
         prec = self.scheme.precision_matrix(cfm)
         delta_e_loo = delta_e / (1 - np.diag(cfm.dot(prec).dot(cfm.T)))
         self.e_pred_loo = self.e_dft - delta_e_loo
+
+        # Apply energy normalization
+        self.e_pred_loo *= self.normalization
+
         w = np.diag(self.weight_matrix)
         cv_sq = np.sum(w * delta_e_loo**2)
 
@@ -990,6 +1029,8 @@ class Evaluate:
             eci = self._get_eci_loo(i)
             e_pred = self.cf_matrix[i][:].dot(eci)
             delta_e = self.e_dft[i] - e_pred
+            delta_e *= self.normalization[i]
+
             cv_sq += self.weight_matrix[i, i] * (delta_e) ** 2
             e_pred_loo.append(e_pred)
         # cv_sq /= self.cf_matrix.shape[0]
@@ -1008,7 +1049,10 @@ class Evaluate:
             for part in partitions:
                 eci = self.scheme.fit(part["train_X"], part["train_y"])
                 e_pred = part["validate_X"].dot(eci)
-                scores.append(np.mean((e_pred - part["validate_y"]) ** 2))
+                delta_e = e_pred - part["validate_y"]
+                delta_e *= self.normalization[part["validate_index"]]
+
+                scores.append(np.mean(delta_e**2))
             avg_score += np.sqrt(np.mean(scores))
         return avg_score / self.num_repetitions
 
@@ -1141,14 +1185,22 @@ class Evaluate:
             raise ValueError(f"Unknown scoring scheme: {self.schoring_scheme}")
         return cv
 
-    def get_energy_predict(self) -> np.ndarray:
+    def get_energy_predict(self, normalize: bool = True) -> np.ndarray:
         """
         Perform matrix multiplication of eci and cf_matrix
 
         :return: Energy predicted using ECIs
         """
         eci = self.get_eci()
-        return self.cf_matrix.dot(eci)
+        en = self.cf_matrix.dot(eci)
+        if normalize:
+            return en * self.normalization
+        return en
+
+    def get_energy_true(self, normalize: bool = True) -> np.ndarray:
+        if normalize:
+            return self.e_dft * self.normalization
+        return self.e_dft
 
     def get_eci_by_size(self) -> Dict[str, Dict[str, list]]:
         """

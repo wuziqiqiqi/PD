@@ -25,7 +25,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
     """
     if plot_args is None:
         plot_args = {}
-    X = evaluate.e_dft
+    X = evaluate.get_energy_true()
     Y = evaluate.get_energy_predict()
     xlabel = plot_args.get("xlabel", r"E$_{DFT}$ (eV/atom)")
     ylabel = plot_args.get("ylabel", r"E$_{CE}$ (eV/atom)")
@@ -108,7 +108,7 @@ def plot_fit_residual(
     """
     if plot_args is None:
         plot_args = {}
-    X = evaluate.e_dft
+    X = evaluate.get_energy_true()
     Y = evaluate.get_energy_predict() - X  # eV/atom
     Y *= 1000  # meV/atom
     xlabel = plot_args.get("xlabel", "#OCC")
@@ -361,12 +361,13 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
 def _make_annotations_hull(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
     """Helper function to make annotations for interactive plots."""
     e_pred = evaluate.get_energy_predict()
+    e_dft = evaluate.get_energy_true()
 
     def format_annotation_dft(idx):
         name = evaluate.names[idx]
         row_id = evaluate.row_ids[idx]
-        e_dft = evaluate.e_dft[idx]
-        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {e_dft:.4f} eV/atom"
+        en = e_dft[idx]
+        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {en:.4f} eV/atom"
 
     def format_annotation_ce(idx):
         name = evaluate.names[idx]
@@ -383,15 +384,14 @@ def _make_annotations_hull(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
 def _make_annotations_plot_fit(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
     """Helper function to make annotations for interactive plots."""
     e_pred = evaluate.get_energy_predict()
+    e_dft = evaluate.get_energy_true()
 
     def format_annotation(idx):
         name = evaluate.names[idx]
         row_id = evaluate.row_ids[idx]
-        e_dft = evaluate.e_dft[idx]
+        en = e_dft[idx]
         e_ce = e_pred[idx]
-        return (
-            f"DB ID: {row_id}\nName: {name}\nE(DFT): {e_dft:.4f} eV/atom\nE(CE): {e_ce:.4f} eV/atom"
-        )
+        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {en:.4f} eV/atom\nE(CE): {e_ce:.4f} eV/atom"
 
     N = len(e_pred)
     return ([format_annotation(idx) for idx in range(N)],)

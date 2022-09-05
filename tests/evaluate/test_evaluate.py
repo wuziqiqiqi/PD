@@ -160,6 +160,7 @@ def test_cv(make_eval):
         evaluator.cf_matrix = input_type["input_matrix"]
         evaluator.e_dft = input_type["result_matrix"]
         evaluator.weight_matrix = np.eye(len(input_type["result_matrix"]))
+        evaluator.set_normalization()
         return evaluator
 
     # loocv
@@ -205,6 +206,7 @@ def test_error(make_eval):
     evaluator.cf_matrix = input_type["input_matrix"]
     evaluator.e_dft = input_type["result_matrix"]
     evaluator.weight_matrix = np.eye(len(input_type["result_matrix"]))
+    evaluator.set_normalization()
 
     rmse_error = evaluator.rmse()
     assert rmse_error == pytest.approx(0.0, abs=1e-8)
@@ -473,3 +475,56 @@ def test_set_scoring_scheme(make_eval):
     assert eva.scoring_scheme == "loocv_fast"
     with pytest.raises(ValueError):
         eva.scoring_scheme = "loo"
+
+
+def test_set_normalization(make_eval):
+    eva: Evaluate = make_eval()
+    norm = eva.normalization
+    assert norm.shape == (len(eva.e_dft),)
+    assert (norm == 1).all()
+
+    def check_norm(symbol):
+        """Helper function to verify the normalization"""
+        for ii, uid in enumerate(eva.row_ids):
+            row = con.get(id=uid)
+            n = row.symbols.count(symbol)
+            if n == 0:
+                assert eva.normalization[ii] == 1
+            else:
+                assert eva.normalization[ii] == pytest.approx(row.natoms / n)
+
+    con = eva.settings.connect()
+
+    eva.set_normalization(["Au"])
+    assert (eva.normalization != 1).any()
+    check_norm("Au")
+
+    eva.set_normalization(["Cu"])
+    assert (eva.normalization != 1).any()
+    check_norm("Cu")
+
+    eva.set_normalization(None)
+    assert (eva.normalization == 1).all()
+
+
+@pytest.mark.parametrize("schema", ["loocv", "k-fold", "loocv_fast"])
+def test_schema_normalization(make_eval, schema):
+    eva: Evaluate = make_eval()
+    eva.scoring_scheme = schema
+    if schema == "k-fold":
+        eva.nsplits = 2
+
+    cv = eva.get_cv_score()
+    rmse = eva.rmse()
+    mae = eva.mae()
+    eva.set_normalization(["Au"])
+    cv_au = eva.get_cv_score()
+    assert cv != cv_au
+    assert rmse != eva.rmse()
+    assert mae != eva.mae()
+    eva.set_normalization(["Cu"])
+    cv_cu = eva.get_cv_score()
+    assert rmse != eva.rmse()
+    assert mae != eva.mae()
+    assert cv != cv_cu
+    assert cv_au != cv_cu

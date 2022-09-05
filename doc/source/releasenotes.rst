@@ -10,6 +10,8 @@ Release notes
 * Added `interactive` option to :py:func:`~clease.plot_post_process.plot_eci`
 * Added :meth:`~clease.settings.ClusterExpansionSettings.get_cluster_corresponding_to_cf_name`.
 * Minor performance improvements to SGC MC.
+* Added :meth:`~clease.evaluate.Evaluate.set_normalization` for adjusting what elements to normalize by.
+  Default is to normalize by everything.
 
 1.0.2
 ======
