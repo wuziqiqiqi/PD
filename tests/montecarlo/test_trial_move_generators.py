@@ -15,7 +15,7 @@ from clease.montecarlo import (
 
 def test_random_flip():
     atoms = bulk("Au") * (4, 4, 4)
-    symbs = ["Au", "Cu", "X"]
+    symbs = ["Au", "Cu", "X", "Ni", "Ag", "O"]
 
     all_indices = [None, [0, 4, 7, 32, 40]]
     for indices in all_indices:
@@ -24,14 +24,26 @@ def test_random_flip():
         if allowed_indices is None:
             allowed_indices = list(range(len(atoms)))
 
-        # Run 10 flips. Ensure that the move is valid
-        for _ in range(10):
+        # Run a number of flips. Ensure that the move is valid
+        for _ in range(200):
             move = flipper.get_single_trial_move()
             assert len(move) == 1
             assert move[0].old_symb in symbs
             assert move[0].new_symb in symbs
             assert move[0].old_symb != move[0].new_symb
             assert move[0].index in allowed_indices
+
+
+def test_flip_possibilities():
+    atoms = bulk("Au") * (4, 4, 4)
+    symbs = ["Au", "Cu", "X", "Ni", "Ag", "O"]
+
+    gen = RandomFlip(symbs, atoms)
+    for s, lst in gen.flip_map.items():
+        assert isinstance(s, str)
+        assert isinstance(lst, list)
+        assert len(lst) == len(symbs) - 1
+        assert s not in lst
 
 
 def test_random_swap():

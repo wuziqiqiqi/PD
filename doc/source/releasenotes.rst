@@ -9,6 +9,7 @@ Release notes
 * Getting thermodynamic quantities in the SGC MC now also retrieves averages from observers.
 * Added `interactive` option to :py:func:`~clease.plot_post_process.plot_eci`
 * Added :meth:`~clease.settings.ClusterExpansionSettings.get_cluster_corresponding_to_cf_name`.
+* Minor performance improvements to SGC MC.
 
 1.0.2
 ======

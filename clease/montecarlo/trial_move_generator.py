@@ -1,7 +1,9 @@
-from typing import Sequence, List, Set, Tuple
+from typing import Sequence, List, Set, Tuple, Dict
 import random
+from random import choice
 from abc import abstractmethod, ABC
 from ase import Atoms
+from ase.data import chemical_symbols
 from clease.datastructures import SystemChange
 from clease.tools import flatten
 from .constraints import MCConstraint
@@ -16,7 +18,7 @@ __all__ = (
     "RandomFlipWithinBasis",
 )
 
-DEFAULT_MAX_ATTEMPTS = 10000
+DEFAULT_MAX_ATTEMPTS = 10_000
 
 
 class TooFewElementsError(Exception):
@@ -155,10 +157,25 @@ class RandomFlip(SingleTrialMoveGenerator):
         else:
             self.indices = indices
 
+        # Pre-compute the possible flips. We don't want to be computing
+        # these maps for each trial move.
+        self.flip_map = self._make_possible_flips()
+
+    def _make_possible_flips(self) -> Dict[str, List[str]]:
+        """Compute a map of possible flips, given a site has a particular symbol."""
+        possible = {}
+        for sym in self.symbols:
+            possible[sym] = [s for s in self.symbols if s != sym]
+        return possible
+
     def get_single_trial_move(self) -> List[SystemChange]:
-        pos = random.choice(self.indices)
-        old_symb = self.atoms[pos].symbol
-        new_symb = random.choice([s for s in self.symbols if s != old_symb])
+        """Get a random flip of an included site into a different element."""
+        pos = choice(self.indices)
+        # Access to the numbers array of the atoms object is the
+        # fastest way of determining a single symbol, by avoiding constructing the entire Symbols
+        # array in atoms.symbols
+        old_symb = chemical_symbols[self.atoms.numbers[pos]]
+        new_symb = choice(self.flip_map[old_symb])
         return [
             SystemChange(index=pos, old_symb=old_symb, new_symb=new_symb, name=self.CHANGE_NAME)
         ]
