@@ -703,6 +703,8 @@ class ClusterExpansionSettings:
 
     def clusters_table(self) -> str:
         """String with information about the clusters"""
+        # We need the clusters to be constructed first.
+        self.ensure_clusters_exist()
         mult_dict = self.multiplicity_factor
 
         columns = [
@@ -732,6 +734,7 @@ class ClusterExpansionSettings:
             s = fmt.format(index_s, name, size, group, radius, n_figures, mult)
             lines.append(s)
 
+        # Bottom horizontal line
         lines.append(rule)
 
         return "\n".join(lines)
