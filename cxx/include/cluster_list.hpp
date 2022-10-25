@@ -1,8 +1,8 @@
 #ifndef CLUSTER_LIST_H
 #define CLUSTER_LIST_H
-#include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "cluster.hpp"
@@ -27,8 +27,8 @@ class ClusterList {
     void unique_indices(std::set<int> &indices) const;
 
    private:
-    std::map<std::string, std::set<unsigned int> > symm_group_by_name;
-    std::map<std::string, std::vector<Cluster> > clusters;
+    std::unordered_map<std::string, std::set<unsigned int>> symm_group_by_name;
+    std::unordered_map<std::string, std::vector<Cluster>> clusters;
 };
 
 #endif

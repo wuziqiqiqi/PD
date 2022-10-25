@@ -25,6 +25,7 @@ void RowSparseStructMatrix::set_size(unsigned int n_rows, unsigned int n_non_zer
     }
     num_non_zero = n_non_zero_per_row;
     allowed_lookup_values = new int[num_non_zero];
+    this->num_rows = n_rows;
 }
 
 RowSparseStructMatrix::RowSparseStructMatrix(const RowSparseStructMatrix &other) {

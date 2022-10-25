@@ -1,7 +1,5 @@
 #include "cluster_list.hpp"
 
-using namespace std;
-
 void ClusterList::clear() {
     clusters.clear();
     symm_group_by_name.clear();
@@ -12,18 +10,19 @@ void ClusterList::append(const Cluster &cluster) {
     symm_group_by_name[cluster.name].insert(cluster.symm_group);
 }
 
-bool ClusterList::is_in_symm_group(const string &name, unsigned int symm_group) const {
-    return symm_group_by_name.at(name).find(symm_group) != symm_group_by_name.at(name).end();
+bool ClusterList::is_in_symm_group(const std::string &name, unsigned int symm_group) const {
+    auto group = symm_group_by_name.at(name);
+    return group.find(symm_group) != group.end();
 }
 
-const Cluster &ClusterList::get(const string &name, unsigned int symm_group) const {
+const Cluster &ClusterList::get(const std::string &name, unsigned int symm_group) const {
     for (const Cluster &cluster : clusters.at(name)) {
         if (cluster.symm_group == symm_group) {
             return cluster;
         }
     }
 
-    throw runtime_error("Did not find cluster in the requested symmetry group!");
+    throw std::runtime_error("Did not find cluster in the requested symmetry group!");
 }
 
 unsigned int ClusterList::max_index() const {
@@ -38,7 +37,7 @@ unsigned int ClusterList::max_index() const {
     return mx;
 }
 
-void ClusterList::unique_indices(set<int> &unique_indx) const {
+void ClusterList::unique_indices(std::set<int> &unique_indx) const {
     for (auto iter = clusters.begin(); iter != clusters.end(); ++iter) {
         for (const Cluster &cluster : iter->second) {
             cluster.unique_indices(unique_indx);

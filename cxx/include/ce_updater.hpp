@@ -47,6 +47,16 @@ struct ClusterMember {
     int ref_indx;
     int sub_cluster_indx;
 };
+/* Cache structure which contains objects that are useful for the updating of the spin product */
+struct SpinProductCache {
+    int ref_indx;        // The current reference index
+    int original_index;  // The original "untranslated" index.
+    /* A cache of the relevant translation matrix row
+    corresponding to the ref_indx */
+    int *trans_matrix_row;
+    // The basis functions for the new and old site symbols
+    std::vector<std::pair<double, double>> bfs_new_old;
+};
 
 class CEUpdater {
    public:
@@ -81,11 +91,17 @@ class CEUpdater {
 
     /** Computes the spin product for one element */
     double spin_product_one_atom(int ref_indx, const Cluster &indx_list,
-                                 const std::vector<int> &dec, int ref_id);
+                                 const std::vector<int> &dec, int ref_id) const;
     // Calculate the change in spin product going from old_symb_id to new_symb_id
-    double spin_product_one_atom_delta(int ref_indx, const Cluster &indx_list,
-                                       const std::vector<int> &dec, int old_symb_id,
-                                       int new_symb_id);
+    double spin_product_one_atom_delta(const SpinProductCache &sp_cache, const Cluster &indx_list,
+                                       const equiv_deco_t &equiv_deco) const;
+
+    SpinProductCache build_sp_cache(const SymbolChange &symb_change, unsigned int old_symb_id,
+                                    unsigned int new_symb_id) const;
+
+    /* Locate the original index for the "untranslated" site, given a
+    reference index, i.e. the inverse operation of the translation matrix.*/
+    int get_original_index(int ref_indx) const;
 
     /**
     Calculates the new energy given a set of system changes

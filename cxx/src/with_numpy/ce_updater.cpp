@@ -227,7 +227,7 @@ double CEUpdater::get_energy() {
 }
 
 double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster,
-                                        const vector<int> &dec, int ref_id) {
+                                        const vector<int> &dec, int ref_id) const {
     double sp = 0.0;
 
     // Note: No duplication factor is included here, since this method is used for calculating the
@@ -259,9 +259,24 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster,
     return sp;
 }
 
-double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &cluster,
-                                              const vector<int> &dec, int old_symb_id,
-                                              int new_symb_id) {
+int CEUpdater::get_original_index(int ref_indx) const {
+    int *trans_matrix_row = trans_matrix.get_row(ref_indx);
+    int *allowed_lu = trans_matrix.get_allowed_lookup_values();
+    for (unsigned int j = 0; j < trans_matrix.get_num_non_zero(); j++) {
+        int col = allowed_lu[j];
+        int indx = trans_matrix.lookup_in_row(trans_matrix_row, col);
+        if (indx == ref_indx) {
+            return col;
+        }
+    }
+    std::stringstream err;
+    err << "Did not locate original index for ref index: " << ref_indx;
+    throw std::runtime_error(err.str());
+}
+
+double CEUpdater::spin_product_one_atom_delta(const SpinProductCache &sp_cache,
+                                              const Cluster &cluster,
+                                              const equiv_deco_t &equiv_deco) const {
     // Keep track of the change in spin-product
     double sp_delta = 0.0;
 
@@ -271,33 +286,40 @@ double CEUpdater::spin_product_one_atom_delta(int ref_indx, const Cluster &clust
     unsigned int num_indx = indx_list.size();
     unsigned int n_memb = indx_list[0].size();
 
-    // Cache the relevant row from the trans matrix.
-    int *trans_matrix_row = trans_matrix.get_row(ref_indx);
+    int *tm_row = sp_cache.trans_matrix_row;
 
-    for (unsigned int i = 0; i < num_indx; i++) {
-        // Calculate the spin product for both new and the old (ref)
-        double sp_temp_new = 1.0;
-        double sp_temp_ref = 1.0;
+    for (const vector<int> &dec : equiv_deco) {
+        // Iterate each site in the cluster
+        for (unsigned int i = 0; i < num_indx; i++) {
+            // Calculate the spin product for both new and the old (ref)
+            double sp_temp_new = 1.0;
+            double sp_temp_ref = 1.0;
+            // The constant term to the spin product from the sites which didn't change.
+            double sp_const = 1.0;
 
-        // Use pointer arithmetics in the inner most loop
-        const int *indices = &indx_list[i][0];
+            // Use pointer arithmetics in the inner most loop
+            const int *indices = &indx_list[i][0];
 
-        for (unsigned int j = 0; j < n_memb; j++) {
-            double bf_new, bf_ref;
-            int trans_index = trans_matrix.lookup_in_row(trans_matrix_row, indices[j]);
-            int dec_j = dec[j];
-            if (trans_index == ref_indx) {
-                bf_new = basis_functions.get(dec_j, new_symb_id);
-                bf_ref = basis_functions.get(dec_j, old_symb_id);
-            } else {
-                double bf = basis_functions.get(dec_j, symbols_with_id->id(trans_index));
-                bf_new = bf;
-                bf_ref = bf;
+            for (unsigned int j = 0; j < n_memb; j++) {
+                const int site_index = indices[j];
+                const int dec_j = dec[j];
+                if (site_index == sp_cache.original_index) {
+                    // This site is the reference index.
+                    // Look up the BF values directly for the new and old symbols
+                    const std::pair<double, double> &ref_bf = sp_cache.bfs_new_old[dec_j];
+                    sp_temp_new *= ref_bf.first;
+                    sp_temp_ref *= ref_bf.second;
+                } else {
+                    // Look up the symbol of the non-reference site, which hasn't changed.
+                    const int trans_index = trans_matrix.lookup_in_row(tm_row, site_index);
+                    sp_const *= basis_functions.get(dec_j, symbols_with_id->id(trans_index));
+                }
             }
-            sp_temp_new *= bf_new;
-            sp_temp_ref *= bf_ref;
+            // The change in spin-product is the difference in SP between the site(s) which changed,
+            // multiplied by the constant SP from the other un-changed sites (since these contribute
+            // equally before and after the change).
+            sp_delta += (sp_temp_new - sp_temp_ref) * sp_const * dup_factors[i];
         }
-        sp_delta += (sp_temp_new - sp_temp_ref) * dup_factors[i];
     }
     return sp_delta;
 }
@@ -314,6 +336,23 @@ void CEUpdater::py_changes2_symb_changes(PyObject *all_changes,
         SymbolChange symb_change = SymbolChange(PyList_GetItem(all_changes, i));
         symb_changes.push_back(symb_change);
     }
+}
+
+SpinProductCache CEUpdater::build_sp_cache(const SymbolChange &symb_change,
+                                           unsigned int old_symb_id,
+                                           unsigned int new_symb_id) const {
+    int ref_indx = symb_change.indx;
+    // Look up the untranslated index of the reference index.
+    int orig_indx = this->get_original_index(ref_indx);
+    // Cache the relevant row from the trans matrix.
+    int *trans_matrix_row = this->trans_matrix.get_row(ref_indx);
+
+    // Cache the basis functions for each decoration number specifically
+    // for the old and new symbols for faster lookup.
+    auto bfs_new_old = this->basis_functions.prepare_bfs_new_old(new_symb_id, old_symb_id);
+
+    SpinProductCache sp_cache = {ref_indx, orig_indx, trans_matrix_row, bfs_new_old};
+    return sp_cache;
 }
 
 void CEUpdater::update_cf(SymbolChange &symb_change) {
@@ -340,6 +379,13 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
     symbols_with_id->set_symbol(symb_change.indx, symb_change.new_symb);
     unsigned int new_symb_id = symbols_with_id->id(symb_change.indx);
 
+    /* The following prepares a range of properties which will be
+     useful for all of the clusters, so we don't compute more
+     than we have to inside the main ECI loop (and especially inside the
+     spin-product loop). */
+
+    SpinProductCache sp_cache = this->build_sp_cache(symb_change, old_symb_id, new_symb_id);
+
     if (atoms != nullptr) {
         set_symbol_in_atoms(atoms, symb_change.indx, symb_change.new_symb);
     }
@@ -363,12 +409,12 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
         // Singlet
         if (parsed.size == 1) {
             unsigned int dec = parsed.dec_num;
-            next_cf[i] = current_cf[i] + (basis_functions.get(dec, new_symb_id) -
-                                          basis_functions.get(dec, old_symb_id)) /
-                                             num_non_bkg_sites;
+            const std::pair<double, double> &bf_ref = sp_cache.bfs_new_old[dec];
+            next_cf[i] = current_cf[i] + (bf_ref.first - bf_ref.second) / num_non_bkg_sites;
             continue;
         }
 
+        // n-body
         int symm = trans_symm_group[symb_change.indx];
 
         if (!clusters.is_in_symm_group(parsed.prefix, symm)) {
@@ -381,11 +427,8 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
 
         const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(parsed.dec_str);
 
-        double delta_sp = 0.0;
-        for (const vector<int> &deco : equiv_deco) {
-            delta_sp += spin_product_one_atom_delta(symb_change.indx, cluster, deco, old_symb_id,
-                                                    new_symb_id);
-        }
+        // Calculate the change (delta) in spin product
+        double delta_sp = spin_product_one_atom_delta(sp_cache, cluster, equiv_deco);
 
         delta_sp *= (static_cast<double>(size) / equiv_deco.size());
         delta_sp /= normalisation_factor.at(parsed.prefix);
@@ -884,14 +927,12 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
             }
 
             const Cluster &cluster = clusters.get(prefix, symm);
-            unsigned int size = cluster.size;
-            assert(cluster_indices[0].size() == size);
 
             const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(dec_str);
+            unsigned int ref_id = symbols_with_id->id(atom_no);
             double sp_temp = 0.0;
             for (const vector<int> &deco : equiv_deco) {
-                sp_temp +=
-                    spin_product_one_atom(atom_no, cluster, deco, symbols_with_id->id(atom_no));
+                sp_temp += spin_product_one_atom(atom_no, cluster, deco, ref_id);
             }
             sp += sp_temp / equiv_deco.size();
             count += cluster.get().size();

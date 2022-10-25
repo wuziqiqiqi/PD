@@ -62,6 +62,14 @@ class RowSparseStructMatrix {
     /** Access function that verifies that the lookup is valid */
     int get_with_validity_check(unsigned int row, unsigned int col) const;
 
+    const unsigned int get_num_non_zero() const {
+        return this->num_non_zero;
+    };
+
+    int *get_allowed_lookup_values() const {
+        return this->allowed_lookup_values;
+    };
+
    private:
     int *allowed_lookup_values{nullptr};
     int *lookup{nullptr};

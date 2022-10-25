@@ -3,15 +3,15 @@
 #include <Python.h>
 
 #include <iostream>
-#include <map>
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 typedef std::vector<std::vector<int>> cluster_t;
 typedef std::vector<std::vector<int>> equiv_deco_t;
-typedef std::map<std::string, equiv_deco_t> all_equiv_deco_t;
+typedef std::unordered_map<std::string, equiv_deco_t> all_equiv_deco_t;
 
 class Cluster {
    public:

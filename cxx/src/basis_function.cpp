@@ -49,6 +49,19 @@ double BasisFunction::get(unsigned int dec_num, unsigned int symb_id) const {
     return bfs[get_index(dec_num, symb_id)];
 }
 
+std::vector<std::pair<double, double>> BasisFunction::prepare_bfs_new_old(
+    unsigned int new_symb_id, unsigned int old_symb_id) const {
+    std::vector<std::pair<double, double>> prepped;
+    prepped.reserve(this->num_bf_values);
+
+    for (unsigned int dec_num = 0; dec_num < this->num_bf_values; dec_num++) {
+        double new_bf = this->get(dec_num, new_symb_id);
+        double old_bf = this->get(dec_num, old_symb_id);
+        prepped.emplace_back(std::make_pair(new_bf, old_bf));
+    }
+    return prepped;
+}
+
 void BasisFunction::swap(const BasisFunction &other) {
     this->symb_ptr = other.symb_ptr;
     this->num_bfs = other.num_bfs;
