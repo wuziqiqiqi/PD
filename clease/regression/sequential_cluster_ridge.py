@@ -26,13 +26,17 @@ class SequentialClusterRidge(LinearRegression):
 
     num_alpha: int
         Number of alpha values
+
+    verbose: bool
+        Print information about fit after completion
     """
 
-    def __init__(self, min_alpha=1e-10, max_alpha=10.0, num_alpha=20):
+    def __init__(self, min_alpha=1e-10, max_alpha=10.0, num_alpha=20, verbose: bool = False):
         super().__init__()
         self.min_alpha = min_alpha
         self.max_alpha = max_alpha
         self.num_alpha = num_alpha
+        self.verbose = verbose
 
     @staticmethod
     def _cv(X, coeff, y, l2scheme):
@@ -92,5 +96,6 @@ class SequentialClusterRidge(LinearRegression):
         res = np.zeros(numFeat)
         best_coeff = coeffs[best_cv]
         res[: len(best_coeff)] = best_coeff
-        self._print_summary(cvs, coeffs)
+        if self.verbose:
+            self._print_summary(cvs, coeffs)
         return res
