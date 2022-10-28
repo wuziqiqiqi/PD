@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Iterator, List
 import ase
-from ase.calculators.singlepoint import SinglePointCalculator
 from clease.datastructures import MCStep
+from clease.calculator import CleaseCacheCalculator
 from .mc_observer import MCObserver
 
 __all__ = ("MoveObserver",)
@@ -64,6 +64,6 @@ def _apply_step(atoms: ase.Atoms, step: MCStep) -> ase.Atoms:
         for change in step.last_move:
             change.apply_change(atoms)
     # Attach a calculator with the energies
-    calc = SinglePointCalculator(atoms, energy=step.energy)
+    calc = CleaseCacheCalculator(energy=step.energy)
     atoms.calc = calc
     return atoms

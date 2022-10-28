@@ -6,6 +6,7 @@ Release notes
 
 1.0.4
 ======
+* Added :class:`~clease.calculator.calc_cache.CleaseCacheCalculator`.
 
 1.0.3
 ======

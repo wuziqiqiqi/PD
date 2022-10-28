@@ -5,6 +5,7 @@ import random
 from collections import defaultdict
 import pytest
 import numpy as np
+from ase import Atoms
 from ase.build import bulk
 from ase.geometry import get_layers
 import clease
@@ -336,14 +337,16 @@ def test_site_order_parameter(db_name):
     assert "site_order_std" in thermo.keys()
 
 
-def test_lowest_energy_obs(db_name):
+def test_lowest_energy_obs(db_name, compare_atoms):
     atoms = get_example_mc_system(db_name)
+    atoms.symbols[0:3] = "Cu"
 
-    atoms[0].symbol = "Cu"
-    atoms[1].symbol = "Cu"
-    atoms[2].symbol = "Cu"
+    assert len(set(atoms.symbols)) > 1
 
     low_en = LowestEnergyStructure(atoms)
+
+    assert low_en.emin_atoms is not atoms
+    assert isinstance(low_en.emin_atoms, Atoms)
 
     mc = Montecarlo(atoms, 700)
     energy_evol = EnergyEvolution(mc)
@@ -353,6 +356,48 @@ def test_lowest_energy_obs(db_name):
     mc.run(steps=1000)
     assert np.min(energy_evol.energies) == pytest.approx(low_en.lowest_energy)
     assert low_en.emin_atoms.get_potential_energy() == pytest.approx(low_en.lowest_energy)
+
+    # Verify that mutating the original atoms object doesn't mutate the emin atoms object.
+    nums = np.array(low_en.emin_atoms.numbers)  # Copy the numbers
+    atoms.numbers[0] = 88
+    assert (low_en.emin_atoms.numbers == nums).all()
+    # Verify we can get the energy property, without ASE failing the check_state test.
+    low_en.emin_atoms.get_potential_energy()
+
+
+def test_track_lowest_cf(db_name):
+    atoms = get_example_mc_system(db_name)
+    atoms.symbols[0:3] = "Cu"
+
+    low_en = LowestEnergyStructure(atoms)
+
+    assert low_en.emin_atoms is not atoms
+    assert low_en._calc_cache is low_en.emin_atoms.calc
+    assert isinstance(low_en.emin_atoms, Atoms)
+    mc = Montecarlo(atoms, 700)
+    mc.attach(low_en)
+
+    # Tracking CF's is disabled by default.
+    assert low_en.lowest_energy_cf is None
+    assert low_en.lowest_energy == np.inf
+    mc.run(500)
+    assert low_en.lowest_energy < np.inf
+    assert low_en.lowest_energy == pytest.approx(low_en._lowest_energy_cache)
+    assert low_en.lowest_energy_cf is None
+    assert low_en._calc_cache is low_en.emin_atoms.calc
+    assert low_en.emin_atoms.get_potential_energy() == pytest.approx(low_en.lowest_energy)
+
+    # Enable tracking CF, should now get tracked.
+    low_en.track_cf = True
+    low_en.reset()
+    assert low_en.lowest_energy == np.inf
+    mc.run(500)
+    assert low_en.lowest_energy_cf is not None
+    assert isinstance(low_en.lowest_energy_cf, dict)
+    for k, v in low_en.lowest_energy_cf.items():
+        assert isinstance(k, str)
+        assert isinstance(v, float)
+    assert low_en.lowest_energy == pytest.approx(low_en._lowest_energy_cache)
 
 
 def test_diffraction_obs(db_name):
