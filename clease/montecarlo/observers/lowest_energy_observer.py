@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 import ase
+from clease.datastructures import MCStep
 from clease.calculator import CleaseCacheCalculator
 from .mc_observer import MCObserver
 
@@ -67,28 +68,29 @@ class LowestEnergyStructure(MCObserver):
         """The energy of the current atoms object (not the emin energy)"""
         return self.calc.results["energy"]
 
-    def __call__(self, system_changes) -> None:
+    def observe_step(self, mc_step: MCStep) -> None:
         """
         Check if the current state has lower energy and store the current
         state if it has a lower energy than the previous state.
 
-        system_changes: list
-            System changes. See doc-string of
-            `clease.montecarlo.observers.MCObserver`
+        mc_step: MCStep
+             Instance of MCStep with information on the latest step.
         """
-
-        if self.energy < self._lowest_energy_cache:
-            self._update_emin()
-            dE = self.energy - self.lowest_energy
+        # We do the comparison even if the move was rejected,
+        # as no energy has been recorded for the first step, yet.
+        # The internal energy cache is np.inf when nothing has been recorded.
+        if mc_step.energy < self._lowest_energy_cache:
+            self._update_emin(mc_step)
+            dE = mc_step.energy - self.lowest_energy
             msg = "Found new low energy structure. New energy: %.3f eV. Change: %.3f eV"
             logger.info(msg, self.lowest_energy, dE)
             if self.verbose:
                 print(msg % (self.lowest_energy, dE))
 
-    def _update_emin(self) -> None:
+    def _update_emin(self, mc_step: MCStep) -> None:
         if self.track_cf:
             self.lowest_energy_cf = self.calc.get_cf()
-        self.lowest_energy = self.energy
+        self.lowest_energy = mc_step.energy
 
         # Avoid copying the atoms object multiple times. We can only ever have
         # changed the symbols, so copy those over from the atoms object.
