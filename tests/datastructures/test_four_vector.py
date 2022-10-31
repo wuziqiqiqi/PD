@@ -270,16 +270,6 @@ def test_shift_notimplemented():
         fv.shift_xyz([0, 0, 0, 1])
 
 
-def test_shift_xyz_and_modulo():
-    a = FourVector(-1, -1, 3, 0)
-    b = FourVector(0, 0, 0, 0)
-
-    assert a.shift_xyz_and_modulo(b, 2, 2, 1) == FourVector(1, 1, 0, 0)
-
-    b = FourVector(5, 0, 0, 0)
-    assert a.shift_xyz_and_modulo(b, 2, 2, 1) == FourVector(0, 1, 0, 0)
-
-
 def test_save_load(make_random_four_vector, make_tempfile):
     file = make_tempfile("four_vector.json")
     for _ in range(20):

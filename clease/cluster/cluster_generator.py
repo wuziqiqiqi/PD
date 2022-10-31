@@ -1,5 +1,6 @@
 from itertools import product
 from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
+from math import sqrt
 import numpy as np
 from ase import Atoms
 from clease import tools
@@ -44,28 +45,12 @@ class ClusterGenerator:
         primitive cell."""
         return fv.to_cartesian(self.prim, transposed_cell=self.prim_cell_T)
 
-    def eucledian_distance_vec(
-        self, x1: Union[np.ndarray, FourVector], x2: Union[np.ndarray, FourVector]
-    ) -> np.ndarray:
-        """
-        Calculate the difference between two vectors. Either they are in FourVector representation.
-        in which case they are translated into cartesian coordiantes, or they are assumed to be
-        NumPy arrays in cartesian coordinates.
-
-        :param x1: First vector
-        :param x2: Second vector
-        """
-
-        def as_euc(x: Union[np.ndarray, FourVector]) -> np.ndarray:
-            """Helper function to translate vector to NumPy array format"""
-            if isinstance(x, FourVector):
-                return self._fv_to_cart(x)
-            # Assume it's already in cartesian coordinates
-            return x
-
-        euc1 = as_euc(x1)
-        euc2 = as_euc(x2)
-        return euc2 - euc1
+    def _as_euc(self, x: Union[np.ndarray, FourVector]) -> np.ndarray:
+        """Helper function to translate vector to NumPy array format"""
+        if isinstance(x, FourVector):
+            return self._fv_to_cart(x)
+        # Assume it's already in cartesian coordinates
+        return x
 
     def many_to_four_vector(
         self, cartesian: np.ndarray, sublattices: Sequence[int]
@@ -132,7 +117,9 @@ class ClusterGenerator:
         return int(np.argmin(diff_sq))
 
     def eucledian_distance(
-        self, x1: Union[np.ndarray, FourVector], x2: Union[np.ndarray, FourVector]
+        self,
+        x1: Union[np.ndarray, FourVector],
+        x2: Union[np.ndarray, FourVector],
     ) -> float:
         """
         Eucledian distance between to FourVectors in cartesian coordinates.
@@ -145,8 +132,10 @@ class ClusterGenerator:
         :param x2: Second vector
         """
 
-        d = self.eucledian_distance_vec(x1, x2)
-        return np.linalg.norm(d, ord=2)
+        # Find the distance vector
+        euc1 = self._as_euc(x1)
+        euc2 = self._as_euc(x2)
+        return _1d_array_norm(euc2 - euc1)
 
     @property
     def shortest_diag(self) -> float:
@@ -158,8 +147,8 @@ class ClusterGenerator:
                 if all(x == 0 for x in w):
                     continue
 
-                diag = cellT.dot(w)
-                length: float = np.linalg.norm(diag, ord=2)
+                diag: np.ndarray = cellT.dot(w)
+                length: float = _1d_array_norm(diag)
                 yield length
 
         # Find the shortest length
@@ -289,27 +278,40 @@ class ClusterGenerator:
 
         return clusters, all_fps
 
-    def _get_internal_distances(self, figure: Figure) -> List[List[float]]:
+    def _get_internal_distances(self, figure: Figure, sort: bool = False) -> np.ndarray:
         """
-        Return all the internal distances of a figure
+        Return all the internal distances of a figure.
+
+        If ``sort`` is True, then distances are sorted from
+        largest->smallest distance for each component.
+
+        Returns a 2D array with the internal distances. If the array is *unsorted*,
+            then entry ``(i, j)`` is the eucledian distance between figures ``i`` and ``j``.
         """
-        dists = []
-        for x0 in figure.components:
-            tmp_dist = []
-            for x1 in figure.components:
-                dist = self.eucledian_distance(x0, x1)
-                # float() to ensure we're not working on a NumPy floating number
-                dist = round(float(dist), 6)
-                tmp_dist.append(dist)
-            dists.append(sorted(tmp_dist, reverse=True))
-        return dists
+        comp = figure.components
+
+        # Convert each FourVector component to cartesian coordinates
+        x = np.array([self._fv_to_cart(c) for c in comp], dtype=float)
+        # Build the distance array, such that elements (i, j) is the
+        # Euclidean distance betweens elements i and j.
+        arr = np.linalg.norm(x[:, np.newaxis] - x, axis=-1, ord=2)
+        # Round to 6 digits for numerical stability.
+        arr = np.round(arr, 6)
+        if sort:
+            # fliplr for reversing the sort. Sorted such that each row has largest->smallest
+            # distance (i.e. like reverse=True does in Python's sort() method).
+            arr = np.fliplr(np.sort(arr, axis=1))
+        return arr
 
     def _order_by_internal_distances(self, figure: Figure) -> Figure:
         """Order the Figure by internal distances. Returns a new instance of the Figure."""
-        dists = self._get_internal_distances(figure)
+        dists = self._get_internal_distances(figure, sort=True)
         fvs = figure.components
-        zipped = sorted(list(zip(dists, fvs)), reverse=True)
-        return Figure((x[1] for x in zipped))
+
+        # Sort according to the figure with the largest internal distances, lexographically.
+        # Largest internal distances first.
+        order = np.lexsort(dists.T)[::-1]
+        return Figure((fvs[i] for i in order))
 
     def to_atom_index(self, cluster: Cluster, lut: Dict[FourVector, int]) -> List[List[int]]:
         """
@@ -326,7 +328,7 @@ class ClusterGenerator:
 
     def equivalent_sites(self, figure: Figure) -> List[List[int]]:
         """Find the equivalent sites of a figure."""
-        dists = self._get_internal_distances(figure)
+        dists = self._get_internal_distances(figure, sort=True)
         equiv_sites = []
         for i, d1 in enumerate(dists):
             for j in range(i + 1, len(dists)):
@@ -348,9 +350,8 @@ class ClusterGenerator:
 
     def get_max_distance(self, figure: Figure):
         """Return the maximum distance of a figure."""
-        internal_dists = self._get_internal_distances(figure)
-        max_dists = [x[0] for x in internal_dists]
-        return max(max_dists)
+        internal_dists = self._get_internal_distances(figure, sort=False)
+        return internal_dists.max()
 
 
 class SitesWithinCutoff:
@@ -445,3 +446,14 @@ def positions_to_fingerprint(X: np.ndarray) -> ClusterFingerprint:
     # Append the off-diagonal elements after the diagonal, into a 1D array
     inner = np.append(diag_positions, off_diag)
     return ClusterFingerprint(fp=inner)
+
+
+def _1d_array_norm(arr: np.ndarray) -> float:
+    """Calculate the norm of a 1-d vector.
+    Assumes the vector is 1-dimensional and real, and will not be checked.
+
+    More efficient norm than ``np.linalg.norm`` for small vectors,
+    since we already know the dimensionality, all numbers are real,
+    and that the result is scalar.
+    """
+    return sqrt(arr.dot(arr))

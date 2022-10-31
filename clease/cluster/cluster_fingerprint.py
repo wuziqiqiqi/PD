@@ -54,9 +54,9 @@ class ClusterFingerprint(AttrSavable):
 
         if len(self.fp) != len(other.fp):
             return False
-        # We disable rtol, as it is otherwise messing with the numerical
-        # accuracy we're trying to achieve.
-        return np.allclose(self.fp, other.fp, atol=self.tol, rtol=0)
+        # Functionally equivalent to np.allclose(self.fp, other.fp, atol=self.tol, rtol=0)
+        # but ~10x faster.
+        return (np.abs(self.fp - other.fp) < self.tol).all()
 
     def __getitem__(self, i):
         return self.fp[i]

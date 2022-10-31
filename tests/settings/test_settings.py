@@ -140,9 +140,10 @@ def test_TaO_no_bkg(db_name):
 
     assert len(prim) == 14
     assert len(gen_prim) == 10
+    is_bkg_all = settings.cluster_mng.is_background_atoms(prim)
     for atom in prim:
         is_bkg = atom.symbol == "Ta"
-        assert settings.cluster_mng.is_background_atom(atom) == is_bkg
+        assert is_bkg_all[atom.index] == is_bkg
 
 
 def test_get_figures_settings(settings_and_atoms, dummy_eci):

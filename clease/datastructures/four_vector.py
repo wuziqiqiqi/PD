@@ -89,31 +89,6 @@ class FourVector(AttrSavable):
             self.ix + other.ix, self.iy + other.iy, self.iz + other.iz, self.sublattice
         )
 
-    def shift_xyz_and_modulo(self, other: FourVector, nx: int, ny: int, nz: int) -> FourVector:
-        """
-        Shift the four vector, similarly to "shift_xyz". Additionally, apply a modulo
-        of (nx, ny, nz) to (ix, iy, iz).
-        Useful for wrapping a four-vector back into a supercell, which is a (nx, ny, nz)
-        repetition of the primitive. The sublattice remains the same.
-
-        Return a new FourVector instance.
-
-        Example:
-
-        >>> from clease.datastructures.four_vector import FourVector
-        >>> a = FourVector(-1, -1, 3, 0)
-        >>> b = FourVector(0, 0, 0, 0)
-        >>> a.shift_xyz_and_modulo(b, 2, 2, 1)
-        FourVector(ix=1, iy=1, iz=0, sublattice=0)
-        """
-        if not isinstance(other, FourVector):
-            raise NotImplementedError(f"Shift must be by another FourVector, got {other!r}")
-
-        ix = (self.ix + other.ix) % nx
-        iy = (self.iy + other.iy) % ny
-        iz = (self.iz + other.iz) % nz
-        return FourVector(ix, iy, iz, self.sublattice)
-
     def _validate(self) -> None:
         """Method for explicitly checking the validity of the FourVector.
         Mainly for testing purposes. Is not run upon instantiation.

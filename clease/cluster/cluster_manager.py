@@ -1,4 +1,4 @@
-from typing import Sequence, Set, Dict, List, Iterator, Tuple
+from typing import Sequence, Set, Dict, List, Iterator, Tuple, Callable
 import logging
 from itertools import product
 import functools
@@ -63,15 +63,18 @@ class ClusterManager:
 
         # Find the indices we need to delete
         # If no background atoms are present, this will do nothing.
-        delete = [atom.index for atom in atoms if self.is_background_atom(atom)]
-        delete.sort(reverse=True)
-        for i in delete:
-            del atoms[i]
+        mask = self.is_background_atoms(atoms)
+        indices = np.arange(len(atoms))[mask]
+        del atoms[indices]
         return atoms
 
-    def is_background_atom(self, atom: ase.Atom) -> bool:
-        """Check whether an atom is a background atom."""
-        return atom.symbol in self.background_syms
+    def is_background_atoms(self, atoms: ase.Atoms) -> np.ndarray:
+        """Find every single background atom in an entire atoms object.
+
+        Returns a NumPy array of booleans indicating if a site is a background site."""
+        # Convert background syms to a list, as otherwise numpy treats the
+        # set as an entire element.
+        return np.isin(atoms.symbols, list(self.background_syms))
 
     def __eq__(self, other):
         return self.clusters == other.clusters and self.generator == other.generator
@@ -244,6 +247,21 @@ class ClusterManager:
         """
         return self.clusters.get_figures(self.generator)
 
+    def make_all_four_vectors(self, atoms: ase.Atoms) -> Tuple[np.ndarray, List[FourVector]]:
+        """Construct the FourVector to every site which is not a background site.
+
+        Returns an array of indices and a list with the corresponding FourVectors.
+        Indices for background sites are skipped.
+        """
+        # Find every non-background site
+        mask = ~self.is_background_atoms(atoms)
+        # Array corresponding to the atomic index of sites we calculate the FVs for.
+        indices = np.arange(len(atoms))[mask]
+        tags = atoms.get_tags()[mask]
+        pos = atoms.positions[mask]
+        four_vectors = self.generator.many_to_four_vector(pos, tags)
+        return indices, four_vectors
+
     def create_four_vector_lut(self, template: ase.Atoms) -> Dict[FourVector, int]:
         """
         Construct a lookup table (LUT) for the index in template given the
@@ -254,13 +272,8 @@ class ClusterManager:
         template: Atoms
             Atoms object to use when creating the lookup table (LUT)
         """
-        lut = {}
-        for atom in template:
-            if self.is_background_atom(atom):
-                # No need to make a lookup for a background atom
-                continue
-            vec = self.generator.to_four_vector(atom.position, atom.tag)
-            lut[vec] = atom.index
+        indices, four_vectors = self.make_all_four_vectors(template)
+        lut = {fv: idx for idx, fv in zip(indices, four_vectors)}
         return lut
 
     def fourvec_to_indx(
@@ -293,11 +306,47 @@ class ClusterManager:
         template: ase.Atoms
             Atoms object representing the simulation cell
         """
-        cell = template.get_cell()
-
         # Get the unique four-vectors which are present in all of our clusters.
         unique = self.unique_four_vectors()
 
+        wrap_fnc = self._prepare_wrap_fnc(template, unique)
+
+        lut = self.create_four_vector_lut(template)
+
+        # Map the un-translated unique 4-vectors to their index
+        unique_indx_lut = self.fourvec_to_indx(template, unique)
+        # call int() to convert from NumPy integer to python integer
+        unique_index = [int(unique_indx_lut[u]) for u in unique]
+
+        # The inverse of the LUT gives us the index of the template to its FourVector
+        # Background atoms will be missing in this table.
+        idx_to_fv = {idx: fv for fv, idx in lut.items()}
+
+        def _make_site_mapping(index: int) -> Dict[int, int]:
+            """Helper function to calculate the translation mapping for each
+            atomic site."""
+            try:
+                vec = idx_to_fv[index]
+            except KeyError:
+                # Background site
+                return {}
+
+            # Calculate the four vectors wrapped back into the supercell
+            four_vecs = wrap_fnc(vec)
+
+            # Map the translated four-vectors to the unique index
+            return {uidx: lut[fv] for uidx, fv in zip(unique_index, four_vecs)}
+
+        # Calculate the mapping for each site in the template.
+        trans_mat = [_make_site_mapping(i) for i in range(len(template))]
+        return TransMatrix(trans_mat)
+
+    def _prepare_wrap_fnc(
+        self, template: ase.Atoms, unique: Sequence[FourVector]
+    ) -> Callable[[FourVector], Iterator[FourVector]]:
+        """Prepare the wrapping function which will map a given translation FourVector
+        into the unique FourVectors with that site as a given reference.
+        """
         # Only set "trivial_supercell" to True, if we allow that path.
         # Setting self._allow_trivial_path to False is only for testing purposes
         if self._allow_trivial_path:
@@ -307,61 +356,44 @@ class ClusterManager:
 
         # Set up the FourVector wrap function
         if trivial_supercell:
-            nx, ny, nz = tools.get_repetition(self.prim, template)
+            rep_arr = tools.get_repetition(self.prim, template)
+            # Pre-calculate the XYZ arrays of the unique FourVectors,
+            # as well as the sublattices. We utilize the NumPy vectorization
+            # for calculating the shift + modulo operation.
+            unique_xyz = np.array([u.xyz_array for u in unique], dtype=int)
+            sublattices = [u.sublattice for u in unique]
             wrap_fnc = functools.partial(
-                self._wrap_four_vectors_trivial, unique=unique, nx=nx, ny=ny, nz=nz
+                self._wrap_four_vectors_trivial,
+                unique_xyz=unique_xyz,
+                sublattices=sublattices,
+                rep_arr=rep_arr,
             )
-            logger.debug("Trivial supercell with repetition: (%d, %d, %d)", nx, ny, nz)
+            logger.debug("Trivial supercell with repetition: (%d, %d, %d)", *rep_arr)
         else:
             # Choose the generalized pathway.
             # Pre-calculate the inverse of the cell for faster wrapping of the positions.
+            cell = template.get_cell()
             cell_T_inv = np.linalg.inv(cell.T)
             wrap_fnc = functools.partial(
                 self._wrap_four_vectors_general, unique=unique, cell=cell, cell_T_inv=cell_T_inv
             )
             logger.debug("Non-trivial supercell, will wrap using cartesian coordinates")
-
-        lut = self.create_four_vector_lut(template)
-
-        # Map the un-translated unique 4-vectors to their index
-        unique_indx_lut = self.fourvec_to_indx(template, unique)
-        # call int() to convert from NumPy integer to python integer
-        unique_index = [int(unique_indx_lut[u]) for u in unique]
-
-        def _make_site_mapping(atom: ase.Atom) -> Dict[int, int]:
-            """Helper function to calculate the translation mapping for each
-            atomic site."""
-            if self.is_background_atom(atom):
-                # This atom is considered a background, it has no mapping
-                return {}
-
-            # Translate the atom into its four-vector representation
-            vec = self.generator.to_four_vector(atom.position, sublattice=atom.tag)
-
-            # Calculate the four vectors wrapped back into the supercell
-            four_vecs = wrap_fnc(vec)
-
-            # Get the index of the translated four-vector
-            indices = [lut[fv] for fv in four_vecs]
-
-            return dict(zip(unique_index, indices))
-
-        # Calculate the mapping for each site in the template.
-        trans_mat = list(map(_make_site_mapping, template))
-        return TransMatrix(trans_mat)
+        return wrap_fnc
 
     def _wrap_four_vectors_trivial(
         self,
         translation_vector: FourVector,
-        unique: Sequence[FourVector],
-        nx: int,
-        ny: int,
-        nz: int,
+        unique_xyz: np.ndarray,
+        sublattices: List[int],
+        rep_arr: np.ndarray,
     ) -> Iterator[FourVector]:
         """Wrap FourVectors using the trivial shift+modulo operation"""
         # pylint: disable=no-self-use
-        # Create as a generator, no need to assign this into a new list.
-        return (u.shift_xyz_and_modulo(translation_vector, nx, ny, nz) for u in unique)
+        # We use the .tolist() method, faster to iterate the Python list than the NumPy array
+        # for building the subsequent FourVectors.
+        translated = np.mod(unique_xyz + translation_vector.xyz_array, rep_arr).tolist()
+        for xyz, s in zip(translated, sublattices):
+            yield FourVector(*xyz, s)
 
     def _wrap_four_vectors_general(
         self,

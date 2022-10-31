@@ -128,8 +128,9 @@ class Cluster(AttrSavable):
             translation matrix
         """
         target_figure = self._order_equiv_sites(target_figure)
+        ref_row = trans_matrix[ref_indx]
         for figure in self.indices:
-            translated_figure = [trans_matrix[ref_indx][x] for x in figure]
+            translated_figure = [ref_row[x] for x in figure]
             translated_figure = self._order_equiv_sites(translated_figure)
             if translated_figure == target_figure:
                 return self._order_equiv_sites(figure)
@@ -139,7 +140,7 @@ class Cluster(AttrSavable):
             f"{ref_indx} and figure: {target_figure}!"
         )
 
-    def get_all_figure_keys(self):
+    def get_all_figure_keys(self) -> List[str]:
         return [self.get_figure_key(fig) for fig in self.indices]
 
     @property

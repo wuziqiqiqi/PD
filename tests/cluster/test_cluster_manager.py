@@ -213,9 +213,10 @@ def test_is_background(nacl, make_cluster_mng):
 
     atoms = nacl * (4, 4, 4)
     assert set(atoms.symbols) == {"Na", "Cl"}
+    res = mng.is_background_atoms(atoms)
     for atom in atoms:
         expect = atom.symbol == "Na"
-        assert mng.is_background_atom(atom) == expect
+        assert res[atom.index] == expect
 
 
 @pytest.mark.parametrize(
