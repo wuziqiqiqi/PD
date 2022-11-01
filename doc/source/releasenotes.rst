@@ -6,7 +6,13 @@ Release notes
 
 1.0.4
 ======
-* Added :class:`~clease.calculator.calc_cache.CleaseCacheCalculator`.
+* Added :class:`~clease.calculator.calc_cache.CleaseCacheCalculator`, as a primitive cache calculator
+  object with no cache validation.
+* Performance improvements to updating correlation functions.
+* Performance improvements to calculating the translation matrix, so the first
+  calculation of the clusters should be faster.
+* Performance improvements to the :class:`~clease.montecarlo.observers.lowest_energy_observer.LowestEnergyStructure`.
+  Correlation functions are also no longer tracked by default, but can be enabled with the ``track_cf`` key.
 
 1.0.3
 ======
