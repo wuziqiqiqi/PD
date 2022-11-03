@@ -3,7 +3,9 @@ import numpy as np
 
 from clease.calculator import attach_calculator
 from clease.montecarlo import SGCMonteCarlo
+from clease.montecarlo.montecarlo import Montecarlo
 from clease.montecarlo.observers import SGCState, MultiStateSGCConcObserver, ConcentrationObserver
+from clease.montecarlo.observers.mc_observer import MCObserver
 from clease.settings import CEBulk, Concentration
 from clease.corr_func import CorrFunction
 from clease.montecarlo.constraints import ConstrainElementInserts
@@ -12,9 +14,21 @@ from clease.montecarlo import RandomFlip
 from clease.tools import species_chempot2eci
 
 
-def test_run(db_name):
+def check_obs_is_attached(mc: Montecarlo, obs: MCObserver):
+    """Helper function to check that a given observer is attached.
+    Raises an assertion error if its missing."""
+    for o in mc.iter_observers():
+        if obs is o:
+            # We found the correct observer
+            return
+    assert False, "Missing observer!"
+
+
+@pytest.fixture
+def settings(db_name):
+    """Example settings for an AuCu system for running MC"""
     conc = Concentration(basis_elements=[["Au", "Cu"]])
-    settings = CEBulk(
+    settings_ = CEBulk(
         db_name=db_name,
         concentration=conc,
         crystalstructure="fcc",
@@ -22,7 +36,24 @@ def test_run(db_name):
         max_cluster_dia=[5.0, 4.1],
         size=[2, 2, 2],
     )
+    return settings_
 
+
+@pytest.fixture
+def example_sgc_mc(settings, make_random_eci):
+    def _make_example(temp=30_000, n=3, chem_pot=None):
+        atoms = settings.prim_cell * (n, n, n)
+
+        eci = make_random_eci(settings)
+
+        atoms = attach_calculator(settings, atoms, eci)
+        mc = SGCMonteCarlo(atoms, temp, symbols=["Au", "Cu"])
+        return mc
+
+    return _make_example
+
+
+def test_run(settings):
     atoms = settings.atoms.copy() * (3, 3, 3)
     cf = CorrFunction(settings)
     cf_scratch = cf.get_cf(settings.atoms)
@@ -49,16 +80,7 @@ def test_run(db_name):
         assert E[i - 1] >= E[i]
 
 
-def test_conc_obs_sgc(db_name):
-    conc = Concentration(basis_elements=[["Au", "Cu"]])
-    settings = CEBulk(
-        db_name=db_name,
-        concentration=conc,
-        crystalstructure="fcc",
-        a=4.0,
-        max_cluster_dia=[5.0, 4.1],
-        size=[2, 2, 2],
-    )
+def test_conc_obs_sgc(settings):
     atoms = settings.atoms.copy() * (3, 3, 3)
 
     settings.set_active_template(atoms)
@@ -75,6 +97,9 @@ def test_conc_obs_sgc(db_name):
     mc = SGCMonteCarlo(atoms, 5000, symbols=["Au", "Cu"])
     mc.attach(obs1)
     mc.attach(obs2)
+
+    check_obs_is_attached(mc, obs1)
+    check_obs_is_attached(mc, obs2)
 
     for T in [5000, 2000, 500]:
         mc.temperature = T
@@ -99,6 +124,9 @@ def test_conc_obs_sgc(db_name):
             assert thermo[k] == pytest.approx(v)
         for k, v in conc2.items():
             assert thermo[k] == pytest.approx(v)
+    # Verify observers are still attached
+    check_obs_is_attached(mc, obs1)
+    check_obs_is_attached(mc, obs2)
 
 
 def test_constrain_inserts(db_name):
@@ -222,6 +250,8 @@ def test_multi_state_sgc_obs(db_name):
     np.random.seed(0)
 
     sgc.attach(observer)
+
+    check_obs_is_attached(sgc, observer)
     sgc.run(steps=2000, chem_pot=ref_pot)
 
     # Check consistency. By construction the Ag concentration varies in the same
@@ -233,3 +263,35 @@ def test_multi_state_sgc_obs(db_name):
 
     assert conc_plus > conc_center
     assert conc_minus < conc_center
+
+
+def test_sgc_temp_change(example_sgc_mc):
+
+    mc = example_sgc_mc(temp=10_000)
+
+    obs = mc.averager
+
+    assert obs.energy.mean == 0
+    assert obs.energy_sq.mean == 0
+    assert (obs.singlets == 0).all()
+    assert obs.counter == 0
+
+    # Verify the averager observer is attached.
+    check_obs_is_attached(mc, obs)
+
+    mc.run(100, chem_pot={"c1_0": 0.0})
+
+    assert obs.energy.mean != pytest.approx(0)
+    assert obs.energy_sq.mean > 0
+    assert (obs.singlets != 0).any()
+    assert obs.counter == 100
+
+    # Trigger a temp change, should reset averagers
+    mc.temperature = 10_000
+    assert obs.energy.mean == 0
+    assert obs.energy_sq.mean == 0
+    assert (obs.singlets == 0).all()
+    assert obs.counter == 0
+
+    # Verify the averager observer is still attached.
+    check_obs_is_attached(mc, obs)

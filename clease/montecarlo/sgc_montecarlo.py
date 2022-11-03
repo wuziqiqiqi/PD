@@ -36,10 +36,11 @@ class SGCMonteCarlo(Montecarlo):
             if len(symbols) <= 1:
                 raise ValueError("At least 2 symbols have to be specified")
             generator = RandomFlip(symbols, atoms)
-        super().__init__(atoms, temp, generator=generator)
-        self.symbols = symbols
 
-        self.averager = SGCObserver(self.atoms.calc)
+        self.averager = SGCObserver(atoms.calc)
+        super().__init__(atoms, temp, generator=generator)
+
+        self.symbols = symbols
 
         self.chem_pots = []
         self.chem_pot_names = []
@@ -50,7 +51,7 @@ class SGCMonteCarlo(Montecarlo):
         self.current_singlets = None
 
         has_attached_obs = False
-        for obs in self.observers:
+        for obs in self.iter_observers():
             if obs.name == "SGCObserver":
                 has_attached_obs = True
                 self.averager = obs
@@ -182,6 +183,12 @@ class SGCMonteCarlo(Montecarlo):
             name = s + "_conc"
             res[name] = x[i]
         return res
+
+    def reset_averagers(self) -> None:
+        """Reset the energy averagers, including the internal SGC Observer"""
+        super().reset_averagers()
+        # Also remember to reset the internal SGC averager
+        self.averager.reset()
 
     def get_thermodynamic_quantities(self, reset_eci=True):
         """Compute thermodynamic quantities.

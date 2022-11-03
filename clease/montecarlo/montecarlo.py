@@ -147,6 +147,13 @@ class Montecarlo(BaseMC):
 
         self.observers.append((interval, obs))
 
+    def iter_observers(self) -> Iterator[MCObserver]:
+        """Directly iterate the attached observers without also getting
+        information about the interval."""
+        # Remember that the observer list contains tuples of (interval, observer)
+        for _, obs in self.observers:
+            yield obs
+
     def initialize_run(self):
         """Prepare MC object for a new run."""
         logger.debug("Initializing run")

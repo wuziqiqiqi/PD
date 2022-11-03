@@ -13,6 +13,8 @@ Release notes
   calculation of the clusters should be faster.
 * Performance improvements to the :class:`~clease.montecarlo.observers.lowest_energy_observer.LowestEnergyStructure`.
   Correlation functions are also no longer tracked by default, but can be enabled with the ``track_cf`` key.
+* The default SGC observer in :class:`~clease.montecarlo.sgc_montecarlo.SGCMonteCarlo` should now be reset
+  automatically upon changing the temperature.
 
 1.0.3
 ======
