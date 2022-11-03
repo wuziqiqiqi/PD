@@ -4,6 +4,10 @@
 Release notes
 =============
 
+1.0.5
+======
+
+
 1.0.4
 ======
 * Added :class:`~clease.calculator.calc_cache.CleaseCacheCalculator`, as a primitive cache calculator
