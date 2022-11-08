@@ -2,6 +2,7 @@ from itertools import product
 from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
 from math import sqrt
 import numpy as np
+from scipy.spatial.distance import cdist
 from ase import Atoms
 from clease import tools
 from clease.datastructures import FourVector, Figure
@@ -294,7 +295,7 @@ class ClusterGenerator:
         x = np.array([self._fv_to_cart(c) for c in comp], dtype=float)
         # Build the distance array, such that elements (i, j) is the
         # Euclidean distance betweens elements i and j.
-        arr = np.linalg.norm(x[:, np.newaxis] - x, axis=-1, ord=2)
+        arr = cdist(x, x, metric="euclid")
         # Round to 6 digits for numerical stability.
         arr = np.round(arr, 6)
         if sort:
