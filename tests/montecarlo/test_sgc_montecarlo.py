@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-
+from ase.build import bulk
+from ase.calculators.emt import EMT
 from clease.calculator import attach_calculator
 from clease.montecarlo import SGCMonteCarlo
 from clease.montecarlo.montecarlo import Montecarlo
@@ -41,13 +42,13 @@ def settings(db_name):
 
 @pytest.fixture
 def example_sgc_mc(settings, make_random_eci):
-    def _make_example(temp=30_000, n=3, chem_pot=None):
+    def _make_example(temp=30_000, n=3, chem_pot=None, **kwargs):
         atoms = settings.prim_cell * (n, n, n)
 
         eci = make_random_eci(settings)
 
         atoms = attach_calculator(settings, atoms, eci)
-        mc = SGCMonteCarlo(atoms, temp, symbols=["Au", "Cu"])
+        mc = SGCMonteCarlo(atoms, temp, symbols=["Au", "Cu"], **kwargs)
         return mc
 
     return _make_example
@@ -267,7 +268,7 @@ def test_multi_state_sgc_obs(db_name):
 
 def test_sgc_temp_change(example_sgc_mc):
 
-    mc = example_sgc_mc(temp=10_000)
+    mc = example_sgc_mc(temp=10_000, observe_singlets=True)
 
     obs = mc.averager
 
@@ -295,3 +296,14 @@ def test_sgc_temp_change(example_sgc_mc):
 
     # Verify the averager observer is still attached.
     check_obs_is_attached(mc, obs)
+
+
+def test_no_clease_calc():
+    """Verify that the SGC MC class fails if no Clease calculator is attached"""
+    atoms = bulk("Au") * (4, 4, 4)
+    assert atoms.calc is None
+    with pytest.raises(ValueError):
+        SGCMonteCarlo(atoms, 300)
+    atoms.calc = EMT()
+    with pytest.raises(ValueError):
+        SGCMonteCarlo(atoms, 300)

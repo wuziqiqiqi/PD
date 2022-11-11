@@ -35,7 +35,7 @@ class Averager:
         return self
 
     def __add__(self, other):
-        """Add to Averager objects.
+        """Add two Averager objects.
 
         Parameter:
 
@@ -74,7 +74,8 @@ class Averager:
         self._mean = 0.0
 
     @property
-    def mean(self):
+    def mean(self) -> float:
+        """Calculate the mean value of the measurements"""
         if self._n_samples == 0:
             return self._mean * self._ref_value
         return (self._mean / self._n_samples) * self._ref_value

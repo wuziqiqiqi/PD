@@ -1,7 +1,6 @@
 """Monte Carlo method for ase."""
 from typing import Dict, Union, Iterator, Any
-import sys
-import datetime
+from datetime import datetime
 import time
 import logging
 import random
@@ -9,7 +8,6 @@ import math
 from collections import Counter
 from ase import Atoms
 from ase.units import kB
-from clease.version import __version__
 from clease.datastructures import SystemChanges, MCStep
 from .mc_evaluator import CEMCEvaluator, MCEvaluator
 from .base import BaseMC
@@ -257,16 +255,12 @@ class Montecarlo(BaseMC):
         logger.debug("Reached end of MC iterator.")
 
     @property
-    def meta_info(self):
+    def meta_info(self) -> Dict[str, str]:
         """Return dict with meta info."""
-        ts = time.time()
-        st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S")
-        clease_version = str(__version__)
-        v_info = sys.version_info
+        # Get the timestamp with millisecond precision
+        timestamp = datetime.now().isoformat(timespec="milliseconds")
         meta_info = {
-            "timestamp": st,
-            "python_version": f"{v_info.major}.{v_info.minor}.{v_info.micro}",
-            "clease_version": clease_version,
+            "timestamp": timestamp,
         }
         return meta_info
 
@@ -288,10 +282,12 @@ class Montecarlo(BaseMC):
         quantities["energy_var"] = mean_sq - mean_energy**2
         quantities["temperature"] = self.temperature
         quantities["accept_rate"] = self.current_accept_rate
+        quantities["n_mc_steps"] = self.current_step
+
         at_count = self.count_atoms()
         for key, value in at_count.items():
             name = f"{key}_conc"
-            conc = float(value) / len(self.atoms)
+            conc = value / len(self.atoms)
             quantities[name] = conc
 
         # Add some more info that can be useful
@@ -304,8 +300,8 @@ class Montecarlo(BaseMC):
     def _get_obs_averages(self) -> Dict[str, Any]:
         """Get average measurements from observers"""
         obs_avgs = {}
-        for obs in self.observers:
-            obs_avgs.update(obs[1].get_averages())
+        for obs in self.iter_observers():
+            obs_avgs.update(obs.get_averages())
         return obs_avgs
 
     def _calculate_step(self, system_changes: SystemChanges):
@@ -318,7 +314,6 @@ class Montecarlo(BaseMC):
         system_changes: list
             List with system changes
         """
-        logger.debug("Applying changes to the system.")
         self.evaluator.apply_system_changes(system_changes)
         # Evaluate the energy quantity after applying the changes to the system.
         self.new_energy = self.evaluator.get_energy(applied_changes=system_changes)
@@ -327,13 +322,7 @@ class Montecarlo(BaseMC):
         # already been introduced to the system
         for bias in self.bias_potentials:
             self.new_energy += bias(system_changes)
-        logger.debug(
-            "Current energy: %.3f eV, new energy: %.3f eV",
-            self.current_energy,
-            self.new_energy,
-        )
         accept = self._do_accept(self.current_energy, self.new_energy)
-        logger.debug("Change accepted? %s", accept)
 
         if accept:
             # Changes accepted, finalize evaluator.
@@ -357,24 +346,17 @@ class Montecarlo(BaseMC):
         # Standard Metropolis acceptance criteria
         if new_energy < current_energy:
             return True
-        kT = self.temperature * kB
         energy_diff = new_energy - current_energy
-        probability = math.exp(-energy_diff / kT)
-        logger.debug(
-            "Energy difference: %.3e. Calculated probability: %.3f",
-            energy_diff,
-            probability,
-        )
+        probability = math.exp(-energy_diff / self.kT)
+
         return random.random() <= probability
 
     def _move_accepted(self, system_changes: SystemChanges) -> None:
-        logger.debug("Move accepted, updating things")
         self.num_accepted += 1
         self.generator.on_move_accepted(system_changes)
         self.current_energy = self.new_energy
 
     def _move_rejected(self, system_changes: SystemChanges) -> None:
-        logger.debug("Move rejected, undoing system changes: %s", system_changes)
         self.generator.on_move_rejected(system_changes)
 
     def count_atoms(self) -> Dict[str, int]:
@@ -403,12 +385,6 @@ class Montecarlo(BaseMC):
     def execute_observers(self, last_step: MCStep):
         for interval, obs in self.observers:
             if self.current_step % interval == 0:
-                logger.debug(
-                    "Executing observer %s at step %d with interval %d.",
-                    obs.name,
-                    self.current_step,
-                    interval,
-                )
                 obs.observe_step(last_step)
 
 

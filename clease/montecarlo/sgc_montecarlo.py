@@ -1,7 +1,9 @@
-from typing import Sequence, Dict
+from typing import Sequence, Dict, Any
 import numpy as np
 from ase import Atoms
 from ase.units import kB
+from clease.calculator import Clease
+from clease.settings import ClusterExpansionSettings
 from .observers import SGCObserver
 from .montecarlo import Montecarlo
 from .trial_move_generator import TrialMoveGenerator, RandomFlip
@@ -31,13 +33,23 @@ class SGCMonteCarlo(Montecarlo):
         temp: float,
         symbols: Sequence[str] = (),
         generator: TrialMoveGenerator = None,
+        observe_singlets: bool = False,
     ):
+        if not isinstance(atoms, Atoms):
+            raise ValueError(f"atoms must be an Atoms object, got {atoms!r}")
+        if not isinstance(atoms.calc, Clease):
+            raise ValueError(
+                f"Atoms must have a Clease calculator object attached, got {atoms.calc!r}."
+            )
+
         if generator is None:
             if len(symbols) <= 1:
                 raise ValueError("At least 2 symbols have to be specified")
-            generator = RandomFlip(symbols, atoms)
+            # Only select indices which are not considered background.
+            non_bkg = atoms.calc.settings.non_background_indices
+            generator = RandomFlip(symbols, atoms, indices=non_bkg)
 
-        self.averager = SGCObserver(atoms.calc)
+        self.averager = SGCObserver(atoms.calc, observe_singlets=observe_singlets)
         super().__init__(atoms, temp, generator=generator)
 
         self.symbols = symbols
@@ -48,7 +60,6 @@ class SGCMonteCarlo(Montecarlo):
         self.name = "SGCMonteCarlo"
         self._chemical_potential = None
         self.chem_pot_in_eci = False
-        self.current_singlets = None
 
         has_attached_obs = False
         for obs in self.iter_observers():
@@ -58,6 +69,10 @@ class SGCMonteCarlo(Montecarlo):
                 break
         if not has_attached_obs:
             self.attach(self.averager)
+
+    @property
+    def observe_singlets(self) -> bool:
+        return self.averager.observe_singlets
 
     def _check_symbols(self):
         """
@@ -72,12 +87,20 @@ class SGCMonteCarlo(Montecarlo):
         self.averager.reset()
 
     @property
+    def calc(self) -> Clease:
+        return self.atoms.calc
+
+    @property
+    def settings(self) -> ClusterExpansionSettings:
+        return self.calc.settings
+
+    @property
     def chemical_potential(self):
         return self._chemical_potential
 
     @chemical_potential.setter
     def chemical_potential(self, chem_pot: Dict[str, float]):
-        eci = self.atoms.calc.eci
+        eci = self.calc.eci
         if any(key not in eci for key in chem_pot):
             msg = "A chemical potential not being trackted is added. Make "
             msg += "sure that all the following keys are in the ECIs before "
@@ -89,8 +112,8 @@ class SGCMonteCarlo(Montecarlo):
 
         self._chemical_potential = chem_pot
         if self.chem_pot_in_eci:
-            self._reset_eci_to_original(self.atoms.calc.eci)
-        self._include_chemical_potential_in_eci(chem_pot, self.atoms.calc.eci)
+            self._reset_eci_to_original(self.calc.eci)
+        self._include_chemical_potential_in_eci(chem_pot, self.calc.eci)
 
     def _include_chemical_potential_in_eci(self, chem_pot: Dict[str, float], eci: Dict[str, float]):
         """
@@ -113,7 +136,7 @@ class SGCMonteCarlo(Montecarlo):
             self.chem_pot_names.append(key)
             current_eci = eci.get(key, 0.0)
             eci[key] = current_eci - chem_pot[key]
-        calc = self.atoms.calc
+        calc = self.calc
         calc.update_eci(eci)
         self.chem_pot_in_eci = True
         self.current_energy = calc.calculate(None, None, None)
@@ -127,7 +150,7 @@ class SGCMonteCarlo(Montecarlo):
         """
         for name, val in zip(self.chem_pot_names, self.chem_pots):
             eci_with_chem_pot[name] += val
-        calc = self.atoms.calc
+        calc = self.calc
         calc.update_eci(eci_with_chem_pot)
         self.chem_pot_in_eci = False
         self.current_energy = calc.calculate(None, None, None)
@@ -136,7 +159,7 @@ class SGCMonteCarlo(Montecarlo):
     def reset_eci(self):
         """Return the ECIs."""
         if self.chem_pot_in_eci:
-            self._reset_eci_to_original(self.atoms.calc.eci)
+            self._reset_eci_to_original(self.calc.eci)
 
     def run(self, steps: int = 10, call_observers: bool = True, chem_pot: Dict[str, float] = None):
         """
@@ -164,7 +187,7 @@ class SGCMonteCarlo(Montecarlo):
 
     def singlet2composition(self, avg_singlets: Dict[str, float]):
         """Convert singlets to composition."""
-        bf = self.atoms.calc.settings.basis_functions
+        bf = self.settings.basis_functions
         matrix = np.zeros((len(self.symbols), len(self.symbols)))
 
         index = {s: i for i, s in enumerate(self.symbols)}
@@ -180,7 +203,7 @@ class SGCMonteCarlo(Montecarlo):
 
         res = {}
         for s, i in index.items():
-            name = s + "_conc"
+            name = f"{s}_conc"
             res[name] = x[i]
         return res
 
@@ -190,60 +213,68 @@ class SGCMonteCarlo(Montecarlo):
         # Also remember to reset the internal SGC averager
         self.averager.reset()
 
-    def get_thermodynamic_quantities(self, reset_eci=True):
+    def get_thermodynamic_quantities(self, reset_eci: bool = False) -> Dict[str, Any]:
         """Compute thermodynamic quantities.
 
         Parameters:
 
         reset_eci: bool
-            If True, the chemical potential will be removed from the ECIs
+            If True, the chemical potential will be removed from the ECIs.
         """
+        # Note - in order to correctly measure averagers from the SGC observer,
+        # we need some information from the SGC MC object. So we directly extract the averages
+        # from that observer here.
+        avg_obs = self.averager  # Alias
         N = self.averager.counter
-        quantities = {}
-        singlets = self.averager.singlets / N
-        singlets_sq = self.averager.quantities["singlets_sq"] / N
+        averages = {}
+        averages["energy"] = avg_obs.energy.mean
+        averages["sgc_energy"] = avg_obs.energy.mean
+        averages["sgc_heat_capacity"] = avg_obs.energy_sq.mean - avg_obs.energy.mean**2
 
-        quantities["sgc_energy"] = self.averager.energy.mean
-        quantities["sgc_heat_capacity"] = (
-            self.averager.energy_sq.mean - self.averager.energy.mean**2
-        )
+        averages["sgc_heat_capacity"] /= kB * self.temperature**2
 
-        quantities["sgc_heat_capacity"] /= kB * self.temperature**2
+        averages["temperature"] = self.temperature
+        averages["n_mc_steps"] = self.averager.counter
+        averages["accept_rate"] = self.current_accept_rate
 
-        quantities["energy"] = self.averager.energy.mean
-        natoms = len(self.atoms)
-        for i, chem_pot in enumerate(self.chem_pots):
-            quantities["energy"] += chem_pot * singlets[i] * natoms
+        # Singlets are more expensive to measure than the other quantities,
+        # so only measure them upon request.
+        if self.observe_singlets:
+            # Add singlets and chemical potential to the dictionary
+            # pylint: disable=consider-using-enumerate
+            singlets = avg_obs.singlets / N
+            singlets_sq = avg_obs.quantities["singlets_sq"] / N
 
-        quantities["temperature"] = self.temperature
-        quantities["n_mc_steps"] = self.averager.counter
-        quantities["accept_rate"] = self.current_accept_rate
+            averages["singlet_energy"] = avg_obs.energy.mean
+            natoms = len(self.atoms)
+            for i, chem_pot in enumerate(self.chem_pots):
+                averages["singlet_energy"] += chem_pot * singlets[i] * natoms
+            for i in range(len(singlets)):
+                name = f"singlet_{self.chem_pot_names[i]}"
+                averages[name] = singlets[i]
 
-        # Add singlets and chemical potential to the dictionary
-        # pylint: disable=consider-using-enumerate
-        for i in range(len(singlets)):
-            name = f"singlet_{self.chem_pot_names[i]}"
-            quantities[name] = singlets[i]
+                name = f"var_singlet_{self.chem_pot_names[i]}"
+                averages[name] = singlets_sq[i] - singlets[i] ** 2
 
-            name = f"var_singlet_{self.chem_pot_names[i]}"
-            quantities[name] = singlets_sq[i] - singlets[i] ** 2
+            # Measure concentration from the singlets
+            try:
+                avg_conc = self.singlet2composition(singlets)
+                averages.update(avg_conc)
+            # pylint: disable=broad-except
+            except Exception as exc:
+                print("Could not find average singlets!")
+                print(exc)
 
-            name = f"mu_{self.chem_pot_names[i]}"
-            quantities[name] = self.chem_pots[i]
+        # Always measure the chemical potentials.
+        for chem_pot_name, chem_pot in zip(self.chem_pot_names, self.chem_pots):
+            key = f"mu_{chem_pot_name}"
+            averages[key] = chem_pot
 
-        quantities.update(self.meta_info)
-
-        try:
-            avg_conc = self.singlet2composition(singlets)
-            quantities.update(avg_conc)
-        # pylint: disable=broad-except
-        except Exception as exc:
-            print("Could not find average singlets!")
-            print(exc)
+        averages.update(self.meta_info)
 
         # Add information from observers
-        quantities.update(self._get_obs_averages())
+        averages.update(self._get_obs_averages())
 
         if reset_eci:
             self._reset_eci_to_original(self.atoms.calc.eci)
-        return quantities
+        return averages

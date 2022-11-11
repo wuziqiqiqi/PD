@@ -4,7 +4,6 @@ import logging
 import time
 import random
 from ase import Atoms
-from ase.units import kB
 import numpy as np
 from clease.datastructures import SystemChange, MCStep, SystemChanges
 from .mc_evaluator import MCEvaluator
@@ -73,10 +72,6 @@ class KineticMonteCarlo(BaseMC):
 
         if self.epr is not None:
             self.epr.reset()
-
-    @property
-    def kT(self) -> float:
-        return kB * self.T
 
     def _update_epr(self, current: int, choice: int, swaps: List[int], cum_rates: np.ndarray):
         """

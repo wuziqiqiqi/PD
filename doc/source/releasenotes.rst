@@ -8,6 +8,12 @@ Release notes
 ======
 * Added :py:func:`~clease.geometry.supercell_which_contains_sphere` and
   :py:func:`~clease.geometry.cell_wall_distances`.
+* :class:`~clease.montecarlo.observers.sgc_observer.SGCObserver` now only tracks the singlet averages
+  if ``observe_singlets=True``. The default observer which is created by the
+  :class:`~clease.montecarlo.sgc_montecarlo.SGCMonteCarlo` can be controlled by the
+  :class:`~clease.montecarlo.sgc_montecarlo.SGCMonteCarlo` ``observe_singlets`` keyword.
+* ``reset_eci`` in :meth:`~clease.montecarlo.sgc_montecarlo.SGCMonteCarlo.get_thermodynamic_quantities`
+  now defaults to ``False``. This keyword is likely to be removed in the future, see #321.
 
 1.0.4
 ======

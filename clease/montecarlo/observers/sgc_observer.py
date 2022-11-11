@@ -1,6 +1,29 @@
 import numpy as np
+import attr
+from clease.calculator import Clease
 from clease.montecarlo.averager import Averager
+from clease.datastructures.mc_step import MCStep
 from .mc_observer import MCObserver
+
+
+@attr.define(slots=True)
+class SGCQuantities:
+    """Container for observed quantities in the SGCObserver"""
+
+    energy: Averager = attr.field()
+    energy_sq: Averager = attr.field()
+    singlets: np.ndarray = attr.field()
+    singlets_sq: np.ndarray = attr.field()
+    singl_eng: np.ndarray = attr.field()
+    counter: int = attr.field(default=0)
+
+    def reset(self) -> None:
+        self.counter = 0
+        self.energy.clear()
+        self.energy_sq.clear()
+        self.singlets[:] = 0.0
+        self.singlets_sq[:] = 0.0
+        self.singl_eng[:] = 0.0
 
 
 class SGCObserver(MCObserver):
@@ -12,72 +35,72 @@ class SGCObserver(MCObserver):
 
     calc: `clease.calculators.Clease`
         Clease calculator
+
+    observe_singlets: bool
+        Whether the singlet values of the calculator are measured during each observation.
+        Measuring singlets is slightly more expensive, so this is disabled by default.
     """
 
     name = "SGCObersver"
 
-    def __init__(self, calc):
+    def __init__(self, calc: Clease, observe_singlets: bool = False):
+        self.observe_singlets = observe_singlets
         super().__init__()
         self.calc = calc
-        E = calc.get_potential_energy()
+        initial_energy = calc.get_potential_energy()
         n_singlets = len(self.calc.get_singlets())
-        self.quantities = {
-            "singlets": np.zeros(n_singlets, dtype=np.float64),
-            "singlets_sq": np.zeros(n_singlets, dtype=np.float64),
-            "energy": Averager(ref_value=E),
-            "energy_sq": Averager(ref_value=E**2),
-            "singl_eng": np.zeros(n_singlets, dtype=np.float64),
-            "counter": 0,
-        }
+        self.quantities = SGCQuantities(
+            energy=Averager(ref_value=initial_energy),
+            energy_sq=Averager(ref_value=initial_energy**2),
+            singlets=np.zeros(n_singlets, dtype=np.float64),
+            singlets_sq=np.zeros(n_singlets, dtype=np.float64),
+            singl_eng=np.zeros(n_singlets, dtype=np.float64),
+        )
 
     def reset(self):
         """Reset all variables to zero."""
-        self.quantities["singlets"][:] = 0.0
-        self.quantities["singlets_sq"][:] = 0.0
-        self.quantities["energy"].clear()
-        self.quantities["energy_sq"].clear()
-        self.quantities["singl_eng"][:] = 0.0
-        self.quantities["counter"] = 0
+        self.quantities.reset()
 
-    def __call__(self, system_changes):
-        """Update all SGC parameters.
+    def get_current_energy(self) -> float:
+        """Return the current energy of the attached calculator object."""
+        return self.calc.results["energy"]
 
-        Parameters:
+    def observe_step(self, mc_step: MCStep):
+        """Update all SGC parameters."""
+        # Reference to avoid self. lookup multiple times
+        quantities = self.quantities
+        E = self.get_current_energy()
 
-        system_changes: list
-            System changes. See doc-string of
-            `clease.montecarlo.observers.MCObserver`
-        """
-        self.quantities["counter"] += 1
-        new_singlets = self.calc.get_singlets()
+        quantities.counter += 1
+        quantities.energy += E
+        quantities.energy_sq += E * E
 
-        E = self.calc.results["energy"]
-
-        self.quantities["singlets"] += new_singlets
-        self.quantities["singlets_sq"] += new_singlets**2
-        self.quantities["energy"] += E
-        self.quantities["energy_sq"] += E**2
-        self.quantities["singl_eng"] += new_singlets * E
+        if self.observe_singlets:
+            # Only perform the singlet observations if requested.
+            new_singlets = self.calc.get_singlets()
+            quantities.singlets += new_singlets
+            quantities.singlets_sq += new_singlets * new_singlets
+            quantities.singl_eng += new_singlets * E
 
     @property
     def energy(self):
-        return self.quantities["energy"]
+        return self.quantities.energy
 
     @property
     def energy_sq(self):
-        return self.quantities["energy_sq"]
+        return self.quantities.energy_sq
 
     @property
     def singlets(self):
-        return self.quantities["singlets"]
+        return self.quantities.singlets
 
     @property
     def singl_eng(self):
-        return self.quantities["singl_eng"]
+        return self.quantities.singl_eng
 
     @property
     def counter(self):
-        return self.quantities["counter"]
+        return self.quantities.counter
 
     def interval_ok(self, interval):
         return interval == 1

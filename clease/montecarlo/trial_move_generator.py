@@ -2,6 +2,7 @@ from typing import Sequence, List, Set, Tuple, Dict
 import random
 from random import choice
 from abc import abstractmethod, ABC
+import numpy as np
 from ase import Atoms
 from ase.data import chemical_symbols
 from clease.datastructures import SystemChange
@@ -151,6 +152,10 @@ class RandomFlip(SingleTrialMoveGenerator):
         super().__init__(**kwargs)
         self.symbols = symbols
         self.atoms = atoms
+        # Hold a direct reference to the numbers array
+        self.numbers: np.ndarray = self.atoms.numbers
+        # Verify it's the same array in memory
+        assert self.numbers is atoms.numbers
 
         if indices is None:
             self.indices = list(range(len(self.atoms)))
@@ -174,11 +179,10 @@ class RandomFlip(SingleTrialMoveGenerator):
         # Access to the numbers array of the atoms object is the
         # fastest way of determining a single symbol, by avoiding constructing the entire Symbols
         # array in atoms.symbols
-        old_symb = chemical_symbols[self.atoms.numbers[pos]]
-        new_symb = choice(self.flip_map[old_symb])
-        return [
-            SystemChange(index=pos, old_symb=old_symb, new_symb=new_symb, name=self.CHANGE_NAME)
-        ]
+        old_symb = chemical_symbols[self.numbers[pos]]
+        flips = self.flip_map[old_symb]
+        new_symb = choice(flips)
+        return [SystemChange(pos, old_symb, new_symb, self.CHANGE_NAME)]
 
 
 class RandomSwap(SingleTrialMoveGenerator):
@@ -212,18 +216,8 @@ class RandomSwap(SingleTrialMoveGenerator):
         rand_pos_a = self.tracker.get_random_indx_of_symbol(symb_a)
         rand_pos_b = self.tracker.get_random_indx_of_symbol(symb_b)
         return [
-            SystemChange(
-                index=rand_pos_a,
-                old_symb=symb_a,
-                new_symb=symb_b,
-                name=self.CHANGE_NAME,
-            ),
-            SystemChange(
-                index=rand_pos_b,
-                old_symb=symb_b,
-                new_symb=symb_a,
-                name=self.CHANGE_NAME,
-            ),
+            SystemChange(rand_pos_a, symb_a, symb_b, self.CHANGE_NAME),
+            SystemChange(rand_pos_b, symb_b, symb_a, self.CHANGE_NAME),
         ]
 
     def on_move_accepted(self, changes: Sequence[SystemChange]):

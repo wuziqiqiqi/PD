@@ -6,6 +6,7 @@ from collections import defaultdict
 import pytest
 import numpy as np
 from ase import Atoms
+from ase.units import kB
 from ase.build import bulk
 from ase.geometry import get_layers
 import clease
@@ -814,3 +815,16 @@ def test_call_observers(example_system, mocker):
     for _ in mc.irun(10):
         pass
     assert obs.call_count == 40
+
+
+def test_set_temp_kT(example_system):
+    mc = Montecarlo(example_system, 300)
+    # Check both the temperature and kT properties are correctly set.
+    assert mc.temperature == pytest.approx(300)
+    assert mc.kT == pytest.approx(300.0 * kB)
+
+    # Set the temperature, and verify the value
+    for temp in np.random.uniform(0, 4_000, size=15):
+        mc.temperature = temp
+        assert mc.temperature == pytest.approx(temp)
+        assert mc.kT == pytest.approx(temp * kB)
