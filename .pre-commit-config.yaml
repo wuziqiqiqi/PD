@@ -7,8 +7,8 @@ repos:
       - id: trailing-whitespace # Remove trailing whitespaces
       - id: end-of-file-fixer # Ensure we have newline at end of file
 
-  - repo: https://gitlab.com/pycqa/flake8
-    rev: 4.0.1
+  - repo: https://github.com/PyCQA/flake8
+    rev: 5.0.4
     hooks:
       - id: flake8
         exclude: &exclude_files >
