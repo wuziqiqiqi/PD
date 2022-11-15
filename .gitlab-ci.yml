@@ -1,4 +1,4 @@
-image: python:3.10
+image: python:3.11
 
 before_script:
   - python3 --version
@@ -16,6 +16,7 @@ code-style:
 
 pylint:
   stage: Static Analysis
+  image: python:3.10  # Pylint on 3.11 seems to be broken
   script:
     - tox -e pylint
 
@@ -75,6 +76,12 @@ pytest:py39:
   script:
     - tox -e py39
 
+pytest:py310:
+  image: python:3.10
+  <<: *manual_test
+  script:
+    - tox -e py310
+
 # CI to test CLEASE against the current ASE master.
 pytest:ase_master:
   <<: *manual_test
@@ -98,15 +105,15 @@ linux_wheels:
     DOCKER_DRIVER: overlay2
     # See https://github.com/docker-library/docker/pull/166
     DOCKER_TLS_CERTDIR: ""
-    # Only build CPython 3.7-3.10, no PyPy, only manylinux
-    CIBW_BUILD: cp{37,38,39,310}-manylinux*
+    # Only build CPython 3.7-3.11, no PyPy, only manylinux
+    CIBW_BUILD: cp{37,38,39,310,311}-manylinux*
     # Add the -fopenmp flag for wheel building.
     CIBW_ENVIRONMENT_LINUX: CLEASE_OMP='-fopenmp'
     TWINE_USERNAME: __token__
     TWINE_PASSWORD: ${CI_PYPI_TOKEN}
   script:
     - curl -sSL https://get.docker.com/ | sh
-    - python -m pip install cibuildwheel==2.3.1 twine
+    - python -m pip install cibuildwheel==2.11.2 twine
     - cibuildwheel --output-dir wheelhouse
     - twine check wheelhouse/*
     - twine upload wheelhouse/*
