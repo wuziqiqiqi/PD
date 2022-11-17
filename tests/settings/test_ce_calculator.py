@@ -19,6 +19,8 @@ from clease.calculator import Clease, attach_calculator, get_ce_energy
 # Only change this to override the reference trans matrices
 UPDATE_TRANS_MATRIX = False
 
+ALL_BASIS_FUNCTIONS = ["polynomial", "binary_linear", "trigonometric"]
+
 
 @pytest.fixture
 def save_trans_matrix(references_path):
@@ -96,7 +98,7 @@ def get_ternary(db_name):
     return bc_settings, atoms
 
 
-def get_rocksalt(db_name):
+def get_rocksalt(db_name, bf_type="trigonometric"):
     """Test rocksalt where passed atoms with background_atoms."""
     basis_elements = [["Li", "X", "V"], ["O"]]
     concentration = Concentration(basis_elements=basis_elements)
@@ -108,7 +110,7 @@ def get_rocksalt(db_name):
         db_name=db_name,
         max_cluster_dia=[7.0, 7.0],
     )
-
+    settings.basis_func_type = bf_type
     atoms = bulk("LiO", crystalstructure="rocksalt", a=4.05)
     atoms = atoms * (3, 3, 3)
     Li_indx = [a.index for a in atoms if a.symbol == "Li"]
@@ -122,7 +124,7 @@ def get_rocksalt(db_name):
     return settings, atoms
 
 
-def rocksalt_with_self_interaction(size, db_name):
+def rocksalt_with_self_interaction(size, db_name, bf_type="trigonometric"):
     basis_elements = [["Li", "Mn", "X"], ["O", "X"]]
     concentration = Concentration(basis_elements=basis_elements)
     settings = CEBulk(
@@ -133,13 +135,13 @@ def rocksalt_with_self_interaction(size, db_name):
         db_name=db_name,
         max_cluster_dia=[7.0, 4.0],
     )
-    settings.basis_func_type = "trigonometric"
+    settings.basis_func_type = bf_type
     atoms = settings.atoms.copy()
     settings.set_active_template(atoms=atoms)
     return settings, atoms
 
 
-def get_spacegroup(db_name):
+def get_spacegroup(db_name, bf_type="trigonometric"):
     """Test rocksalt where passed atoms."""
     basis = [
         (0.0, 0.0, 0.0),
@@ -164,6 +166,7 @@ def get_spacegroup(db_name):
         max_cluster_dia=[4.0, 4.0],
         include_background_atoms=True,
     )
+    settings.basis_func_type = bf_type
 
     atoms = crystal(
         symbols=["O", "X", "O", "Ta"],
@@ -295,22 +298,30 @@ def test_update_corr_func_ternary(db_name, verify_clusters):
     verify_clusters(tern_settings)
 
 
-def test_update_corr_func_rocksalt(db_name):
+@pytest.mark.parametrize("basis_func_type", ALL_BASIS_FUNCTIONS)
+def test_update_corr_func_rocksalt(db_name, basis_func_type):
     print("rocksalt")
-    rs_settings, rs_atoms = get_rocksalt(db_name)
+    rs_settings, rs_atoms = get_rocksalt(db_name, bf_type=basis_func_type)
     do_test_update_correlation_functions(rs_settings, rs_atoms, n_trial_configs=5, fixed=["O"])
 
 
-def test_insert_element_rocksalt_1x1x1(db_name, verify_clusters):
+@pytest.mark.parametrize("basis_func_type", ALL_BASIS_FUNCTIONS)
+def test_insert_element_rocksalt_1x1x1(db_name, verify_clusters, basis_func_type):
     print("rocksalt with self interaction 1x1x1")
-    rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 1], db_name)
+    rs_settings, rs_atoms = rocksalt_with_self_interaction(
+        [1, 1, 1], db_name, bf_type=basis_func_type
+    )
+    rs_settings.basis_func_type = basis_func_type
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=5)
     verify_clusters(rs_settings)
 
 
-def test_insert_element_rocksalt_1x1x2(db_name, verify_clusters):
+@pytest.mark.parametrize("basis_func_type", ALL_BASIS_FUNCTIONS)
+def test_insert_element_rocksalt_1x1x2(db_name, verify_clusters, basis_func_type):
     print("rocksalt with self interaction 1x1x2")
-    rs_settings, rs_atoms = rocksalt_with_self_interaction([1, 1, 2], db_name)
+    rs_settings, rs_atoms = rocksalt_with_self_interaction(
+        [1, 1, 2], db_name, bf_type=basis_func_type
+    )
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=1)
     verify_clusters(rs_settings)
 
@@ -327,9 +338,10 @@ def test_insert_element_rocksalt_1x2x3(db_name):
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=10)
 
 
-def test_update_corr_func_spacegroup(db_name, verify_clusters):
+@pytest.mark.parametrize("basis_func_type", ALL_BASIS_FUNCTIONS)
+def test_update_corr_func_spacegroup(db_name, verify_clusters, basis_func_type):
     print("spacegroup")
-    sp_settings, sp_atoms = get_spacegroup(db_name)
+    sp_settings, sp_atoms = get_spacegroup(db_name, bf_type=basis_func_type)
     do_test_update_correlation_functions(sp_settings, sp_atoms, n_trial_configs=5, fixed=["Ta"])
     verify_clusters(sp_settings)
 
