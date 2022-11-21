@@ -20,18 +20,9 @@
 #include "symbol_change.hpp"
 #include "symbols_with_numbers.hpp"
 
-// Read values from name_list
-// name_list[symm_group][cluster_size] = vector of string variables of all the cluster names
-typedef std::vector<std::vector<std::vector<std::string>>> name_list;
-
-// Read values form cluster_list
-// cluster_list[symm_group][cluster_size][indx] = vector of indices belonging to the cluster #indx.
-typedef std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>> cluster_list;
 typedef std::vector<std::map<std::string, double>> bf_list;
 typedef std::array<SymbolChange, 2> swap_move;
-typedef std::unordered_map<std::string, Cluster> cluster_dict;
 
-// typedef std::unordered_map<std::string,double> cf;
 typedef NamedArray cf;
 
 enum class Status_t {
@@ -194,18 +185,17 @@ class CEUpdater {
 
     // std::vector<std::string> symbols;
     Symbols *symbols_with_id{nullptr};
-    // std::vector<cluster_dict> clusters;
+
     ClusterList clusters;
     std::vector<int> trans_symm_group;
     std::vector<int> trans_symm_group_count;
     std::map<std::string, int> normalisation_factor;
 
-    // bf_list basis_functions;
     BasisFunction *basis_functions{nullptr};
 
     Status_t status{Status_t::NOT_INITIALIZED};
-    // Matrix<int> trans_matrix;
     RowSparseStructMatrix trans_matrix;
+
     std::map<std::string, int> ctype_lookup;
     NamedArray eci;
     std::map<std::string, std::string> cname_with_dec;
