@@ -14,6 +14,23 @@ using namespace std;
 
 Cluster::Cluster(PyObject *info_dict) {
     parse_info_dict(info_dict);
+
+    this->num_figures = figures.size();
+    ref_cluster_site.clear();
+    non_ref_sites.clear();
+
+    /* The non-ref sites are placed continuously and contiguously in a single array
+    for better cache locality.*/
+    for (const auto &fig : figures) {
+        for (unsigned int j = 0; j < fig.size(); j++) {
+            unsigned int site = (unsigned int)fig[j];
+            if (site == ref_indx) {
+                ref_cluster_site.push_back(j);
+            } else {
+                non_ref_sites.emplace_back(j, site);
+            }
+        }
+    }
 }
 
 ostream &operator<<(ostream &out, const Cluster &cluster) {
@@ -193,6 +210,9 @@ Example: size=3, num_bfs=2, we add the following vectors:
 
 const equiv_deco_t &Cluster::get_equiv_deco(const string &dec_str) const {
     return equiv_deco.at(dec_str);
+}
+equiv_deco_t *Cluster::get_equiv_deco_ptr(const std::string &dec_str) {
+    return &equiv_deco.at(dec_str);
 }
 
 const equiv_deco_t &Cluster::get_equiv_deco(const std::vector<int> &deco) const {

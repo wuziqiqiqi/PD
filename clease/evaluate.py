@@ -333,7 +333,7 @@ class Evaluate:
             np.ndarray: A 1D array of floats with all ECI values.
         """
         if self.eci is None:
-            # getting ECI's was not allowed to fit, and we havn't run a fit yet.
+            # getting ECI's was not allowed to fit, and we haven't run a fit yet.
             raise ValueError("ECI's has not been fit yet. Call the Evaluate.fit method first.")
 
         return self.eci

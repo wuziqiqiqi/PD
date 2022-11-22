@@ -9,10 +9,18 @@
 #include <unordered_map>
 #include <vector>
 
+typedef std::vector<int> deco_t;
 typedef std::vector<std::vector<int>> cluster_t;
-typedef std::vector<std::vector<int>> equiv_deco_t;
+typedef std::vector<deco_t> equiv_deco_t;
 typedef std::unordered_map<std::string, equiv_deco_t> all_equiv_deco_t;
 
+struct ClusterSite {
+   public:
+    ClusterSite(unsigned int cluster_index, unsigned int lattice_index)
+        : cluster_index(cluster_index), lattice_index(lattice_index){};
+    unsigned int cluster_index;
+    unsigned int lattice_index;
+};
 class Cluster {
    public:
     Cluster() : size(0), name("noname"){};
@@ -34,11 +42,14 @@ class Cluster {
     unsigned int get_size() const {
         return size;
     };
-    unsigned int num_subclusters() const {
-        return figures.size();
+
+    inline unsigned int get_num_figures() const {
+        return this->num_figures;
     };
+
     const equiv_deco_t &get_equiv_deco(const std::string &dec_string) const;
     const equiv_deco_t &get_equiv_deco(const std::vector<int> &deco) const;
+    equiv_deco_t *get_equiv_deco_ptr(const std::string &dec_str);
     void unique_indices(std::set<int> &indices) const;
 
     /** Return the max index in the cluster */
@@ -56,12 +67,24 @@ class Cluster {
     unsigned int symm_group;
     double max_cluster_dia;
 
+    const std::vector<int> &get_ref_cluster_sites() const {
+        return this->ref_cluster_site;
+    };
+
+    const std::vector<ClusterSite> &get_non_ref_sites() const {
+        return this->non_ref_sites;
+    };
+
    private:
     cluster_t figures;
     cluster_t order;
     cluster_t equiv_sites;
     all_equiv_deco_t equiv_deco;
     std::vector<double> duplication_factors;
+
+    std::vector<int> ref_cluster_site;
+    std::vector<ClusterSite> non_ref_sites;
+    unsigned int num_figures;
 
     void all_deco(int n_bfs, std::vector<std::vector<int>> &all_deco) const;
 

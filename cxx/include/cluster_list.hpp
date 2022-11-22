@@ -19,7 +19,8 @@ class ClusterList {
     bool is_in_symm_group(const std::string &name, unsigned int symm_group) const;
 
     /** Get a given cluster with name and symmetry group */
-    const Cluster &get(const std::string &name, unsigned int symm_group) const;
+    const Cluster &get(const std::string &name, unsigned int symm_group);
+    Cluster *get_ptr(const std::string &name, unsigned int symm_group);
 
     /** Return the maximum index present in any of the clusters */
     unsigned int max_index() const;
@@ -29,6 +30,8 @@ class ClusterList {
    private:
     std::unordered_map<std::string, std::set<unsigned int>> symm_group_by_name;
     std::unordered_map<std::string, std::vector<Cluster>> clusters;
+
+    Cluster &find_cluster(const std::string &name, unsigned int symm_group);
 };
 
 #endif

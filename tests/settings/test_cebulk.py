@@ -710,3 +710,15 @@ def test_cutoff_equals_lp(crystalstructure, a_lp):
         # Not all test settings will raise here either, but some probably will
         assert "try increasing the cutoff diameter" in str(err)
         print(f"Cluster failure with settings: {crystalstructure}, and {a_lp}.")
+
+
+def test_assume_no_self_interactions(make_settings, make_conc):
+    basis_elements = [["Au", "Cu"]]
+    conc = make_conc(basis_elements)
+    settings = make_settings(conc)
+    atoms = settings.prim_cell.copy()
+    settings.set_active_template(atoms)
+    assert not settings.cluster_list.assume_no_self_interactions
+    atoms = settings.prim_cell * (4, 4, 4)
+    settings.set_active_template(atoms)
+    assert settings.cluster_list.assume_no_self_interactions

@@ -302,6 +302,7 @@ def test_update_corr_func_ternary(db_name, verify_clusters):
 def test_update_corr_func_rocksalt(db_name, basis_func_type):
     print("rocksalt")
     rs_settings, rs_atoms = get_rocksalt(db_name, bf_type=basis_func_type)
+    assert rs_settings.cluster_list.assume_no_self_interactions
     do_test_update_correlation_functions(rs_settings, rs_atoms, n_trial_configs=5, fixed=["O"])
 
 
@@ -312,6 +313,8 @@ def test_insert_element_rocksalt_1x1x1(db_name, verify_clusters, basis_func_type
         [1, 1, 1], db_name, bf_type=basis_func_type
     )
     rs_settings.basis_func_type = basis_func_type
+    # This test has self interactions
+    assert not rs_settings.cluster_list.assume_no_self_interactions
     do_test_insert_element(rs_settings, rs_atoms, n_trial_configs=5)
     verify_clusters(rs_settings)
 

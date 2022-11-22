@@ -122,7 +122,7 @@ class ClusterList:
             # we use cached results if possible
             logger.debug("Found a cached result for all cf names for %s num bf", num_bf)
             return self._all_cf_name_cache[num_bf]
-        # We havn't cached this name list yet, so we need to build it
+        # We haven't cached this name list yet, so we need to build it
         logger.debug("Building all CF names for %s num bf", num_bf)
         all_cf = self._build_all_cf_names(num_bf)
         self._all_cf_name_cache[num_bf] = all_cf
@@ -138,6 +138,20 @@ class ClusterList:
             else:
                 all_cf_names += self.get_cf_names(cluster, num_bf)
         return sorted(set(all_cf_names))
+
+    @property
+    def assume_no_self_interactions(self) -> bool:
+        """Calculate if it's safe to assume no self-interactions
+        in the cluster."""
+        for cluster in self.clusters:
+            if cluster.indices is None:
+                # We haven't attached the translated indices yet
+                raise RuntimeError("Cluster has not yet been initialized to a template.")
+            ref = cluster.ref_indx
+            for indx_lst in cluster.indices:
+                if indx_lst.count(ref) != 1:
+                    return False
+        return True
 
     def __len__(self) -> int:
         return len(self.clusters)

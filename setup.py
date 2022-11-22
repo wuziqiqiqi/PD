@@ -79,7 +79,7 @@ if omp_cmd:
     define_macros.append(("HAS_OMP", "1"))
 
 # Uncomment for profiling of the C++ code
-# extra_comp_args.append("-pg")
+# extra_comp_args.append("-g")
 
 # Replaces the deprecated "distutils.sysconfig.get_python_inc()"
 py_include = sysconfig.get_path("include")

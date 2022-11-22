@@ -11,12 +11,20 @@ void ClusterList::append(const Cluster &cluster) {
 }
 
 bool ClusterList::is_in_symm_group(const std::string &name, unsigned int symm_group) const {
-    auto group = symm_group_by_name.at(name);
+    auto &group = symm_group_by_name.at(name);
     return group.find(symm_group) != group.end();
 }
 
-const Cluster &ClusterList::get(const std::string &name, unsigned int symm_group) const {
-    for (const Cluster &cluster : clusters.at(name)) {
+const Cluster &ClusterList::get(const std::string &name, unsigned int symm_group) {
+    return find_cluster(name, symm_group);
+}
+
+Cluster *ClusterList::get_ptr(const std::string &name, unsigned int symm_group) {
+    return &find_cluster(name, symm_group);
+}
+
+Cluster &ClusterList::find_cluster(const std::string &name, unsigned int symm_group) {
+    for (Cluster &cluster : clusters.at(name)) {
         if (cluster.symm_group == symm_group) {
             return cluster;
         }

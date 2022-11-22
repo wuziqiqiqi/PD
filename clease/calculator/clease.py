@@ -182,7 +182,7 @@ class Clease:
         """
         if atoms is not None:
             if self.atoms is None:
-                # We havn't yet initialized, so initialize with the passed atoms object.
+                # We haven't yet initialized, so initialize with the passed atoms object.
                 self.set_atoms(atoms)
             else:
                 # Use the symbols of the passed atoms object

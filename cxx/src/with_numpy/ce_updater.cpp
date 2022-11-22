@@ -108,6 +108,14 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
     cout << "Parsing cluster list...\n";
 #endif
 
+    PyObject *py_no_si = get_attr(cluster_list, "assume_no_self_interactions");
+    assume_no_self_interactions = PyObject_IsTrue(py_no_si);
+    Py_DECREF(py_no_si);
+
+#ifdef PRINT_DEBUG
+    std::cout << "Assuming no self-interaction?: " << assume_no_self_interactions << std::endl;
+#endif
+
     for (unsigned int i = 0; i < num_clusters; i++) {
         PyObject *py_cluster = PySequence_GetItem(cluster_list, i);
 
@@ -248,7 +256,6 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster,
         double sp_temp = 1.0;
 
         // Use pointer arithmetics in the inner most loop
-        // const int *indx_list_ptr = &indx_list[i][0];
         const int *indices = &indx_list[i][0];
 
         for (unsigned int j = 0; j < n_memb; j++) {
@@ -276,9 +283,53 @@ int CEUpdater::get_original_index(int ref_indx) const {
     throw std::runtime_error(err.str());
 }
 
+double CEUpdater::spin_product_one_atom_delta_no_si(const SpinProductCache &sp_cache,
+                                                    const Cluster &cluster,
+                                                    const deco_t &deco) const {
+    /* Note: This function assumes no self-interaction within a cluster. */
+
+    // Figure out how many times we need to iterate
+    unsigned int num_indx = cluster.get_num_figures();  // Outer loop count
+    // Assume 1 ref site in a figure, so we iterate 1 less
+    unsigned int n_non_ref = cluster.get_size() - 1;  // Inner loop count
+
+    int *tm_row = sp_cache.trans_matrix_row;
+
+    /* There are n_non_ref sites per each ref site, so the non_ref_site_ptr
+    iterates faster than the ref_site_ptr. Figures are placed contiguously
+    in a 1D array.*/
+    const ClusterSite *non_ref_site_ptr = &cluster.get_non_ref_sites()[0];
+    const int *ref_site_ptr = &cluster.get_ref_cluster_sites()[0];
+
+    // Keep track of the change in spin-product
+    double sp_delta = 0.0;
+
+    // Iterate each figure in the cluster. 1 reference site is assumed per cluster
+    for (unsigned int i = 0; i < num_indx; i++, ++ref_site_ptr) {
+        /* Calculate the spin product for both new and the old (ref)
+        The constant term to the spin product from the sites which didn't change.*/
+        const int dec_ref = deco[*ref_site_ptr];
+        double new_bf = basis_functions->get(dec_ref, sp_cache.new_symb_id);
+        double old_bf = basis_functions->get(dec_ref, sp_cache.old_symb_id);
+        double sp_change = new_bf - old_bf;
+
+        /* Iterate the remaining non-reference sites, as we already took care of the reference
+        site (assuming no self-interaction)*/
+        for (unsigned int j = 0; j < n_non_ref; j++, ++non_ref_site_ptr) {
+            const ClusterSite &site = *non_ref_site_ptr;
+            const int dec_j = deco[site.cluster_index];
+
+            const int trans_index = trans_matrix.lookup_in_row(tm_row, site.lattice_index);
+            sp_change *= basis_functions->get(dec_j, symbols_with_id->id(trans_index));
+        }
+
+        sp_delta += sp_change;
+    }
+    return sp_delta;
+}
+
 double CEUpdater::spin_product_one_atom_delta(const SpinProductCache &sp_cache,
-                                              const Cluster &cluster,
-                                              const equiv_deco_t &equiv_deco) const {
+                                              const Cluster &cluster, const deco_t &deco) const {
     // Keep track of the change in spin-product
     double sp_delta = 0.0;
 
@@ -296,33 +347,29 @@ double CEUpdater::spin_product_one_atom_delta(const SpinProductCache &sp_cache,
         // Use pointer arithmetics in the inner most loop
         const int *indices = &indx_list[i][0];
 
-        for (const std::vector<int> &dec : equiv_deco) {
-            // Calculate the spin product for both new and the old (ref)
-            double sp_temp_new = 1.0, sp_temp_ref = 1.0;
-            // The constant term to the spin product from the sites which didn't change.
-            double sp_const = dup_factors[i];
+        // Calculate the spin product for both new and the old (ref)
+        double sp_temp_new = 1.0, sp_temp_ref = 1.0;
+        // The constant term to the spin product from the sites which didn't change.
+        double sp_const = dup_factors[i];
 
-            for (unsigned int j = 0; j < n_memb; j++) {
-                const int site_index = indices[j];
-                const int dec_j = dec[j];
-                if (site_index == sp_cache.original_index) {
-                    // This site is the reference index.
-                    // Look up the BF values directly for the new and old symbols
-                    const BFChange &ref_bf = sp_cache.bfs_new_old[dec_j];
-                    sp_temp_new *= ref_bf.new_bf;
-                    sp_temp_ref *= ref_bf.old_bf;
-                } else {
-                    // Look up the symbol of the non-reference site, which hasn't changed.
-                    const int trans_index = trans_matrix.lookup_in_row(tm_row, site_index);
-                    sp_const *= basis_functions->get(dec_j, symbols_with_id->id(trans_index));
-                }
+        for (unsigned int j = 0; j < n_memb; j++) {
+            const int site_index = indices[j];
+            const int dec_j = deco[j];
+            if (site_index == sp_cache.original_index) {
+                // This site is the reference index.
+                // Look up the BF values directly for the new and old symbols
+                sp_temp_new *= basis_functions->get(dec_j, sp_cache.new_symb_id);
+                sp_temp_ref *= basis_functions->get(dec_j, sp_cache.old_symb_id);
+            } else {
+                // Look up the symbol of the non-reference site, which hasn't changed.
+                const int trans_index = trans_matrix.lookup_in_row(tm_row, site_index);
+                sp_const *= basis_functions->get(dec_j, symbols_with_id->id(trans_index));
             }
-
-            // The change in spin-product is the difference in SP between the site(s) which
-            // changed, multiplied by the constant SP from the other un-changed sites (since
-            // these contribute equally before and after the change).
-            sp_delta += (sp_temp_new - sp_temp_ref) * sp_const;
         }
+        // The change in spin-product is the difference in SP between the site(s) which
+        // changed, multiplied by the constant SP from the other un-changed sites (since
+        // these contribute equally before and after the change).
+        sp_delta += (sp_temp_new - sp_temp_ref) * sp_const;
     }
     return sp_delta;
 }
@@ -341,30 +388,22 @@ void CEUpdater::py_changes2_symb_changes(PyObject *all_changes,
     }
 }
 
-SpinProductCache CEUpdater::build_sp_cache(const SymbolChange &symb_change,
-                                           unsigned int old_symb_id,
-                                           unsigned int new_symb_id) const {
+SpinProductCache CEUpdater::build_sp_cache(const SymbolChange &symb_change) const {
     int ref_indx = symb_change.indx;
     // Look up the untranslated index of the reference index.
     int orig_indx = this->get_original_index(ref_indx);
     // Cache the relevant row from the trans matrix.
     int *trans_matrix_row = this->trans_matrix.get_row(ref_indx);
 
-    // Cache the basis functions for each decoration number specifically
-    // for the old and new symbols for faster lookup.
-    auto bfs_new_old = this->basis_functions->prepare_bfs_new_old(new_symb_id, old_symb_id);
+    unsigned int old_symb_id = symbols_with_id->get_symbol_id(symb_change.old_symb);
+    unsigned int new_symb_id = symbols_with_id->get_symbol_id(symb_change.new_symb);
 
-    SpinProductCache sp_cache = {ref_indx, orig_indx, trans_matrix_row, bfs_new_old};
+    SpinProductCache sp_cache = {ref_indx, orig_indx, trans_matrix_row, new_symb_id, old_symb_id};
     return sp_cache;
 }
 
-void CEUpdater::update_cf(SymbolChange &symb_change) {
-    if (symb_change.old_symb == symb_change.new_symb) {
-        return;
-    }
-
+cf &CEUpdater::get_next_cf(SymbolChange &symb_change) {
     SymbolChange *symb_change_track;
-    cf &current_cf = history->get_current();
     cf *next_cf_ptr = nullptr;
     history->get_next(&next_cf_ptr, &symb_change_track);
     cf &next_cf = *next_cf_ptr;
@@ -373,35 +412,45 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
     symb_change_track->old_symb = symb_change.old_symb;
     symb_change_track->new_symb = symb_change.new_symb;
     symb_change_track->track_indx = symb_change.track_indx;
+    return next_cf;
+}
+
+void CEUpdater::update_cf(SymbolChange &symb_change) {
+    if (symb_change.old_symb == symb_change.new_symb) {
+        return;
+    }
 
     if (is_background_index[symb_change.indx]) {
         throw runtime_error("Attempting to move a background atom!");
     }
 
-    unsigned int old_symb_id = symbols_with_id->id(symb_change.indx);
+    cf &current_cf = history->get_current();
+    cf &next_cf = get_next_cf(symb_change);
+
     symbols_with_id->set_symbol(symb_change.indx, symb_change.new_symb);
-    unsigned int new_symb_id = symbols_with_id->id(symb_change.indx);
 
     /* The following prepares a range of properties which will be
      useful for all of the clusters, so we don't compute more
-     than we have to inside the main ECI loop (and especially inside the
-     spin-product loop). */
-
-    SpinProductCache sp_cache = this->build_sp_cache(symb_change, old_symb_id, new_symb_id);
+     than we have to inside the main ECI loop */
+    SpinProductCache sp_cache = this->build_sp_cache(symb_change);
 
     if (atoms != nullptr) {
         set_symbol_in_atoms(atoms, symb_change.indx, symb_change.new_symb);
     }
 
+    int symm = trans_symm_group[symb_change.indx];
+    const std::vector<ClusterCache> &clusters_cache = m_cluster_by_symm[symm];
+
     // Loop over all ECIs
     // As work load for different clusters are different due to a different
     // multiplicity factor, we need to apply a dynamic schedule
 #ifdef HAS_OMP
-#pragma omp parallel for num_threads(this->cf_update_num_threads) schedule(dynamic)
+    bool is_par = this->cf_update_num_threads > 1;
+#pragma omp parallel for if (is_par) num_threads(this->cf_update_num_threads) schedule(dynamic)
 #endif
     for (unsigned int i = 0; i < eci.size(); i++) {
         // The pre-parsed version of the cluster name.
-        const ParsedName parsed = this->m_parsed_names[i];
+        const ParsedName &parsed = this->m_parsed_names[i];
 
         // 0-body
         if (parsed.size == 0) {
@@ -412,29 +461,39 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
         // Singlet
         if (parsed.size == 1) {
             unsigned int dec = parsed.dec_num;
-            const BFChange &bf_ref = sp_cache.bfs_new_old[dec];
-            next_cf[i] = current_cf[i] + (bf_ref.new_bf - bf_ref.old_bf) / num_non_bkg_sites;
+            double new_bf = basis_functions->get(dec, sp_cache.new_symb_id);
+            double old_bf = basis_functions->get(dec, sp_cache.old_symb_id);
+            next_cf[i] = current_cf[i] + (new_bf - old_bf) / num_non_bkg_sites;
             continue;
         }
 
         // n-body
-        int symm = trans_symm_group[symb_change.indx];
+        const ClusterCache &cluster_cache = clusters_cache[i];
+        const Cluster *cluster_ptr = cluster_cache.cluster_ptr;
 
-        if (!clusters.is_in_symm_group(parsed.prefix, symm)) {
+        if (cluster_ptr == nullptr) {
+            // This cluster was not present in the symmetry group.
             next_cf[i] = current_cf[i];
             continue;
         }
+        // The cluster is in the symmetry group, so calculate the spin product
+        // change for this cluster.
+        const Cluster &cluster = *cluster_ptr;
+        const equiv_deco_t &equiv_deco = *cluster_cache.equiv_deco_ptr;
 
-        const Cluster &cluster = clusters.get(parsed.prefix, symm);
-        unsigned int size = cluster.size;
-
-        const equiv_deco_t &equiv_deco = cluster.get_equiv_deco(parsed.dec_str);
-
+        double delta_sp = 0.0;
         // Calculate the change (delta) in spin product
-        double delta_sp = spin_product_one_atom_delta(sp_cache, cluster, equiv_deco);
+        for (const deco_t &deco : equiv_deco) {
+            if (this->assume_no_self_interactions) {
+                // Faster version for large cells with no self interaction
+                delta_sp += spin_product_one_atom_delta_no_si(sp_cache, cluster, deco);
+            } else {
+                // Safe fall-back version
+                delta_sp += spin_product_one_atom_delta(sp_cache, cluster, deco);
+            }
+        }
 
-        delta_sp *= (static_cast<double>(size) / equiv_deco.size());
-        delta_sp /= normalisation_factor.at(parsed.prefix);
+        delta_sp *= cluster_cache.normalization;
         next_cf[i] = current_cf[i] + delta_sp;
     }
 }
@@ -575,6 +634,47 @@ void CEUpdater::set_symbols(const vector<string> &new_symbs) {
     symbols_with_id->set_symbols(new_symbs);
 }
 
+void CEUpdater::cluster_by_symm_group() {
+    m_cluster_by_symm.clear();
+
+    // Find unique symmetry groups
+    std::set<int> unique;
+    insert_in_set(this->trans_symm_group, unique);
+
+    for (const int symm : unique) {
+        if (symm == -1) {
+            // Background symmetry group
+            continue;
+        }
+        // 1 ClusterCache per ECI value
+        std::vector<ClusterCache> cluster_cache;
+        cluster_cache.reserve(this->m_parsed_names.size());
+        for (const ParsedName &parsed : this->m_parsed_names) {
+            ClusterCache cache;
+            if (parsed.size == 0 || parsed.size == 1 ||
+                !clusters.is_in_symm_group(parsed.prefix, symm)) {
+                /* Either 0- or 1-body cluster, or cluster is not in this
+                symmetry group. */
+                cluster_cache.push_back(cache);
+                continue;
+            }
+            Cluster *cluster_ptr = clusters.get_ptr(parsed.prefix, symm);
+            equiv_deco_t *equiv_ptr = cluster_ptr->get_equiv_deco_ptr(parsed.dec_str);
+            // Calculate the normalization of the resulting cluster functions
+            double normalization = static_cast<double>(cluster_ptr->size);
+            normalization /= equiv_ptr->size();
+            normalization /= normalisation_factor.at(parsed.prefix);
+
+            // Populate the new cache object
+            cache.cluster_ptr = cluster_ptr;
+            cache.equiv_deco_ptr = equiv_ptr;
+            cache.normalization = normalization;
+
+            cluster_cache.push_back(cache);
+        }
+        m_cluster_by_symm.insert({symm, cluster_cache});
+    }
+}
 void CEUpdater::set_eci(PyObject *pyeci) {
     PyObject *key;
     PyObject *value;
@@ -594,6 +694,8 @@ void CEUpdater::set_eci(PyObject *pyeci) {
     if (this->status == Status_t::READY && !all_eci_corresponds_to_cf()) {
         throw invalid_argument("All ECIs has to correspond to a correlation function!");
     }
+    // Update the cluster pointers to match the order with the ECI's.
+    cluster_by_symm_group();
 }
 
 bool CEUpdater::all_decoration_nums_equal(const vector<int> &dec_nums) const {
@@ -668,7 +770,8 @@ void CEUpdater::build_trans_symm_group(PyObject *py_trans_symm_group) {
             int indx = py2int(PyList_GetItem(sublist, j));
             if (trans_symm_group[indx] != -1) {
                 throw runtime_error(
-                    "One site appears to be present in more than one translation symmetry group!");
+                    "One site appears to be present in more than one translation symmetry "
+                    "group!");
             }
             trans_symm_group[indx] = i;
         }
@@ -701,7 +804,8 @@ bool CEUpdater::all_eci_corresponds_to_cf() {
 double CEUpdater::calculate(vector<swap_move> &sequence) {
     if (sequence.size() >= history->max_history / 2) {
         throw invalid_argument(
-            "The length of sequence of swap move exceeds the buffer size for the history tracker");
+            "The length of sequence of swap move exceeds the buffer size for the history "
+            "tracker");
     }
 
     for (unsigned int i = 0; i < sequence.size(); i++) {

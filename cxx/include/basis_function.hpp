@@ -9,11 +9,6 @@
 typedef std::map<std::string, double> dict_dbl_t;
 typedef std::vector<dict_dbl_t> bf_raw_t;
 
-struct BFChange {
-    BFChange(double new_bf, double old_bf) : new_bf(new_bf), old_bf(old_bf){};
-    double new_bf;
-    double old_bf;
-};
 class BasisFunction {
    public:
     BasisFunction();
@@ -35,15 +30,6 @@ class BasisFunction {
     unsigned int size() const {
         return num_bfs;
     };
-
-    /* For preparing a vector of basis functions that maps a decoration number
-    to the old and new basis functions simultaneously.
-    This vector contains copies of the underlying basis functions.
-    The pair<double, double> is constructed as follows:
-    first -> Basis function of the *new* symbol
-    second -> Basis function of the *old* symbol
-    */
-    std::vector<BFChange> prepare_bfs_new_old(unsigned int new_id, unsigned int old_id) const;
 
     /** Stream operator */
     friend std::ostream &operator<<(std::ostream &out, const BasisFunction &bf);

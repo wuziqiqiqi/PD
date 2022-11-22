@@ -40,6 +40,15 @@ enum class Status_t {
     NOT_INITIALIZED,
 };
 
+/* Collection of pointers to a cluster and equivalent decoration vector.
+nullptr is used to indicate the Cluster is not used, generally for a given
+translational symmetry group.*/
+struct ClusterCache {
+    Cluster *cluster_ptr{nullptr};
+    equiv_deco_t *equiv_deco_ptr{nullptr};
+    double normalization{1.0};
+};
+
 /** Help structure used when the correlation functions have different decoration number */
 struct ClusterMember {
     int ref_indx;
@@ -52,8 +61,8 @@ struct SpinProductCache {
     /* A cache of the relevant translation matrix row
     corresponding to the ref_indx */
     int *trans_matrix_row;
-    // The basis functions for the new and old site symbols
-    std::vector<BFChange> bfs_new_old;
+    unsigned int new_symb_id;
+    unsigned int old_symb_id;
 };
 
 class CEUpdater {
@@ -76,7 +85,7 @@ class CEUpdater {
         return status == Status_t::READY;
     };
 
-    /** Computes the energy based on the ECIs and the correlations functions */
+    /** Compute the energy based on the ECIs and the correlations functions */
     double get_energy();
 
     /** Returns the value of the singlets */
@@ -86,16 +95,6 @@ class CEUpdater {
     /** Updates the CF */
     void update_cf(PyObject *single_change);
     void update_cf(SymbolChange &single_change);
-
-    /** Computes the spin product for one element */
-    double spin_product_one_atom(int ref_indx, const Cluster &cluster, const std::vector<int> &dec,
-                                 int ref_id) const;
-    // Calculate the change in spin product going from old_symb_id to new_symb_id
-    double spin_product_one_atom_delta(const SpinProductCache &sp_cache, const Cluster &cluster,
-                                       const equiv_deco_t &equiv_deco) const;
-
-    SpinProductCache build_sp_cache(const SymbolChange &symb_change, unsigned int old_symb_id,
-                                    unsigned int new_symb_id) const;
 
     /* Locate the original index for the "untranslated" site, given a
     reference index, i.e. the inverse operation of the translation matrix.*/
@@ -212,11 +211,36 @@ class CEUpdater {
     std::map<std::string, std::string> cname_with_dec;
     std::vector<bool> is_background_index;
     bool ignore_background_indices{true};
+    bool assume_no_self_interactions{false};
     CFHistoryTracker *history{nullptr};
     PyObject *atoms{nullptr};
     std::vector<std::string> singlets;
     // Pre-parsed names of the ECI values.
     std::vector<ParsedName> m_parsed_names;
+    std::map<int, std::vector<ClusterCache>> m_cluster_by_symm;
+
+    /* Prepare the next CF array */
+    cf &get_next_cf(SymbolChange &symb_change);
+
+    /** Compute the spin product for one element */
+    double spin_product_one_atom(int ref_indx, const Cluster &cluster, const std::vector<int> &dec,
+                                 int ref_id) const;
+    // Calculate the change in spin product going from old_symb_id to new_symb_id
+    double spin_product_one_atom_delta(const SpinProductCache &sp_cache, const Cluster &cluster,
+                                       const deco_t &deco) const;
+
+    /* Calculate the change in spin product under the assumption that no self-interaction
+    is present, i.e. no site is present more than once in a figure within a cluster.*/
+    double spin_product_one_atom_delta_no_si(const SpinProductCache &sp_cache,
+                                             const Cluster &cluster, const deco_t &deco) const;
+
+    /* Construct a map from the symmetry group with pointers to the relevant clusters.
+    The pointer clusters are ordered in the same order as the ECI values.
+    A nullpointer is inserted when a cluster is either a 0- or 1-body cluster, or not in the
+    symmetry group.*/
+    void cluster_by_symm_group();
+
+    SpinProductCache build_sp_cache(const SymbolChange &symb_change) const;
 
     // Cached number of non background sites
     void count_non_bkg_sites();

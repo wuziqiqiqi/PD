@@ -51,7 +51,7 @@ def test_syncronize(aucu_system, get_cf_scratch):
     assert atoms.symbols[0] == "Cu"
     atoms.symbols[0] = "Au"
 
-    # We havn't done any syncronization yet
+    # We haven't done any syncronization yet
     # so CF's shouldn't have changed
     cf_calc = atoms.calc.get_cf()
     assert cf == pytest.approx(cf_calc)
