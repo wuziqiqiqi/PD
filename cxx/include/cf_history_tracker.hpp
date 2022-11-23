@@ -27,7 +27,7 @@ class CFHistoryTracker {
     /** Returns a reference to the active correlation function */
     cf &get_current();
 
-    /** Gets the system change and previus */
+    /** Gets the system change and previous */
     void pop(SymbolChange **change);
 
     /** Insert a python correlation function (assumed to be a dictionary) */

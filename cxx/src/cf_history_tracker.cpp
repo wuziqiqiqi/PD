@@ -39,8 +39,7 @@ void CFHistoryTracker::init_all_keys(cf &entry, const vector<string> &cf_names) 
 void CFHistoryTracker::get_next(cf **next_cf, SymbolChange **next_change) {
     *next_cf = cf_history[current];
     *next_change = changes[current];
-    current += 1;
-    current = current % max_history;
+    current = (current + 1) % max_history;
     if (buffer_size < max_history) {
         buffer_size += 1;
     }
@@ -97,8 +96,7 @@ void CFHistoryTracker::insert(cf &new_cf, SymbolChange *symb_changes) {
         *changes[current] = *symb_changes;
     }
 
-    current++;
-    current = current % max_history;
+    current = (current + 1) % max_history;
 
     if (buffer_size < max_history) {
         buffer_size += 1;

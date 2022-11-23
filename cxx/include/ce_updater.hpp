@@ -40,8 +40,6 @@ enum class Status_t {
     NOT_INITIALIZED,
 };
 
-typedef std::map<std::string, std::vector<int>> tracker_t;
-
 /** Help structure used when the correlation functions have different decoration number */
 struct ClusterMember {
     int ref_indx;
@@ -55,7 +53,7 @@ struct SpinProductCache {
     corresponding to the ref_indx */
     int *trans_matrix_row;
     // The basis functions for the new and old site symbols
-    std::vector<std::pair<double, double>> bfs_new_old;
+    std::vector<BFChange> bfs_new_old;
 };
 
 class CEUpdater {
@@ -90,10 +88,10 @@ class CEUpdater {
     void update_cf(SymbolChange &single_change);
 
     /** Computes the spin product for one element */
-    double spin_product_one_atom(int ref_indx, const Cluster &indx_list,
-                                 const std::vector<int> &dec, int ref_id) const;
+    double spin_product_one_atom(int ref_indx, const Cluster &cluster, const std::vector<int> &dec,
+                                 int ref_id) const;
     // Calculate the change in spin product going from old_symb_id to new_symb_id
-    double spin_product_one_atom_delta(const SpinProductCache &sp_cache, const Cluster &indx_list,
+    double spin_product_one_atom_delta(const SpinProductCache &sp_cache, const Cluster &cluster,
                                        const equiv_deco_t &equiv_deco) const;
 
     SpinProductCache build_sp_cache(const SymbolChange &symb_change, unsigned int old_symb_id,
@@ -164,11 +162,6 @@ class CEUpdater {
     /** Sets the symbols */
     void set_symbols(const std::vector<std::string> &new_symbs);
 
-    /** CE updater should keep track of where the atoms are */
-    void set_atom_position_tracker(tracker_t *new_tracker) {
-        tracker = new_tracker;
-    };
-
     /** Set the number of threads to use during CF updating */
     void set_num_threads(unsigned int num) {
         cf_update_num_threads = num;
@@ -209,7 +202,7 @@ class CEUpdater {
     std::map<std::string, int> normalisation_factor;
 
     // bf_list basis_functions;
-    BasisFunction basis_functions;
+    BasisFunction *basis_functions{nullptr};
 
     Status_t status{Status_t::NOT_INITIALIZED};
     // Matrix<int> trans_matrix;
@@ -221,7 +214,6 @@ class CEUpdater {
     bool ignore_background_indices{true};
     CFHistoryTracker *history{nullptr};
     PyObject *atoms{nullptr};
-    tracker_t *tracker{nullptr};  // Do not own this pointer
     std::vector<std::string> singlets;
     // Pre-parsed names of the ECI values.
     std::vector<ParsedName> m_parsed_names;
@@ -229,9 +221,6 @@ class CEUpdater {
     // Cached number of non background sites
     void count_non_bkg_sites();
     int num_non_bkg_sites;
-
-    /** Undos the latest changes keeping the tracker CE tracker updated */
-    void undo_changes_tracker(int num_steps);
 
     /** Returns true if all decoration numbers are equal */
     bool all_decoration_nums_equal(const std::vector<int> &dec_num) const;

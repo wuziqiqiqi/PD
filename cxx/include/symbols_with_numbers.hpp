@@ -15,7 +15,7 @@ class Symbols {
     Symbols &operator=(const Symbols &other);
 
     /** Return the symbol ID of the atom at site indx */
-    unsigned int id(unsigned int indx) const {
+    inline unsigned int id(unsigned int indx) const {
         return symb_ids[indx];
     };
 

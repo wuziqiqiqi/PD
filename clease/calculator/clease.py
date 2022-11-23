@@ -370,7 +370,6 @@ class Clease:
 
     def apply_system_changes(self, system_changes: SystemChanges) -> None:
         """Apply a set of changes to the calculator, and evaluate the energy"""
-        self.reset()
         # Apply the updates
         self.update_cf(system_changes)
         self.energy = self.updater.get_energy()

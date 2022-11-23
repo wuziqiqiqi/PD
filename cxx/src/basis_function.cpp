@@ -39,25 +39,15 @@ BasisFunction &BasisFunction::operator=(const BasisFunction &other) {
 BasisFunction::~BasisFunction() {
 }
 
-unsigned int BasisFunction::get_index(unsigned int dec_num, unsigned int symb_id) const {
-    return dec_num * this->num_bf_values + symb_id;
-}
-
-double BasisFunction::get(unsigned int dec_num, unsigned int symb_id) const {
-    /* This access is used in the inner loop of the spin product calculation (i.e. very frequently),
-     so we access with no bounds checking for performance reasons. */
-    return bfs[get_index(dec_num, symb_id)];
-}
-
-std::vector<std::pair<double, double>> BasisFunction::prepare_bfs_new_old(
-    unsigned int new_symb_id, unsigned int old_symb_id) const {
-    std::vector<std::pair<double, double>> prepped;
+std::vector<BFChange> BasisFunction::prepare_bfs_new_old(unsigned int new_symb_id,
+                                                         unsigned int old_symb_id) const {
+    std::vector<BFChange> prepped;
     prepped.reserve(this->num_bf_values);
 
     for (unsigned int dec_num = 0; dec_num < this->num_bf_values; dec_num++) {
         double new_bf = this->get(dec_num, new_symb_id);
         double old_bf = this->get(dec_num, old_symb_id);
-        prepped.emplace_back(std::make_pair(new_bf, old_bf));
+        prepped.emplace_back(new_bf, old_bf);
     }
     return prepped;
 }

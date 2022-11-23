@@ -20,7 +20,9 @@ CEUpdater::~CEUpdater() {
     delete history;
 
     delete symbols_with_id;
+    delete basis_functions;
     symbols_with_id = nullptr;
+    basis_functions = nullptr;
 }
 
 void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc, PyObject *pyeci,
@@ -154,7 +156,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
         basis_func_raw.push_back(new_entry);
     }
 
-    this->basis_functions = BasisFunction(basis_func_raw, *symbols_with_id);
+    this->basis_functions = new BasisFunction(basis_func_raw, *symbols_with_id);
 
 #ifdef PRINT_DEBUG
     cout << "Reading translation matrix from settings\n";
@@ -252,7 +254,7 @@ double CEUpdater::spin_product_one_atom(int ref_indx, const Cluster &cluster,
         for (unsigned int j = 0; j < n_memb; j++) {
             int trans_index = trans_matrix.lookup_in_row(trans_matrix_row, indices[j]);
             int id = (trans_index == ref_indx) ? ref_id : symbols_with_id->id(trans_index);
-            sp_temp *= basis_functions.get(dec[j], id);
+            sp_temp *= basis_functions->get(dec[j], id);
         }
         sp += sp_temp;
     }
@@ -280,25 +282,25 @@ double CEUpdater::spin_product_one_atom_delta(const SpinProductCache &sp_cache,
     // Keep track of the change in spin-product
     double sp_delta = 0.0;
 
+    // List of figures in the cluster
     const vector<vector<int>> &indx_list = cluster.get();
     // Account for the self-interaction, in case we updated 2 sites with 1 change
-    const vector<double> &dup_factors = cluster.get_duplication_factors();
+    const std::vector<double> &dup_factors = cluster.get_duplication_factors();
     unsigned int num_indx = indx_list.size();
     unsigned int n_memb = indx_list[0].size();
 
     int *tm_row = sp_cache.trans_matrix_row;
 
-    for (const vector<int> &dec : equiv_deco) {
-        // Iterate each site in the cluster
-        for (unsigned int i = 0; i < num_indx; i++) {
-            // Calculate the spin product for both new and the old (ref)
-            double sp_temp_new = 1.0;
-            double sp_temp_ref = 1.0;
-            // The constant term to the spin product from the sites which didn't change.
-            double sp_const = 1.0;
+    // Iterate each site in the cluster
+    for (unsigned int i = 0; i < num_indx; i++) {
+        // Use pointer arithmetics in the inner most loop
+        const int *indices = &indx_list[i][0];
 
-            // Use pointer arithmetics in the inner most loop
-            const int *indices = &indx_list[i][0];
+        for (const std::vector<int> &dec : equiv_deco) {
+            // Calculate the spin product for both new and the old (ref)
+            double sp_temp_new = 1.0, sp_temp_ref = 1.0;
+            // The constant term to the spin product from the sites which didn't change.
+            double sp_const = dup_factors[i];
 
             for (unsigned int j = 0; j < n_memb; j++) {
                 const int site_index = indices[j];
@@ -306,19 +308,20 @@ double CEUpdater::spin_product_one_atom_delta(const SpinProductCache &sp_cache,
                 if (site_index == sp_cache.original_index) {
                     // This site is the reference index.
                     // Look up the BF values directly for the new and old symbols
-                    const std::pair<double, double> &ref_bf = sp_cache.bfs_new_old[dec_j];
-                    sp_temp_new *= ref_bf.first;
-                    sp_temp_ref *= ref_bf.second;
+                    const BFChange &ref_bf = sp_cache.bfs_new_old[dec_j];
+                    sp_temp_new *= ref_bf.new_bf;
+                    sp_temp_ref *= ref_bf.old_bf;
                 } else {
                     // Look up the symbol of the non-reference site, which hasn't changed.
                     const int trans_index = trans_matrix.lookup_in_row(tm_row, site_index);
-                    sp_const *= basis_functions.get(dec_j, symbols_with_id->id(trans_index));
+                    sp_const *= basis_functions->get(dec_j, symbols_with_id->id(trans_index));
                 }
             }
-            // The change in spin-product is the difference in SP between the site(s) which changed,
-            // multiplied by the constant SP from the other un-changed sites (since these contribute
-            // equally before and after the change).
-            sp_delta += (sp_temp_new - sp_temp_ref) * sp_const * dup_factors[i];
+
+            // The change in spin-product is the difference in SP between the site(s) which
+            // changed, multiplied by the constant SP from the other un-changed sites (since
+            // these contribute equally before and after the change).
+            sp_delta += (sp_temp_new - sp_temp_ref) * sp_const;
         }
     }
     return sp_delta;
@@ -349,7 +352,7 @@ SpinProductCache CEUpdater::build_sp_cache(const SymbolChange &symb_change,
 
     // Cache the basis functions for each decoration number specifically
     // for the old and new symbols for faster lookup.
-    auto bfs_new_old = this->basis_functions.prepare_bfs_new_old(new_symb_id, old_symb_id);
+    auto bfs_new_old = this->basis_functions->prepare_bfs_new_old(new_symb_id, old_symb_id);
 
     SpinProductCache sp_cache = {ref_indx, orig_indx, trans_matrix_row, bfs_new_old};
     return sp_cache;
@@ -409,8 +412,8 @@ void CEUpdater::update_cf(SymbolChange &symb_change) {
         // Singlet
         if (parsed.size == 1) {
             unsigned int dec = parsed.dec_num;
-            const std::pair<double, double> &bf_ref = sp_cache.bfs_new_old[dec];
-            next_cf[i] = current_cf[i] + (bf_ref.first - bf_ref.second) / num_non_bkg_sites;
+            const BFChange &bf_ref = sp_cache.bfs_new_old[dec];
+            next_cf[i] = current_cf[i] + (bf_ref.new_bf - bf_ref.old_bf) / num_non_bkg_sites;
             continue;
         }
 
@@ -442,11 +445,6 @@ void CEUpdater::undo_changes() {
 }
 
 void CEUpdater::undo_changes(int num_steps) {
-    if (tracker != nullptr) {
-        undo_changes_tracker(num_steps);
-        return;
-    }
-
     int buf_size = history->history_size();
 
     if (num_steps > buf_size - 1) {
@@ -462,22 +460,6 @@ void CEUpdater::undo_changes(int num_steps) {
             set_symbol_in_atoms(atoms, last_changes->indx, last_changes->old_symb);
         }
     }
-}
-
-void CEUpdater::undo_changes_tracker(int num_steps) {
-    SymbolChange *last_change;
-    SymbolChange *first_change;
-    tracker_t &trk = *tracker;
-    for (int i = 0; i < num_steps; i++) {
-        history->pop(&last_change);
-        history->pop(&first_change);
-        symbols_with_id->set_symbol(last_change->indx, last_change->old_symb);
-        symbols_with_id->set_symbol(first_change->indx, first_change->old_symb);
-        trk[first_change->old_symb][first_change->track_indx] = first_change->indx;
-        trk[last_change->old_symb][last_change->track_indx] = last_change->indx;
-    }
-    symbols_with_id->set_symbol(first_change->indx, first_change->old_symb);
-    symbols_with_id->set_symbol(last_change->indx, last_change->old_symb);
 }
 
 double CEUpdater::calculate(PyObject *system_changes) {
@@ -538,11 +520,6 @@ double CEUpdater::calculate(swap_move &system_changes) {
     // Update correlation function
     update_cf(system_changes[0]);
     update_cf(system_changes[1]);
-    if (tracker != nullptr) {
-        tracker_t &trk = *tracker;
-        trk[system_changes[0].old_symb][system_changes[0].track_indx] = system_changes[1].indx;
-        trk[system_changes[1].old_symb][system_changes[1].track_indx] = system_changes[0].indx;
-    }
 
     return get_energy();
 }
@@ -577,7 +554,7 @@ CEUpdater *CEUpdater::copy() const {
     obj->trans_symm_group = trans_symm_group;
     obj->trans_symm_group_count = trans_symm_group_count;
     obj->normalisation_factor = normalisation_factor;
-    obj->basis_functions = BasisFunction(basis_functions);
+    obj->basis_functions = new BasisFunction(*basis_functions);
     obj->status = status;
     obj->trans_matrix = trans_matrix;
     obj->ctype_lookup = ctype_lookup;
@@ -587,7 +564,6 @@ CEUpdater *CEUpdater::copy() const {
     obj->num_non_bkg_sites = num_non_bkg_sites;
     obj->history = new CFHistoryTracker(*history);
     obj->atoms = nullptr;  // Left as nullptr by intention
-    obj->tracker = tracker;
     return obj;
 }
 
@@ -905,7 +881,7 @@ void CEUpdater::calculate_cf_from_scratch(const vector<string> &cf_names, map<st
             // Normalise with respect to the actual number of atoms included
             for (unsigned int atom_no = 0; atom_no < symbols_with_id->size(); atom_no++) {
                 if (!is_background_index[atom_no] || !ignore_background_indices) {
-                    new_value += basis_functions.get(dec, symbols_with_id->id(atom_no));
+                    new_value += basis_functions->get(dec, symbols_with_id->id(atom_no));
                 }
             }
             cf[name] = new_value / num_non_bkg_sites;

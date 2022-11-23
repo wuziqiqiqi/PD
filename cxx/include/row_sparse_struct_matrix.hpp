@@ -47,10 +47,14 @@ class RowSparseStructMatrix {
     /** Get a specific row.
      * NOTE: For max performance this function does not perform any validity checks */
     int *get_row(unsigned int row_index) const;
+
     /** Look up a column in a pre-cached row, e.g. from the get_row method.
      * Use together with get_row() to split the operation of the () operator.
-     * NOTE: For max performance this function does not perform any validity checks */
-    const int lookup_in_row(int *row, unsigned int index) const;
+     * NOTE: For max performance this function does not perform any validity checks
+     * Method is inlined, as it's called very frequently in the hot path.*/
+    inline const int lookup_in_row(int *row, unsigned int index) const {
+        return row[lookup[index]];
+    };
 
     /** Matrix-like access operator. NOTE: For max performance this function does not perform any
      * validity checks */

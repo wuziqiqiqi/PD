@@ -120,10 +120,6 @@ int *RowSparseStructMatrix::get_row(unsigned int row_index) const {
     return values[row_index];
 }
 
-const int RowSparseStructMatrix::lookup_in_row(int *row, unsigned int index) const {
-    return row[lookup[index]];
-}
-
 int RowSparseStructMatrix::get_with_validity_check(unsigned int row, unsigned int col) const {
     if (row >= num_rows) {
         stringstream ss;

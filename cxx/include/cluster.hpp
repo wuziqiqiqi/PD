@@ -55,7 +55,7 @@ class Cluster {
     unsigned int ref_indx;
     unsigned int symm_group;
     double max_cluster_dia;
-    // std::string descriptor;
+
    private:
     cluster_t figures;
     cluster_t order;
