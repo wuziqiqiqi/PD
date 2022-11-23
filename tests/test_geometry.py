@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
-from clease.geometry import max_sphere_dia_in_cell
+from ase.build import bulk
+from clease.geometry import max_sphere_dia_in_cell, supercell_which_contains_sphere
 
 
 @pytest.mark.parametrize(
@@ -39,3 +40,35 @@ def test_sphere_in_cube():
     y = [max_sphere_dia_in_cell(make_cell(a)) for a in ang]
 
     assert pytest.approx(y) == np.abs(np.cos(ang))
+
+
+@pytest.mark.parametrize("dia", [15, 30, 35, 40, 41.5])
+def test_sphere_in_sc(dia):
+    # Use a cubic cell, easier to reason about how much expansion a sphere causes.
+    atoms = bulk("NaCl", crystalstructure="rocksalt", a=3.3, cubic=True)
+
+    cell_vectors = np.linalg.norm(atoms.get_cell(), axis=1)
+    assert (cell_vectors < dia).all()
+
+    sc = supercell_which_contains_sphere(atoms, dia)
+
+    cell_vectors = np.linalg.norm(sc.get_cell(), axis=1)
+    assert (cell_vectors >= dia).all()
+    # The cell vector shouldn't be overly large.
+    assert (cell_vectors < 1.3 * dia).all()
+
+
+@pytest.mark.parametrize(
+    "atoms, expect",
+    [
+        (bulk("NaCl", crystalstructure="rocksalt", a=3.8, cubic=True), (11, 11, 11)),
+        (bulk("NaCl", crystalstructure="rocksalt", a=3.8, cubic=False), (19, 19, 19)),
+        (bulk("Au", crystalstructure="fcc", a=3.6, cubic=False), (20, 20, 20)),
+    ],
+)
+def test_sphere_repeats(atoms, expect):
+    dia = 40
+
+    sc = supercell_which_contains_sphere(atoms, dia)
+    assert "repeats" in sc.info
+    assert (sc.info["repeats"] == expect).all()

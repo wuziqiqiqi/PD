@@ -6,7 +6,8 @@ Release notes
 
 1.0.5
 ======
-
+* Added :py:func:`~clease.geometry.supercell_which_contains_sphere` and
+  :py:func:`~clease.geometry.cell_wall_distances`.
 
 1.0.4
 ======
