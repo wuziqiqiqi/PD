@@ -110,16 +110,13 @@ class CEMCEvaluator(MCEvaluator):
                 "Clease calculator must be attached to the atoms object when using CEMCEvaluator"
             )
         super().__init__(atoms)
+        self.calc: Clease = self.atoms.calc  # Keep a direct reference to the calculator
+        assert self.calc is self.atoms.calc
 
     @property
     def settings(self) -> ClusterExpansionSettings:
         """Get the related settings object"""
         return self.calc.settings
-
-    @property
-    def calc(self) -> Clease:
-        """Get the internal calculator object"""
-        return self.atoms.calc
 
     def get_energy(self, applied_changes: SystemChanges = None) -> float:
         return self.calc.get_energy()

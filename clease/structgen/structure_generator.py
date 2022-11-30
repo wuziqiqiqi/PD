@@ -148,7 +148,7 @@ class StructureGenerator(ABC):
                     num_accepted += 1
                     self.atoms.calc.clear_history()
                 else:
-                    self.atoms.calc.restore()
+                    self.atoms.calc.undo_system_changes()
 
         # Create a new calculator and attach it to the generated structure
         calc = Clease(self.settings, eci=self.eci, init_cf=self.cf_generated_structure)

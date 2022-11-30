@@ -214,21 +214,8 @@ class Clease:
         return self.calculate(atoms=atoms)
 
     def clear_history(self) -> None:
+        """Direct access to the clear history method"""
         self.updater.clear_history()
-
-    def restore(self) -> None:
-        """Restore the Atoms object to its original configuration and energy.
-
-        This method reverts the Atoms object to its oldest state stored in
-        memory. The state is restored to either
-        (1) an initial state when the calculator was attached, or
-        (2) the state at which the `clear_history()` method was invoked last
-            time.
-
-        NOTE: The maximum capacity for the history buffer is 1000 steps
-        """
-        self.updater.undo_changes()
-        self.energy = self.updater.get_energy()
 
     def update_energy(self) -> None:
         """Update correlation function and get new energy."""
@@ -376,13 +363,26 @@ class Clease:
 
     def undo_system_changes(self) -> None:
         """Revert a set of changes. The changes passed in should be the original
-        sequence of system changes which were applied. Restores the original results."""
-        self.restore()  # Also restores results
+        sequence of system changes which were applied. Restores the original results.
+
+        Restore the Atoms object to its original configuration and energy.
+
+        This method reverts the Atoms object to its oldest state stored in
+        memory. The state is restored to either
+        (1) an initial state when the calculator was attached, or
+        (2) the state at which the `clear_history()` method was invoked last
+            time.
+
+        NOTE: The maximum capacity for the history buffer is 1000 steps
+        """
+        self.updater.undo_changes()
+        self.energy = self.updater.get_energy()
 
     def keep_system_changes(self) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
-        self.clear_history()
+        # Call clear_history directly intentionally, rather than using self.clear_history()
+        self.updater.clear_history()
 
     def get_num_threads(self) -> int:
         """Get the number of threads from the C++ updater."""
