@@ -113,7 +113,7 @@ EXTRAS_REQUIRE = {
         # Get the histrogram extras, for making nice histogram plots
         # with pytest-benchmark
         "pytest-benchmark[histogram]>=3.4.1",
-        "tox>=3.24.0",
+        "tox>=4",
     ),
     # Extra nice-to-haves when developing CLEASE
     "dev": (

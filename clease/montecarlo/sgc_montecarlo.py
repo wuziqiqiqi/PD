@@ -13,7 +13,6 @@ class InvalidChemicalPotentialError(Exception):
     pass
 
 
-# pylint: disable=too-many-instance-attributes
 class SGCMonteCarlo(Montecarlo):
     """
     Class for running Monte Carlo in the Semi-Grand Canonical Ensebmle
