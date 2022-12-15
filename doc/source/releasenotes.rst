@@ -4,6 +4,9 @@
 Release notes
 =============
 
+1.0.6
+======
+
 1.0.5
 ======
 * Added :py:func:`~clease.geometry.supercell_which_contains_sphere` and
