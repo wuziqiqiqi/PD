@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+typedef unsigned short int symb_id_t;
 typedef std::vector<std::string> vec_str_t;
 typedef std::set<std::string> set_str_t;
 typedef std::map<std::string, unsigned int> dict_uint_t;
@@ -15,7 +16,7 @@ class Symbols {
     Symbols &operator=(const Symbols &other);
 
     /** Return the symbol ID of the atom at site indx */
-    inline unsigned int id(unsigned int indx) const {
+    inline symb_id_t id(unsigned int indx) const {
         return symb_ids[indx];
     };
 
@@ -54,8 +55,7 @@ class Symbols {
     };
 
    private:
-    // unsigned int *symb_ids{nullptr};
-    std::vector<unsigned int> symb_ids;
+    std::vector<symb_id_t> symb_ids;
     vec_str_t symbols;
     dict_uint_t symb_id_translation;
 

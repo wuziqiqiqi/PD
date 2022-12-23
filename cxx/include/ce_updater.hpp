@@ -4,6 +4,7 @@
 
 #include <array>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -60,9 +61,6 @@ class CEUpdater {
    public:
     CEUpdater();
     ~CEUpdater();
-
-    /** New copy. NOTE: the pointer has to be deleted */
-    CEUpdater *copy() const;
 
     /** Initialize the object (cluster_info should contain duplication factors) */
     void init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc, PyObject *eci,
@@ -183,15 +181,14 @@ class CEUpdater {
 
     unsigned int cf_update_num_threads{1};
 
-    // std::vector<std::string> symbols;
-    Symbols *symbols_with_id{nullptr};
+    std::unique_ptr<Symbols> symbols_with_id{nullptr};
 
     ClusterList clusters;
     std::vector<int> trans_symm_group;
     std::vector<int> trans_symm_group_count;
     std::map<std::string, int> normalisation_factor;
 
-    BasisFunction *basis_functions{nullptr};
+    std::unique_ptr<BasisFunction> basis_functions{nullptr};
 
     Status_t status{Status_t::NOT_INITIALIZED};
     RowSparseStructMatrix trans_matrix;
@@ -202,7 +199,7 @@ class CEUpdater {
     std::vector<bool> is_background_index;
     bool ignore_background_indices{true};
     bool assume_no_self_interactions{false};
-    CFHistoryTracker *history{nullptr};
+    std::unique_ptr<CFHistoryTracker> history{nullptr};
     PyObject *atoms{nullptr};
     std::vector<std::string> singlets;
     // Pre-parsed names of the ECI values.

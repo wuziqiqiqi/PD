@@ -63,7 +63,7 @@ def get_source_files():
 
 
 src_files = get_source_files()
-extra_comp_args = ["-std=c++11"]
+extra_comp_args = ["-std=c++14"]
 extra_link_args = []
 define_macros = []
 # Check for OpenMP directive

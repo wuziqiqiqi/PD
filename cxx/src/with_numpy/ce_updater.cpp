@@ -16,14 +16,7 @@
 using namespace std;
 
 CEUpdater::CEUpdater(){};
-CEUpdater::~CEUpdater() {
-    delete history;
-
-    delete symbols_with_id;
-    delete basis_functions;
-    symbols_with_id = nullptr;
-    basis_functions = nullptr;
-}
+CEUpdater::~CEUpdater(){};
 
 void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc, PyObject *pyeci,
                      PyObject *cluster_list) {
@@ -58,7 +51,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
     Py_DECREF(py_unique_symb);
 
     insert_in_set(symbols, unique_symbols);
-    symbols_with_id = new Symbols(symbols, unique_symbols);
+    symbols_with_id = std::make_unique<Symbols>(symbols, unique_symbols);
 
     // Build read the translational sites
     PyObject *py_trans_symm_group = get_attr(settings, "index_by_sublattice");
@@ -164,7 +157,7 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
         basis_func_raw.push_back(new_entry);
     }
 
-    this->basis_functions = new BasisFunction(basis_func_raw, *symbols_with_id);
+    this->basis_functions = std::make_unique<BasisFunction>(basis_func_raw, *symbols_with_id);
 
 #ifdef PRINT_DEBUG
     cout << "Reading translation matrix from settings\n";
@@ -191,7 +184,8 @@ void CEUpdater::init(PyObject *py_atoms, PyObject *settings, PyObject *corrFunc,
 
     vector<string> flattened_cnames;
     flattened_cf_names(flattened_cnames);
-    history = new CFHistoryTracker(eci.get_names());
+
+    history = std::make_unique<CFHistoryTracker>(eci.get_names());
     history->insert(corrFunc, nullptr);
 
     // Store the singlets names
@@ -604,26 +598,6 @@ PyObject *CEUpdater::get_cf() {
         Py_DECREF(pyvalue);
     }
     return cf_dict;
-}
-
-CEUpdater *CEUpdater::copy() const {
-    CEUpdater *obj = new CEUpdater();
-    obj->symbols_with_id = new Symbols(*symbols_with_id);
-    obj->clusters = clusters;
-    obj->trans_symm_group = trans_symm_group;
-    obj->trans_symm_group_count = trans_symm_group_count;
-    obj->normalisation_factor = normalisation_factor;
-    obj->basis_functions = new BasisFunction(*basis_functions);
-    obj->status = status;
-    obj->trans_matrix = trans_matrix;
-    obj->ctype_lookup = ctype_lookup;
-    obj->eci = eci;
-    obj->cname_with_dec = cname_with_dec;
-    obj->is_background_index = is_background_index;
-    obj->num_non_bkg_sites = num_non_bkg_sites;
-    obj->history = new CFHistoryTracker(*history);
-    obj->atoms = nullptr;  // Left as nullptr by intention
-    return obj;
 }
 
 void CEUpdater::set_symbols(const vector<string> &new_symbs) {

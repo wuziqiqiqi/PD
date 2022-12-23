@@ -6,6 +6,7 @@ Release notes
 
 1.0.6
 ======
+* Now requires the ``c++14`` compiler flag.
 
 1.0.5
 ======

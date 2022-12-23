@@ -35,7 +35,6 @@ class BasisFunction {
     friend std::ostream &operator<<(std::ostream &out, const BasisFunction &bf);
 
    private:
-    const Symbols *symb_ptr{nullptr};
     std::vector<double> bfs;
     unsigned int num_bfs{0};
     unsigned int num_bf_values{0};
