@@ -21,6 +21,9 @@ def test_non_singular(x, y):
 
     linreg = LinearRegression()
     coeff = linreg.fit(X, y)
+    assert isinstance(coeff, np.ndarray)
+    assert coeff.ndim == 1
+    assert coeff.shape[0] == X.shape[1]
 
     # Test that fit works
     assert np.allclose(coeff, [1.0, 2.0, -4.0])

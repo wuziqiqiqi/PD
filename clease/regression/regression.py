@@ -3,6 +3,7 @@ from typing import Union, Optional, List
 import numpy as np
 from numpy.linalg import pinv
 from sklearn.linear_model import Lasso as skLasso
+from scipy.linalg import lstsq
 from clease.data_normalizer import DataNormalizer
 
 __all__ = ("LinearRegression", "Tikhonov", "Lasso")
@@ -41,15 +42,7 @@ class LinearRegression:
         :param y: Data points (vector of length N)
         """
         self._ensure_weight_matrix_consistency(y)
-
-        # We use SVD to carry out the fit
-        U, D, V_h = np.linalg.svd(X, full_matrices=False)
-        V = V_h.T
-        diag_item = np.zeros_like(D)
-        mask = np.abs(D) > self.tol
-        diag_item[mask] = 1.0 / D[mask]
-        coeff = V.dot(np.diag(diag_item)).dot(U.T).dot(y)
-        return coeff
+        return lstsq(X, y)[0]  # Only fetch the solution
 
     def precision_matrix(self, X: np.ndarray) -> np.ndarray:
         D, V_h = np.linalg.svd(X, full_matrices=False)[1:]  # U is unused
