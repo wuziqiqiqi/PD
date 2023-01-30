@@ -7,6 +7,8 @@ Release notes
 1.0.6
 ======
 * Now requires the ``c++14`` compiler flag.
+* Fixed updating current energy for metadynamics.
+  See `!590 <https://gitlab.com/computationalmaterials/clease/-/merge_requests/590>`_.
 
 1.0.5
 ======
