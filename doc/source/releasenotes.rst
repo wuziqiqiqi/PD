@@ -4,6 +4,10 @@
 Release notes
 =============
 
+1.0.7
+======
+
+
 1.0.6
 ======
 * Now requires the ``c++14`` compiler flag.
