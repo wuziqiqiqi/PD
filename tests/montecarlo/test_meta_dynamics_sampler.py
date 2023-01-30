@@ -53,3 +53,32 @@ def test_ideal_mixture(tmpdir, db_name):
     conc_mx = data["betaG"]["x"][np.argmax(y)]
     os.remove(fname)
     assert 0.05 < conc_mx < 0.96
+
+
+def test_restart_training(db_name, make_tempfile):
+    conc = Concentration(basis_elements=[["Au", "Cu"]])
+    settings = CEBulk(conc, a=3.9, db_name=db_name, max_cluster_dia=[3.0], crystalstructure="fcc")
+    atoms = bulk("Au", a=3.9) * (3, 3, 3)
+    eci = {"c0": 0.0, "c1_0": 0.0, "c2_d0000_0_00": 0.0}
+    atoms = attach_calculator(settings, atoms=atoms, eci=eci)
+    mc = SGCMonteCarlo(atoms, 600, symbols=["Au", "Cu"])
+    pot = BinnedBiasPotential(
+        xmin=0.0, xmax=1.0, nbins=2, getter=ConcentrationObserver(atoms, element="Au")
+    )
+    fname = make_tempfile("meta_test_restart.json")
+    meta_dyn_data = {
+        "bias_pot": {
+            "xmin": 0.0,
+            "xmax": 1.0,
+            "nbins": 2,
+            "dx": 0.5,
+            "values": [
+                1.0,
+                1.0,
+            ],
+        }
+    }
+    pot.from_dict(meta_dyn_data["bias_pot"])
+
+    meta = MetaDynamicsSampler(mc=mc, bias=pot, fname=fname, mod_factor=1)
+    assert meta.mc.current_energy == 1.0, "Biases weren't correctly loaded"

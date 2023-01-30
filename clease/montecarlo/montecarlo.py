@@ -78,6 +78,9 @@ class Montecarlo(BaseMC):
 
     def update_current_energy(self) -> None:
         self.current_energy = self.evaluator.get_energy()
+        self.current_energy += sum(
+            bias.calculate_from_scratch(self.atoms) for bias in self.bias_potentials
+        )
         logger.debug("Updating current energy to %s", self.current_energy)
         self.evaluator.reset()
 
