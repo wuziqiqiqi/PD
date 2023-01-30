@@ -2,8 +2,8 @@ from copy import deepcopy
 from collections import Counter
 import pytest
 from ase.build import bulk
-import numpy as np
-from scipy import stats
+from scipy.stats import binomtest
+
 from clease.montecarlo import (
     RandomFlip,
     RandomSwap,
@@ -170,7 +170,7 @@ def test_random_flip_within_basis():
     # Check that the p-value for the null hypothesis (prob of selecting a basis is 0.5) is
     # larger than 0.05, i.e. we do not reject the null hypothesis.
     # if p < 0.05, it would be unlikely the basis count was chosen with equal probability.
-    pval = stats.binom_test(basis_count, p=0.5)
+    pval = binomtest(basis_count[0], sum(basis_count), p=0.5).pvalue
     assert pval > 0.05, basis_count
 
 
@@ -190,15 +190,18 @@ def test_mixed_swap_probability(flip_prob):
         changes = generator.get_single_trial_move()
         return changes[0].name
 
-    num = 10_000
+    num = 20_000
     c = Counter(get_move_type() for _ in range(num))
 
     # We can have 1 move type if flip_prob = 0 or 1
     # otherwise we should have 2
-    assert 1 <= len(c) <= 2
-    # A "flip_move" is the "success" case in the binom_test, it needs to be first
-    counts = [c["flip_move"], c["swap_move"]]
+    if flip_prob in [0, 1]:
+        assert len(c) == 1
+    else:
+        assert len(c) == 2
 
     # See comment in test_random_flip_within_basis for discussion on p-values
-    pval = stats.binom_test(counts, p=flip_prob)
+    success = c["flip_move"]
+    assert num == c["flip_move"] + c["swap_move"]
+    pval = binomtest(success, num, p=flip_prob).pvalue
     assert pval > 0.05
