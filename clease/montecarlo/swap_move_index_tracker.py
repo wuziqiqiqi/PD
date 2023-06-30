@@ -1,7 +1,8 @@
-from typing import Sequence, List, Dict, Optional
 import random
-import numpy as np
+from typing import Dict, List, Optional, Sequence
+
 import ase
+import numpy as np
 
 
 class SwapMoveIndexTracker:

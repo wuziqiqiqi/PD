@@ -1,5 +1,7 @@
 import logging
+
 import numpy as np
+
 from .regression import LinearRegression, Tikhonov
 
 logger = logging.getLogger(__name__)

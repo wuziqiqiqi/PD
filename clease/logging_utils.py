@@ -1,7 +1,7 @@
-from typing import Optional, TextIO, Iterator
+from contextlib import contextmanager
 import logging
 import sys
-from contextlib import contextmanager
+from typing import Iterator, Optional, TextIO
 
 __all__ = ("log_stream", "log_stream_context", "get_root_clease_logger")
 

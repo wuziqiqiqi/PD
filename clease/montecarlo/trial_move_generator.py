@@ -1,12 +1,15 @@
-from typing import Sequence, List, Set, Tuple, Dict, Optional
+from abc import ABC, abstractmethod
 import random
 from random import choice
-from abc import abstractmethod, ABC
-import numpy as np
+from typing import Dict, List, Optional, Sequence, Set, Tuple
+
 from ase import Atoms
 from ase.data import chemical_symbols
+import numpy as np
+
 from clease.datastructures import SystemChange
 from clease.tools import flatten
+
 from .constraints import MCConstraint
 from .swap_move_index_tracker import SwapMoveIndexTracker
 

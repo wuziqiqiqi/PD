@@ -1,5 +1,6 @@
-from typing import List
 from abc import ABCMeta
+from typing import List
+
 from ase import Atoms
 from ase.neighborlist import neighbor_list
 

@@ -1,28 +1,30 @@
 """Module that fits ECIs to energy data."""
-import os
-import sys
+from collections import Counter, defaultdict
 import json
 import logging as lg
 import multiprocessing as mp
-from typing import Dict, List, Sequence, Optional
-from collections import defaultdict, Counter
+import os
+import sys
+from typing import Dict, List, Optional, Sequence
 
+from ase.db import connect
 from deprecated import deprecated
 import numpy as np
-from ase.db import connect
 import threadpoolctl
 
-from clease.settings import ClusterExpansionSettings
-from clease.regression import LinearRegression
-from clease.mp_logger import MultiprocessHandler
-from clease.tools import singlets2conc, get_ids, get_attribute
-from clease.data_manager import make_corr_func_data_manager
 from clease.cluster_coverage import ClusterCoverageChecker
+from clease.data_manager import make_corr_func_data_manager
+from clease.mp_logger import MultiprocessHandler
+from clease.regression import LinearRegression
+from clease.settings import ClusterExpansionSettings
 from clease.tools import (
     add_file_extension,
-    sort_cf_names,
-    get_size_from_cf_name,
+    get_attribute,
     get_diameter_from_cf_name,
+    get_ids,
+    get_size_from_cf_name,
+    singlets2conc,
+    sort_cf_names,
 )
 
 __all__ = ("Evaluate", "supports_alpha_cv")
@@ -422,7 +424,8 @@ class Evaluate:
             whether or not to show convex hull.
         """
         import matplotlib.pyplot as plt
-        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+
+        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
         import clease.plot_post_process as pp
 
         if self.eci is None:
@@ -904,7 +907,8 @@ class Evaluate:
             If ``True``, one can interact with the plot using mouse.
         """
         import matplotlib.pyplot as plt
-        from clease.interactive_plot import InteractivePlot, AnnotatedAx
+
+        from clease.interactive_plot import AnnotatedAx, InteractivePlot
 
         if self.eci is None:
             self.fit()

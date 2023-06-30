@@ -1,9 +1,10 @@
 import logging
+from typing import Optional
+
 import numpy as np
 from scipy.optimize import minimize
 
 from .regression import LinearRegression
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

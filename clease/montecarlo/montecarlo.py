@@ -1,20 +1,23 @@
 """Monte Carlo method for ase."""
-from typing import Dict, Union, Iterator, Any, Optional
-from datetime import datetime
-import time
-import logging
-import random
-import math
 from collections import Counter
+from datetime import datetime
+import logging
+import math
+import random
+import time
+from typing import Any, Dict, Iterator, Optional, Union
+
 from ase import Atoms
 from ase.units import kB
-from clease.datastructures import SystemChanges, MCStep
-from .mc_evaluator import CEMCEvaluator, MCEvaluator
-from .base import BaseMC
+
+from clease.datastructures import MCStep, SystemChanges
+
 from .averager import Averager
+from .base import BaseMC
 from .bias_potential import BiasPotential
+from .mc_evaluator import CEMCEvaluator, MCEvaluator
 from .observers import MCObserver
-from .trial_move_generator import TrialMoveGenerator, RandomSwap
+from .trial_move_generator import RandomSwap, TrialMoveGenerator
 
 logger = logging.getLogger(__name__)
 

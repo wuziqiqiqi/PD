@@ -1,14 +1,16 @@
-import time
+from itertools import product
 import json
 import logging
-from itertools import product
-import numpy as np
-from scipy.special import polygamma
-from scipy.optimize import brentq
-from matplotlib import pyplot as plt
-from clease.tools import invert_matrix
-from .regression import LinearRegression
+import time
 
+from matplotlib import pyplot as plt
+import numpy as np
+from scipy.optimize import brentq
+from scipy.special import polygamma
+
+from clease.tools import invert_matrix
+
+from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
 

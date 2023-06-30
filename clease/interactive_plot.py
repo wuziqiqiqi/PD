@@ -1,10 +1,11 @@
-from typing import Union, Sequence, Callable, List
 from tkinter import TclError
-import numpy as np
+from typing import Callable, List, Sequence, Union
+
 from ase.db import connect
 from ase.gui.gui import GUI
 from ase.gui.images import Images
 import attr
+import numpy as np
 
 
 @attr.define

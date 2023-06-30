@@ -1,9 +1,11 @@
-import sys
-from typing import List, Sequence, Tuple, Dict, Optional
 from copy import deepcopy
-import numpy as np
+import sys
+from typing import Dict, List, Optional, Sequence, Tuple
+
 from ase import Atoms
 from ase.db import connect
+import numpy as np
+
 from clease.settings import ClusterExpansionSettings
 
 __all__ = ("ClusterCoverageChecker",)

@@ -1,9 +1,11 @@
+from typing import Optional
+
+from ase.db import connect
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
-import matplotlib.pyplot as plt
-from ase.db import connect
+
 from clease.tools import invert_matrix
-from typing import Optional
 
 __all__ = ("ConvexHull",)
 

@@ -1,11 +1,14 @@
 from itertools import product
-from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence, Optional
 from math import sqrt
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Union
+
+from ase import Atoms
 import numpy as np
 from scipy.spatial.distance import cdist
-from ase import Atoms
+
 from clease import tools
-from clease.datastructures import FourVector, Figure
+from clease.datastructures import Figure, FourVector
+
 from .cluster import Cluster
 from .cluster_fingerprint import ClusterFingerprint
 

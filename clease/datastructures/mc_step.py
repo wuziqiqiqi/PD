@@ -1,6 +1,9 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 import attr
+
 from clease.jsonio import AttrSavable, jsonable
+
 from .system_changes import SystemChanges
 
 __all__ = ("MCStep",)

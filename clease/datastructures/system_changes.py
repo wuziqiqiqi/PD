@@ -1,8 +1,10 @@
-from typing import Sequence, Tuple
 import typing
+from typing import Sequence, Tuple
+
 import ase
 from ase.data import atomic_numbers
 import attr
+
 from clease.jsonio import AttrSavable, jsonable
 
 __all__ = ("SystemChange", "SystemChanges")

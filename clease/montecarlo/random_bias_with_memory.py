@@ -1,4 +1,5 @@
 import numpy as np
+
 from .bias_potential import BiasPotential
 
 

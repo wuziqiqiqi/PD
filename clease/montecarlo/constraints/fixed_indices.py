@@ -1,5 +1,7 @@
 from typing import Sequence
+
 from clease.datastructures import SystemChanges
+
 from .mc_constraint import MCConstraint
 
 

@@ -1,15 +1,18 @@
-from typing import List, Tuple, Sequence, Union
-import warnings
 import logging
-import time
 import random
+import time
+from typing import List, Sequence, Tuple, Union
+import warnings
+
 from ase import Atoms
 import numpy as np
-from clease.datastructures import SystemChange, MCStep, SystemChanges
-from .mc_evaluator import MCEvaluator
-from .base import BaseMC
+
+from clease.datastructures import MCStep, SystemChange, SystemChanges
+
 from .barrier_models import BarrierModel
+from .base import BaseMC
 from .kmc_events import KMCEventType
+from .mc_evaluator import MCEvaluator
 from .observers import MCObserver
 
 __all__ = ("KineticMonteCarlo",)

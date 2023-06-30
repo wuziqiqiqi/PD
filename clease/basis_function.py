@@ -1,10 +1,12 @@
 """Module for setting up pseudospins and basis functions."""
 from abc import ABC, abstractmethod
 import math
-from typing import List, Dict, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
+
 import numpy as np
-from clease.jsonio import jsonable
+
 from clease.gramSchmidthMonomials import GramSchmidtMonimial
+from clease.jsonio import jsonable
 
 __all__ = (
     "BasisFunction",

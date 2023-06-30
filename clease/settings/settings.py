@@ -4,26 +4,27 @@ This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
 from __future__ import annotations
-import logging
-from copy import deepcopy
-from typing import List, Dict, Optional, Union, Sequence, Set, Any
 
-import numpy as np
+from copy import deepcopy
+import logging
+from typing import Any, Dict, List, Optional, Sequence, Set, Union
+
 from ase import Atoms
 from ase.db import connect
 from ase.db.core import Database
+import numpy as np
 
-from clease.version import __version__
+from clease.basis_function import BasisFunction, BinaryLinear, Polynomial, Trigonometric
+from clease.cluster import Cluster, ClusterList, ClusterManager
+from clease.datastructures import TransMatrix
 from clease.jsonio import jsonable
 from clease.tools import get_size_from_cf_name, wrap_and_sort_by_position
-from clease.cluster import ClusterManager, ClusterList, Cluster
-from clease.basis_function import Polynomial, Trigonometric, BinaryLinear, BasisFunction
-from clease.datastructures import TransMatrix
-from .concentration import Concentration
-from .template_filters import ValidConcentrationFilter
-from .template_atoms import TemplateAtoms
-from .atoms_manager import AtomsManager
+from clease.version import __version__
 
+from .atoms_manager import AtomsManager
+from .concentration import Concentration
+from .template_atoms import TemplateAtoms
+from .template_filters import ValidConcentrationFilter
 
 __all__ = ("ClusterExpansionSettings",)
 

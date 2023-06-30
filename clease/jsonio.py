@@ -1,8 +1,9 @@
 import json
 from typing import Any, Dict
-import attr
+
 from ase.io import jsonio as aseio
 from ase.utils import reader, writer
+import attr
 
 __all__ = ("encode", "decode", "read_json", "write_json", "jsonable")
 

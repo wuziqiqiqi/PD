@@ -1,15 +1,16 @@
-from typing import List, Sequence, Dict, Union, Callable, Tuple, Optional
-import time
 import logging
+import time
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from numpy.random import choice
 from scipy.linalg import solve_triangular
 
 from clease.data_normalizer import DataNormalizer
-from clease.tools import get_diameter_from_cf_name, split_dataset, get_size_from_cf_name
-from .regression import LinearRegression
+from clease.tools import get_diameter_from_cf_name, get_size_from_cf_name, split_dataset
+
 from .constrained_ridge import ConstrainedRidge
+from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
 

@@ -8,9 +8,12 @@ line-length = 100
 target-version = ["py37"]
 
 [tool.ruff]
-select = ["E", "F", "NPY", "RUF"]
+select = ["E", "F", "NPY", "RUF", "I"]
 exclude = ["tests", "__init__.py"]
 ignore = ["NPY002", "RUF012"]
 # Same as Black.
 line-length = 100
 target-version = "py37"
+
+[tool.ruff.isort]
+force-sort-within-sections = true

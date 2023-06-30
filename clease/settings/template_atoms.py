@@ -1,17 +1,20 @@
 """Class containing a manager for creating template atoms."""
-from itertools import product
-from typing import Iterator, List, Union, Optional
 from contextlib import contextmanager
-import numpy as np
-from numpy.random import shuffle
+from itertools import product
+from typing import Iterator, List, Optional, Union
+
 import ase
 from ase.build.tools import niggli_reduce_cell
+import numpy as np
+from numpy.random import shuffle
+
 from clease.tools import all_integer_transform_matrices, make_supercell
+
 from .template_filters import (
-    CellFilter,
     AtomsFilter,
-    SkewnessFilter,
+    CellFilter,
     EquivalentCellsFilter,
+    SkewnessFilter,
 )
 
 __all__ = ("TemplateAtoms",)

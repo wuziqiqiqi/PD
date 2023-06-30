@@ -1,7 +1,9 @@
-from typing import Union
 from abc import ABC
+from typing import Union
+
 from ase import Atoms
 from ase.units import kB
+
 from .mc_evaluator import MCEvaluator, construct_evaluator
 
 __all__ = ("BaseMC",)

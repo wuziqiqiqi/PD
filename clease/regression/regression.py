@@ -1,9 +1,11 @@
 """Collection of classess to perform regression."""
-from typing import Union, Optional, List
+from typing import List, Optional, Union
+
 import numpy as np
 from numpy.linalg import pinv
-from sklearn.linear_model import Lasso as skLasso
 from scipy.linalg import lstsq
+from sklearn.linear_model import Lasso as skLasso
+
 from clease.data_normalizer import DataNormalizer
 
 __all__ = ("LinearRegression", "Tikhonov", "Lasso")

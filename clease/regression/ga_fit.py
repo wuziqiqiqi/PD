@@ -1,8 +1,11 @@
-import os
 import logging
-import numpy as np
+import os
+
 from matplotlib import pyplot as plt
+import numpy as np
+
 from clease.tools import aic, aicc, bic
+
 from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)

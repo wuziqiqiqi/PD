@@ -1,5 +1,7 @@
 import click
+
 from clease.settings import settings_from_json
+
 from . import main
 
 

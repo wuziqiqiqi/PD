@@ -1,7 +1,9 @@
 from copy import deepcopy
+
+from ase.geometry import wrap_positions
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
-from ase.geometry import wrap_positions
+
 from .cluster_list import ClusterList
 
 __all__ = ("AtomsNotContainedInLargeCellError", "ClusterInfoMapper")

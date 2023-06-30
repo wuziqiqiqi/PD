@@ -1,5 +1,5 @@
-import numpy as np
 from ase.calculators.calculator import Calculator, PropertyNotImplementedError
+import numpy as np
 
 
 class CleaseCacheCalculator(Calculator):

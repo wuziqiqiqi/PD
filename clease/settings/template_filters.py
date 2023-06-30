@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
-from itertools import product, permutations, combinations
-import numpy as np
+from itertools import combinations, permutations, product
+
 from ase import Atoms
+import numpy as np
+
 from .concentration import (
     Concentration,
     IntConversionNotConsistentError,

@@ -1,9 +1,11 @@
-import time
-import logging
-import json
 from copy import deepcopy
-import numpy as np
+import json
+import logging
+import time
+
 from ase.units import kB
+import numpy as np
+
 from .constraints import CollectiveVariableConstraint
 
 logger = logging.getLogger(__name__)

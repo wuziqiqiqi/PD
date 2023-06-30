@@ -1,8 +1,10 @@
-from typing import Union, Optional
 import logging
+from typing import Optional, Union
+
 from ase import Atoms
-from clease.datastructures import SystemChanges
+
 from clease.calculator import Clease
+from clease.datastructures import SystemChanges
 from clease.settings.settings import ClusterExpansionSettings
 
 __all__ = ("MCEvaluator", "CEMCEvaluator", "construct_evaluator")

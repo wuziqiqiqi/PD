@@ -1,13 +1,15 @@
-import logging
-from typing import Tuple, List, Dict, Set, Optional, Sequence
-from collections import defaultdict
-import sqlite3
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from itertools import combinations_with_replacement as cwr
-import numpy as np
+import logging
+import sqlite3
+from typing import Dict, List, Optional, Sequence, Set, Tuple
+
 from ase.db import connect
+import numpy as np
+
 from clease import db_util
-from clease.tools import add_file_extension, sort_cf_names, get_ids
+from clease.tools import add_file_extension, get_ids, sort_cf_names
 
 logger = logging.getLogger(__name__)
 

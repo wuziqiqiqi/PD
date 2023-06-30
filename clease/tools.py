@@ -1,21 +1,22 @@
 """A collection of miscellaneous functions used for Cluster Expansion."""
-import re
+from collections.abc import Iterable
+from itertools import chain, combinations, filterfalse, permutations, product
 import logging
 from pathlib import Path
-from itertools import permutations, combinations, product, filterfalse, chain
-from collections.abc import Iterable
-from typing import List, Optional, Tuple, Dict, Set, Sequence, Union
+import re
+from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
 from typing import Iterable as tIterable
-from typing_extensions import Protocol
-from packaging.version import Version, parse
-import numpy as np
-from numpy.random import sample, shuffle
+
 import ase
 import ase.build.supercells as ase_sc
 from ase.db import connect
 from ase.db.core import parse_selection
-from scipy.spatial import cKDTree as KDTree
+import numpy as np
+from numpy.random import sample, shuffle
+from packaging.version import Version, parse
 from scipy.optimize import linprog
+from scipy.spatial import cKDTree as KDTree
+from typing_extensions import Protocol
 
 ASE_VERSION = parse(ase.__version__)
 

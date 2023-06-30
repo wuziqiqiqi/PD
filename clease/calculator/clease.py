@@ -1,13 +1,15 @@
 """Calculator for Cluster Expansion."""
-import sys
 import contextlib
-from typing import Dict, Optional, TextIO, Union, List, Sequence, Any
-import numpy as np
+import sys
+from typing import Any, Dict, List, Optional, Sequence, TextIO, Union
+
 from ase import Atoms
 from ase.calculators.calculator import PropertyNotImplementedError
 from clease_cxx import PyCEUpdater, has_parallel
-from clease.datastructures import SystemChange, SystemChanges
+import numpy as np
+
 from clease.corr_func import CorrFunction
+from clease.datastructures import SystemChange, SystemChanges
 from clease.settings import ClusterExpansionSettings
 
 

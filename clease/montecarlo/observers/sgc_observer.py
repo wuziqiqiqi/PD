@@ -1,8 +1,10 @@
-import numpy as np
 import attr
+import numpy as np
+
 from clease.calculator import Clease
-from clease.montecarlo.averager import Averager
 from clease.datastructures.mc_step import MCStep
+from clease.montecarlo.averager import Averager
+
 from .mc_observer import MCObserver
 
 

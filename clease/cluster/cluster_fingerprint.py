@@ -1,8 +1,10 @@
-from typing import Any, Iterable
 from functools import total_ordering
-import numpy as np
+from typing import Any, Iterable
+
 import attr
-from clease.jsonio import jsonable, AttrSavable
+import numpy as np
+
+from clease.jsonio import AttrSavable, jsonable
 
 __all__ = ("ClusterFingerprint",)
 

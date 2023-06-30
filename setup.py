@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 import sysconfig
-from setuptools import setup, Extension
+
+from setuptools import Extension, setup
 
 
 def src_folder():

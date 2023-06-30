@@ -1,8 +1,10 @@
-from ase.calculators.emt import EMT
-from ase.db import connect
 import sys
+
+from ase.calculators.emt import EMT
 from ase.constraints import StrainFilter
+from ase.db import connect
 from ase.optimize import BFGS
+
 from clease.tools import update_db
 
 

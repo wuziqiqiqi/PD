@@ -1,7 +1,10 @@
 from typing import Dict, Optional
+
 from ase import Atoms
+
 from clease.settings import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
+
 from .clease import Clease
 
 

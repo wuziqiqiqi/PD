@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import List, Sequence, Optional
+
+from typing import List, Optional, Sequence
+
 from ase import Atoms
 
 __all__ = ("AtomsManager",)

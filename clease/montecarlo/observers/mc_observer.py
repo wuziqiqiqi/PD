@@ -1,6 +1,8 @@
 from abc import ABC
+
 from ase import Atoms
-from clease.datastructures import SystemChanges, MCStep
+
+from clease.datastructures import MCStep, SystemChanges
 
 
 class MCObserver(ABC):

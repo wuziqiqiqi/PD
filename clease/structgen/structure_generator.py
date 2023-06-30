@@ -1,25 +1,24 @@
 """Module for generating new structures."""
-import os
-import math
-import time
-import logging
-from copy import deepcopy
 from abc import ABC
-
-import numpy as np
-from numpy.random import choice
-from numpy.linalg import inv, pinv
+from copy import deepcopy
+import logging
+import math
+import os
+import time
 
 from ase.db import connect
 from ase.io.trajectory import TrajectoryReader
+import numpy as np
+from numpy.linalg import inv, pinv
+from numpy.random import choice
 
-from clease.settings import ClusterExpansionSettings
-from clease.corr_func import CorrFunction
-from clease.tools import wrap_and_sort_by_position
 from clease.calculator import Clease
+from clease.corr_func import CorrFunction
 from clease.montecarlo import Montecarlo, TooFewElementsError
-from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
 from clease.montecarlo.constraints import ConstrainSwapByBasis
+from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
+from clease.settings import ClusterExpansionSettings
+from clease.tools import wrap_and_sort_by_position
 
 logger = logging.getLogger(__name__)
 

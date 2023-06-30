@@ -1,12 +1,15 @@
-from typing import Sequence, Dict, Any, Optional
-import numpy as np
+from typing import Any, Dict, Optional, Sequence
+
 from ase import Atoms
 from ase.units import kB
+import numpy as np
+
 from clease.calculator import Clease
 from clease.settings import ClusterExpansionSettings
-from .observers import SGCObserver
+
 from .montecarlo import Montecarlo
-from .trial_move_generator import TrialMoveGenerator, RandomFlip
+from .observers import SGCObserver
+from .trial_move_generator import RandomFlip, TrialMoveGenerator
 
 
 class InvalidChemicalPotentialError(Exception):

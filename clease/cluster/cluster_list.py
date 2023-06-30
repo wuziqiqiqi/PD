@@ -1,15 +1,17 @@
 from __future__ import annotations
-from itertools import product
+
 import copy
-from typing import List, Dict, Any
+from itertools import product
 import logging
+from typing import Any, Dict, List
 
 from ase import Atoms
 
-from clease.tools import flatten, dec_string, list2str
 from clease.jsonio import jsonable
-from .cluster_generator import ClusterGenerator
+from clease.tools import dec_string, flatten, list2str
+
 from .cluster import Cluster
+from .cluster_generator import ClusterGenerator
 
 logger = logging.getLogger(__name__)
 __all__ = ("ClusterList",)

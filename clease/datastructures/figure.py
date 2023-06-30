@@ -1,9 +1,12 @@
 """This module defines the "Figure" class, which is a collection of FourVector objects."""
-from typing import Iterable, Any, Tuple, Optional
-import attr
+from typing import Any, Iterable, Optional, Tuple
+
 import ase
+import attr
 import numpy as np
-from clease.jsonio import jsonable, AttrSavable
+
+from clease.jsonio import AttrSavable, jsonable
+
 from .four_vector import FourVector
 
 __all__ = ("Figure",)

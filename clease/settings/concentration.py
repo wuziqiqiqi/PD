@@ -1,10 +1,12 @@
 """Class containing a manager for setting up concentrations of species."""
 from collections import OrderedDict
 from random import choice
+
 import numpy as np
 from scipy.optimize import minimize
+
 from clease.jsonio import jsonable
-from clease.tools import remove_redundant_constraints, remove_redundant_equations, invert_matrix
+from clease.tools import invert_matrix, remove_redundant_constraints, remove_redundant_equations
 
 __all__ = ("Concentration",)
 

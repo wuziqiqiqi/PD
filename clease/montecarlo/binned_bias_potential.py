@@ -1,6 +1,9 @@
 from typing import Sequence
+
 import numpy as np
+
 from clease.datastructures import SystemChange
+
 from .bias_potential import BiasPotential
 
 

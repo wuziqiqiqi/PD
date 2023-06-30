@@ -1,27 +1,25 @@
 """Module for generating new structures for training."""
-import os
 from copy import deepcopy
 from functools import reduce
-from typing import List, Dict, Optional, Union, Any, Tuple
-import logging
 from itertools import product
-
-import numpy as np
-from numpy.random import shuffle
+import logging
+import os
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ase import Atoms
 from ase.io import read
 from ase.io.trajectory import TrajectoryReader
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
+import numpy as np
+from numpy.random import shuffle
 
 from clease import db_util
-from clease.settings import ClusterExpansionSettings
 from clease.corr_func import CorrFunction
-
 from clease.montecarlo import TooFewElementsError
-from clease.tools import wrap_and_sort_by_position, nested_list2str
-from clease.tools import count_atoms
-from .structure_generator import ProbeStructure, GSStructure, MetropolisTrajectory
+from clease.settings import ClusterExpansionSettings
+from clease.tools import count_atoms, nested_list2str, wrap_and_sort_by_position
+
+from .structure_generator import GSStructure, MetropolisTrajectory, ProbeStructure
 
 try:
     from math import gcd

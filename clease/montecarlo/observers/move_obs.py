@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 from typing import Iterator, List
+
 import ase
-from clease.datastructures import MCStep
+
 from clease.calculator import CleaseCacheCalculator
+from clease.datastructures import MCStep
+
 from .mc_observer import MCObserver
 
 __all__ = ("MoveObserver",)

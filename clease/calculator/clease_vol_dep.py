@@ -1,7 +1,10 @@
-from typing import Dict, Optional, Iterable, Set, List, Union, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Union
+
 from ase import Atoms
+
 from clease.datastructures import SystemChange
 from clease.settings import ClusterExpansionSettings
+
 from .clease import Clease
 
 

@@ -1,11 +1,14 @@
-from typing import Sequence, Dict, Any, List
 from functools import total_ordering
-import numpy as np
+from typing import Any, Dict, List, Sequence
+
 from ase import Atoms
 import attr
+import numpy as np
+
 from clease.datastructures import Figure
-from clease.jsonio import jsonable, AttrSavable
+from clease.jsonio import AttrSavable, jsonable
 from clease.tools import equivalent_deco, list2str
+
 from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ("Cluster",)

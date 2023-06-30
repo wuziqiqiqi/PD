@@ -1,8 +1,10 @@
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
+
+from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.figure import Figure
-from clease import Evaluate, ConvexHull
+
+from clease import ConvexHull, Evaluate
 from clease.evaluate import supports_alpha_cv
 
 
@@ -71,7 +73,7 @@ def plot_fit(
     plot_line = ax.plot(X, Y, "bo", mfc="none")[0]
 
     if interactive:
-        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
 
         annotations = _make_annotations_plot_fit(evaluate)
         # Construct the annotated axis objects.
@@ -132,7 +134,7 @@ def plot_fit_residual(
     ax[1].spines["top"].set_visible(False)
 
     if interactive:
-        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
 
         annotations = _make_annotations_plot_fit(evaluate)
         # Construct the annotated axis objects.
@@ -221,7 +223,7 @@ def plot_eci(
     ax.legend()
 
     if interactive:
-        from clease.interactive_plot import InteractivePlot, AnnotatedAx
+        from clease.interactive_plot import AnnotatedAx, InteractivePlot
 
         # Construct the annotated axis objects.
         annotated_ax = AnnotatedAx(
@@ -333,7 +335,7 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
     fig.suptitle("Convex hull DFT (o), CE (x)")
 
     if interactive:
-        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
+        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
 
         ax_list = fig.get_axes()
 

@@ -1,7 +1,7 @@
 """Logger that can be used together with multiprocessing funcions."""
 import logging as lg
-import threading
 import multiprocessing as mp
+import threading
 
 
 class MultiprocessHandler(lg.Handler):

@@ -1,15 +1,18 @@
 from __future__ import annotations
-import copy
+
 from collections import Counter
+import copy
 from itertools import product
-from typing import NamedTuple, Tuple, List, Optional
-import numpy as np
-from scipy.spatial.distance import cdist
-from scipy.optimize import linear_sum_assignment
-from ase.atoms import Cell
+from typing import List, NamedTuple, Optional, Tuple
+
 from ase import Atoms
+from ase.atoms import Cell
 import attr
-from clease.jsonio import jsonable, AttrSavable
+import numpy as np
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cdist
+
+from clease.jsonio import AttrSavable, jsonable
 
 __all__ = ("FourVector", "construct_four_vectors")
 

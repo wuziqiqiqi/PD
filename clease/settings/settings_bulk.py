@@ -7,7 +7,9 @@ from copy import deepcopy
 
 from ase.build import bulk
 from ase.spacegroup import crystal
+
 from clease.tools import wrap_and_sort_by_position
+
 from .concentration import Concentration
 from .settings import ClusterExpansionSettings
 

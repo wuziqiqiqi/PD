@@ -1,11 +1,13 @@
-import logging
 from collections import defaultdict
-from typing import List, Dict, Set, Sequence, Union
 from datetime import datetime
-from packaging.version import parse, Version
-import numpy as np
+import logging
+from typing import Dict, List, Sequence, Set, Union
+
 import ase
 from ase.db import connect
+import numpy as np
+from packaging.version import Version, parse
+
 from .version import __version__  # Avoid triggering other imports
 
 logger = logging.getLogger(__name__)

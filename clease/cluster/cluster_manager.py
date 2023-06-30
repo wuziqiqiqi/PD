@@ -1,18 +1,19 @@
-from typing import Sequence, Set, Dict, List, Iterator, Tuple, Callable, Optional
-import logging
-from itertools import product
-import functools
 from copy import deepcopy
-import numpy as np
+import functools
+from itertools import product
+import logging
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple
+
 import ase
+import numpy as np
 
 from clease import tools
-from clease.datastructures import FourVector, Figure, TransMatrix
+from clease.datastructures import Figure, FourVector, TransMatrix
 
-from .cluster_fingerprint import ClusterFingerprint
 from .cluster import Cluster
-from .cluster_list import ClusterList
+from .cluster_fingerprint import ClusterFingerprint
 from .cluster_generator import ClusterGenerator
+from .cluster_list import ClusterList
 from .utils import name_clusters, size
 
 __all__ = ("ClusterManager",)

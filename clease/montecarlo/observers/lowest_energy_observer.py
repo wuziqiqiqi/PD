@@ -1,8 +1,11 @@
 import logging
-import numpy as np
+
 import ase
-from clease.datastructures import MCStep
+import numpy as np
+
 from clease.calculator import CleaseCacheCalculator
+from clease.datastructures import MCStep
+
 from .mc_observer import MCObserver
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,7 @@
 import click
-from clease.db_util import get_all_cf_names, get_all_cf, get_cf_tables
+
+from clease.db_util import get_all_cf, get_all_cf_names, get_cf_tables
+
 from . import main
 
 
