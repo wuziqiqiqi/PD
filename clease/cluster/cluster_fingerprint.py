@@ -67,6 +67,5 @@ class ClusterFingerprint(AttrSavable):
     @fp.validator
     def _validate_fp(self, attribute, value) -> None:
         """The Fingerprint must be a 1d array."""
-        # pylint: disable=unused-argument, no-self-use
         if not value.ndim == 1:
             raise ValueError(f"Fingerprint must be a 1d array, got {value.ndim}")

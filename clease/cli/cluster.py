@@ -30,7 +30,6 @@ def clusters(filename, gui, no_table):
         # We use ase.visualize.view here, to have the GUI spawned in
         # a background process, rather than using the settings.view_clusters()
         # method.
-        # pylint: disable=import-outside-toplevel
         from ase.visualize import view
 
         figures = settings.get_all_figures_as_atoms()

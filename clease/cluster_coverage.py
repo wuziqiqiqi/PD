@@ -1,5 +1,5 @@
 import sys
-from typing import List, Sequence, Tuple, Dict
+from typing import List, Sequence, Tuple, Dict, Optional
 from copy import deepcopy
 import numpy as np
 from ase import Atoms
@@ -51,7 +51,7 @@ class ClusterCoverageChecker:
     def __init__(
         self,
         settings: ClusterExpansionSettings,
-        select_cond: Sequence[Tuple[str, str, str]] = None,
+        select_cond: Optional[Sequence[Tuple[str, str, str]]] = None,
     ):
         # Make copy such that we don't alter the settings object
         self.settings = deepcopy(settings)
@@ -106,7 +106,7 @@ class ClusterCoverageChecker:
             coverages.update({k: v for k, v in new_cov.items() if v > coverages.get(k, 0.0)})
         return coverages
 
-    def print_report(self, coverage: Dict[str, float] = None, file=sys.stdout) -> None:
+    def print_report(self, coverage: Optional[Dict[str, float]] = None, file=sys.stdout) -> None:
         """
         Prints a nicely formatted report of coverage.
 

@@ -57,8 +57,8 @@ class BaseMC(ABC):
 
     def _set_temperature(self, value: float) -> None:
         """Set the internal temperature."""
-        self._temperature = value  # pylint: disable=attribute-defined-outside-init
-        self.kT = value * kB  # pylint: disable=attribute-defined-outside-init
+        self._temperature = value
+        self.kT = value * kB
         self._on_temp_change()
 
     def _on_temp_change(self) -> None:

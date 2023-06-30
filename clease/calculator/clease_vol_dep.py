@@ -81,7 +81,6 @@ class CleaseVolDep(Clease):
         vol_coeff: Dict[str, float],
         init_cf: Optional[Dict[str, float]] = None,
     ):
-
         if not eci_format_ok(eci.keys()):
             raise ValueError(f"Invalid format of ECI names. Got\n{eci.keys()}")
 
@@ -196,7 +195,7 @@ class CleaseVolDep(Clease):
             for p in range(3, self.max_power + 1)
         )
 
-    def get_dBdP(self, cf: Dict[str, float] = None) -> float:
+    def get_dBdP(self, cf: Optional[Dict[str, float]] = None) -> float:
         """
         Return the pressure derivative of the bulk modulus of the
         current structure.
@@ -230,8 +229,8 @@ class CleaseVolDep(Clease):
 
     def calculate(
         self,
-        atoms: Atoms = None,
-        properties: List[str] = None,
+        atoms: Optional[Atoms] = None,
+        properties: Optional[List[str]] = None,
         system_changes: Union[Sequence[SystemChange], None] = None,
     ) -> float:
         """Calculate the energy of the passed Atoms object.

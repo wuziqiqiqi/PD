@@ -24,7 +24,6 @@ class KeepChanges:
         self.keep_changes = True
 
 
-# pylint: disable=too-many-instance-attributes, too-many-public-methods
 class Clease:
     """Class for calculating energy using CLEASE.
 
@@ -52,7 +51,6 @@ class Clease:
         init_cf: Optional[Dict[str, float]] = None,
         logfile: Union[TextIO, str, None] = None,
     ) -> None:
-
         if not isinstance(settings, ClusterExpansionSettings):
             msg = "settings must be CEBulk or CECrystal object."
             raise TypeError(msg)
@@ -83,7 +81,6 @@ class Clease:
             if logfile == "-":
                 logfile = sys.stdout
             else:
-                # pylint: disable=consider-using-with
                 logfile = open(logfile, "a")
         self.logfile = logfile
 
@@ -159,8 +156,8 @@ class Clease:
     def calculate(
         self,
         atoms: Optional[Atoms] = None,
-        properties: List[str] = None,
-        system_changes: SystemChanges = None,
+        properties: Optional[List[str]] = None,
+        system_changes: Optional[SystemChanges] = None,
     ) -> float:
         """Calculate the energy of the passed Atoms object.
 
@@ -197,7 +194,9 @@ class Clease:
         self.update_energy()
         return self.energy
 
-    def get_property(self, name: str, atoms: Atoms = None, allow_calculation: bool = True):
+    def get_property(
+        self, name: str, atoms: Optional[Atoms] = None, allow_calculation: bool = True
+    ):
         """Get a property from the calculator.
 
         Exists due to compatibility with ASE, should not be used directly.
@@ -208,7 +207,7 @@ class Clease:
             return self.energy
         return self.get_potential_energy(atoms=atoms)
 
-    def get_potential_energy(self, atoms: Atoms = None) -> float:
+    def get_potential_energy(self, atoms: Optional[Atoms] = None) -> float:
         """Calculate the energy from scratch with an atoms object"""
         # self.set_atoms(atoms)
         return self.calculate(atoms=atoms)
@@ -222,7 +221,9 @@ class Clease:
         self.update_cf()
         self.energy = self.updater.get_energy()
 
-    def calculation_required(self, atoms: Atoms, properties: Sequence[str] = None) -> bool:
+    def calculation_required(
+        self, atoms: Atoms, properties: Optional[Sequence[str]] = None
+    ) -> bool:
         """Check whether a calculation is required for a given atoms object.
         The ``properties`` argument only exists for compatibility reasons, and has no effect.
         Primarily for ASE compatibility.
@@ -272,7 +273,7 @@ class Clease:
         """Return the correlation functions as a dict"""
         return self.updater.get_cf()
 
-    def update_cf(self, system_changes: SystemChanges = None) -> None:
+    def update_cf(self, system_changes: Optional[SystemChanges] = None) -> None:
         """Update correlation function based on the reference value.
 
         :param system_changes: List of system changes. For example, if the

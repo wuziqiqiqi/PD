@@ -63,7 +63,7 @@ class NewStructures:
     def __init__(
         self,
         settings: ClusterExpansionSettings,
-        generation_number: int = None,
+        generation_number: Optional[int] = None,
         struct_per_gen: int = 5,
         check_db: bool = True,
     ) -> None:
@@ -483,7 +483,6 @@ class NewStructures:
         self.insert_structure(init_struct=new_atoms)
         return True
 
-    # pylint: disable=too-many-branches
     def _set_initial_structures(
         self, atoms: Union[Atoms, List[Atoms]], random_composition: bool = False
     ) -> List[Atoms]:
@@ -830,7 +829,7 @@ class NewStructures:
 
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
-    def _get_kvp(self, formula_unit: str = None) -> Dict:
+    def _get_kvp(self, formula_unit: Optional[str] = None) -> Dict:
         """
         Create a dictionary of key-value pairs and return it.
 
@@ -900,7 +899,7 @@ class NewStructures:
                     new_count[symbol] += 1
             atom_count.append(new_count)
             all_nums += [v for k, v in new_count.items()]
-        # pylint: disable=unnecessary-lambda
+
         gcdp = reduce(lambda x, y: gcd(x, y), all_nums)
         fu = ""
         for i, count in enumerate(atom_count):

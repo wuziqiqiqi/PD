@@ -1,5 +1,4 @@
 """Module that fits ECIs to energy data."""
-# pylint: skip-file
 import os
 import sys
 import json
@@ -685,7 +684,8 @@ class Evaluate:
         alphas = []
         if self.parallel:
             # We need to limit NumPy's parallelization (and any other BLAS/OpenMP threading)
-            # as it'll spawn num_score * NUM_THREADS threads, which ultimately hurts the performance.
+            # as it'll spawn num_score * NUM_THREADS threads,
+            # which ultimately hurts the performance.
             # We un-limit the threading again after the work is done.
             with threadpoolctl.threadpool_limits(limits=1):
                 # Use a context manager to ensure workers are properly closed, even upon a crash

@@ -112,7 +112,7 @@ def test_equality(bf_fun, bf_fun2):
     # Test some things it should never be equal to
     assert bf1 != "some_string"
     assert bf1 != []
-    assert bf1 != None  # pylint: disable=singleton-comparison
+    assert bf1 != None
     assert bf1 not in [True, False]
 
 

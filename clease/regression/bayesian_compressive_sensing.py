@@ -74,8 +74,6 @@ class BayesianCompressiveSensing(LinearRegression):
         to avoid singular matrices
     """
 
-    # pylint: disable=too-many-instance-attributes
-
     def __init__(
         self,
         shape_var=0.5,
@@ -91,7 +89,6 @@ class BayesianCompressiveSensing(LinearRegression):
         init_lamb=0.0,
         penalty=1e-8,
     ):
-        # pylint: disable=too-many-arguments
         super().__init__()
 
         # Paramters
@@ -421,7 +418,6 @@ class BayesianCompressiveSensing(LinearRegression):
         y: np.ndarray
             Array of length N with the energies
         """
-        # pylint: disable=too-many-branches, too-many-statements
         # XXX: Needs some cleaning
         allowed_strategies = ["random", "max_increase"]
 

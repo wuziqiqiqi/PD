@@ -67,7 +67,6 @@ class MetaDynamicsSampler:
         try:
             x = self.bias.getter(None)
             x = float(x)
-        # pylint: disable=broad-except
         except Exception:
             return False
         return True
@@ -78,7 +77,6 @@ class MetaDynamicsSampler:
         try:
             x = self.bias.getter([], peak=True)
             x = float(x)
-        # pylint: disable=broad-except
         except Exception:
             return False
         return True
@@ -179,7 +177,6 @@ class MetaDynamicsSampler:
                 self.save()
                 now = time.perf_counter()
 
-            # pylint: disable=protected-access
             self.mc._mc_step()
             self.update()
             if self.visit_is_flat():

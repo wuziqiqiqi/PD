@@ -14,7 +14,7 @@ class AtomsManager:
     :param atoms: ASE Atoms object
     """
 
-    def __init__(self, atoms: Atoms = None) -> None:
+    def __init__(self, atoms: Optional[Atoms] = None) -> None:
         self.atoms = atoms
 
     @property

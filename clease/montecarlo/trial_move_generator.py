@@ -1,4 +1,4 @@
-from typing import Sequence, List, Set, Tuple, Dict
+from typing import Sequence, List, Set, Tuple, Dict, Optional
 import random
 from random import choice
 from abc import abstractmethod, ABC
@@ -148,7 +148,9 @@ class RandomFlip(SingleTrialMoveGenerator):
 
     CHANGE_NAME = "flip_move"
 
-    def __init__(self, symbols: Set[str], atoms: Atoms, indices: List[int] = None, **kwargs):
+    def __init__(
+        self, symbols: Set[str], atoms: Atoms, indices: Optional[List[int]] = None, **kwargs
+    ):
         super().__init__(**kwargs)
         self.symbols = symbols
         self.atoms = atoms
@@ -196,7 +198,7 @@ class RandomSwap(SingleTrialMoveGenerator):
 
     CHANGE_NAME = "swap_move"
 
-    def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
+    def __init__(self, atoms: Atoms, indices: Optional[List[int]] = None, **kwargs):
         super().__init__(**kwargs)
         self.indices = indices
 
@@ -336,7 +338,7 @@ class RandomFlipWithinBasis(SingleTrialMoveGenerator):
         self,
         symbols: Sequence[Sequence[str]],
         atoms: Atoms,
-        indices: Sequence[Sequence[int]] = None,
+        indices: Optional[Sequence[Sequence[int]]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

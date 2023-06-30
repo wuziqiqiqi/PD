@@ -25,7 +25,6 @@ def cluster():
 
 
 def test_get_size(cluster):
-
     cpp_cluster = CppCluster(cluster)
 
     exp_size = cluster.size

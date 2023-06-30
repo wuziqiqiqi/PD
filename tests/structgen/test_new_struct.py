@@ -116,7 +116,6 @@ def test_determine_generation_number(db_name):
 
 @patch("clease.structgen.new_struct.GSStructure")
 def test_num_generated_structures(gs_mock, db_name):
-
     conc = Concentration(basis_elements=[["Au", "Cu"]])
     atoms = bulk("Au", a=2.9, crystalstructure="sc") * (5, 5, 5)
     atoms[0].symbol = "Cu"

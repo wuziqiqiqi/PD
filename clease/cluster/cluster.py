@@ -38,7 +38,6 @@ class Cluster(AttrSavable):
     @figures.validator
     def _validate_figures(self, attribute, value):
         """Verify that we have the correct type in the "figures" field."""
-        # pylint: disable=unused-argument, no-self-use
         for ii, v in enumerate(value):
             if not isinstance(v, Figure):
                 raise TypeError(

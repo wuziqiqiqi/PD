@@ -548,7 +548,6 @@ def test_fixed_indices(db_name):
 
 
 @pytest.mark.slow
-# pylint: disable=redefined-outer-name
 def test_gs_mgsi(db_name, almgsix_eci):
     conc = Concentration(basis_elements=[["Al", "Mg", "Si", "X"]])
     settings = CEBulk(
@@ -660,7 +659,6 @@ def test_mc_reset_step_counter(db_name):
     # We always reset on a new run
     mc.run(3)
     assert mc.current_step == 3
-    # pylint: disable=protected-access
     mc._reset_internal_counters()
     assert mc.current_step == 0
 

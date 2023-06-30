@@ -14,4 +14,4 @@ def settings_from_json(fname) -> ClusterExpansionSettings:
     fname: str
         JSON file where settings are stored
     """
-    return ClusterExpansionSettings.load(fname)  # pylint: disable=no-member
+    return ClusterExpansionSettings.load(fname)

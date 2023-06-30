@@ -16,7 +16,7 @@ REQUIRE_COMPATIBLE_TABLE_VERISON = True
 
 def toggle_require_compatible_table_version() -> None:
     """Toggle to disable/enable the "require_reconfigure_table" function."""
-    global REQUIRE_COMPATIBLE_TABLE_VERISON  # pylint: disable=global-statement
+    global REQUIRE_COMPATIBLE_TABLE_VERISON
     new = not REQUIRE_COMPATIBLE_TABLE_VERISON
     logger.info(
         'Toggling global "REQUIRE_COMPATIBLE_TABLE_VERISON" from %s to %s.',
@@ -64,7 +64,6 @@ def get_metadata(ase_connection: _CONNECTION, *ids) -> _TABLE:
     :param *ids: One or more ID's to get meta data for. Must be integers.
     """
     table_name = MetaTableKeys.CLEASE_META_TABLE
-    # pylint: disable=protected-access
     if not ase_connection._external_table_exists(table_name):
         logger.debug("No metadata table was found")
         return {}
@@ -334,6 +333,6 @@ def get_cf_tables(db_name: str) -> List[str]:
     db_name: Name of the database
     """
     db = connect(db_name)
-    ext_tab = db._get_external_table_names()  # pylint: disable=protected-access
+    ext_tab = db._get_external_table_names()
     cf_tables = [n for n in ext_tab if n.endswith("_cf")]
     return cf_tables

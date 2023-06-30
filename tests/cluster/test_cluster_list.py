@@ -134,7 +134,6 @@ def test_parent_tracker(make_cluster):
 
 
 def test_cf_names_no_equiv_sites(make_cluster):
-
     prefix = "c3_d0001_0"
     cluster = make_cluster(name=prefix)
     cf_names = ClusterList.get_cf_names(cluster, 2)

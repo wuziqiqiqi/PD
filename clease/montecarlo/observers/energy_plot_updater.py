@@ -4,7 +4,6 @@ from .mc_observer import MCObserver
 
 
 class EnergyPlotUpdater(MCObserver):
-
     name = "EnergyPlotUpdater"
 
     def __init__(self, energy_obs=None, graph=None, mean_plot=None):

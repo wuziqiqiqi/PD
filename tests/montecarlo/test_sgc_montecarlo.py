@@ -267,7 +267,6 @@ def test_multi_state_sgc_obs(db_name):
 
 
 def test_sgc_temp_change(example_sgc_mc):
-
     mc = example_sgc_mc(temp=10_000, observe_singlets=True)
 
     obs = mc.averager

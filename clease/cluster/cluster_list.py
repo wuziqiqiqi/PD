@@ -21,7 +21,6 @@ class ClusterDoesNotExistError(Exception):
 
 @jsonable("cluster_list")
 class ClusterList:
-    # pylint: disable=too-many-public-methods
     def __init__(self):
         self._clusters = []
         # Format of the names cache: {num_bf: names}
@@ -324,7 +323,7 @@ class ClusterList:
             # Fix additional ID
             for k in name_map:
                 pref = k.rpartition("_")[0]
-                prefix_map[pref] = prefix_map.get(pref, []) + [k]
+                prefix_map[pref] = [*prefix_map.get(pref, []), k]
 
             for k, v in prefix_map.items():
                 v.sort()

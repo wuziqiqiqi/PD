@@ -31,7 +31,6 @@ __all__ = (
 )
 
 
-# pylint: disable=too-many-instance-attributes
 class StructureGenerator(ABC):
     """Base class for generating new strctures."""
 
@@ -169,11 +168,9 @@ class StructureGenerator(ABC):
 
     def _accept(self) -> bool:
         """Determine if we accept the last change."""
-        # pylint: disable=no-self-use
         return True
 
     def _estimate_temp_range(self):
-        # pylint: disable=no-self-use
         return 1.0, 1e5
 
     def _determine_temps(self):
@@ -357,7 +354,6 @@ class ProbeStructure(StructureGenerator):
         num_steps_per_temp=1000,
         approx_mean_var=False,
     ):
-
         StructureGenerator.__init__(
             self, settings, atoms, init_temp, final_temp, num_temp, num_steps_per_temp
         )

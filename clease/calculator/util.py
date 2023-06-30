@@ -8,7 +8,7 @@ from .clease import Clease
 def attach_calculator(
     settings: ClusterExpansionSettings,
     atoms: Atoms,
-    eci: Dict[str, float] = None,
+    eci: Optional[Dict[str, float]] = None,
     num_threads: Optional[int] = None,
 ) -> Atoms:
     """Utility function for an efficient initialization of large cells. Will set the atoms

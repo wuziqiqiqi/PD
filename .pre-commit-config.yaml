@@ -18,19 +18,15 @@ repos:
           )
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 23.3.0
     hooks:
       - id: black
 
-  - repo: local
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.0.275
     hooks:
-      - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        args: ["--rcfile=.pylintrc"]
-        exclude: *exclude_files
+      - id: ruff
 
   # C++ code formatter
   - repo: https://github.com/pre-commit/mirrors-clang-format

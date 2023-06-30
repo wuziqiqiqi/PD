@@ -8,11 +8,9 @@ def test_buffered_array():
     array.push(2.0)
     array.push(3.0)
 
-    # pylint: disable=protected-access
     assert np.allclose(array._buffer, [1.0, 2.0, 3.0])
 
     array.push(4.0)
-    # pylint: disable=protected-access
     assert np.allclose(array._buffer, [4.0, 0.0, 0.0])
 
 

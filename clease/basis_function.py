@@ -61,7 +61,6 @@ class BasisFunction(ABC):
     def get_basis_functions(self):
         """Create basis functions which guarantees the orthonormality condition."""
 
-    # pylint: disable=no-self-use
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Customize the full cluster names. Default is to do nothing."""
         return full_cluster_name

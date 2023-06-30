@@ -69,8 +69,6 @@ class ClusterExpansionSettings:
         basis_func_type (str, optional): Type of basis function to use. Defaults to 'polynomial'.
     """
 
-    # pylint: disable=too-many-instance-attributes, too-many-public-methods
-
     # Keys which are important for saving/loading
     ARG_KEYS = ("prim_cell", "concentration")
     KWARG_KEYS = (
@@ -272,7 +270,6 @@ class ClusterExpansionSettings:
 
     @include_background_atoms.setter
     def include_background_atoms(self, value: bool) -> None:
-        # pylint: disable=no-self-use
         msg = "The include_background_atoms setter has been removed in version 0.11.3.\n"
         msg += f"Please set 'include_background_atoms={value}' in the settings constructor, "
         msg += "instead."
@@ -581,7 +578,6 @@ class ClusterExpansionSettings:
 
     def view_clusters(self) -> None:
         """Display all clusters along with their names."""
-        # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
 
@@ -626,7 +622,6 @@ class ClusterExpansionSettings:
         """
         Display all templates in the ASE GUi
         """
-        # pylint: disable=import-outside-toplevel
         from ase.visualize import view
 
         view(self.get_all_templates())

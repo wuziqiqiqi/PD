@@ -174,5 +174,4 @@ class GramSchmidtMonimial:
         value:
             Value to be raised to the given power
         """
-        # pylint: disable=no-self-use
         return value**power

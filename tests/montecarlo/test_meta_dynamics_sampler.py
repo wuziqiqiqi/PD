@@ -34,7 +34,6 @@ def test_ideal_mixture(tmpdir, db_name):
     y -= y[0]
 
     if show_plot:
-        # pylint: disable=import-outside-toplevel
         from matplotlib import pyplot as plt
 
         fig = plt.figure()

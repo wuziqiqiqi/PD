@@ -1,4 +1,4 @@
-from typing import List, Sequence, Dict, Union, Callable, Tuple
+from typing import List, Sequence, Dict, Union, Callable, Tuple, Optional
 import time
 import logging
 
@@ -77,7 +77,7 @@ class PhysicalRidge(LinearRegression):
         size_decay: Union[str, Callable[[int], float]] = "linear",
         dia_decay: Union[str, Callable[[int], float]] = "linear",
         normalize: bool = True,
-        cf_names: List[str] = None,
+        cf_names: Optional[List[str]] = None,
     ) -> None:
         super().__init__()
         self.lamb_size = lamb_size
@@ -293,7 +293,6 @@ def random_cv_hyper_opt(
     :param groups: Grouping information for X and y matrix. See docstring
         of `clease.tools.split_dataset` for furhter information.
     """
-    # pylint: disable=too-many-locals
     best_param = None
     best_cv = 0.0
     best_mse = 0.0

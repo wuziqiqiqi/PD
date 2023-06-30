@@ -59,7 +59,6 @@ class TransMatrix:
 
     @trans_matrix.validator
     def _validate_trans_matrix(self, attribute, value):
-        # pylint: disable=unused-argument, no-self-use
         if not isinstance(value, list):
             raise TypeError(f"Expected the trans matrix as a list, got {value!r}")
         lens = set(len(dct) for dct in value)

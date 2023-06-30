@@ -124,7 +124,7 @@ EXTRAS_REQUIRE = {
         "twine",
         "black>=22.1.0",  # Style formatting
         "clang-format>=14.0.3",  # c++ style formatting
-        "pylint",
+        "ruff",
         "pyclean>=2.0.0",  # For removing __pycache__ and .pyc files
         "pytest-cov",
         "build",

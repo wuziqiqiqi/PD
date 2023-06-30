@@ -205,7 +205,6 @@ class ShowStructureOnClick(InteractivePlot):
         return events
 
     def on_click(self, event) -> None:
-
         if not self.event_in_ax(event):
             return
 

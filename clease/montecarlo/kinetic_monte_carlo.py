@@ -130,7 +130,6 @@ class KineticMonteCarlo(BaseMC):
 
         May be overridden by a child class to provide a custom behavior.
         """
-        # pylint: disable=unused-argument
         return self.attempt_freq
 
     def _mc_step(self, vac_idx: int, step_no: int) -> Tuple[int, MCStep]:

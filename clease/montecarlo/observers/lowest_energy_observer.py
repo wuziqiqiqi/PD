@@ -30,7 +30,6 @@ class LowestEnergyStructure(MCObserver):
         self.atoms = atoms
         self.track_cf = track_cf
         self.verbose = verbose
-        # Silence pylint
         self.lowest_energy_cf = None
         self.reset()
 

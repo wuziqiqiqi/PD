@@ -35,7 +35,6 @@ class MCObserver(ABC):
 
     def get_averages(self) -> dict:
         """Return averages in the form of a dictionary."""
-        # pylint: disable=no-self-use
         return {}
 
     def calculate_from_scratch(self, atoms: Atoms) -> None:
@@ -52,5 +51,4 @@ class MCObserver(ABC):
         :param interval: Interval controlling how often a MC observer will be
             called.
         """
-        # pylint: disable=no-self-use, unused-argument
         return True

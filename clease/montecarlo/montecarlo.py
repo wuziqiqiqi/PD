@@ -1,5 +1,5 @@
 """Monte Carlo method for ase."""
-from typing import Dict, Union, Iterator, Any
+from typing import Dict, Union, Iterator, Any, Optional
 from datetime import datetime
 import time
 import logging
@@ -19,7 +19,6 @@ from .trial_move_generator import TrialMoveGenerator, RandomSwap
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-instance-attributes
 class Montecarlo(BaseMC):
     """Class for running Monte Carlo at a fixed composition (canonical).
     For more information, also see the documentation of the parent class
@@ -42,7 +41,7 @@ class Montecarlo(BaseMC):
         self,
         system: Union[Atoms, MCEvaluator],
         temp: float,
-        generator: TrialMoveGenerator = None,
+        generator: Optional[TrialMoveGenerator] = None,
     ):
         # We cannot cause an energy calculation trigger in init,
         # so we defer these quantities until needed.

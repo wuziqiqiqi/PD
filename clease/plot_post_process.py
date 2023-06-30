@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
@@ -6,7 +6,9 @@ from clease import Evaluate, ConvexHull
 from clease.evaluate import supports_alpha_cv
 
 
-def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = False) -> Figure:
+def plot_fit(
+    evaluate: Evaluate, plot_args: Optional[dict] = None, interactive: bool = False
+) -> Figure:
     """
     Figure object calculated (DFT) and predicted energies.
     If the plot_args dictionary contains keys,
@@ -69,7 +71,6 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
     plot_line = ax.plot(X, Y, "bo", mfc="none")[0]
 
     if interactive:
-        # pylint: disable=import-outside-toplevel
         from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         annotations = _make_annotations_plot_fit(evaluate)
@@ -88,7 +89,7 @@ def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = Fal
 
 
 def plot_fit_residual(
-    evaluate: Evaluate, plot_args: dict = None, interactive: bool = False
+    evaluate: Evaluate, plot_args: Optional[dict] = None, interactive: bool = False
 ) -> Figure:
     """
     Figure object subtracted (DFT) and predicted energies.
@@ -131,7 +132,6 @@ def plot_fit_residual(
     ax[1].spines["top"].set_visible(False)
 
     if interactive:
-        # pylint: disable=import-outside-toplevel
         from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         annotations = _make_annotations_plot_fit(evaluate)
@@ -151,7 +151,7 @@ def plot_fit_residual(
 
 def plot_eci(
     evaluate: Evaluate,
-    plot_args: dict = None,
+    plot_args: Optional[dict] = None,
     ignore_sizes=(),
     interactive: bool = False,
 ) -> Figure:
@@ -221,7 +221,6 @@ def plot_eci(
     ax.legend()
 
     if interactive:
-        # pylint: disable=import-outside-toplevel
         from clease.interactive_plot import InteractivePlot, AnnotatedAx
 
         # Construct the annotated axis objects.
@@ -237,7 +236,7 @@ def plot_eci(
     return fig
 
 
-def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
+def plot_cv(evaluate: Evaluate, plot_args: Optional[dict] = None) -> Figure:
     """
     Figure object of CV values according to alpha values
     If the plot_args dictionary contains keys,
@@ -316,7 +315,6 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
 
     # `concs` is dictionary with the keys of species with value being the
     # concentrations among the frames
-    # pylint: disable=protected-access
     concs = {key: [] for key in cnv_hull._unique_elem}
     for frame_conc in conc_per_frame:
         for key, value in concs.items():
@@ -335,7 +333,6 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
     fig.suptitle("Convex hull DFT (o), CE (x)")
 
     if interactive:
-        # pylint: disable=import-outside-toplevel
         from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         ax_list = fig.get_axes()

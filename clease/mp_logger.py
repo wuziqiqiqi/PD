@@ -35,7 +35,7 @@ class MultiprocessHandler(lg.Handler):
                 self._handler.emit(record)
             except EOFError:
                 break
-            except Exception as exc:  # pylint: disable=broad-except
+            except Exception as exc:
                 print("An unexpected exception occured during logging.")
                 print(str(exc))
 
@@ -47,7 +47,7 @@ class MultiprocessHandler(lg.Handler):
         """Emit record."""
         try:
             self.send(record)
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             self.handleError(record)
 
     def close(self):

@@ -24,7 +24,6 @@ class InvalidConstraintError(Exception):
     """Exception raised when user provides invalid constraints."""
 
 
-# pylint: disable=too-many-instance-attributes
 @jsonable("concentration")
 class Concentration:
     """
@@ -315,7 +314,6 @@ class Concentration:
 
     def _get_integers(self, string, variable_range=None):
         """Extract all the integers from a string."""
-        # pylint: disable=no-self-use,too-many-branches
         if variable_range is None:
             variable_symbols = []
         else:
@@ -395,7 +393,6 @@ class Concentration:
             key is a string, and the value should be int or float
             e.g., {"x": (0, 2), "y": (0, 0.7)}, {'x': (0., 1.)}
         """
-        # pylint: disable=too-many-branches
         if formulas is None or variable_range is None:
             raise InvalidConstraintError("formula and variable range has to be provided!")
 
@@ -475,7 +472,6 @@ class Concentration:
     def _num_elements_with_var(self, variable_range, element_conc):
         """count how many elements have their concentration specified with
         the passed variable."""
-        # pylint: disable=no-self-use
         num_elements_with_variable = {k: 0 for k in variable_range.keys()}
         for var in variable_range.keys():
             for basis_elem in element_conc:
@@ -516,7 +512,6 @@ class Concentration:
 
     def _reference_elements(self, element_conc, variables):
         """Return the reference element for each variable."""
-        # pylint: disable=no-self-use
         # reference element is the one that has its concentration specified
         # with a clean representation (e.g., <x> or <y>)
         ref_elem = {}
@@ -531,7 +526,6 @@ class Concentration:
 
     def _get_basis_containg_variable(self, formulas, variable_symbol):
         """Return index of the basis containing the passed varyable symbol."""
-        # pylint: disable=no-self-use
         for basis, formula in enumerate(formulas):
             if variable_symbol in formula:
                 return basis
@@ -563,7 +557,6 @@ class Concentration:
         string: str
             string of the following form 3x, 10y, 3z etc.
         """
-        # pylint: disable=no-self-use
         if not string[0].isdigit():
             return 1
 
@@ -953,7 +946,6 @@ def equality_constraint(x, vec, rhs):
 
 def eq_jac(x, vec, rhs):
     """Jacobian of the equalitu constraint equation."""
-    # pylint: disable=unused-argument
     return vec
 
 
@@ -965,5 +957,4 @@ def inequality_constraint(x, vec, rhs):
 
 def ineq_jac(x, vec, rhs):
     """Jacobian of the inequality constraint equations."""
-    # pylint: disable=unused-argument
     return vec

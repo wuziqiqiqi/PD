@@ -35,5 +35,4 @@ class CleaseCacheCalculator(Calculator):
 
     def check_state(self, *args, **kwargs):
         """Will never fail the check_state check"""
-        # pylint: disable=unused-argument
         return []

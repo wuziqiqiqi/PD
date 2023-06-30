@@ -14,11 +14,10 @@ code-style:
   script:
     - tox -e style
 
-pylint:
+ruff:
   stage: Static Analysis
-  image: python:3.10  # Pylint on 3.11 seems to be broken
   script:
-    - tox -e pylint
+    - tox -e ruff
 
 # mypy:
 #   stage: Static Analysis

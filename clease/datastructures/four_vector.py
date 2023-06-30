@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 from collections import Counter
 from itertools import product
-from typing import NamedTuple, Tuple, List
+from typing import NamedTuple, Tuple, List, Optional
 import numpy as np
 from scipy.spatial.distance import cdist
 from scipy.optimize import linear_sum_assignment
@@ -27,7 +27,7 @@ class FourVector(AttrSavable):
     iz: int = attr.field()
     sublattice: int = attr.field()
 
-    def to_cartesian(self, prim: Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
+    def to_cartesian(self, prim: Atoms, transposed_cell: Optional[np.ndarray] = None) -> np.ndarray:
         """Convert the four vector into cartesian coordinates
 
         Args:
@@ -144,8 +144,8 @@ def _make_grid(bbox: _Box, prim: Atoms) -> Tuple[List[FourVector], np.ndarray]:
     scaled_pos = []
 
     ranges = [range(bbox.lower[i], bbox.upper[i] + 1) for i in range(3)] + [range(len(prim))]
-    for ix, iy, iz, l in product(*ranges):
-        fv = FourVector(ix, iy, iz, l)
+    for ix, iy, iz, lattice in product(*ranges):
+        fv = FourVector(ix, iy, iz, lattice)
         four_vecs.append(fv)
         scaled_pos.append(fv.to_scaled(prim))
 

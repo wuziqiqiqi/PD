@@ -26,7 +26,7 @@ def names(db_name):
 def cf(db_name, db_id):
     try:
         show_cf(db_name, db_id)
-    except Exception as exc:  # pylint: disable=broad-except
+    except Exception as exc:
         click.echo(f"An error occurred: {exc}")
 
 

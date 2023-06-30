@@ -212,7 +212,6 @@ def test_subset_selection():
     ],
 )
 def test_sublattice_bf_selection(test):
-
     selection = select_bf_subsets(test["basis_elems"], test["bfs"])
 
     # Confirm that all elements on each sublattice is distinguished

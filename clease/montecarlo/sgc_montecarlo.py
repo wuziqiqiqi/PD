@@ -1,4 +1,4 @@
-from typing import Sequence, Dict, Any
+from typing import Sequence, Dict, Any, Optional
 import numpy as np
 from ase import Atoms
 from ase.units import kB
@@ -31,7 +31,7 @@ class SGCMonteCarlo(Montecarlo):
         atoms: Atoms,
         temp: float,
         symbols: Sequence[str] = (),
-        generator: TrialMoveGenerator = None,
+        generator: Optional[TrialMoveGenerator] = None,
         observe_singlets: bool = False,
     ):
         if not isinstance(atoms, Atoms):
@@ -160,7 +160,12 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.calc.eci)
 
-    def run(self, steps: int = 10, call_observers: bool = True, chem_pot: Dict[str, float] = None):
+    def run(
+        self,
+        steps: int = 10,
+        call_observers: bool = True,
+        chem_pot: Optional[Dict[str, float]] = None,
+    ):
         """
         Run Monte Carlo simulation.
         See :py:meth:`~clease.montecarlo.montecarlo.Montecarlo.run`
@@ -240,7 +245,6 @@ class SGCMonteCarlo(Montecarlo):
         # so only measure them upon request.
         if self.observe_singlets:
             # Add singlets and chemical potential to the dictionary
-            # pylint: disable=consider-using-enumerate
             singlets = avg_obs.singlets / N
             singlets_sq = avg_obs.quantities["singlets_sq"] / N
 
@@ -259,7 +263,6 @@ class SGCMonteCarlo(Montecarlo):
             try:
                 avg_conc = self.singlet2composition(singlets)
                 averages.update(avg_conc)
-            # pylint: disable=broad-except
             except Exception as exc:
                 print("Could not find average singlets!")
                 print(exc)

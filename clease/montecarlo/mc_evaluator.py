@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 import logging
 from ase import Atoms
 from clease.datastructures import SystemChanges
@@ -26,7 +26,7 @@ class MCEvaluator:
     def atoms(self):
         return self._atoms
 
-    def get_energy(self, applied_changes: SystemChanges = None) -> float:
+    def get_energy(self, applied_changes: Optional[SystemChanges] = None) -> float:
         """Evaluate the energy of a system.
         If a change is sufficiently local/small, it there, in some situations,
         may be other ways of evaluating the energy than a full calculation.
@@ -43,7 +43,6 @@ class MCEvaluator:
         Returns:
             float: Energy of the atoms object.
         """
-        # pylint: disable=unused-argument
         # system_changes are passed in (optionally) in order to allow for localized evaluations
         # See discussion:
         # https://gitlab.com/computationalmaterials/clease/-/issues/268
@@ -76,7 +75,7 @@ class MCEvaluator:
         for change in system_changes:
             change.undo_change(self.atoms)
 
-    def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
+    def keep_system_changes(self, system_changes: Optional[SystemChanges] = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
 
@@ -118,7 +117,7 @@ class CEMCEvaluator(MCEvaluator):
         """Get the related settings object"""
         return self.calc.settings
 
-    def get_energy(self, applied_changes: SystemChanges = None) -> float:
+    def get_energy(self, applied_changes: Optional[SystemChanges] = None) -> float:
         return self.calc.get_energy()
 
     def reset(self) -> None:
@@ -149,7 +148,7 @@ class CEMCEvaluator(MCEvaluator):
         """
         self.calc.undo_system_changes()
 
-    def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
+    def keep_system_changes(self, system_changes: Optional[SystemChanges] = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
         self.calc.keep_system_changes()

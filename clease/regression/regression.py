@@ -53,15 +53,12 @@ class LinearRegression:
         return V.dot(np.diag(diag)).dot(V.T)
 
     def get_instance_array(self) -> List[object]:
-        # pylint: disable=no-self-use
         return [LinearRegression()]
 
     def is_scalar(self):
-        # pylint: disable=no-self-use
         return False
 
     def get_scalar_parameter(self):  # pragma: no cover
-        # pylint: disable=no-self-use
         raise ValueError("Fitting scheme is not described by a scalar parameter!")
 
     @property
@@ -169,7 +166,6 @@ class Tikhonov(LinearRegression):
         num_alpha: int = 10,
         scale: Optional[str] = "log",
     ) -> List[object]:
-        # pylint: disable=arguments-differ
         if scale == "log":
             alpha = np.logspace(
                 np.log10(alpha_min), np.log10(alpha_max), int(num_alpha), endpoint=True
@@ -222,7 +218,6 @@ class Lasso(LinearRegression):
     def get_instance_array(
         alpha_min: float, alpha_max: float, num_alpha: int = 10, scale: str = "log"
     ) -> List[object]:
-        # pylint: disable=arguments-differ
         if scale == "log":
             alpha = np.logspace(
                 np.log10(alpha_min), np.log10(alpha_max), int(num_alpha), endpoint=True

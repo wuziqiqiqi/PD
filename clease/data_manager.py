@@ -742,7 +742,6 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         :param ids: List of ids to take into account
         """
-        # pylint: disable=too-many-statements, too-many-locals
         cf_getter = CorrelationFunctionGetter(
             self.db_name, self.tab_name, self.cf_names, order=self.cf_order
         )
@@ -871,7 +870,6 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             cur = db.connection.cursor()
             cur.execute(query)
             for value, db_id in cur.fetchall():
-
                 # Extract only the ones that are present in the set of ids
                 if db_id in ids:
                     id_key[db_id] = value

@@ -1,4 +1,3 @@
-# pylint: disable=undefined-variable
 from .new_struct import *
 from .structure_generator import *
 

@@ -6,3 +6,11 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 100
 target-version = ["py37"]
+
+[tool.ruff]
+select = ["E", "F", "NPY", "RUF"]
+exclude = ["tests", "__init__.py"]
+ignore = ["NPY002", "RUF012"]
+# Same as Black.
+line-length = 100
+target-version = "py37"

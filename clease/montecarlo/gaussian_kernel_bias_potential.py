@@ -4,7 +4,6 @@ from clease.datastructures import SystemChange
 from .bias_potential import BiasPotential
 
 
-# pylint: disable=too-many-instance-attributes
 class GaussianKernelBiasPotential(BiasPotential):
     """
     Bias potential represented by a sum of Gaussian kernels.
@@ -36,7 +35,6 @@ class GaussianKernelBiasPotential(BiasPotential):
     """
 
     def __init__(self, xmin=0.0, xmax=1.0, num_kernels=10, width=0.1, getter=None):
-
         self.xmin = xmin
         self.xmax = xmax
         self.width = width

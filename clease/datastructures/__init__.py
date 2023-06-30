@@ -1,5 +1,3 @@
-# pylint: disable=undefined-variable
-
 from .system_changes import *
 from .four_vector import *
 from .trans_matrix import *

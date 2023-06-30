@@ -59,7 +59,7 @@ In the CLEASE code, we have a few code styles we adhere to. It is therefore reco
 ```
 pre-commit install
 ```
-to set up the pre-commit hooks. These hooks will check any changed files for things like compliance with `flake8`, `black`, trailing white spaces and `pylint`.
+to set up the pre-commit hooks. These hooks will check any changed files for things like compliance with `flake8`, `black`, trailing white spaces and `ruff`.
 When you make a new commit, the pre-commit hooks may apply changes to your file. If this is the case, simply add the changes to your staging area, and re-run the commit (or manually run the `pre-commit` command, prior to comitting to ensure everything passes).
 
 ### Flake8
@@ -76,14 +76,16 @@ black .
 ```
 It might also be a good idea to set up `black` autoformatting in your IDE, e.g. VSCode, which will automatically apply these changes for you, while you develop. An example on how to set up VScode with `black` can be found [here](https://dev.to/adamlombard/how-to-use-the-black-python-code-formatter-in-vscode-3lo0).
 
-### Pylint
+### ruff
 
-[pylint](https://pylint.org/) searches for possible mistakes in the code, and may start complaining about a lot of things. We have a rather extensive set of exceptions set up in the `.pylintrc` file, but it is still nevertheless quite restrictive on how to write good code. We require that pylint with our `.pylintrc` must pass in the GitLab CI, so therefore do your best to adhere to the pylint complaints. Only files in `clease` python source directory must comply with pylint, i.e. we do not require the `tests/` or `docs/` folder to comply.
+[ruff](https://beta.ruff.rs/docs/) searches for possible mistakes in the code, and may start complaining about a lot of things. We require that ruff must pass in the GitLab CI, so therefore do your best to adhere to the ruff complaints. Only files in `clease` python source directory must comply with ruff, i.e. we do not require the `tests/` or `docs/` folder to comply.
 
- Pylint is also checked in the pre-commit hooks, but can be manually checked with (from the git root directory)
+Ruff is also checked in the pre-commit hooks, but can be manually checked with (from the git root directory)
 ```
-pylint clease/
+ruff clease/
 ```
+
+Optionally, you can run ruff with the `--fix` tag, and allow `ruff` to try and auto fix any issues, i.e. `ruff --fix clease/`.
 
 ### In case of issues
 Do not be discouraged if it is difficult for you to comply with all of these code checks. If you cannot seem to manage, you can always do a commit with

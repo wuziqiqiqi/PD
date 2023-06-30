@@ -71,7 +71,6 @@ class StructureMapper:
         :param cell1: First cell
         :param cell2: Second cell
         """
-        # pylint: disable=no-self-use
         P = cell2.dot(np.linalg.inv(cell1))
         return 0.5 * (P.T.dot(P) - np.eye(3))
 

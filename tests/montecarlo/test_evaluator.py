@@ -8,7 +8,6 @@ from clease.montecarlo import construct_evaluator
 
 @pytest.fixture
 def aucu_system(db_name):
-
     conc = Concentration(basis_elements=[["Au", "Cu"]])
     settings = CEBulk(
         db_name=db_name,

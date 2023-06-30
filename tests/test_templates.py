@@ -144,7 +144,6 @@ def test_fcc(template_atoms_factory):
     ],
 )
 def test_valid_concentration_filter(test):
-
     settings = get_settings_placeholder_valid_conc_filter(test["system"])
 
     template_generator = TemplateAtoms(
@@ -190,7 +189,6 @@ def test_fixed_vol(template_atoms_factory):
 
 
 def test_fixed_vol_with_conc_constraint(mocker, db_name):
-
     mocker.patch("clease.settings.ClusterExpansionSettings.create_cluster_list_and_trans_matrix")
     A_eq = [[3, -2]]
     b_eq = [0]

@@ -1,5 +1,5 @@
 from itertools import product
-from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence
+from typing import List, Tuple, Dict, Set, Iterator, Iterable, Union, Sequence, Optional
 from math import sqrt
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -82,7 +82,7 @@ class ClusterGenerator:
         # Iterating the array as a list is more efficient than iterating the numpy array.
         return [FourVector(*vals, subl) for vals, subl in zip(ints.tolist(), sublattices)]
 
-    def to_four_vector(self, cartesian: np.ndarray, sublattice: int = None) -> FourVector:
+    def to_four_vector(self, cartesian: np.ndarray, sublattice: Optional[int] = None) -> FourVector:
         """Translate a position in Cartesian coordinates to its FourVector"""
         if cartesian.ndim != 1:
             raise ValueError(f"Cartesian positions must be 1-dimensional, got {cartesian.ndim:d}")
@@ -324,7 +324,6 @@ class ClusterGenerator:
 
         :param lut: Look up table for 4-vectors to indices
         """
-        # pylint: disable=no-self-use
         return [[lut[fv] for fv in fig.components] for fig in cluster.figures]
 
     def equivalent_sites(self, figure: Figure) -> List[List[int]]:
@@ -403,7 +402,7 @@ def site_iterator(
     def recursive_yield(remaining, current):
         if len(current) == size - 1:
             # This is the full Figure object
-            components = [x0] + current
+            components = [x0, *current]
             fig = Figure(components)
             yield fig
         else:
@@ -412,7 +411,7 @@ def site_iterator(
                 if any(next_item <= v for v in current):
                     continue
                 rem = set.intersection(remaining, within_cutoff[next_item])
-                yield from recursive_yield(rem, current + [next_item])
+                yield from recursive_yield(rem, [*current, next_item])
 
     for v in within_cutoff[x0]:
         rem = within_cutoff[x0].intersection(within_cutoff[v])
