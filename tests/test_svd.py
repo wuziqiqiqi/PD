@@ -1,5 +1,5 @@
 import numpy as np
-from clease.svd import SVD
+from cleases.svd import SVD
 
 
 def test_svd():

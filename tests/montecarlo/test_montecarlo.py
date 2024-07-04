@@ -9,21 +9,21 @@ from ase import Atoms
 from ase.units import kB
 from ase.build import bulk
 from ase.geometry import get_layers
-import clease
-from clease.calculator import attach_calculator
-from clease.montecarlo import Montecarlo
-from clease.montecarlo.observers import CorrelationFunctionObserver
-from clease.montecarlo.observers import Snapshot
-from clease.montecarlo.observers import EnergyEvolution
-from clease.montecarlo.observers import SiteOrderParameter
-from clease.montecarlo.observers import LowestEnergyStructure
-from clease.montecarlo.observers import DiffractionObserver, AcceptanceRate, MCObserver
-from clease.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
-from clease.montecarlo import RandomSwap, MixedSwapFlip
-from clease.settings import CEBulk, Concentration
-from clease.corr_func import CorrFunction
-from clease.datastructures import SystemChange, MCStep
-from clease.montecarlo.mc_evaluator import CEMCEvaluator
+import cleases
+from cleases.calculator import attach_calculator
+from cleases.montecarlo import Montecarlo
+from cleases.montecarlo.observers import CorrelationFunctionObserver
+from cleases.montecarlo.observers import Snapshot
+from cleases.montecarlo.observers import EnergyEvolution
+from cleases.montecarlo.observers import SiteOrderParameter
+from cleases.montecarlo.observers import LowestEnergyStructure
+from cleases.montecarlo.observers import DiffractionObserver, AcceptanceRate, MCObserver
+from cleases.montecarlo.constraints import ConstrainSwapByBasis, FixedElement
+from cleases.montecarlo import RandomSwap, MixedSwapFlip
+from cleases.settings import CEBulk, Concentration
+from cleases.corr_func import CorrFunction
+from cleases.datastructures import SystemChange, MCStep
+from cleases.montecarlo.mc_evaluator import CEMCEvaluator
 
 # Set the random seed
 np.random.seed(0)
@@ -184,7 +184,7 @@ def test_run(db_name):
         assert "accept_rate" in thermo
         E.append(thermo["energy"])
 
-    assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
+    assert isinstance(mc.evaluator, cleases.montecarlo.mc_evaluator.CEMCEvaluator)
     assert mc.atoms is atoms
 
     cf = CorrFunction(atoms.calc.settings)

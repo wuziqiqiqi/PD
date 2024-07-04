@@ -1,6 +1,6 @@
 import pytest
 
-from clease.regression import Tikhonov
+from cleases.regression import Tikhonov
 
 
 @pytest.mark.parametrize(

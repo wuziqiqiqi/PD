@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 import logging
 from .version import *
 

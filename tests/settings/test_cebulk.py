@@ -16,18 +16,18 @@ from ase.calculators.emt import EMT
 from ase.db import connect
 from ase.build import bulk, make_supercell
 
-from clease.settings import (
+from cleases.settings import (
     CEBulk,
     settings_from_json,
     Concentration,
     ClusterExpansionSettings,
 )
-from clease import NewStructures, Evaluate
-from clease.corr_func import CorrFunction
-from clease.structgen import MaxAttemptReachedError
-from clease.tools import update_db
-from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
-from clease.cluster.cluster_list import ClusterDoesNotExistError
+from cleases import NewStructures, Evaluate
+from cleases.corr_func import CorrFunction
+from cleases.structgen import MaxAttemptReachedError
+from cleases.tools import update_db
+from cleases.basis_function import Polynomial, Trigonometric, BinaryLinear
+from cleases.cluster.cluster_list import ClusterDoesNotExistError
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated

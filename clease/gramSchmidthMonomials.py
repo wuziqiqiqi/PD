@@ -1,5 +1,4 @@
 from typing import Dict, List
-
 import numpy as np
 
 
@@ -175,4 +174,5 @@ class GramSchmidtMonimial:
         value:
             Value to be raised to the given power
         """
+        # pylint: disable=no-self-use
         return value**power

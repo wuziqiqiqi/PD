@@ -1,6 +1,4 @@
 import logging
-from typing import Optional
-
 import numpy as np
 from scipy.optimize import minimize
 
@@ -42,7 +40,7 @@ class GeneralizedRidgeRegression(LinearRegression):
         initial guesses for alpha is provided.
     """
 
-    def __init__(self, alpha: Optional[np.ndarray] = None) -> None:
+    def __init__(self, alpha: np.ndarray = None) -> None:
         super().__init__()
         self.alpha = alpha
 

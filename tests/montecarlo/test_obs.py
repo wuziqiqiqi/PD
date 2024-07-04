@@ -1,10 +1,10 @@
 import pytest
 import ase
 import numpy as np
-from clease.settings import Concentration, CEBulk
-from clease.calculator import attach_calculator
-from clease.corr_func import CorrFunction
-from clease.montecarlo import Montecarlo, observers
+from cleases.settings import Concentration, CEBulk
+from cleases.calculator import attach_calculator
+from cleases.corr_func import CorrFunction
+from cleases.montecarlo import Montecarlo, observers
 
 
 def get_rocksalt_mc_system(db_name):

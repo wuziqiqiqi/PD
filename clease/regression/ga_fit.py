@@ -1,11 +1,8 @@
-import logging
 import os
-
-from matplotlib import pyplot as plt
+import logging
 import numpy as np
-
+from matplotlib import pyplot as plt
 from clease.tools import aic, aicc, bic
-
 from .regression import LinearRegression
 
 logger = logging.getLogger(__name__)
@@ -19,6 +16,7 @@ class SaturatedPopulationError(Exception):
     """A given population is saturated"""
 
 
+# pylint: disable=too-many-instance-attributes
 class GAFit:
     """
     Genetic Algorithm for selecting relevant clusters.
@@ -193,6 +191,7 @@ class GAFit:
 
     def create_new_generation(self):
         """Create a new generation."""
+        # pylint: disable=too-many-statements
         new_generation = []
         srt_indx = np.argsort(self.fitness)[::-1]
 
@@ -292,7 +291,7 @@ class GAFit:
         """Introduce mutations."""
         avg_f = np.mean(np.abs(self.fitness))
         best_indx = np.argmax(self.fitness)
-        for i in range(len(self.individuals)):
+        for i in range(len(self.individuals)):  # pylint: disable=consider-using-enumerate
             if i == best_indx:
                 # Do not mutate the best individual
                 continue

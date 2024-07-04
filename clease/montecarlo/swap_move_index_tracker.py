@@ -1,8 +1,7 @@
+from typing import Sequence, List, Dict
 import random
-from typing import Dict, List, Optional, Sequence
-
-import ase
 import numpy as np
+import ase
 
 
 class SwapMoveIndexTracker:
@@ -14,7 +13,7 @@ class SwapMoveIndexTracker:
         can be chosen.
     """
 
-    def __init__(self, atoms, indices: Optional[Sequence[int]] = None):
+    def __init__(self, atoms, indices: Sequence[int] = None):
         self.tracker: Dict[str, List[int]] = {}
         self.index_loc = None
         self._last_move = []
@@ -41,7 +40,7 @@ class SwapMoveIndexTracker:
         str_repr += f"Tracker info: {self.tracker}\n"
         return str_repr
 
-    def _init_tracker(self, atoms: ase.Atoms, indices: Optional[Sequence[int]] = None) -> None:
+    def _init_tracker(self, atoms: ase.Atoms, indices: Sequence[int] = None) -> None:
         """Initialize the tracker with the numbers."""
         # Cache the unique symbols for faster access
         symbols = self._unique_symbols_from_atoms(atoms)

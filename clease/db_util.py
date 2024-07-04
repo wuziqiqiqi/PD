@@ -1,13 +1,11 @@
-from collections import defaultdict
-from datetime import datetime
 import logging
-from typing import Dict, List, Sequence, Set, Union
-
+from collections import defaultdict
+from typing import List, Dict, Set, Sequence, Union
+from datetime import datetime
+from packaging.version import parse, Version
+import numpy as np
 import ase
 from ase.db import connect
-import numpy as np
-from packaging.version import Version, parse
-
 from .version import __version__  # Avoid triggering other imports
 
 logger = logging.getLogger(__name__)
@@ -18,7 +16,7 @@ REQUIRE_COMPATIBLE_TABLE_VERISON = True
 
 def toggle_require_compatible_table_version() -> None:
     """Toggle to disable/enable the "require_reconfigure_table" function."""
-    global REQUIRE_COMPATIBLE_TABLE_VERISON
+    global REQUIRE_COMPATIBLE_TABLE_VERISON  # pylint: disable=global-statement
     new = not REQUIRE_COMPATIBLE_TABLE_VERISON
     logger.info(
         'Toggling global "REQUIRE_COMPATIBLE_TABLE_VERISON" from %s to %s.',
@@ -66,6 +64,7 @@ def get_metadata(ase_connection: _CONNECTION, *ids) -> _TABLE:
     :param *ids: One or more ID's to get meta data for. Must be integers.
     """
     table_name = MetaTableKeys.CLEASE_META_TABLE
+    # pylint: disable=protected-access
     if not ase_connection._external_table_exists(table_name):
         logger.debug("No metadata table was found")
         return {}
@@ -335,6 +334,6 @@ def get_cf_tables(db_name: str) -> List[str]:
     db_name: Name of the database
     """
     db = connect(db_name)
-    ext_tab = db._get_external_table_names()
+    ext_tab = db._get_external_table_names()  # pylint: disable=protected-access
     cf_tables = [n for n in ext_tab if n.endswith("_cf")]
     return cf_tables

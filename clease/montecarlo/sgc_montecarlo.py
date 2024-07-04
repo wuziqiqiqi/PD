@@ -1,15 +1,12 @@
-from typing import Any, Dict, Optional, Sequence
-
+from typing import Sequence, Dict, Any
+import numpy as np
 from ase import Atoms
 from ase.units import kB
-import numpy as np
-
 from clease.calculator import Clease
 from clease.settings import ClusterExpansionSettings
-
-from .montecarlo import Montecarlo
 from .observers import SGCObserver
-from .trial_move_generator import RandomFlip, TrialMoveGenerator
+from .montecarlo import Montecarlo
+from .trial_move_generator import TrialMoveGenerator, RandomFlip
 
 
 class InvalidChemicalPotentialError(Exception):
@@ -34,24 +31,22 @@ class SGCMonteCarlo(Montecarlo):
         atoms: Atoms,
         temp: float,
         symbols: Sequence[str] = (),
-        generator: Optional[TrialMoveGenerator] = None,
+        generator: TrialMoveGenerator = None,
         observe_singlets: bool = False,
     ):
         if not isinstance(atoms, Atoms):
             raise ValueError(f"atoms must be an Atoms object, got {atoms!r}")
-        if not isinstance(atoms.calc, Clease):
-            raise ValueError(
-                f"Atoms must have a Clease calculator object attached, got {atoms.calc!r}."
-            )
+        # if not isinstance(atoms.calc, Clease):
+        #     raise ValueError(
+        #         f"Atoms must have a Clease calculator object attached, got {atoms.calc!r}."
+        #     )
 
         if generator is None:
             if len(symbols) <= 1:
                 raise ValueError("At least 2 symbols have to be specified")
-            # Only select indices which are not considered background.
-            non_bkg = atoms.calc.settings.non_background_indices
-            generator = RandomFlip(symbols, atoms, indices=non_bkg)
+            generator = RandomFlip(symbols, atoms)
 
-        self.averager = SGCObserver(atoms.calc, observe_singlets=observe_singlets)
+        self.averager = SGCObserver(atoms, observe_singlets=observe_singlets)
         super().__init__(atoms, temp, generator=generator)
 
         self.symbols = symbols
@@ -62,7 +57,7 @@ class SGCMonteCarlo(Montecarlo):
         self.name = "SGCMonteCarlo"
         self._chemical_potential = None
         self.chem_pot_in_eci = False
-
+        
         has_attached_obs = False
         for obs in self.iter_observers():
             if obs.name == "SGCObserver":
@@ -102,20 +97,23 @@ class SGCMonteCarlo(Montecarlo):
 
     @chemical_potential.setter
     def chemical_potential(self, chem_pot: Dict[str, float]):
-        eci = self.calc.eci
-        if any(key not in eci for key in chem_pot):
-            msg = "A chemical potential not being trackted is added. Make "
-            msg += "sure that all the following keys are in the ECIs before "
-            msg += "they are passed to the calculator: "
-            msg += f"{list(chem_pot.keys())}\n"
-            msg += "(Add them with a zero ECI value if they are not supposed "
-            msg += "to be included.)"
-            raise InvalidChemicalPotentialError(msg)
+        if isinstance(self.atoms.calc, Clease):
+            eci = self.calc.eci
+            if any(key not in eci for key in chem_pot):
+                msg = "A chemical potential not being trackted is added. Make "
+                msg += "sure that all the following keys are in the ECIs before "
+                msg += "they are passed to the calculator: "
+                msg += f"{list(chem_pot.keys())}\n"
+                msg += "(Add them with a zero ECI value if they are not supposed "
+                msg += "to be included.)"
+                raise InvalidChemicalPotentialError(msg)
 
-        self._chemical_potential = chem_pot
-        if self.chem_pot_in_eci:
-            self._reset_eci_to_original(self.calc.eci)
-        self._include_chemical_potential_in_eci(chem_pot, self.calc.eci)
+            self._chemical_potential = chem_pot
+            if self.chem_pot_in_eci:
+                self._reset_eci_to_original(self.calc.eci)
+            self._include_chemical_potential_in_eci(chem_pot, self.calc.eci)
+        else:
+            self._chemical_potential = chem_pot
 
     def _include_chemical_potential_in_eci(self, chem_pot: Dict[str, float], eci: Dict[str, float]):
         """
@@ -163,12 +161,7 @@ class SGCMonteCarlo(Montecarlo):
         if self.chem_pot_in_eci:
             self._reset_eci_to_original(self.calc.eci)
 
-    def run(
-        self,
-        steps: int = 10,
-        call_observers: bool = True,
-        chem_pot: Optional[Dict[str, float]] = None,
-    ):
+    def run(self, steps: int = 10, call_observers: bool = True, chem_pot: Dict[str, float] = None):
         """
         Run Monte Carlo simulation.
         See :py:meth:`~clease.montecarlo.montecarlo.Montecarlo.run`
@@ -177,7 +170,7 @@ class SGCMonteCarlo(Montecarlo):
 
         chem_pot: dict
             Chemical potentials. The keys should correspond to one of the
-            singlet terms. A typical form of this is {"c1_0":-1.0,c1_1_1.0}
+            singlet terms. A typical form of this is {"c1_0":-1.0,c1_1:1.0}
         """
 
         if chem_pot is None and self.chemical_potential is None:
@@ -248,8 +241,9 @@ class SGCMonteCarlo(Montecarlo):
         # so only measure them upon request.
         if self.observe_singlets:
             # Add singlets and chemical potential to the dictionary
+            # pylint: disable=consider-using-enumerate
             singlets = avg_obs.singlets / N
-            singlets_sq = avg_obs.quantities["singlets_sq"] / N
+            singlets_sq = avg_obs.quantities.singlets_sq / N
 
             averages["singlet_energy"] = avg_obs.energy.mean
             natoms = len(self.atoms)
@@ -266,6 +260,7 @@ class SGCMonteCarlo(Montecarlo):
             try:
                 avg_conc = self.singlet2composition(singlets)
                 averages.update(avg_conc)
+            # pylint: disable=broad-except
             except Exception as exc:
                 print("Could not find average singlets!")
                 print(exc)

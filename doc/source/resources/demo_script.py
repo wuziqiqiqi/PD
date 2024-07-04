@@ -5,7 +5,7 @@ from ase.constraints import StrainFilter
 from ase.db import connect
 from ase.optimize import BFGS
 
-from clease.tools import update_db
+from cleases.tools import update_db
 
 
 def main(argv):

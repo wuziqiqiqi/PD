@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from clease.gramSchmidthMonomials import GramSchmidtMonimial
+from cleases.gramSchmidthMonomials import GramSchmidtMonimial
 
 
 def bf_list_equal(d1, d2):

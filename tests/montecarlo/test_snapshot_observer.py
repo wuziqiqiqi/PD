@@ -1,6 +1,6 @@
 import pytest
 from ase import Atoms
-from clease.montecarlo.observers import Snapshot
+from cleases.montecarlo.observers import Snapshot
 
 
 @pytest.mark.parametrize("mode", ["w", "a"])

@@ -1,9 +1,7 @@
-from abc import ABC
 from typing import Union
-
+from abc import ABC
 from ase import Atoms
 from ase.units import kB
-
 from .mc_evaluator import MCEvaluator, construct_evaluator
 
 __all__ = ("BaseMC",)
@@ -59,8 +57,8 @@ class BaseMC(ABC):
 
     def _set_temperature(self, value: float) -> None:
         """Set the internal temperature."""
-        self._temperature = value
-        self.kT = value * kB
+        self._temperature = value  # pylint: disable=attribute-defined-outside-init
+        self.kT = value * kB  # pylint: disable=attribute-defined-outside-init
         self._on_temp_change()
 
     def _on_temp_change(self) -> None:

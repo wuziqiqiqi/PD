@@ -1,17 +1,14 @@
 from typing import Dict, Optional
-
 from ase import Atoms
-
 from clease.settings import ClusterExpansionSettings
 from clease.tools import wrap_and_sort_by_position
-
 from .clease import Clease
 
 
 def attach_calculator(
     settings: ClusterExpansionSettings,
     atoms: Atoms,
-    eci: Optional[Dict[str, float]] = None,
+    eci: Dict[str, float] = None,
     num_threads: Optional[int] = None,
 ) -> Atoms:
     """Utility function for an efficient initialization of large cells. Will set the atoms

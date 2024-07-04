@@ -1,5 +1,5 @@
-from ase.calculators.calculator import Calculator, PropertyNotImplementedError
 import numpy as np
+from ase.calculators.calculator import Calculator, PropertyNotImplementedError
 
 
 class CleaseCacheCalculator(Calculator):
@@ -35,4 +35,5 @@ class CleaseCacheCalculator(Calculator):
 
     def check_state(self, *args, **kwargs):
         """Will never fail the check_state check"""
+        # pylint: disable=unused-argument
         return []

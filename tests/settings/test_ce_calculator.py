@@ -9,12 +9,12 @@ from random import randint, choice
 from ase.build import bulk
 from ase.spacegroup import crystal
 
-from clease.tools import wrap_and_sort_by_position
-from clease.datastructures import SystemChange, TransMatrix
-from clease.settings import CEBulk, CECrystal
-from clease.corr_func import CorrFunction
-from clease.settings import Concentration
-from clease.calculator import Clease, attach_calculator, get_ce_energy
+from cleases.tools import wrap_and_sort_by_position
+from cleases.datastructures import SystemChange, TransMatrix
+from cleases.settings import CEBulk, CECrystal
+from cleases.corr_func import CorrFunction
+from cleases.settings import Concentration
+from cleases.calculator import Clease, attach_calculator, get_ce_energy
 
 # Only change this to override the reference trans matrices
 UPDATE_TRANS_MATRIX = False

@@ -1,8 +1,8 @@
 import pytest
 from ase.build import bulk
 import numpy as np
-from clease.datastructures import FourVector, Figure
-from clease.jsonio import read_json
+from cleases.datastructures import FourVector, Figure
+from cleases.jsonio import read_json
 
 
 @pytest.fixture

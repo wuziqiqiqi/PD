@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
 
 from clease.regression import LinearRegression
 from clease.tools import aicc

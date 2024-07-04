@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 from .regression import *
 from .generalized_ridge_regression import *
 from .bayesian_compressive_sensing import *

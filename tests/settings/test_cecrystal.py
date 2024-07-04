@@ -8,11 +8,11 @@ import pytest
 from ase import Atoms
 from ase.db import connect
 from ase.spacegroup import crystal
-from clease.settings import CECrystal, settings_from_json, Concentration
-from clease.corr_func import CorrFunction
-from clease import NewStructures
-from clease.structgen import MaxAttemptReachedError
-from clease.tools import wrap_and_sort_by_position
+from cleases.settings import CECrystal, settings_from_json, Concentration
+from cleases.corr_func import CorrFunction
+from cleases import NewStructures
+from cleases.structgen import MaxAttemptReachedError
+from cleases.tools import wrap_and_sort_by_position
 
 # If this is True, the JSON file containing the correlation functions
 # Used to check consistency of the reference functions is updated

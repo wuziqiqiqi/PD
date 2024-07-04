@@ -1,9 +1,9 @@
 import pytest
 from ase.build import bulk
-from clease.montecarlo import RandomBiasWithMemory
-from clease.settings import CEBulk, Concentration
-from clease.montecarlo import Montecarlo
-from clease.calculator import attach_calculator
+from cleases.montecarlo import RandomBiasWithMemory
+from cleases.settings import CEBulk, Concentration
+from cleases.montecarlo import Montecarlo
+from cleases.calculator import attach_calculator
 
 
 @pytest.fixture

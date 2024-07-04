@@ -2,10 +2,10 @@ import subprocess
 import pytest
 from ase.db import connect
 from ase.build import bulk
-import clease
-from clease import db_util, NewStructures
-from clease.settings import CEBulk, Concentration
-from clease.db_util import get_all_cf_names, get_all_cf, get_cf_tables
+import cleases
+from cleases import db_util, NewStructures
+from cleases.settings import CEBulk, Concentration
+from cleases.db_util import get_all_cf_names, get_all_cf, get_cf_tables
 
 
 def test_get_all_cf_names(db_name):
@@ -235,4 +235,4 @@ def test_meta(fast_settings):
         assert tab_name.endswith("_cf")
         assert db_util.MetaTableKeys.TIME in table
         assert db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION in table
-        assert table[db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION] == str(clease.__version__)
+        assert table[db_util.MetaTableKeys.CLEASE_CONFIGURE_VERSION] == str(cleases.__version__)

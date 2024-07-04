@@ -1,12 +1,11 @@
-from copy import deepcopy
-import json
-import logging
 import time
-
-from ase.units import kB
+import logging
+import json
+from copy import deepcopy
 import numpy as np
-
+from ase.units import kB
 from .constraints import CollectiveVariableConstraint
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +56,13 @@ class MetaDynamicsSampler:
         self.visit_hist.zero()
         self.flat_limit = flat_limit
         self.mod_factor = mod_factor * kB * self.mc.temperature
-        self.log_freq = 30
+        self.log_freq = 1
         self.fname = fname
         self.progress_info = {"mean": 0.0, "minimum": 0.0}
         self.observers = []
         self.quit = False
+        ##############################
+        self.pbar = tqdm(total=flat_limit)
 
     def _getter_accepts_none(self):
         """Return True if the getter accepts None."""
@@ -69,6 +70,7 @@ class MetaDynamicsSampler:
         try:
             x = self.bias.getter(None)
             x = float(x)
+        # pylint: disable=broad-except
         except Exception:
             return False
         return True
@@ -79,6 +81,7 @@ class MetaDynamicsSampler:
         try:
             x = self.bias.getter([], peak=True)
             x = float(x)
+        # pylint: disable=broad-except
         except Exception:
             return False
         return True
@@ -115,6 +118,9 @@ class MetaDynamicsSampler:
 
         if np.max(avg) == 0:
             return False
+
+        self.pbar.n = minval / avg
+        self.pbar.refresh()
         return minval > self.flat_limit * avg
 
     def update(self):
@@ -168,6 +174,9 @@ class MetaDynamicsSampler:
         logger.info("Starting metadynamics sampling...")
         logger.info("Writing result to %s every %s sec", self.fname, self.log_freq)
         self.mc.initialize_run()
+        ######################################
+        trash = self.visit_is_flat()
+        ######################################
         while not conv:
             counter += 1
             if time.perf_counter() - now > self.log_freq:
@@ -179,6 +188,7 @@ class MetaDynamicsSampler:
                 self.save()
                 now = time.perf_counter()
 
+            # pylint: disable=protected-access
             self.mc._mc_step()
             self.update()
             if self.visit_is_flat():

@@ -3,8 +3,8 @@ from clease_cxx import CppAtoms
 import copy
 import numpy as np
 from ase.build import bulk
-from clease.datastructures.four_vector import construct_four_vectors, FourVector
-from clease.datastructures.system_changes import SystemChange
+from cleases.datastructures.four_vector import construct_four_vectors, FourVector
+from cleases.datastructures.system_changes import SystemChange
 import pytest
 
 

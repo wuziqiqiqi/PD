@@ -1,30 +1,29 @@
 """Module that fits ECIs to energy data."""
-from collections import Counter, defaultdict
+# pylint: skip-file
+import os
+import sys
 import json
 import logging as lg
 import multiprocessing as mp
-import os
-import sys
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Sequence, Optional
+from collections import defaultdict, Counter
 
-from ase.db import connect
 from deprecated import deprecated
 import numpy as np
+from ase.db import connect
 import threadpoolctl
 
-from clease.cluster_coverage import ClusterCoverageChecker
-from clease.data_manager import make_corr_func_data_manager
-from clease.mp_logger import MultiprocessHandler
-from clease.regression import LinearRegression
 from clease.settings import ClusterExpansionSettings
+from clease.regression import LinearRegression
+from clease.mp_logger import MultiprocessHandler
+from clease.tools import singlets2conc, get_ids, get_attribute
+from clease.data_manager import make_corr_func_data_manager
+from clease.cluster_coverage import ClusterCoverageChecker
 from clease.tools import (
     add_file_extension,
-    get_attribute,
-    get_diameter_from_cf_name,
-    get_ids,
-    get_size_from_cf_name,
-    singlets2conc,
     sort_cf_names,
+    get_size_from_cf_name,
+    get_diameter_from_cf_name,
 )
 
 __all__ = ("Evaluate", "supports_alpha_cv")
@@ -291,8 +290,8 @@ class Evaluate:
         """Weight structure according to similarity with the
         most similar structure on the Convex Hull."""
 
-        if abs(min_weight - 1.0) < 1e-4:
-            return
+        # if abs(min_weight - 1.0) < 1e-4:
+        #     return
 
         from clease import ConvexHull
 
@@ -424,8 +423,7 @@ class Evaluate:
             whether or not to show convex hull.
         """
         import matplotlib.pyplot as plt
-
-        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
         import clease.plot_post_process as pp
 
         if self.eci is None:
@@ -687,8 +685,7 @@ class Evaluate:
         alphas = []
         if self.parallel:
             # We need to limit NumPy's parallelization (and any other BLAS/OpenMP threading)
-            # as it'll spawn num_score * NUM_THREADS threads,
-            # which ultimately hurts the performance.
+            # as it'll spawn num_score * NUM_THREADS threads, which ultimately hurts the performance.
             # We un-limit the threading again after the work is done.
             with threadpoolctl.threadpool_limits(limits=1):
                 # Use a context manager to ensure workers are properly closed, even upon a crash
@@ -907,8 +904,7 @@ class Evaluate:
             If ``True``, one can interact with the plot using mouse.
         """
         import matplotlib.pyplot as plt
-
-        from clease.interactive_plot import AnnotatedAx, InteractivePlot
+        from clease.interactive_plot import InteractivePlot, AnnotatedAx
 
         if self.eci is None:
             self.fit()

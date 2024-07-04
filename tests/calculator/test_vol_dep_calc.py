@@ -1,10 +1,10 @@
 from copy import deepcopy
 import pytest
 
-from clease.calculator import Clease
-from clease.calculator import CleaseVolDep
-from clease.tools import wrap_and_sort_by_position
-from clease.datastructures import SystemChange
+from cleases.calculator import Clease
+from cleases.calculator import CleaseVolDep
+from cleases.tools import wrap_and_sort_by_position
+from cleases.datastructures import SystemChange
 
 
 def test_consistency(get_random_eci, get_LiVX):

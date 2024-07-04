@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 import numpy as np
-from clease.datastructures import SystemChange
-from clease.montecarlo.gaussian_kernel_bias_potential import GaussianKernelBiasPotential
+from cleases.datastructures import SystemChange
+from cleases.montecarlo.gaussian_kernel_bias_potential import GaussianKernelBiasPotential
 
 
 def assertAlmostEqual(a, b):

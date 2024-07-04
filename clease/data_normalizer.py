@@ -1,5 +1,4 @@
 from typing import Tuple
-
 import numpy as np
 
 
@@ -60,6 +59,7 @@ class DataNormalizer:
             Columns with a standard deviation smaller than this value are
             considered to be constant
         """
+        # pylint: disable=no-self-use
         std = np.std(X, axis=0, ddof=1)
         return np.argwhere(std < tol)[:, 0]
 
@@ -76,6 +76,7 @@ class DataNormalizer:
             Columns with a standard deviation larger than this value are
             considered to be varying
         """
+        # pylint: disable=no-self-use
         std = np.std(X, axis=0, ddof=1)
         return np.argwhere(std >= tol)[:, 0]
 

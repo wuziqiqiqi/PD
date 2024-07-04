@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 import numpy as np
-from clease.datastructures import SystemChange
-from clease.montecarlo import BinnedBiasPotential
+from cleases.datastructures import SystemChange
+from cleases.montecarlo import BinnedBiasPotential
 
 
 def bias_12_11bins(getter=None):

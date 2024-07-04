@@ -6,7 +6,7 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.db import connect
 from ase.geometry import wrap_positions
-from clease.tools import (
+from cleases.tools import (
     min_distance_from_facet,
     factorize,
     all_integer_transform_matrices,
@@ -29,8 +29,8 @@ from clease.tools import (
     remove_redundant_constraints,
     remove_redundant_equations,
 )
-from clease import tools
-from clease.basis_function import Polynomial
+from cleases import tools
+from cleases.basis_function import Polynomial
 
 
 @pytest.fixture

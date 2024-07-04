@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 from pathlib import Path, PurePath
-
-from clease_cxx import has_parallel
 import click
-
+from clease_cxx import has_parallel
 import clease
 from clease.version import __version__
 

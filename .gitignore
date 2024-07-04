@@ -35,3 +35,5 @@ prof/
 .idea
 
 openmp_timing.json
+
+find . -type f -size +10M -exec echo {} \; | sed 's|^\./||' >> .gitignore

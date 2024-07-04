@@ -1,18 +1,15 @@
-import logging
-import random
-import time
-from typing import List, Sequence, Tuple, Union
+from typing import List, Tuple, Sequence, Union
 import warnings
-
+import logging
+import time
+import random
 from ase import Atoms
 import numpy as np
-
-from clease.datastructures import MCStep, SystemChange, SystemChanges
-
-from .barrier_models import BarrierModel
-from .base import BaseMC
-from .kmc_events import KMCEventType
+from clease.datastructures import SystemChange, MCStep, SystemChanges
 from .mc_evaluator import MCEvaluator
+from .base import BaseMC
+from .barrier_models import BarrierModel
+from .kmc_events import KMCEventType
 from .observers import MCObserver
 
 __all__ = ("KineticMonteCarlo",)
@@ -133,6 +130,7 @@ class KineticMonteCarlo(BaseMC):
 
         May be overridden by a child class to provide a custom behavior.
         """
+        # pylint: disable=unused-argument
         return self.attempt_freq
 
     def _mc_step(self, vac_idx: int, step_no: int) -> Tuple[int, MCStep]:

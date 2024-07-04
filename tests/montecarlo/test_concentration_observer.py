@@ -1,6 +1,6 @@
 import pytest
-from clease.montecarlo.observers import ConcentrationObserver
-from clease.datastructures import SystemChange, MCStep, SystemChanges
+from cleases.montecarlo.observers import ConcentrationObserver
+from cleases.datastructures import SystemChange, MCStep, SystemChanges
 from ase.build import bulk
 
 

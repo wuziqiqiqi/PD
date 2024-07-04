@@ -1,8 +1,8 @@
 from collections import Counter
 import pytest
 from ase.build import bulk
-from clease.jsonio import read_json
-from clease.datastructures import SystemChange
+from cleases.jsonio import read_json
+from cleases.datastructures import SystemChange
 
 
 @pytest.fixture

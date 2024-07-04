@@ -7,10 +7,10 @@ import pytest
 import ase
 import numpy as np
 import matplotlib.pyplot as plt
-from clease.montecarlo import Montecarlo
-from clease.settings import Concentration, CEBulk
-from clease.corr_func import CorrFunction
-from clease.calculator import attach_calculator, Clease
+from cleases.montecarlo import Montecarlo
+from cleases.settings import Concentration, CEBulk
+from cleases.corr_func import CorrFunction
+from cleases.calculator import attach_calculator, Clease
 from clease_cxx import has_parallel
 
 

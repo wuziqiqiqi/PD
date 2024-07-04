@@ -1,0 +1,54 @@
+    Cluster-wide configured Spack, integrated within the existing Lmod module
+system on the cluster.
+    Any software installed via Spack gets stored in the users home directory
+under the path ~/.spack
+
+    Run `$ spack config get config` to view the current configuration. To get
+started review the
+    ARC-Spack documentation here (https://arc.umich.edu/spack/).
+
+    If the current configuration does not meet your requirements, a local spack
+installation can be configured,
+    following the guide:
+https://spack-tutorial.readthedocs.io/en/latest/tutorial_basics.html#installing-spack
+
+
+    Example use:
+    $ spack install gmake
+    
+    To view installed packages:
+    $ spack find
+    or
+    $ module avail
+    
+    To load installed packages:
+    $ spack load gmake
+    or
+    $ module load gmake
+     
+Traceback (most recent call last):
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/emc.py", line 1084, in <module>
+    mcSGC = SGCMonteCarlo(gs05, temp, symbols=['Mg', 'Li'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/sgc_montecarlo.py", line 50, in __init__
+    super().__init__(atoms, temp, generator=generator)
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/montecarlo.py", line 58, in __init__
+    super().__init__(system, temp)
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/base.py", line 23, in __init__
+    self.evaluator = system
+    ^^^^^^^^^^^^^^
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/base.py", line 44, in evaluator
+    self._evaluator = construct_evaluator(value)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/mc_evaluator.py", line 249, in construct_evaluator
+    return _make_mc_evaluator_from_atoms(system)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/mc_evaluator.py", line 221, in _make_mc_evaluator_from_atoms
+    return CEMCEvaluator(atoms)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/mc_evaluator.py", line 147, in __init__
+    super().__init__(atoms)
+  File "/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease/clease/montecarlo/mc_evaluator.py", line 27, in __init__
+    self.gsE0 = atoms.info["gsE"][0]
+                ~~~~~~~~~~^^^^^^^
+KeyError: 'gsE'

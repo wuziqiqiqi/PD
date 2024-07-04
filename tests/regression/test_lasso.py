@@ -1,7 +1,7 @@
 import pytest
 import sklearn.linear_model
 import numpy as np
-from clease.regression import Lasso
+from cleases.regression import Lasso
 
 
 @pytest.mark.parametrize(

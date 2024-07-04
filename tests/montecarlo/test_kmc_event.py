@@ -1,4 +1,4 @@
-from clease.montecarlo import NeighbourSwap
+from cleases.montecarlo import NeighbourSwap
 from ase.build import bulk
 
 

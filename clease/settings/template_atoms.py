@@ -1,20 +1,17 @@
 """Class containing a manager for creating template atoms."""
-from contextlib import contextmanager
 from itertools import product
-from typing import Iterator, List, Optional, Union
-
-import ase
-from ase.build.tools import niggli_reduce_cell
+from typing import Iterator, List, Union, Optional
+from contextlib import contextmanager
 import numpy as np
 from numpy.random import shuffle
-
+import ase
+from ase.build.tools import niggli_reduce_cell
 from clease.tools import all_integer_transform_matrices, make_supercell
-
 from .template_filters import (
-    AtomsFilter,
     CellFilter,
-    EquivalentCellsFilter,
+    AtomsFilter,
     SkewnessFilter,
+    EquivalentCellsFilter,
 )
 
 __all__ = ("TemplateAtoms",)
@@ -243,7 +240,7 @@ class TemplateAtoms:
         """Return a list with all templates."""
         return list(self.iterate_all_templates())
 
-    def iterate_all_templates(self, max_per_size: Optional[int] = None) -> Iterator[ase.Atoms]:
+    def iterate_all_templates(self, max_per_size: int = None) -> Iterator[ase.Atoms]:
         """Get all possible templates in an iterator.
 
         :param max_per_size: Maximum number of iterations per size.

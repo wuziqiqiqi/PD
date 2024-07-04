@@ -2,17 +2,17 @@ import pytest
 import numpy as np
 from ase.build import bulk
 from ase.calculators.emt import EMT
-from clease.calculator import attach_calculator
-from clease.montecarlo import SGCMonteCarlo
-from clease.montecarlo.montecarlo import Montecarlo
-from clease.montecarlo.observers import SGCState, MultiStateSGCConcObserver, ConcentrationObserver
-from clease.montecarlo.observers.mc_observer import MCObserver
-from clease.settings import CEBulk, Concentration
-from clease.corr_func import CorrFunction
-from clease.montecarlo.constraints import ConstrainElementInserts
-from clease.montecarlo.constraints import PairConstraint
-from clease.montecarlo import RandomFlip
-from clease.tools import species_chempot2eci
+from cleases.calculator import attach_calculator
+from cleases.montecarlo import SGCMonteCarlo
+from cleases.montecarlo.montecarlo import Montecarlo
+from cleases.montecarlo.observers import SGCState, MultiStateSGCConcObserver, ConcentrationObserver
+from cleases.montecarlo.observers.mc_observer import MCObserver
+from cleases.settings import CEBulk, Concentration
+from cleases.corr_func import CorrFunction
+from cleases.montecarlo.constraints import ConstrainElementInserts
+from cleases.montecarlo.constraints import PairConstraint
+from cleases.montecarlo import RandomFlip
+from cleases.tools import species_chempot2eci
 
 
 def check_obs_is_attached(mc: Montecarlo, obs: MCObserver):

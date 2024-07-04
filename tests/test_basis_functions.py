@@ -1,5 +1,5 @@
 import pytest
-from clease.basis_function import Polynomial, Trigonometric, BinaryLinear
+from cleases.basis_function import Polynomial, Trigonometric, BinaryLinear
 
 all_bfs = (Polynomial, Trigonometric, BinaryLinear)
 

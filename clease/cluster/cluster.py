@@ -1,14 +1,11 @@
+from typing import Sequence, Dict, Any, List
 from functools import total_ordering
-from typing import Any, Dict, List, Sequence
-
+import numpy as np
 from ase import Atoms
 import attr
-import numpy as np
-
 from clease.datastructures import Figure
-from clease.jsonio import AttrSavable, jsonable
+from clease.jsonio import jsonable, AttrSavable
 from clease.tools import equivalent_deco, list2str
-
 from .cluster_fingerprint import ClusterFingerprint
 
 __all__ = ("Cluster",)
@@ -41,6 +38,7 @@ class Cluster(AttrSavable):
     @figures.validator
     def _validate_figures(self, attribute, value):
         """Verify that we have the correct type in the "figures" field."""
+        # pylint: disable=unused-argument, no-self-use
         for ii, v in enumerate(value):
             if not isinstance(v, Figure):
                 raise TypeError(

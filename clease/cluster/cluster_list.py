@@ -1,17 +1,15 @@
 from __future__ import annotations
-
-import copy
 from itertools import product
+import copy
+from typing import List, Dict, Any
 import logging
-from typing import Any, Dict, List
 
 from ase import Atoms
 
+from clease.tools import flatten, dec_string, list2str
 from clease.jsonio import jsonable
-from clease.tools import dec_string, flatten, list2str
-
-from .cluster import Cluster
 from .cluster_generator import ClusterGenerator
+from .cluster import Cluster
 
 logger = logging.getLogger(__name__)
 __all__ = ("ClusterList",)
@@ -23,6 +21,7 @@ class ClusterDoesNotExistError(Exception):
 
 @jsonable("cluster_list")
 class ClusterList:
+    # pylint: disable=too-many-public-methods
     def __init__(self):
         self._clusters = []
         # Format of the names cache: {num_bf: names}
@@ -325,7 +324,7 @@ class ClusterList:
             # Fix additional ID
             for k in name_map:
                 pref = k.rpartition("_")[0]
-                prefix_map[pref] = [*prefix_map.get(pref, []), k]
+                prefix_map[pref] = prefix_map.get(pref, []) + [k]
 
             for k, v in prefix_map.items():
                 v.sort()

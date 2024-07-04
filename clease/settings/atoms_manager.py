@@ -1,7 +1,5 @@
 from __future__ import annotations
-
-from typing import List, Optional, Sequence
-
+from typing import List, Sequence, Optional
 from ase import Atoms
 
 __all__ = ("AtomsManager",)
@@ -16,7 +14,7 @@ class AtomsManager:
     :param atoms: ASE Atoms object
     """
 
-    def __init__(self, atoms: Optional[Atoms] = None) -> None:
+    def __init__(self, atoms: Atoms = None) -> None:
         self.atoms = atoms
 
     @property

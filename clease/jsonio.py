@@ -1,9 +1,8 @@
 import json
 from typing import Any, Dict
-
+import attr
 from ase.io import jsonio as aseio
 from ase.utils import reader, writer
-import attr
 
 __all__ = ("encode", "decode", "read_json", "write_json", "jsonable")
 
@@ -31,6 +30,7 @@ class CleaseEncoder(json.JSONEncoder):
     # Arguments differ, because they call the variable "o" instead of "obj"
     # in JSONEncoder. It doesn't look as nice.
     def default(self, obj):
+        # pylint: disable=arguments-renamed
         for encoder in self.encoders:
             try:
                 res = encoder(obj)
@@ -56,6 +56,7 @@ def object_hook(dct):
 
 # Note: we disable cyclic imports, as imports here are defered until much later,
 # so it's not actually an issue.
+# pylint: disable=import-outside-toplevel,cyclic-import
 def create_clease_object(objtype, dct):
     if objtype == "concentration":
         from .settings import Concentration
@@ -144,7 +145,7 @@ def jsonable(name):
     def load_json(cls, fd, **kwargs):
         """Method for loading class object from JSON"""
         obj = read_json(fd, **kwargs)
-        assert isinstance(obj, cls)
+        assert isinstance(obj, cls)  # pylint: disable=isinstance-second-argument-not-valid-type
         return obj
 
     def jsonableclass(cls):

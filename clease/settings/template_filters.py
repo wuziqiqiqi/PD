@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from itertools import combinations, permutations, product
-
-from ase import Atoms
+from itertools import product, permutations, combinations
 import numpy as np
-
+from ase import Atoms
 from .concentration import (
     Concentration,
     IntConversionNotConsistentError,
@@ -63,6 +61,7 @@ class SkewnessFilter(CellFilter):
 
     def _get_max_min_diag_ratio(self, cell):
         """Return the ratio between the maximum and the minimum diagonal."""
+        # pylint: disable=no-self-use
         diag_lengths = []
         for w in product([-1, 0, 1], repeat=3):
             if np.allclose(w, 0):
@@ -89,6 +88,7 @@ class EquivalentCellsFilter(CellFilter):
         self.cell_list = cell_list
 
     def _is_unitary(self, matrix):
+        # pylint: disable=no-self-use
         return np.allclose(matrix.T.dot(matrix), np.identity(matrix.shape[0]))
 
     def _are_equivalent(self, cell1, cell2):
@@ -155,6 +155,7 @@ class DistanceBetweenFacetsFilter(CellFilter):
         self.ratio = ratio
 
     def _distance_between_facets(self, cell, span):
+        # pylint: disable=no-self-use
         v1 = cell[span[0], :]
         v2 = cell[span[1], :]
         normal = np.cross(v1, v2)

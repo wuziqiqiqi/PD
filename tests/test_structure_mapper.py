@@ -4,7 +4,7 @@ import numpy as np
 from ase.build import bulk
 from ase.neighborlist import neighbor_list
 from ase import Atoms
-from clease import StructureMapper
+from cleases import StructureMapper
 
 
 def rattled_gold_vac():

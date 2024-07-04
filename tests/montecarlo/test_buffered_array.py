@@ -1,5 +1,5 @@
 import numpy as np
-from clease.montecarlo.observers.buffered_array import BufferedArray
+from cleases.montecarlo.observers.buffered_array import BufferedArray
 
 
 def test_buffered_array():

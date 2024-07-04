@@ -1,16 +1,15 @@
-import logging
+from typing import List, Sequence, Dict, Union, Callable, Tuple
 import time
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
+import logging
 
 import numpy as np
 from numpy.random import choice
 from scipy.linalg import solve_triangular
 
 from clease.data_normalizer import DataNormalizer
-from clease.tools import get_diameter_from_cf_name, get_size_from_cf_name, split_dataset
-
-from .constrained_ridge import ConstrainedRidge
+from clease.tools import get_diameter_from_cf_name, split_dataset, get_size_from_cf_name
 from .regression import LinearRegression
+from .constrained_ridge import ConstrainedRidge
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +77,7 @@ class PhysicalRidge(LinearRegression):
         size_decay: Union[str, Callable[[int], float]] = "linear",
         dia_decay: Union[str, Callable[[int], float]] = "linear",
         normalize: bool = True,
-        cf_names: Optional[List[str]] = None,
+        cf_names: List[str] = None,
     ) -> None:
         super().__init__()
         self.lamb_size = lamb_size
@@ -294,6 +293,7 @@ def random_cv_hyper_opt(
     :param groups: Grouping information for X and y matrix. See docstring
         of `clease.tools.split_dataset` for furhter information.
     """
+    # pylint: disable=too-many-locals
     best_param = None
     best_cv = 0.0
     best_mse = 0.0

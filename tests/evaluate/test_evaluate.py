@@ -6,12 +6,12 @@ import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
 from ase.db import connect
 from ase.calculators.emt import EMT
-from clease.settings import CEBulk, Concentration
-from clease import Evaluate, supports_alpha_cv
-from clease import NewStructures
-from clease.tools import get_diameter_from_cf_name, update_db
-from clease import regression
-import clease.plot_post_process as pp
+from cleases.settings import CEBulk, Concentration
+from cleases import Evaluate, supports_alpha_cv
+from cleases import NewStructures
+from cleases.tools import get_diameter_from_cf_name, update_db
+from cleases import regression
+import cleases.plot_post_process as pp
 
 
 @pytest.fixture

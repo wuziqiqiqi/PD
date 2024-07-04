@@ -1,7 +1,5 @@
 import click
-
-from clease.db_util import get_all_cf, get_all_cf_names, get_cf_tables
-
+from clease.db_util import get_all_cf_names, get_all_cf, get_cf_tables
 from . import main
 
 
@@ -28,7 +26,7 @@ def names(db_name):
 def cf(db_name, db_id):
     try:
         show_cf(db_name, db_id)
-    except Exception as exc:
+    except Exception as exc:  # pylint: disable=broad-except
         click.echo(f"An error occurred: {exc}")
 
 

@@ -1,5 +1,5 @@
 import pytest
-from clease.cluster import Cluster, ClusterFingerprint
+from cleases.cluster import Cluster, ClusterFingerprint
 
 
 @pytest.fixture

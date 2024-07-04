@@ -2,10 +2,10 @@
 import pytest
 import numpy as np
 from ase.calculators.singlepoint import SinglePointCalculator
-from clease.settings import CEBulk, Concentration
-from clease.corr_func import CorrFunction, ClusterNotTrackedError
-from clease import NewStructures
-from clease.tools import wrap_and_sort_by_position
+from cleases.settings import CEBulk, Concentration
+from cleases.corr_func import CorrFunction, ClusterNotTrackedError
+from cleases import NewStructures
+from cleases.tools import wrap_and_sort_by_position
 
 
 @pytest.fixture

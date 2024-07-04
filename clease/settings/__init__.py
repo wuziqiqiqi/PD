@@ -1,3 +1,5 @@
+# pylint: disable=undefined-variable
+# For some reason, pylint detects a lot of cyclic imports here.
 from .concentration import *
 from . import template_filters
 from . import template_atoms

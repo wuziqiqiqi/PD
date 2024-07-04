@@ -1,5 +1,5 @@
 import pytest
-from clease.montecarlo.averager import Averager
+from cleases.montecarlo.averager import Averager
 
 
 def test_add_numbers():

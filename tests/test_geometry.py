@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from ase.build import bulk
-from clease.geometry import max_sphere_dia_in_cell, supercell_which_contains_sphere
+from cleases.geometry import max_sphere_dia_in_cell, supercell_which_contains_sphere
 
 
 @pytest.mark.parametrize(

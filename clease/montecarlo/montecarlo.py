@@ -1,27 +1,27 @@
 """Monte Carlo method for ase."""
-from collections import Counter
+from typing import Dict, Union, Iterator, Any
 from datetime import datetime
-import logging
-import math
-import random
 import time
-from typing import Any, Dict, Iterator, Optional, Union
-
+import logging
+import random
+import math
+import numpy as np
+from collections import Counter
 from ase import Atoms
 from ase.units import kB
-
-from clease.datastructures import MCStep, SystemChanges
-
-from .averager import Averager
-from .base import BaseMC
-from .bias_potential import BiasPotential
+from clease.datastructures import SystemChanges, MCStep
+from clease.calculator import Clease
 from .mc_evaluator import CEMCEvaluator, MCEvaluator
+from .base import BaseMC
+from .averager import Averager
+from .bias_potential import BiasPotential
 from .observers import MCObserver
-from .trial_move_generator import RandomSwap, TrialMoveGenerator
+from .trial_move_generator import TrialMoveGenerator, RandomSwap, RandomTransition, RandomFlip
 
 logger = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class Montecarlo(BaseMC):
     """Class for running Monte Carlo at a fixed composition (canonical).
     For more information, also see the documentation of the parent class
@@ -44,14 +44,16 @@ class Montecarlo(BaseMC):
         self,
         system: Union[Atoms, MCEvaluator],
         temp: float,
-        generator: Optional[TrialMoveGenerator] = None,
+        generator: TrialMoveGenerator = None,
     ):
+        random.seed(10)
         # We cannot cause an energy calculation trigger in init,
         # so we defer these quantities until needed.
         self.current_energy = None
         self.new_energy = None
         self.mean_energy = None
         self.energy_squared = None
+        self.oldA = 3.9
 
         super().__init__(system, temp)
 
@@ -83,6 +85,10 @@ class Montecarlo(BaseMC):
         self.current_energy += sum(
             bias.calculate_from_scratch(self.atoms) for bias in self.bias_potentials
         )
+        if not isinstance(self.atoms.calc, Clease):
+            if isinstance(self.generator, RandomFlip):
+                if len(self.chemical_potential):
+                    self.current_energy -= self.chemical_potential['c1_0']* ((np.sum(self.atoms.numbers == 3)/len(self.atoms.numbers))*2-1)
         logger.debug("Updating current energy to %s", self.current_energy)
         self.evaluator.reset()
 
@@ -160,7 +166,7 @@ class Montecarlo(BaseMC):
     def initialize_run(self):
         """Prepare MC object for a new run."""
         logger.debug("Initializing run")
-        self.generator.initialize(self.atoms)
+        self.generator.initialize(atoms=self.atoms)
 
         # Ensure the evaluator is properly synchronized.
         self.evaluator.synchronize()
@@ -327,6 +333,12 @@ class Montecarlo(BaseMC):
         # already been introduced to the system
         for bias in self.bias_potentials:
             self.new_energy += bias(system_changes)
+        
+        if not isinstance(self.atoms.calc, Clease):
+            if isinstance(self.generator, RandomFlip):
+                if len(self.chemical_potential):
+                    self.new_energy -= self.chemical_potential['c1_0']* ((np.sum(self.atoms.numbers == 3)/len(self.atoms.numbers))*2-1)
+        
         accept = self._do_accept(self.current_energy, self.new_energy)
 
         if accept:

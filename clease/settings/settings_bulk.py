@@ -7,9 +7,7 @@ from copy import deepcopy
 
 from ase.build import bulk
 from ase.spacegroup import crystal
-
 from clease.tools import wrap_and_sort_by_position
-
 from .concentration import Concentration
 from .settings import ClusterExpansionSettings
 
@@ -77,6 +75,13 @@ def CEBulk(
         raise ValueError(msg)
 
     basis_elements = concentration.orig_basis_elements
+
+    # tmp = []
+    # for x in basis_elements:
+    #     tmpp = x[0]
+    #     tmp.append(tmpp)
+    # haha = "".join(tmp)
+
     name = "".join(x[0] for x in basis_elements)
     prim = bulk(name=name, crystalstructure=crystalstructure, a=a, c=c, covera=covera, u=u)
     prim = wrap_and_sort_by_position(prim)

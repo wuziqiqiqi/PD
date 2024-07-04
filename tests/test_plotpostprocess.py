@@ -1,9 +1,9 @@
 import sys
 import pytest
 import numpy as np
-import clease.plot_post_process as pp
+import cleases.plot_post_process as pp
 
-from clease import Evaluate
+from cleases import Evaluate
 
 
 def test_plot_fit(bc_setting):

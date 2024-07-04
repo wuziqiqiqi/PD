@@ -1,20 +1,18 @@
-from abc import ABC, abstractmethod
+from typing import Sequence, List, Set, Tuple, Dict
 import random
 from random import choice
-from typing import Dict, List, Optional, Sequence, Set, Tuple
-
+from abc import abstractmethod, ABC
+import numpy as np
 from ase import Atoms
 from ase.data import chemical_symbols
-import numpy as np
-
 from clease.datastructures import SystemChange
 from clease.tools import flatten
-
 from .constraints import MCConstraint
 from .swap_move_index_tracker import SwapMoveIndexTracker
 
 __all__ = (
     "TrialMoveGenerator",
+    "RandomTransition",
     "RandomFlip",
     "RandomSwap",
     "MixedSwapFlip",
@@ -138,6 +136,60 @@ class SingleTrialMoveGenerator(TrialMoveGenerator, ABC):
         """
         return [change for change in changes if self.name_matches(change)]
 
+class RandomTransition(SingleTrialMoveGenerator):
+    """
+    Generate trial moves where the position of a random atom is shifted by delta
+    """
+    
+    CHANGE_NAME = "transition_move"
+    
+    def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
+        super().__init__(**kwargs)
+        self.atoms = atoms
+        # Hold a direct reference to the numbers array
+        self.numbers: np.ndarray = self.atoms.numbers
+        # Verify it's the same array in memory
+        assert self.numbers is atoms.numbers
+
+        if indices is None:
+            self.indices = list(range(len(self.atoms)))
+        else:
+            self.indices = indices
+
+        # Pre-compute the possible flips. We don't want to be computing
+        # these maps for each trial move.
+        self.delta = (atoms.get_volume()/len(atoms.numbers))**(1/3)/2 * 0.05
+        self.accepted = 1
+        self.rejected = 1
+        self.acceptance_rate = self.accepted/(self.accepted + self.rejected)
+        self.step = 0.1
+        self.prevIncrease = True
+        
+    def get_single_trial_move(self) -> List[SystemChange]:
+        # if self.accepted > 10 or self.rejected > 10:
+        #     if self.acceptance_rate - 0.5 > 0.1:
+        #         # if not self.prevIncrease:
+        #         #     self.step /= 2
+        #         # self.prevIncrease = True
+        #         self.delta *= (1+self.step)
+        #     elif self.acceptance_rate - 0.5 < -0.1:
+        #         # if self.prevIncrease:
+        #         #     self.step /= 2
+        #         # self.prevIncrease = False
+        #         self.delta *= (1-self.step)
+        toBeMoved = choice(self.indices)
+        old_pos = self.atoms.positions[toBeMoved]
+        new_pos = [old_pos[0] + self.delta * random.uniform(-1, 1), old_pos[1] + self.delta * random.uniform(-1, 1), old_pos[2] + self.delta * random.uniform(-1, 1)]
+        return [SystemChange(index=toBeMoved, old_position=tuple(old_pos), new_position=tuple(new_pos), name=self.CHANGE_NAME)]
+    
+    def on_move_accepted(self, changes: Sequence[SystemChange]):
+        self.accepted += 1
+        self.acceptance_rate = self.accepted/(self.accepted + self.rejected)
+    
+    def on_move_rejected(self, changes: Sequence[SystemChange]):
+        self.rejected += 1
+        self.acceptance_rate = self.accepted/(self.accepted + self.rejected)
+
 
 class RandomFlip(SingleTrialMoveGenerator):
     """
@@ -151,9 +203,7 @@ class RandomFlip(SingleTrialMoveGenerator):
 
     CHANGE_NAME = "flip_move"
 
-    def __init__(
-        self, symbols: Set[str], atoms: Atoms, indices: Optional[List[int]] = None, **kwargs
-    ):
+    def __init__(self, symbols: Set[str], atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.symbols = symbols
         self.atoms = atoms
@@ -201,7 +251,7 @@ class RandomSwap(SingleTrialMoveGenerator):
 
     CHANGE_NAME = "swap_move"
 
-    def __init__(self, atoms: Atoms, indices: Optional[List[int]] = None, **kwargs):
+    def __init__(self, atoms: Atoms, indices: List[int] = None, **kwargs):
         super().__init__(**kwargs)
         self.indices = indices
 
@@ -341,7 +391,7 @@ class RandomFlipWithinBasis(SingleTrialMoveGenerator):
         self,
         symbols: Sequence[Sequence[str]],
         atoms: Atoms,
-        indices: Optional[Sequence[Sequence[int]]] = None,
+        indices: Sequence[Sequence[int]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

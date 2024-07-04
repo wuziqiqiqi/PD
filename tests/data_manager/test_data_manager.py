@@ -6,10 +6,10 @@ from ase.calculators.emt import EMT
 from ase.build import bulk
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
-import clease
-from clease import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
-import clease.data_manager as dm
-from clease.tools import update_db
+import cleases
+from cleases import CorrFuncEnergyDataManager, CorrFuncVolumeDataManager
+import cleases.data_manager as dm
+from cleases.tools import update_db
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def simple_db(db_name):
         cf_func = {"c0": 0.0, "c1_1": 1.0, "c2_d0000_0_00": -1.0}
         for i in range(10):
             uid = db.write(atoms, final_struct_id=2 * (i + 1), converged=1)
-            clease.db_util.update_table(db, uid, "cf_func", cf_func)
+            cleases.db_util.update_table(db, uid, "cf_func", cf_func)
             atoms2.calc = EMT()
             atoms2.get_potential_energy()
             db.write(atoms2)
@@ -71,7 +71,7 @@ def test_corr_final_energy(manager_func, expect_header, make_tempfile, simple_db
     # Add an initial structure that is by mistake labeled as converged
     with connect(simple_db) as db:
         cf = {k: 1.0 for k in cf_names}
-        clease.db_util.new_row_with_single_table(db, Atoms(), "cf_func", cf, converged=True)
+        cleases.db_util.new_row_with_single_table(db, Atoms(), "cf_func", cf, converged=True)
 
     with pytest.raises(dm.InconsistentDataError):
         X, y = manager.get_data([("converged", "=", 1)])
@@ -124,7 +124,7 @@ def shuffled_db(db_name):
             atoms = bulk("Cu") * (3, 3, 3)
             cf_func = {"c0": np.random.rand(), "c1_1": np.random.rand()}
             dbId = db.write(atoms, converged=True, name=f"structure{i}")
-            clease.db_util.update_table(db, dbId, "cf_func", cf_func)
+            cleases.db_util.update_table(db, dbId, "cf_func", cf_func)
             init_struct_ids.append(dbId)
 
     # We need to re-open the connection, to flush the db cache
@@ -201,7 +201,7 @@ def test_cf_vol_dep_eci(db_name):
             init_struct = bulk("Cu", a=3.9 + 0.1 * i) * (1, 1, i + 1)
             cf = {"c0": 0.5, "c1_1": -1.0}
 
-            clease.db_util.new_row_with_single_table(
+            cleases.db_util.new_row_with_single_table(
                 db, init_struct, "cf", cf, final_struct_id=2 * i + 2, converged=1
             )
             final_struct = init_struct.copy()
@@ -332,7 +332,7 @@ def test_cf_second_order(db_name):
 
     ids = []
     for cf in cfs:
-        uid = clease.db_util.new_row_with_single_table(
+        uid = cleases.db_util.new_row_with_single_table(
             db, Atoms(), "polynomial_cf", cf, struct_type="initial"
         )
         ids.append(uid)
@@ -367,7 +367,7 @@ def test_cf_reconfig_required(db_name):
         ids.append(uid)
 
     getter = dm.CorrelationFunctionGetter(db_name, "polynomial_cf", order=2)
-    with pytest.raises(clease.db_util.OutOfDateTable):
+    with pytest.raises(cleases.db_util.OutOfDateTable):
         getter.get_property(ids)
 
 

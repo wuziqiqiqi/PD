@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib
-from clease.sparsifier import Sparsifier
-from clease.regression import LinearRegression
+from cleases.sparsifier import Sparsifier
+from cleases.regression import LinearRegression
 
 
 def test_sparsifier():

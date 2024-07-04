@@ -1,6 +1,6 @@
 """Module for testing individial MC constraints"""
-from clease.montecarlo.constraints import FixedIndices
-from clease.datastructures import SystemChange
+from cleases.montecarlo.constraints import FixedIndices
+from cleases.datastructures import SystemChange
 
 
 def test_fixed_indices():

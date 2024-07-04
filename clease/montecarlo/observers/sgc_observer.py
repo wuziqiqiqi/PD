@@ -1,10 +1,8 @@
-import attr
 import numpy as np
-
+import attr
 from clease.calculator import Clease
-from clease.datastructures.mc_step import MCStep
 from clease.montecarlo.averager import Averager
-
+from clease.datastructures.mc_step import MCStep
 from .mc_observer import MCObserver
 
 
@@ -45,19 +43,42 @@ class SGCObserver(MCObserver):
 
     name = "SGCObersver"
 
-    def __init__(self, calc: Clease, observe_singlets: bool = False):
+    def __init__(self, atoms, observe_singlets: bool = False):
         self.observe_singlets = observe_singlets
         super().__init__()
-        self.calc = calc
-        initial_energy = calc.get_potential_energy()
-        n_singlets = len(self.calc.get_singlets())
+        self.calc = atoms.calc
+
+        if isinstance(self.calc, Clease):
+            print("CLEASE................")
+            initial_energy = self.calc.get_potential_energy()
+            n_singlets = len(self.calc.get_singlets())
+        else:
+            initial_energy = self.calc.get_potential_energy(atoms)
+            n_singlets = 1
+            
         self.quantities = SGCQuantities(
-            energy=Averager(ref_value=initial_energy),
-            energy_sq=Averager(ref_value=initial_energy**2),
-            singlets=np.zeros(n_singlets, dtype=np.float64),
-            singlets_sq=np.zeros(n_singlets, dtype=np.float64),
-            singl_eng=np.zeros(n_singlets, dtype=np.float64),
-        )
+                energy=Averager(ref_value=initial_energy),
+                energy_sq=Averager(ref_value=initial_energy**2),
+                singlets=np.zeros(n_singlets, dtype=np.float64),
+                singlets_sq=np.zeros(n_singlets, dtype=np.float64),
+                singl_eng=np.zeros(n_singlets, dtype=np.float64),
+            )
+
+        # if isinstance(self.calc, Clease):
+        #     n_singlets = len(self.calc.get_singlets())
+        #     print("CLEASE!!!!!!!!!!!!!")
+        #     self.quantities = SGCQuantities(
+        #         energy=Averager(ref_value=initial_energy),
+        #         energy_sq=Averager(ref_value=initial_energy**2),
+        #         singlets=np.zeros(n_singlets, dtype=np.float64),
+        #         singlets_sq=np.zeros(n_singlets, dtype=np.float64),
+        #         singl_eng=np.zeros(n_singlets, dtype=np.float64),
+        #     )
+        # else:
+        #     self.quantities = SGCQuantities(
+        #         energy=Averager(ref_value=initial_energy),
+        #         energy_sq=Averager(ref_value=initial_energy**2),
+        #     )
 
     def reset(self):
         """Reset all variables to zero."""

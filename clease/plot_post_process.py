@@ -1,18 +1,14 @@
-from typing import List, Optional, Tuple
-
-from matplotlib.figure import Figure
+from typing import List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
-
-from clease import ConvexHull, Evaluate
+from matplotlib.figure import Figure
+from clease import Evaluate, ConvexHull
 from clease.evaluate import supports_alpha_cv
 
 
-def plot_fit(
-    evaluate: Evaluate, plot_args: Optional[dict] = None, interactive: bool = False
-) -> Figure:
+def plot_fit(evaluate: Evaluate, plot_args: dict = None, interactive: bool = False) -> Figure:
     """
-    Figure object calculated (DFT) and predicted energies.
+    Figure object calculated (EIM) and predicted energies.
     If the plot_args dictionary contains keys,
     return  figure object to relate plot_args  keys
 
@@ -31,9 +27,9 @@ def plot_fit(
         plot_args = {}
     X = evaluate.get_energy_true()
     Y = evaluate.get_energy_predict()
-    xlabel = plot_args.get("xlabel", r"E$_{DFT}$ (eV/atom)")
+    xlabel = plot_args.get("xlabel", r"E$_{EIM}$ (eV/atom)")
     ylabel = plot_args.get("ylabel", r"E$_{CE}$ (eV/atom)")
-    title = plot_args.get("title", f"Fit using {len(evaluate.e_dft)} data points.")
+    title = plot_args.get("title", f"Li-Na Energy Pairty Plot, Fit using {len(evaluate.e_dft)} data points.")
 
     # rmin, rmax set the plot range of x, y coordinate
     if np.size(X) and np.size(Y) != 0:
@@ -73,7 +69,8 @@ def plot_fit(
     plot_line = ax.plot(X, Y, "bo", mfc="none")[0]
 
     if interactive:
-        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         annotations = _make_annotations_plot_fit(evaluate)
         # Construct the annotated axis objects.
@@ -91,10 +88,10 @@ def plot_fit(
 
 
 def plot_fit_residual(
-    evaluate: Evaluate, plot_args: Optional[dict] = None, interactive: bool = False
+    evaluate: Evaluate, plot_args: dict = None, interactive: bool = False
 ) -> Figure:
     """
-    Figure object subtracted (DFT) and predicted energies.
+    Figure object subtracted (EIM) and predicted energies.
     If the plot_args dictionary contains keys,
     return  figure object to relate plot_args  keys
 
@@ -115,14 +112,14 @@ def plot_fit_residual(
     Y = evaluate.get_energy_predict() - X  # eV/atom
     Y *= 1000  # meV/atom
     xlabel = plot_args.get("xlabel", "#OCC")
-    ylabel = plot_args.get("ylabel", r"$E_{DFT} - E_{pred}$ (meV/atom)")
+    ylabel = plot_args.get("ylabel", r"$E_{EIM} - E_{pred}$ (meV/atom)")
     title = plot_args.get("title", "Residual (v)")
 
     gridspec_kw = {"wspace": 0.0, "width_ratios": [5, 1]}
     fig, ax = plt.subplots(ncols=2, sharey=True, gridspec_kw=gridspec_kw)
     ax[0].axhline(0, ls="--")
     plot_line = ax[0].plot(X, Y, "v", mfc="none")[0]
-    ax[0].set_xlabel(r"$E_{DFT}$ (eV/atom)")
+    ax[0].set_xlabel(r"$E_{EIM}$ (eV/atom)")
     ax[0].set_ylabel(ylabel)
     ax[0].set_title(title)
 
@@ -134,7 +131,8 @@ def plot_fit_residual(
     ax[1].spines["top"].set_visible(False)
 
     if interactive:
-        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         annotations = _make_annotations_plot_fit(evaluate)
         # Construct the annotated axis objects.
@@ -153,7 +151,7 @@ def plot_fit_residual(
 
 def plot_eci(
     evaluate: Evaluate,
-    plot_args: Optional[dict] = None,
+    plot_args: dict = None,
     ignore_sizes=(),
     interactive: bool = False,
 ) -> Figure:
@@ -223,7 +221,8 @@ def plot_eci(
     ax.legend()
 
     if interactive:
-        from clease.interactive_plot import AnnotatedAx, InteractivePlot
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import InteractivePlot, AnnotatedAx
 
         # Construct the annotated axis objects.
         annotated_ax = AnnotatedAx(
@@ -238,7 +237,7 @@ def plot_eci(
     return fig
 
 
-def plot_cv(evaluate: Evaluate, plot_args: Optional[dict] = None) -> Figure:
+def plot_cv(evaluate: Evaluate, plot_args: dict = None) -> Figure:
     """
     Figure object of CV values according to alpha values
     If the plot_args dictionary contains keys,
@@ -306,7 +305,7 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
 
     cnv_hull = ConvexHull(evaluate.settings.db_name, select_cond=evaluate.select_cond)
 
-    # Construct the figure object, and plot the DFT points.
+    # Construct the figure object, and plot the EIM points.
     # Also fetch the Line2D objects which are drawn on the figure (i.e., the scatter points)
     # dft_lines is for interactive plotting.
     fig, dft_lines = cnv_hull.plot(return_lines=True)
@@ -317,6 +316,7 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
 
     # `concs` is dictionary with the keys of species with value being the
     # concentrations among the frames
+    # pylint: disable=protected-access
     concs = {key: [] for key in cnv_hull._unique_elem}
     for frame_conc in conc_per_frame:
         for key, value in concs.items():
@@ -332,10 +332,11 @@ def plot_convex_hull(evaluate: Evaluate, interactive: bool = False) -> Figure:
         return_lines=True,
     )
 
-    fig.suptitle("Convex hull DFT (o), CE (x)")
+    fig.suptitle("Li-Na Convex hull EIM (o), CE (x)")
 
     if interactive:
-        from clease.interactive_plot import AnnotatedAx, ShowStructureOnClick
+        # pylint: disable=import-outside-toplevel
+        from clease.interactive_plot import ShowStructureOnClick, AnnotatedAx
 
         ax_list = fig.get_axes()
 
@@ -366,7 +367,7 @@ def _make_annotations_hull(evaluate: Evaluate) -> Tuple[List[str], List[str]]:
         name = evaluate.names[idx]
         row_id = evaluate.row_ids[idx]
         en = e_dft[idx]
-        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {en:.4f} eV/atom"
+        return f"DB ID: {row_id}\nName: {name}\nE(EIM): {en:.4f} eV/atom"
 
     def format_annotation_ce(idx):
         name = evaluate.names[idx]
@@ -390,7 +391,7 @@ def _make_annotations_plot_fit(evaluate: Evaluate) -> Tuple[List[str], List[str]
         row_id = evaluate.row_ids[idx]
         en = e_dft[idx]
         e_ce = e_pred[idx]
-        return f"DB ID: {row_id}\nName: {name}\nE(DFT): {en:.4f} eV/atom\nE(CE): {e_ce:.4f} eV/atom"
+        return f"DB ID: {row_id}\nName: {name}\nE(EIM): {en:.4f} eV/atom\nE(CE): {e_ce:.4f} eV/atom"
 
     N = len(e_pred)
     return ([format_annotation(idx) for idx in range(N)],)

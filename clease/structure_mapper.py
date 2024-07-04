@@ -1,10 +1,9 @@
 from typing import Tuple
-
-from ase.atoms import Atoms, Cell
-from ase.geometry import find_mic
+import spglib
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-import spglib
+from ase.atoms import Atoms, Cell
+from ase.geometry import find_mic
 
 __all__ = ("TransformInfo", "StructureMapper")
 
@@ -72,6 +71,7 @@ class StructureMapper:
         :param cell1: First cell
         :param cell2: Second cell
         """
+        # pylint: disable=no-self-use
         P = cell2.dot(np.linalg.inv(cell1))
         return 0.5 * (P.T.dot(P) - np.eye(3))
 

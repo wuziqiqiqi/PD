@@ -1,9 +1,9 @@
 import os
 import pytest
 from ase.build import bulk
-from clease.settings import CEBulk, Concentration
-from clease import NewStructures
-from clease.tools import wrap_and_sort_by_position
+from cleases.settings import CEBulk, Concentration
+from cleases import NewStructures
+from cleases.tools import wrap_and_sort_by_position
 
 
 def test_formula_unit(db_name):

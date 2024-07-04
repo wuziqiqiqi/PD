@@ -1,12 +1,9 @@
 """This module defines the "Figure" class, which is a collection of FourVector objects."""
-from typing import Any, Iterable, Optional, Tuple
-
-import ase
+from typing import Iterable, Any, Tuple
 import attr
+import ase
 import numpy as np
-
-from clease.jsonio import AttrSavable, jsonable
-
+from clease.jsonio import jsonable, AttrSavable
 from .four_vector import FourVector
 
 __all__ = ("Figure",)
@@ -49,6 +46,7 @@ class Figure(AttrSavable):
     @components.validator
     def _validate_all_four_vectors(self, attribute, value):
         """Perform a check that all elements in the components sequence are FourVector objects"""
+        # pylint: disable=unused-argument, no-self-use
         # The signature of this function is dictated by attrs.
         for ii, v in enumerate(value):
             if not isinstance(v, FourVector):
@@ -57,9 +55,7 @@ class Figure(AttrSavable):
                     f"of type {type(v)} in index {ii}."
                 )
 
-    def to_cartesian(
-        self, prim: ase.Atoms, transposed_cell: Optional[np.ndarray] = None
-    ) -> np.ndarray:
+    def to_cartesian(self, prim: ase.Atoms, transposed_cell: np.ndarray = None) -> np.ndarray:
         """Get the Figure in terms of the cartesian coordinates, as defined
         by the primitive lattice.
 
@@ -79,7 +75,7 @@ class Figure(AttrSavable):
             cart[ii, :] = fv.to_cartesian(prim, transposed_cell=transposed_cell)
         return cart
 
-    def get_diameter(self, prim: ase.Atoms, transposed_cell: Optional[np.ndarray] = None) -> float:
+    def get_diameter(self, prim: ase.Atoms, transposed_cell: np.ndarray = None) -> float:
         """Calculate the diameter of the figure, as the maximum distance to the
         geometric center of the figure in cartesian coordinates.
 

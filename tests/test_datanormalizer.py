@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from clease.data_normalizer import DataNormalizer
+from cleases.data_normalizer import DataNormalizer
 
 
 def test_normalizer():

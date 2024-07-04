@@ -1,11 +1,8 @@
 from typing import Sequence
-
 from ase.atoms import Atoms
 from ase.io.trajectory import TrajectoryWriter
-
 from clease.datastructures import SystemChange
 from clease.tools import add_file_extension
-
 from .mc_observer import MCObserver
 
 

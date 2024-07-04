@@ -4,8 +4,8 @@ import pytest
 import numpy as np
 from ase.build import bulk
 
-from clease.cluster import ClusterGenerator
-from clease.datastructures import FourVector, Figure
+from cleases.cluster import ClusterGenerator
+from cleases.datastructures import FourVector, Figure
 
 
 def test_sites_cutoff_fcc():

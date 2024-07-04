@@ -1,7 +1,7 @@
 """Logger that can be used together with multiprocessing funcions."""
 import logging as lg
-import multiprocessing as mp
 import threading
+import multiprocessing as mp
 
 
 class MultiprocessHandler(lg.Handler):
@@ -35,7 +35,7 @@ class MultiprocessHandler(lg.Handler):
                 self._handler.emit(record)
             except EOFError:
                 break
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-except
                 print("An unexpected exception occured during logging.")
                 print(str(exc))
 
@@ -47,7 +47,7 @@ class MultiprocessHandler(lg.Handler):
         """Emit record."""
         try:
             self.send(record)
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             self.handleError(record)
 
     def close(self):

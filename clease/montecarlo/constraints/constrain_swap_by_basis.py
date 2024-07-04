@@ -1,10 +1,7 @@
 from typing import Sequence
-
-from ase import Atoms
 import numpy as np
-
+from ase import Atoms
 from clease.datastructures.system_changes import SystemChanges
-
 from .mc_constraint import MCConstraint
 
 

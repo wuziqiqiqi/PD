@@ -2,10 +2,10 @@ import pytest
 from ase.build import bulk
 from ase.spacegroup import crystal
 
-from clease.cluster import ClusterInfoMapper, AtomsNotContainedInLargeCellError
-from clease.settings import CEBulk, CECrystal, Concentration
-from clease.corr_func import CorrFunction
-from clease.tools import wrap_and_sort_by_position
+from cleases.cluster import ClusterInfoMapper, AtomsNotContainedInLargeCellError
+from cleases.settings import CEBulk, CECrystal, Concentration
+from cleases.corr_func import CorrFunction
+from cleases.tools import wrap_and_sort_by_position
 
 
 def dict_amost_equal(d1, d2):

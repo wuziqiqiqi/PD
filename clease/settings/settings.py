@@ -4,27 +4,26 @@ This module defines the base-class for storing the settings for performing
 Cluster Expansion in different conditions.
 """
 from __future__ import annotations
-
-from copy import deepcopy
 import logging
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
+from copy import deepcopy
+from typing import List, Dict, Optional, Union, Sequence, Set, Any
 
+import numpy as np
 from ase import Atoms
 from ase.db import connect
 from ase.db.core import Database
-import numpy as np
 
-from clease.basis_function import BasisFunction, BinaryLinear, Polynomial, Trigonometric
-from clease.cluster import Cluster, ClusterList, ClusterManager
-from clease.datastructures import TransMatrix
+from clease.version import __version__
 from clease.jsonio import jsonable
 from clease.tools import get_size_from_cf_name, wrap_and_sort_by_position
-from clease.version import __version__
-
-from .atoms_manager import AtomsManager
+from clease.cluster import ClusterManager, ClusterList, Cluster
+from clease.basis_function import Polynomial, Trigonometric, BinaryLinear, BasisFunction
+from clease.datastructures import TransMatrix
 from .concentration import Concentration
-from .template_atoms import TemplateAtoms
 from .template_filters import ValidConcentrationFilter
+from .template_atoms import TemplateAtoms
+from .atoms_manager import AtomsManager
+
 
 __all__ = ("ClusterExpansionSettings",)
 
@@ -69,6 +68,8 @@ class ClusterExpansionSettings:
 
         basis_func_type (str, optional): Type of basis function to use. Defaults to 'polynomial'.
     """
+
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     # Keys which are important for saving/loading
     ARG_KEYS = ("prim_cell", "concentration")
@@ -271,6 +272,7 @@ class ClusterExpansionSettings:
 
     @include_background_atoms.setter
     def include_background_atoms(self, value: bool) -> None:
+        # pylint: disable=no-self-use
         msg = "The include_background_atoms setter has been removed in version 0.11.3.\n"
         msg += f"Please set 'include_background_atoms={value}' in the settings constructor, "
         msg += "instead."
@@ -579,6 +581,7 @@ class ClusterExpansionSettings:
 
     def view_clusters(self) -> None:
         """Display all clusters along with their names."""
+        # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
 
@@ -623,6 +626,7 @@ class ClusterExpansionSettings:
         """
         Display all templates in the ASE GUi
         """
+        # pylint: disable=import-outside-toplevel
         from ase.visualize import view
 
         view(self.get_all_templates())

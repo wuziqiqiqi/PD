@@ -1,7 +1,7 @@
 """Test to ensure the orthnormality of the basis functions."""
 import itertools
 import pytest
-from clease.settings import CEBulk
+from cleases.settings import CEBulk
 
 tol = 1e-9
 

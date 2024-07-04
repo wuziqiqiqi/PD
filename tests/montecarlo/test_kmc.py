@@ -1,14 +1,14 @@
 import pytest
 from ase.calculators.emt import EMT
-from clease.montecarlo.observers import (
+from cleases.montecarlo.observers import (
     CorrelationFunctionObserver,
     EntropyProductionRate,
 )
-from clease.montecarlo import KineticMonteCarlo, BEPBarrier, NeighbourSwap
-from clease.settings import CEBulk, Concentration
-from clease.calculator import attach_calculator
-from clease.montecarlo.mc_evaluator import MCEvaluator
-from clease.datastructures import MCStep
+from cleases.montecarlo import KineticMonteCarlo, BEPBarrier, NeighbourSwap
+from cleases.settings import CEBulk, Concentration
+from cleases.calculator import attach_calculator
+from cleases.montecarlo.mc_evaluator import MCEvaluator
+from cleases.datastructures import MCStep
 
 
 @pytest.fixture

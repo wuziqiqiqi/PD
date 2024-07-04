@@ -1,10 +1,7 @@
-from typing import Optional
-
-from ase.db import connect
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import ConvexHull as SciConvexHull
-
+import matplotlib.pyplot as plt
+from ase.db import connect
 from clease.tools import invert_matrix
 
 __all__ = ("ConvexHull",)
@@ -39,13 +36,15 @@ class ConvexHull:
         be {"Au": (0, 0.5)}.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(
         self,
         db_name,
         select_cond=None,
         atoms_per_fu=1,
         conc_scale=1.0,
-        conc_ranges: Optional[dict] = None,
+        conc_ranges: dict = None,
     ):
         if conc_ranges is None:
             conc_ranges = {}
@@ -253,6 +252,7 @@ class ConvexHull:
         return_lines is primarily for internal use, to return the
         matplotlib Line2D objects from the main energy plot.
         """
+        # pylint: disable=too-many-branches
         # We only add the Convex Hull for the DFT
         # data
         add_cnv_hull = concs is None
@@ -300,6 +300,8 @@ class ConvexHull:
 
             if add_cnv_hull:
                 c_hull = self.get_convex_hull(conc_var=elems[i])
+                # pylint cannot inspect scipy C things, false positive
+                # pylint: disable=no-member
                 for simpl in c_hull.simplices:
                     if self._is_lower_conv_hull(simpl):
                         x_cnv = [x[simpl[0]], x[simpl[1]]]
@@ -316,11 +318,14 @@ class ConvexHull:
 
     def show_structures_on_convex_hull(self):
         """Show all entries on the convex hull."""
+        # pylint: disable=import-outside-toplevel
         from ase.gui.gui import GUI
         from ase.gui.images import Images
 
         c_hull = self.get_convex_hull()
         indices = set()
+        # pylint cannot inspect scipy C things, false positive
+        # pylint: disable=no-member
         for simplex in c_hull.simplices:
             if self._is_lower_conv_hull(simplex):
                 indices = indices.union(simplex)

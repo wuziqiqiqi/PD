@@ -1,10 +1,11 @@
+from typing import Union
 import logging
-from typing import Optional, Union
-
+import numpy as np
 from ase import Atoms
-
-from clease.calculator import Clease
+from ase.optimize import BFGS
+from ase.constraints import UnitCellFilter, ExpCellFilter, StrainFilter
 from clease.datastructures import SystemChanges
+from clease.calculator import Clease
 from clease.settings.settings import ClusterExpansionSettings
 
 __all__ = ("MCEvaluator", "CEMCEvaluator", "construct_evaluator")
@@ -23,12 +24,17 @@ class MCEvaluator:
 
     def __init__(self, atoms: Atoms):
         self._atoms = atoms
+        self.gsE0 = atoms.info["gsE"][0]
+        self.gsE1 = atoms.info["gsE"][1]
 
     @property
     def atoms(self):
         return self._atoms
+    
+    def scale_by_conc(self, atoms):
+        pass
 
-    def get_energy(self, applied_changes: Optional[SystemChanges] = None) -> float:
+    def get_energy(self, applied_changes: SystemChanges = None) -> float:
         """Evaluate the energy of a system.
         If a change is sufficiently local/small, it there, in some situations,
         may be other ways of evaluating the energy than a full calculation.
@@ -45,10 +51,38 @@ class MCEvaluator:
         Returns:
             float: Energy of the atoms object.
         """
+        # pylint: disable=unused-argument
         # system_changes are passed in (optionally) in order to allow for localized evaluations
         # See discussion:
         # https://gitlab.com/computationalmaterials/clease/-/issues/268
-        return self.atoms.get_potential_energy()
+
+        # currConc = np.sum(self.atoms.numbers == 3)/len(self.atoms.numbers)
+
+        # oldA = self.atoms.positions[2][0]
+        # scaleCurve = np.poly1d([-1.63523948,  4.44352489, -4.44708269,  2.0816961 , -0.43532789, -0.01615746,  0.82522372]) #BCC
+        # scale = scaleCurve(currConc) * 4.33 / oldA
+
+        # oldA = self.atoms.positions[2][2]
+        # scaleCurve = np.poly1d([ 0.10226702, -0.09545872, -0.03450606,  1.01170911]) # HCP
+        # scale = scaleCurve(currConc) * 5.14 / oldA
+
+        # scale = (5.0538606897 * currConc + (1-currConc) * 5.2020344828)  /oldA
+
+        # self.oldA *= scale
+        # self.atoms.cell *= scale
+        # self.atoms.positions *= scale
+
+        # try:
+        #     tmpPositions = np.load("tmpPositions.npy", allow_pickle=True)
+        # except:
+        #     pass
+        # ucf = UnitCellFilter(self.atoms)
+        # opt = BFGS(ucf, "555.txt")
+        # opt.run(fmax=0.02)
+        # np.save("tmpPositions.npy", self.atoms.positions)
+        NLi = np.sum(self.atoms.numbers == 3)
+        NMg = len(self.atoms.numbers) - NLi
+        return self.atoms.get_potential_energy() - NLi * self.gsE0 - NMg * self.gsE1
 
     def reset(self) -> None:
         """Perform a reset on the evaluator and/or on the atoms"""
@@ -77,7 +111,7 @@ class MCEvaluator:
         for change in system_changes:
             change.undo_change(self.atoms)
 
-    def keep_system_changes(self, system_changes: Optional[SystemChanges] = None) -> None:
+    def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
 
@@ -119,7 +153,7 @@ class CEMCEvaluator(MCEvaluator):
         """Get the related settings object"""
         return self.calc.settings
 
-    def get_energy(self, applied_changes: Optional[SystemChanges] = None) -> float:
+    def get_energy(self, applied_changes: SystemChanges = None) -> float:
         return self.calc.get_energy()
 
     def reset(self) -> None:
@@ -150,7 +184,7 @@ class CEMCEvaluator(MCEvaluator):
         """
         self.calc.undo_system_changes()
 
-    def keep_system_changes(self, system_changes: Optional[SystemChanges] = None) -> None:
+    def keep_system_changes(self, system_changes: SystemChanges = None) -> None:
         """A set of system changes are to be kept. Perform necessary actions to prepare
         for a new evaluation."""
         self.calc.keep_system_changes()

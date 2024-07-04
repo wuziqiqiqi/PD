@@ -1,5 +1,5 @@
 from ase.build import bulk
-from clease import ClusterCoverageChecker
+from cleases import ClusterCoverageChecker
 
 
 def test_cluster_coverage(bc_setting):

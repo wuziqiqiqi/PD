@@ -4,9 +4,9 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 import pytest
 import numpy as np
-from clease.tools import make_supercell
-from clease.jsonio import read_json
-from clease.datastructures import FourVector, construct_four_vectors
+from cleases.tools import make_supercell
+from cleases.jsonio import read_json
+from cleases.datastructures import FourVector, construct_four_vectors
 
 
 def make_scaled_crd_close_to_one(tol: float = 1e-12):

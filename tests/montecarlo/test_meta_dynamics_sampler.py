@@ -2,12 +2,12 @@ import json
 import os
 import numpy as np
 from ase.build import bulk
-from clease.settings import CEBulk, Concentration
-from clease.calculator import attach_calculator
-from clease.montecarlo import BinnedBiasPotential
-from clease.montecarlo import MetaDynamicsSampler
-from clease.montecarlo import SGCMonteCarlo
-from clease.montecarlo.observers import ConcentrationObserver
+from cleases.settings import CEBulk, Concentration
+from cleases.calculator import attach_calculator
+from cleases.montecarlo import BinnedBiasPotential
+from cleases.montecarlo import MetaDynamicsSampler
+from cleases.montecarlo import SGCMonteCarlo
+from cleases.montecarlo.observers import ConcentrationObserver
 
 
 def test_ideal_mixture(tmpdir, db_name):

@@ -3,11 +3,11 @@ import pytest
 import numpy as np
 from ase import Atoms
 from ase.build import bulk
-from clease.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
-from clease.settings.settings import PrimitiveCellNotFound
-from clease.cluster import ClusterManager, Cluster
-from clease.calculator import Clease
-from clease.tools import wrap_and_sort_by_position
+from cleases.settings import CEBulk, Concentration, ClusterExpansionSettings, CECrystal
+from cleases.settings.settings import PrimitiveCellNotFound
+from cleases.cluster import ClusterManager, Cluster
+from cleases.calculator import Clease
+from cleases.tools import wrap_and_sort_by_position
 
 
 @pytest.fixture

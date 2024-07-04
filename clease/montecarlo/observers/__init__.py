@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 from .mc_observer import MCObserver
 from .sgc_observer import SGCObserver
 from .corr_func_observer import CorrelationFunctionObserver

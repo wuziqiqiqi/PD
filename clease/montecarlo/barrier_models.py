@@ -1,8 +1,6 @@
-from abc import ABC, abstractmethod
 from typing import Dict, Union
-
+from abc import ABC, abstractmethod
 from ase import Atoms
-
 from clease.datastructures import SystemChanges
 from clease.montecarlo.mc_evaluator import MCEvaluator, construct_evaluator
 

@@ -2,7 +2,7 @@ import itertools
 import pytest
 
 from clease_cxx import CppCluster
-from clease.cluster import Cluster, ClusterFingerprint
+from cleases.cluster import Cluster, ClusterFingerprint
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import random
 import pytest
-from clease.datastructures import FourVector
+from cleases.datastructures import FourVector
 
 
 @pytest.fixture

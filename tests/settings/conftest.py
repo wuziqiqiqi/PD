@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from clease.settings import ClusterExpansionSettings
+from cleases.settings import ClusterExpansionSettings
 
 
 @pytest.fixture

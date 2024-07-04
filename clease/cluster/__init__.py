@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 from .cluster_fingerprint import *
 from .cluster import *
 from .cluster_generator import *

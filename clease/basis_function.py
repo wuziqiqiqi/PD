@@ -1,12 +1,10 @@
 """Module for setting up pseudospins and basis functions."""
 from abc import ABC, abstractmethod
 import math
-from typing import Dict, List, Optional, Sequence
-
+from typing import List, Dict, Optional, Sequence
 import numpy as np
-
-from clease.gramSchmidthMonomials import GramSchmidtMonimial
 from clease.jsonio import jsonable
+from clease.gramSchmidthMonomials import GramSchmidtMonimial
 
 __all__ = (
     "BasisFunction",
@@ -63,6 +61,7 @@ class BasisFunction(ABC):
     def get_basis_functions(self):
         """Create basis functions which guarantees the orthonormality condition."""
 
+    # pylint: disable=no-self-use
     def customize_full_cluster_name(self, full_cluster_name: str) -> str:
         """Customize the full cluster names. Default is to do nothing."""
         return full_cluster_name

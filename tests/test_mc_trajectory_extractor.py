@@ -1,6 +1,6 @@
 import unittest
 from ase.build import bulk
-from clease.mc_trajectory_extractor import MCTrajectoryExtractor
+from cleases.mc_trajectory_extractor import MCTrajectoryExtractor
 
 
 class TestMCTrajectoryExtractor(unittest.TestCase):

@@ -4,7 +4,7 @@ import pytest
 from ase.build import bulk
 from scipy.stats import binomtest
 
-from clease.montecarlo import (
+from cleases.montecarlo import (
     RandomFlip,
     RandomSwap,
     MixedSwapFlip,

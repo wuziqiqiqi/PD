@@ -9,9 +9,9 @@ import numpy as np
 import ase
 from ase.db import connect
 from ase.calculators.emt import EMT
-from clease.settings import CEBulk, Concentration
-from clease import NewStructures
-from clease.tools import update_db
+from cleases.settings import CEBulk, Concentration
+from cleases import NewStructures
+from cleases.tools import update_db
 
 try:
     import matplotlib.pyplot as plt

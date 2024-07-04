@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from clease.regression import SequentialClusterRidge
+from cleases.regression import SequentialClusterRidge
 
 
 def test_support_expanding():

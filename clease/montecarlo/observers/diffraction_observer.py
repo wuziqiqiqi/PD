@@ -1,7 +1,5 @@
 import numpy as np
-
 from clease.datastructures import SystemChanges
-
 from .mc_observer import MCObserver
 
 

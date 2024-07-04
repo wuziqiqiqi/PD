@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np  # Initialize the Numpy API
 from libcpp cimport bool
 
+
 np.import_array()
 include "pyce_updater.pyx"
 include "py_cluster.pyx"

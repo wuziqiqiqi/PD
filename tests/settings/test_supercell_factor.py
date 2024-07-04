@@ -1,5 +1,5 @@
 import os
-from clease.settings import CEBulk, CECrystal, Concentration
+from cleases.settings import CEBulk, CECrystal, Concentration
 
 
 def test_fcc(db_name):

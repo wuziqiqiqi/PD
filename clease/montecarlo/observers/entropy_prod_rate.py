@@ -1,8 +1,6 @@
-from pathlib import Path
 from typing import List, Union
-
+from pathlib import Path
 import numpy as np
-
 from .buffered_array import BufferedArray
 
 __all__ = ("EntropyProductionRate",)

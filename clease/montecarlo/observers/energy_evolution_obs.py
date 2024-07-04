@@ -1,9 +1,6 @@
 import logging
-
 import numpy as np
-
 from clease.tools import add_file_extension
-
 from .mc_observer import MCObserver
 
 logger = logging.getLogger(__name__)

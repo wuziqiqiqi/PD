@@ -682,7 +682,9 @@ bool CEUpdater::all_decoration_nums_equal(const vector<int> &dec_nums) const {
 }
 
 void CEUpdater::get_singlets(PyObject *npy_obj) const {
-    PyObject *npy_array = PyArray_FROM_OTF(npy_obj, NPY_DOUBLE, NPY_OUT_ARRAY);
+    // PyObject *npy_array = PyArray_FROM_OTF(npy_obj, NPY_DOUBLE, NPY_OUT_ARRAY);
+    // PyArrayObject* array = (PyArrayObject*) npy_array;
+    PyArrayObject* npy_array = (PyArrayObject*) PyArray_FROM_OTF(npy_obj, NPY_DOUBLE, NPY_OUT_ARRAY);
     unsigned int npy_array_size = PyArray_SIZE(npy_array);
     if (npy_array_size < singlets.size()) {
         string msg("The passed Numpy array is too small to hold all the singlets terms!\n");
@@ -851,7 +853,8 @@ void CEUpdater::read_trans_matrix(PyObject *py_trans_mat) {
         cout << "Inserted " << n_elements_insterted << " into the translation matrix\n";
 #endif
     } else {
-        PyObject *trans_mat = PyArray_FROM_OTF(py_trans_mat, NPY_INT32, NPY_ARRAY_IN_ARRAY);
+        // PyObject *trans_mat = PyArray_FROM_OTF(py_trans_mat, NPY_INT32, NPY_ARRAY_IN_ARRAY);
+        PyArrayObject *trans_mat = (PyArrayObject*) PyArray_FROM_OTF(py_trans_mat, NPY_INT32, NPY_ARRAY_IN_ARRAY);
 
         npy_intp *size = PyArray_DIMS(trans_mat);
         trans_matrix.set_size(size[0], unique_indx_vec.size(), max_indx);

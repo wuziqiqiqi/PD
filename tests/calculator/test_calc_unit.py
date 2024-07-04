@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
-from clease.calculator import Clease
-from clease.calculator import attach_calculator
-from clease.settings import Concentration
+from cleases.calculator import Clease
+from cleases.calculator import attach_calculator
+from cleases.settings import Concentration
 
 
 @pytest.fixture

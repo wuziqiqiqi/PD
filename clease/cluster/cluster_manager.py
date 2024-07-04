@@ -1,19 +1,18 @@
-from copy import deepcopy
-import functools
-from itertools import product
+from typing import Sequence, Set, Dict, List, Iterator, Tuple, Callable
 import logging
-from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple
-
-import ase
+from itertools import product
+import functools
+from copy import deepcopy
 import numpy as np
+import ase
 
 from clease import tools
-from clease.datastructures import Figure, FourVector, TransMatrix
+from clease.datastructures import FourVector, Figure, TransMatrix
 
-from .cluster import Cluster
 from .cluster_fingerprint import ClusterFingerprint
-from .cluster_generator import ClusterGenerator
+from .cluster import Cluster
 from .cluster_list import ClusterList
+from .cluster_generator import ClusterGenerator
 from .utils import name_clusters, size
 
 __all__ = ("ClusterManager",)
@@ -31,7 +30,7 @@ class ClusterManager:
         Primitive cell
     """
 
-    def __init__(self, prim_cell: ase.Atoms, background_syms: Optional[Set[str]] = None):
+    def __init__(self, prim_cell: ase.Atoms, background_syms: Set[str] = None):
         self._background_syms = background_syms or set()
 
         primitive_filtered = self._filter_background(prim_cell)
@@ -389,6 +388,7 @@ class ClusterManager:
         rep_arr: np.ndarray,
     ) -> Iterator[FourVector]:
         """Wrap FourVectors using the trivial shift+modulo operation"""
+        # pylint: disable=no-self-use
         # We use the .tolist() method, faster to iterate the Python list than the NumPy array
         # for building the subsequent FourVectors.
         translated = np.mod(unique_xyz + translation_vector.xyz_array, rep_arr).tolist()
@@ -400,7 +400,7 @@ class ClusterManager:
         translation_vector: FourVector,
         unique: Sequence[FourVector],
         cell: np.ndarray,
-        cell_T_inv: Optional[np.ndarray] = None,
+        cell_T_inv: np.ndarray = None,
     ) -> Iterator[FourVector]:
         """Generalized FourVector wrapping function."""
         # Translate the (x, y, z) components of the unique four-vectors

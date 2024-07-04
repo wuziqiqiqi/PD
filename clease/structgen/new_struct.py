@@ -1,25 +1,27 @@
 """Module for generating new structures for training."""
+import os
 from copy import deepcopy
 from functools import reduce
-from itertools import product
+from typing import List, Dict, Optional, Union, Any, Tuple
 import logging
-import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from itertools import product
+
+import numpy as np
+from numpy.random import shuffle
 
 from ase import Atoms
 from ase.io import read
 from ase.io.trajectory import TrajectoryReader
 from ase.utils.structure_comparator import SymmetryEquivalenceCheck
-import numpy as np
-from numpy.random import shuffle
 
 from clease import db_util
-from clease.corr_func import CorrFunction
-from clease.montecarlo import TooFewElementsError
 from clease.settings import ClusterExpansionSettings
-from clease.tools import count_atoms, nested_list2str, wrap_and_sort_by_position
+from clease.corr_func import CorrFunction
 
-from .structure_generator import GSStructure, MetropolisTrajectory, ProbeStructure
+from clease.montecarlo import TooFewElementsError
+from clease.tools import wrap_and_sort_by_position, nested_list2str
+from clease.tools import count_atoms
+from .structure_generator import ProbeStructure, GSStructure, MetropolisTrajectory
 
 try:
     from math import gcd
@@ -61,7 +63,7 @@ class NewStructures:
     def __init__(
         self,
         settings: ClusterExpansionSettings,
-        generation_number: Optional[int] = None,
+        generation_number: int = None,
         struct_per_gen: int = 5,
         check_db: bool = True,
     ) -> None:
@@ -402,7 +404,7 @@ class NewStructures:
             self.insert_structure(init_struct=gs_struct, cf=cf)
             current_count += 1
 
-    def generate_random_structures(self, atoms: Optional[Atoms] = None) -> None:
+    def generate_random_structures(self, atoms: Optional[Atoms] = None, conc = None) -> None:
         """
         Generate random structures until the number of structures with
         `generation_number` equals `struct_per_gen`.
@@ -425,7 +427,7 @@ class NewStructures:
 
         num_structs = self.num_to_gen()
         while i < num_structs and fail_counter < max_fail:
-            if self.generate_one_random_structure(atoms=atoms):
+            if self.generate_one_random_structure(atoms=atoms, conc=conc):
                 i += 1
                 fail_counter = 0
                 logger.debug("Generated %d random structures", i)
@@ -442,7 +444,7 @@ class NewStructures:
             raise MaxAttemptReachedError(msg)
         logger.info("Succesfully generated %d random structures.", self.num_in_gen())
 
-    def generate_one_random_structure(self, atoms: Optional[Atoms] = None) -> bool:
+    def generate_one_random_structure(self, atoms: Optional[Atoms] = None, conc = None) -> bool:
         """
         Generate and insert a random structure to database if a unique
         structure is found.
@@ -460,7 +462,10 @@ class NewStructures:
 
         while not unique_structure_found and num_attempts < max_attempt:
             self.settings.set_active_template(atoms=atoms)
-            new_atoms = self._get_struct_at_conc(conc_type="random")
+            if isinstance(conc, np.ndarray):
+                new_atoms = self._get_struct_at_conc(conc_type="x", conc_in=conc)
+            else:
+                new_atoms = self._get_struct_at_conc(conc_type="random")
             fu = self._get_formula_unit(new_atoms)
             if not self._exists_in_db(new_atoms, fu):
                 unique_structure_found = True
@@ -481,6 +486,7 @@ class NewStructures:
         self.insert_structure(init_struct=new_atoms)
         return True
 
+    # pylint: disable=too-many-branches
     def _set_initial_structures(
         self, atoms: Union[Atoms, List[Atoms]], random_composition: bool = False
     ) -> List[Atoms]:
@@ -622,7 +628,7 @@ class NewStructures:
             else:
                 raise exc
 
-    def _get_struct_at_conc(self, conc_type: str = "random", index: int = 0) -> Atoms:
+    def _get_struct_at_conc(self, conc_type: str = "random", index: int = 0, conc_in = None) -> Atoms:
         """Generate a structure at a concentration specified.
 
         :param conc_type: One of 'min', 'max' and 'random'
@@ -634,6 +640,9 @@ class NewStructures:
             x = conc.get_conc_min_component(index)
         elif conc_type == "max":
             x = conc.get_conc_max_component(index)
+        elif conc_type == "x":
+            assert isinstance(conc_in, np.ndarray), "must specify concentration when conc_type = x"
+            x = conc_in
         else:
             nib = [len(x) for x in self.settings.index_by_basis]
             x = conc.get_random_concentration(nib=nib)
@@ -827,7 +836,7 @@ class NewStructures:
 
         return symmcheck.compare(atoms.copy(), atoms_in_db)
 
-    def _get_kvp(self, formula_unit: Optional[str] = None) -> Dict:
+    def _get_kvp(self, formula_unit: str = None) -> Dict:
         """
         Create a dictionary of key-value pairs and return it.
 
@@ -897,7 +906,7 @@ class NewStructures:
                     new_count[symbol] += 1
             atom_count.append(new_count)
             all_nums += [v for k, v in new_count.items()]
-
+        # pylint: disable=unnecessary-lambda
         gcdp = reduce(lambda x, y: gcd(x, y), all_nums)
         fu = ""
         for i, count in enumerate(atom_count):

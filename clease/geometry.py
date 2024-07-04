@@ -1,6 +1,6 @@
 """Module for tools pertaining to geometry of atoms and cells."""
-from ase import Atoms
 import numpy as np
+from ase import Atoms
 
 __all__ = ("max_sphere_dia_in_cell", "supercell_which_contains_sphere", "cell_wall_distances")
 

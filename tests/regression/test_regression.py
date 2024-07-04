@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from clease.regression import LinearRegression, Lasso, Tikhonov
+from cleases.regression import LinearRegression, Lasso, Tikhonov
 
 
 @pytest.fixture

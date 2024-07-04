@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from clease.regression import ConstrainedRidge
+from cleases.regression import ConstrainedRidge
 
 
 @pytest.fixture

@@ -6,10 +6,10 @@ from ase.build import bulk
 from ase.spacegroup import crystal
 from ase.build import niggli_reduce
 from ase.db import connect
-from clease.settings import CEBulk, Concentration
-from clease.settings import template_atoms
-from clease.settings.template_atoms import TemplateAtoms
-from clease.settings.template_filters import (
+from cleases.settings import CEBulk, Concentration
+from cleases.settings import template_atoms
+from cleases.settings.template_atoms import TemplateAtoms
+from cleases.settings.template_filters import (
     AtomsFilter,
     CellFilter,
     SkewnessFilter,
@@ -17,7 +17,7 @@ from clease.settings.template_filters import (
     CellVectorDirectionFilter,
     ValidConcentrationFilter,
 )
-from clease.tools import wrap_and_sort_by_position
+from cleases.tools import wrap_and_sort_by_position
 
 
 class SettingsPlaceHolder:

@@ -9,8 +9,8 @@ from ase.db import connect
 from ase import Atoms
 from ase.calculators.singlepoint import SinglePointCalculator
 
-from clease.settings import CEBulk, ClusterExpansionSettings, Concentration
-from clease import NewStructures
+from cleases.settings import CEBulk, ClusterExpansionSettings, Concentration
+from cleases import NewStructures
 
 
 class CorrFuncPlaceholder:

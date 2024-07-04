@@ -1,5 +1,4 @@
 from clease.datastructures.system_changes import SystemChanges
-
 from .mc_constraint import MCConstraint
 
 

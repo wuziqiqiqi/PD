@@ -1,9 +1,8 @@
+# pylint: skip-file
 # XXX: Some funny imports here. This file needs to be cleaned up some
 from typing import Sequence
-
 import numpy as np
 from scipy.interpolate import interp1d
-
 from clease.datastructures import SystemChange
 
 
@@ -31,6 +30,7 @@ class BiasPotential:
         starts.
         """
 
+    # pylint: disable=no-self-use,unused-argument
     def calculate_from_scratch(self, atoms):
         """Calculate the bias potential from scratch.
 

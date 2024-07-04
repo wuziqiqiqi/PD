@@ -1,16 +1,14 @@
-from itertools import product
+import time
 import json
 import logging
-import time
-
-from matplotlib import pyplot as plt
+from itertools import product
 import numpy as np
-from scipy.optimize import brentq
 from scipy.special import polygamma
-
+from scipy.optimize import brentq
+from matplotlib import pyplot as plt
 from clease.tools import invert_matrix
-
 from .regression import LinearRegression
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +74,8 @@ class BayesianCompressiveSensing(LinearRegression):
         to avoid singular matrices
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     def __init__(
         self,
         shape_var=0.5,
@@ -91,6 +91,7 @@ class BayesianCompressiveSensing(LinearRegression):
         init_lamb=0.0,
         penalty=1e-8,
     ):
+        # pylint: disable=too-many-arguments
         super().__init__()
 
         # Paramters
@@ -420,6 +421,7 @@ class BayesianCompressiveSensing(LinearRegression):
         y: np.ndarray
             Array of length N with the energies
         """
+        # pylint: disable=too-many-branches, too-many-statements
         # XXX: Needs some cleaning
         allowed_strategies = ["random", "max_increase"]
 

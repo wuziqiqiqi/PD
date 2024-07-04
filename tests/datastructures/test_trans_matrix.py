@@ -1,7 +1,7 @@
 import pytest
 import random
 import numpy as np
-from clease.datastructures import TransMatrix
+from cleases.datastructures import TransMatrix
 
 
 @pytest.fixture

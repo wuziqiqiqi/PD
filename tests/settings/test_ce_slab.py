@@ -2,13 +2,13 @@ import pytest
 import numpy as np
 import ase
 from ase.build import bulk
-from clease.settings.settings_slab import (
+from cleases.settings.settings_slab import (
     get_prim_slab_cell,
     add_vacuum_layers,
     remove_vacuum_layers,
     CESlab,
 )
-from clease.settings import settings_from_json, Concentration
+from cleases.settings import settings_from_json, Concentration
 
 
 @pytest.mark.parametrize(

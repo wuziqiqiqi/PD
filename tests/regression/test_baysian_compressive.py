@@ -2,7 +2,7 @@ from copy import deepcopy
 import pytest
 import numpy as np
 from scipy.special import polygamma
-from clease.regression import BayesianCompressiveSensing
+from cleases.regression import BayesianCompressiveSensing
 
 # Fix the seed to ensure consistent tests
 np.random.seed(0)

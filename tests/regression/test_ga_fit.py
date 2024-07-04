@@ -5,10 +5,10 @@ import numpy as np
 from ase.calculators.emt import EMT
 from ase.db import connect
 
-from clease.regression import GAFit, SaturatedPopulationError
-from clease.settings import CEBulk, Concentration
-from clease import NewStructures, Evaluate
-from clease.tools import update_db
+from cleases.regression import GAFit, SaturatedPopulationError
+from cleases.settings import CEBulk, Concentration
+from cleases import NewStructures, Evaluate
+from cleases.tools import update_db
 
 all_cost_funcs = ("bic", "aic", "aicc")
 

@@ -1,11 +1,10 @@
+from typing import Union, Sequence, Callable, List
 from tkinter import TclError
-from typing import Callable, List, Sequence, Union
-
+import numpy as np
 from ase.db import connect
 from ase.gui.gui import GUI
 from ase.gui.images import Images
 import attr
-import numpy as np
 
 
 @attr.define
@@ -206,6 +205,7 @@ class ShowStructureOnClick(InteractivePlot):
         return events
 
     def on_click(self, event) -> None:
+
         if not self.event_in_ax(event):
             return
 

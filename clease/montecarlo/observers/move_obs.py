@@ -1,12 +1,8 @@
 from __future__ import annotations
-
 from typing import Iterator, List
-
 import ase
-
-from clease.calculator import CleaseCacheCalculator
 from clease.datastructures import MCStep
-
+from clease.calculator import CleaseCacheCalculator
 from .mc_observer import MCObserver
 
 __all__ = ("MoveObserver",)
@@ -38,6 +34,9 @@ class MoveObserver(MCObserver):
             # Step was rejected, and we only want accepted steps
             return
         self.steps.append(mc_step)
+
+    def history(self):
+        return self.steps
 
     def reset(self) -> None:
         self.steps = []

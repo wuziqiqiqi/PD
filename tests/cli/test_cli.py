@@ -2,8 +2,8 @@ import subprocess
 from pathlib import Path
 import pytest
 from click.testing import CliRunner
-import clease
-from clease.cli.main import clease_cli
+import cleases
+from cleases.cli.main import clease_cli
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_entry_point():
 def test_version(run_cmd):
     opts = "--version"
     p = run_cmd(opts=opts)
-    assert str(clease.__version__) in p.stdout
+    assert str(cleases.__version__) in p.stdout
 
 
 def test_reconfigure(run_cmd, bc_setting):
@@ -75,7 +75,7 @@ def test_print_cluster_table(run_cmd, bc_setting, mocker):
 
 def test_info(run_cmd):
     p = run_cmd(opts="info")
-    assert str(clease.__version__) in p.stdout
+    assert str(cleases.__version__) in p.stdout
     assert "OpenMP" in p.stdout
     # Check we printed the location of the installation path
-    assert str(Path(clease.__file__).parent.resolve()) in p.stdout
+    assert str(Path(cleases.__file__).parent.resolve()) in p.stdout

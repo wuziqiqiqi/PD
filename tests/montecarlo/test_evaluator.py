@@ -1,9 +1,9 @@
 """Module for testing the MC Evaluator class"""
 import pytest
-from clease.settings import CEBulk, Concentration
-from clease.calculator import attach_calculator
-from clease.corr_func import CorrFunction
-from clease.montecarlo import construct_evaluator
+from cleases.settings import CEBulk, Concentration
+from cleases.calculator import attach_calculator
+from cleases.corr_func import CorrFunction
+from cleases.montecarlo import construct_evaluator
 
 
 @pytest.fixture

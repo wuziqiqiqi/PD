@@ -3,8 +3,8 @@ import pytest
 from pytest import approx
 
 import numpy as np
-from clease.settings import Concentration
-from clease.settings.concentration import InvalidConstraintError
+from cleases.settings import Concentration
+from cleases.settings.concentration import InvalidConstraintError
 
 
 @pytest.fixture

@@ -2,9 +2,9 @@ import random
 from collections import defaultdict
 import pytest
 import numpy as np
-from clease.settings import CEBulk, Concentration
-from clease.calculator.util import attach_calculator
-from clease.montecarlo import Montecarlo
+from cleases.settings import CEBulk, Concentration
+from cleases.calculator.util import attach_calculator
+from cleases.montecarlo import Montecarlo
 
 # Require the --openmp mark
 pytestmark = pytest.mark.openmp

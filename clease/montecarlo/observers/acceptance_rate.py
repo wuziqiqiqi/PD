@@ -1,5 +1,4 @@
 from typing import Dict
-
 from clease.datastructures import SystemChanges
 from clease.montecarlo.observers.mc_observer import MCObserver
 

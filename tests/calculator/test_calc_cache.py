@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from ase.build import bulk
 from ase.db import connect
-from clease.calculator import CleaseCacheCalculator
+from cleases.calculator import CleaseCacheCalculator
 from ase.calculators.singlepoint import SinglePointCalculator
 
 

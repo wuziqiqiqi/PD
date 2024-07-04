@@ -1,9 +1,9 @@
 from collections import Counter
 import pytest
 from ase.build import bulk
-from clease.cluster import ClusterManager
-from clease.datastructures.four_vector import FourVector
-from clease.tools import wrap_and_sort_by_position, get_size_from_cf_name
+from cleases.cluster import ClusterManager
+from cleases.datastructures.four_vector import FourVector
+from cleases.tools import wrap_and_sort_by_position, get_size_from_cf_name
 import numpy as np
 
 

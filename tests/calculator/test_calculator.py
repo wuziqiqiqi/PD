@@ -3,12 +3,12 @@ import numpy as np
 from ase.db import connect
 from ase.io import read
 from ase.calculators.calculator import PropertyNotImplementedError
-from clease.settings import Concentration, CEBulk
-from clease.corr_func import CorrFunction
-from clease.calculator import Clease, attach_calculator
-from clease.calculator.clease import UnitializedCEError
-from clease.datastructures import SystemChange
-from clease import tools
+from cleases.settings import Concentration, CEBulk
+from cleases.corr_func import CorrFunction
+from cleases.calculator import Clease, attach_calculator
+from cleases.calculator.clease import UnitializedCEError
+from cleases.datastructures import SystemChange
+from cleases import tools
 from clease_cxx import has_parallel
 
 

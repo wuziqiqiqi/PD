@@ -1,7 +1,7 @@
 import random
 import pytest
-from clease.corr_func import CorrFunction
-from clease.settings import CEBulk
+from cleases.corr_func import CorrFunction
+from cleases.settings import CEBulk
 
 
 @pytest.fixture

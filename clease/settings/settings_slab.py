@@ -1,9 +1,8 @@
-from typing import Optional, Sequence, Tuple, Union
-
+from typing import Union, Tuple, Optional, Sequence
+import numpy as np
 from ase import Atoms
 from ase.build import surface
 from ase.geometry import get_layers
-import numpy as np
 
 from clease.tools import make_supercell
 

@@ -1,13 +1,12 @@
 """Module for calculating correlation functions."""
+from typing import Iterator, Tuple, Dict, Any
 import logging
-from typing import Any, Dict, Iterator, Tuple
-
 from ase.atoms import Atoms
-from clease_cxx import PyCEUpdater
 
-from . import db_util
+from clease_cxx import PyCEUpdater
 from .settings import ClusterExpansionSettings
 from .tools import wrap_and_sort_by_position
+from . import db_util
 
 logger = logging.getLogger(__name__)
 __all__ = ("CorrFunction", "ClusterNotTrackedError")

@@ -3,8 +3,8 @@ import copy
 import pytest
 from ase.build import bulk
 import numpy as np
-from clease.cluster import Cluster, ClusterList, ClusterFingerprint
-from clease.jsonio import read_json
+from cleases.cluster import Cluster, ClusterList, ClusterFingerprint
+from cleases.jsonio import read_json
 
 
 @pytest.fixture

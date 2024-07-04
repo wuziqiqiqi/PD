@@ -1,15 +1,13 @@
-from abc import ABC, abstractmethod
-from collections import defaultdict
-from itertools import combinations_with_replacement as cwr
 import logging
+from typing import Tuple, List, Dict, Set, Optional, Sequence
+from collections import defaultdict
 import sqlite3
-from typing import Dict, List, Optional, Sequence, Set, Tuple
-
-from ase.db import connect
+from abc import ABC, abstractmethod
+from itertools import combinations_with_replacement as cwr
 import numpy as np
-
+from ase.db import connect
 from clease import db_util
-from clease.tools import add_file_extension, get_ids, sort_cf_names
+from clease.tools import add_file_extension, sort_cf_names, get_ids
 
 logger = logging.getLogger(__name__)
 
@@ -744,6 +742,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
 
         :param ids: List of ids to take into account
         """
+        # pylint: disable=too-many-statements, too-many-locals
         cf_getter = CorrelationFunctionGetter(
             self.db_name, self.tab_name, self.cf_names, order=self.cf_order
         )
@@ -872,6 +871,7 @@ class CorrelationFunctionGetterVolDepECI(DataManager):
             cur = db.connection.cursor()
             cur.execute(query)
             for value, db_id in cur.fetchall():
+
                 # Extract only the ones that are present in the set of ids
                 if db_id in ids:
                     id_key[db_id] = value

@@ -1,10 +1,7 @@
 from typing import Dict
-
 import ase
-
 from clease.datastructures import MCStep, SystemChanges
 from clease.montecarlo.averager import Averager
-
 from .mc_observer import MCObserver
 
 

@@ -1,24 +1,25 @@
 """Module for generating new structures."""
-from abc import ABC
-from copy import deepcopy
-import logging
-import math
 import os
+import math
 import time
+import logging
+from copy import deepcopy
+from abc import ABC
+
+import numpy as np
+from numpy.random import choice
+from numpy.linalg import inv, pinv
 
 from ase.db import connect
 from ase.io.trajectory import TrajectoryReader
-import numpy as np
-from numpy.linalg import inv, pinv
-from numpy.random import choice
 
-from clease.calculator import Clease
-from clease.corr_func import CorrFunction
-from clease.montecarlo import Montecarlo, TooFewElementsError
-from clease.montecarlo.constraints import ConstrainSwapByBasis
-from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
 from clease.settings import ClusterExpansionSettings
+from clease.corr_func import CorrFunction
 from clease.tools import wrap_and_sort_by_position
+from clease.calculator import Clease
+from clease.montecarlo import Montecarlo, TooFewElementsError
+from clease.montecarlo.observers import LowestEnergyStructure, Snapshot
+from clease.montecarlo.constraints import ConstrainSwapByBasis
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ __all__ = (
 )
 
 
+# pylint: disable=too-many-instance-attributes
 class StructureGenerator(ABC):
     """Base class for generating new strctures."""
 
@@ -167,9 +169,11 @@ class StructureGenerator(ABC):
 
     def _accept(self) -> bool:
         """Determine if we accept the last change."""
+        # pylint: disable=no-self-use
         return True
 
     def _estimate_temp_range(self):
+        # pylint: disable=no-self-use
         return 1.0, 1e5
 
     def _determine_temps(self):
@@ -353,6 +357,7 @@ class ProbeStructure(StructureGenerator):
         num_steps_per_temp=1000,
         approx_mean_var=False,
     ):
+
         StructureGenerator.__init__(
             self, settings, atoms, init_temp, final_temp, num_temp, num_steps_per_temp
         )

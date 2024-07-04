@@ -1,5 +1,5 @@
 import pytest
-from clease.regression import GeneralizedRidgeRegression, EigenDecomposition
+from cleases.regression import GeneralizedRidgeRegression, EigenDecomposition
 import numpy as np
 
 

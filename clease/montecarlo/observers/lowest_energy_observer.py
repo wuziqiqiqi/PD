@@ -1,11 +1,8 @@
 import logging
-
-import ase
 import numpy as np
-
-from clease.calculator import CleaseCacheCalculator
+import ase
 from clease.datastructures import MCStep
-
+from clease.calculator import CleaseCacheCalculator
 from .mc_observer import MCObserver
 
 logger = logging.getLogger(__name__)
@@ -33,6 +30,7 @@ class LowestEnergyStructure(MCObserver):
         self.atoms = atoms
         self.track_cf = track_cf
         self.verbose = verbose
+        # Silence pylint
         self.lowest_energy_cf = None
         self.reset()
 

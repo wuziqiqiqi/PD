@@ -6,9 +6,9 @@ import numpy as np
 from ase import Atoms
 from ase.build import bulk
 from ase.calculators.emt import EMT
-import clease
-from clease.datastructures import SystemChange
-from clease.montecarlo import Montecarlo, MCEvaluator
+import cleases
+from cleases.datastructures import SystemChange
+from cleases.montecarlo import Montecarlo, MCEvaluator
 
 
 @pytest.fixture
@@ -42,8 +42,8 @@ def test_emt_mc_implicit_evaluator(atoms):
         mc = Montecarlo(atoms, temp)
         mc.run(steps=5)
     # Check we created the correct type of evaluator
-    assert isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.MCEvaluator)
-    assert not isinstance(mc.evaluator, clease.montecarlo.mc_evaluator.CEMCEvaluator)
+    assert isinstance(mc.evaluator, cleases.montecarlo.mc_evaluator.MCEvaluator)
+    assert not isinstance(mc.evaluator, cleases.montecarlo.mc_evaluator.CEMCEvaluator)
     E1 = atoms.get_potential_energy()
 
     # Check the energy has changed

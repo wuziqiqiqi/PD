@@ -1,8 +1,8 @@
 from json import load
 import pytest
 import numpy as np
-from clease.datastructures import SystemChange, MCStep
-from clease.jsonio import read_json
+from cleases.datastructures import SystemChange, MCStep
+from cleases.jsonio import read_json
 
 
 @pytest.fixture

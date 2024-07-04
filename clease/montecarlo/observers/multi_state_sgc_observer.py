@@ -1,10 +1,7 @@
-from typing import Dict, List, Tuple
-
+from typing import List, Dict, Tuple
 from ase.units import kB
 import numpy as np
-
 from clease.calculator import Clease
-
 from .mc_observer import MCObserver
 
 

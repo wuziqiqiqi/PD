@@ -1,22 +1,22 @@
+# pylint: disable=too-many-lines
 """A collection of miscellaneous functions used for Cluster Expansion."""
-from collections.abc import Iterable
-from itertools import chain, combinations, filterfalse, permutations, product
+import re
 import logging
 from pathlib import Path
-import re
-from typing import Dict, List, Optional, Sequence, Set, Tuple, Union
+from itertools import permutations, combinations, product, filterfalse, chain
+from collections.abc import Iterable
+from typing import List, Optional, Tuple, Dict, Set, Sequence, Union
 from typing import Iterable as tIterable
-
+from typing_extensions import Protocol
+from packaging.version import Version, parse
+import numpy as np
+from numpy.random import sample, shuffle
 import ase
 import ase.build.supercells as ase_sc
 from ase.db import connect
 from ase.db.core import parse_selection
-import numpy as np
-from numpy.random import sample, shuffle
-from packaging.version import Version, parse
-from scipy.optimize import linprog
 from scipy.spatial import cKDTree as KDTree
-from typing_extensions import Protocol
+from scipy.optimize import linprog
 
 ASE_VERSION = parse(ase.__version__)
 
@@ -173,8 +173,8 @@ def update_db(
     uid_initial=None,
     final_struct=None,
     db_name=None,
-    custom_kvp_init: Optional[dict] = None,
-    custom_kvp_final: Optional[dict] = None,
+    custom_kvp_init: dict = None,
+    custom_kvp_final: dict = None,
 ):
     """Update the database.
 
@@ -270,6 +270,7 @@ def reconfigure(settings, **kwargs) -> None:
         settings (ClusterExpansionSettings):
             Instance of a cluster expansion settings object.
     """
+    # pylint: disable=import-outside-toplevel, cyclic-import
     from clease.corr_func import CorrFunction
     from clease.settings import ClusterExpansionSettings
 
@@ -930,7 +931,6 @@ def sort_cf_names(cf_names: tIterable[str]) -> List[str]:
     2. Diameter
     3. Lexicographical order of the name itself
     """
-
     # Helper sorting function to define the order of the sorting.
     def _sort_ordering(name: str):
         return get_size_from_cf_name(name), get_diameter_from_cf_name(name), name
@@ -1030,8 +1030,8 @@ def constraint_is_redundant(
     b_lb: np.ndarray,
     c_lb: np.ndarray,
     d: float,
-    A_eq: Optional[np.ndarray] = None,
-    b_eq: Optional[np.ndarray] = None,
+    A_eq: np.ndarray = None,
+    b_eq: np.ndarray = None,
 ) -> bool:
     """
     The method considers the following system
@@ -1065,10 +1065,7 @@ def constraint_is_redundant(
 
 
 def remove_redundant_constraints(
-    A_lb: np.ndarray,
-    b_lb: np.ndarray,
-    A_eq: Optional[np.ndarray] = None,
-    b_eq: Optional[np.ndarray] = None,
+    A_lb: np.ndarray, b_lb: np.ndarray, A_eq: np.ndarray = None, b_eq: np.ndarray = None
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Remove all redundant constraints from A_lb and b_lb.
@@ -1278,7 +1275,7 @@ def wrap_positions_3d(
     positions: np.ndarray,
     cell: np.ndarray,
     center=(0.5, 0.5, 0.5),
-    cell_T_inv: Optional[np.ndarray] = None,
+    cell_T_inv: np.ndarray = None,
     eps: float = 1e-7,
 ) -> np.ndarray:
     """Similar to the ase.geometry.wrap_positions but this implementation assumes that the

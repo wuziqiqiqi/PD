@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from clease.regression import PhysicalRidge
-from clease.regression.physical_ridge import random_cv_hyper_opt
+from cleases.regression import PhysicalRidge
+from cleases.regression.physical_ridge import random_cv_hyper_opt
 
 
 def test_size_from_name():

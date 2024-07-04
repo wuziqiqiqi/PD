@@ -1,7 +1,7 @@
 """Test case for the multiprocessing logger."""
 import pytest
 import multiprocessing as mp
-from clease.mp_logger import MultiprocessHandler
+from cleases.mp_logger import MultiprocessHandler
 import logging as lg
 import os
 
