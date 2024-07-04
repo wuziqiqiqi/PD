@@ -1,0 +1,9 @@
+ &funccard
+ atomtype='Au'
+ &end
+ &funccard
+ atomtype='Cu'
+ &end
+ &funccard
+ &end
+

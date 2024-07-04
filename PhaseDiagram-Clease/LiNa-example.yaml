@@ -1,0 +1,78 @@
+GroundStates: ['Li', 'Na']
+
+CLEASE:
+  Li:
+    CESettings:
+      crystalstructure: 'bcc'
+      a: 3.9
+      supercell_factor: 64
+      concentration: [['Li', 'Na']]
+      db_name: "LiNa/LiNa-formationE2.db"
+      max_cluster_dia: [7,7,7]
+
+    CEFitting:
+      scoring_scheme: "k-fold"
+      nsplits: 20
+      fitting_scheme: "l2"
+      regularization:
+        alpha_min: 0.000001
+        alpha_max: 10
+        num_alpha: 150
+      ECI_filename: "FROM DB"
+    
+  Na:
+    CESettings:
+      crystalstructure: 'bcc'
+      a: 3.9
+      supercell_factor: 64
+      concentration: [['Li', 'Na']]
+      db_name: "LiNa/LiNa-formationE2.db"
+      max_cluster_dia: [7,7,7]
+
+    CEFitting:
+      scoring_scheme: "k-fold"
+      nsplits: 20
+      fitting_scheme: "l2"
+      regularization:
+        alpha_min: 0.000001
+        alpha_max: 10
+        num_alpha: 150
+      ECI_filename: "FROM DB"
+
+LAMMPS:
+  lmpcmds: ["pair_style eim",
+        "pair_coeff * * Na Li EIM/ffield.eim Na Li"]
+  atom_types: {"Na":1, "Li":2}
+  keep_alive: True
+  log_file: "../LAMMPSLog.log"
+
+# LAMMPS:
+#   lmpcmds: ["pair_style meam",
+#          "pair_coeff * * ../MEAM/library.meam Li Mg ../MEAM/LiMg.meam Li Mg"]
+#   atom_types: {"Mg":1, "Li":2}
+#   keep_alive: True
+#   log_file: "../LAMMPSLog.log"
+
+# DFT:
+#   DFT_energy_file: "LiNa-demo-DFTresult.db"
+
+EMC:
+  DEBUG: 0
+  gs_db_names: ["LiNa/Li-gs.db", "LiNa/Na-gs.db"]
+  muInit: 0.5
+  muFinal: -0.5
+  dMu: 0.03
+  Temp: 1
+  error: 0.003
+
+PHB:
+  DEBUG: 1
+  gs0_db_name: "Na-gs.db"
+  gs1_db_name: "Li-gs.db"
+  TInit: 300
+  TFinal: 500 
+  dT: 5
+  muInit: -0.3
+  dMu: 0.01
+  error: 0.003
+

@@ -1,0 +1,23 @@
+units	metal
+atom_style	full
+
+read_data	initial-solid.data
+velocity	all create 300.0 1312343 dist gaussian
+
+pair_style	quip
+pair_coeff	* * /ocean/projects/cts180021p/wuziqi/clease/mint-PD/PhaseDiagram-Clease/Liquid/GAP_potential/gap_LiKCl.xml "Potential xml_label=GAP_2021_9_27_0_1_17_37_618" 17 19
+
+neighbor	0.3 bin
+neigh_modify	delay 10
+
+timestep	0.001
+compute	msd all msd
+thermo_style	custom step temp pe etotal press vol c_msd[4]
+thermo	10
+dump	1 all custom 10 xyz-npt.dump type id x y z
+dump	2 all custom 10 force-npt.dump type id fx fy fz
+
+fix	1 all npt temp 300.0 300.0 $(100.0*dt) aniso 1.01325 1.01325 $(1000.0*dt)
+run	5000
+
+write_data	structureA.data

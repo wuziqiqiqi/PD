@@ -1,0 +1,40 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.2.0
+    hooks:
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: trailing-whitespace # Remove trailing whitespaces
+      - id: end-of-file-fixer # Ensure we have newline at end of file
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        exclude: &exclude_files >
+          (?x)(
+            ^doc/|
+            ^tests/
+          )
+
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args: ["--rcfile=.pylintrc"]
+        exclude: *exclude_files
+
+  # C++ code formatter
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v14.0.3
+    hooks:
+      - id: clang-format
+        types_or: [c++, c, cuda]

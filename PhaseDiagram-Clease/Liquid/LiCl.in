@@ -1,0 +1,20 @@
+units		metal
+atom_style	full
+newton		off
+
+read_data	LiCl-solid.data
+#velocity	all create 300.0 1312343 dist gaussian
+
+pair_style	quip
+pair_coeff	* * gap_LiKCl.xml "Potential xml_label=GAP_2021_9_27_0_1_17_37_618" 3 17 19
+
+neighbor	0.3 bin
+neigh_modify	delay 10
+
+fix		1 all nve
+thermo		10
+timestep	0.001
+
+#dump		1 all custom 10 dump.gap type fx fy fz
+
+run		40

@@ -1,0 +1,72 @@
+from typing import Any, Iterable
+from functools import total_ordering
+import numpy as np
+import attr
+from clease.jsonio import jsonable, AttrSavable
+
+__all__ = ("ClusterFingerprint",)
+
+
+def _fingerprint_converter(x: Any) -> Any:
+    if isinstance(x, np.ndarray):
+        return x
+    if isinstance(x, Iterable):
+        x = np.array(x)
+    return x
+
+
+@jsonable("cluster_fingerprint")
+@total_ordering
+@attr.define(eq=False, order=False)
+class ClusterFingerprint(AttrSavable):
+    """Container for a Cluster Fingerprint."""
+
+    fp: np.ndarray = attr.field(
+        converter=_fingerprint_converter,
+        validator=attr.validators.instance_of(np.ndarray),
+    )
+    tol: float = attr.field(default=1e-9)
+
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, ClusterFingerprint):
+            return NotImplemented
+
+        self_len = len(self.fp)
+        other_len = len(other.fp)
+
+        if self_len < other_len:
+            return True
+        if self_len > other_len:
+            return False
+
+        diff = self.fp - other.fp
+        for value in diff:
+            if value < -self.tol:
+                return True
+            if value > self.tol:
+                return False
+
+        return False
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, ClusterFingerprint):
+            return NotImplemented
+
+        if len(self.fp) != len(other.fp):
+            return False
+        # Functionally equivalent to np.allclose(self.fp, other.fp, atol=self.tol, rtol=0)
+        # but ~10x faster.
+        return (np.abs(self.fp - other.fp) < self.tol).all()
+
+    def __getitem__(self, i):
+        return self.fp[i]
+
+    def __len__(self):
+        return len(self.fp)
+
+    @fp.validator
+    def _validate_fp(self, attribute, value) -> None:
+        """The Fingerprint must be a 1d array."""
+        # pylint: disable=unused-argument, no-self-use
+        if not value.ndim == 1:
+            raise ValueError(f"Fingerprint must be a 1d array, got {value.ndim}")

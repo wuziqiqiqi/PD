@@ -1,0 +1,2 @@
+/usr/bin/which: no fi_info in (/opt/packages/anaconda3-2022.10/bin:/opt/packages/anaconda3-2022.10/condabin:/opt/intel/oneapi/intelpython/latest/bin:/opt/intel/oneapi/intelpython/latest/condabin:/jet/home/wuziqi/.local/bin:/jet/home/wuziqi/bin:/opt/packages/psc.allocations.user/bin:/opt/packages/allocations/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/opt/packages/interact/bin:/opt/puppetlabs/bin)
+slurmstepd: error: *** JOB 23253466 ON v032 CANCELLED AT 2024-04-05T14:42:57 DUE TO TIME LIMIT ***

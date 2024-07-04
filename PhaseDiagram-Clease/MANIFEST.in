@@ -1,0 +1,13 @@
+global-include *.rst *.pyx *.pxd *.cpp *.hpp *.tpp *.kv *.png pyproject.toml
+include clease/_version.txt
+
+setup.py:
+
+'': ['data/*', '*.pyx', '*.pxd', '*.cpp', '*.hpp', '*.tpp', '*.kv', '*.png']
+
+# Remove .tox from the sdist
+prune .tox
+# Borrowed from NumPy
+# Exclude generated files
+prune */__pycache__
+global-exclude *.pyc *.pyo *.pyd *.swp *.bak *~

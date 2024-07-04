@@ -1,0 +1,19 @@
+## Usage Notes 
+
+### ML training dataset and potential 
+
+1) "POT/"
+
+### MD
+1. The full MD trajectory for the thermal conducitivity calculations can be found in "MD_WAVE_METHOD/"
+
+2. All the MD trajectories used for structure factor / CN estimation at  multiple composition / temperatures  can be foudn in "MD/". The ".tar.gz" file with '.extxyz' trajectory is according to the LiCl-KCl molar fraction followed by the temperature in K units.
+
+3. The "MD/" folder also the log files for two additional compositions (i.e. 30-70, & 80-20) and can be used to verify the density from volume relaxation. 
+
+
+### Misc. Info
+
+Molten LiCl as a system on its own is reported in https://pubs.acs.org/doi/abs/10.1021/acs.jpclett.1c00901 
+
+The potential provided in this data deposit does not include any pure LiCl melt training data. Hence should be used with caution at ultra low concentrations of LiCl.

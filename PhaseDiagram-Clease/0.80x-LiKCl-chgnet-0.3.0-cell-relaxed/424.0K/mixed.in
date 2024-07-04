@@ -1,0 +1,26 @@
+read_restart    ../structure.ready
+
+pair_style      chgnet/gpu /nfs/turbo/coe-venkvis/ziqiw-turbo/LAMMPSs/lammps-ASC/potentials/CHGNET
+pair_coeff      * * 0.3.0 Cl K Li
+
+neighbor        0.3 bin
+neigh_modify    delay 10
+
+timestep	    0.001
+compute	        msd all msd
+thermo_style	custom step temp pe etotal press vol c_msd[4]
+thermo	        10
+dump	        1 all custom 10 xyz-mix.dump type id x y z
+dump	        2 all custom 10 force-mix.dump type id fx fy fz
+
+fix             3 gLiquid npt temp 1500 424.0 $(100.0*dt) z 1.01325 1.01325 $(1000.0*dt) couple none
+run             10000
+unfix           3
+
+fix             4 all npt temp 424.0 424.0 $(100.0*dt) aniso 1.01325 1.01325 $(1000.0*dt)
+run             30000
+unfix           4
+
+write_data      structure.end.data
+write_restart   structure.end
+                    
