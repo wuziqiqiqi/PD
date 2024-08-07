@@ -24,8 +24,11 @@ class MCEvaluator:
 
     def __init__(self, atoms: Atoms):
         self._atoms = atoms
-        self.gsE0 = atoms.info["gsE"][0]
-        self.gsE1 = atoms.info["gsE"][1]
+        # self.gsE0 = atoms.info["gsE"][0]
+        # self.gsE1 = atoms.info["gsE"][1]
+        self.gsE0 = 0
+        self.gsE1 = 0
+        
 
     @property
     def atoms(self):

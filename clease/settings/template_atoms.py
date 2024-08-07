@@ -226,7 +226,7 @@ class TemplateAtoms:
         large_cell = atoms.get_cell()
         size_factor = large_cell.dot(inv_cell)
         scale_int = size_factor.round(decimals=0).astype(int)
-        if np.allclose(size_factor, scale_int):
+        if np.allclose(size_factor, scale_int, atol=1e-4):
             check_valid_conversion_matrix(scale_int)
             return scale_int.tolist()
 
@@ -234,6 +234,8 @@ class TemplateAtoms:
             f"The passed atoms object cannot be described by "
             f"repeating of the unit cells. Scale factors found "
             f"{size_factor}"
+            f"diff = "
+            f"{size_factor - scale_int}"
         )
 
     def get_all_templates(self) -> List[ase.Atoms]:

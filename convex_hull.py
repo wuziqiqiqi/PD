@@ -6,7 +6,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import os
 
-chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/06-30-2024/bestE_epoch571_e1_f8_s9_mNA.pth.tar")
+# chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/06-30-2024/bestE_epoch571_e1_f8_s9_mNA.pth.tar")
+chgnet = CHGNet.load()
 chgnetCalc = CHGNetCalculator(model=chgnet)
 
 bccDB = connect("/nfs/turbo/coe-venkvis/ziqiw-turbo/DFT/LiMg/LiMg-Jun27-bcc.db")
@@ -105,5 +106,6 @@ plt.plot(hcpX, hcpFormationEPA, 'o')
 # plt.ylim([np.min(bccFormationEPA[bccX <= 1]), np.max(bccFormationEPA[bccX <= 1])])
 # plt.legend(["bcc", "hcp"])
 # plt.title("HCP LiMg")
-plt.savefig("convex_hull.png")
+# plt.savefig("convex_hull.png")
+plt.show()
     

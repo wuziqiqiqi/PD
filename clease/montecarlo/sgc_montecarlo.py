@@ -135,7 +135,7 @@ class SGCMonteCarlo(Montecarlo):
             self.chem_pots.append(chem_pot[key])
             self.chem_pot_names.append(key)
             current_eci = eci.get(key, 0.0)
-            eci[key] = current_eci - chem_pot[key]
+            eci[key] = current_eci - chem_pot[key] #TODO check if this is okay? since x may need to be in the range of 0-1
         calc = self.calc
         calc.update_eci(eci)
         self.chem_pot_in_eci = True

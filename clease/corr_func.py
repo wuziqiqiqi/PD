@@ -2,6 +2,7 @@
 from typing import Iterator, Tuple, Dict, Any
 import logging
 from ase.atoms import Atoms
+from ase.visualize import view
 
 from clease_cxx import PyCEUpdater
 from .settings import ClusterExpansionSettings

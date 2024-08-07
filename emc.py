@@ -38,7 +38,7 @@ from pymatgen.core import Structure
 
 from drawpd import LTE, MF
 
-kB = 8.617333262e-5
+kB = 8.617333262e-5 * 0.0433634 * 1e10
 np.set_printoptions(precision=3, suppress=True)
 
 """
@@ -106,89 +106,6 @@ if "LAMMPS" in options:
         from ase.calculators.lammpslib import LAMMPSlib
         print("LAMMPS calc!")
         ASElammps = LAMMPSlib(**options["LAMMPS"])
-
-# cmds = ["pair_style eam/alloy",
-#         "pair_coeff * * AuCu_Zhou04.eam.alloy Cu Au"]
-
-# ASElammps = LAMMPSlib(lmpcmds=cmds, keep_alive=True, log_file=os.path.join(rootDir, "LAMMPSlog.log"))
-# cmds = ["pair_style eim",
-#         "pair_coeff * * Na Li /Users/Michael_wang/Documents/venkat/cleaseASEcalc/ffield.eim Na Li"]
-# rootDir = "/Users/Michael_wang/Documents/venkat/cleaseASEcalc/LiNa"
-# ASElammps = LAMMPSlib(lmpcmds=cmds, keep_alive=True, log_file=os.path.join(rootDir, "LAMMPSlog.log"))
-
-# cmds = ["pair_style meam",
-#         "pair_coeff * * /Users/Michael_wang/Documents/venkat/MEAM/library.meam Li Mg /Users/Michael_wang/Documents/venkat/MEAM/LiMg.meam Li Mg"]
-# rootDir = "/Users/Michael_wang/Documents/venkat/cleaseASEcalc/LiMg"
-# ASElammps = LAMMPSlib(lmpcmds=cmds, atom_types={'Li':1, 'Mg':2}, keep_alive=True, log_file=os.path.join(rootDir, "LAMMPSlogMg.log"))
-# lmp = lammps()
-
-# print(ASElammps, lmp)
-
-
-# conc = Concentration(basis_elements=[['Li', 'Mg']])
-# db_name = "LiMg/LiMg-Sep8-first-Batch-hcp.db"
-# MCsettings = CEBulk(crystalstructure='hcp',
-#                   a=3.17,
-#                   c=5.14,
-#                   supercell_factor=64,
-#                   concentration=conc,
-#                   db_name=db_name,
-#                   max_cluster_dia=[5.5,5.5,5.5],
-#                   basis_func_type="polynomial")
-# with open(db_name + "-eci.json") as f:
-#     eci = json.load(f)
-
-# conc = Concentration(basis_elements=[['Li', 'Mg']])
-# db_name = "LiMg/LiMg-Sep8-first-Batch-bcc.db"
-# MCsettings = CEBulk(crystalstructure='bcc',
-#                   a=4.33,
-#                   supercell_factor=64,
-#                   concentration=conc,
-#                   db_name=db_name,
-#                   max_cluster_dia=[7,7,7],
-#                   basis_func_type="polynomial")
-# with open(db_name + "-eci.json") as f:
-#     eci = json.load(f)
-
-# db_name = "LiNa-demo.db"
-# conc = Concentration(basis_elements=[['Li', 'Na']])
-
-# MCsettings = CEBulk(crystalstructure='bcc',
-#                   a=3.9,
-#                   supercell_factor=64,
-#                   concentration=conc,
-#                   db_name=db_name,
-#                   max_cluster_dia=[7,7,7],
-#                   basis_func_type="polynomial")
-# with open("LiNa-eci.json") as f:
-#     eci = json.load(f)
-
-# conc = Concentration(basis_elements=[['Au', 'Cu']])
-
-# curr_db_name = "aucuEAMUnrelaxed.db"
-# MCsettings = CEBulk(crystalstructure='fcc',
-#                   a=3.8,
-#                   supercell_factor=27,
-#                   concentration=conc,
-#                   db_name=curr_db_name,
-#                   max_cluster_dia=[6.5, 4.0, 4.0])
-# with open('aucu-Mar17.db-eci.json') as f:
-#     eci = json.load(f)
-# with open('aucu-May31.db-eci.json') as f:
-#     eci = json.load(f)
-
-# curr_db_name = "toy-fero.db"
-# MCsettings = CEBulk(crystalstructure='sc',
-#                   a=3,
-#                   supercell_factor=64,
-#                   concentration=conc,
-#                   db_name=curr_db_name,
-#                   max_cluster_dia=[4,4,4],
-#                   basis_func_type="polynomial")
-# bf_ls = MCsettings.basis_functions
-# print(bf_ls)
-# with open('toy-fero-eci.json') as f:
-#     eci = json.load(f)
 
 # from clease.tools import species_chempot2eci
 # eci = species_chempot2eci(bf_list=bf_ls, species_chempot={"Cu":-1, "H":2, "O":3.33})
@@ -306,7 +223,7 @@ def generate_gs_structures(MCsettings, eci, starting=None, startConc=np.array([0
 # exit(0)
 
 def get_conc(atoms):
-    return np.sum(atoms.numbers == 3) / len(atoms.numbers) * 2 - 1
+    return np.sum(atoms.numbers == 3) / len(atoms) * 2 - 1
 
 def plot_stuff(x, stuff, myTitle = None, breakingpt = None):
     for i, s in enumerate(stuff):
@@ -855,7 +772,8 @@ def get_spin_change(n_sites, steps):
 # print(critialIdx)
 
 # exit(0)
-chgnet = CHGNet.load()
+# chgnet = CHGNet.load()
+# exit(0)
 
 GroundStates = options["GroundStates"]
 gs_db_names = options["EMC"]["gs_db_names"]
@@ -894,11 +812,13 @@ for gsIdx, gs_name in enumerate(GroundStates):
     gs05 = None
     for row in db.select(""):
         gs05 = row.toatoms()
+        
+    print(gs05)
 
-    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
     # gs05.calc = EAM(potential='AuCu_Zhou04.eam.alloy')
     # gs05.calc = ASElammps
-    gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = CHGNetCalculator(model=chgnet)
     
     gsE[gsIdx] = gs05.get_potential_energy()/len(gs05)
 
@@ -937,17 +857,25 @@ for gsIdx, gs_name in enumerate(GroundStates):
     for row in db.select(""):
         gs05 = row.toatoms()
 
-    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
     # gs05.calc = EAM(potential='AuCu_Zhou04.eam.alloy')
     # gs05.calc = ASElammps
-    gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = CHGNetCalculator(model=chgnet)
     
+    
+    tmpLi = gs05.copy()
+    tmpLi.calc = gs05.calc
+    tmpLi.numbers[:] = 3
+    gsE[0] = tmpLi.get_potential_energy()/len(tmpLi)
+    tmpLi.numbers[:] = 12
+    gsE[1] = tmpLi.get_potential_energy()/len(tmpLi)
+    gsE = [0,0]
+        
     gs05.info["gsE"] = gsE
     gs05.set_initial_charges(np.zeros(gs05.numbers.shape))
 
     # view(gs05)
-
-
+    
     # ts = time.time()
     # for i in range(int(1e8)):
     #     # print("gs atom E:", gs05.get_potential_energy())
@@ -997,9 +925,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
     if gsIdx == 0:
         mus = np.arange(muInit, muFinal+dMu*1e-5, dMu)
     elif gsIdx == 1:
-        muTmp = muInit
-        muInit = muFinal
-        muFinal = muTmp
+        muInit, muFinal = muFinal, muInit
         dMu = -dMu
         mus = np.arange(muInit, muFinal+dMu*1e-5, dMu)
 
@@ -1069,7 +995,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
     # muTable = np.zeros((iRange, jRange))
     deltSpinDetecter = np.zeros((iRange, jRange))
     phiTable[0, 0] = phi_lte
-    systemSize = len(gs05.numbers)
+    systemSize = len(gs05)
     timeStarted = time.time()
     
     # myTraj = []
@@ -1096,11 +1022,19 @@ for gsIdx, gs_name in enumerate(GroundStates):
             # eq = ema_equilibrium_detector(prec=2e-6, nb=5000)
 
             """uncomment below for real runs"""
+            # exprimentMu = 20000
             # run until converge
             for i in range(MaxIterNum):
                 if not i % 100000:
                     print(i)
+                # if exprimentMu < -20000:
+                #     plt.plot(E)
+                #     plt.show()
+                #     exit()
+                
                 mcSGC.run(steps=100, chem_pot={'c1_0': mu})
+                # print(f"mu = {mu}")
+                # exprimentMu -= 500
                 # myTraj.append(gs05.copy())
                 currE = mcSGC.get_thermodynamic_quantities()['sgc_energy']
                 # singE.append(mcSGC.get_thermodynamic_quantities()['singlet_energy'])
@@ -1112,10 +1046,12 @@ for gsIdx, gs_name in enumerate(GroundStates):
 
                 if not i % avgWindowWidth:
                     avgRecorder.append(np.average(E[-100:]))
-
+                    
                 # if converged, save qautities of interest, get ready to integrate
                 if eq.new_data(POI=currX, other=currE) or i == MaxIterNum-1:
                 # if i > 2000 or i == MaxIterNum - 1:
+                    # plt.plot(E)
+                    
                     print("converged after: ", i)
                     ###############################################
                     # print("mu = ", mu, "x = ", eq.get_POI())
@@ -1154,6 +1090,10 @@ for gsIdx, gs_name in enumerate(GroundStates):
                     for (a, b) in zip(tmpNum, gs05.numbers):
                         assert a == b
                     # exit()
+                    # print(np.mean(E), eq.get_other()/systemSize)
+                    # plt.plot(eq.get_other(), 'o')
+                    # plt.show()
+                    
                     break
             
             # write(gs_name + str(mu) + ".xyz", myTraj)
@@ -1209,9 +1149,12 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 else:
                     prevB = 1/kB/(temp - dT)
                     currB = 1/kB/temp
+                    # phiTable[i_tmp, j_tmp] = (phiTable[i_tmp, j_tmp-1]*prevB
+                    #                         + (ETable[i_tmp, j_tmp] - actual_mu * XTable[i_tmp, j_tmp]
+                    #                             + ETable[i_tmp, j_tmp-1] - actual_mu * XTable[i_tmp, j_tmp-1])
+                    #                         * (currB - prevB) / 2) / currB
                     phiTable[i_tmp, j_tmp] = (phiTable[i_tmp, j_tmp-1]*prevB
-                                            + (ETable[i_tmp, j_tmp] - actual_mu * XTable[i_tmp, j_tmp]
-                                                + ETable[i_tmp, j_tmp-1] - actual_mu * XTable[i_tmp, j_tmp-1])
+                                            + (ETable[i_tmp, j_tmp] + ETable[i_tmp, j_tmp-1])
                                             * (currB - prevB) / 2) / currB
             else:
                 # if j_tmp == 0, we need to integrate from a previous T of the same µ
@@ -1249,6 +1192,10 @@ for gsIdx, gs_name in enumerate(GroundStates):
             break
         gs05 = attach_calculator(MCsettings, atoms=prevGs05.copy(), eci=eci)
         # gs05 = prevGs05.copy()
+        # gs05.calc = ASElammps
+        # gs05.calc.reset()
+        gs05.info["gsE"] = gsE
+        gs05.set_initial_charges(np.zeros(gs05.numbers.shape))
 
         old_spins = np.copy(gs05.numbers)
 
@@ -1278,9 +1225,15 @@ for gsIdx, gs_name in enumerate(GroundStates):
     np.save("300-900-phiTable-" + gs_name + ".npy", phiTable)
 
     plt.figure(1)
-    plt.plot(mus, phiTable[:,-1], '-o')
+    plt.plot(mus, phiTable[-1], '-o')
+    # plt.plot(Ts, phiTable[:,0], '-o')
+    plt.title(gs_name)
+    # plt.show()
     plt.figure(2)
-    plt.plot(mus, XTable[:,-1], '-o')
+    plt.plot(mus, XTable[-1], '-o')
+    # plt.plot(Ts, XTable[:,0], '-o')
+    plt.title(gs_name)
+    # plt.show()
 
 
 # exit(0)
@@ -1295,12 +1248,13 @@ print("walltime:", timeEnded - timeStarted)
 # plt.plot(mus, XTable[0], '-o')
 # plt.vlines(mus[critialIdx], 0, 1)
 plt.figure(1)
-plt.title("Plot to set mu")
-plt.xlabel("mu")
+plt.title("phi vs T")
+plt.xlabel("T")
 plt.ylabel("phi")
+plt.legend(["BCC", "HCP"])  
 # plt.xlim([-0.25, 0.25])
 # plt.ylim([-0.5, 0])
-plt.savefig('mu_phi.png')
+plt.savefig('T_phi.png')
 
 plt.figure(2)
 plt.xlabel("mu")

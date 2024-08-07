@@ -82,13 +82,21 @@ class Montecarlo(BaseMC):
 
     def update_current_energy(self) -> None:
         self.current_energy = self.evaluator.get_energy()
+        # self.current_energy = self.evaluator.get_energy() + ((np.sum(self.atoms.numbers == 3)/len(self.atoms)) - 1)*self.chem_pots[0]
+        
+        
+        ##################################### CHEAT CODE ###################################
+        # self.current_energy = self.current_energy / 100
+        
+        
         self.current_energy += sum(
             bias.calculate_from_scratch(self.atoms) for bias in self.bias_potentials
         )
         if not isinstance(self.atoms.calc, Clease):
             if isinstance(self.generator, RandomFlip):
                 if len(self.chemical_potential):
-                    self.current_energy -= self.chemical_potential['c1_0']* ((np.sum(self.atoms.numbers == 3)/len(self.atoms.numbers))*2-1)
+                    # TODO: For sgc_E > 0, when mu < 0, x > 0, which maybe not the case for this
+                    self.current_energy -= self.chemical_potential['c1_0']* ((np.sum(self.atoms.numbers == 3)/len(self.atoms.numbers))) * 216
         logger.debug("Updating current energy to %s", self.current_energy)
         self.evaluator.reset()
 

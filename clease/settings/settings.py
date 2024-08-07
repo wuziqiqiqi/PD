@@ -12,6 +12,8 @@ import numpy as np
 from ase import Atoms
 from ase.db import connect
 from ase.db.core import Database
+from ase.visualize import view
+from ase.data import chemical_symbols
 
 from clease.version import __version__
 from clease.jsonio import jsonable
@@ -477,7 +479,6 @@ class ClusterExpansionSettings:
             template = self.template_atoms.weighted_random_template()
 
         template = wrap_and_sort_by_position(template)
-
         if atoms is not None:
             # Check that the positions of the generated template
             # matches the ones in the passed object
@@ -485,8 +486,10 @@ class ClusterExpansionSettings:
             if not np.allclose(template.get_positions(), atoms.get_positions()):
                 raise ValueError(
                     f"Inconsistent positions. Passed object\n"
-                    f"{atoms.get_positions()}\nGenerated template"
+                    f"{atoms.get_positions()}\nGenerated templateeeeee"
                     f"\n{template.get_positions()}"
+                    f"\nDifference are:\n"
+                    f"{atoms.get_positions() - template.get_positions()}"
                 )
         self.prepare_new_active_template(template)
 

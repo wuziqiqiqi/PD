@@ -22,7 +22,7 @@ class LTE:
         """
         self.gs_atom = atom
         self.N = len(atom)
-        self.x = np.sum(self.gs_atom.numbers == 3)/self.N*2-1
+        self.x = np.sum(self.gs_atom.numbers == 3)/self.N
         self.gsE0 = atom.info["gsE"][0]
         self.gsE1 = atom.info["gsE"][1]
         NLi = np.sum(self.gs_atom.numbers == 3)
@@ -49,17 +49,26 @@ class LTE:
 
 
     def get_E(self, T, mu):
+        """
+        kjhkjhkhj
+        """
         # view(self.gs_atom)
         phi = self.gs_E - mu * self.x
-        print("phi0 = ", phi)
+        print("phi0 = ", phi, "mu = ", mu)
         kb = 8.617333262e-5
         beta = 1/kb/T
         for i in range(self.N):
             # alter one spin
             currSpecies = self.gs_atom.numbers[i]
-            if currSpecies == 3: self.gs_atom.numbers[i] = 12
-            if currSpecies == 12: self.gs_atom.numbers[i] = 3
+            if currSpecies == 3: 
+                self.gs_atom.numbers[i] = 12
+                dEta = -1
+            if currSpecies == 12: 
+                self.gs_atom.numbers[i] = 3
+                dEta = 1
 
+            # relax???
+            
             NLi = np.sum(self.gs_atom.numbers == 3)
             NMg = len(self.gs_atom.numbers) - NLi
             if self.formation:
@@ -74,10 +83,10 @@ class LTE:
             # newE = tmp.get_potential_energy() - ((self.x+1)/2 * self.Li + (1-(self.x+1)/2) * self.Mg) * self.N
             dE = newE - self.gs_E * self.N  # or the other way around? NO! LOL
             # dEta = np.sum(self.gs_atom.numbers == 11) - self.x * self.N
-            if mu > 0:
-                dEta = -1
-            else:
-                dEta = 1
+            # if mu > 0:
+            #     dEta = -1
+            # else:
+            #     dEta = 1
             # dEta = 1
 
             tmp = (mu * dEta - dE) * beta
@@ -86,7 +95,7 @@ class LTE:
 
             phi -= np.exp(tmp)/beta/self.N
             
-            print(f"newE = {newE}, dE = {dE}, tmp = {tmp}, phi = {phi}")
+            print(f"newE = {newE}, dE = {dE}, tmp = {tmp}, phi = {phi}, dphi = {np.exp(tmp)/beta/self.N}")
 
             # reset
             self.gs_atom.numbers[i] = currSpecies
