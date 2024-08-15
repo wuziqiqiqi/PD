@@ -26,7 +26,7 @@ from ase.data import atomic_numbers
 from ase.io.trajectory import TrajectoryWriter
 from ase.io import write, read
 from ase.units import kB
-from ase.optimize import BFGS
+from ase.optimize import FIRE
 from ase.constraints import UnitCellFilter
 
 from clease.settings import Concentration
@@ -328,7 +328,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
     
     gs05.calc = ASElammps
     ucf = UnitCellFilter(gs05)
-    opt = BFGS(ucf)
+    opt = FIRE(ucf)
     opt.run(fmax=0.02)
     
     gsE[gsIdx] = gs05.get_potential_energy()/len(gs05)
@@ -445,10 +445,10 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 
                 # calculate the energy for the old strucutre
                 ucf = UnitCellFilter(gs05)
-                opt = BFGS(ucf, logfile=None)
+                opt = FIRE(ucf, logfile=None)
                 converged = opt.run(fmax=0.02, steps=500)
                 if not converged:
-                    print(f"BFGS MAXSTEP REACHED at {i} for oldE!!!")
+                    print(f"FIRE MAXSTEP REACHED at {i} for oldE!!!")
                 currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
                 oldSysXyz = gs05.positions.copy()
                 # randomly flip one
@@ -460,7 +460,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 # calculate the new energy
                 converged = opt.run(fmax=0.02, steps=500)
                 if not converged:
-                    print(f"BFGS MAXSTEP REACHED at {i} for newE!!!")
+                    print(f"FIRE MAXSTEP REACHED at {i} for newE!!!")
                 currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
                 # temporarily accept the new energy
                 currE = currNewE

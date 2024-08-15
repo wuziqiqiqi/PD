@@ -1,7 +1,7 @@
 import numpy as np
 from clease.calculator import attach_calculator
 from ase.visualize import view
-from ase.optimize import BFGS
+from ase.optimize import FIRE
 from ase.constraints import UnitCellFilter
 
 class LTE:
@@ -33,7 +33,7 @@ class LTE:
         # else:
         #     self.gs_atom.numbers[:] = 3
         ucf = UnitCellFilter(atom)
-        opt = BFGS(ucf)
+        opt = FIRE(ucf)
         opt.run(fmax=0.02)        
         if self.formation:
             self.gs_E = atom.get_potential_energy()/len(atom)
@@ -43,7 +43,7 @@ class LTE:
         # tmp = atom.copy()
         # tmp.calc = self.myCalc
         # ucf = UnitCellFilter(tmp)
-        # opt = BFGS(ucf, logfile=None)
+        # opt = FIRE(ucf, logfile=None)
         # opt.run(fmax=0.02)
         # print(atom.get_potential_energy()/self.N, "################")
         # self.gs_E = tmp.get_potential_energy()/self.N - (self.x+1)/2 * self.Li - (1-(self.x+1)/2) * self.Mg
@@ -70,7 +70,7 @@ class LTE:
             tmp = self.gs_atom.copy()
             tmp.calc = self.gs_atom.calc
             ucf = UnitCellFilter(tmp)
-            opt = BFGS(ucf)
+            opt = FIRE(ucf)
             opt.run(fmax=0.02)
             
             NLi = np.sum(self.gs_atom.numbers == 3)
@@ -82,7 +82,7 @@ class LTE:
             # tmp = self.gs_atom.copy()
             # tmp.calc = self.myCalc
             # ucf = UnitCellFilter(tmp)
-            # opt = BFGS(ucf, logfile=None)
+            # opt = FIRE(ucf, logfile=None)
             # opt.run(fmax=0.02)
             # newE = tmp.get_potential_energy() - ((self.x+1)/2 * self.Li + (1-(self.x+1)/2) * self.Mg) * self.N
             dE = newE - self.gs_E * self.N  # or the other way around? NO! LOL

@@ -3,7 +3,7 @@
 #SBATCH -J emc # Job name
 #SBATCH -n 1 # Number of total cores
 #SBATCH -N 1 # Number of nodes
-#SBATCH --time=00-8:00:00
+#SBATCH --time=02-00:00:00
 #SBATCH -p venkvis-cpu
 #SBATCH --mem=2000 # Memory pool for all cores in MB
 #SBATCH -e outNerr/emc_%A_%a.err #change the name of the err file 
