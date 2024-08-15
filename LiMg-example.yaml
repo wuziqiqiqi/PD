@@ -71,11 +71,11 @@ EMC:
   gs_db_names: ["LiMg/Li-gs.db", "LiMg/Mg-gs.db"]
   muInit: 0.3
   muFinal: -0.3
-  dMu: 10.015
+  dMu: 0.06
   # Temp: 200
   TInit: 100
-  TFinal: 300
-  dT: 40
+  TFinal: 800
+  dT: 35
   error: 0.003
 
 PHB:

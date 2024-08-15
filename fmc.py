@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/nfs/turbo/coe-venkvis/ziqiw-turbo/PD/solid/clease")
+sys.path.append("/nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD/clease")
 
 import json
 import logging
@@ -7,6 +7,8 @@ import sys, os, time
 import yaml
 import math
 import random
+import time
+import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,6 +26,8 @@ from ase.data import atomic_numbers
 from ase.io.trajectory import TrajectoryWriter
 from ase.io import write, read
 from ase.units import kB
+from ase.optimize import BFGS
+from ase.constraints import UnitCellFilter
 
 from clease.settings import Concentration
 from clease.structgen import NewStructures
@@ -43,6 +47,38 @@ from drawpd import LTE, MF
 
 def get_conc(atoms):
     return np.sum(atoms.numbers == 3) / len(atoms)
+
+def generateBatchInput(input, Ts):
+    slurm_script = f"""#!/bin/bash
+#SBATCH --array=0-{len(Ts)-1}   # Array index range
+#SBATCH -J emc_%a # Job name
+#SBATCH -n 1 # Number of total cores
+#SBATCH -N 1 # Number of nodes
+#SBATCH --time=00-8:00:00
+#SBATCH -p venkvis-cpu
+#SBATCH --mem=2000 # Memory pool for all cores in MB
+#SBATCH -e outNerr/emc_%A_%a.err #change the name of the err file 
+#SBATCH -o outNerr/emc_%A_%a.out # File to which STDOUT will be written %j is the job #
+
+source /nfs/turbo/coe-venkvis/ziqiw-turbo/.bashrc
+conda activate /nfs/turbo/coe-venkvis/ziqiw-turbo/conda/casm
+cd /nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD
+
+# Define the array of custom values
+VALUES=({" ".join(map(str, Ts))})
+
+# Get the value corresponding to the current task ID
+MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
+
+echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
+
+# Example: Run a Python script with the selected value
+python fmc.py --input="{input}" --batch=true --init=false --temp=$MY_VALUE
+"""
+
+    with open(f"runBatch.sh", 'w') as f:
+        f.write(slurm_script)
+    
 
 class equilibrium_detector:
     def __init__(self, granularity, nb_bins, prec, patience):
@@ -198,11 +234,51 @@ class equilibrium_detector:
         return self.converged
 
 
-# kB = 8.617333262e-5 * 0.0433634 * 1e10
-np.set_printoptions(precision=3, suppress=True)
 
-with open('LiMg-example.yaml', 'r') as file:
+parser = argparse.ArgumentParser(description="Process some command-line arguments.")
+
+# Add the arguments
+parser.add_argument('-i', '--input', type=str, default='LiNa-example.yaml', help='input yaml filename')
+parser.add_argument('-b', '--batch', type=str, default='False', help='Set a (default: True)')
+parser.add_argument('--init', type=str, default='True', help='Set b (default: True)')
+parser.add_argument('-t', '--temp', type=str, default='', help='temperature needed if init=false')
+
+# Parse the arguments
+args = parser.parse_args()
+
+# Access the values
+inputFileName = args.input
+
+if args.batch.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']:
+    batchMode = True
+    if args.init.lower() in ['true', '1', 't', 'y', 'yes', 'yeah', 'yup', 'certainly', 'uh-huh']:
+        batchInit = True
+        os.makedirs(f"{inputFileName[:-5]}-reuslt", exist_ok=True)
+        batchTemp = ''
+    elif args.init.lower() in ['false', '0', 'f', 'n', 'no', 'nope', 'nah', 'never']:
+        batchInit = False
+        try:
+            _ = float(args.temp)
+            batchTemp = args.temp
+        except:
+            raise ValueError(f"Invalid value for temp: {args.temp}")
+    else:
+        raise ValueError(f"Invalid value for batch init: {args.init}")
+elif args.batch.lower() in ['false', '0', 'f', 'n', 'no', 'nope', 'nah', 'never']:
+    batchMode = False
+    batchInit = True
+    batchTemp = ''
+else:
+    raise ValueError(f"Invalid value for batch mode: {args.batch}")
+
+
+# kB = 8.617333262e-5 * 0.0433634 * 1e10
+np.set_printoptions(precision=7, suppress=True)
+
+with open(inputFileName, 'r') as file:
     options = yaml.safe_load(file)
+    
+print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
 DEBUG = options["EMC"]["DEBUG"]
 
@@ -214,13 +290,51 @@ if "LAMMPS" in options:
 GroundStates = options["GroundStates"]
 gs_db_names = options["EMC"]["gs_db_names"]
 muInit, muFinal = options["EMC"]["muInit"], options["EMC"]["muFinal"]
-dMu = options["EMC"]["dMu"]
+
+if batchMode and batchInit:
+    dMu = 1e10
+else:
+    dMu = options["EMC"]["dMu"]
 
 dMu = abs(dMu)
 if (muFinal - muInit)*dMu < 0:
     dMu = -dMu
 
 gsE = [0,0]
+for gsIdx, gs_name in enumerate(GroundStates):
+    db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
+    conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
+
+    tmp = basis_elements=options["CLEASE"][gs_name]["CESettings"].copy()
+    tmp['concentration'] = conc
+    MCsettings = CEBulk(**tmp)
+
+    eciName = options["CLEASE"][gs_name]["CEFitting"]["ECI_filename"]
+    if eciName == "FROM DB":
+        with open(db_name + "-eci.json") as f:
+            eci = json.load(f)
+    else:
+        with open(eciName) as f:
+            eci = json.load(f)
+
+    db = connect(gs_db_names[gsIdx])
+    gs05 = None
+    for row in db.select(""):
+        gs05 = row.toatoms()
+    
+    # gs05.set_cell(gs05.cell*1.1, scale_atoms=True)
+    
+    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    
+    gs05.calc = ASElammps
+    ucf = UnitCellFilter(gs05)
+    opt = BFGS(ucf)
+    opt.run(fmax=0.02)
+    
+    gsE[gsIdx] = gs05.get_potential_energy()/len(gs05)
+    
+startt = time.time()
+
 for gsIdx, gs_name in enumerate(GroundStates):
     
     db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
@@ -237,29 +351,25 @@ for gsIdx, gs_name in enumerate(GroundStates):
     else:
         with open(eciName) as f:
             eci = json.load(f)
-    
+
     db = connect(gs_db_names[gsIdx])
     gs05 = None
     for row in db.select(""):
         gs05 = row.toatoms()
 
-    # gs05.calc = ASElammps
-    gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
-    
-    tmpLi = gs05.copy()
-    tmpLi.calc = gs05.calc
-    tmpLi.numbers[:] = 3
-    gsE[0] = tmpLi.get_potential_energy()/len(tmpLi)
-    tmpLi.numbers[:] = 12
-    gsE[1] = tmpLi.get_potential_energy()/len(tmpLi)
+    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    gs05.calc = ASElammps
+
+    # tmpLi = gs05.copy()
+    # tmpLi.calc = gs05.calc
+    # tmpLi.numbers[:] = 3
+    # gsE[0] = tmpLi.get_potential_energy()/len(tmpLi)
+    # tmpLi.numbers[:] = 12
+    # gsE[1] = tmpLi.get_potential_energy()/len(tmpLi)
     # gsE = [0,0]
         
     gs05.info["gsE"] = gsE
-    
-    TInit, TFinal = options["EMC"]["TInit"], options["EMC"]["TFinal"]
-    dT = options["EMC"]["dT"]
-    Ts = np.arange(TInit, TFinal+1e-5, dT)
-    # Ts = [50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+
     if gsIdx == 0:
         mus = np.arange(muInit, muFinal+dMu*1e-5, dMu)
     elif gsIdx == 1:
@@ -267,10 +377,45 @@ for gsIdx, gs_name in enumerate(GroundStates):
         dMu = -dMu
         mus = np.arange(muInit, muFinal+dMu*1e-5, dMu)
     
-    lte = LTE(formation=False)
-    lte.set_gs_atom(gs05)
-    phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
-    
+    if batchMode:
+        if batchInit:
+            TInit, TFinal = options["EMC"]["TInit"], options["EMC"]["TFinal"]
+            dT = options["EMC"]["dT"]
+            Ts = np.arange(TInit, TFinal+1e-5, dT)
+            
+            generateBatchInput(Ts)
+            
+            lte = LTE(formation=False)
+            lte.set_gs_atom(gs05)
+            phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
+        else:
+            with open(f"{inputFileName[:-5]}-reuslt/{gs_name}-startingPoints.json", 'r') as f:
+                TsDict = json.load(f)
+            Ts = [float(batchTemp)]
+            
+            # this lte is for DEBUG ONLY!!!
+            try:
+                lte = LTE(formation=False)
+                lte.set_gs_atom(gs05)
+                phi_lte_lte = lte.get_E(T=Ts[0], mu=mus[0])
+            except:
+                phi_lte_lte = 0
+                print("debugging LTE fail to run")
+            
+            phi_lte = TsDict[batchTemp]
+            print("REFREFREFREFREFREFREFREFREFREFREF")
+            print("at T =", Ts[0], gs_name, "loaded_lte = ", phi_lte, "calulated_lte = ", phi_lte_lte)
+            print("REFREFREFREFREFREFREFREFREFREFREF")
+    else:
+        TInit, TFinal = options["EMC"]["TInit"], options["EMC"]["TFinal"]
+        dT = options["EMC"]["dT"]
+        Ts = np.arange(TInit, TFinal+1e-5, dT)
+            
+        lte = LTE(formation=False)
+        lte.set_gs_atom(gs05)
+        phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
+        
+
     print("######################################")
     print("at T =", Ts[0], gs_name, "E_lte = ", phi_lte)
     print("######################################")
@@ -283,32 +428,86 @@ for gsIdx, gs_name in enumerate(GroundStates):
     deltSpinDetecter = np.zeros((len(Ts), len(mus)))
     systemSize = len(gs05)
     old_spins = np.copy(gs05.numbers)
-    
+
     for iT, currT in enumerate(Ts):
         for iMu, currMu in enumerate(mus):
-            eq = equilibrium_detector(granularity=100, nb_bins=16, prec=options["EMC"]["error"], patience=6)
+            eq = equilibrium_detector(granularity=200, nb_bins=16, prec=options["EMC"]["error"], patience=6)
             MaxIterNum = 1000000
             print("T = ", currT, "mu = ", currMu)
             for i in range(MaxIterNum):
+                
+                # in order to calculate the acceptance rate
+                acceptanceRecord = np.zeros((1000))
+                VScaleRange = 0.1
+                
+                if i % 100 == 0:
+                    print(i)
+                
+                # calculate the energy for the old strucutre
+                ucf = UnitCellFilter(gs05)
+                opt = BFGS(ucf, logfile=None)
+                converged = opt.run(fmax=0.02, steps=500)
+                if not converged:
+                    print(f"BFGS MAXSTEP REACHED at {i} for oldE!!!")
                 currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
+                oldSysXyz = gs05.positions.copy()
+                # randomly flip one
                 flipIdx = int(np.random.uniform(low=0, high=len(gs05)-1))
                 if gs05.numbers[flipIdx] == 3:
                     gs05.numbers[flipIdx] = 12
                 else:
                     gs05.numbers[flipIdx] = 3
+                # calculate the new energy
+                converged = opt.run(fmax=0.02, steps=500)
+                if not converged:
+                    print(f"BFGS MAXSTEP REACHED at {i} for newE!!!")
                 currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
+                # temporarily accept the new energy
                 currE = currNewE
+                
                 
                 if currNewE > currOldE:
                     energy_diff = currNewE - currOldE
                     probability = math.exp(-energy_diff / kB / currT)
                     if random.random() > probability:
+                        # DAMN!!!!! revert
                         currE = currOldE
+                        gs05.positions = oldSysXyz.copy()
                         if gs05.numbers[flipIdx] == 3:
                             gs05.numbers[flipIdx] = 12
                         else:
                             gs05.numbers[flipIdx] = 3
                 
+                # # currE is now the accepted energy and gs05 is now the accepted strucutre
+                # # randomly pick a scaling factor
+                # scaleScale = np.random.uniform(low=1-VScaleRange, high=1+VScaleRange)
+                # # scale the system
+                # gs05.set_cell(gs05.cell*scaleScale, scale_atoms=True)
+                # # calculate new energy
+                # currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
+                # # record the old E
+                # currOldE = currE
+                # # temporarily accept the new E
+                # currE = currNewE
+                # acceptanceRecord[i%1000] = 1
+                # if currNewE > currOldE:
+                #     energy_diff = currNewE - currOldE
+                #     probability = math.exp(-energy_diff / kB / currT)
+                #     if random.random() > probability:
+                #         # DAMN!!!!! revert
+                #         currE = currOldE
+                #         acceptanceRecord[i%1000] = 0
+                #         gs05.set_cell(gs05.cell/scaleScale, scale_atoms=True)
+                
+                # if i % 1000 == 0:
+                #     acptRate = np.mean(acceptanceRecord)
+                #     print(acptRate)
+                #     if acptRate > 0.75:
+                #         VScaleRange*1.1
+                #     if acptRate < 0.25:
+                #         if VScaleRange/1.1 > 1:
+                #             VScaleRange/1.1
+                            
                 if eq.new_data(POI=get_conc(gs05), other=currE) or i == MaxIterNum-1:
                     print("converged after: ", i)
                     if iT == 0:
@@ -318,18 +517,39 @@ for gsIdx, gs_name in enumerate(GroundStates):
                     XTable[iT, iMu] = eq.get_POI()
                     deltSpinDetecter[iT, iMu] = np.sum(old_spins != gs05.numbers)
                     old_spins = np.copy(gs05.numbers)
+                    print(gs05.cell)
+                    print(gs05.get_volume())
                     break
-            
             if DEBUG:
                 if len(mus) == 1:
                     print(deltSpinDetecter[:iT+1, 0])
+                    if batchMode:
+                        f = open(f"{inputFileName[:-5]}-reuslt/fmc-mu-{mus[0]}.out", "a")
+                    else:
+                        f = open("fmc-mu.out", "a")
+                    for xxx in deltSpinDetecter[:iT+1, 0]:
+                        f.write(f"{xxx} ")
+                    f.write("\n")
+                    f.close()
                 else:
                     print(deltSpinDetecter[iT, :iMu+1])
+                    if batchMode:
+                        f = open(f"{inputFileName[:-5]}-reuslt/fmc-T-{Ts[0]}.out", "a")
+                    else:
+                        f = open("fmc-T.out", "a")
+                    for xxx in deltSpinDetecter[iT, :iMu+1]:
+                        f.write(f"{xxx} ")
+                    f.write("\n")
+                    f.close()
                     
             if iT == 0 and iMu == 0:
                 # phiTable[0,0] = 0
                 continue
             
+            if iT == 0 and iMu == 0:
+                # phiTable[0,0] = 0
+                continue
+        
             if iMu == 0:
                 print("#######################################################################################################")
                 prevB, currB = 1/kB/(currT - dT), 1/kB/currT
@@ -347,15 +567,23 @@ for gsIdx, gs_name in enumerate(GroundStates):
         gs05.calc.reset()
         gs05.info["gsE"] = gsE
     
-    if len(Ts) == 1:                
+    if len(Ts) == 1:      
         plt.figure(1)
         plt.plot(mus, phiTable[-1], '-o')
+        if batchMode:
+            np.save(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-phiTable.npy", phiTable[-1])
         plt.title(gs_name)
         # plt.show()
         plt.figure(2)
         plt.plot(mus, XTable[-1], '-o')
         plt.title(gs_name)
     else:
+        startingPoints = {}
+        if batchMode:
+            for idx, ts in enumerate(Ts):
+                startingPoints[str(ts)] = phiTable[idx,0]
+            with open(f"{inputFileName[:-5]}-reuslt/{gs_name}-startingPoints.json", 'w') as f:
+                json.dump(startingPoints, f)
         plt.figure(1)
         plt.plot(Ts, phiTable[:,0], '-o')
         plt.title(gs_name)
@@ -371,7 +599,10 @@ plt.ylabel("phi")
 plt.legend(["BCC", "HCP"])
 # plt.xlim([-0.25, 0.25])
 # plt.ylim([-0.5, 0])
-plt.savefig('T_phi.png')
+if batchMode:
+    plt.savefig(f"{inputFileName[:-5]}-reuslt/T_phi_{batchTemp}.png")
+else:
+    plt.savefig("T_phi.png")
 
 plt.figure(2)
 plt.title("Li concentration vs. mu")
@@ -379,7 +610,12 @@ plt.xlabel("mu")
 plt.ylabel("Li concentration")
 plt.legend(["BCC Li -> BCC Mg", "HCP Mg -> HCP Li"])
 # plt.xlim([-0.25, 0.25])
-plt.savefig('mu_x.png')
+if batchMode:
+    plt.savefig(f"{inputFileName[:-5]}-reuslt/mu_x_{batchTemp}.png")
+else:
+    plt.savefig("mu_x.png")
 plt.show()
 
 print(ETable)
+
+print(f"walltime: {time.time() - startt}")

@@ -59,9 +59,9 @@ LAMMPS:
 EMC:
   DEBUG: 1
   gs_db_names: ["LiNa/Li-gs.db", "LiNa/Na-gs.db"]
-  muInit: 4
-  muFinal: -4
-  dMu: 0.8
+  muInit: 0.25
+  muFinal: -0.25
+  dMu: 0.025
   TInit: 100
   TFinal: 400
   dT: 3000

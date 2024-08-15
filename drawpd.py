@@ -26,13 +26,15 @@ class LTE:
         self.gsE0 = atom.info["gsE"][0]
         self.gsE1 = atom.info["gsE"][1]
         NLi = np.sum(self.gs_atom.numbers == 3)
-        NMg = len(self.gs_atom.numbers) - NLi
+        NMg = len(self.gs_atom) - NLi
         
         # if NMg == 0:
         #     self.gs_atom.numbers[:] = 12
         # else:
         #     self.gs_atom.numbers[:] = 3
-        
+        ucf = UnitCellFilter(atom)
+        opt = BFGS(ucf)
+        opt.run(fmax=0.02)        
         if self.formation:
             self.gs_E = atom.get_potential_energy()/len(atom)
         else:
@@ -49,12 +51,9 @@ class LTE:
 
 
     def get_E(self, T, mu):
-        """
-        kjhkjhkhj
-        """
         # view(self.gs_atom)
         phi = self.gs_E - mu * self.x
-        print("phi0 = ", phi, "mu = ", mu)
+        print("phi0 = ", phi)
         kb = 8.617333262e-5
         beta = 1/kb/T
         for i in range(self.N):
@@ -66,8 +65,13 @@ class LTE:
             if currSpecies == 12: 
                 self.gs_atom.numbers[i] = 3
                 dEta = 1
-
-            # relax???
+            
+            # need new copy!!!!!!!!!!!!!!!!
+            tmp = self.gs_atom.copy()
+            tmp.calc = self.gs_atom.calc
+            ucf = UnitCellFilter(tmp)
+            opt = BFGS(ucf)
+            opt.run(fmax=0.02)
             
             NLi = np.sum(self.gs_atom.numbers == 3)
             NMg = len(self.gs_atom.numbers) - NLi
@@ -91,6 +95,7 @@ class LTE:
 
             tmp = (mu * dEta - dE) * beta
 
+            print(f"mu = {mu}, dEta = {dEta}, dE = {dE}, tmp = {tmp}")
             assert tmp < 0, "structure at mu = " + str(mu) + "is not minimum"
 
             phi -= np.exp(tmp)/beta/self.N
