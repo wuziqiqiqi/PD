@@ -15,7 +15,7 @@ cd /nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD
 
 echo "Job started on `hostname` at `date`" 
 
-python fmc.py --batch=True --input="LiMg-example.yaml" --init=true
+python fmc.py --input="LiMg-example-0.4-20relax.yaml" --batch=true --init=true
 
 echo " "
 echo "Job Ended at `date`"

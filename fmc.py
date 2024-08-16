@@ -51,7 +51,7 @@ def get_conc(atoms):
 def generateBatchInput(input, Ts):
     slurm_script = f"""#!/bin/bash
 #SBATCH --array=0-{len(Ts)-1}   # Array index range
-#SBATCH -J emc_%a # Job name
+#SBATCH -J emc # Job name
 #SBATCH -n 1 # Number of total cores
 #SBATCH -N 1 # Number of nodes
 #SBATCH --time=00-8:00:00
@@ -383,7 +383,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
             dT = options["EMC"]["dT"]
             Ts = np.arange(TInit, TFinal+1e-5, dT)
             
-            generateBatchInput(Ts)
+            generateBatchInput(inputFileName, Ts)
             
             lte = LTE(formation=False)
             lte.set_gs_atom(gs05)
@@ -446,7 +446,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 # calculate the energy for the old strucutre
                 ucf = UnitCellFilter(gs05)
                 opt = FIRE(ucf, logfile=None)
-                converged = opt.run(fmax=0.02, steps=500)
+                converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                 if not converged:
                     print(f"FIRE MAXSTEP REACHED at {i} for oldE!!!")
                 currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
@@ -458,7 +458,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 else:
                     gs05.numbers[flipIdx] = 3
                 # calculate the new energy
-                converged = opt.run(fmax=0.02, steps=500)
+                converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                 if not converged:
                     print(f"FIRE MAXSTEP REACHED at {i} for newE!!!")
                 currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)

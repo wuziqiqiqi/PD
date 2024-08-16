@@ -3,7 +3,7 @@
 #SBATCH -J emc # Job name
 #SBATCH -n 1 # Number of total cores
 #SBATCH -N 1 # Number of nodes
-#SBATCH --time=02-00:00:00
+#SBATCH --time=01-00:00:00
 #SBATCH -p venkvis-cpu
 #SBATCH --mem=2000 # Memory pool for all cores in MB
 #SBATCH -e outNerr/emc_%A_%a.err #change the name of the err file 
@@ -22,4 +22,4 @@ MY_VALUE=${VALUES[$SLURM_ARRAY_TASK_ID]}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python fmc.py --input="LiMg-example.yaml" --batch=true --init=false --temp=$MY_VALUE
+python fmc.py --input="LiMg-example-0.4-500relax.yaml" --batch=true --init=false --temp=$MY_VALUE
