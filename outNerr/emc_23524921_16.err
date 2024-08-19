@@ -1,0 +1,37 @@
+    Cluster-wide configured Spack, integrated within the existing Lmod module
+system on the cluster.
+    Any software installed via Spack gets stored in the users home directory
+under the path ~/.spack
+
+    Run `$ spack config get config` to view the current configuration. To get
+started review the
+    ARC-Spack documentation here (https://arc.umich.edu/spack/).
+
+    If the current configuration does not meet your requirements, a local spack
+installation can be configured,
+    following the guide:
+https://spack-tutorial.readthedocs.io/en/latest/tutorial_basics.html#installing-spack
+
+
+    Example use:
+    $ spack install gmake
+    
+    To view installed packages:
+    $ spack find
+    or
+    $ module avail
+    
+    To load installed packages:
+    $ spack load gmake
+    or
+    $ module load gmake
+     
+/nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD/fmc.py:330: FutureWarning: Import UnitCellFilter from ase.filters
+  ucf = UnitCellFilter(gs05)
+/nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD/drawpd.py:35: FutureWarning: Import UnitCellFilter from ase.filters
+  ucf = UnitCellFilter(atom)
+/nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD/drawpd.py:72: FutureWarning: Import UnitCellFilter from ase.filters
+  ucf = UnitCellFilter(tmp)
+/nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD/fmc.py:447: FutureWarning: Import UnitCellFilter from ase.filters
+  ucf = UnitCellFilter(gs05)
+slurmstepd: error: *** JOB 23524951 ON lh1728 CANCELLED AT 2024-08-16T16:27:48 ***

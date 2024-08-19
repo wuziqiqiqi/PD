@@ -576,6 +576,8 @@ for gsIdx, gs_name in enumerate(GroundStates):
         # plt.show()
         plt.figure(2)
         plt.plot(mus, XTable[-1], '-o')
+        if batchMode:
+            np.save(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-XTable.npy", XTable[-1])
         plt.title(gs_name)
     else:
         startingPoints = {}
