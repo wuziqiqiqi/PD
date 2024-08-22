@@ -22,4 +22,4 @@ MY_VALUE=${VALUES[$SLURM_ARRAY_TASK_ID]}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python fmc.py --input="LiMg-example-0.4-500relax.yaml" --batch=true --init=false --temp=$MY_VALUE
+python fmc.py --input="LiMg-example-0.8-5000relax.yaml" --batch=true --init=false --temp=$MY_VALUE

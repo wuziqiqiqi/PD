@@ -48,8 +48,9 @@ from drawpd import LTE, MF
 def get_conc(atoms):
     return np.sum(atoms.numbers == 3) / len(atoms)
 
-def generateBatchInput(input, Ts):
-    slurm_script = f"""#!/bin/bash
+def generateBatchInput(input, device, Ts):
+    if device == "cpu":
+        slurm_script = f"""#!/bin/bash
 #SBATCH --array=0-{len(Ts)-1}   # Array index range
 #SBATCH -J emc # Job name
 #SBATCH -n 1 # Number of total cores
@@ -57,8 +58,8 @@ def generateBatchInput(input, Ts):
 #SBATCH --time=00-8:00:00
 #SBATCH -p venkvis-cpu
 #SBATCH --mem=2000 # Memory pool for all cores in MB
-#SBATCH -e outNerr/emc_%A_%a.err #change the name of the err file 
-#SBATCH -o outNerr/emc_%A_%a.out # File to which STDOUT will be written %j is the job #
+#SBATCH -e outNerr/emc_{input[:-5]}_%a.err #change the name of the err file 
+#SBATCH -o outNerr/emc_{input[:-5]}_%a.out # File to which STDOUT will be written %j is the job #
 
 source /nfs/turbo/coe-venkvis/ziqiw-turbo/.bashrc
 conda activate /nfs/turbo/coe-venkvis/ziqiw-turbo/conda/casm
@@ -73,10 +74,38 @@ MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python fmc.py --input="{input}" --batch=true --init=false --temp=$MY_VALUE
+python fmc.py --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE
 """
+    else:
+        slurm_script = f"""#!/bin/bash
+#SBATCH --array=0-{len(Ts)-1}   # Array index range
+#SBATCH -J emc # Job name
+#SBATCH -n 1 # Number of total cores
+#SBATCH -N 1 # Number of nodes
+#SBATCH --time=00-8:00:00
+#SBATCH -p venkvis-a100, venkvis-h100
+#SBATCH --gres=gpu:1
+#SBATCH --mem=2000 # Memory pool for all cores in MB
+#SBATCH -e outNerr/emc_{input[:-5]}_%a.err #change the name of the err file 
+#SBATCH -o outNerr/emc_{input[:-5]}_%a.out # File to which STDOUT will be written %j is the job #
 
-    with open(f"runBatch.sh", 'w') as f:
+source /nfs/turbo/coe-venkvis/ziqiw-turbo/.bashrc
+conda activate /nfs/turbo/coe-venkvis/ziqiw-turbo/conda/casm
+cd /nfs/turbo/coe-venkvis/ziqiw-turbo/mint-PD/PD
+
+# Define the array of custom values
+VALUES=({" ".join(map(str, Ts))})
+
+# Get the value corresponding to the current task ID
+MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
+
+echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
+
+# Example: Run a Python script with the selected value
+python fmc.py --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE
+"""
+    
+    with open(f"runBatch-{input[:-5]}.sh", 'w') as f:
         f.write(slurm_script)
     
 
@@ -239,9 +268,11 @@ parser = argparse.ArgumentParser(description="Process some command-line argument
 
 # Add the arguments
 parser.add_argument('-i', '--input', type=str, default='LiNa-example.yaml', help='input yaml filename')
+parser.add_argument('-d', '--device', type=str, default='cpu', help='device to run the code')
 parser.add_argument('-b', '--batch', type=str, default='False', help='Set a (default: True)')
 parser.add_argument('--init', type=str, default='True', help='Set b (default: True)')
 parser.add_argument('-t', '--temp', type=str, default='', help='temperature needed if init=false')
+parser.add_argument('--gs', type=str, default='[0, 1]', help='ground states to be calculated (need to be a list)')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -271,12 +302,16 @@ elif args.batch.lower() in ['false', '0', 'f', 'n', 'no', 'nope', 'nah', 'never'
 else:
     raise ValueError(f"Invalid value for batch mode: {args.batch}")
 
+# turn string "[0, 1]" to list [0, 1]
+gsIdxs = eval(args.gs)
 
 # kB = 8.617333262e-5 * 0.0433634 * 1e10
 np.set_printoptions(precision=7, suppress=True)
 
 with open(inputFileName, 'r') as file:
     options = yaml.safe_load(file)
+    if batchInit:
+        json.dump(options, open(f"{inputFileName[:-5]}-reuslt/input.json", 'w'))
     
 print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
@@ -286,6 +321,8 @@ if "LAMMPS" in options:
         from ase.calculators.lammpslib import LAMMPSlib
         print("LAMMPS calc!")
         ASElammps = LAMMPSlib(**options["LAMMPS"])
+        
+chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/06-30-2024/bestF_epoch996_e2_f8_s7_mNA.pth.tar")
 
 GroundStates = options["GroundStates"]
 gs_db_names = options["EMC"]["gs_db_names"]
@@ -326,7 +363,8 @@ for gsIdx, gs_name in enumerate(GroundStates):
     
     # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
     
-    gs05.calc = ASElammps
+    # gs05.calc = ASElammps
+    gs05.calc = CHGNetCalculator(model=chgnet)
     ucf = UnitCellFilter(gs05)
     opt = FIRE(ucf)
     opt.run(fmax=0.02)
@@ -335,8 +373,8 @@ for gsIdx, gs_name in enumerate(GroundStates):
     
 startt = time.time()
 
-for gsIdx, gs_name in enumerate(GroundStates):
-    
+for gsIdx in gsIdxs:
+    gs_name = GroundStates[gsIdx]
     db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
     conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
 
@@ -358,7 +396,9 @@ for gsIdx, gs_name in enumerate(GroundStates):
         gs05 = row.toatoms()
 
     # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
-    gs05.calc = ASElammps
+    # gs05.calc = ASElammps
+    gs05.calc = CHGNetCalculator(model=chgnet)
+
 
     # tmpLi = gs05.copy()
     # tmpLi.calc = gs05.calc
@@ -383,7 +423,7 @@ for gsIdx, gs_name in enumerate(GroundStates):
             dT = options["EMC"]["dT"]
             Ts = np.arange(TInit, TFinal+1e-5, dT)
             
-            generateBatchInput(inputFileName, Ts)
+            generateBatchInput(inputFileName, args.device, Ts)
             
             lte = LTE(formation=False)
             lte.set_gs_atom(gs05)
@@ -444,11 +484,19 @@ for gsIdx, gs_name in enumerate(GroundStates):
                     print(i)
                 
                 # calculate the energy for the old strucutre
+                # gs05.calc = ASElammps
                 ucf = UnitCellFilter(gs05)
                 opt = FIRE(ucf, logfile=None)
                 converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                 if not converged:
-                    print(f"FIRE MAXSTEP REACHED at {i} for oldE!!!")
+                    print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
+                # gs05.calc = CHGNetCalculator(model=chgnet)
+                # ucf = UnitCellFilter(gs05)
+                # opt = FIRE(ucf, logfile=None)
+                # converged = opt.run(fmax=0.02, steps=20)
+                # if not converged:
+                #     print(f"FIRE MAXSTEP REACHED for CHGNet at {i} for oldE!!!")
+
                 currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
                 oldSysXyz = gs05.positions.copy()
                 # randomly flip one
@@ -458,9 +506,18 @@ for gsIdx, gs_name in enumerate(GroundStates):
                 else:
                     gs05.numbers[flipIdx] = 3
                 # calculate the new energy
+                # gs05.calc = ASElammps
+                # ucf = UnitCellFilter(gs05)
+                # opt = FIRE(ucf, logfile=None)
                 converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                 if not converged:
-                    print(f"FIRE MAXSTEP REACHED at {i} for newE!!!")
+                    print(f"FIRE MAXSTEP REACHED for MEAM at {i} for newE!!!")
+                # gs05.calc = CHGNetCalculator(model=chgnet)
+                # ucf = UnitCellFilter(gs05)
+                # opt = FIRE(ucf, logfile=None)
+                # converged = opt.run(fmax=0.02, steps=20)
+                # if not converged:
+                #     print(f"FIRE MAXSTEP REACHED for CHGNet at {i} for newE!!!")
                 currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
                 # temporarily accept the new energy
                 currE = currNewE
