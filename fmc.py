@@ -9,6 +9,7 @@ import math
 import random
 import time
 import argparse
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,12 +44,17 @@ from chgnet.model.model import CHGNet
 from chgnet.model.dynamics import MolecularDynamics, StructOptimizer, CHGNetCalculator
 from pymatgen.core import Structure
 
+from mace.calculators import MACECalculator, mace_mp
+
+from mattersim.forcefield import MatterSimCalculator
+
 from drawpd import LTE, MF
 
 def get_conc(atoms):
     return np.sum(atoms.numbers == 3) / len(atoms)
 
-def generateBatchInput(input, device, Ts):
+def generateBatchInput(input, device, gs, Ts):
+    currentPythonFilename = os.path.basename(__file__)
     if device == "cpu":
         slurm_script = f"""#!/bin/bash
 #SBATCH --array=0-{len(Ts)-1}   # Array index range
@@ -58,8 +64,8 @@ def generateBatchInput(input, device, Ts):
 #SBATCH --time=00-8:00:00
 #SBATCH -p venkvis-cpu
 #SBATCH --mem=2000 # Memory pool for all cores in MB
-#SBATCH -e outNerr/emc_{input[:-5]}_%a.err #change the name of the err file 
-#SBATCH -o outNerr/emc_{input[:-5]}_%a.out # File to which STDOUT will be written %j is the job #
+#SBATCH -e outNerr/emc_{input[:-5]}{gs}_%a.err #change the name of the err file 
+#SBATCH -o outNerr/emc_{input[:-5]}{gs}_%a.out # File to which STDOUT will be written %j is the job #
 
 source /nfs/turbo/coe-venkvis/ziqiw-turbo/.bashrc
 conda activate /nfs/turbo/coe-venkvis/ziqiw-turbo/conda/casm
@@ -74,7 +80,7 @@ MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python fmc.py --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE
+python {currentPythonFilename} --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
 """
     else:
         slurm_script = f"""#!/bin/bash
@@ -83,11 +89,11 @@ python fmc.py --input={input} --device={device} --batch=true --init=false --temp
 #SBATCH -n 1 # Number of total cores
 #SBATCH -N 1 # Number of nodes
 #SBATCH --time=00-8:00:00
-#SBATCH -p venkvis-a100, venkvis-h100
+#SBATCH -p venkvis-h100,venkvis-a100
 #SBATCH --gres=gpu:1
 #SBATCH --mem=2000 # Memory pool for all cores in MB
-#SBATCH -e outNerr/emc_{input[:-5]}_%a.err #change the name of the err file 
-#SBATCH -o outNerr/emc_{input[:-5]}_%a.out # File to which STDOUT will be written %j is the job #
+#SBATCH -e outNerr/emc_{input[:-5]}{gs}_%a.err #change the name of the err file 
+#SBATCH -o outNerr/emc_{input[:-5]}{gs}_%a.out # File to which STDOUT will be written %j is the job #
 
 source /nfs/turbo/coe-venkvis/ziqiw-turbo/.bashrc
 conda activate /nfs/turbo/coe-venkvis/ziqiw-turbo/conda/casm
@@ -102,10 +108,10 @@ MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python fmc.py --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE
+python {currentPythonFilename} --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
 """
     
-    with open(f"runBatch-{input[:-5]}.sh", 'w') as f:
+    with open(f"runBatch-{input[:-5]}-gs{gs}.sh", 'w') as f:
         f.write(slurm_script)
     
 
@@ -316,13 +322,26 @@ with open(inputFileName, 'r') as file:
 print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
 DEBUG = options["EMC"]["DEBUG"]
+RESUME = False
+DEVICE = 'cuda'
 
 if "LAMMPS" in options:
         from ase.calculators.lammpslib import LAMMPSlib
         print("LAMMPS calc!")
         ASElammps = LAMMPSlib(**options["LAMMPS"])
         
-chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/06-30-2024/bestF_epoch996_e2_f8_s7_mNA.pth.tar")
+# chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/100/10-14-2024/epoch1129_e10_f32_s60_mNA.pth.tar")
+# chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/11-06-2024/epoch291_e2_f46_s19_mNA.pth.tar")
+mattersimModel = "MatterSim-v1.0.0-1M.pth"
+
+# chgnet = CHGNet.load()
+
+# myCalc = ASElammps
+# myCalc = CHGNetCalculator(model=chgnet)
+myCalc = MatterSimCalculator(load_path=mattersimModel, device=DEVICE)
+# myCalc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
+# myCalc = MACECalculator(model_paths=['/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/MACE/10-10-2024/mace_fine_tunning_LiMg_swa.model'], device='cuda', default_dtype="float32")
+# myCalc = "CE"
 
 GroundStates = options["GroundStates"]
 gs_db_names = options["EMC"]["gs_db_names"]
@@ -361,16 +380,23 @@ for gsIdx, gs_name in enumerate(GroundStates):
     
     # gs05.set_cell(gs05.cell*1.1, scale_atoms=True)
     
-    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
-    
+    if myCalc == "CE":
+        gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    else:
+        gs05.calc = myCalc
     # gs05.calc = ASElammps
-    gs05.calc = CHGNetCalculator(model=chgnet)
-    ucf = UnitCellFilter(gs05)
-    opt = FIRE(ucf)
-    opt.run(fmax=0.02)
+    # gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
+    if myCalc != "CE":
+        ucf = UnitCellFilter(gs05)
+        opt = FIRE(ucf)
+        opt.run(fmax=0.02)
     
     gsE[gsIdx] = gs05.get_potential_energy()/len(gs05)
-    
+
+print("gsE = ", gsE)
+
+
 startt = time.time()
 
 for gsIdx in gsIdxs:
@@ -395,9 +421,14 @@ for gsIdx in gsIdxs:
     for row in db.select(""):
         gs05 = row.toatoms()
 
-    # gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    if myCalc == "CE":
+        gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+    else:
+        gs05.calc = myCalc
     # gs05.calc = ASElammps
-    gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
+
 
 
     # tmpLi = gs05.copy()
@@ -423,7 +454,7 @@ for gsIdx in gsIdxs:
             dT = options["EMC"]["dT"]
             Ts = np.arange(TInit, TFinal+1e-5, dT)
             
-            generateBatchInput(inputFileName, args.device, Ts)
+            generateBatchInput(inputFileName, args.device, gsIdx, Ts)
             
             lte = LTE(formation=False)
             lte.set_gs_atom(gs05)
@@ -433,19 +464,36 @@ for gsIdx in gsIdxs:
                 TsDict = json.load(f)
             Ts = [float(batchTemp)]
             
-            # this lte is for DEBUG ONLY!!!
-            try:
-                lte = LTE(formation=False)
-                lte.set_gs_atom(gs05)
-                phi_lte_lte = lte.get_E(T=Ts[0], mu=mus[0])
-            except:
-                phi_lte_lte = 0
-                print("debugging LTE fail to run")
-            
-            phi_lte = TsDict[batchTemp]
-            print("REFREFREFREFREFREFREFREFREFREFREF")
-            print("at T =", Ts[0], gs_name, "loaded_lte = ", phi_lte, "calulated_lte = ", phi_lte_lte)
-            print("REFREFREFREFREFREFREFREFREFREFREF")
+            # if resumeDict exists, load it
+            if os.path.exists(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-resumeDict.pkl"):
+                with open(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-resumeDict.pkl", 'rb') as f:
+                    resumeDict = pickle.load(f)
+                phiTable = resumeDict["phiTable"]
+                ETable = resumeDict["ETable"]
+                XTable = resumeDict["XTable"]
+                gs05 = resumeDict["gs05"].copy()
+                if myCalc == "CE":
+                    gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+                else:
+                    gs05.calc = myCalc
+                deltSpinDetecter = resumeDict["deltSpinDetecter"]
+                markIMu = resumeDict["markIMu"]
+                RESUME = True
+                print("resumeDict loaded")
+            else:
+                # this lte is for DEBUG ONLY!!!
+                try:
+                    lte = LTE(formation=False)
+                    lte.set_gs_atom(gs05)
+                    phi_lte_lte = lte.get_E(T=Ts[0], mu=mus[0])
+                except:
+                    phi_lte_lte = 0
+                    print("debugging LTE fail to run")
+                
+                phi_lte = TsDict[batchTemp]
+                print("REFREFREFREFREFREFREFREFREFREFREF")
+                print("at T =", Ts[0], gs_name, "loaded_lte = ", phi_lte, "calulated_lte = ", phi_lte_lte)
+                print("REFREFREFREFREFREFREFREFREFREFREF")
     else:
         TInit, TFinal = options["EMC"]["TInit"], options["EMC"]["TFinal"]
         dT = options["EMC"]["dT"]
@@ -455,22 +503,28 @@ for gsIdx in gsIdxs:
         lte.set_gs_atom(gs05)
         phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
         
-
-    print("######################################")
-    print("at T =", Ts[0], gs_name, "E_lte = ", phi_lte)
-    print("######################################")
-    
-    phiTable = np.zeros((len(Ts), len(mus)))
-    phiTable[0,0] = phi_lte 
-    print(phiTable.shape)
-    ETable = np.zeros((len(Ts), len(mus)))
-    XTable = np.zeros((len(Ts), len(mus)))
-    deltSpinDetecter = np.zeros((len(Ts), len(mus)))
+    if RESUME:
+        print("Resuming")
+    else:
+        print("######################################")
+        print("at T =", Ts[0], gs_name, "E_lte = ", phi_lte)
+        print("######################################")
+        
+        phiTable = np.zeros((len(Ts), len(mus)))
+        phiTable[0,0] = phi_lte 
+        ETable = np.zeros((len(Ts), len(mus)))
+        XTable = np.zeros((len(Ts), len(mus)))
+        deltSpinDetecter = np.zeros((len(Ts), len(mus)))
     systemSize = len(gs05)
     old_spins = np.copy(gs05.numbers)
+    # gs05.calc = CHGNetCalculator(model=chgnet)
+    # gs05.calc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
 
     for iT, currT in enumerate(Ts):
         for iMu, currMu in enumerate(mus):
+            if RESUME and iMu <= markIMu:
+                print(f"Resumed, skipping T = {currT}, mu_{iMu} = {currMu}")
+                continue
             eq = equilibrium_detector(granularity=200, nb_bins=16, prec=options["EMC"]["error"], patience=6)
             MaxIterNum = 1000000
             print("T = ", currT, "mu = ", currMu)
@@ -485,11 +539,13 @@ for gsIdx in gsIdxs:
                 
                 # calculate the energy for the old strucutre
                 # gs05.calc = ASElammps
-                ucf = UnitCellFilter(gs05)
-                opt = FIRE(ucf, logfile=None)
-                converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
-                if not converged:
-                    print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
+                # gs05.calc = CHGNetCalculator(model=chgnet)
+                if myCalc != "CE":
+                    ucf = UnitCellFilter(gs05)
+                    opt = FIRE(ucf, logfile=None)
+                    converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
+                    if not converged:
+                        print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
                 # gs05.calc = CHGNetCalculator(model=chgnet)
                 # ucf = UnitCellFilter(gs05)
                 # opt = FIRE(ucf, logfile=None)
@@ -507,11 +563,13 @@ for gsIdx in gsIdxs:
                     gs05.numbers[flipIdx] = 3
                 # calculate the new energy
                 # gs05.calc = ASElammps
-                # ucf = UnitCellFilter(gs05)
-                # opt = FIRE(ucf, logfile=None)
-                converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
-                if not converged:
-                    print(f"FIRE MAXSTEP REACHED for MEAM at {i} for newE!!!")
+                # gs05.calc = CHGNetCalculator(model=chgnet)
+                if myCalc != "CE":
+                    ucf = UnitCellFilter(gs05)
+                    opt = FIRE(ucf, logfile=None)
+                    converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
+                    if not converged:
+                        print(f"FIRE MAXSTEP REACHED for MEAM at {i} for newE!!!")
                 # gs05.calc = CHGNetCalculator(model=chgnet)
                 # ucf = UnitCellFilter(gs05)
                 # opt = FIRE(ucf, logfile=None)
@@ -618,9 +676,26 @@ for gsIdx in gsIdxs:
             else:
                 phiTable[iT, iMu] = phiTable[iT, iMu - 1] - (XTable[iT, iMu] + XTable[iT, iMu - 1]) / 2 * dMu
             
+            if len(Ts) == 1:
+                resumeDict = {}
+                resumeDict["gs05"] = gs05.copy()
+                resumeDict["ETable"] = ETable
+                resumeDict["XTable"] = XTable
+                resumeDict["phiTable"] = phiTable
+                resumeDict["deltSpinDetecter"] = deltSpinDetecter
+                resumeDict["markIMu"] = iMu
+                pickle.dump(resumeDict, open(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-resumeDict.pkl", 'wb'))
+                print("resumeDict saved")
+            
         
         gs05 = prevGs05.copy()
-        gs05.calc = ASElammps
+        if myCalc == "CE":
+            gs05 = attach_calculator(MCsettings, atoms=gs05, eci=eci)
+        else:
+            gs05.calc = myCalc
+        # gs05.calc = ASElammps
+        # gs05.calc = CHGNetCalculator(model=chgnet)
+        # gs05.calc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
         gs05.calc.reset()
         gs05.info["gsE"] = gsE
     
@@ -629,13 +704,18 @@ for gsIdx in gsIdxs:
         plt.plot(mus, phiTable[-1], '-o')
         if batchMode:
             np.save(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-phiTable.npy", phiTable[-1])
+        else:
+            np.save(f"{gs_name}-{Ts[0]}-phiTable-stock.npy", phiTable[-1])
         plt.title(gs_name)
         # plt.show()
         plt.figure(2)
         plt.plot(mus, XTable[-1], '-o')
         if batchMode:
             np.save(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-XTable.npy", XTable[-1])
+        else:
+            np.save(f"{gs_name}-{Ts[0]}-XTable-stock.npy", XTable[-1])
         plt.title(gs_name)
+        os.remove(f"{inputFileName[:-5]}-reuslt/{gs_name}-{Ts[0]}-resumeDict.pkl")
     else:
         startingPoints = {}
         if batchMode:
@@ -678,3 +758,9 @@ plt.show()
 print(ETable)
 
 print(f"walltime: {time.time() - startt}")
+
+# create file named walltime.txt to store the walltime
+with open(f"{inputFileName[:-5]}-reuslt/walltime-{time.time() - startt}.txt", 'w') as f:
+    f.write(f"walltime: {time.time() - startt}")
+
+f"{inputFileName[:-5]}-reuslt/T_phi_{batchTemp}.png"

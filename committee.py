@@ -21,19 +21,25 @@ inputFileName = args.input[:-5]
 if args.mode == 'prep':
     for i in range(int(args.n)):
         if i == 0:
-            os.system(f'sbatch runInit.sh')
+            os.system(f'sbatch runInit0.sh')
+            os.system(f'sbatch runInit1.sh')
             continue
         os.system(f'cp {inputFileName}.yaml {inputFileName}-{i}.yaml')
-        os.system(f'cp runInit.sh runInit-{i}.sh')
+        os.system(f'cp runInit0.sh runInit0-{i}.sh')
+        os.system(f'cp runInit1.sh runInit1-{i}.sh')
         # add -{i} after "{inputFileName}" in file runInit-{i}.sh
-        os.system(f"sed -i 's/{inputFileName}/{inputFileName}-{i}/g' runInit-{i}.sh")
-        os.system(f'sbatch runInit-{i}.sh')
+        os.system(f"sed -i 's/{inputFileName}/{inputFileName}-{i}/g' runInit0-{i}.sh")
+        os.system(f"sed -i 's/{inputFileName}/{inputFileName}-{i}/g' runInit1-{i}.sh")
+        os.system(f'sbatch runInit0-{i}.sh')
+        os.system(f'sbatch runInit1-{i}.sh')
 elif args.mode == 'run':
     for i in range(int(args.n)):
         if i == 0:
-            os.system(f'sbatch runBatch-{inputFileName}.sh')
+            os.system(f'sbatch runBatch-{inputFileName}-gs\[0\].sh')
+            os.system(f'sbatch runBatch-{inputFileName}-gs\[1\].sh')
             continue
-        os.system(f'sbatch runBatch-{inputFileName}-{i}.sh')
+        os.system(f'sbatch runBatch-{inputFileName}-{i}-gs\[0\].sh')
+        os.system(f'sbatch runBatch-{inputFileName}-{i}-gs\[1\].sh')
 elif args.mode == 'clean':
     # list all directories with format inputFileName*
     dirs = []
@@ -62,16 +68,20 @@ elif args.mode == 'clean':
     LiXTable = np.mean(LiXTables, axis=0)
     MgXTable = np.mean(MgXTables, axis=0)
     
-    np.save('Li-phiTable-averaged.npy', LiphiTable)
-    np.save('Mg-phiTable-averaged.npy', MgphiTable)
-    np.save('Li-XTable-averaged.npy', LiXTable)
-    np.save('Mg-XTable-averaged.npy', MgXTable)
+    np.save('averaged-MACEft-Li-phiTable-all.npy', LiphiTable)
+    np.save('averaged-MACEft-Mg-phiTable-all.npy', MgphiTable)
+    np.save('averaged-MACEft-Li-XTable-all.npy', LiXTable)
+    np.save('averaged-MACEft-Mg-XTable-all.npy', MgXTable)
     
     for dir in os.listdir('.'):
         if f"{inputFileName}-" in dir and os.path.isfile(dir):
             print(f'removing {dir}')
-            os.remove(dir)
+            # os.remove(dir)
         
-        if "runInit-" in dir and os.path.isfile(dir):
+        if "runInit0-" in dir and os.path.isfile(dir):
             print(f'removing {dir}')
-            os.remove(dir)
+            # os.remove(dir)
+        
+        if "runInit1-" in dir and os.path.isfile(dir):
+            print(f'removing {dir}')
+            # os.remove(dir)

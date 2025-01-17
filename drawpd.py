@@ -3,6 +3,7 @@ from clease.calculator import attach_calculator
 from ase.visualize import view
 from ase.optimize import FIRE
 from ase.constraints import UnitCellFilter
+from clease.calculator import Clease
 
 class LTE:
     def __init__(self, myCalc = None, formation = False):
@@ -32,9 +33,10 @@ class LTE:
         #     self.gs_atom.numbers[:] = 12
         # else:
         #     self.gs_atom.numbers[:] = 3
-        ucf = UnitCellFilter(atom)
-        opt = FIRE(ucf)
-        opt.run(fmax=0.02)        
+        if not isinstance(self.gs_atom.calc, Clease):
+            ucf = UnitCellFilter(atom)
+            opt = FIRE(ucf)
+            opt.run(fmax=0.02)        
         if self.formation:
             self.gs_E = atom.get_potential_energy()/len(atom)
         else:
@@ -69,9 +71,10 @@ class LTE:
             # need new copy!!!!!!!!!!!!!!!!
             tmp = self.gs_atom.copy()
             tmp.calc = self.gs_atom.calc
-            ucf = UnitCellFilter(tmp)
-            opt = FIRE(ucf)
-            opt.run(fmax=0.02)
+            if not isinstance(tmp.calc, Clease):
+                ucf = UnitCellFilter(tmp)
+                opt = FIRE(ucf)
+                opt.run(fmax=0.02)
             
             NLi = np.sum(self.gs_atom.numbers == 3)
             NMg = len(self.gs_atom.numbers) - NLi

@@ -23,6 +23,7 @@ def summarizeTables(workingDir):
         TInit, TFinal = options["EMC"]["TInit"], options["EMC"]["TFinal"]
         dT = options["EMC"]["dT"]
         Ts = np.arange(TInit, TFinal+1e-5, dT)
+        # Ts = [800, 835, 870]
         
         print(mus)
         print(Ts)
@@ -47,7 +48,7 @@ def summarizeTables(workingDir):
                 theTable[idx] = data
             
                 # remove file
-                os.remove(file)
+                # os.remove(file)
             
             np.save(f'{gs}-{whichTable}Table-all.npy', theTable)
     os.chdir(oldDir)
