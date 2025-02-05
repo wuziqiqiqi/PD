@@ -49,10 +49,10 @@ from mace.calculators import MACECalculator, mace_mp
 
 from mattersim.forcefield import MatterSimCalculator
 
-from drawpd import LTE, MF
+from drawpdAnySpecies import LTE, MF
 
-def get_conc(atoms):
-    return np.sum(atoms.numbers == 3) / len(atoms)
+def get_conc(atoms, species):
+    return np.sum(atoms.numbers == species) / len(atoms)
 
 def generateBatchInput(input, device, gs, Ts):
     currentPythonFilename = os.path.basename(__file__)
@@ -325,6 +325,11 @@ with open(inputFileName, 'r') as file:
     
 print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
+
+species0 = atomic_numbers(options["GroundStates"][0])
+species1 = atomic_numbers(options["GroundStates"][1])
+
+
 DEBUG = options["EMC"]["DEBUG"]
 RESUME = False
 
@@ -342,8 +347,8 @@ if "LAMMPS" in options:
         
 # chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/100/10-14-2024/epoch1129_e10_f32_s60_mNA.pth.tar")
 # chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/11-06-2024/epoch291_e2_f46_s19_mNA.pth.tar")
-# mattersimModel = "MatterSim-v1.0.0-1M.pth"
-mattersimModel = "/u/wuziqi/finetune/mattersim/mattersimft_best_model.pth"
+mattersimModel = "MatterSim-v1.0.0-1M.pth"
+
 # chgnet = CHGNet.load()
 
 # myCalc = ASElammps
@@ -475,7 +480,7 @@ for gsIdx in gsIdxs:
             
             generateBatchInput(inputFileName, args.device, gsIdx, Ts)
             
-            lte = LTE(formation=False)
+            lte = LTE(formation=False, species=[species0, species1])
             lte.set_gs_atom(gs05)
             phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
         else:
@@ -502,7 +507,7 @@ for gsIdx in gsIdxs:
             else:
                 # this lte is for DEBUG ONLY!!!
                 try:
-                    lte = LTE(formation=False)
+                    lte = LTE(formation=False, species=[species0, species1])
                     lte.set_gs_atom(gs05)
                     phi_lte_lte = lte.get_E(T=Ts[0], mu=mus[0])
                 except:
@@ -518,7 +523,7 @@ for gsIdx in gsIdxs:
         dT = options["EMC"]["dT"]
         Ts = np.arange(TInit, TFinal+1e-5, dT)
             
-        lte = LTE(formation=False)
+        lte = LTE(formation=False, species=[species0, species1])
         lte.set_gs_atom(gs05)
         phi_lte = lte.get_E(T=Ts[0], mu=mus[0])
         
@@ -580,14 +585,14 @@ for gsIdx in gsIdxs:
                 # if not converged:
                 #     print(f"FIRE MAXSTEP REACHED for CHGNet at {i} for oldE!!!")
 
-                currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
+                currOldE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05, species0) + gsE[1] * (1-get_conc(gs05, species0)) + currMu * get_conc(gs05, species0)) * len(gs05)
                 oldSysXyz = gs05.positions.copy()
                 # randomly flip one
                 flipIdx = int(np.random.uniform(low=0, high=len(gs05)-1))
-                if gs05.numbers[flipIdx] == 3:
-                    gs05.numbers[flipIdx] = 12
+                if gs05.numbers[flipIdx] == species0:
+                    gs05.numbers[flipIdx] = species1
                 else:
-                    gs05.numbers[flipIdx] = 3
+                    gs05.numbers[flipIdx] = species0
                 # calculate the new energy
                 # gs05.calc = ASElammps
                 # gs05.calc = CHGNetCalculator(model=chgnet)
@@ -611,7 +616,7 @@ for gsIdx in gsIdxs:
                 # converged = opt.run(fmax=0.02, steps=20)
                 # if not converged:
                 #     print(f"FIRE MAXSTEP REACHED for CHGNet at {i} for newE!!!")
-                currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05) + gsE[1] * (1-get_conc(gs05)) + currMu * get_conc(gs05)) * len(gs05)
+                currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05, species0) + gsE[1] * (1-get_conc(gs05, species0)) + currMu * get_conc(gs05, species0)) * len(gs05)
                 # temporarily accept the new energy
                 currE = currNewE
                 
@@ -623,10 +628,10 @@ for gsIdx in gsIdxs:
                         # DAMN!!!!! revert
                         currE = currOldE
                         gs05.positions = oldSysXyz.copy()
-                        if gs05.numbers[flipIdx] == 3:
-                            gs05.numbers[flipIdx] = 12
+                        if gs05.numbers[flipIdx] == species0:
+                            gs05.numbers[flipIdx] = species1
                         else:
-                            gs05.numbers[flipIdx] = 3
+                            gs05.numbers[flipIdx] = species0
                 
                 # # currE is now the accepted energy and gs05 is now the accepted strucutre
                 # # randomly pick a scaling factor
@@ -658,7 +663,7 @@ for gsIdx in gsIdxs:
                 #         if VScaleRange/1.1 > 1:
                 #             VScaleRange/1.1
                             
-                if eq.new_data(POI=get_conc(gs05), other=currE) or i == MaxIterNum-1:
+                if eq.new_data(POI=get_conc(gs05, species0), other=currE) or i == MaxIterNum-1:
                     print("converged after: ", i)
                     if iT == 0:
                         prevGs05 = gs05.copy()
@@ -784,9 +789,9 @@ plt.legend(["BCC", "HCP"])
 # plt.xlim([-0.25, 0.25])
 # plt.ylim([-0.5, 0])
 if batchMode:
-    plt.savefig(f"{inputFileName[:-5]}-reuslt/T_phi_{batchTemp}.png")
+    plt.savefig(f"{inputFileName[:-5]}-reuslt/{re.sub(r'[^0-9]', '', args.gs)}_T_phi_{batchTemp}.png")
 else:
-    plt.savefig("T_phi.png")
+    plt.savefig(f"{re.sub(r'[^0-9]', '', args.gs)}_T_phi.png")
 
 plt.figure(2)
 plt.title("Li concentration vs. mu")
@@ -795,9 +800,9 @@ plt.ylabel("Li concentration")
 plt.legend(["BCC Li -> BCC Mg", "HCP Mg -> HCP Li"])
 # plt.xlim([-0.25, 0.25])
 if batchMode:
-    plt.savefig(f"{inputFileName[:-5]}-reuslt/mu_x_{batchTemp}.png")
+    plt.savefig(f"{inputFileName[:-5]}-reuslt/{re.sub(r'[^0-9]', '', args.gs)}_mu_x_{batchTemp}.png")
 else:
-    plt.savefig("mu_x.png")
+    plt.savefig(f"{re.sub(r'[^0-9]', '', args.gs)}_mu_x.png")
 plt.show()
 
 print(ETable)
