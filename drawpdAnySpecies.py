@@ -7,7 +7,7 @@ from ase.constraints import UnitCellFilter
 from clease.calculator import Clease
 
 class LTE:
-    def __init__(self, myCalc = None, formation = False, species):
+    def __init__(self, species, myCalc = None, formation = False):
         self.gs_atom = None
         self.gs_E = None
         self.N = None

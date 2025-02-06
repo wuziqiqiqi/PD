@@ -326,8 +326,8 @@ with open(inputFileName, 'r') as file:
 print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
 
-species0 = atomic_numbers(options["GroundStates"][0])
-species1 = atomic_numbers(options["GroundStates"][1])
+species0 = atomic_numbers[options["GroundStates"][0]]
+species1 = atomic_numbers[options["GroundStates"][1]]
 
 
 DEBUG = options["EMC"]["DEBUG"]
@@ -373,20 +373,21 @@ if (muFinal - muInit)*dMu < 0:
 
 gsE = [0,0]
 for gsIdx, gs_name in enumerate(GroundStates):
-    db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
-    conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
+    if myCalc == "CE":
+        db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
+        conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
 
-    tmp = basis_elements=options["CLEASE"][gs_name]["CESettings"].copy()
-    tmp['concentration'] = conc
-    MCsettings = CEBulk(**tmp)
+        tmp = basis_elements=options["CLEASE"][gs_name]["CESettings"].copy()
+        tmp['concentration'] = conc
+        MCsettings = CEBulk(**tmp)
 
-    eciName = options["CLEASE"][gs_name]["CEFitting"]["ECI_filename"]
-    if eciName == "FROM DB":
-        with open(db_name + "-eci.json") as f:
-            eci = json.load(f)
-    else:
-        with open(eciName) as f:
-            eci = json.load(f)
+        eciName = options["CLEASE"][gs_name]["CEFitting"]["ECI_filename"]
+        if eciName == "FROM DB":
+            with open(db_name + "-eci.json") as f:
+                eci = json.load(f)
+        else:
+            with open(eciName) as f:
+                eci = json.load(f)
 
     db = connect(gs_db_names[gsIdx])
     gs05 = None
@@ -416,20 +417,21 @@ startt = time.time()
 
 for gsIdx in gsIdxs:
     gs_name = GroundStates[gsIdx]
-    db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
-    conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
+    if myCalc == "CE":
+        db_name = options["CLEASE"][gs_name]["CESettings"]["db_name"]
+        conc = Concentration(basis_elements=options["CLEASE"][gs_name]["CESettings"]["concentration"])
 
-    tmp = basis_elements=options["CLEASE"][gs_name]["CESettings"].copy()
-    tmp['concentration'] = conc
-    MCsettings = CEBulk(**tmp)
+        tmp = basis_elements=options["CLEASE"][gs_name]["CESettings"].copy()
+        tmp['concentration'] = conc
+        MCsettings = CEBulk(**tmp)
 
-    eciName = options["CLEASE"][gs_name]["CEFitting"]["ECI_filename"]
-    if eciName == "FROM DB":
-        with open(db_name + "-eci.json") as f:
-            eci = json.load(f)
-    else:
-        with open(eciName) as f:
-            eci = json.load(f)
+        eciName = options["CLEASE"][gs_name]["CEFitting"]["ECI_filename"]
+        if eciName == "FROM DB":
+            with open(db_name + "-eci.json") as f:
+                eci = json.load(f)
+        else:
+            with open(eciName) as f:
+                eci = json.load(f)
 
     db = connect(gs_db_names[gsIdx])
     gs05 = None
