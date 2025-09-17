@@ -10,6 +10,7 @@ import random
 import time
 import argparse
 import pickle
+import re
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,7 +55,7 @@ from drawpdAnySpecies import LTE, MF
 def get_conc(atoms, species):
     return np.sum(atoms.numbers == species) / len(atoms)
 
-def generateBatchInput(input, device, gs, Ts):
+def generateBatchInput(input, device, gs, Ts, calc):
     currentPythonFilename = os.path.basename(__file__)
     if device == "cpu":
         slurm_script = f"""#!/bin/bash
@@ -82,7 +83,7 @@ MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python {currentPythonFilename} --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
+python {currentPythonFilename} --input={input} --calc={calc} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
 """
     else:
         slurm_script = f"""#!/bin/bash
@@ -111,7 +112,7 @@ MY_VALUE=${{VALUES[$SLURM_ARRAY_TASK_ID]}}
 echo "Running task $SLURM_ARRAY_TASK_ID with value $MY_VALUE"
 
 # Example: Run a Python script with the selected value
-python {currentPythonFilename} --input={input} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
+python {currentPythonFilename} --input={input} --calc={calc} --device={device} --batch=true --init=false --temp=$MY_VALUE --gs=[{gs}]
 """
     
     with open(f"runBatch-{input[:-5]}-gs{gs}.sh", 'w') as f:
@@ -282,6 +283,7 @@ parser.add_argument('-b', '--batch', type=str, default='False', help='Set a (def
 parser.add_argument('--init', type=str, default='True', help='Set b (default: True)')
 parser.add_argument('-t', '--temp', type=str, default='', help='temperature needed if init=false')
 parser.add_argument('--gs', type=str, default='[0, 1]', help='ground states to be calculated (need to be a list)')
+parser.add_argument('--calc', type=str, default='mattersim', help='calculator to use')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -321,7 +323,7 @@ np.set_printoptions(precision=7, suppress=True)
 with open(inputFileName, 'r') as file:
     options = yaml.safe_load(file)
     if batchInit:
-        json.dump(options, open(f"{inputFileName[:-5]}-reuslt/input.json", 'w'))
+        json.dump(options, open(f"{inputFileName[:-5]}-reuslt/input.json", 'w'), indent=4)
     
 print(f"input loaded from {inputFileName}, batchMode = {batchMode}, batchInit = {batchInit}, batchTemp = {batchTemp}")
 
@@ -347,16 +349,35 @@ if "LAMMPS" in options:
         
 # chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/100/10-14-2024/epoch1129_e10_f32_s60_mNA.pth.tar")
 # chgnet = CHGNet.from_file("/nfs/turbo/coe-venkvis/ziqiw-turbo/fine-tune/CHGNet/11-06-2024/epoch291_e2_f46_s19_mNA.pth.tar")
-mattersimModel = "MatterSim-v1.0.0-1M.pth"
+# mattersimModel = "MatterSim-v1.0.0-1M.pth"
 
 # chgnet = CHGNet.load()
 
 # myCalc = ASElammps
 # myCalc = CHGNetCalculator(model=chgnet)
-myCalc = MatterSimCalculator(load_path=mattersimModel, device=DEVICE)
+# myCalc = MatterSimCalculator(load_path=mattersimModel, device=DEVICE)
 # myCalc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
 # myCalc = MACECalculator(model_paths=['/u/wuziqi/finetune/MACE/mace_fine_tunning_LiMg_swa.model'], device='cuda', default_dtype="float32")
 # myCalc = "CE"
+
+if args.calc == 'ms':
+    mattersimModel = "MatterSim-v1.0.0-1M.pth"
+    myCalc = MatterSimCalculator(load_path=mattersimModel, device=DEVICE)
+elif args.calc == 'chgnet':
+    chgnet = CHGNet.load()
+    myCalc = CHGNetCalculator(model=chgnet)
+elif args.calc == 'mace':
+    myCalc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
+elif args.calc == 'maceft':
+    # myCalc = MACECalculator(model_paths=['/u/wuziqi/finetune/MACE/mace_fine_tunning_LiMg_stagetwo_082125.model'], device=DEVICE, default_dtype="float32")
+    myCalc = MACECalculator(model_paths=['/u/wuziqi/finetune/MACE/LiCa-100-2strain-100-trajgs/mace_fine_tunning_LiCa_stagetwo.model'], device=DEVICE, default_dtype="float32")
+elif args.calc == 'msft':
+    # myCalc = MatterSimCalculator(load_path="/u/wuziqi/finetune/mattersim/ms-LiMg-100-1strain-100-endgs.pth", device=DEVICE)
+    myCalc = MatterSimCalculator(load_path="/u/wuziqi/finetune/mattersim/ms-LiCa-100-2strain-100-trajgs.pth", device=DEVICE)
+elif args.calc == 'msft2':
+    myCalc = MatterSimCalculator(load_path="/u/wuziqi/finetune/mattersim/ms-LiMg-50-1strain-50-endgs.pth", device=DEVICE)
+else:
+    raise ValueError(f"Invalid calculator: {args.calc}")
 
 GroundStates = options["GroundStates"]
 gs_db_names = options["EMC"]["gs_db_names"]
@@ -480,7 +501,7 @@ for gsIdx in gsIdxs:
             dT = options["EMC"]["dT"]
             Ts = np.arange(TInit, TFinal+1e-5, dT)
             
-            generateBatchInput(inputFileName, args.device, gsIdx, Ts)
+            generateBatchInput(inputFileName, args.device, gsIdx, Ts, args.calc)
             
             lte = LTE(formation=False, species=[species0, species1])
             lte.set_gs_atom(gs05)
@@ -541,10 +562,12 @@ for gsIdx in gsIdxs:
         ETable = np.zeros((len(Ts), len(mus)))
         XTable = np.zeros((len(Ts), len(mus)))
         deltSpinDetecter = np.zeros((len(Ts), len(mus)))
+        negEList = []
     systemSize = len(gs05)
     old_spins = np.copy(gs05.numbers)
     # gs05.calc = CHGNetCalculator(model=chgnet)
     # gs05.calc = mace_mp(model="medium", dispersion=False, default_dtype="float32", device=DEVICE)
+    parentGs05 = gs05.copy()
 
     for iT, currT in enumerate(Ts):
         for iMu, currMu in enumerate(mus):
@@ -566,12 +589,22 @@ for gsIdx in gsIdxs:
                 # calculate the energy for the old strucutre
                 # gs05.calc = ASElammps
                 # gs05.calc = CHGNetCalculator(model=chgnet)
+                
+                ########################### initial relaxation for old structure ###########################
                 if myCalc != "CE":
                     # ucf = UnitCellFilter(gs05)
                     opt = FIRE(gs05, logfile=None)
                     converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                     if not converged:
-                        print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
+                        relaxPatient = 0
+                        while relaxPatient < 5 and not converged:
+                            # pertube each atom's position a little bit by adding a Nx3 matrix of random numbers
+                            gs05.positions += (np.random.rand(*gs05.positions.shape)-0.5) * 0.1
+                            opt = FIRE(gs05, logfile=None)
+                            converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
+                            relaxPatient += 1
+                        if not converged:
+                            print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
                     eos = calculate_eos(gs05, eps=0.15)
                     try:
                         v, e, _ = eos.fit()
@@ -580,6 +613,8 @@ for gsIdx in gsIdxs:
                         write(f"{gs_name}-failed.xyz", gs05)
                         raise ValueError("EOS fit failed")
                     gs05.set_cell(gs05.get_cell() * (v / gs05.get_volume())**(1/3), scale_atoms=True)
+                ####################### end of initial relaxation for old structure ########################
+                
                 # gs05.calc = CHGNetCalculator(model=chgnet)
                 # ucf = UnitCellFilter(gs05)
                 # opt = FIRE(ucf, logfile=None)
@@ -603,7 +638,15 @@ for gsIdx in gsIdxs:
                     opt = FIRE(gs05, logfile=None)
                     converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
                     if not converged:
-                        print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
+                        relaxPatient = 0
+                        while relaxPatient < 5 and not converged:
+                            # pertube each atom's position a little bit by adding a Nx3 matrix of random numbers
+                            gs05.positions += (np.random.rand(*gs05.positions.shape)-0.5) * 0.1
+                            opt = FIRE(gs05, logfile=None)
+                            converged = opt.run(fmax=0.02, steps=options["EMC"]["maxRelaxSteps"])
+                            relaxPatient += 1
+                        if not converged:
+                            print(f"FIRE MAXSTEP REACHED for MEAM at {i} for oldE!!!")
                     eos = calculate_eos(gs05, eps=0.15)
                     try:
                         v, e, _ = eos.fit()
@@ -619,6 +662,21 @@ for gsIdx in gsIdxs:
                 # if not converged:
                 #     print(f"FIRE MAXSTEP REACHED for CHGNet at {i} for newE!!!")
                 currNewE = gs05.get_potential_energy() - (gsE[0] * get_conc(gs05, species0) + gsE[1] * (1-get_conc(gs05, species0)) + currMu * get_conc(gs05, species0)) * len(gs05)
+                
+                # testing the MLIP energy
+                # if currNewE < 0 and currMu < 0:
+                #     print("WRONG ENERGY!!!!!!!!!!!!!!")
+                #     # save the structure
+                #     negEList.append(gs05.copy())
+                # elif currNewE < -currMu and currMu > 0:
+                #     print("WRONG ENERGY!!!!!!!!!!!!!!")
+                #     # save the structure
+                #     negEList.append(gs05.copy())
+                    
+                # if len(negEList) > 10:
+                #     write(f"{inputFileName[:-5]}-reuslt/{gs_name}-negativeEStructures.xyz", negEList)
+                #     exit(1)
+                
                 # temporarily accept the new energy
                 currE = currNewE
                 
@@ -719,6 +777,8 @@ for gsIdx in gsIdxs:
                 print(phiTable[iT, iMu])
                 print(phiTable[iT - 1, iMu],  phiTable[iT - 1, iMu] * prevB / currB ,(ETable[iT, iMu] + ETable[iT - 1, iMu]) / 2 * (currB - prevB) / currB)
                 print(ETable[iT, iMu] , ETable[iT - 1, iMu])
+                dphi = phiTable[iT, iMu] - phiTable[iT - 1, iMu]
+                assert dphi * dT < 0, f"phiTable not monotonic with T at iT = {iT}, iMu = {iMu}, dphi = {dphi}, dT = {dT}, phiTable[iT, iMu] = {phiTable[iT, iMu]}, phiTable[iT - 1, iMu] = {phiTable[iT - 1, iMu]}"
             else:
                 phiTable[iT, iMu] = phiTable[iT, iMu - 1] - (XTable[iT, iMu] + XTable[iT, iMu - 1]) / 2 * dMu
             
